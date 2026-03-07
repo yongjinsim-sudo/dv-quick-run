@@ -144,7 +144,7 @@
         },
         "dvQuickRun.tenantId": {
           "type": "string",
-          "default": "5ec47af9-fa73-4af2-8548-b76f902e2319",
+          "default": "",
           "description": "Optional Entra tenant ID to force Azure CLI login to the correct tenant."
         },
         "dvQuickRun.enableCodeLens": {
