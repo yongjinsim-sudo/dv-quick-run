@@ -1,0 +1,163 @@
+{
+  "name": "dv-quick-run",
+  "displayName": "DV Quick Run",
+  "description": "Run and debug Dataverse Web API queries directly from VS Code. Includes smart query builders, Explain Query, and relationship exploration tools.",
+  "version": "0.1.0",
+  "publisher": "dv-forgelab",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Azure"
+  ],
+  "keywords": [
+    "dataverse",
+    "dynamics",
+    "dynamics365",
+    "powerplatform",
+    "crm",
+    "odata",
+    "dataverse api",
+    "dynamics api",
+    "power platform dataverse"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "dvQuickRun.whoAmI", "title": "DV Quick Run: Who Am I" },
+      { "command": "dvQuickRun.runGet", "title": "DV Quick Run: Run Query" },
+      { "command": "dvQuickRun.clearHistory", "title": "DV Quick Run: Clear Query History" },
+      { "command": "dvQuickRun.getMetadata", "title": "DV Quick Run: Get Metadata" },
+      { "command": "dvQuickRun.smartGet", "title": "DV Quick Run: Build Smart GET" },
+      { "command": "dvQuickRun.smartGetRerunLast", "title": "DV Quick Run: Smart GET (Re-run Last)" },
+      { "command": "dvQuickRun.smartGetEditLast", "title": "DV Quick Run: Smart GET (Edit Last)" },
+      { "command": "dvQuickRun.smartGetFromGuidPickFields", "title": "DV Quick Run: Build Smart GET from GUID (Pick Fields)" },
+      { "command": "dvQuickRun.smartGetFromGuidRaw", "title": "DV Quick Run: Build Smart GET from GUID" },
+      { "command": "dvQuickRun.smartPatch", "title": "DV Quick Run: Build Smart PATCH" },
+      { "command": "dvQuickRun.smartPatchRerunLast", "title": "DV Quick Run: Smart PATCH (Re-run Last)" },
+      { "command": "dvQuickRun.smartPatchEditLast", "title": "DV Quick Run: Smart PATCH (Edit Last)" },
+      { "command": "dvQuickRun.generateQueryFromJson", "title": "DV Quick Run: Generate Query from JSON" },
+      { "command": "dvQuickRun.runQueryUnderCursor", "title": "DV Quick Run: Run Query Under Cursor" },
+      { "command": "dvQuickRun.addFieldsSelect", "title": "DV Quick Run: Add Select Fields" },
+      { "command": "dvQuickRun.addFilter", "title": "DV Quick Run: Add Filter" },
+      { "command": "dvQuickRun.addExpand", "title": "DV Quick Run: Add Expand" },
+      { "command": "dvQuickRun.addOrderBy", "title": "DV Quick Run: Add Order By" },
+      { "command": "dvQuickRun.explainQuery", "title": "DV Quick Run: Explain Query" },
+      { "command": "dvQuickRun.runQueryAtLine", "title": "DV Quick Run: Run Query At Line" },
+      { "command": "dvQuickRun.explainQueryAtLine", "title": "DV Quick Run: Explain Query At Line" },
+      { "command": "dvQuickRun.relationshipExplorer", "title": "DV Quick Run: Explore Relationships" },
+      { "command": "dvQuickRun.relationshipGraphView", "title": "DV Quick Run: View Relationship Graph" }
+    ],
+    "menus": {
+      "commandPalette": [
+        { "command": "dvQuickRun.runQueryAtLine", "when": "false" },
+        { "command": "dvQuickRun.explainQueryAtLine", "when": "false" },
+        { "command": "dvQuickRun.smartGetRerunLast", "when": "false" },
+        { "command": "dvQuickRun.smartGetEditLast", "when": "false" },
+        { "command": "dvQuickRun.smartPatchRerunLast", "when": "false" },
+        { "command": "dvQuickRun.smartPatchEditLast", "when": "false" }
+      ],
+      "editor/context": [
+        {
+          "command": "dvQuickRun.runQueryUnderCursor",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_core@1"
+        },
+        {
+          "command": "dvQuickRun.explainQuery",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_core@2"
+        },
+        {
+          "command": "dvQuickRun.addFieldsSelect",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_edit@1"
+        },
+        {
+          "command": "dvQuickRun.addFilter",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_edit@2"
+        },
+        {
+          "command": "dvQuickRun.addExpand",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_edit@3"
+        },
+        {
+          "command": "dvQuickRun.addOrderBy",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_edit@4"
+        },
+        {
+          "command": "dvQuickRun.smartGetFromGuidRaw",
+          "when": "editorHasSelection",
+          "group": "dvQuickRun_guid@1"
+        },
+        {
+          "command": "dvQuickRun.smartGetFromGuidPickFields",
+          "when": "editorHasSelection",
+          "group": "dvQuickRun_guid@2"
+        },
+        {
+          "command": "dvQuickRun.generateQueryFromJson",
+          "when": "editorTextFocus && !editorReadonly && editorLangId == json",
+          "group": "dvQuickRun_json@1"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "dvQuickRun.runQueryUnderCursor",
+        "key": "ctrl+shift+r",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "DV Quick Run",
+      "properties": {
+        "dvQuickRun.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Dataverse Web API base URL, e.g. https://{org}.api.crm6.dynamics.com/api/data/v9.2"
+        },
+        "dvQuickRun.tenantId": {
+          "type": "string",
+          "default": "5ec47af9-fa73-4af2-8548-b76f902e2319",
+          "description": "Optional Entra tenant ID to force Azure CLI login to the correct tenant."
+        },
+        "dvQuickRun.enableCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline CodeLens actions for likely Dataverse query lines."
+        },
+        "dvQuickRun.enableInlineMetadataHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline metadata hover for Dataverse query entities, clauses, operators, and fields."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.109.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.56.1",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}

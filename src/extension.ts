@@ -1,0 +1,173 @@
+import * as vscode from "vscode";
+import { registerRunGetCommand } from "./commands/runGet.js";
+import { registerWhoAmICommand } from "./commands/whoAmI.js";
+import { registerClearHistoryCommand } from "./commands/clearHistory.js";
+import { registerVirtualJsonProvider } from "./utils/virtualJsonDoc.js";
+import { createCommandContext } from "./commands/context/commandContext.js";
+import { registerGetMetadataCommand } from "./commands/getMetadata.js";
+import { registerSmartGetCommand } from "./commands/smartGet.js";
+import { registerSmartGetRerunLastCommand } from "./commands/smartGetRerunLast.js";
+import { registerSmartGetEditLastCommand } from "./commands/smartGetEditLast.js";
+import { registerSmartPatchCommand } from "./commands/smartPatch.js";
+import { registerSmartPatchEditLastCommand } from "./commands/smartPatchEditLast.js";
+import { registerSmartPatchRerunLastCommand } from "./commands/smartPatchRerunLast.js";
+import { registerSmartGetFromGuidRawCommand } from "./commands/smartGetFromGuidRaw.js";
+import { registerSmartGetFromGuidPickFieldsCommand } from "./commands/smartGetFromGuidPickFields.js";
+import { registerGenerateQueryFromJsonCommand } from "./commands/generateQueryFromJson.js";
+import { runQueryUnderCursor } from "./commands/runQueryUnderCursor.js";
+import { addFieldsSelect } from "./commands/addFieldsSelect.js";
+import { addFilter } from "./commands/addFilter.js";
+import { addExpand } from "./commands/addExpand.js";
+import { addOrderBy } from "./commands/addOrderBy.js";
+import { explainQuery } from "./commands/explainQuery.js";
+import { QueryCodeLensProvider } from "./providers/queryCodeLensProvider.js";
+import { QueryHoverProvider } from "./providers/queryHoverProvider.js";
+import { relationshipExplorer } from "./commands/relationshipExplorer.js";
+import { relationshipGraphView } from "./commands/relationshipGraphView.js";
+
+async function runCommandAtLine(
+  documentUri: vscode.Uri,
+  lineNumber: number,
+  command: string
+): Promise<void> {
+  const doc = await vscode.workspace.openTextDocument(documentUri);
+  const editor = await vscode.window.showTextDocument(doc, {
+    preview: false,
+    preserveFocus: false
+  });
+
+  const line = doc.lineAt(lineNumber);
+  const range = new vscode.Range(lineNumber, 0, lineNumber, line.text.length);
+
+  editor.selection = new vscode.Selection(range.start, range.end);
+  editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+
+  await vscode.commands.executeCommand(command);
+}
+
+export function activate(context: vscode.ExtensionContext) {
+  registerVirtualJsonProvider(context);
+
+  const ctx = createCommandContext(context);
+
+  registerWhoAmICommand(context, ctx);
+  registerRunGetCommand(context, ctx);
+  registerClearHistoryCommand(context, ctx);
+  registerGetMetadataCommand(context, ctx);
+  registerSmartGetCommand(context, ctx);
+  registerSmartGetRerunLastCommand(context, ctx);
+  registerSmartGetEditLastCommand(context, ctx);
+  registerSmartPatchCommand(context, ctx);
+  registerSmartPatchEditLastCommand(context, ctx);
+  registerSmartPatchRerunLastCommand(context, ctx);
+  registerSmartGetFromGuidPickFieldsCommand(context, ctx);
+  registerSmartGetFromGuidRawCommand(context, ctx);
+  registerGenerateQueryFromJsonCommand(context, ctx);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("dvQuickRun.runQueryUnderCursor", async () => {
+      await runQueryUnderCursor(ctx);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("dvQuickRun.addFieldsSelect", async () => {
+      await addFieldsSelect(ctx);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("dvQuickRun.addFilter", async () => {
+      await addFilter(ctx);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("dvQuickRun.addExpand", async () => {
+      await addExpand(ctx);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("dvQuickRun.addOrderBy", async () => {
+      await addOrderBy(ctx);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("dvQuickRun.explainQuery", async () => {
+      await explainQuery(ctx);
+    })
+  );
+
+  context.subscriptions.push(
+	vscode.commands.registerCommand("dvQuickRun.relationshipExplorer", () => relationshipExplorer(ctx))
+	);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("dvQuickRun.relationshipGraphView", () =>
+      relationshipGraphView(ctx)
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "dvQuickRun.runQueryAtLine",
+      async (documentUri: vscode.Uri, lineNumber: number) => {
+        await runCommandAtLine(documentUri, lineNumber, "dvQuickRun.runQueryUnderCursor");
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "dvQuickRun.explainQueryAtLine",
+      async (documentUri: vscode.Uri, lineNumber: number) => {
+        await runCommandAtLine(documentUri, lineNumber, "dvQuickRun.explainQuery");
+      }
+    )
+  );
+
+  const codeLensProvider = new QueryCodeLensProvider();
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider(
+      [
+        { scheme: "file" },
+        { scheme: "untitled" }
+      ],
+      codeLensProvider
+    )
+  );
+
+  const hoverProvider = new QueryHoverProvider(ctx);
+
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      [
+        { scheme: "file" },
+        { scheme: "untitled" }
+      ],
+      hoverProvider
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("dvQuickRun.enableCodeLens")) {
+        codeLensProvider.refresh();
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(() => codeLensProvider.refresh())
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument(() => codeLensProvider.refresh())
+  );
+
+}
+
+export function deactivate() {}
