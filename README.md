@@ -9,8 +9,6 @@ Instead of jumping between Postman, browser tabs, maker portals, and documentati
 
 ## 🚀 Animated Demo
 
-*(Add your demo GIF here later)*
-
 ![DV Quick Run Demo](docs/demo-run-query.gif)
 
 Example workflow:
