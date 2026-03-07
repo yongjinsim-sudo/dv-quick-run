@@ -145,7 +145,7 @@
         "dvQuickRun.tenantId": {
           "type": "string",
           "default": "",
-          "description": "Optional Entra tenant ID to force Azure CLI login to the correct tenant."
+          "description": "Optional Entra tenant ID. Only needed if Azure CLI is logged into multiple tenants or the wrong tenant is being used."
         },
         "dvQuickRun.enableCodeLens": {
           "type": "boolean",
