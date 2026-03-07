@@ -18,10 +18,13 @@
   },
   "categories": [
     "Other",
-    "Programming Languages",
+    "Debuggers",
     "Azure"
   ],
-  "keywords": [
+  "extensionKind": [
+    "workspace"
+  ],
+"keywords": [
     "dataverse",
     "dynamics",
     "dynamics365",
@@ -30,7 +33,9 @@
     "odata",
     "dataverse api",
     "dynamics api",
-    "power platform dataverse"
+    "power platform dataverse",
+    "vscode dataverse",
+    "dataverse query"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
