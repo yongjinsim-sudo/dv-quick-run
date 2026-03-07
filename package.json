@@ -16,10 +16,10 @@
   "engines": {
     "vscode": "^1.109.0"
   },
+  "license": "MIT",
   "categories": [
     "Other",
-    "Debuggers",
-    "Azure"
+    "Debuggers"
   ],
   "extensionKind": [
     "workspace"
@@ -131,7 +131,7 @@
       {
         "command": "dvQuickRun.runQueryUnderCursor",
         "key": "ctrl+shift+r",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && !editorReadonly"
       }
     ],
     "configuration": {

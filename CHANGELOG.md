@@ -22,3 +22,4 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 - Inline metadata hover for Dataverse queries
 - CodeLens actions for quick query execution
 - Azure CLI authentication support
+- Added Ctrl+Enter shortcut to run query under cursor

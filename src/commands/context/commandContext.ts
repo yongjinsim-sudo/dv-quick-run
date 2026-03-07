@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getBaseUrl, getTenantId } from "../../utils/config.js";
+import { ensureBaseUrl, getTenantId } from "../../utils/config.js";
 import { getDataverseAccessToken } from "../../auth/azureCliAuth.js";
 import { DataverseClient } from "../../services/dataverseClient.js";
 
@@ -33,7 +33,7 @@ export function createCommandContext(ext: vscode.ExtensionContext): CommandConte
 
     async getBaseUrl(): Promise<string> {
       // Keep your existing behavior: prompt and persist if missing
-      const baseUrl = (await getBaseUrl()).replace(/\/+$/, "");
+      const baseUrl = (await ensureBaseUrl()).replace(/\/+$/, "");
       return baseUrl;
     },
 
