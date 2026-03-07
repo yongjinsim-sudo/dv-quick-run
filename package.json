@@ -4,6 +4,14 @@
   "description": "Run and debug Dataverse Web API queries directly from VS Code. Includes smart query builders, Explain Query, and relationship exploration tools.",
   "version": "0.1.0",
   "publisher": "dv-forgelab",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yongjinsim-sudo/dv-quick-run"
+  },
+  "homepage": "https://github.com/yongjinsim-sudo/dv-quick-run",
+  "bugs": {
+    "url": "https://github.com/yongjinsim-sudo/dv-quick-run/issues"
+  },
   "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.109.0"
