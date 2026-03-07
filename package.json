@@ -120,6 +120,11 @@
     "keybindings": [
       {
         "command": "dvQuickRun.runQueryUnderCursor",
+        "key": "ctrl+enter",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "dvQuickRun.runQueryUnderCursor",
         "key": "ctrl+shift+r",
         "when": "editorTextFocus"
       }
@@ -130,7 +135,7 @@
         "dvQuickRun.baseUrl": {
           "type": "string",
           "default": "",
-          "description": "Dataverse Web API base URL, e.g. https://{org}.api.crm6.dynamics.com/api/data/v9.2"
+          "description": "Dataverse Web API base URL, e.g. https://yourorg.crm6.dynamics.com/api/data/v9.2"
         },
         "dvQuickRun.tenantId": {
           "type": "string",
