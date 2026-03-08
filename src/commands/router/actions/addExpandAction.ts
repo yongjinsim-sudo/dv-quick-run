@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
-import { loadEntityDefs, loadFields } from "./shared/metadataAccess.js";
+import { fetchEntityNavigationProperties } from "../../../services/entityRelationshipMetadataService.js";
+import { loadEntityDefs, loadFields, findEntityByEntitySetName, findEntityByLogicalName } from "./shared/metadataAccess.js";
 import { getSelectableFields } from "./shared/selectableFields.js";
 import { getEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
 import {
@@ -12,46 +13,58 @@ import {
 } from "./shared/queryMutation/parsedEditorQuery.js";
 import { setQueryOption } from "./shared/queryMutation/queryOptionMutator.js";
 import { applyEditorQueryUpdate } from "./shared/queryMutation/applyEditorQueryUpdate.js";
+import type { NavPropertyDef } from "../../../services/entityRelationshipMetadataService.js";
 
 type NavOption = {
   navigationPropertyName: string;
+  relationshipType: NavPropertyDef["relationshipType"];
+  targetLogicalName: string;
   referencingAttribute?: string;
-  referencedEntity: string;
   schemaName?: string;
 };
 
-function pickEntity(defs: EntityDef[], entitySetName: string): EntityDef | undefined {
-  return defs.find((d) => d.entitySetName.toLowerCase() === entitySetName.toLowerCase());
+function resolveTargetLogicalName(nav: NavPropertyDef): string | undefined {
+  switch (nav.relationshipType) {
+    case "ManyToOne":
+      return nav.referencedEntity;
+    case "OneToMany":
+      return nav.referencingEntity;
+    case "ManyToMany":
+      return nav.referencedEntity;
+    default:
+      return undefined;
+  }
 }
 
-async function loadManyToOneNavOptions(
+async function loadNavigationOptions(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
   logicalName: string
 ): Promise<NavOption[]> {
-  const path =
-    `/EntityDefinitions(LogicalName='${logicalName}')/ManyToOneRelationships` +
-    `?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntityNavigationPropertyName`;
+  const rows = await fetchEntityNavigationProperties(client, token, logicalName);
 
-  ctx.output.appendLine(`Loading navigation properties: ${path}`);
-
-  const json = await client.get(path, token);
-
-  const rows: any[] = Array.isArray(json?.value) ? json.value : [];
-  
   const options: NavOption[] = rows
-    .map((x: any): NavOption => ({
-      navigationPropertyName: String(x?.ReferencingEntityNavigationPropertyName ?? "").trim(),
-      referencingAttribute: x?.ReferencingAttribute ? String(x.ReferencingAttribute) : undefined,
-      referencedEntity: String(x?.ReferencedEntity ?? "").trim(),
-      schemaName: x?.SchemaName ? String(x.SchemaName) : undefined
-    }))
-    .filter((x: NavOption) => !!x.navigationPropertyName && !!x.referencedEntity);
+    .map((row): NavOption | undefined => {
+      const navigationPropertyName = String(row.navigationPropertyName ?? "").trim();
+      const targetLogicalName = String(resolveTargetLogicalName(row) ?? "").trim();
+      if (!navigationPropertyName || !targetLogicalName) {
+        return undefined;
+      }
+
+      return {
+        navigationPropertyName,
+        relationshipType: row.relationshipType,
+        targetLogicalName,
+        referencingAttribute: row.referencingAttribute ? String(row.referencingAttribute) : undefined,
+        schemaName: row.schemaName ? String(row.schemaName) : undefined
+      };
+    })
+    .filter((row): row is NavOption => !!row);
 
   const dedup = new Map<string, NavOption>();
-  for (const o of options) {
-    dedup.set(o.navigationPropertyName.toLowerCase(), o);
+  for (const option of options) {
+    dedup.set(option.navigationPropertyName.toLowerCase(), option);
   }
 
   const result = Array.from(dedup.values()).sort((a, b) =>
@@ -63,25 +76,36 @@ async function loadManyToOneNavOptions(
 }
 
 async function pickNavigationProperty(
-  entitySetName: string,
+  sourceEntitySetName: string,
+  defs: EntityDef[],
   options: NavOption[]
 ): Promise<NavOption | undefined> {
   if (!options.length) {
-    vscode.window.showInformationMessage(`DV Quick Run: No expandable navigation properties found for ${entitySetName}.`);
+    vscode.window.showInformationMessage(`DV Quick Run: No expandable navigation properties found for ${sourceEntitySetName}.`);
     return undefined;
   }
 
   const picked = await vscode.window.showQuickPick(
-    options.map((o) => ({
-      label: o.navigationPropertyName,
-      description: o.referencedEntity,
-      detail: o.referencingAttribute
-        ? `Lookup: ${o.referencingAttribute}${o.schemaName ? ` • ${o.schemaName}` : ""}`
-        : o.schemaName,
-      option: o
-    })),
+    options.map((option) => {
+      const targetDef = findEntityByLogicalName(defs, option.targetLogicalName);
+      const targetLabel = targetDef?.entitySetName ?? option.targetLogicalName;
+      const detailParts: string[] = [option.relationshipType];
+      if (option.referencingAttribute) {
+        detailParts.push(`Lookup: ${option.referencingAttribute}`);
+      }
+      if (option.schemaName) {
+        detailParts.push(option.schemaName);
+      }
+
+      return {
+        label: option.navigationPropertyName,
+        description: targetLabel,
+        detail: detailParts.join(" • "),
+        option
+      };
+    }),
     {
-      title: `DV Quick Run: Add Expand ($expand) — ${entitySetName}`,
+      title: `DV Quick Run: Add Expand ($expand) — ${sourceEntitySetName}`,
       placeHolder: "Pick a navigation property to expand",
       ignoreFocusOut: true,
       matchOnDescription: true,
@@ -97,11 +121,11 @@ async function pickExpandFields(
   selectable: ReturnType<typeof getSelectableFields>
 ): Promise<string[] | undefined> {
   const picked = await vscode.window.showQuickPick(
-    selectable.map((f) => ({
-      label: f.logicalName,
-      description: f.attributeType || "",
-      detail: `$select token: ${f.selectToken}`,
-      token: f.selectToken as string
+    selectable.map((field) => ({
+      label: field.logicalName,
+      description: field.attributeType || "",
+      detail: `$select token: ${field.selectToken}`,
+      token: field.selectToken as string
     })),
     {
       title: `DV Quick Run: Expand fields (${targetEntitySetName})`,
@@ -117,11 +141,11 @@ async function pickExpandFields(
     return undefined;
   }
 
-  return picked.map((p) => p.token);
+  return picked.map((item) => item.token);
 }
 
 function buildExpandClause(navigationPropertyName: string, selectTokens: string[]): string {
-  const tokens = selectTokens.map((x) => x.trim()).filter(Boolean);
+  const tokens = selectTokens.map((token) => token.trim()).filter(Boolean);
   if (!tokens.length) {
     return navigationPropertyName;
   }
@@ -176,18 +200,18 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
     const client: DataverseClient = ctx.getClient(baseUrl);
 
     const defs = await loadEntityDefs(ctx, client, token);
-    const sourceDef = await pickEntity(defs, entitySetName);
+    const sourceDef = findEntityByEntitySetName(defs, entitySetName);
     if (!sourceDef) {
       throw new Error(`Could not find metadata for entity set: ${entitySetName}`);
     }
 
-    const navOptions = await loadManyToOneNavOptions(ctx, client, token, sourceDef.logicalName);
-    const pickedNav = await pickNavigationProperty(sourceDef.entitySetName, navOptions);
+    const navOptions = await loadNavigationOptions(ctx, client, token, sourceDef.logicalName);
+    const pickedNav = await pickNavigationProperty(sourceDef.entitySetName, defs, navOptions);
     if (!pickedNav) {return;}
 
-    const targetDef = defs.find((d) => d.logicalName.toLowerCase() === pickedNav.referencedEntity.toLowerCase());
+    const targetDef = findEntityByLogicalName(defs, pickedNav.targetLogicalName);
     if (!targetDef) {
-      throw new Error(`Could not find target entity metadata for: ${pickedNav.referencedEntity}`);
+      throw new Error(`Could not find target entity metadata for: ${pickedNav.targetLogicalName}`);
     }
 
     const targetFields = await loadFields(ctx, client, token, targetDef.logicalName);
@@ -206,7 +230,7 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
       strategy = pickedStrategy;
     }
 
-    const mergedExpand = mergeExpand(existingExpand, newClause, strategy);
+    const mergedExpand = mergeExpandClause(existingExpand ?? undefined, newClause);
     setQueryOption(parsed, "$expand", mergedExpand);
 
     const updated = buildEditorQuery(parsed);
@@ -214,9 +238,108 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
 
     ctx.output.appendLine(`Add Expand ($expand): ${target.text} -> ${updated}`);
     vscode.window.showInformationMessage("DV Quick Run: Added expand to $expand.");
-  } catch (e: any) {
-    const msg = e?.message ?? String(e);
+  } catch (error: any) {
+    const msg = error?.message ?? String(error);
     ctx.output.appendLine(msg);
     vscode.window.showErrorMessage("DV Quick Run: Add Expand ($expand) failed. Check Output.");
   }
+}
+
+function splitTopLevelExpandItems(expand: string): string[] {
+  const items: string[] = [];
+  let current = "";
+  let depth = 0;
+
+  for (const ch of expand) {
+    if (ch === "(") {
+      depth++;
+    } else if (ch === ")") {
+      depth = Math.max(0, depth - 1);
+    }
+
+    if (ch === "," && depth === 0) {
+      if (current.trim()) {
+        items.push(current.trim());
+      }
+      current = "";
+      continue;
+    }
+
+    current += ch;
+  }
+
+  if (current.trim()) {
+    items.push(current.trim());
+  }
+
+  return items;
+}
+
+function getExpandNavName(item: string): string {
+  const trimmed = item.trim();
+  const idx = trimmed.indexOf("(");
+  return idx >= 0 ? trimmed.slice(0, idx).trim() : trimmed;
+}
+
+function getNestedSelectFields(item: string): string[] {
+  const match = item.match(/\$select=([^)]+)/i);
+  if (!match?.[1]) {
+    return [];
+  }
+
+  return match[1]
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+function buildExpandItem(navName: string, selectFields: string[]): string {
+  const distinct = Array.from(new Set(selectFields.map((x) => x.trim()).filter(Boolean)));
+
+  if (!distinct.length) {
+    return navName;
+  }
+
+  return `${navName}($select=${distinct.join(",")})`;
+}
+
+function mergeExpandItem(existingItem: string, incomingItem: string): string {
+  const navName = getExpandNavName(existingItem);
+
+  const existingFields = getNestedSelectFields(existingItem);
+  const incomingFields = getNestedSelectFields(incomingItem);
+
+  if (!existingFields.length && !incomingFields.length) {
+    return navName;
+  }
+
+  const mergedFields = Array.from(new Set([...existingFields, ...incomingFields]));
+  return buildExpandItem(navName, mergedFields);
+}
+
+function mergeExpandClause(existingExpand: string | undefined, incomingItem: string): string {
+  if (!existingExpand?.trim()) {
+    return incomingItem;
+  }
+
+  const incomingNav = getExpandNavName(incomingItem);
+
+  const items = splitTopLevelExpandItems(existingExpand);
+
+  let found = false;
+
+  const merged = items.map((item) => {
+    if (getExpandNavName(item).toLowerCase() === incomingNav.toLowerCase()) {
+      found = true;
+      return mergeExpandItem(item, incomingItem);
+    }
+
+    return item;
+  });
+
+  if (!found) {
+    merged.push(incomingItem);
+  }
+
+  return merged.join(",");
 }
