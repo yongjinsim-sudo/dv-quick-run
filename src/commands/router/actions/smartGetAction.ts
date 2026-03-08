@@ -10,24 +10,12 @@ import { promptOrderBy } from "./smartGet/smartGetOrderBy.js";
 import { normalizePath, buildResultTitle, describeState, buildQueryFromState, buildGetCurl } from "./smartGet/smartGetQueryBuilder.js";
 import { toSelectableFields } from "./shared/selectableFields.js";
 import { shouldExecuteQueryWithGuardrails } from "./shared/guardrails/guardedExecution.js";
+import { buildLookupSelectToken } from "../../../metadata/metadataModel.js";
 
 const LAST_SMART_GET_STATE_KEY = "dvQuickRun.smartGet.lastState";
 
 function selectTokenForField(f: SmartField): string | undefined {
-  const ln = (f.logicalName || "").trim();
-  if (!ln) {return undefined;}
-
-  const t = (f.attributeType || "").toLowerCase();
-
-  if (t === "lookup" || t === "customer" || t === "owner") {
-    return `_${ln}_value`;
-  }
-
-  if (t === "virtual" || t === "managedproperty" || t === "partylist") {
-    return undefined;
-  }
-
-  return ln;
+  return buildLookupSelectToken(f.logicalName, f.attributeType);
 }
 
 function deriveAttributesVirtualUri(logicalName: string): vscode.Uri {
@@ -430,7 +418,7 @@ async function reviewAndEditLoop(
       { label: "✏️ Edit filter", description: filterText, choice: { kind: "editFilter" } },
       { label: "✏️ Edit $orderby", description: orderByText, choice: { kind: "editOrderBy" } },
       { label: "✏️ Edit $top", description: String(current.top), choice: { kind: "editTop" } },
-      { label: "📋 Copy query path", description: "Copies /<entitySet>?$select=... to clipboard", choice: { kind: "copyPath" } },
+      { label: "📋 Copy query path", description: "Copies <entitySet>?$select=... to clipboard", choice: { kind: "copyPath" } },
       { label: "📋 Copy GET as curl", description: "Copies curl command to clipboard", choice: { kind: "copyCurl" }},
       { label: "🧾 Copy full URL", description: "Copies https://.../api/data/v9.2/<entitySet>?... to clipboard", choice: { kind: "copyFullUrl" } },
       { label: "➡️ Open in Run GET", description: "Prefills Run GET with this query", choice: { kind: "openInRunGet" } },
