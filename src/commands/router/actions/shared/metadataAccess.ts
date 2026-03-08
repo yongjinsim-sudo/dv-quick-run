@@ -4,9 +4,19 @@ import { DataverseClient } from "../../../../services/dataverseClient.js";
 
 import { getCachedEntityDefs, setCachedEntityDefs, EntityDef } from "../../../../utils/entitySetCache.js";
 import { fetchEntityDefs } from "../../../../services/entityMetadataService.js";
-
+import type { FieldMetadata } from "../../../../metadata/metadataModel.js";
 import { getCachedFields, setCachedFields } from "../../../../utils/entityFieldCache.js";
 import { fetchEntityFields, FieldDef } from "../../../../services/entityFieldMetadataService.js";
+
+import {
+  getSelectableFields,
+  type SelectableField,
+  selectTokenForField
+} from "./selectableFields.js";
+
+function normalizeName(value: string | undefined): string {
+  return (value ?? "").trim().toLowerCase();
+}
 
 export async function loadEntityDefs(
   ctx: CommandContext,
@@ -83,18 +93,89 @@ export async function loadFields(
   return fields;
 }
 
+export async function loadSelectableFields(
+  ctx: CommandContext,
+  client: DataverseClient,
+  token: string,
+  logicalName: string
+): Promise<SelectableField[]> {
+  const fields = await loadFields(ctx, client, token, logicalName);
+  const selectable = getSelectableFields(fields);
+  ctx.output.appendLine(`Selectable fields for ${logicalName}: ${selectable.length} / ${fields.length}`);
+  return selectable;
+}
+
+export function buildFieldMap(fields: FieldDef[]): Map<string, FieldDef> {
+  return new Map(
+    fields
+      .filter((field): field is FieldDef => !!field && !!normalizeName(field.logicalName))
+      .map((field) => [normalizeName(field.logicalName), field])
+  );
+}
+
+export function findFieldByLogicalName(
+  fields: FieldDef[],
+  logicalName: string
+): FieldDef | undefined {
+  const key = normalizeName(logicalName);
+  if (!key) {
+    return undefined;
+  }
+
+  return buildFieldMap(fields).get(key);
+}
+
+export function findFieldBySelectToken(
+  fields: FieldDef[],
+  selectToken: string
+): FieldDef | undefined {
+  const normalizedToken = normalizeName(selectToken);
+  if (!normalizedToken) {
+    return undefined;
+  }
+
+  return fields.find((field) => normalizeName(getSelectToken(field)) === normalizedToken);
+}
+
+function getSelectToken(field: FieldMetadata): string {
+  return selectTokenForField({
+    logicalName: field.logicalName ?? "",
+    attributeType: field.attributeType ?? ""
+  }) ?? "";
+}
+
+export async function loadEntityDefByLogicalName(
+  ctx: CommandContext,
+  client: DataverseClient,
+  token: string,
+  logicalName: string
+): Promise<EntityDef | undefined> {
+  const defs = await loadEntityDefs(ctx, client, token);
+  return findEntityByLogicalName(defs, logicalName);
+}
+
+export async function loadEntityDefByEntitySetName(
+  ctx: CommandContext,
+  client: DataverseClient,
+  token: string,
+  entitySetName: string
+): Promise<EntityDef | undefined> {
+  const defs = await loadEntityDefs(ctx, client, token);
+  return findEntityByEntitySetName(defs, entitySetName);
+}
+
 export function findEntityByLogicalName(
   defs: EntityDef[],
   logicalName: string
 ): EntityDef | undefined {
-  const ln = logicalName.trim().toLowerCase();
-  return defs.find((d) => d.logicalName.trim().toLowerCase() === ln);
+  const ln = normalizeName(logicalName);
+  return defs.find((d) => normalizeName(d.logicalName) === ln);
 }
 
 export function findEntityByEntitySetName(
   defs: EntityDef[],
   entitySetName: string
 ): EntityDef | undefined {
-  const esn = entitySetName.trim().toLowerCase();
-  return defs.find((d) => d.entitySetName.trim().toLowerCase() === esn);
+  const esn = normalizeName(entitySetName);
+  return defs.find((d) => normalizeName(d.entitySetName) === esn);
 }

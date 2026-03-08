@@ -550,6 +550,12 @@ async function reviewAndEditLoop(
   }
 }
 
+function ensureTransportPath(path: string): string {
+  const t = path.trim();
+  if (!t) {return "";}
+  return t.startsWith("/") ? t : `/${t}`;
+}
+
 async function executeState(
   ctx: CommandContext,
   client: DataverseClient,
@@ -559,12 +565,13 @@ async function executeState(
   const fields = await getFieldsForEntity(ctx, client, token, state.entityLogicalName);
 
   const { path, filterClause } = buildQueryFromState(state, fields, buildFilterClause);
-
+  const transportPath = ensureTransportPath(path);
+  
   const shouldExecute = await shouldExecuteQueryWithGuardrails(
     ctx,
     client,
     token,
-    path,
+    transportPath,
     "Smart GET execution cancelled by guardrails."
   );
   
@@ -574,13 +581,11 @@ async function executeState(
 
   await saveLastState(ctx, state);
   await addQueryToHistory(ctx.ext, path.replace(/^\//, ""));
-
-  ctx.output.appendLine(`Smart GET: ${describeState(state, stringifyExpr)}`);
-  if (filterClause) {ctx.output.appendLine(`Filter (raw): ${filterClause}`);}
+  
   ctx.output.appendLine(`Query: ${path}`);
-  ctx.output.appendLine(`GET ${path}`);
-
-  const result = await client.get(path, token);
+  ctx.output.appendLine(`GET ${transportPath}`);
+  
+  const result = await client.get(transportPath, token);
   await showJsonNamed(buildResultTitle(path), result);
 }
 
