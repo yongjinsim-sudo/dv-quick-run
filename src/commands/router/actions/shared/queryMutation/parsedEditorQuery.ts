@@ -25,8 +25,19 @@ export function parseEditorQuery(raw: string): ParsedEditorQuery {
 }
 
 export function buildEditorQuery(parsed: ParsedEditorQuery): string {
-  const query = parsed.queryOptions.toString();
   const prefix = parsed.leadingSlash ? "/" : "";
+
+  const pairs: string[] = [];
+  for (const [key, value] of parsed.queryOptions.entries()) {
+    if (!key) {continue;}
+    if (value === "") {
+      pairs.push(key);
+    } else {
+      pairs.push(`${key}=${value}`);
+    }
+  }
+
+  const query = pairs.join("&");
 
   if (!query) {
     return `${prefix}${parsed.entityPath}`;
