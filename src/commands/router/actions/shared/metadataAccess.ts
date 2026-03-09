@@ -14,8 +14,108 @@ import {
   selectTokenForField
 } from "./selectableFields.js";
 
+import { fetchEntityNavigationProperties } from "../../../../services/entityRelationshipMetadataService.js";
+import {
+  getCachedNavigationProperties,
+  setCachedNavigationProperties
+} from "../../../../utils/entityRelationshipCache.js";
+
+
+
 function normalizeName(value: string | undefined): string {
   return (value ?? "").trim().toLowerCase();
+}
+
+export {
+  loadChoiceMetadata,
+  findChoiceMetadataForField,
+  resolveChoiceValue,
+  matchChoiceLabel
+} from "./valueAwareness.js";
+
+export type RelationshipHit = {
+  navigationPropertyName: string;
+  targetLogicalName: string;
+};
+
+export async function loadNavigationProperties(
+  ctx: CommandContext,
+  client: DataverseClient,
+  token: string,
+  logicalName: string
+): Promise<any[]> {
+  const cached = getCachedNavigationProperties(ctx.ext, logicalName);
+  if (cached?.length) {
+    ctx.output.appendLine(
+      `Navigation properties cache hit for ${logicalName}: ${cached.length} relationships.`
+    );
+    return cached;
+  }
+
+  const relationships = await vscode.window.withProgress<any[]>(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `DV Quick Run: Loading navigation properties for ${logicalName}...`,
+      cancellable: false
+    },
+    async () => await fetchEntityNavigationProperties(client, token, logicalName)
+  );
+
+  await setCachedNavigationProperties(ctx.ext, logicalName, relationships);
+  ctx.output.appendLine(
+    `Navigation properties fetched for ${logicalName}: ${relationships.length} relationships.`
+  );
+
+  return relationships;
+}
+
+export async function findFieldOnDirectlyRelatedEntity(
+  ctx: CommandContext,
+  client: DataverseClient,
+  token: string,
+  defs: EntityDef[],
+  baseLogicalName: string,
+  fieldToken: string
+): Promise<RelationshipHit | undefined> {
+  const relationships = await loadNavigationProperties(ctx, client, token, baseLogicalName);
+
+  for (const rel of relationships) {
+    const navigationPropertyName = String(rel?.navigationPropertyName ?? "").trim();
+    if (!navigationPropertyName) {
+      continue;
+    }
+
+    const candidateTargets = [rel?.referencedEntity, rel?.referencingEntity]
+      .map((value) => String(value ?? "").trim())
+      .filter((value) => !!value);
+
+    const targetLogicalName = candidateTargets.find(
+      (value) => normalizeName(value) !== normalizeName(baseLogicalName)
+    );
+
+    if (!targetLogicalName) {
+      continue;
+    }
+
+    const targetEntity =
+      findEntityByLogicalName(defs, targetLogicalName) ??
+      ({ logicalName: targetLogicalName } as EntityDef);
+
+    const targetFields = await loadFields(ctx, client, token, targetEntity.logicalName);
+
+    const found =
+      findFieldByLogicalName(targetFields, fieldToken) ??
+      findFieldBySelectToken(targetFields, fieldToken);
+
+    if (found) {
+      return {
+        navigationPropertyName,
+        targetLogicalName: targetEntity.logicalName
+      };
+    }
+  }
+
+  return undefined;
 }
 
 export async function loadEntityDefs(

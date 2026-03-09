@@ -3,16 +3,16 @@ import { DataverseClient } from "../../../../../services/dataverseClient.js";
 import { EntityDef } from "../../../../../utils/entitySetCache.js";
 import {
   findEntityByEntitySetName,
-  findEntityByLogicalName,
   findFieldByLogicalName,
   findFieldBySelectToken,
+  findFieldOnDirectlyRelatedEntity,
+  findChoiceMetadataForField,
+  loadChoiceMetadata,
   loadEntityDefs,
-  loadFields
+  loadFields,
+  type RelationshipHit,
+  matchChoiceLabel
 } from "../metadataAccess.js";
-import { fetchEntityNavigationProperties } from "../../../../../services/entityRelationshipMetadataService.js";
-import { getCachedNavigationProperties, setCachedNavigationProperties } from "../../../../../utils/entityRelationshipCache.js";
-import { fetchEntityChoiceMetadata } from "../../../../../services/entityChoiceMetadataService.js";
-import { getCachedChoiceMetadata, setCachedChoiceMetadata } from "../../../../../utils/entityChoiceCache.js";
 
 type ParsedOrderBy = {
   field: string;
@@ -53,11 +53,6 @@ type SimpleComparison = {
   fieldLogicalName: string;
   operator: string;
   rawValue: string;
-};
-
-type RelationshipHit = {
-  navigationPropertyName: string;
-  targetLogicalName: string;
 };
 
 function normalizeName(value: string | undefined): string {
@@ -217,88 +212,10 @@ function validateChoiceLikeValue(attributeType: string | undefined, rawValue: st
   };
 }
 
-async function loadChoiceMetadata(ctx: CommandContext, client: DataverseClient, token: string, logicalName: string): Promise<any[]> {
-  const cached = getCachedChoiceMetadata(ctx.ext, logicalName);
-  if (cached?.length) {
-    return cached;
-  }
-
-  const metadata = await fetchEntityChoiceMetadata(client, token, logicalName);
-  await setCachedChoiceMetadata(ctx.ext, logicalName, metadata);
-  return metadata;
-}
-
-async function loadNavigationProperties(ctx: CommandContext, client: DataverseClient, token: string, logicalName: string): Promise<any[]> {
-  const cached = getCachedNavigationProperties(ctx.ext, logicalName);
-  if (cached?.length) {
-    return cached;
-  }
-
-  const relationships = await fetchEntityNavigationProperties(client, token, logicalName);
-  await setCachedNavigationProperties(ctx.ext, logicalName, relationships);
-  return relationships;
-}
-
-function findChoiceMetadataForField(allChoiceMetadata: any[], fieldLogicalName: string): any | undefined {
-  const target = normalizeName(fieldLogicalName);
-  return allChoiceMetadata.find((item) => normalizeName(item?.fieldLogicalName) === target);
-}
-
-function matchChoiceLabel(allChoiceMetadata: any[], fieldLogicalName: string, label: string): any | undefined {
-  const choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, fieldLogicalName);
-  if (!choiceMetadata?.options?.length) {
-    return undefined;
-  }
-
-  const normalizedLabel = normalizeName(label);
-  return choiceMetadata.options.find((option: any) => normalizeName(option.label) === normalizedLabel);
-}
-
 function formatChoiceValuesPreview(options: Array<{ value: number | boolean; label: string }>): string {
   const shown = options.slice(0, 8).map((option) => `\`${String(option.value)}\` (${option.label})`);
   const remaining = Math.max(0, options.length - shown.length);
   return remaining > 0 ? `${shown.join(", ")} … and ${remaining} more` : shown.join(", ");
-}
-
-async function findFieldOnReachableRelatedEntity(
-  ctx: CommandContext,
-  client: DataverseClient,
-  token: string,
-  defs: EntityDef[],
-  baseLogicalName: string,
-  fieldToken: string
-): Promise<RelationshipHit | undefined> {
-  const relationships = await loadNavigationProperties(ctx, client, token, baseLogicalName);
-  for (const rel of relationships) {
-    const navProp = rel?.navigationPropertyName;
-    if (!navProp) {
-      continue;
-    }
-
-    const candidateTargets = [rel?.referencedEntity, rel?.referencingEntity]
-      .map((value) => String(value ?? "").trim())
-      .filter((value) => !!value);
-
-    const targetLogicalName = candidateTargets.find(
-      (value) => normalizeName(value) !== normalizeName(baseLogicalName)
-    );
-
-    if (!targetLogicalName) {
-      continue;
-    }
-
-    const targetEntity = findEntityByLogicalName(defs, targetLogicalName) ?? { logicalName: targetLogicalName } as EntityDef;
-    const targetFields = await loadFields(ctx, client, token, targetEntity.logicalName);
-    const found = findFieldByLogicalName(targetFields, fieldToken) ?? findFieldBySelectToken(targetFields, fieldToken);
-    if (found) {
-      return {
-        navigationPropertyName: navProp,
-        targetLogicalName: targetEntity.logicalName
-      };
-    }
-  }
-
-  return undefined;
 }
 
 function buildExpandSuggestion(parsed: ParsedDataverseQuery, validBaseSelectTokens: string[], relation: RelationshipHit, fieldToken: string): string {
@@ -345,21 +262,22 @@ async function validateSelectFields(
   });
   const validBaseSelectTokens = parsed.select.filter((token) => !!(findFieldBySelectToken(fields, token) ?? findFieldByLogicalName(fields, token)));
 
-  for (const token of parsed.select) {
-    const found = findFieldBySelectToken(fields, token) ?? findFieldByLogicalName(fields, token);
+    for (const selectToken of parsed.select) {
+    const found = findFieldBySelectToken(fields, selectToken) ?? findFieldByLogicalName(fields, selectToken);
     if (found) {
       continue;
     }
 
-    const suggestion = suggestClosest(token, candidateNames);
+    const suggestion = suggestClosest(selectToken, candidateNames);
     let relationshipSuggestion: string | undefined;
     let extraMessage = "";
 
     try {
-      const relationshipHit = await findFieldOnReachableRelatedEntity(ctx, client, token, defs, entityLogicalName, token);
+      const relationshipHit = await findFieldOnDirectlyRelatedEntity(ctx, client, token, defs, entityLogicalName, selectToken
+      );
       if (relationshipHit) {
         extraMessage = ` It exists on related entity \`${relationshipHit.targetLogicalName}\`.`;
-        relationshipSuggestion = buildExpandSuggestion(parsed, validBaseSelectTokens, relationshipHit, token);
+        relationshipSuggestion = buildExpandSuggestion(parsed, validBaseSelectTokens, relationshipHit, selectToken);
       }
     } catch {
       // ignore enrichment failures
@@ -367,7 +285,7 @@ async function validateSelectFields(
 
     issues.push({
       severity: "error",
-      message: `Field \`${token}\` in $select was not found on \`${entityLogicalName}\`.${extraMessage}`,
+      message: `Field \`${selectToken}\` in $select was not found on \`${entityLogicalName}\`.${extraMessage}`,
       suggestion: relationshipSuggestion
         ? `You may be looking for: \`${relationshipSuggestion}\``
         : suggestion
@@ -379,8 +297,16 @@ async function validateSelectFields(
   return issues;
 }
 
-function validateOrderByFields(items: ParsedOrderBy[], entityLogicalName: string, fields: any[]): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
+async function validateOrderByFields(
+  ctx: CommandContext,
+  client: DataverseClient,
+  token: string,
+  defs: EntityDef[],
+  items: ParsedOrderBy[],
+  entityLogicalName: string,
+  fields: any[]
+): Promise<ValidationIssue[]> {
+    const issues: ValidationIssue[] = [];
   const fieldNames = fields.map((field) => field.logicalName).filter(Boolean) as string[];
 
   for (const item of items) {
@@ -389,10 +315,32 @@ function validateOrderByFields(items: ParsedOrderBy[], entityLogicalName: string
     }
 
     const suggestion = suggestClosest(item.field, fieldNames);
+    let relationshipSuggestion: string | undefined;
+    let extraMessage = "";
+
+    try {
+      const relationshipHit = await findFieldOnDirectlyRelatedEntity(
+        ctx,
+        client,
+        token,
+        defs,
+        entityLogicalName,
+        item.field
+      );
+
+      if (relationshipHit) {
+        extraMessage = ` It exists on related entity \`${relationshipHit.targetLogicalName}\`.`;
+        relationshipSuggestion =
+          `Consider using $expand=${relationshipHit.navigationPropertyName}($select=${item.field}) instead.`;
+      }
+    } catch {
+      // ignore enrichment failures
+    }
+
     issues.push({
       severity: "error",
-      message: `Field \`${item.field}\` in $orderby was not found on \`${entityLogicalName}\`.`,
-      suggestion: suggestion ? `Did you mean \`${suggestion}\`?` : undefined
+      message: `Field \`${item.field}\` in $orderby was not found on \`${entityLogicalName}\`.${extraMessage}`,
+      suggestion: relationshipSuggestion ?? (suggestion ? `Did you mean \`${suggestion}\`?` : undefined)
     });
   }
 
@@ -403,6 +351,7 @@ async function validateFilterFields(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
+  defs: EntityDef[],
   filter: string,
   entityLogicalName: string,
   fields: any[]
@@ -415,10 +364,26 @@ async function validateFilterFields(
     const field = findFieldByLogicalName(fields, comparison.fieldLogicalName);
     if (!field) {
       const suggestion = suggestClosest(comparison.fieldLogicalName, fieldNames);
+      let relationshipSuggestion: string | undefined;
+      let extraMessage = "";
+    
+      try {
+        const relationshipHit = await findFieldOnDirectlyRelatedEntity(ctx, client, token, defs, entityLogicalName, comparison.fieldLogicalName
+        );
+    
+        if (relationshipHit) {
+          extraMessage = ` It exists on related entity \`${relationshipHit.targetLogicalName}\`.`;
+          relationshipSuggestion =
+            `Consider using $expand=${relationshipHit.navigationPropertyName}($select=${comparison.fieldLogicalName}) instead.`;
+        }
+      } catch {
+        // ignore enrichment failures
+      }
+    
       issues.push({
         severity: "error",
-        message: `Field \`${comparison.fieldLogicalName}\` in $filter was not found on \`${entityLogicalName}\`.`,
-        suggestion: suggestion ? `Did you mean \`${suggestion}\`?` : undefined
+        message: `Field \`${comparison.fieldLogicalName}\` in $filter was not found on \`${entityLogicalName}\`.${extraMessage}`,
+        suggestion: relationshipSuggestion ?? (suggestion ? `Did you mean \`${suggestion}\`?` : undefined)
       });
       continue;
     }
@@ -437,9 +402,10 @@ async function validateFilterFields(
           if (!cachedChoiceMetadata) {
             cachedChoiceMetadata = await loadChoiceMetadata(ctx, client, token, entityLogicalName);
           }
-          const match = matchChoiceLabel(cachedChoiceMetadata, field.logicalName, label);
+          const match = await matchChoiceLabel(ctx, client, token, entityLogicalName, field.logicalName, label);
+                  
           if (match) {
-            suggestion = `Did you mean \`${field.logicalName} ${comparison.operator} ${String(match.value)}\`?`;
+            suggestion = `Did you mean \`${field.logicalName} ${comparison.operator} ${String(match.option.value)}\`?`;
           }
         } catch {
           // ignore enrichment failures
@@ -527,11 +493,11 @@ export async function validateParsedQuery(
 
   const fields = await loadFields(ctx, client, token, resolvedEntity.logicalName);
 
-  issues.push(...await validateSelectFields(ctx, client, token, defs, parsed, resolvedEntity.logicalName, fields));
-  issues.push(...validateOrderByFields(parsed.orderBy, resolvedEntity.logicalName, fields));
+  issues.push(...await validateSelectFields(ctx, client, token, defs, parsed, resolvedEntity.logicalName, fields  ));
+  issues.push(...await validateOrderByFields(ctx, client, token, defs, parsed.orderBy, resolvedEntity.logicalName, fields ));
 
   if (parsed.filter) {
-    issues.push(...await validateFilterFields(ctx, client, token, parsed.filter, resolvedEntity.logicalName, fields));
+    issues.push(...await validateFilterFields(ctx, client, token, defs, parsed.filter, resolvedEntity.logicalName, fields ));
   }
 
   const topParam = parsed.params.find((p) => normalizeName(p.key) === "$top");
