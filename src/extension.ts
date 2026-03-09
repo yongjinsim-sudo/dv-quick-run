@@ -39,8 +39,13 @@ async function runCommandAtLine(
   const line = doc.lineAt(lineNumber);
   const range = new vscode.Range(lineNumber, 0, lineNumber, line.text.length);
 
-  editor.selection = new vscode.Selection(range.start, range.end);
-  editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+  const pos = new vscode.Position(lineNumber, 0);
+  
+  editor.selection = new vscode.Selection(pos, pos);
+  editor.revealRange(
+    new vscode.Range(pos, pos),
+    vscode.TextEditorRevealType.InCenter
+  );
 
   await vscode.commands.executeCommand(command);
 }
