@@ -15,12 +15,22 @@ export function parseEditorQuery(raw: string): ParsedEditorQuery {
   const entityPath = qIndex >= 0 ? normalized.slice(0, qIndex).trim() : normalized.trim();
   const queryString = qIndex >= 0 ? normalized.slice(qIndex + 1).trim() : "";
 
+  const queryOptions = new URLSearchParams(queryString);
+
+  const selectValue = queryOptions.get("$select");
+  if (selectValue) {
+    const trimmedSelect = selectValue.trim();
+    if (trimmedSelect.startsWith("(") && trimmedSelect.endsWith(")")) {
+      queryOptions.set("$select", trimmedSelect.slice(1, -1));
+    }
+  }
+
   return {
     raw: trimmed,
     leadingSlash,
     entityPath,
     queryString,
-    queryOptions: new URLSearchParams(queryString)
+    queryOptions
   };
 }
 

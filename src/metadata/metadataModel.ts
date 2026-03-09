@@ -4,6 +4,8 @@ export type UnsupportedSelectAttributeType = "virtual" | "managedproperty" | "pa
 
 export type RelationshipType = "ManyToOne" | "OneToMany" | "ManyToMany";
 
+export type ChoiceMetadataKind = "picklist" | "multiselectpicklist" | "state" | "status" | "boolean";
+
 export interface EntityMetadata {
   entitySetName: string;
   logicalName: string;
@@ -22,6 +24,21 @@ export interface FieldMetadata {
   isValidForCreate?: boolean;
   isValidForUpdate?: boolean;
   lookupTargets?: string[];
+}
+
+export interface ChoiceOptionMetadata {
+  value: number | boolean;
+  label: string;
+  normalizedLabel: string;
+}
+
+export interface ChoiceMetadata {
+  entityLogicalName: string;
+  fieldLogicalName: string;
+  attributeType?: string;
+  kind: ChoiceMetadataKind;
+  globalChoiceName?: string;
+  options: ChoiceOptionMetadata[];
 }
 
 export interface RelationshipMetadata {
@@ -55,6 +72,24 @@ export function normalizeMetadataBool(value: unknown, defaultValue = true): bool
   return defaultValue;
 }
 
+export function normalizeMetadataNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "object" && value && "Value" in value) {
+    const wrapped = (value as { Value?: unknown }).Value;
+    return typeof wrapped === "number" && Number.isFinite(wrapped) ? wrapped : undefined;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+}
+
 export function normalizeMetadataStringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) {
     return undefined;
@@ -65,6 +100,10 @@ export function normalizeMetadataStringArray(value: unknown): string[] | undefin
     .filter((item): item is string => !!item);
 
   return items.length ? items : undefined;
+}
+
+export function normalizeChoiceLabel(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 export function isLookupLikeAttributeType(attributeType?: string): boolean {
@@ -79,7 +118,38 @@ export function isUnsupportedSelectAttributeType(attributeType?: string): boolea
 
 export function isChoiceAttributeType(attributeType?: string): boolean {
   const normalized = (attributeType ?? "").trim().toLowerCase();
-  return normalized === "picklist" || normalized === "state" || normalized === "status";
+  return normalized === "picklist"
+    || normalized === "multipicklist"
+    || normalized === "multiselectpicklist"
+    || normalized === "state"
+    || normalized === "status"
+    || normalized === "boolean";
+}
+
+export function normalizeChoiceKind(attributeType?: string): ChoiceMetadataKind | undefined {
+  const normalized = (attributeType ?? "").trim().toLowerCase();
+
+  if (normalized === "picklist") {
+    return "picklist";
+  }
+
+  if (normalized === "multipicklist" || normalized === "multiselectpicklist") {
+    return "multiselectpicklist";
+  }
+
+  if (normalized === "state") {
+    return "state";
+  }
+
+  if (normalized === "status") {
+    return "status";
+  }
+
+  if (normalized === "boolean") {
+    return "boolean";
+  }
+
+  return undefined;
 }
 
 export function buildLookupSelectToken(logicalName: string, attributeType?: string): string | undefined {

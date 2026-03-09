@@ -3,6 +3,8 @@ import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
 import { loadEntityDefs, findEntityByEntitySetName } from "./shared/metadataAccess.js";
+import { loadChoiceMetadata, matchChoiceLabel, resolveChoiceValue } from "./shared/valueAwareness.js";
+import type { ChoiceMetadataDef } from "../../../services/entityChoiceMetadataService.js";
 import { clauseFact, FILTER_OPERATOR_FACTS } from "./shared/queryExplain/factLibrary.js";
 import { getFieldHint } from "./shared/queryExplain/fieldHints.js";
 import { narrateExpression } from "./shared/queryExplain/filterNarrator.js";
@@ -45,6 +47,14 @@ type ParsedDataverseQuery = {
 type ExplanationSection = {
   heading: string;
   lines: string[];
+};
+
+type FilterValueExplanation = {
+  field: string;
+  operator: string;
+  rawValues: string[];
+  resolvedValues: string[];
+  kind: string;
 };
 
 function getEditorAndRangeText(): { text: string } {
@@ -390,7 +400,15 @@ function buildExpandLines(items: ParsedExpand[]): string[] {
   return lines;
 }
 
-function buildSections(parsed: ParsedDataverseQuery, entity?: EntityDef): ExplanationSection[] {
+function buildValueAwarenessLines(items: FilterValueExplanation[]): string[] {
+  return items.flatMap((item) => [
+    `- \`${item.field}\` ${item.operator} ${item.resolvedValues.join(", ")}`,
+    `  - Field kind: ${item.kind}`,
+    `  - Raw value${item.rawValues.length === 1 ? "" : "s"}: ${item.rawValues.map((value) => `\`${value}\``).join(", ")}`
+  ]);
+}
+
+function buildSections(parsed: ParsedDataverseQuery, entity?: EntityDef, valueExplanations: FilterValueExplanation[] = []): ExplanationSection[] {
   const sections: ExplanationSection[] = [];
 
   sections.push({
@@ -426,6 +444,13 @@ function buildSections(parsed: ParsedDataverseQuery, entity?: EntityDef): Explan
     sections.push({
       heading: "$orderby",
       lines: buildOrderByLines(parsed.orderBy)
+    });
+  }
+
+  if (valueExplanations.length) {
+    sections.push({
+      heading: "Values",
+      lines: buildValueAwarenessLines(valueExplanations)
     });
   }
 
@@ -495,9 +520,9 @@ function buildDesignNotes(parsed: ParsedDataverseQuery): string[] {
   }).map((x) => `- ${x}`);
 }
 
-function toMarkdown(parsed: ParsedDataverseQuery, entity: EntityDef | undefined): string {
+function toMarkdown(parsed: ParsedDataverseQuery, entity: EntityDef | undefined, valueExplanations: FilterValueExplanation[] = []): string {
   const summary = buildSummary(parsed, entity);
-  const sections = buildSections(parsed, entity);
+  const sections = buildSections(parsed, entity, valueExplanations);
   const intentLines = buildIntentLines(parsed);
   const designNotes = buildDesignNotes(parsed);
 
@@ -545,12 +570,12 @@ function toMarkdown(parsed: ParsedDataverseQuery, entity: EntityDef | undefined)
   return lines.join("\n");
 }
 
-async function tryResolveEntity(
+async function tryResolveMetadataSession(
   ctx: CommandContext,
   entitySetName?: string
-): Promise<EntityDef | undefined> {
+): Promise<{ entity?: EntityDef; client?: DataverseClient; token?: string; choiceMetadata?: ChoiceMetadataDef[] }> {
   if (!entitySetName) {
-    return undefined;
+    return {};
   }
 
   try {
@@ -559,12 +584,133 @@ async function tryResolveEntity(
     const token = await ctx.getToken(scope);
     const client: DataverseClient = ctx.getClient(baseUrl);
     const defs = await loadEntityDefs(ctx, client, token);
+    const entity = findEntityByEntitySetName(defs, entitySetName);
 
-    return findEntityByEntitySetName(defs, entitySetName);
+    if (!entity) {
+      return { client, token };
+    }
+
+    const choiceMetadata = await loadChoiceMetadata(ctx, client, token, entity.logicalName).catch((error: any) => {
+      ctx.output.appendLine(`Explain Query choice metadata skipped: ${error?.message ?? String(error)}`);
+      return [];
+    });
+
+    return { entity, client, token, choiceMetadata };
   } catch (e: any) {
     ctx.output.appendLine(`Explain Query metadata resolution skipped: ${e?.message ?? String(e)}`);
-    return undefined;
+    return {};
   }
+}
+
+function splitTopLevelCsv(input: string): string[] {
+  return splitTopLevel(input, ",");
+}
+
+function trimOuterQuotes(value: string): string {
+  const trimmed = value.trim();
+  if (/^'.*'$/.test(trimmed)) {
+    return trimmed.slice(1, -1).replace(/''/g, "'");
+  }
+
+  return trimmed;
+}
+
+async function explainFilterValues(
+  ctx: CommandContext,
+  client: DataverseClient | undefined,
+  token: string | undefined,
+  entity: EntityDef | undefined,
+  parsed: ParsedDataverseQuery
+): Promise<FilterValueExplanation[]> {
+  if (!client || !token || !entity || !parsed.filter) {
+    return [];
+  }
+
+  const results: FilterValueExplanation[] = [];
+  const seen = new Set<string>();
+
+  for (const match of parsed.filter.matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\s+(eq|ne)\s+('(?:[^']|'')*'|[^\s)]+)/gi)) {
+    const field = match[1];
+    const operator = match[2].toLowerCase();
+    const raw = match[3];
+    const key = `${field}|${operator}|${raw}`.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+
+    const resolved = await resolveChoiceValue(ctx, client, token, entity.logicalName, field, raw)
+      ?? await matchChoiceLabel(ctx, client, token, entity.logicalName, field, raw);
+
+    if (!resolved) {
+      continue;
+    }
+
+    results.push({
+      field,
+      operator,
+      rawValues: [raw],
+      resolvedValues: [`${resolved.option.label} (${String(resolved.option.value)})`],
+      kind: resolved.metadata.kind
+    });
+  }
+
+  for (const match of parsed.filter.matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\s+in\s*\(([^)]*)\)/gi)) {
+    const field = match[1];
+    const rawItems = splitTopLevelCsv(match[2]).map((item) => item.trim()).filter(Boolean);
+    if (!rawItems.length) {
+      continue;
+    }
+
+    const resolvedValues: string[] = [];
+    for (const rawItem of rawItems) {
+      const resolved = await resolveChoiceValue(ctx, client, token, entity.logicalName, field, rawItem)
+        ?? await matchChoiceLabel(ctx, client, token, entity.logicalName, field, rawItem);
+
+      if (resolved) {
+        resolvedValues.push(`${resolved.option.label} (${String(resolved.option.value)})`);
+      }
+    }
+
+    if (resolvedValues.length) {
+      results.push({
+        field,
+        operator: "in",
+        rawValues: rawItems,
+        resolvedValues,
+        kind: "choice"
+      });
+    }
+  }
+
+  for (const match of parsed.filter.matchAll(/\b(?:contain-values|not-contain-values)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*\[([^\]]*)\]\s*\)/gi)) {
+    const operator = match[0].trim().startsWith("not-") ? "not-contain-values" : "contain-values";
+    const field = match[1];
+    const rawItems = splitTopLevelCsv(match[2]).map((item) => trimOuterQuotes(item)).filter(Boolean);
+    const resolvedValues: string[] = [];
+
+    for (const rawItem of rawItems) {
+      const resolved = await resolveChoiceValue(ctx, client, token, entity.logicalName, field, rawItem)
+        ?? await matchChoiceLabel(ctx, client, token, entity.logicalName, field, rawItem);
+
+      if (resolved) {
+        resolvedValues.push(`${resolved.option.label} (${String(resolved.option.value)})`);
+      }
+    }
+
+    if (resolvedValues.length) {
+      results.push({
+        field,
+        operator,
+        rawValues: rawItems,
+        resolvedValues,
+        kind: "multiselectpicklist"
+      });
+    }
+  }
+
+  return results;
 }
 
 async function openMarkdownPreview(markdown: string): Promise<void> {
@@ -595,8 +741,9 @@ export async function runExplainQueryAction(ctx: CommandContext): Promise<void> 
 
     ctx.output.appendLine(`Explain Query input: ${text}`);
 
-    const entity = await tryResolveEntity(ctx, parsed.entitySetName);
-    const markdown = toMarkdown(parsed, entity);
+    const session = await tryResolveMetadataSession(ctx, parsed.entitySetName);
+    const valueExplanations = await explainFilterValues(ctx, session.client, session.token, session.entity, parsed);
+    const markdown = toMarkdown(parsed, session.entity, valueExplanations);
 
     await openMarkdownPreview(markdown);
 

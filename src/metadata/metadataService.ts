@@ -1,6 +1,7 @@
 import { DataverseClient } from "../services/dataverseClient.js";
-import { EntityMetadata, FieldMetadata, RelationshipMetadata } from "./metadataModel.js";
+import { ChoiceMetadata, EntityMetadata, FieldMetadata, RelationshipMetadata } from "./metadataModel.js";
 import {
+  normalizeChoiceMetadataList,
   normalizeEntityMetadataList,
   normalizeFieldMetadataList,
   normalizeRelationshipMetadataList
@@ -75,6 +76,69 @@ export async function fetchNormalizedFieldMetadata(
   }
 
   return normalized;
+}
+
+export async function fetchNormalizedChoiceMetadata(
+  client: DataverseClient,
+  token: string,
+  logicalName: string
+): Promise<ChoiceMetadata[]> {
+  const safeLogicalName = logicalName.replace(/'/g, "''");
+
+  const attempts: Array<{ path: string; isExpandedEntity?: boolean }> = [
+    {
+      path:
+        `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes/Microsoft.Dynamics.CRM.PicklistAttributeMetadata` +
+        `?$select=LogicalName,AttributeType&$expand=OptionSet,GlobalOptionSet&$top=5000`
+    },
+    {
+      path:
+        `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes/Microsoft.Dynamics.CRM.MultiSelectPicklistAttributeMetadata` +
+        `?$select=LogicalName,AttributeType&$expand=OptionSet,GlobalOptionSet&$top=5000`
+    },
+    {
+      path:
+        `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes/Microsoft.Dynamics.CRM.StateAttributeMetadata` +
+        `?$select=LogicalName,AttributeType&$expand=OptionSet&$top=5000`
+    },
+    {
+      path:
+        `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes/Microsoft.Dynamics.CRM.StatusAttributeMetadata` +
+        `?$select=LogicalName,AttributeType&$expand=OptionSet&$top=5000`
+    },
+    {
+      path:
+        `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata` +
+        `?$select=LogicalName,AttributeType&$expand=OptionSet&$top=5000`
+    }
+  ];
+
+  let lastError: unknown;
+  const allRows: any[] = [];
+
+  for (const attempt of attempts) {
+    try {
+      const rows = await getList<any>(client, token, attempt.path);
+      if (rows.length) {
+        allRows.push(...rows);
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  const normalized = normalizeChoiceMetadataList(allRows, logicalName);
+  if (normalized.length) {
+    return normalized;
+  }
+
+  if (lastError) {
+    throw lastError instanceof Error
+      ? lastError
+      : new Error(`Unable to load choice metadata for ${logicalName}.`);
+  }
+
+  return [];
 }
 
 export async function fetchNormalizedNavigationProperties(

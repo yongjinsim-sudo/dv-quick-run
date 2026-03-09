@@ -169,14 +169,6 @@ async function pickExistingExpandStrategy(existingExpand: string): Promise<"repl
   return picked?.value;
 }
 
-function mergeExpand(existingExpand: string | null, newClause: string, strategy: "replace" | "append"): string {
-  if (!existingExpand || strategy === "replace") {
-    return newClause;
-  }
-
-  return `${existingExpand},${newClause}`;
-}
-
 export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
   ctx.output.show(true);
 

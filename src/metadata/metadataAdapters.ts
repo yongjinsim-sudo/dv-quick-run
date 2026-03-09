@@ -1,9 +1,15 @@
 import {
+  ChoiceMetadata,
+  ChoiceMetadataKind,
+  ChoiceOptionMetadata,
   EntityMetadata,
   FieldMetadata,
   RelationshipMetadata,
+  normalizeChoiceKind,
+  normalizeChoiceLabel,
   normalizeMetadataBool,
   normalizeMetadataName,
+  normalizeMetadataNumber,
   normalizeMetadataStringArray
 } from "./metadataModel.js";
 
@@ -20,6 +26,120 @@ function distinctBy<T>(items: T[], keySelector: (item: T) => string): T[] {
   }
 
   return Array.from(map.values());
+}
+
+function getLocalizedLabel(value: any): string | undefined {
+  return normalizeMetadataName(value?.UserLocalizedLabel?.Label)
+    ?? normalizeMetadataName(value?.LocalizedLabels?.[0]?.Label)
+    ?? normalizeMetadataName(value?.label)
+    ?? normalizeMetadataName(value?.Label)
+    ?? normalizeMetadataName(value);
+}
+
+function normalizeChoiceOption(option: any): ChoiceOptionMetadata | undefined {
+  const value = normalizeMetadataNumber(option?.Value ?? option?.value);
+  const label = getLocalizedLabel(option?.Label ?? option?.label);
+
+  if (value === undefined || !label) {
+    return undefined;
+  }
+
+  return {
+    value,
+    label,
+    normalizedLabel: normalizeChoiceLabel(label)
+  };
+}
+
+function normalizeBooleanChoiceOption(option: any): ChoiceOptionMetadata | undefined {
+  const rawValue = option?.Value ?? option?.value;
+  const label = getLocalizedLabel(option?.Label ?? option?.label);
+
+  let value: boolean | undefined;
+  if (typeof rawValue === "boolean") {
+    value = rawValue;
+  } else {
+    const numeric = normalizeMetadataNumber(rawValue);
+    if (numeric === 0) {
+      value = false;
+    } else if (numeric === 1) {
+      value = true;
+    }
+  }
+
+  if (value === undefined || !label) {
+    return undefined;
+  }
+
+  return {
+    value,
+    label,
+    normalizedLabel: normalizeChoiceLabel(label)
+  };
+}
+
+function normalizeChoiceOptions(options: any[]): ChoiceOptionMetadata[] {
+  const normalized = (options ?? [])
+    .map((option) => normalizeChoiceOption(option))
+    .filter((option): option is ChoiceOptionMetadata => !!option);
+
+  return distinctBy(normalized, (option) => String(option.value)).sort((a, b) => Number(a.value) - Number(b.value));
+}
+
+function normalizeBooleanChoiceOptions(attribute: any): ChoiceOptionMetadata[] {
+  const candidates = [
+    attribute?.OptionSet?.FalseOption,
+    attribute?.OptionSet?.TrueOption,
+    attribute?.FalseOption,
+    attribute?.TrueOption
+  ].filter(Boolean);
+
+  const normalized = candidates
+    .map((option) => normalizeBooleanChoiceOption(option))
+    .filter((option): option is ChoiceOptionMetadata => !!option);
+
+  if (normalized.length) {
+    return distinctBy(normalized, (option) => String(option.value));
+  }
+
+  return normalizeChoiceOptions(attribute?.OptionSet?.Options ?? attribute?.options ?? []);
+}
+
+function buildChoiceMetadata(
+  attribute: any,
+  entityLogicalName: string,
+  kind: ChoiceMetadataKind
+): ChoiceMetadata | undefined {
+  const fieldLogicalName = normalizeMetadataName(attribute?.LogicalName ?? attribute?.logicalname);
+  if (!fieldLogicalName) {
+    return undefined;
+  }
+
+  const options = kind === "boolean"
+    ? normalizeBooleanChoiceOptions(attribute)
+    : normalizeChoiceOptions(
+      attribute?.OptionSet?.Options
+      ?? attribute?.GlobalOptionSet?.Options
+      ?? attribute?.options
+      ?? []
+    );
+
+  if (!options.length) {
+    return undefined;
+  }
+
+  return {
+    entityLogicalName,
+    fieldLogicalName,
+    attributeType: normalizeMetadataName(attribute?.AttributeType ?? attribute?.attributetype),
+    kind,
+    globalChoiceName: normalizeMetadataName(
+      attribute?.GlobalOptionSet?.Name
+      ?? attribute?.OptionSet?.Name
+      ?? attribute?.GlobalOptionSetName
+    ),
+    options
+  };
 }
 
 export function normalizeEntityMetadataList(value: any[]): EntityMetadata[] {
@@ -84,6 +204,23 @@ export function normalizeFieldMetadataList(value: any[]): FieldMetadata[] {
 
   return distinctBy(normalized, (item) => item.logicalName).sort((a, b) =>
     a.logicalName.localeCompare(b.logicalName, undefined, { sensitivity: "base" })
+  );
+}
+
+export function normalizeChoiceMetadataList(value: any[], entityLogicalName: string): ChoiceMetadata[] {
+  const normalized = (value ?? [])
+    .map((attribute): ChoiceMetadata | undefined => {
+      const kind = normalizeChoiceKind(attribute?.AttributeType ?? attribute?.attributetype);
+      if (!kind) {
+        return undefined;
+      }
+
+      return buildChoiceMetadata(attribute, entityLogicalName, kind);
+    })
+    .filter((item): item is ChoiceMetadata => !!item);
+
+  return distinctBy(normalized, (item) => item.fieldLogicalName).sort((a, b) =>
+    a.fieldLogicalName.localeCompare(b.fieldLogicalName, undefined, { sensitivity: "base" })
   );
 }
 
