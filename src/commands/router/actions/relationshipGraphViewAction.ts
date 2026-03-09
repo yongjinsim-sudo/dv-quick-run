@@ -1,32 +1,146 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../../context/commandContext.js";
-
-import { fetchEntityDefs } from "../../../services/entityMetadataService.js";
 import { fetchEntityRelationships } from "../../../services/entityRelationshipExplorerService.js";
-import {
-  getCachedEntityDefs,
-  setCachedEntityDefs,
-  type EntityDef
-} from "../../../utils/entitySetCache.js";
 import {
   getCachedEntityRelationships,
   setCachedEntityRelationships
 } from "../../../utils/entityRelationshipExplorerCache.js";
 import {
+  findEntityByEntitySetName,
+  findEntityByLogicalName,
+  loadEntityDefs,
+  loadFields
+} from "./shared/metadataAccess.js";
+import { getSelectableFields } from "./shared/selectableFields.js";
+import {
   getEntitySetNameFromEditorQuery,
   parseEditorQuery
 } from "./shared/queryMutation/parsedEditorQuery.js";
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
+
+function normalize(value: string | undefined): string {
+  return (value ?? "").trim().toLowerCase();
 }
 
-function findEntityByEntitySetName(
-  defs: EntityDef[],
-  entitySetName: string
-): EntityDef | undefined {
-  const target = normalize(entitySetName);
-  return defs.find((d) => normalize(d.entitySetName) === target);
+type FocusedRelationship =
+  | {
+      relationshipType: "Many-to-One";
+      navigationPropertyName: string;
+      targetEntity?: string;
+      targetEntitySetName?: string;
+      lookupAttribute?: string;
+      schemaName?: string;
+      exampleExpand?: string;
+      suggestedFields?: string[];
+    }
+  | {
+      relationshipType: "One-to-Many";
+      navigationPropertyName: string;
+      targetEntity?: string;
+      targetEntitySetName?: string;
+      lookupAttribute?: string;
+      schemaName?: string;
+      exampleExpand?: string;
+      suggestedFields?: string[];
+    }
+  | {
+      relationshipType: "Many-to-Many";
+      navigationPropertyName: string;
+      targetEntity?: string;
+      targetEntitySetName?: string;
+      schemaName?: string;
+      exampleExpand?: string;
+      suggestedFields?: string[];
+    };
+
+function pickPreferredExampleField(fieldLogicalNames: string[]): string | undefined {
+  const lowered = new Map(fieldLogicalNames.map((name) => [name.toLowerCase(), name]));
+
+  return (
+    lowered.get("fullname") ??
+    lowered.get("name") ??
+    lowered.get("subject") ??
+    lowered.get("title") ??
+    lowered.get("domainname") ??
+    lowered.get("internalemailaddress") ??
+    lowered.get("emailaddress1") ??
+    lowered.get("telephone1") ??
+    lowered.get("accountnumber") ??
+    lowered.get("currencyname") ??
+    lowered.get("isocurrencycode") ??
+    fieldLogicalNames[0]
+  );
+}
+
+function pickSuggestedFields(fieldLogicalNames: string[]): string[] {
+  const preferredOrder = [
+    "fullname",
+    "name",
+    "subject",
+    "title",
+    "domainname",
+    "internalemailaddress",
+    "emailaddress1",
+    "telephone1",
+    "accountnumber",
+    "currencyname",
+    "isocurrencycode",
+    "firstname",
+    "lastname"
+  ];
+
+  const lowered = new Map(fieldLogicalNames.map((name) => [name.toLowerCase(), name]));
+  const preferred = preferredOrder
+    .map((name) => lowered.get(name))
+    .filter((name): name is string => !!name);
+
+  const remaining = fieldLogicalNames.filter(
+    (name) => !preferred.some((p) => p.toLowerCase() === name.toLowerCase())
+  );
+
+  return [...preferred, ...remaining].slice(0, 5);
+}
+
+async function enrichFocusedRelationship(
+  ctx: CommandContext,
+  defs: Awaited<ReturnType<typeof loadEntityDefs>>,
+  entitySetName: string,
+  relationship: FocusedRelationship,
+  token: string,
+  client: ReturnType<CommandContext["getClient"]>
+): Promise<FocusedRelationship> {
+  const targetEntity = relationship.targetEntity?.trim();
+  if (!targetEntity) {
+    return relationship;
+  }
+
+  const targetDef = findEntityByLogicalName(defs, targetEntity);
+  const targetEntitySetName = targetDef?.entitySetName;
+
+  let exampleExpand: string | undefined;
+  let suggestedFields: string[] | undefined;
+
+  try {
+    const targetFields = await loadFields(ctx, client, token, targetEntity);
+    const selectable = getSelectableFields(targetFields);
+    const fieldLogicalNames = selectable.map((f) => f.logicalName).filter(Boolean);
+
+    suggestedFields = pickSuggestedFields(fieldLogicalNames);
+
+    const exampleField = pickPreferredExampleField(fieldLogicalNames);
+    exampleExpand = exampleField
+      ? `${entitySetName}?$expand=${relationship.navigationPropertyName}($select=${exampleField})`
+      : `${entitySetName}?$expand=${relationship.navigationPropertyName}`;
+  } catch {
+    exampleExpand = `${entitySetName}?$expand=${relationship.navigationPropertyName}`;
+  }
+
+  return {
+    ...relationship,
+    targetEntitySetName,
+    exampleExpand,
+    suggestedFields
+  };
 }
 
 function tryGetEntitySetNameFromActiveEditor(): string | undefined {
@@ -48,22 +162,6 @@ function tryGetEntitySetNameFromActiveEditor(): string | undefined {
   }
 }
 
-async function loadEntityDefs(ctx: CommandContext): Promise<EntityDef[]> {
-  const cached = getCachedEntityDefs(ctx.ext);
-  if (cached?.length) {
-    return cached;
-  }
-
-  const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
-  const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
-
-  const defs = await fetchEntityDefs(client, token);
-  await setCachedEntityDefs(ctx.ext, defs);
-  return defs;
-}
-
 function padRight(value: string, width: number): string {
   if (value.length >= width) {
     return value;
@@ -71,28 +169,6 @@ function padRight(value: string, width: number): string {
 
   return value + " ".repeat(width - value.length);
 }
-
-type FocusedRelationship =
-  | {
-      relationshipType: "Many-to-One";
-      navigationPropertyName: string;
-      targetEntity?: string;
-      lookupAttribute?: string;
-      schemaName?: string;
-    }
-  | {
-      relationshipType: "One-to-Many";
-      navigationPropertyName: string;
-      targetEntity?: string;
-      lookupAttribute?: string;
-      schemaName?: string;
-    }
-  | {
-      relationshipType: "Many-to-Many";
-      navigationPropertyName: string;
-      targetEntity?: string;
-      schemaName?: string;
-    };
 
 function getHoverLikeTokenUnderCursor(): string | undefined {
   const editor = vscode.window.activeTextEditor;
@@ -201,17 +277,23 @@ function appendFocusedRelationshipSection(
     lines.push(`Schema Name: ${focused.schemaName}`);
   }
 
+  if (focused.targetEntitySetName) {
+    lines.push(`Target Entity Set: ${focused.targetEntitySetName}`);
+  }
+
   lines.push("");
   lines.push("Example:");
 
-  if (focused.relationshipType === "Many-to-One") {
-    lines.push(
-      `${entitySetName}?$expand=${focused.navigationPropertyName}($select=name)`
-    );
-  } else {
-    lines.push(
-      `${entitySetName}?$expand=${focused.navigationPropertyName}`
-    );
+  lines.push(
+    focused.exampleExpand ??
+      (focused.relationshipType === "Many-to-One"
+        ? `${entitySetName}?$expand=${focused.navigationPropertyName}($select=name)`
+        : `${entitySetName}?$expand=${focused.navigationPropertyName}`)
+  );
+
+  if (focused.suggestedFields?.length) {
+    lines.push("");
+    lines.push(`Common Fields: ${focused.suggestedFields.join(", ")}`);
   }
 
   lines.push("");
@@ -306,7 +388,12 @@ async function showRelationshipGraphDocument(content: string): Promise<void> {
 }
 
 export async function runRelationshipGraphViewAction(ctx: CommandContext): Promise<void> {
-  const defs = await loadEntityDefs(ctx);
+  const baseUrl = await ctx.getBaseUrl();
+  const scope = ctx.getScope(baseUrl);
+  const token = await ctx.getToken(scope);
+  const client = ctx.getClient(baseUrl);
+  
+  const defs = await loadEntityDefs(ctx, client, token);
 
   let logicalName: string | undefined;
   let entitySetName: string | undefined;
@@ -344,18 +431,26 @@ export async function runRelationshipGraphViewAction(ctx: CommandContext): Promi
   let relationships = getCachedEntityRelationships(ctx.ext, logicalName);
 
   if (!relationships) {
-    const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
-    const token = await ctx.getToken(scope);
-    const client = ctx.getClient(baseUrl);
-
-    relationships = await fetchEntityRelationships(client, token, logicalName);
-    await setCachedEntityRelationships(ctx.ext, logicalName, relationships);
+   relationships = await fetchEntityRelationships(client, token, logicalName);
+   await setCachedEntityRelationships(ctx.ext, logicalName, relationships);
   }
 
   const tokenUnderCursor = getHoverLikeTokenUnderCursor();
-  const focusedRelationship = tryGetFocusedRelationship(tokenUnderCursor, relationships);
-
+  const focusedRaw = tryGetFocusedRelationship(tokenUnderCursor, relationships);
+  
+  let focusedRelationship = focusedRaw;
+  
+  if (focusedRaw) {
+    focusedRelationship = await enrichFocusedRelationship(
+      ctx,
+      defs,
+      entitySetName,
+      focusedRaw,
+      token,
+      client
+    );
+  }
+  
   const content = buildGraphText(
     entitySetName,
     logicalName,

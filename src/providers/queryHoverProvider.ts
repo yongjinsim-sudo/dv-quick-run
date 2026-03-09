@@ -4,15 +4,21 @@ import { clauseFact, FILTER_OPERATOR_FACTS } from "../commands/router/actions/sh
 import { getFieldHint } from "../commands/router/actions/shared/queryExplain/fieldHints.js";
 import { parseEditorQuery, getEntitySetNameFromEditorQuery } from "../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { toSelectableFields } from "../commands/router/actions/shared/selectableFields.js";
-import { getCachedEntityDefs, setCachedEntityDefs, type EntityDef } from "../utils/entitySetCache.js";
-import { getCachedFields, setCachedFields } from "../utils/entityFieldCache.js";
-import { fetchEntityDefs } from "../services/entityMetadataService.js";
-import { fetchEntityFields, type FieldDef } from "../services/entityFieldMetadataService.js";
-import { fetchEntityNavigationProperties, type NavPropertyDef } from "../services/entityRelationshipMetadataService.js";
-import { getCachedNavigationProperties, setCachedNavigationProperties } from "../utils/entityRelationshipCache.js";
-import { fetchEntityChoiceMetadata, type ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
-import { getCachedChoiceMetadata, setCachedChoiceMetadata } from "../utils/entityChoiceCache.js";
 import { isChoiceAttributeType } from "../metadata/metadataModel.js";
+import { loadEntityDefs, loadFields, loadNavigationProperties, loadChoiceMetadata } from "../commands/router/actions/shared/metadataAccess.js";
+import type { EntityDef } from "../utils/entitySetCache.js";
+import type { FieldDef } from "../services/entityFieldMetadataService.js";
+import type { NavPropertyDef } from "../services/entityRelationshipMetadataService.js";
+import type { ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
+
+const navHoverEnrichmentCache = new Map<
+  string,
+  {
+    exampleExpand?: string;
+    suggestedFields?: string[];
+    targetEntitySetName?: string;
+  }
+>();
 
 function looksLikeDataverseQuery(text: string): boolean {
   const line = text.trim();
@@ -154,35 +160,21 @@ function findEntityByEntitySetName(defs: EntityDef[], entitySetName: string): En
 }
 
 async function loadEntityDefsSilently(ctx: CommandContext): Promise<EntityDef[]> {
-  const cached = getCachedEntityDefs(ctx.ext);
-  if (cached?.length) {
-    return cached;
-  }
-
   const baseUrl = await ctx.getBaseUrl();
   const scope = ctx.getScope(baseUrl);
   const token = await ctx.getToken(scope);
   const client = ctx.getClient(baseUrl);
 
-  const defs = await fetchEntityDefs(client, token);
-  await setCachedEntityDefs(ctx.ext, defs);
-  return defs;
+  return loadEntityDefs(ctx, client, token);
 }
 
 async function loadFieldsSilently(ctx: CommandContext, logicalName: string): Promise<FieldDef[]> {
-  const cached = getCachedFields(ctx.ext, logicalName);
-  if (cached?.length) {
-    return cached;
-  }
-
   const baseUrl = await ctx.getBaseUrl();
   const scope = ctx.getScope(baseUrl);
   const token = await ctx.getToken(scope);
   const client = ctx.getClient(baseUrl);
 
-  const fields = await fetchEntityFields(client, token, logicalName);
-  await setCachedFields(ctx.ext, logicalName, fields);
-  return fields;
+  return loadFields(ctx, client, token, logicalName);
 }
 
 function buildClauseHover(token: string): vscode.Hover | undefined {
@@ -222,19 +214,12 @@ async function loadChoiceMetadataSilently(
   ctx: CommandContext,
   logicalName: string
 ): Promise<ChoiceMetadataDef[]> {
-  const cached = getCachedChoiceMetadata(ctx.ext, logicalName);
-  if (cached?.length) {
-    return cached;
-  }
-
   const baseUrl = await ctx.getBaseUrl();
   const scope = ctx.getScope(baseUrl);
   const token = await ctx.getToken(scope);
   const client = ctx.getClient(baseUrl);
 
-  const values = await fetchEntityChoiceMetadata(client, token, logicalName);
-  await setCachedChoiceMetadata(ctx.ext, logicalName, values);
-  return values;
+  return loadChoiceMetadata(ctx, client, token, logicalName);
 }
 
 function findChoiceMetadataForField(
@@ -448,11 +433,7 @@ export class QueryHoverProvider implements vscode.HoverProvider {
                 const token = await this.ctx.getToken(scope);
                 const client = this.ctx.getClient(baseUrl);
 
-                let allChoiceMetadata = getCachedChoiceMetadata(this.ctx.ext, entity.logicalName);
-                if (!allChoiceMetadata?.length) {
-                  allChoiceMetadata = await fetchEntityChoiceMetadata(client, token, entity.logicalName);
-                  await setCachedChoiceMetadata(this.ctx.ext, entity.logicalName, allChoiceMetadata);
-                }
+                const allChoiceMetadata = await loadChoiceMetadataSilently(this.ctx, entity.logicalName);
                 const choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, field.logicalName);
 
                 if (choiceMetadata) {
@@ -494,21 +475,116 @@ export class QueryHoverProvider implements vscode.HoverProvider {
       if (tokenAppearsInExpand(lineText, hoveredWord)) {
         const defs = await loadEntityDefsSilently(this.ctx);
         const entity = findEntityByEntitySetName(defs, entitySetName);
-
+    
         if (entity) {
           const navs = await loadNavigationPropertiesSilently(this.ctx, entity.logicalName);
-
+    
           const navMatch = navs.find(
             (n) => normalizeWord(n.navigationPropertyName) === normalizeWord(hoveredWord)
           );
-
+    
           if (navMatch) {
-            return buildNavigationPropertyHover(navMatch, entitySetName);
+            const targetLogicalName =
+              navMatch.referencedEntity?.trim() ||
+              navMatch.referencingEntity?.trim() ||
+              undefined;
+    
+              let targetEntitySetName: string | undefined;
+              let exampleExpand: string | undefined;
+              let suggestedFields: string[] | undefined;
+
+              const cacheKey = `${entitySetName}:${navMatch.navigationPropertyName}`;
+
+              const cached = navHoverEnrichmentCache.get(cacheKey);
+
+              if (cached) {
+                targetEntitySetName = cached.targetEntitySetName;
+                exampleExpand = cached.exampleExpand;
+                suggestedFields = cached.suggestedFields;
+              }
+              else if (targetLogicalName) {
+                (async () => {
+                  try {
+                    const targetDef = defs.find(
+                      (d) => normalizeWord(d.logicalName) === normalizeWord(targetLogicalName)
+                    );
+                  
+                    const targetEntitySetName = targetDef?.entitySetName;
+                  
+                    const targetFields = await loadFieldsSilently(this.ctx, targetLogicalName);
+                    const selectable = toSelectableFields(targetFields);
+                  
+                    const fieldLogicalNames = selectable
+                      .map((f) => f.logicalName)
+                      .filter(Boolean)
+                      .slice(0, 30);
+                  
+                    const suggestedFields = pickSuggestedFields(fieldLogicalNames);
+                  
+                    const exampleField = pickPreferredExampleField(fieldLogicalNames);
+                  
+                    const exampleExpand = exampleField
+                      ? `${entitySetName}?$expand=${navMatch.navigationPropertyName}($select=${exampleField})`
+                      : `${entitySetName}?$expand=${navMatch.navigationPropertyName}`;
+                              
+                  } catch {
+                    // ignore enrichment failures
+                  }
+                })();
+              
+                // return simple hover immediately
+                return buildNavigationPropertyHover({
+                  nav: navMatch,
+                  sourceEntitySetName: entitySetName
+                });
+              }
+
+              if (cached) {
+                targetEntitySetName = cached.targetEntitySetName;
+                exampleExpand = cached.exampleExpand;
+                suggestedFields = cached.suggestedFields;
+              } else if (targetLogicalName) {
+              const targetDef = defs.find(
+                (d) => normalizeWord(d.logicalName) === normalizeWord(targetLogicalName)
+              );
+              targetEntitySetName = targetDef?.entitySetName;
+    
+              try {
+                const targetFields = await loadFieldsSilently(this.ctx, targetLogicalName);
+                const selectable = toSelectableFields(targetFields);
+                const fieldLogicalNames = selectable
+                  .map((f) => f.logicalName)
+                  .filter(Boolean)
+                  .slice(0, 30);
+    
+                suggestedFields = pickSuggestedFields(fieldLogicalNames);
+    
+                const exampleField = pickPreferredExampleField(fieldLogicalNames);
+                exampleExpand = exampleField
+                  ? `${entitySetName}?$expand=${navMatch.navigationPropertyName}($select=${exampleField})`
+                  : `${entitySetName}?$expand=${navMatch.navigationPropertyName}`;
+              } catch {
+                exampleExpand = `${entitySetName}?$expand=${navMatch.navigationPropertyName}`;
+              }
+            }
+            navHoverEnrichmentCache.set(cacheKey, {
+              targetEntitySetName,
+              exampleExpand,
+              suggestedFields
+            });
+    
+            return buildNavigationPropertyHover({
+              nav: navMatch,
+              sourceEntitySetName: entitySetName,
+              targetEntitySetName,
+              exampleExpand,
+              suggestedFields
+            });
           }
         }
       }
-    } catch (e: any) {
-        return buildNavigationFallbackHover(hoveredWord);
+    } catch {
+      return buildNavigationFallbackHover(hoveredWord);
     }
 
     // Field hover
@@ -586,19 +662,12 @@ async function loadNavigationPropertiesSilently(
   ctx: CommandContext,
   logicalName: string
 ): Promise<NavPropertyDef[]> {
-  const cached = getCachedNavigationProperties(ctx.ext, logicalName);
-  if (cached?.length) {
-    return cached;
-  }
-
   const baseUrl = await ctx.getBaseUrl();
   const scope = ctx.getScope(baseUrl);
   const token = await ctx.getToken(scope);
   const client = ctx.getClient(baseUrl);
 
-  const navs = await fetchEntityNavigationProperties(client, token, logicalName);
-  await setCachedNavigationProperties(ctx.ext, logicalName, navs);
-  return navs;
+  return loadNavigationProperties(ctx, client, token, logicalName);
 }
 
 function getExpandValue(queryText: string): string | undefined {
@@ -615,10 +684,63 @@ function tokenAppearsInExpand(queryText: string, token: string): boolean {
   return expand.toLowerCase().includes(token.trim().toLowerCase());
 }
 
-function buildNavigationPropertyHover(
-  nav: NavPropertyDef,
-  sourceEntitySetName: string
-): vscode.Hover {
+function pickPreferredExampleField(fieldLogicalNames: string[]): string | undefined {
+  const lowered = new Map(fieldLogicalNames.map((name) => [name.toLowerCase(), name]));
+
+  return (
+    lowered.get("fullname") ??
+    lowered.get("name") ??
+    lowered.get("subject") ??
+    lowered.get("title") ??
+    lowered.get("domainname") ??
+    lowered.get("internalemailaddress") ??
+    lowered.get("emailaddress1") ??
+    lowered.get("telephone1") ??
+    lowered.get("accountnumber") ??
+    lowered.get("currencyname") ??
+    lowered.get("isocurrencycode") ??
+    fieldLogicalNames[0]
+  );
+}
+
+function pickSuggestedFields(fieldLogicalNames: string[]): string[] {
+  const preferredOrder = [
+    "fullname",
+    "name",
+    "subject",
+    "title",
+    "domainname",
+    "internalemailaddress",
+    "emailaddress1",
+    "telephone1",
+    "accountnumber",
+    "currencyname",
+    "isocurrencycode",
+    "firstname",
+    "lastname"
+  ];
+
+  const lowered = new Map(fieldLogicalNames.map((name) => [name.toLowerCase(), name]));
+  const preferred = preferredOrder
+    .map((name) => lowered.get(name))
+    .filter((name): name is string => !!name);
+
+  const remaining = fieldLogicalNames.filter(
+    (name) => !preferred.some((p) => p.toLowerCase() === name.toLowerCase())
+  );
+
+  return [...preferred, ...remaining].slice(0, 5);
+}
+
+function buildNavigationPropertyHover(args: {
+  nav: NavPropertyDef;
+  sourceEntitySetName: string;
+  targetEntitySetName?: string;
+  exampleExpand?: string;
+  suggestedFields?: string[];
+}): vscode.Hover {
+  const { nav, sourceEntitySetName, targetEntitySetName, exampleExpand, suggestedFields } = args;
+
   const md = new vscode.MarkdownString();
 
   md.appendMarkdown(`**Expand Navigation: \`${nav.navigationPropertyName}\`**\n\n`);
@@ -633,6 +755,10 @@ function buildNavigationPropertyHover(
     md.appendMarkdown(`- Target logical name: \`${nav.referencedEntity}\`\n`);
   }
 
+  if (targetEntitySetName) {
+    md.appendMarkdown(`- Target entity set: \`${targetEntitySetName}\`\n`);
+  }
+
   if (nav.referencingAttribute) {
     md.appendMarkdown(`- Lookup attribute: \`${nav.referencingAttribute}\`\n`);
   }
@@ -641,14 +767,20 @@ function buildNavigationPropertyHover(
     md.appendMarkdown(`- Schema name: \`${nav.schemaName}\`\n`);
   }
 
-  md.appendMarkdown("\nUsed in `$expand` to include related records.");
+  md.appendMarkdown("\nUsed in `$expand` to include related records.\n");
 
-  if (nav.relationshipType === "ManyToOne") {
-    md.appendMarkdown("\nExample: ");
-    md.appendCodeblock(`${sourceEntitySetName}?$expand=${nav.navigationPropertyName}($select=name)`, "text");
-  } else {
-    md.appendMarkdown("\nExample: ");
-    md.appendCodeblock(`${sourceEntitySetName}?$expand=${nav.navigationPropertyName}`, "text");
+  md.appendMarkdown("\n**Example**\n");
+  md.appendCodeblock(
+    exampleExpand ??
+      (nav.relationshipType === "ManyToOne"
+        ? `${sourceEntitySetName}?$expand=${nav.navigationPropertyName}($select=name)`
+        : `${sourceEntitySetName}?$expand=${nav.navigationPropertyName}`),
+    "text"
+  );
+
+  if (suggestedFields?.length) {
+    md.appendMarkdown("\n**Common fields**\n");
+    md.appendMarkdown(`${suggestedFields.map((f) => `\`${f}\``).join(", ")}\n`);
   }
 
   return new vscode.Hover(md);

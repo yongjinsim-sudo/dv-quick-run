@@ -2,8 +2,13 @@ import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
-import { fetchEntityNavigationProperties } from "../../../services/entityRelationshipMetadataService.js";
-import { loadEntityDefs, loadFields, findEntityByEntitySetName, findEntityByLogicalName } from "./shared/metadataAccess.js";
+import {
+  loadEntityDefs,
+  loadFields,
+  loadNavigationProperties,
+  findEntityByEntitySetName,
+  findEntityByLogicalName
+} from "./shared/metadataAccess.js";
 import { getSelectableFields } from "./shared/selectableFields.js";
 import { getEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
 import {
@@ -13,28 +18,14 @@ import {
 } from "./shared/queryMutation/parsedEditorQuery.js";
 import { setQueryOption } from "./shared/queryMutation/queryOptionMutator.js";
 import { applyEditorQueryUpdate } from "./shared/queryMutation/applyEditorQueryUpdate.js";
-import type { NavPropertyDef } from "../../../services/entityRelationshipMetadataService.js";
 
 type NavOption = {
   navigationPropertyName: string;
-  relationshipType: NavPropertyDef["relationshipType"];
+  relationshipType: string;
   targetLogicalName: string;
   referencingAttribute?: string;
   schemaName?: string;
 };
-
-function resolveTargetLogicalName(nav: NavPropertyDef): string | undefined {
-  switch (nav.relationshipType) {
-    case "ManyToOne":
-      return nav.referencedEntity;
-    case "OneToMany":
-      return nav.referencingEntity;
-    case "ManyToMany":
-      return nav.referencedEntity;
-    default:
-      return undefined;
-  }
-}
 
 async function loadNavigationOptions(
   ctx: CommandContext,
@@ -42,22 +33,35 @@ async function loadNavigationOptions(
   token: string,
   logicalName: string
 ): Promise<NavOption[]> {
-  const rows = await fetchEntityNavigationProperties(client, token, logicalName);
+  const rows = await loadNavigationProperties(ctx, client, token, logicalName);
 
   const options: NavOption[] = rows
     .map((row): NavOption | undefined => {
-      const navigationPropertyName = String(row.navigationPropertyName ?? "").trim();
-      const targetLogicalName = String(resolveTargetLogicalName(row) ?? "").trim();
-      if (!navigationPropertyName || !targetLogicalName) {
+      const navigationPropertyName = String(row?.navigationPropertyName ?? "").trim();
+      if (!navigationPropertyName) {
+        return undefined;
+      }
+
+      const candidateTargets = [row?.referencedEntity, row?.referencingEntity]
+        .map((value) => String(value ?? "").trim())
+        .filter((value) => !!value);
+
+      const targetLogicalName = candidateTargets.find(
+        (value) => value.toLowerCase() !== logicalName.toLowerCase()
+      );
+
+      if (!targetLogicalName) {
         return undefined;
       }
 
       return {
         navigationPropertyName,
-        relationshipType: row.relationshipType,
+        relationshipType: String(row?.relationshipType ?? ""),
         targetLogicalName,
-        referencingAttribute: row.referencingAttribute ? String(row.referencingAttribute) : undefined,
-        schemaName: row.schemaName ? String(row.schemaName) : undefined
+        referencingAttribute: row?.referencingAttribute
+          ? String(row.referencingAttribute)
+          : undefined,
+        schemaName: row?.schemaName ? String(row.schemaName) : undefined
       };
     })
     .filter((row): row is NavOption => !!row);
@@ -222,8 +226,9 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
       strategy = pickedStrategy;
     }
 
-    const mergedExpand = mergeExpandClause(existingExpand ?? undefined, newClause);
-    setQueryOption(parsed, "$expand", mergedExpand);
+    const finalExpand = existingExpand && strategy === "append" ? mergeExpandClause(existingExpand, newClause): newClause;
+
+    setQueryOption(parsed, "$expand", finalExpand);
 
     const updated = buildEditorQuery(parsed);
     await applyEditorQueryUpdate(target, updated);
