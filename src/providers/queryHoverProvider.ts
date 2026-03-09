@@ -10,6 +10,9 @@ import { fetchEntityDefs } from "../services/entityMetadataService.js";
 import { fetchEntityFields, type FieldDef } from "../services/entityFieldMetadataService.js";
 import { fetchEntityNavigationProperties, type NavPropertyDef } from "../services/entityRelationshipMetadataService.js";
 import { getCachedNavigationProperties, setCachedNavigationProperties } from "../utils/entityRelationshipCache.js";
+import { fetchEntityChoiceMetadata, type ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
+import { getCachedChoiceMetadata, setCachedChoiceMetadata } from "../utils/entityChoiceCache.js";
+import { isChoiceAttributeType } from "../metadata/metadataModel.js";
 
 function looksLikeDataverseQuery(text: string): boolean {
   const line = text.trim();
@@ -86,6 +89,65 @@ function normalizeWord(text: string): string {
   return text.trim().toLowerCase();
 }
 
+function isScalarValueToken(text: string): boolean {
+  const t = text.trim();
+
+  if (!t) {
+    return false;
+  }
+
+  if (/^-?\d+(\.\d+)?$/.test(t)) {
+    return true;
+  }
+
+  const lowered = t.toLowerCase();
+  return lowered === "true" || lowered === "false";
+}
+
+function normalizeScalarToken(text: string): string {
+  return text.trim().toLowerCase();
+}
+
+function parseSimpleFilterComparisons(filter: string): Array<{
+  fieldLogicalName: string;
+  operator: string;
+  rawValue: string;
+}> {
+  const results: Array<{
+    fieldLogicalName: string;
+    operator: string;
+    rawValue: string;
+  }> = [];
+
+  const regex =
+    /\b([A-Za-z_][A-Za-z0-9_]*)\s+(eq|ne|gt|ge|lt|le)\s+((?:true|false|-?\d+(?:\.\d+)?)|'(?:[^']|'')*')/gi;
+
+  for (const match of filter.matchAll(regex)) {
+    const [, fieldLogicalName, operator, rawValue] = match;
+    if (fieldLogicalName && operator && rawValue) {
+      results.push({ fieldLogicalName, operator: operator.toLowerCase(), rawValue });
+    }
+  }
+
+  return results;
+}
+
+function buildChoiceValueHover(args: {
+  rawValue: string;
+  fieldLogicalName: string;
+  attributeType?: string;
+  label: string;
+}): vscode.Hover {
+  const md = new vscode.MarkdownString();
+
+  md.appendMarkdown(`**Value: \`${args.rawValue}\`**\n\n`);
+  md.appendMarkdown(`- Field: \`${args.fieldLogicalName}\`\n`);
+  md.appendMarkdown(`- Type: \`${args.attributeType?.trim() || "unknown"}\`\n`);
+  md.appendMarkdown(`- Meaning: **${args.label}**\n`);
+
+  return new vscode.Hover(md);
+}
+
 function findEntityByEntitySetName(defs: EntityDef[], entitySetName: string): EntityDef | undefined {
   const target = entitySetName.trim().toLowerCase();
   return defs.find((d) => d.entitySetName.trim().toLowerCase() === target);
@@ -156,6 +218,33 @@ function buildClauseHover(token: string): vscode.Hover | undefined {
   return new vscode.Hover(md);
 }
 
+async function loadChoiceMetadataSilently(
+  ctx: CommandContext,
+  logicalName: string
+): Promise<ChoiceMetadataDef[]> {
+  const cached = getCachedChoiceMetadata(ctx.ext, logicalName);
+  if (cached?.length) {
+    return cached;
+  }
+
+  const baseUrl = await ctx.getBaseUrl();
+  const scope = ctx.getScope(baseUrl);
+  const token = await ctx.getToken(scope);
+  const client = ctx.getClient(baseUrl);
+
+  const values = await fetchEntityChoiceMetadata(client, token, logicalName);
+  await setCachedChoiceMetadata(ctx.ext, logicalName, values);
+  return values;
+}
+
+function findChoiceMetadataForField(
+  values: ChoiceMetadataDef[],
+  fieldLogicalName: string
+): ChoiceMetadataDef | undefined {
+  const target = fieldLogicalName.trim().toLowerCase();
+  return values.find((item) => item.fieldLogicalName.trim().toLowerCase() === target);
+}
+
 function buildOperatorHover(token: string): vscode.Hover | undefined {
   const normalized = normalizeWord(token);
 
@@ -207,7 +296,9 @@ function buildEntityHover(entitySetName: string, entity?: EntityDef): vscode.Hov
 function buildFieldHover(
   field: FieldDef,
   selectToken?: string,
-  matchedToken?: string
+  matchedToken?: string,
+  choiceMetadata?: ChoiceMetadataDef,
+  selectedRawValue?: string
 ): vscode.Hover {
   const md = new vscode.MarkdownString();
   const attributeType = field.attributeType?.trim() || "unknown";
@@ -236,11 +327,52 @@ function buildFieldHover(
     md.appendMarkdown("\nUseful in `$orderby` and date-based `$filter` expressions.");
   }
 
-  if (typeKey === "picklist" || typeKey === "state" || typeKey === "status") {
+  if (typeKey === "picklist" || typeKey === "state" || typeKey === "status" || typeKey === "boolean") {
     md.appendMarkdown("\nOption-style field. Filters usually compare numeric values.");
   }
 
+  if (choiceMetadata?.options?.length) {
+    md.appendMarkdown("\n\n**Values**\n");
+
+    const maxToShow = 8;
+    const shown = choiceMetadata.options.slice(0, maxToShow);
+    const normalizedSelected = selectedRawValue?.trim().toLowerCase();
+
+    for (const option of shown) {
+      const optionValue = String(option.value);
+      const isSelected = normalizedSelected === optionValue.trim().toLowerCase();
+
+      if (isSelected) {
+        md.appendMarkdown(`- ➜ **\`${optionValue}\` = ${option.label}**\n`);
+      } else {
+        md.appendMarkdown(`- \`${optionValue}\` = ${option.label}\n`);
+      }
+    }
+
+    if (choiceMetadata.options.length > maxToShow) {
+      const remaining = choiceMetadata.options.length - maxToShow;
+      md.appendMarkdown(`- _…and ${remaining} more_\n`);
+    }
+  }
+
   return new vscode.Hover(md);
+}
+
+function getSelectedRawValueForField(
+  parsed: ReturnType<typeof parseEditorQuery>,
+  fieldLogicalName: string
+): string | undefined {
+  const filterValue = parsed.queryOptions.get("$filter");
+  if (!filterValue) {
+    return undefined;
+  }
+
+  const comparisons = parseSimpleFilterComparisons(filterValue);
+  const match = comparisons.find(
+    (c) => normalizeWord(c.fieldLogicalName) === normalizeWord(fieldLogicalName)
+  );
+
+  return match?.rawValue;
 }
 
 export class QueryHoverProvider implements vscode.HoverProvider {
@@ -287,6 +419,63 @@ export class QueryHoverProvider implements vscode.HoverProvider {
 
     if (!entitySetName) {
       return undefined;
+    }
+
+        // Choice-value hover (e.g. hover "1" in prioritycode eq 1)
+    try {
+      if (isScalarValueToken(hoveredWord)) {
+        const filterValue = parsed.queryOptions.get("$filter");
+        if (filterValue) {
+          const comparisons = parseSimpleFilterComparisons(filterValue);
+
+          const matchingComparison = comparisons.find(
+            (c) => normalizeScalarToken(c.rawValue) === normalizeScalarToken(hoveredWord)
+          );
+
+          if (matchingComparison) {
+            const defs = await loadEntityDefsSilently(this.ctx);
+            const entity = findEntityByEntitySetName(defs, entitySetName);
+
+            if (entity) {
+              const fields = await loadFieldsSilently(this.ctx, entity.logicalName);
+              const field = fields.find(
+                (f) => normalizeWord(f.logicalName) === normalizeWord(matchingComparison.fieldLogicalName)
+              );
+
+              if (field && isChoiceAttributeType(field.attributeType)) {
+                const baseUrl = await this.ctx.getBaseUrl();
+                const scope = this.ctx.getScope(baseUrl);
+                const token = await this.ctx.getToken(scope);
+                const client = this.ctx.getClient(baseUrl);
+
+                let allChoiceMetadata = getCachedChoiceMetadata(this.ctx.ext, entity.logicalName);
+                if (!allChoiceMetadata?.length) {
+                  allChoiceMetadata = await fetchEntityChoiceMetadata(client, token, entity.logicalName);
+                  await setCachedChoiceMetadata(this.ctx.ext, entity.logicalName, allChoiceMetadata);
+                }
+                const choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, field.logicalName);
+
+                if (choiceMetadata) {
+                  const option = choiceMetadata.options.find(
+                    (o) => normalizeScalarToken(String(o.value)) === normalizeScalarToken(matchingComparison.rawValue)
+                  );
+
+                  if (option) {
+                    return buildChoiceValueHover({
+                      rawValue: matchingComparison.rawValue,
+                      fieldLogicalName: field.logicalName,
+                      attributeType: field.attributeType,
+                      label: option.label
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // Silent fallback: value-token hover is enrichment only.
     }
 
     // Entity set hover
@@ -337,26 +526,52 @@ export class QueryHoverProvider implements vscode.HoverProvider {
       const fieldMatch = fields.find(
         (f) => normalizeWord(f.logicalName) === normalizeWord(hoveredWord)
       );
-
+      
       if (fieldMatch) {
         const selectableMatch = selectable.find(
           (f) => normalizeWord(f.logicalName) === normalizeWord(fieldMatch.logicalName)
         );
-
-        return buildFieldHover(fieldMatch, selectableMatch?.selectToken, hoveredWord);
+      
+        let choiceMetadata: ChoiceMetadataDef | undefined;
+        if (isChoiceAttributeType(fieldMatch.attributeType)) {
+          const allChoiceMetadata = await loadChoiceMetadataSilently(this.ctx, entity.logicalName);
+          choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, fieldMatch.logicalName);
+        }
+      
+        const selectedRawValue = getSelectedRawValueForField(parsed, fieldMatch.logicalName);
+          return buildFieldHover(
+            fieldMatch,
+            selectableMatch?.selectToken,
+            hoveredWord,
+            choiceMetadata,
+            selectedRawValue
+          );
       }
 
       const selectTokenMatch = selectable.find(
         (f) => normalizeWord(f.selectToken ?? "") === normalizeWord(hoveredWord)
       );
-
+      
       if (selectTokenMatch) {
         const backingField = fields.find(
           (f) => normalizeWord(f.logicalName) === normalizeWord(selectTokenMatch.logicalName)
         );
-
+      
         if (backingField) {
-          return buildFieldHover(backingField, selectTokenMatch.selectToken, hoveredWord);
+          let choiceMetadata: ChoiceMetadataDef | undefined;
+          if (isChoiceAttributeType(backingField.attributeType)) {
+            const allChoiceMetadata = await loadChoiceMetadataSilently(this.ctx, entity.logicalName);
+            choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, backingField.logicalName);
+          }
+      
+          const selectedRawValue = getSelectedRawValueForField(parsed, backingField.logicalName);
+            return buildFieldHover(
+              backingField,
+              selectTokenMatch.selectToken,
+              hoveredWord,
+              choiceMetadata,
+              selectedRawValue
+            );
         }
       }
     } catch (e: any) {
