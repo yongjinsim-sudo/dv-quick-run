@@ -1,12 +1,10 @@
 import * as vscode from "vscode";
+import type { EntityMetadata } from "../metadata/metadataModel.js";
 
 const KEY = "dvQuickRun.entityDefsCache";
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-export type EntityDef = {
-  entitySetName: string;
-  logicalName: string;
-};
+export type EntityDef = EntityMetadata;
 
 type CachePayload = {
   fetchedAt: number;

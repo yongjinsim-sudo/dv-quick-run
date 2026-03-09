@@ -7,6 +7,8 @@ import { clauseFact, FILTER_OPERATOR_FACTS } from "./shared/queryExplain/factLib
 import { getFieldHint } from "./shared/queryExplain/fieldHints.js";
 import { narrateExpression } from "./shared/queryExplain/filterNarrator.js";
 import { buildQueryShapeAdvice } from "./shared/queryExplain/queryShapeAdvisor.js";
+import { validateParsedQuery, type ValidationIssue } from "./shared/queryExplain/queryValidation.js";
+import { getLogicalEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
 
 type QueryParam = {
   key: string;
@@ -48,18 +50,8 @@ type ExplanationSection = {
 };
 
 function getEditorAndRangeText(): { text: string } {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    throw new Error("No active editor.");
-  }
-
-  const selected = editor.document.getText(editor.selection).trim();
-  if (selected) {
-    return { text: selected };
-  }
-
-  const line = editor.document.lineAt(editor.selection.active.line);
-  return { text: line.text.trim() };
+  const { text } = getLogicalEditorQueryTarget();
+  return { text };
 }
 
 function normalizeInput(input: string): string {
@@ -495,7 +487,21 @@ function buildDesignNotes(parsed: ParsedDataverseQuery): string[] {
   }).map((x) => `- ${x}`);
 }
 
-function toMarkdown(parsed: ParsedDataverseQuery, entity: EntityDef | undefined): string {
+function buildValidationLines(issues: ValidationIssue[]): string[] {
+  const lines: string[] = [];
+
+  for (const issue of issues) {
+    const prefix = issue.severity === "error" ? "- Error:" : "- Warning:";
+    lines.push(`${prefix} ${issue.message}`);
+    if (issue.suggestion) {
+      lines.push(`  - Suggestion: ${issue.suggestion}`);
+    }
+  }
+
+  return lines;
+}
+
+function toMarkdown(parsed: ParsedDataverseQuery, entity: EntityDef | undefined, validationIssues: ValidationIssue[] = []): string {
   const summary = buildSummary(parsed, entity);
   const sections = buildSections(parsed, entity);
   const intentLines = buildIntentLines(parsed);
@@ -527,6 +533,13 @@ function toMarkdown(parsed: ParsedDataverseQuery, entity: EntityDef | undefined)
     lines.push(`## ${section.heading}`);
     lines.push("");
     lines.push(...section.lines);
+    lines.push("");
+  }
+
+  if (validationIssues.length) {
+    lines.push("## Validation");
+    lines.push("");
+    lines.push(...buildValidationLines(validationIssues));
     lines.push("");
   }
 
@@ -596,7 +609,14 @@ export async function runExplainQueryAction(ctx: CommandContext): Promise<void> 
     ctx.output.appendLine(`Explain Query input: ${text}`);
 
     const entity = await tryResolveEntity(ctx, parsed.entitySetName);
-    const markdown = toMarkdown(parsed, entity);
+
+    const baseUrl = await ctx.getBaseUrl();
+    const scope = ctx.getScope(baseUrl);
+    const token = await ctx.getToken(scope);
+    const client: DataverseClient = ctx.getClient(baseUrl);
+
+    const validationIssues = await validateParsedQuery(ctx, client, token, parsed, entity);
+    const markdown = toMarkdown(parsed, entity, validationIssues);
 
     await openMarkdownPreview(markdown);
 

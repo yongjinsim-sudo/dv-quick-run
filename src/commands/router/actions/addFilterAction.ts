@@ -1,10 +1,12 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
-import { EntityDef } from "../../../utils/entitySetCache.js";
-import { FieldDef } from "../../../services/entityFieldMetadataService.js";
-import { loadEntityDefs, loadFields } from "./shared/metadataAccess.js";
-import { toSelectableFields } from "./shared/selectableFields.js";
+import {
+  loadEntityDefs,
+  loadSelectableFields,
+  findEntityByEntitySetName
+} from "./shared/metadataAccess.js";
+import type { SelectableField } from "./shared/selectableFields.js";
 import { getEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
 import {
   parseEditorQuery,
@@ -14,12 +16,7 @@ import {
 import { setQueryOption } from "./shared/queryMutation/queryOptionMutator.js";
 import { applyEditorQueryUpdate } from "./shared/queryMutation/applyEditorQueryUpdate.js";
 
-type FilterableField = {
-  logicalName: string;
-  attributeType: string;
-  isValidForRead?: boolean;
-  selectToken?: string;
-};
+type FilterableField = SelectableField;
 
 type FilterExpr =
   | {
@@ -56,18 +53,6 @@ function looksLikeJsonLine(input: string): boolean {
   );
 }
 
-function pickEntity(defs: EntityDef[], entitySetName: string): EntityDef | undefined {
-  return defs.find((d) => d.entitySetName.toLowerCase() === entitySetName.toLowerCase());
-}
-
-function toFilterableFields(fields: FieldDef[]): FilterableField[] {
-  return toSelectableFields(fields).map((f) => ({
-    logicalName: f.logicalName,
-    attributeType: f.attributeType,
-    isValidForRead: f.isValidForRead,
-    selectToken: f.selectToken
-  }));
-}
 
 async function pickField(entitySetName: string, fields: FilterableField[]): Promise<FilterableField | undefined> {
   const picked = await vscode.window.showQuickPick(
@@ -472,13 +457,12 @@ export async function runAddFilterAction(ctx: CommandContext): Promise<void> {
     const client: DataverseClient = ctx.getClient(baseUrl);
 
     const defs = await loadEntityDefs(ctx, client, token);
-    const def = await pickEntity(defs, entitySetName);
+    const def = findEntityByEntitySetName(defs, entitySetName);
     if (!def) {
       throw new Error(`Could not find metadata for entity set: ${entitySetName}`);
     }
 
-    const rawFields = await loadFields(ctx, client, token, def.logicalName);
-    const fields = toFilterableFields(rawFields);
+    const fields = await loadSelectableFields(ctx, client, token, def.logicalName);
 
     const pickedField = await pickField(def.entitySetName, fields);
     if (!pickedField) {return;}

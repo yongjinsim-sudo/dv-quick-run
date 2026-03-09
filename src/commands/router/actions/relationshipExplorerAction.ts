@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../../context/commandContext.js";
-
-import { fetchEntityDefs } from "../../../services/entityMetadataService.js";
 import { fetchEntityRelationships } from "../../../services/entityRelationshipExplorerService.js";
 import {
-  getCachedEntityDefs,
-  setCachedEntityDefs,
-  type EntityDef
-} from "../../../utils/entitySetCache.js";
+  findEntityByEntitySetName,
+  findEntityByLogicalName,
+  loadEntityDefs,
+  loadFields
+} from "./shared/metadataAccess.js";
+import { getSelectableFields } from "./shared/selectableFields.js";
 import {
   getCachedEntityRelationships,
   setCachedEntityRelationships
@@ -17,26 +17,93 @@ import {
   parseEditorQuery
 } from "./shared/queryMutation/parsedEditorQuery.js";
 
-async function loadEntityDefs(ctx: CommandContext): Promise<EntityDef[]> {
-  const cached = getCachedEntityDefs(ctx.ext);
-  if (cached?.length) {
-    return cached;
+type RelationshipDisplay = {
+  navigationPropertyName: string;
+  relationshipType: "manyToOne" | "oneToMany" | "manyToMany";
+  targetLogicalName?: string;
+  targetEntitySetName?: string;
+  referencingAttribute?: string;
+  schemaName?: string;
+  exampleExpand: string;
+  suggestedFields?: string[];
+};
+
+function pickPreferredExampleField(fieldLogicalNames: string[]): string | undefined {
+  const lowered = new Map(fieldLogicalNames.map((name) => [name.toLowerCase(), name]));
+
+  return (
+    lowered.get("fullname") ??
+    lowered.get("name") ??
+    lowered.get("subject") ??
+    lowered.get("title") ??
+    lowered.get("accountnumber") ??
+    lowered.get("emailaddress1") ??
+    fieldLogicalNames[0]
+  );
+}
+
+async function buildRelationshipDisplay(
+  ctx: CommandContext,
+  logicalName: string,
+  entitySetName: string,
+  defs: Awaited<ReturnType<typeof loadEntityDefs>>,
+  rel: {
+    navigationPropertyName: string;
+    referencedEntity?: string;
+    targetEntity?: string;
+    referencingAttribute?: string;
+    schemaName?: string;
+  },
+  relationshipType: "manyToOne" | "oneToMany" | "manyToMany",
+  token: string,
+  client: ReturnType<CommandContext["getClient"]>
+): Promise<RelationshipDisplay> {
+  const targetLogicalName =
+    rel.referencedEntity?.trim() ||
+    rel.targetEntity?.trim() ||
+    undefined;
+  let suggestedFields: string[] | undefined;
+  let targetEntitySetName: string | undefined;
+  let exampleField: string | undefined;
+
+  if (targetLogicalName) {
+    const targetDef = findEntityByLogicalName(defs, targetLogicalName);
+    targetEntitySetName = targetDef?.entitySetName;
+
+    try {
+      const targetFields = await loadFields(ctx, client, token, targetLogicalName);
+      const selectable = getSelectableFields(targetFields);
+      const fieldLogicalNames = selectable.map((f) => f.logicalName).filter(Boolean);
+      suggestedFields = fieldLogicalNames.slice(0, 5);
+      exampleField = pickPreferredExampleField(fieldLogicalNames);
+    } catch {
+      // ignore enrichment failures
+    }
   }
 
-  const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
-  const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
+  const exampleExpand =
+    relationshipType === "manyToOne" && exampleField
+      ? `${entitySetName}?$expand=${rel.navigationPropertyName}($select=${exampleField})`
+      : `${entitySetName}?$expand=${rel.navigationPropertyName}`;
 
-  const defs = await fetchEntityDefs(client, token);
-  await setCachedEntityDefs(ctx.ext, defs);
-  return defs;
+  return {
+    navigationPropertyName: rel.navigationPropertyName,
+    relationshipType,
+    targetLogicalName,
+    targetEntitySetName,
+    referencingAttribute: rel.referencingAttribute,
+    schemaName: rel.schemaName,
+    exampleExpand,
+    suggestedFields
+  };
 }
 
 function buildExplorerText(
   entitySetName: string,
   logicalName: string,
-  data: Awaited<ReturnType<typeof fetchEntityRelationships>>
+  manyToOne: RelationshipDisplay[],
+  oneToMany: RelationshipDisplay[],
+  manyToMany: RelationshipDisplay[]
 ): string {
   const lines: string[] = [];
 
@@ -44,48 +111,54 @@ function buildExplorerText(
   lines.push(`Entity Set: ${entitySetName}`);
   lines.push("");
 
-  lines.push(`Many-to-One (${data.manyToOne.length})`);
+  lines.push(`Many-to-One (${manyToOne.length})`);
   lines.push("----------------------------------------");
-  if (!data.manyToOne.length) {
+  if (!manyToOne.length) {
     lines.push("(none)");
   } else {
-    for (const item of data.manyToOne) {
+    for (const item of manyToOne) {
       lines.push(`- ${item.navigationPropertyName}`);
-      if (item.referencedEntity) {lines.push(`  target: ${item.referencedEntity}`);}
-      if (item.referencingAttribute) {lines.push(`  lookup: ${item.referencingAttribute}`);}
-      if (item.schemaName) {lines.push(`  schema: ${item.schemaName}`);}
-      lines.push(`  example: ${entitySetName}?$expand=${item.navigationPropertyName}($select=name)`);
+      if (item.targetLogicalName) { lines.push(`  target logical: ${item.targetLogicalName}`); }
+      if (item.targetEntitySetName) { lines.push(`  target entity set: ${item.targetEntitySetName}`); }
+      if (item.referencingAttribute) { lines.push(`  lookup: ${item.referencingAttribute}`); }
+      if (item.schemaName) { lines.push(`  schema: ${item.schemaName}`); }
+      lines.push(`  example: ${item.exampleExpand}`);
+      if (item.suggestedFields?.length) { lines.push(`  common fields: ${item.suggestedFields.join(", ")}`); }
       lines.push("");
     }
   }
 
   lines.push("");
-  lines.push(`One-to-Many (${data.oneToMany.length})`);
+  lines.push(`One-to-Many (${oneToMany.length})`);
   lines.push("----------------------------------------");
-  if (!data.oneToMany.length) {
+  if (!oneToMany.length) {
     lines.push("(none)");
   } else {
-    for (const item of data.oneToMany) {
+    for (const item of oneToMany) {
       lines.push(`- ${item.navigationPropertyName}`);
-      if (item.referencedEntity) {lines.push(`  target: ${item.referencedEntity}`);}
-      if (item.referencingAttribute) {lines.push(`  lookup: ${item.referencingAttribute}`);}
-      if (item.schemaName) {lines.push(`  schema: ${item.schemaName}`);}
-      lines.push(`  example: ${entitySetName}?$expand=${item.navigationPropertyName}`);
+      if (item.targetLogicalName) { lines.push(`  target logical: ${item.targetLogicalName}`); }
+      if (item.targetEntitySetName) { lines.push(`  target entity set: ${item.targetEntitySetName}`); }
+      if (item.referencingAttribute) { lines.push(`  lookup: ${item.referencingAttribute}`); }
+      if (item.schemaName) { lines.push(`  schema: ${item.schemaName}`); }
+      lines.push(`  example: ${item.exampleExpand}`);
+      if (item.suggestedFields?.length) { lines.push(`  common fields: ${item.suggestedFields.join(", ")}`); }
       lines.push("");
     }
   }
 
   lines.push("");
-  lines.push(`Many-to-Many (${data.manyToMany.length})`);
+  lines.push(`Many-to-Many (${manyToMany.length})`);
   lines.push("----------------------------------------");
-  if (!data.manyToMany.length) {
+  if (!manyToMany.length) {
     lines.push("(none)");
   } else {
-    for (const item of data.manyToMany) {
+    for (const item of manyToMany) {
       lines.push(`- ${item.navigationPropertyName}`);
-      if (item.targetEntity) {lines.push(`  target: ${item.targetEntity}`);}
-      if (item.schemaName) {lines.push(`  schema: ${item.schemaName}`);}
-      lines.push(`  example: ${entitySetName}?$expand=${item.navigationPropertyName}`);
+      if (item.targetLogicalName) { lines.push(`  target logical: ${item.targetLogicalName}`); }
+      if (item.targetEntitySetName) { lines.push(`  target entity set: ${item.targetEntitySetName}`); }
+      if (item.schemaName) { lines.push(`  schema: ${item.schemaName}`); }
+      lines.push(`  example: ${item.exampleExpand}`);
+      if (item.suggestedFields?.length) { lines.push(`  common fields: ${item.suggestedFields.join(", ")}`); }
       lines.push("");
     }
   }
@@ -102,18 +175,6 @@ async function showRelationshipExplorerDocument(content: string, logicalName: st
   await vscode.window.showTextDocument(doc, {
     preview: false
   });
-}
-
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function findEntityByEntitySetName(
-  defs: EntityDef[],
-  entitySetName: string
-): EntityDef | undefined {
-  const target = normalize(entitySetName);
-  return defs.find((d) => normalize(d.entitySetName) === target);
 }
 
 function tryGetEntitySetNameFromActiveEditor(): string | undefined {
@@ -136,7 +197,12 @@ function tryGetEntitySetNameFromActiveEditor(): string | undefined {
 }
 
 export async function runRelationshipExplorerAction(ctx: CommandContext): Promise<void> {
-  const defs = await loadEntityDefs(ctx);
+  const baseUrl = await ctx.getBaseUrl();
+  const scope = ctx.getScope(baseUrl);
+  const token = await ctx.getToken(scope);
+  const client = ctx.getClient(baseUrl);
+
+  const defs = await loadEntityDefs(ctx, client, token);
 
   let logicalName: string | undefined;
   let entitySetName: string | undefined;
@@ -174,56 +240,54 @@ export async function runRelationshipExplorerAction(ctx: CommandContext): Promis
   let relationships = getCachedEntityRelationships(ctx.ext, logicalName);
 
   if (!relationships) {
-    const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
-    const token = await ctx.getToken(scope);
-    const client = ctx.getClient(baseUrl);
-
     relationships = await fetchEntityRelationships(client, token, logicalName);
     await setCachedEntityRelationships(ctx.ext, logicalName, relationships);
   }
 
-  const content = buildExplorerText(entitySetName, logicalName, relationships);
+  const manyToOne = await Promise.all(
+    relationships.manyToOne.map((rel) =>
+      buildRelationshipDisplay(ctx, logicalName!, entitySetName!, defs, rel, "manyToOne", token, client)
+    )
+  );
+
+  const oneToMany = await Promise.all(
+    relationships.oneToMany.map((rel) =>
+      buildRelationshipDisplay(ctx, logicalName!, entitySetName!, defs, rel, "oneToMany", token, client)
+    )
+  );
+
+  const manyToMany = await Promise.all(
+    relationships.manyToMany.map((rel) =>
+      buildRelationshipDisplay(ctx, logicalName!, entitySetName!, defs, rel, "manyToMany", token, client)
+    )
+  );
+
+  const content = buildExplorerText(
+    entitySetName,
+    logicalName,
+    manyToOne,
+    oneToMany,
+    manyToMany
+  );
+
   await showRelationshipExplorerDocument(content, logicalName);
-  await promptExpandCopyAction(entitySetName, relationships);
+
 }
 
-async function promptExpandCopyAction(
-  entitySetName: string,
-  data: Awaited<ReturnType<typeof fetchEntityRelationships>>
-): Promise<void> {
+async function promptExpandCopyAction(items: RelationshipDisplay[]): Promise<void> {
+  const quickPickItems: vscode.QuickPickItem[] = items.map((rel) => ({
+    label: rel.navigationPropertyName,
+    description: rel.targetLogicalName
+      ? `target: ${rel.targetLogicalName}${rel.targetEntitySetName ? ` (${rel.targetEntitySetName})` : ""}`
+      : "target: unknown",
+    detail: `$expand=${rel.exampleExpand.split("?$expand=")[1] ?? rel.navigationPropertyName}`
+  }));
 
-  const items: vscode.QuickPickItem[] = [];
-
-  for (const rel of data.manyToOne) {
-    items.push({
-      label: rel.navigationPropertyName,
-      description: `target: ${rel.referencedEntity ?? "unknown"}`,
-      detail: `$expand=${rel.navigationPropertyName}($select=name)`
-    });
-  }
-
-  for (const rel of data.oneToMany) {
-    items.push({
-      label: rel.navigationPropertyName,
-      description: `target: ${rel.referencedEntity ?? "unknown"}`,
-      detail: `$expand=${rel.navigationPropertyName}`
-    });
-  }
-
-  for (const rel of data.manyToMany) {
-    items.push({
-      label: rel.navigationPropertyName,
-      description: `target: ${rel.targetEntity ?? "unknown"}`,
-      detail: `$expand=${rel.navigationPropertyName}`
-    });
-  }
-
-  if (!items.length) {
+  if (!quickPickItems.length) {
     return;
   }
 
-  const picked = await vscode.window.showQuickPick(items, {
+  const picked = await vscode.window.showQuickPick(quickPickItems, {
     placeHolder: "Copy $expand snippet",
     matchOnDescription: true,
     matchOnDetail: true
@@ -234,10 +298,7 @@ async function promptExpandCopyAction(
   }
 
   const snippet = picked.detail ?? `$expand=${picked.label}`;
-
   await vscode.env.clipboard.writeText(snippet);
 
-  void vscode.window.showInformationMessage(
-    `Copied to clipboard: ${snippet}`
-  );
+  void vscode.window.showInformationMessage(`Copied to clipboard: ${snippet}`);
 }

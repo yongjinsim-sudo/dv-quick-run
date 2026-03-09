@@ -3,7 +3,7 @@ import { SmartField, SmartGetState } from "./smartGetTypes.js";
 export function normalizePath(input: string): string {
   const t = input.trim();
   if (!t) {return "";}
-  return t.startsWith("/") ? t : `/${t}`;
+  return t.replace(/^\/+/, "");
 }
 
 export function buildResultTitle(path: string): string {

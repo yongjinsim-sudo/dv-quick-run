@@ -8,26 +8,10 @@ import {
   confirmGuardrailsIfNeeded,
   showGuardrailErrors
 } from "./shared/guardrails/queryGuardrails.js";
+import { getLogicalEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
 
 function getQueryFromEditor(): string {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    throw new Error("No active editor.");
-  }
-
-  const selection = editor.document.getText(editor.selection).trim();
-
-  if (selection) {
-    return selection;
-  }
-
-  const line = editor.document.lineAt(editor.selection.active.line).text.trim();
-
-  if (!line) {
-    throw new Error("Current line is empty.");
-  }
-
-  return line;
+  return getLogicalEditorQueryTarget().text;
 }
 
 function looksLikeDataverseQuery(input: string): boolean {

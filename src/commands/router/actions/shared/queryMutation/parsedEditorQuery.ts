@@ -15,18 +15,39 @@ export function parseEditorQuery(raw: string): ParsedEditorQuery {
   const entityPath = qIndex >= 0 ? normalized.slice(0, qIndex).trim() : normalized.trim();
   const queryString = qIndex >= 0 ? normalized.slice(qIndex + 1).trim() : "";
 
+  const queryOptions = new URLSearchParams(queryString);
+
+  const selectValue = queryOptions.get("$select");
+  if (selectValue) {
+    const trimmedSelect = selectValue.trim();
+    if (trimmedSelect.startsWith("(") && trimmedSelect.endsWith(")")) {
+      queryOptions.set("$select", trimmedSelect.slice(1, -1));
+    }
+  }
+
   return {
     raw: trimmed,
     leadingSlash,
     entityPath,
     queryString,
-    queryOptions: new URLSearchParams(queryString)
+    queryOptions
   };
 }
 
 export function buildEditorQuery(parsed: ParsedEditorQuery): string {
-  const query = parsed.queryOptions.toString();
   const prefix = parsed.leadingSlash ? "/" : "";
+
+  const pairs: string[] = [];
+  for (const [key, value] of parsed.queryOptions.entries()) {
+    if (!key) {continue;}
+    if (value === "") {
+      pairs.push(key);
+    } else {
+      pairs.push(`${key}=${value}`);
+    }
+  }
+
+  const query = pairs.join("&");
 
   if (!query) {
     return `${prefix}${parsed.entityPath}`;

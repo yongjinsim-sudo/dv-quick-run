@@ -10,24 +10,12 @@ import { promptOrderBy } from "./smartGet/smartGetOrderBy.js";
 import { normalizePath, buildResultTitle, describeState, buildQueryFromState, buildGetCurl } from "./smartGet/smartGetQueryBuilder.js";
 import { toSelectableFields } from "./shared/selectableFields.js";
 import { shouldExecuteQueryWithGuardrails } from "./shared/guardrails/guardedExecution.js";
+import { buildLookupSelectToken } from "../../../metadata/metadataModel.js";
 
 const LAST_SMART_GET_STATE_KEY = "dvQuickRun.smartGet.lastState";
 
 function selectTokenForField(f: SmartField): string | undefined {
-  const ln = (f.logicalName || "").trim();
-  if (!ln) {return undefined;}
-
-  const t = (f.attributeType || "").toLowerCase();
-
-  if (t === "lookup" || t === "customer" || t === "owner") {
-    return `_${ln}_value`;
-  }
-
-  if (t === "virtual" || t === "managedproperty" || t === "partylist") {
-    return undefined;
-  }
-
-  return ln;
+  return buildLookupSelectToken(f.logicalName, f.attributeType);
 }
 
 function deriveAttributesVirtualUri(logicalName: string): vscode.Uri {
@@ -430,7 +418,7 @@ async function reviewAndEditLoop(
       { label: "✏️ Edit filter", description: filterText, choice: { kind: "editFilter" } },
       { label: "✏️ Edit $orderby", description: orderByText, choice: { kind: "editOrderBy" } },
       { label: "✏️ Edit $top", description: String(current.top), choice: { kind: "editTop" } },
-      { label: "📋 Copy query path", description: "Copies /<entitySet>?$select=... to clipboard", choice: { kind: "copyPath" } },
+      { label: "📋 Copy query path", description: "Copies <entitySet>?$select=... to clipboard", choice: { kind: "copyPath" } },
       { label: "📋 Copy GET as curl", description: "Copies curl command to clipboard", choice: { kind: "copyCurl" }},
       { label: "🧾 Copy full URL", description: "Copies https://.../api/data/v9.2/<entitySet>?... to clipboard", choice: { kind: "copyFullUrl" } },
       { label: "➡️ Open in Run GET", description: "Prefills Run GET with this query", choice: { kind: "openInRunGet" } },
@@ -562,6 +550,12 @@ async function reviewAndEditLoop(
   }
 }
 
+function ensureTransportPath(path: string): string {
+  const t = path.trim();
+  if (!t) {return "";}
+  return t.startsWith("/") ? t : `/${t}`;
+}
+
 async function executeState(
   ctx: CommandContext,
   client: DataverseClient,
@@ -571,12 +565,13 @@ async function executeState(
   const fields = await getFieldsForEntity(ctx, client, token, state.entityLogicalName);
 
   const { path, filterClause } = buildQueryFromState(state, fields, buildFilterClause);
-
+  const transportPath = ensureTransportPath(path);
+  
   const shouldExecute = await shouldExecuteQueryWithGuardrails(
     ctx,
     client,
     token,
-    path,
+    transportPath,
     "Smart GET execution cancelled by guardrails."
   );
   
@@ -586,13 +581,11 @@ async function executeState(
 
   await saveLastState(ctx, state);
   await addQueryToHistory(ctx.ext, path.replace(/^\//, ""));
-
-  ctx.output.appendLine(`Smart GET: ${describeState(state, stringifyExpr)}`);
-  if (filterClause) {ctx.output.appendLine(`Filter (raw): ${filterClause}`);}
+  
   ctx.output.appendLine(`Query: ${path}`);
-  ctx.output.appendLine(`GET ${path}`);
-
-  const result = await client.get(path, token);
+  ctx.output.appendLine(`GET ${transportPath}`);
+  
+  const result = await client.get(transportPath, token);
   await showJsonNamed(buildResultTitle(path), result);
 }
 

@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Run and debug Dataverse Web API queries directly from VS Code. Includes smart query builders, Explain Query, and relationship exploration tools.",
-  "version": "0.1.0",
+  "description": "Run, build, and understand Dataverse Web API queries directly inside VS Code. Includes smart query builders, query explanation, metadata intelligence, and relationship exploration.",
+  "version": "0.2.0",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -19,23 +19,29 @@
   "license": "MIT",
   "categories": [
     "Other",
-    "Debuggers"
+    "Debuggers",
+    "Testing"
   ],
   "extensionKind": [
     "workspace"
   ],
-"keywords": [
+  "keywords": [
     "dataverse",
+    "dataverse api",
+    "dataverse query",
+    "dataverse odata",
     "dynamics",
     "dynamics365",
+    "dynamics api",
     "powerplatform",
+    "power platform",
+    "power platform dataverse",
     "crm",
     "odata",
-    "dataverse api",
-    "dynamics api",
-    "power platform dataverse",
+    "fetchxml",
     "vscode dataverse",
-    "dataverse query"
+    "dataverse developer",
+    "dataverse tooling"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",

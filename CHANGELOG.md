@@ -6,6 +6,19 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.2.0] - Metadata Intelligence Foundation
+
+### Added
+- Choice metadata decoding
+- Navigation metadata normalization
+- Lookup target resolution
+- Metadata caching stabilization
+
+### Improved
+- Explain Query accuracy
+- Metadata hover intelligence
+- Query validation reliability
+
 ## [0.1.0] - Initial Release
 
 ### Added

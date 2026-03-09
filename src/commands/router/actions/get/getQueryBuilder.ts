@@ -1,5 +1,5 @@
 import { FieldDef } from "../../../../services/entityFieldMetadataService";
-
+import { buildLookupSelectToken } from "../../../../metadata/metadataModel.js";
 
 export function normalizePath(input: string): string {
   const t = input.trim();
@@ -18,20 +18,7 @@ export function buildResultTitle(path: string): string {
 }
 
 export function selectTokenForField(f: FieldDef): string | undefined {
-  const ln = (f.logicalName || "").trim();
-  if (!ln) {return undefined;}
-
-  const t = (f.attributeType || "").toLowerCase();
-
-  if (t === "lookup" || t === "customer" || t === "owner") {
-    return `_${ln}_value`;
-  }
-
-  if (t === "virtual" || t === "managedproperty" || t === "partylist") {
-    return undefined;
-  }
-
-  return ln;
+  return buildLookupSelectToken(f.logicalName, f.attributeType);
 }
 
 export function buildTopQuery(entitySetName: string, top = 10): string {

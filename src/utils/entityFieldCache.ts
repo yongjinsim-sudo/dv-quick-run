@@ -3,14 +3,14 @@ import type { FieldDef } from "../services/entityFieldMetadataService";
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-type CachePayloadV2 = {
+type CachePayloadV3 = {
   fetchedAt: number;
   fields: FieldDef[];
 };
 
 function key(logicalName: string) {
   // Bump version so old string[] cache is ignored automatically.
-  return `dvQuickRun.fieldsCache.v2.${logicalName.toLowerCase()}`;
+  return `dvQuickRun.fieldsCache.v3.${logicalName.toLowerCase()}`;
 }
 
 function normalizeFields(raw: any): FieldDef[] | undefined {
@@ -39,7 +39,7 @@ export function getCachedFields(
   context: vscode.ExtensionContext,
   logicalName: string
 ): FieldDef[] | undefined {
-  const payload = context.globalState.get<CachePayloadV2>(key(logicalName));
+  const payload = context.globalState.get<CachePayloadV3>(key(logicalName));
   if (!payload) {return undefined;}
 
   const age = Date.now() - payload.fetchedAt;
@@ -56,7 +56,7 @@ export async function setCachedFields(
   logicalName: string,
   fields: FieldDef[]
 ): Promise<void> {
-  const payload: CachePayloadV2 = {
+  const payload: CachePayloadV3 = {
     fetchedAt: Date.now(),
     fields
   };
