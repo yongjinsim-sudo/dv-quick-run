@@ -6,6 +6,13 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.2.1] - Hotfix
+
+### Fixed
+- Improved Azure CLI discovery across Windows environments
+- Fixed authentication failures caused by brittle Azure CLI path assumptions
+- Added safer handling for PATH-based Azure CLI installations
+
 ## [0.2.0] - Metadata Intelligence Foundation
 
 ### Added
