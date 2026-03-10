@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
+import { logDebug, logError, logInfo } from "../../../utils/logger.js";
 import { showJsonNamed } from "../../../utils/virtualJsonDoc.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
 
@@ -45,10 +46,6 @@ export async function runGetMetadataAction(ctx: CommandContext): Promise<void> {
     const baseUrl = await ctx.getBaseUrl();
     const scope = ctx.getScope(baseUrl);
 
-    ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-    ctx.output.appendLine(`Scope: ${scope}`);
-    ctx.output.appendLine(`Getting token via Azure CLI...`);
-
     const token = await ctx.getToken(scope);
     const client = ctx.getClient(baseUrl);
 
@@ -61,14 +58,14 @@ export async function runGetMetadataAction(ctx: CommandContext): Promise<void> {
 
     const path = buildMetadataPath(def.logicalName, kind);
 
-    ctx.output.appendLine(`Metadata: entity=${def.logicalName} kind=${kind}`);
-    ctx.output.appendLine(`GET ${path}`);
+    logDebug(ctx.output,`Metadata: entity=${def.logicalName} kind=${kind}`);
+    logInfo(ctx.output,`GET ${path}`);
 
     const result = await client.get(path, token);
     await showJsonNamed(metadataVirtualPath(def.logicalName, kind), result);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Get Metadata failed. Check Output.");
   }
 }

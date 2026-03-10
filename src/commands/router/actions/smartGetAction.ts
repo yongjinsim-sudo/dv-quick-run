@@ -1,16 +1,18 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
+import { logError, logInfo } from "../../../utils/logger.js";
 import { showJsonNamed } from "../../../utils/virtualJsonDoc.js";
 import { addQueryToHistory } from "../../../utils/queryHistory.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
-import { loadEntityDefs, loadFields } from "./shared/metadataAccess.js";
+import { loadFields } from "./shared/metadataAccess.js";
 import { SmartField, SmartGetState, SmartGetFilterState, FilterExpr } from "./smartGet/smartGetTypes.js";
 import { promptOrderBy } from "./smartGet/smartGetOrderBy.js";
-import { normalizePath, buildResultTitle, describeState, buildQueryFromState, buildGetCurl } from "./smartGet/smartGetQueryBuilder.js";
+import { normalizePath, buildResultTitle, buildQueryFromState, buildGetCurl } from "./smartGet/smartGetQueryBuilder.js";
 import { toSelectableFields } from "./shared/selectableFields.js";
 import { shouldExecuteQueryWithGuardrails } from "./shared/guardrails/guardedExecution.js";
 import { buildLookupSelectToken } from "../../../metadata/metadataModel.js";
+import { SmartMetadataSession } from "./smart/shared/smartMetadataSession.js";
 
 const LAST_SMART_GET_STATE_KEY = "dvQuickRun.smartGet.lastState";
 
@@ -77,28 +79,26 @@ async function getFieldsForEntity(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  logicalName: string
+  logicalName: string,
+  session?: SmartMetadataSession
 ): Promise<SmartField[]> {
   const fromOpenDoc = tryParseFieldsFromOpenAttributesDoc(logicalName);
   if (fromOpenDoc?.length) {
-    const selectable = fromOpenDoc.filter((f) => !!f.selectToken).length;
-    ctx.output.appendLine(`Fields loaded from open metadata doc for ${logicalName}: ${fromOpenDoc.length} fields.`);
-    ctx.output.appendLine(`Selectable fields for ${logicalName}: ${selectable} / ${fromOpenDoc.length}`);
     return fromOpenDoc;
+  }
+
+  if (session) {
+    return session.getSmartFields(logicalName);
   }
 
   const fields = await loadFields(ctx, client, token, logicalName);
 
-  const smart = toSelectableFields(fields).map((f) => ({
+  return toSelectableFields(fields).map((f) => ({
     logicalName: f.logicalName,
     attributeType: f.attributeType,
     isValidForRead: f.isValidForRead,
     selectToken: f.selectToken
-    }));
-
-  const selectable = smart.filter((f) => !!f.selectToken).length;
-  ctx.output.appendLine(`Selectable fields for ${logicalName}: ${selectable} / ${smart.length}`);
-  return smart;
+  }));
 }
 
 async function pickFields(
@@ -308,16 +308,14 @@ async function promptTop(preselectedTop?: number): Promise<number | undefined> {
 }
 
 async function buildOrEditState(
-  ctx: CommandContext,
-  client: DataverseClient,
-  token: string,
+  session: SmartMetadataSession,
   initial?: SmartGetState
 ): Promise<{ state: SmartGetState; fields: SmartField[] } | undefined> {
-  const defs = await loadEntityDefs(ctx, client, token);
+  const defs = await session.getEntityDefs();
   const def = await pickEntity(defs, initial?.entityLogicalName);
   if (!def) {return undefined;}
 
-  const fields = await getFieldsForEntity(ctx, client, token, def.logicalName);
+  const fields = await session.getSmartFields(def.logicalName);
 
   const pickedFields = await pickFields(def, fields, initial?.selectedFieldLogicalNames);
   if (!pickedFields) {return undefined;}
@@ -396,9 +394,12 @@ async function reviewAndEditLoop(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  initial: SmartGetState
-): Promise<SmartGetState | undefined> {
+  session: SmartMetadataSession,
+  initial: SmartGetState,
+  initialFields: SmartField[]
+): Promise<{ state: SmartGetState; fields: SmartField[] } | undefined> {
   let current = initial;
+  let fields = initialFields;
 
   while (true) {
     const filterText = current.filter
@@ -407,7 +408,6 @@ async function reviewAndEditLoop(
 
     const orderByText = current.orderBy ? `${current.orderBy.fieldLogicalName} ${current.orderBy.direction}` : "(none)";
 
-    const fields = await getFieldsForEntity(ctx, client, token, current.entityLogicalName);
     const { path } = buildQueryFromState(current, fields, buildFilterClause);
     const fullUrl = `${(await ctx.getBaseUrl()).replace(/\/$/, "")}${path.startsWith("/") ? "" : "/"}${path}`;
 
@@ -454,7 +454,9 @@ async function reviewAndEditLoop(
       return undefined;
     }
 
-    if (choice.kind === "run") {return current;}
+    if (choice.kind === "run") {
+      return { state: current, fields };
+    }
 
     if (choice.kind === "editTop") {
       const top = await promptTop(current.top);
@@ -475,9 +477,10 @@ async function reviewAndEditLoop(
     }
 
     if (choice.kind === "editEntity") {
-      const edited = await buildOrEditState(ctx, client, token, current);
+      const edited = await buildOrEditState(session, current);
       if (!edited) {return undefined;}
       current = edited.state;
+      fields = edited.fields;
       continue;
     }
 
@@ -489,11 +492,9 @@ async function reviewAndEditLoop(
     }
 
     if (choice.kind === "editFields") {
-      const defs = await loadEntityDefs(ctx, client, token);
-      const currentDef = defs.find((d) => d.logicalName.toLowerCase() === current.entityLogicalName.toLowerCase());
+      const currentDef = await session.getEntityByLogicalName(current.entityLogicalName);
       if (!currentDef) {return undefined;}
 
-      const fields = await getFieldsForEntity(ctx, client, token, current.entityLogicalName);
       const pickedFields = await pickFields(currentDef, fields, current.selectedFieldLogicalNames);
       if (!pickedFields) {return undefined;}
 
@@ -502,8 +503,6 @@ async function reviewAndEditLoop(
     }
 
     if (choice.kind === "editFilter") {
-      const fields = await getFieldsForEntity(ctx, client, token, current.entityLogicalName);
-
       const filterField = await pickOptionalFilterField(fields, current.filter?.fieldLogicalName);
       if (!filterField) {
         current = { ...current, filter: undefined };
@@ -560,65 +559,75 @@ async function executeState(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  state: SmartGetState
+  state: SmartGetState,
+  fields: SmartField[]
 ): Promise<void> {
-  const fields = await getFieldsForEntity(ctx, client, token, state.entityLogicalName);
-
-  const { path, filterClause } = buildQueryFromState(state, fields, buildFilterClause);
+  const { path } = buildQueryFromState(state, fields, buildFilterClause);
   const transportPath = ensureTransportPath(path);
   
   const shouldExecute = await shouldExecuteQueryWithGuardrails(
     ctx,
     client,
     token,
-    transportPath,
+    path,
     "Smart GET execution cancelled by guardrails."
   );
-  
+
   if (!shouldExecute) {
     return;
   }
 
   await saveLastState(ctx, state);
   await addQueryToHistory(ctx.ext, path.replace(/^\//, ""));
-  
-  ctx.output.appendLine(`Query: ${path}`);
-  ctx.output.appendLine(`GET ${transportPath}`);
-  
+
+  logInfo(ctx.output, `Query: ${path}`);
+  logInfo(ctx.output, `GET ${transportPath}`);
+
   const result = await client.get(transportPath, token);
   await showJsonNamed(buildResultTitle(path), result);
 }
 
-async function initContext(ctx: CommandContext): Promise<{ baseUrl: string; scope: string; token: string; client: DataverseClient }> {
+async function initContext(
+  ctx: CommandContext
+): Promise<{
+  baseUrl: string;
+  scope: string;
+  token: string;
+  client: DataverseClient;
+  session: SmartMetadataSession;
+}> {
   const baseUrl = await ctx.getBaseUrl();
   const scope = ctx.getScope(baseUrl);
-
-  ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-  ctx.output.appendLine(`Scope: ${scope}`);
-  ctx.output.appendLine(`Getting token via Azure CLI...`);
-
   const token = await ctx.getToken(scope);
   const client = ctx.getClient(baseUrl);
+  const session = new SmartMetadataSession(ctx, client, token);
 
-  return { baseUrl, scope, token, client };
+  return { baseUrl, scope, token, client, session };
 }
 
 export async function runSmartGetAction(ctx: CommandContext): Promise<void> {
   ctx.output.show(true);
 
   try {
-    const { token, client } = await initContext(ctx);
+      const { token, client, session } = await initContext(ctx);
 
-    const built = await buildOrEditState(ctx, client, token, undefined);
-    if (!built) {return;}
+      const built = await buildOrEditState(session, undefined);
+      if (!built) {return;}
 
-    const reviewed = await reviewAndEditLoop(ctx, client, token, built.state);
-    if (!reviewed) {return;}
+      const reviewed = await reviewAndEditLoop(
+        ctx,
+        client,
+        token,
+        session,
+        built.state,
+        built.fields
+      );
+      if (!reviewed) {return;}
 
-    await executeState(ctx, client, token, reviewed);
+      await executeState(ctx, client, token, reviewed.state, reviewed.fields);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Smart GET failed. Check Output.");
   }
 }
@@ -633,11 +642,19 @@ export async function runSmartGetRerunLastAction(ctx: CommandContext): Promise<v
       return;
     }
 
-    const { token, client } = await initContext(ctx);
-    await executeState(ctx, client, token, last);
+    const { token, client, session } = await initContext(ctx);
+    const fields = await getFieldsForEntity(
+      ctx,
+      client,
+      token,
+      last.entityLogicalName,
+      session
+    );
+
+    await executeState(ctx, client, token, last, fields);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output, msg);
     vscode.window.showErrorMessage("DV Quick Run: Re-run last failed. Check Output.");
   }
 }
@@ -652,15 +669,31 @@ export async function runSmartGetEditLastAction(ctx: CommandContext): Promise<vo
       return;
     }
 
-    const { token, client } = await initContext(ctx);
+    const { token, client, session } = await initContext(ctx);
+    const fields = await getFieldsForEntity(
+      ctx,
+      client,
+      token,
+      last.entityLogicalName,
+      session
+    );
 
-    const reviewed = await reviewAndEditLoop(ctx, client, token, last);
-    if (!reviewed) {return;}
+    const reviewed = await reviewAndEditLoop(
+      ctx,
+      client,
+      token,
+      session,
+      last,
+      fields
+    );
+    if (!reviewed) {
+      return;
+    }
 
-    await executeState(ctx, client, token, reviewed);
+    await executeState(ctx, client, token, reviewed.state, reviewed.fields);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logInfo(ctx.output, msg);
     vscode.window.showErrorMessage("DV Quick Run: Edit last failed. Check Output.");
   }
 }
@@ -671,17 +704,18 @@ export async function runSmartGetFromGuidRawAction(ctx: CommandContext): Promise
   try {
     const guid = getSelectedGuidOrThrow();
 
-    const { token, client } = await initContext(ctx);
+    const { token, client, session } = await initContext(ctx);
 
-    const defs = await loadEntityDefs(ctx, client, token);
+    const defs = await session.getEntityDefs();
     const def = await pickEntity(defs);
     if (!def) {return;}
 
     const path = normalizePath(`${def.entitySetName}(${guid})`);
-
-    ctx.output.appendLine(`Smart GET (GUID raw): entity=${def.entitySetName} id=${guid}`);
-    ctx.output.appendLine(`GET ${path}`);
-
+    const transportPath = ensureTransportPath(path);
+      
+    logInfo(ctx.output, `Smart GET (GUID raw): entity=${def.entitySetName} id=${guid}`);
+    logInfo(ctx.output, `GET ${transportPath}`);
+      
     const shouldExecute = await shouldExecuteQueryWithGuardrails(
       ctx,
       client,
@@ -693,12 +727,12 @@ export async function runSmartGetFromGuidRawAction(ctx: CommandContext): Promise
     if (!shouldExecute) {
       return;
     }
-
-    const result = await client.get(path, token);
+    
+    const result = await client.get(transportPath, token);
     await showJsonNamed(buildResultTitle(path), result);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Smart GET from GUID (Raw) failed. Check Output.");
   }
 }
@@ -709,13 +743,13 @@ export async function runSmartGetFromGuidPickFieldsAction(ctx: CommandContext): 
   try {
     const guid = getSelectedGuidOrThrow();
 
-    const { token, client } = await initContext(ctx);
+    const { token, client, session } = await initContext(ctx);
 
-    const defs = await loadEntityDefs(ctx, client, token);
+    const defs = await session.getEntityDefs();
     const def = await pickEntity(defs);
     if (!def) {return;}
 
-    const fields = await getFieldsForEntity(ctx, client, token, def.logicalName);
+    const fields = await session.getSmartFields(def.logicalName);
 
     const pickedFields = await pickFields(def, fields);
     if (!pickedFields) {return;}
@@ -731,10 +765,11 @@ export async function runSmartGetFromGuidPickFieldsAction(ctx: CommandContext): 
 
     const select = selectTokens.join(",");
     const path = normalizePath(`${def.entitySetName}(${guid})?$select=${select}`);
-
-    ctx.output.appendLine(`Smart GET (GUID pick fields): entity=${def.entitySetName} id=${guid} fields=${selectTokens.length}`);
-    ctx.output.appendLine(`GET ${path}`);
-
+    const transportPath = ensureTransportPath(path);
+      
+    logInfo(ctx.output, `Smart GET (GUID pick fields): entity=${def.entitySetName} id=${guid} fields=${selectTokens.length}`);
+    logInfo(ctx.output, `GET ${transportPath}`);
+      
     const shouldExecute = await shouldExecuteQueryWithGuardrails(
       ctx,
       client,
@@ -746,12 +781,12 @@ export async function runSmartGetFromGuidPickFieldsAction(ctx: CommandContext): 
     if (!shouldExecute) {
       return;
     }
-
-    const result = await client.get(path, token);
+    
+    const result = await client.get(transportPath, token);
     await showJsonNamed(buildResultTitle(path), result);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Smart GET from GUID (Pick Fields) failed. Check Output.");
   }
 }

@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
+import { logError, logInfo } from "../../../utils/logger.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
 import { FieldDef } from "../../../services/entityFieldMetadataService.js";
 import { loadEntityDefs, loadFields } from "./shared/metadataAccess.js";
@@ -108,10 +109,6 @@ export async function runAddOrderByAction(ctx: CommandContext): Promise<void> {
     const baseUrl = await ctx.getBaseUrl();
     const scope = ctx.getScope(baseUrl);
 
-    ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-    ctx.output.appendLine(`Scope: ${scope}`);
-    ctx.output.appendLine(`Getting token via Azure CLI...`);
-
     const token = await ctx.getToken(scope);
     const client: DataverseClient = ctx.getClient(baseUrl);
 
@@ -146,11 +143,11 @@ export async function runAddOrderByAction(ctx: CommandContext): Promise<void> {
     const updated = buildEditorQuery(parsed);
     await applyEditorQueryUpdate(target, updated);
 
-    ctx.output.appendLine(`Add Order ($orderby): ${target.text} -> ${updated}`);
+    logInfo(ctx.output,`Add Order ($orderby): ${target.text} -> ${updated}`);
     vscode.window.showInformationMessage("DV Quick Run: Added order to $orderby.");
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Add Order ($orderby) failed. Check Output.");
   }
 }

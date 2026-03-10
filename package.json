@@ -162,6 +162,12 @@
           "type": "boolean",
           "default": true,
           "description": "Show inline metadata hover for Dataverse query entities, clauses, operators, and fields."
+        },
+        "dvQuickRun.logLevel": {
+        "type": "string",
+        "default": "info",
+        "enum": ["error", "warn", "info", "debug"],
+        "description": "Controls DV Quick Run logging verbosity."
         }
       }
     }

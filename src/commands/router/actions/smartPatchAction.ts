@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
-import { FieldDef } from "../../../services/entityFieldMetadataService.js";
-import { loadEntityDefs, loadFields } from "./shared/metadataAccess.js";
+import { logError, logInfo } from "../../../utils/logger.js";
+import { EntityDef } from "../../../utils/entitySetCache.js";
 import { showJsonNamed } from "../../../utils/virtualJsonDoc.js";
 import { addQueryToHistory } from "../../../utils/queryHistory.js";
-import { EntityDef } from "../../../utils/entitySetCache.js";
 import { SmartField, PatchFieldValue, SmartPatchState } from "./smartPatch/smartPatchTypes.js";
 import { isGuidLike, isPatchSupportedField } from "./smartPatch/smartPatchValueParser.js";
 import { buildPatchBody, buildPatchPath, buildPatchCurl } from "./smartPatch/smartPatchQueryBuilder.js";
+import { SmartMetadataSession } from "./smart/shared/smartMetadataSession.js";
 
 const LAST_SMART_PATCH_STATE_KEY = "dvQuickRun.smartPatch.lastState";
 
@@ -20,18 +20,22 @@ function loadLastState(ctx: CommandContext): SmartPatchState | undefined {
   return ctx.ext.globalState.get<SmartPatchState>(LAST_SMART_PATCH_STATE_KEY);
 }
 
-async function initContext(ctx: CommandContext): Promise<{ baseUrl: string; scope: string; token: string; client: DataverseClient }> {
+async function initContext(
+  ctx: CommandContext
+): Promise<{
+  baseUrl: string;
+  scope: string;
+  token: string;
+  client: DataverseClient;
+  session: SmartMetadataSession;
+}> {
   const baseUrl = await ctx.getBaseUrl();
   const scope = ctx.getScope(baseUrl);
-
-  ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-  ctx.output.appendLine(`Scope: ${scope}`);
-  ctx.output.appendLine(`Getting token via Azure CLI...`);
-
   const token = await ctx.getToken(scope);
   const client = ctx.getClient(baseUrl);
+  const session = new SmartMetadataSession(ctx, client, token);
 
-  return { baseUrl, scope, token, client };
+  return { baseUrl, scope, token, client, session };
 }
 
 async function pickEntity(defs: EntityDef[], preselectLogicalName?: string): Promise<EntityDef | undefined> {
@@ -54,18 +58,10 @@ async function pickEntity(defs: EntityDef[], preselectLogicalName?: string): Pro
 }
 
 async function getFieldsForEntity(
-  ctx: CommandContext,
-  client: DataverseClient,
-  token: string,
+  session: SmartMetadataSession,
   logicalName: string
 ): Promise<SmartField[]> {
-  const fields = await loadFields(ctx, client, token, logicalName);
-
-  return fields.map((f: FieldDef) => ({
-    logicalName: f.logicalName,
-    attributeType: f.attributeType ?? "",
-    isValidForRead: f.isValidForRead
-  }));
+  return session.getSmartFields(logicalName);
 }
 
 async function promptRecordId(pre?: string): Promise<string | undefined> {
@@ -76,12 +72,17 @@ async function promptRecordId(pre?: string): Promise<string | undefined> {
     ignoreFocusOut: true,
     validateInput: (v) => {
       const t = v.trim();
-      if (!t) {return "GUID is required";}
+      if (!t) {
+        return "GUID is required";
+      }
       return isGuidLike(t) ? undefined : "Enter a valid GUID";
     }
   }))?.trim();
 
-  if (!id) {return undefined;}
+  if (!id) {
+    return undefined;
+  }
+
   return id;
 }
 
@@ -109,7 +110,10 @@ async function pickPatchableFields(
     }
   );
 
-  if (!picked || picked.length === 0) {return undefined;}
+  if (!picked || picked.length === 0) {
+    return undefined;
+  }
+
   return picked.map((p) => p.field);
 }
 
@@ -118,25 +122,37 @@ async function promptValues(
   pre?: PatchFieldValue[]
 ): Promise<PatchFieldValue[] | undefined> {
   const preMap = new Map((pre ?? []).map((x) => [x.logicalName.toLowerCase(), x]));
-
   const values: PatchFieldValue[] = [];
 
   for (const f of pickedFields) {
     const existing = preMap.get(f.logicalName.toLowerCase());
+
     const raw = await vscode.window.showInputBox({
-      title: `DV Quick Run: Smart PATCH — Value`,
+      title: "DV Quick Run: Smart PATCH — Value",
       prompt: `${f.logicalName} (${f.attributeType})`,
       value: existing?.rawValue,
       ignoreFocusOut: true
     });
 
-    if (raw === undefined) {return undefined;}
-    if (!raw.trim()) {continue;}
+    if (raw === undefined) {
+      return undefined;
+    }
 
-    values.push({ logicalName: f.logicalName, attributeType: f.attributeType, rawValue: raw.trim() });
+    if (!raw.trim()) {
+      continue;
+    }
+
+    values.push({
+      logicalName: f.logicalName,
+      attributeType: f.attributeType,
+      rawValue: raw.trim()
+    });
   }
 
-  if (values.length === 0) {return undefined;}
+  if (values.length === 0) {
+    return undefined;
+  }
+
   return values;
 }
 
@@ -157,9 +173,12 @@ async function reviewLoop(
   client: DataverseClient,
   token: string,
   baseUrl: string,
-  state: SmartPatchState
-): Promise<SmartPatchState | undefined> {
-  let current = state;
+  session: SmartMetadataSession,
+  initial: SmartPatchState,
+  initialFields: SmartField[]
+): Promise<{ state: SmartPatchState; fields: SmartField[] } | undefined> {
+  let current = initial;
+  let fields = initialFields;
 
   while (true) {
     const patchPath = buildPatchPath(current);
@@ -173,15 +192,23 @@ async function reviewLoop(
     const items: Array<{ label: string; description?: string; choice: ReviewChoice }> = [
       { label: "✅ Run PATCH", description: `${patchPath}`, choice: { kind: "run" } },
 
-      { label: "✏️ Edit entity", description: `${current.entitySetName} (${current.entityLogicalName})`, choice: { kind: "editEntity" } },
+      {
+        label: "✏️ Edit entity",
+        description: `${current.entitySetName} (${current.entityLogicalName})`,
+        choice: { kind: "editEntity" }
+      },
       { label: "✏️ Edit record id", description: current.id, choice: { kind: "editId" } },
       { label: "✏️ Edit fields", description: `${current.fields.length} fields`, choice: { kind: "editFields" } },
       { label: "✏️ Edit values", description: fieldSummary, choice: { kind: "editValues" } },
 
       { label: "📋 Copy payload", description: "Copies JSON body to clipboard", choice: { kind: "copyPayload" } },
       { label: "📋 Copy PATCH path", description: "Copies /<entitySet>(<guid>) to clipboard", choice: { kind: "copyPatchPath" } },
-      { label: "📋 Copy PATCH as curl", description: "Copies curl command to clipboard", choice: { kind: "copyCurl" } },      
-      { label: "➡️ Open in Run GET", description: "Adds a GET for this record to history and opens Run GET", choice: { kind: "openInRunGet" } },
+      { label: "📋 Copy PATCH as curl", description: "Copies curl command to clipboard", choice: { kind: "copyCurl" } },
+      {
+        label: "➡️ Open in Run GET",
+        description: "Adds a GET for this record to history and opens Run GET",
+        choice: { kind: "openInRunGet" }
+      },
       { label: "❌ Cancel", choice: { kind: "cancel" } }
     ];
 
@@ -192,9 +219,13 @@ async function reviewLoop(
     });
 
     const choice = picked?.choice;
-    if (!choice) {return undefined;}
+    if (!choice) {
+      return undefined;
+    }
 
-    if (choice.kind === "cancel") {return undefined;}
+    if (choice.kind === "cancel") {
+      return undefined;
+    }
 
     if (choice.kind === "copyPayload") {
       await vscode.env.clipboard.writeText(JSON.stringify(patchBody, null, 2));
@@ -222,51 +253,70 @@ async function reviewLoop(
       return undefined;
     }
 
-    if (choice.kind === "run") {return current;}
+    if (choice.kind === "run") {
+      return { state: current, fields };
+    }
 
     if (choice.kind === "editId") {
       const id = await promptRecordId(current.id);
-      if (!id) {return undefined;}
+      if (!id) {
+        return undefined;
+      }
+
       current = { ...current, id };
       continue;
     }
 
     if (choice.kind === "editEntity") {
-      const defs = await loadEntityDefs(ctx, client, token);
+      const defs = await session.getEntityDefs();
       const def = await pickEntity(defs, current.entityLogicalName);
-      if (!def) {return undefined;}
+      if (!def) {
+        return undefined;
+      }
 
       const id = await promptRecordId(undefined);
-      if (!id) {return undefined;}
+      if (!id) {
+        return undefined;
+      }
 
-      current = { entityLogicalName: def.logicalName, entitySetName: def.entitySetName, id, fields: [], ifMatch: current.ifMatch };
+      fields = await getFieldsForEntity(session, def.logicalName);
+
+      current = {
+        entityLogicalName: def.logicalName,
+        entitySetName: def.entitySetName,
+        id,
+        fields: [],
+        ifMatch: current.ifMatch
+      };
       continue;
     }
 
     if (choice.kind === "editFields") {
-      const fields = await getFieldsForEntity(ctx, client, token, current.entityLogicalName);
-
       const pre = current.fields.map((x) => x.logicalName);
       const pickedFields = await pickPatchableFields(current.entitySetName, fields, pre);
-      if (!pickedFields) {return undefined;}
+      if (!pickedFields) {
+        return undefined;
+      }
 
       const values = await promptValues(pickedFields, current.fields);
-      if (!values) {return undefined;}
+      if (!values) {
+        return undefined;
+      }
 
       current = { ...current, fields: values };
       continue;
     }
 
     if (choice.kind === "editValues") {
-      const fields = await getFieldsForEntity(ctx, client, token, current.entityLogicalName);
-
       const map = new Map(fields.map((f) => [f.logicalName.toLowerCase(), f]));
       const pickedFields = current.fields
         .map((x) => map.get(x.logicalName.toLowerCase()))
         .filter((x): x is SmartField => !!x);
 
       const values = await promptValues(pickedFields, current.fields);
-      if (!values) {return undefined;}
+      if (!values) {
+        return undefined;
+      }
 
       current = { ...current, fields: values };
       continue;
@@ -285,9 +335,9 @@ async function executePatch(
 
   await saveLastState(ctx, state);
 
-  ctx.output.appendLine(`Smart PATCH: entity=${state.entitySetName} id=${state.id} fields=${state.fields.length}`);
-  ctx.output.appendLine(`PATCH ${patchPath}`);
-  ctx.output.appendLine(`Payload:\n${JSON.stringify(body, null, 2)}`);
+  logInfo(ctx.output, `Smart PATCH: entity=${state.entitySetName} id=${state.id} fields=${state.fields.length}`);
+  logInfo(ctx.output, `PATCH ${patchPath}`);
+  logInfo(ctx.output, `Payload:\n${JSON.stringify(body, null, 2)}`);
 
   const result = await client.patch(patchPath, token, body, state.ifMatch);
 
@@ -302,24 +352,34 @@ async function executePatch(
 }
 
 async function buildInitialState(
-  ctx: CommandContext,
-  client: DataverseClient,
-  token: string,
+  session: SmartMetadataSession,
   pre?: SmartPatchState
-): Promise<SmartPatchState | undefined> {
-  const defs = await loadEntityDefs(ctx, client, token);
+): Promise<{ state: SmartPatchState; fields: SmartField[] } | undefined> {
+  const defs = await session.getEntityDefs();
   const def = await pickEntity(defs, pre?.entityLogicalName);
-  if (!def) {return undefined;}
+  if (!def) {
+    return undefined;
+  }
 
   const id = await promptRecordId(pre?.id);
-  if (!id) {return undefined;}
+  if (!id) {
+    return undefined;
+  }
 
-  const fields = await getFieldsForEntity(ctx, client, token, def.logicalName);
-  const pickedFields = await pickPatchableFields(def.entitySetName, fields, pre?.fields?.map((x) => x.logicalName));
-  if (!pickedFields) {return undefined;}
+  const fields = await getFieldsForEntity(session, def.logicalName);
+  const pickedFields = await pickPatchableFields(
+    def.entitySetName,
+    fields,
+    pre?.fields?.map((x) => x.logicalName)
+  );
+  if (!pickedFields) {
+    return undefined;
+  }
 
   const values = await promptValues(pickedFields, pre?.fields);
-  if (!values) {return undefined;}
+  if (!values) {
+    return undefined;
+  }
 
   const state: SmartPatchState = {
     entityLogicalName: def.logicalName,
@@ -329,25 +389,37 @@ async function buildInitialState(
     ifMatch: pre?.ifMatch ?? "*"
   };
 
-  return state;
+  return { state, fields };
 }
 
 export async function runSmartPatchAction(ctx: CommandContext): Promise<void> {
   ctx.output.show(true);
 
   try {
-    const { token, client, baseUrl } = await initContext(ctx);
+    const { token, client, baseUrl, session } = await initContext(ctx);
 
-    const built = await buildInitialState(ctx, client, token, undefined);
-    if (!built) {return;}
+    const built = await buildInitialState(session, undefined);
+    if (!built) {
+      return;
+    }
 
-    const reviewed = await reviewLoop(ctx, client, token, baseUrl, built);
-    if (!reviewed) {return;}
+    const reviewed = await reviewLoop(
+      ctx,
+      client,
+      token,
+      baseUrl,
+      session,
+      built.state,
+      built.fields
+    );
+    if (!reviewed) {
+      return;
+    }
 
-    await executePatch(ctx, client, token, reviewed);
+    await executePatch(ctx, client, token, reviewed.state);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output, msg);
     vscode.window.showErrorMessage("DV Quick Run: Smart PATCH failed. Check Output.");
   }
 }
@@ -366,7 +438,7 @@ export async function runSmartPatchRerunLastAction(ctx: CommandContext): Promise
     await executePatch(ctx, client, token, last);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output, msg);
     vscode.window.showErrorMessage("DV Quick Run: Re-run last PATCH failed. Check Output.");
   }
 }
@@ -381,18 +453,30 @@ export async function runSmartPatchEditLastAction(ctx: CommandContext): Promise<
       return;
     }
 
-    const { token, client, baseUrl } = await initContext(ctx);
+    const { token, client, baseUrl, session } = await initContext(ctx);
 
-    const rebuilt = await buildInitialState(ctx, client, token, last);
-    if (!rebuilt) {return;}
+    const rebuilt = await buildInitialState(session, last);
+    if (!rebuilt) {
+      return;
+    }
 
-    const reviewed = await reviewLoop(ctx, client, token, baseUrl, rebuilt);
-    if (!reviewed) {return;}
+    const reviewed = await reviewLoop(
+      ctx,
+      client,
+      token,
+      baseUrl,
+      session,
+      rebuilt.state,
+      rebuilt.fields
+    );
+    if (!reviewed) {
+      return;
+    }
 
-    await executePatch(ctx, client, token, reviewed);
+    await executePatch(ctx, client, token, reviewed.state);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output, msg);
     vscode.window.showErrorMessage("DV Quick Run: Edit last PATCH failed. Check Output.");
   }
 }

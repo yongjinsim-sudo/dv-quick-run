@@ -3,13 +3,19 @@ import type { CommandContext } from "../commands/context/commandContext.js";
 import { clauseFact, FILTER_OPERATOR_FACTS } from "../commands/router/actions/shared/queryExplain/factLibrary.js";
 import { getFieldHint } from "../commands/router/actions/shared/queryExplain/fieldHints.js";
 import { parseEditorQuery, getEntitySetNameFromEditorQuery } from "../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
-import { toSelectableFields } from "../commands/router/actions/shared/selectableFields.js";
 import { isChoiceAttributeType } from "../metadata/metadataModel.js";
 import { loadEntityDefs, loadFields, loadNavigationProperties, loadChoiceMetadata } from "../commands/router/actions/shared/metadataAccess.js";
 import type { EntityDef } from "../utils/entitySetCache.js";
 import type { FieldDef } from "../services/entityFieldMetadataService.js";
 import type { NavPropertyDef } from "../services/entityRelationshipMetadataService.js";
 import type { ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
+import type { DataverseClient } from "../services/dataverseClient.js";
+import {
+  buildHoverFieldContext,
+  getCachedHoverFieldContext,
+  setCachedHoverFieldContext,
+  type HoverFieldContext
+} from "./hoverFieldContextCache.js";
 
 const navHoverEnrichmentCache = new Map<
   string,
@@ -159,22 +165,137 @@ function findEntityByEntitySetName(defs: EntityDef[], entitySetName: string): En
   return defs.find((d) => d.entitySetName.trim().toLowerCase() === target);
 }
 
-async function loadEntityDefsSilently(ctx: CommandContext): Promise<EntityDef[]> {
-  const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
-  const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
+type HoverConnectionContext = {
+  baseUrl: string;
+  scope: string;
+  token: string;
+  client: DataverseClient;
+};
 
-  return loadEntityDefs(ctx, client, token);
+function isHoverCancelled(token: vscode.CancellationToken): boolean {
+  return token.isCancellationRequested;
 }
 
-async function loadFieldsSilently(ctx: CommandContext, logicalName: string): Promise<FieldDef[]> {
-  const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
-  const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
+class HoverRequestContext {
+  private connectionPromise?: Promise<HoverConnectionContext>;
+  private entityDefsPromise?: Promise<EntityDef[]>;
+  private fieldContextPromises = new Map<string, Promise<HoverFieldContext>>();
+  private navigationPromises = new Map<string, Promise<NavPropertyDef[]>>();
+  private choicePromises = new Map<string, Promise<ChoiceMetadataDef[]>>();
+  private entityBySetPromises = new Map<string, Promise<EntityDef | undefined>>();
 
-  return loadFields(ctx, client, token, logicalName);
+  constructor(private readonly ctx: CommandContext) {}
+
+  async getConnection(): Promise<HoverConnectionContext> {
+    if (!this.connectionPromise) {
+      this.connectionPromise = (async () => {
+        const baseUrl = await this.ctx.getBaseUrl();
+        const scope = this.ctx.getScope(baseUrl);
+        const token = await this.ctx.getToken(scope);
+        const client = this.ctx.getClient(baseUrl);
+
+        return { baseUrl, scope, token, client };
+      })();
+    }
+
+    return this.connectionPromise;
+  }
+
+  async getEntityDefs(): Promise<EntityDef[]> {
+    if (!this.entityDefsPromise) {
+      this.entityDefsPromise = (async () => {
+        const connection = await this.getConnection();
+        return loadEntityDefs(this.ctx, connection.client, connection.token, {
+          silent: true,
+          suppressOutput: true
+        });
+      })();
+    }
+
+    return this.entityDefsPromise;
+  }
+
+async getEntityByEntitySetName(entitySetName: string): Promise<EntityDef | undefined> {
+  const key = normalizeWord(entitySetName);
+  const existing = this.entityBySetPromises.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  const promise = (async () => {
+    const defs = await this.getEntityDefs();
+    return findEntityByEntitySetName(defs, entitySetName);
+  })();
+
+  this.entityBySetPromises.set(key, promise);
+  return promise;
+}
+
+  async getFieldContext(logicalName: string): Promise<HoverFieldContext> {
+    const cached = getCachedHoverFieldContext(logicalName);
+    if (cached) {
+      return cached;
+    }
+
+    const key = normalizeWord(logicalName);
+    const existing = this.fieldContextPromises.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const promise = (async () => {
+      const connection = await this.getConnection();
+      const fields = await loadFields(this.ctx, connection.client, connection.token, logicalName, {
+        silent: true,
+        suppressOutput: true
+      });
+
+      const context = buildHoverFieldContext(fields);
+      setCachedHoverFieldContext(logicalName, context);
+      return context;
+    })();
+
+    this.fieldContextPromises.set(key, promise);
+    return promise;
+  }
+
+  async getNavigationProperties(logicalName: string): Promise<NavPropertyDef[]> {
+    const key = normalizeWord(logicalName);
+    const existing = this.navigationPromises.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const promise = (async () => {
+      const connection = await this.getConnection();
+      return loadNavigationProperties(this.ctx, connection.client, connection.token, logicalName, {
+        silent: true,
+        suppressOutput: true
+      }) as Promise<NavPropertyDef[]>;
+    })();
+
+    this.navigationPromises.set(key, promise);
+    return promise;
+  }
+
+  async getChoiceMetadata(logicalName: string): Promise<ChoiceMetadataDef[]> {
+    const key = normalizeWord(logicalName);
+    const existing = this.choicePromises.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    const promise = (async () => {
+      const connection = await this.getConnection();
+      return loadChoiceMetadata(this.ctx, connection.client, connection.token, logicalName, {
+        silent: true,
+        suppressOutput: true
+      });
+    })();
+
+    this.choicePromises.set(key, promise);
+    return promise;
+  }
 }
 
 function buildClauseHover(token: string): vscode.Hover | undefined {
@@ -208,18 +329,6 @@ function buildClauseHover(token: string): vscode.Hover | undefined {
   }
 
   return new vscode.Hover(md);
-}
-
-async function loadChoiceMetadataSilently(
-  ctx: CommandContext,
-  logicalName: string
-): Promise<ChoiceMetadataDef[]> {
-  const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
-  const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
-
-  return loadChoiceMetadata(ctx, client, token, logicalName);
 }
 
 function findChoiceMetadataForField(
@@ -366,7 +475,7 @@ export class QueryHoverProvider implements vscode.HoverProvider {
   async provideHover(
     document: vscode.TextDocument,
     position: vscode.Position,
-    _token: vscode.CancellationToken
+    token: vscode.CancellationToken
   ): Promise<vscode.Hover | undefined> {
     if (!isInlineHoverEnabled()) {
       return undefined;
@@ -406,8 +515,14 @@ export class QueryHoverProvider implements vscode.HoverProvider {
       return undefined;
     }
 
-        // Choice-value hover (e.g. hover "1" in prioritycode eq 1)
+    const request = new HoverRequestContext(this.ctx);
+
     try {
+      if (isHoverCancelled(token)) {
+        return undefined;
+      }
+
+      // Choice-value hover
       if (isScalarValueToken(hoveredWord)) {
         const filterValue = parsed.queryOptions.get("$filter");
         if (filterValue) {
@@ -418,27 +533,25 @@ export class QueryHoverProvider implements vscode.HoverProvider {
           );
 
           if (matchingComparison) {
-            const defs = await loadEntityDefsSilently(this.ctx);
-            const entity = findEntityByEntitySetName(defs, entitySetName);
-
-            if (entity) {
-              const fields = await loadFieldsSilently(this.ctx, entity.logicalName);
-              const field = fields.find(
-                (f) => normalizeWord(f.logicalName) === normalizeWord(matchingComparison.fieldLogicalName)
+            const entity = await request.getEntityByEntitySetName(entitySetName);
+            if (entity && !isHoverCancelled(token)) {
+              const fieldContext = await request.getFieldContext(entity.logicalName);
+              const field = fieldContext.fieldByLogicalName.get(
+                normalizeWord(matchingComparison.fieldLogicalName)
               );
 
-              if (field && isChoiceAttributeType(field.attributeType)) {
-                const baseUrl = await this.ctx.getBaseUrl();
-                const scope = this.ctx.getScope(baseUrl);
-                const token = await this.ctx.getToken(scope);
-                const client = this.ctx.getClient(baseUrl);
-
-                const allChoiceMetadata = await loadChoiceMetadataSilently(this.ctx, entity.logicalName);
-                const choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, field.logicalName);
+              if (field && isChoiceAttributeType(field.attributeType) && !isHoverCancelled(token)) {
+                const allChoiceMetadata = await request.getChoiceMetadata(entity.logicalName);
+                const choiceMetadata = findChoiceMetadataForField(
+                  allChoiceMetadata,
+                  field.logicalName
+                );
 
                 if (choiceMetadata) {
                   const option = choiceMetadata.options.find(
-                    (o) => normalizeScalarToken(String(o.value)) === normalizeScalarToken(matchingComparison.rawValue)
+                    (o) =>
+                      normalizeScalarToken(String(o.value)) ===
+                      normalizeScalarToken(matchingComparison.rawValue)
                   );
 
                   if (option) {
@@ -455,110 +568,72 @@ export class QueryHoverProvider implements vscode.HoverProvider {
           }
         }
       }
-    } catch {
-      // Silent fallback: value-token hover is enrichment only.
-    }
 
-    // Entity set hover
-    if (normalizeWord(hoveredWord) === normalizeWord(entitySetName)) {
-      try {
-        const defs = await loadEntityDefsSilently(this.ctx);
-        const entity = findEntityByEntitySetName(defs, entitySetName);
-        return buildEntityHover(entitySetName, entity);
-      } catch (e: any) {
-        return buildNavigationFallbackHover(hoveredWord);
+      if (isHoverCancelled(token)) {
+        return undefined;
       }
-    }
 
-    // Expand navigation-property hover
-    try {
+      // Entity set hover
+      if (normalizeWord(hoveredWord) === normalizeWord(entitySetName)) {
+        const entity = await request.getEntityByEntitySetName(entitySetName);
+        return buildEntityHover(entitySetName, entity);
+      }
+
+      if (isHoverCancelled(token)) {
+        return undefined;
+      }
+
+      // Expand navigation-property hover
       if (tokenAppearsInExpand(lineText, hoveredWord)) {
-        const defs = await loadEntityDefsSilently(this.ctx);
+        const defs = await request.getEntityDefs();
         const entity = findEntityByEntitySetName(defs, entitySetName);
-    
-        if (entity) {
-          const navs = await loadNavigationPropertiesSilently(this.ctx, entity.logicalName);
-    
+
+        if (entity && !isHoverCancelled(token)) {
+          const navs = await request.getNavigationProperties(entity.logicalName);
+
           const navMatch = navs.find(
             (n) => normalizeWord(n.navigationPropertyName) === normalizeWord(hoveredWord)
           );
-    
+
           if (navMatch) {
             const targetLogicalName =
               navMatch.referencedEntity?.trim() ||
               navMatch.referencingEntity?.trim() ||
               undefined;
-    
-              let targetEntitySetName: string | undefined;
-              let exampleExpand: string | undefined;
-              let suggestedFields: string[] | undefined;
 
-              const cacheKey = `${entitySetName}:${navMatch.navigationPropertyName}`;
+            const cacheKey = `${entitySetName}:${navMatch.navigationPropertyName}`;
+            const cached = navHoverEnrichmentCache.get(cacheKey);
 
-              const cached = navHoverEnrichmentCache.get(cacheKey);
+            if (cached) {
+              return buildNavigationPropertyHover({
+                nav: navMatch,
+                sourceEntitySetName: entitySetName,
+                targetEntitySetName: cached.targetEntitySetName,
+                exampleExpand: cached.exampleExpand,
+                suggestedFields: cached.suggestedFields
+              });
+            }
 
-              if (cached) {
-                targetEntitySetName = cached.targetEntitySetName;
-                exampleExpand = cached.exampleExpand;
-                suggestedFields = cached.suggestedFields;
-              }
-              else if (targetLogicalName) {
-                (async () => {
-                  try {
-                    const targetDef = defs.find(
-                      (d) => normalizeWord(d.logicalName) === normalizeWord(targetLogicalName)
-                    );
-                  
-                    const targetEntitySetName = targetDef?.entitySetName;
-                  
-                    const targetFields = await loadFieldsSilently(this.ctx, targetLogicalName);
-                    const selectable = toSelectableFields(targetFields);
-                  
-                    const fieldLogicalNames = selectable
-                      .map((f) => f.logicalName)
-                      .filter(Boolean)
-                      .slice(0, 30);
-                  
-                    const suggestedFields = pickSuggestedFields(fieldLogicalNames);
-                  
-                    const exampleField = pickPreferredExampleField(fieldLogicalNames);
-                  
-                    const exampleExpand = exampleField
-                      ? `${entitySetName}?$expand=${navMatch.navigationPropertyName}($select=${exampleField})`
-                      : `${entitySetName}?$expand=${navMatch.navigationPropertyName}`;
-                              
-                  } catch {
-                    // ignore enrichment failures
-                  }
-                })();
-              
-                // return simple hover immediately
-                return buildNavigationPropertyHover({
-                  nav: navMatch,
-                  sourceEntitySetName: entitySetName
-                });
-              }
+            let targetEntitySetName: string | undefined;
+            let exampleExpand: string | undefined;
+            let suggestedFields: string[] | undefined;
 
-              if (cached) {
-                targetEntitySetName = cached.targetEntitySetName;
-                exampleExpand = cached.exampleExpand;
-                suggestedFields = cached.suggestedFields;
-              } else if (targetLogicalName) {
+            if (targetLogicalName && !isHoverCancelled(token)) {
               const targetDef = defs.find(
                 (d) => normalizeWord(d.logicalName) === normalizeWord(targetLogicalName)
               );
+
               targetEntitySetName = targetDef?.entitySetName;
-    
+
               try {
-                const targetFields = await loadFieldsSilently(this.ctx, targetLogicalName);
-                const selectable = toSelectableFields(targetFields);
-                const fieldLogicalNames = selectable
+                const targetFieldContext = await request.getFieldContext(targetLogicalName);
+                const fieldLogicalNames = targetFieldContext.selectable
                   .map((f) => f.logicalName)
                   .filter(Boolean)
                   .slice(0, 30);
-    
+
                 suggestedFields = pickSuggestedFields(fieldLogicalNames);
-    
+
                 const exampleField = pickPreferredExampleField(fieldLogicalNames);
                 exampleExpand = exampleField
                   ? `${entitySetName}?$expand=${navMatch.navigationPropertyName}($select=${exampleField})`
@@ -567,12 +642,13 @@ export class QueryHoverProvider implements vscode.HoverProvider {
                 exampleExpand = `${entitySetName}?$expand=${navMatch.navigationPropertyName}`;
               }
             }
+
             navHoverEnrichmentCache.set(cacheKey, {
               targetEntitySetName,
               exampleExpand,
               suggestedFields
             });
-    
+
             return buildNavigationPropertyHover({
               nav: navMatch,
               sourceEntitySetName: entitySetName,
@@ -583,91 +659,81 @@ export class QueryHoverProvider implements vscode.HoverProvider {
           }
         }
       }
-    } catch {
-      return buildNavigationFallbackHover(hoveredWord);
-    }
 
-    // Field hover
-    try {
-      const defs = await loadEntityDefsSilently(this.ctx);
-      const entity = findEntityByEntitySetName(defs, entitySetName);
+      if (isHoverCancelled(token)) {
+        return undefined;
+      }
 
+      // Field hover
+      const entity = await request.getEntityByEntitySetName(entitySetName);
       if (!entity) {
         return undefined;
       }
 
-      const fields = await loadFieldsSilently(this.ctx, entity.logicalName);
-      const selectable = toSelectableFields(fields);
+      const fieldContext = await request.getFieldContext(entity.logicalName);
 
-      const fieldMatch = fields.find(
-        (f) => normalizeWord(f.logicalName) === normalizeWord(hoveredWord)
-      );
-      
+      const fieldMatch = fieldContext.fieldByLogicalName.get(normalizeWord(hoveredWord));
+
       if (fieldMatch) {
-        const selectableMatch = selectable.find(
-          (f) => normalizeWord(f.logicalName) === normalizeWord(fieldMatch.logicalName)
+        const selectableMatch = fieldContext.selectableByLogicalName.get(
+          normalizeWord(fieldMatch.logicalName)
         );
-      
+
         let choiceMetadata: ChoiceMetadataDef | undefined;
-        if (isChoiceAttributeType(fieldMatch.attributeType)) {
-          const allChoiceMetadata = await loadChoiceMetadataSilently(this.ctx, entity.logicalName);
+        if (isChoiceAttributeType(fieldMatch.attributeType) && !isHoverCancelled(token)) {
+          const allChoiceMetadata = await request.getChoiceMetadata(entity.logicalName);
           choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, fieldMatch.logicalName);
         }
-      
+
         const selectedRawValue = getSelectedRawValueForField(parsed, fieldMatch.logicalName);
+
+        return buildFieldHover(
+          fieldMatch,
+          selectableMatch?.selectToken,
+          hoveredWord,
+          choiceMetadata,
+          selectedRawValue
+        );
+      }
+
+      const selectTokenMatch = fieldContext.selectableByToken.get(normalizeWord(hoveredWord));
+
+      if (selectTokenMatch) {
+        const backingField = fieldContext.fieldByLogicalName.get(
+          normalizeWord(selectTokenMatch.logicalName)
+        );
+
+        if (backingField) {
+          let choiceMetadata: ChoiceMetadataDef | undefined;
+          if (isChoiceAttributeType(backingField.attributeType) && !isHoverCancelled(token)) {
+            const allChoiceMetadata = await request.getChoiceMetadata(entity.logicalName);
+            choiceMetadata = findChoiceMetadataForField(
+              allChoiceMetadata,
+              backingField.logicalName
+            );
+          }
+
+          const selectedRawValue = getSelectedRawValueForField(parsed, backingField.logicalName);
+
           return buildFieldHover(
-            fieldMatch,
-            selectableMatch?.selectToken,
+            backingField,
+            selectTokenMatch.selectToken,
             hoveredWord,
             choiceMetadata,
             selectedRawValue
           );
-      }
-
-      const selectTokenMatch = selectable.find(
-        (f) => normalizeWord(f.selectToken ?? "") === normalizeWord(hoveredWord)
-      );
-      
-      if (selectTokenMatch) {
-        const backingField = fields.find(
-          (f) => normalizeWord(f.logicalName) === normalizeWord(selectTokenMatch.logicalName)
-        );
-      
-        if (backingField) {
-          let choiceMetadata: ChoiceMetadataDef | undefined;
-          if (isChoiceAttributeType(backingField.attributeType)) {
-            const allChoiceMetadata = await loadChoiceMetadataSilently(this.ctx, entity.logicalName);
-            choiceMetadata = findChoiceMetadataForField(allChoiceMetadata, backingField.logicalName);
-          }
-      
-          const selectedRawValue = getSelectedRawValueForField(parsed, backingField.logicalName);
-            return buildFieldHover(
-              backingField,
-              selectTokenMatch.selectToken,
-              hoveredWord,
-              choiceMetadata,
-              selectedRawValue
-            );
         }
       }
-    } catch (e: any) {
-        return buildNavigationFallbackHover(hoveredWord);
+
+      return undefined;
+    } catch {
+      if (isHoverCancelled(token)) {
+        return undefined;
+      }
+
+      return buildNavigationFallbackHover(hoveredWord);
     }
-
-    return undefined;
   }
-}
-
-async function loadNavigationPropertiesSilently(
-  ctx: CommandContext,
-  logicalName: string
-): Promise<NavPropertyDef[]> {
-  const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
-  const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
-
-  return loadNavigationProperties(ctx, client, token, logicalName);
 }
 
 function getExpandValue(queryText: string): string | undefined {

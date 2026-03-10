@@ -37,7 +37,6 @@ async function runCommandAtLine(
   });
 
   const line = doc.lineAt(lineNumber);
-  const range = new vscode.Range(lineNumber, 0, lineNumber, line.text.length);
 
   const pos = new vscode.Position(lineNumber, 0);
   
@@ -48,6 +47,25 @@ async function runCommandAtLine(
   );
 
   await vscode.commands.executeCommand(command);
+}
+
+function createDebouncedCallback(callback: () => void, delayMs: number): () => void {
+  let handle: NodeJS.Timeout | undefined;
+
+  return () => {
+    if (handle) {
+      clearTimeout(handle);
+    }
+
+    handle = setTimeout(() => {
+      handle = undefined;
+      callback();
+    }, delayMs);
+  };
+}
+
+function shouldRefreshCodeLensForDocument(document: vscode.TextDocument): boolean {
+  return document.uri.scheme === "file" || document.uri.scheme === "untitled";
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -134,6 +152,9 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   const codeLensProvider = new QueryCodeLensProvider();
+  const refreshCodeLensDebounced = createDebouncedCallback(() => {
+    codeLensProvider.refresh();
+  }, 200);
 
   context.subscriptions.push(
     vscode.languages.registerCodeLensProvider(
@@ -165,13 +186,21 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(() => codeLensProvider.refresh())
+context.subscriptions.push(
+  vscode.workspace.onDidOpenTextDocument((document) => {
+      if (shouldRefreshCodeLensForDocument(document)) {
+        refreshCodeLensDebounced();
+      }
+    })
   );
 
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument(() => codeLensProvider.refresh())
-  );
+context.subscriptions.push(
+  vscode.workspace.onDidChangeTextDocument((event) => {
+        if (shouldRefreshCodeLensForDocument(event.document)) {
+          refreshCodeLensDebounced();
+        }
+      })
+    );
 
 }
 
