@@ -6,6 +6,28 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.2.2] - Performance & Cache Observability
+
+### Added
+- Metadata diagnostics command to inspect runtime cache state
+- Commands to clear session metadata cache
+- Commands to clear persisted metadata cache
+- Versioned metadata cache keys to support safe future upgrades
+
+### Improved
+
+- Reduced repeated metadata resolution during hover and Smart GET workflows
+- Optimized CodeLens refresh behavior to avoid unnecessary recomputation while editing
+- Improved metadata cache reuse across hover and query analysis features
+- Reduced output noise by demoting non-critical logs to debug level
+- Added lightweight entity-definition prewarm to improve first-use responsiveness
+
+### Fixed
+
+- Persisted metadata cache invalidation for entity definitions
+- Duplicate hover request context property causing redundant lookup paths
+- Cache key inconsistencies across metadata caches
+
 ## [0.2.1] - Hotfix
 
 ### Fixed

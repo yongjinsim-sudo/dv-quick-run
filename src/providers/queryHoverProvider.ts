@@ -859,3 +859,7 @@ function buildNavigationFallbackHover(token: string): vscode.Hover {
   md.appendMarkdown("Connect to Dataverse to resolve relationship metadata such as target entity, lookup attribute, and schema name.");
   return new vscode.Hover(md);
 }
+
+export function clearNavigationHoverEnrichmentCache(): void {
+  navHoverEnrichmentCache.clear();
+}

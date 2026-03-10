@@ -126,3 +126,17 @@ export function clearMetadataSessionCache(): void {
   choiceMemory.clear();
   choiceInFlight.clear();
 }
+
+export function getMetadataSessionCacheDiagnostics(): {
+  entityDefsLoaded: boolean;
+  fieldsLogicalNames: string[];
+  navigationLogicalNames: string[];
+  choiceLogicalNames: string[];
+} {
+  return {
+    entityDefsLoaded: !!entityDefsMemory,
+    fieldsLogicalNames: Array.from(fieldsMemory.keys()).sort(),
+    navigationLogicalNames: Array.from(navigationMemory.keys()).sort(),
+    choiceLogicalNames: Array.from(choiceMemory.keys()).sort()
+  };
+}

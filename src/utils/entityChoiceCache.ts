@@ -51,3 +51,26 @@ export async function setCachedChoiceMetadata(
   };
   await writeAll(ctx, all);
 }
+
+export function getEntityChoiceCacheDiagnostics(ext: vscode.ExtensionContext): {
+  logicalNames: string[];
+  countsByLogicalName: Record<string, number>;
+} {
+  const store = ext.globalState.get<Record<string, any[]>>("dvQuickRun.entityChoiceCache") ?? {};
+
+  const logicalNames = Object.keys(store).sort();
+  const countsByLogicalName: Record<string, number> = {};
+
+  for (const logicalName of logicalNames) {
+    countsByLogicalName[logicalName] = Array.isArray(store[logicalName]) ? store[logicalName].length : 0;
+  }
+
+  return {
+    logicalNames,
+    countsByLogicalName
+  };
+}
+
+export async function clearCachedChoiceMetadata(ext: vscode.ExtensionContext): Promise<void> {
+  await ext.globalState.update("dvQuickRun.entityChoiceCache", undefined);
+}

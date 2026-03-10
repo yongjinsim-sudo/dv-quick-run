@@ -53,3 +53,15 @@ export function setCachedHoverFieldContext(
 export function clearHoverFieldContextCache(): void {
   hoverFieldContextCache.clear();
 }
+
+export function getHoverFieldContextCacheDiagnostics(): {
+  logicalNames: string[];
+  count: number;
+} {
+  const logicalNames = Array.from(hoverFieldContextCache.keys()).sort();
+
+  return {
+    logicalNames,
+    count: logicalNames.length
+  };
+}
