@@ -5,6 +5,7 @@ import {
   confirmGuardrailsIfNeeded,
   showGuardrailErrors
 } from "./queryGuardrails.js";
+import { logWarn } from "../../../../../utils/logger.js";
 
 export async function shouldExecuteQueryWithGuardrails(
   ctx: CommandContext,
@@ -23,7 +24,7 @@ export async function shouldExecuteQueryWithGuardrails(
   const shouldContinue = await confirmGuardrailsIfNeeded(guardrails);
   if (!shouldContinue) {
     if (cancelMessage) {
-      ctx.output.appendLine(cancelMessage);
+      logWarn(ctx.output,cancelMessage);
     }
     return false;
   }

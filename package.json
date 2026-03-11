@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Run, build, and understand Dataverse Web API queries directly inside VS Code. Includes smart query builders, query explanation, metadata intelligence, and relationship exploration.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -69,7 +69,10 @@
       { "command": "dvQuickRun.runQueryAtLine", "title": "DV Quick Run: Run Query At Line" },
       { "command": "dvQuickRun.explainQueryAtLine", "title": "DV Quick Run: Explain Query At Line" },
       { "command": "dvQuickRun.relationshipExplorer", "title": "DV Quick Run: Explore Relationships" },
-      { "command": "dvQuickRun.relationshipGraphView", "title": "DV Quick Run: View Relationship Graph" }
+      { "command": "dvQuickRun.relationshipGraphView", "title": "DV Quick Run: View Relationship Graph" },
+      { "command": "dvQuickRun.showMetadataDiagnostics", "title": "DV Quick Run: Show Metadata Diagnostics" },
+      { "command": "dvQuickRun.clearMetadataSessionCache", "title": "DV Quick Run: Clear Metadata Session Cache" },
+      { "command": "dvQuickRun.clearPersistedMetadataCache", "title": "DV Quick Run: Clear Persisted Metadata Cache" }
     ],
     "menus": {
       "commandPalette": [
@@ -162,6 +165,12 @@
           "type": "boolean",
           "default": true,
           "description": "Show inline metadata hover for Dataverse query entities, clauses, operators, and fields."
+        },
+        "dvQuickRun.logLevel": {
+        "type": "string",
+        "default": "info",
+        "enum": ["error", "warn", "info", "debug"],
+        "description": "Controls DV Quick Run logging verbosity."
         }
       }
     }

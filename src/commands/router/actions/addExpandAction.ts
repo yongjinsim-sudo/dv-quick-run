@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
+import { logDebug, logError, logInfo } from "../../../utils/logger.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
 import {
   loadEntityDefs,
@@ -75,7 +76,7 @@ async function loadNavigationOptions(
     a.navigationPropertyName.localeCompare(b.navigationPropertyName)
   );
 
-  ctx.output.appendLine(`Navigation properties found for ${logicalName}: ${result.length}`);
+  logDebug(ctx.output,`Navigation properties found for ${logicalName}: ${result.length}`);
   return result;
 }
 
@@ -188,10 +189,6 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
     const baseUrl = await ctx.getBaseUrl();
     const scope = ctx.getScope(baseUrl);
 
-    ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-    ctx.output.appendLine(`Scope: ${scope}`);
-    ctx.output.appendLine(`Getting token via Azure CLI...`);
-
     const token = await ctx.getToken(scope);
     const client: DataverseClient = ctx.getClient(baseUrl);
 
@@ -233,11 +230,11 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
     const updated = buildEditorQuery(parsed);
     await applyEditorQueryUpdate(target, updated);
 
-    ctx.output.appendLine(`Add Expand ($expand): ${target.text} -> ${updated}`);
+    logInfo(ctx.output,`Add Expand ($expand): ${target.text} -> ${updated}`);
     vscode.window.showInformationMessage("DV Quick Run: Added expand to $expand.");
   } catch (error: any) {
     const msg = error?.message ?? String(error);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Add Expand ($expand) failed. Check Output.");
   }
 }

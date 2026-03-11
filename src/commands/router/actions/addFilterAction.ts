@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
+import { logError, logInfo } from "../../../utils/logger.js";
 import {
   loadEntityDefs,
   loadSelectableFields,
@@ -449,10 +450,6 @@ export async function runAddFilterAction(ctx: CommandContext): Promise<void> {
     const baseUrl = await ctx.getBaseUrl();
     const scope = ctx.getScope(baseUrl);
 
-    ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-    ctx.output.appendLine(`Scope: ${scope}`);
-    ctx.output.appendLine(`Getting token via Azure CLI...`);
-
     const token = await ctx.getToken(scope);
     const client: DataverseClient = ctx.getClient(baseUrl);
 
@@ -490,11 +487,11 @@ export async function runAddFilterAction(ctx: CommandContext): Promise<void> {
     const updated = buildEditorQuery(parsed);
     await applyEditorQueryUpdate(target, updated);
 
-    ctx.output.appendLine(`Add Filter ($filter): ${target.text} -> ${updated}`);
+    logInfo(ctx.output,`Add Filter ($filter): ${target.text} -> ${updated}`);
     vscode.window.showInformationMessage("DV Quick Run: Added filter to $filter.");
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage(`DV Quick Run: ${msg}`);
   }
 }

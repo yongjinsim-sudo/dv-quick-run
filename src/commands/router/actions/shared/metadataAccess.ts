@@ -7,7 +7,7 @@ import { fetchEntityDefs } from "../../../../services/entityMetadataService.js";
 import type { FieldMetadata } from "../../../../metadata/metadataModel.js";
 import { getCachedFields, setCachedFields } from "../../../../utils/entityFieldCache.js";
 import { fetchEntityFields, FieldDef } from "../../../../services/entityFieldMetadataService.js";
-
+import { logDebug } from "../../../../utils/logger.js";
 import {
   getSelectableFields,
   type SelectableField,
@@ -20,7 +20,51 @@ import {
   setCachedNavigationProperties
 } from "../../../../utils/entityRelationshipCache.js";
 
+import {
+  getEntityDefsMemory,
+  setEntityDefsMemory,
+  getOrCreateEntityDefsInFlight,
+  getFieldsMemory,
+  setFieldsMemory,
+  getOrCreateFieldsInFlight,
+  getNavigationMemory,
+  setNavigationMemory,
+  getOrCreateNavigationInFlight
+} from "./metadataLoadCache.js";
 
+type MetadataLoadOptions = {
+  silent?: boolean;
+  suppressOutput?: boolean;
+};
+
+function appendOutput(
+  ctx: CommandContext,
+  message: string,
+  options?: MetadataLoadOptions
+): void {
+  if (!options?.suppressOutput) {
+    logDebug(ctx.output,message);
+  }
+}
+
+async function runMetadataLoad<T>(
+  title: string,
+  factory: () => Promise<T>,
+  options?: MetadataLoadOptions
+): Promise<T> {
+  if (options?.silent) {
+    return factory();
+  }
+
+  return vscode.window.withProgress<T>(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title,
+      cancellable: false
+    },
+    async () => await factory()
+  );
+}
 
 function normalizeName(value: string | undefined): string {
   return (value ?? "").trim().toLowerCase();
@@ -42,29 +86,42 @@ export async function loadNavigationProperties(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  logicalName: string
+  logicalName: string,
+  options?: MetadataLoadOptions
 ): Promise<any[]> {
+  const memory = getNavigationMemory<any>(logicalName);
+  if (memory?.length) {
+    return memory;
+  }
+
   const cached = getCachedNavigationProperties(ctx.ext, logicalName);
   if (cached?.length) {
-    ctx.output.appendLine(
-      `Navigation properties cache hit for ${logicalName}: ${cached.length} relationships.`
+    setNavigationMemory(logicalName, cached);
+    appendOutput(
+      ctx,
+      `Navigation properties cache hit for ${logicalName}: ${cached.length} relationships.`,
+      options
     );
     return cached;
   }
 
-  const relationships = await vscode.window.withProgress<any[]>(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: `DV Quick Run: Loading navigation properties for ${logicalName}...`,
-      cancellable: false
-    },
-    async () => await fetchEntityNavigationProperties(client, token, logicalName)
-  );
+  const relationships = await getOrCreateNavigationInFlight<any>(logicalName, async () => {
+    const fetched = await runMetadataLoad<any[]>(
+      `DV Quick Run: Loading navigation properties for ${logicalName}...`,
+      async () => await fetchEntityNavigationProperties(client, token, logicalName),
+      options
+    );
 
-  await setCachedNavigationProperties(ctx.ext, logicalName, relationships);
-  ctx.output.appendLine(
-    `Navigation properties fetched for ${logicalName}: ${relationships.length} relationships.`
-  );
+    await setCachedNavigationProperties(ctx.ext, logicalName, fetched);
+    setNavigationMemory(logicalName, fetched);
+    appendOutput(
+      ctx,
+      `Navigation properties fetched for ${logicalName}: ${fetched.length} relationships.`,
+      options
+    );
+
+    return fetched;
+  });
 
   return relationships;
 }
@@ -121,29 +178,39 @@ export async function findFieldOnDirectlyRelatedEntity(
 export async function loadEntityDefs(
   ctx: CommandContext,
   client: DataverseClient,
-  token: string
+  token: string,
+  options?: MetadataLoadOptions
 ): Promise<EntityDef[]> {
+  const memory = getEntityDefsMemory<EntityDef>();
+  if (memory?.length) {
+    return memory;
+  }
+
   const cached = getCachedEntityDefs(ctx.ext);
   if (cached?.length) {
-    ctx.output.appendLine(`Entity defs cache hit: ${cached.length} items.`);
+    setEntityDefsMemory(cached);
+    appendOutput(ctx, `Entity defs cache hit: ${cached.length} items.`, options);
     return cached;
   }
 
   try {
-    const defs = await vscode.window.withProgress<EntityDef[]>(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: "DV Quick Run: Loading Dataverse entity list...",
-        cancellable: false
-      },
-      async () => await fetchEntityDefs(client, token)
-    );
+    const defs = await getOrCreateEntityDefsInFlight<EntityDef>(async () => {
+      const fetched = await runMetadataLoad<EntityDef[]>(
+        "DV Quick Run: Loading Dataverse entity list...",
+        async () => await fetchEntityDefs(client, token),
+        options
+      );
 
-    await setCachedEntityDefs(ctx.ext, defs);
-    ctx.output.appendLine(`Entity defs fetched: ${defs.length} items.`);
+      await setCachedEntityDefs(ctx.ext, fetched);
+      setEntityDefsMemory(fetched);
+      appendOutput(ctx, `Entity defs fetched: ${fetched.length} items.`, options);
+
+      return fetched;
+    });
+
     return defs;
   } catch (e: any) {
-    ctx.output.appendLine(`Entity defs fetch failed: ${e?.message ?? String(e)}`);
+    appendOutput(ctx, `Entity defs fetch failed: ${e?.message ?? String(e)}`, options);
 
     const fallback: EntityDef[] = [
       { entitySetName: "accounts", logicalName: "account" },
@@ -159,9 +226,11 @@ export async function loadEntityDefs(
       { entitySetName: "annotations", logicalName: "annotation" }
     ];
 
-    vscode.window.showWarningMessage(
-      "DV Quick Run: Could not load entity metadata. Using fallback table list."
-    );
+    if (!options?.silent) {
+      vscode.window.showWarningMessage(
+        "DV Quick Run: Could not load entity metadata. Using fallback table list."
+      );
+    }
 
     return fallback;
   }
@@ -171,25 +240,35 @@ export async function loadFields(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  logicalName: string
+  logicalName: string,
+  options?: MetadataLoadOptions
 ): Promise<FieldDef[]> {
+  const memory = getFieldsMemory<FieldDef>(logicalName);
+  if (memory?.length) {
+    return memory;
+  }
+
   const cached = getCachedFields(ctx.ext, logicalName);
   if (cached?.length) {
-    ctx.output.appendLine(`Fields cache hit for ${logicalName}: ${cached.length} fields.`);
+    setFieldsMemory(logicalName, cached);
+    appendOutput(ctx, `Fields cache hit for ${logicalName}: ${cached.length} fields.`, options);
     return cached;
   }
 
-  const fields = await vscode.window.withProgress<FieldDef[]>(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: `DV Quick Run: Loading fields for ${logicalName}...`,
-      cancellable: false
-    },
-    async () => await fetchEntityFields(client, token, logicalName)
-  );
+  const fields = await getOrCreateFieldsInFlight<FieldDef>(logicalName, async () => {
+    const fetched = await runMetadataLoad<FieldDef[]>(
+      `DV Quick Run: Loading fields for ${logicalName}...`,
+      async () => await fetchEntityFields(client, token, logicalName),
+      options
+    );
 
-  await setCachedFields(ctx.ext, logicalName, fields);
-  ctx.output.appendLine(`Fields fetched for ${logicalName}: ${fields.length} fields.`);
+    await setCachedFields(ctx.ext, logicalName, fetched);
+    setFieldsMemory(logicalName, fetched);
+    appendOutput(ctx, `Fields fetched for ${logicalName}: ${fetched.length} fields.`, options);
+
+    return fetched;
+  });
+
   return fields;
 }
 
@@ -197,12 +276,11 @@ export async function loadSelectableFields(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  logicalName: string
+  logicalName: string,
+  options?: MetadataLoadOptions
 ): Promise<SelectableField[]> {
-  const fields = await loadFields(ctx, client, token, logicalName);
-  const selectable = getSelectableFields(fields);
-  ctx.output.appendLine(`Selectable fields for ${logicalName}: ${selectable.length} / ${fields.length}`);
-  return selectable;
+  const fields = await loadFields(ctx, client, token, logicalName, options);
+  return getSelectableFields(fields);
 }
 
 export function buildFieldMap(fields: FieldDef[]): Map<string, FieldDef> {

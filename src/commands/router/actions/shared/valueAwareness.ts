@@ -1,9 +1,30 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { DataverseClient } from "../../../../services/dataverseClient.js";
+import { logDebug } from "../../../../utils/logger.js";
 import { fetchEntityChoiceMetadata, type ChoiceMetadataDef } from "../../../../services/entityChoiceMetadataService.js";
 import { getCachedChoiceMetadata, setCachedChoiceMetadata } from "../../../../utils/entityChoiceCache.js";
 import { normalizeChoiceLabel } from "../../../../metadata/metadataModel.js";
+import {
+  getChoiceMemory,
+  setChoiceMemory,
+  getOrCreateChoiceInFlight
+} from "./metadataLoadCache.js";
+
+type MetadataLoadOptions = {
+  silent?: boolean;
+  suppressOutput?: boolean;
+};
+
+function appendOutput(
+  ctx: CommandContext,
+  message: string,
+  options?: MetadataLoadOptions
+): void {
+  if (!options?.suppressOutput) {
+    logDebug(ctx.output,message);
+  }
+}
 
 export type ResolvedChoiceValue = {
   metadata: ChoiceMetadataDef;
@@ -45,25 +66,48 @@ export async function loadChoiceMetadata(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  logicalName: string
+  logicalName: string,
+  options?: MetadataLoadOptions
 ): Promise<ChoiceMetadataDef[]> {
+  const memory = getChoiceMemory<ChoiceMetadataDef>(logicalName);
+  if (memory?.length) {
+    return memory;
+  }
+
   const cached = getCachedChoiceMetadata(ctx.ext, logicalName);
   if (cached?.length) {
-    ctx.output.appendLine(`Choice metadata cache hit for ${logicalName}: ${cached.length} fields.`);
+    setChoiceMemory(logicalName, cached);
+    appendOutput(
+      ctx,
+      `Choice metadata cache hit for ${logicalName}: ${cached.length} fields.`,
+      options
+    );
     return cached;
   }
 
-  const values = await vscode.window.withProgress<ChoiceMetadataDef[]>(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: `DV Quick Run: Loading choice metadata for ${logicalName}...`,
-      cancellable: false
-    },
-    async () => await fetchEntityChoiceMetadata(client, token, logicalName)
-  );
+  const values = await getOrCreateChoiceInFlight<ChoiceMetadataDef>(logicalName, async () => {
+    const fetched = options?.silent
+      ? await fetchEntityChoiceMetadata(client, token, logicalName)
+      : await vscode.window.withProgress<ChoiceMetadataDef[]>(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: `DV Quick Run: Loading choice metadata for ${logicalName}...`,
+            cancellable: false
+          },
+          async () => await fetchEntityChoiceMetadata(client, token, logicalName)
+        );
 
-  await setCachedChoiceMetadata(ctx.ext, logicalName, values);
-  ctx.output.appendLine(`Choice metadata fetched for ${logicalName}: ${values.length} fields.`);
+    await setCachedChoiceMetadata(ctx.ext, logicalName, fetched);
+    setChoiceMemory(logicalName, fetched);
+    appendOutput(
+      ctx,
+      `Choice metadata fetched for ${logicalName}: ${fetched.length} fields.`,
+      options
+    );
+
+    return fetched;
+  });
+
   return values;
 }
 

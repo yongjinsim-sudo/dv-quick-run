@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
+import { logDebug, logError, logInfo, logWarn } from "../../../utils/logger.js";
 import { showJsonNamed } from "../../../utils/virtualJsonDoc.js";
 import { getQueryHistory, addQueryToHistory } from "../../../utils/queryHistory.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
@@ -61,7 +62,7 @@ async function buildSelectFieldsQuery(
   const fields = await getFieldsForEntity(ctx, client, token, def.logicalName);
 
   const selectableCount = fields.filter((f) => !!selectTokenForField(f)).length;
-  ctx.output.appendLine(`Selectable fields for ${def.logicalName}: ${selectableCount} / ${fields.length}`);
+  logDebug(ctx.output,`Selectable fields for ${def.logicalName}: ${selectableCount} / ${fields.length}`);
 
   const picked = await vscode.window.showQuickPick(
     fields.map((f) => {
@@ -163,10 +164,6 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
     const baseUrl = await ctx.getBaseUrl();
     const scope = ctx.getScope(baseUrl);
 
-    ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-    ctx.output.appendLine(`Scope: ${scope}`);
-    ctx.output.appendLine(`Getting token via Azure CLI...`);
-
     const token = await ctx.getToken(scope);
     const client = ctx.getClient(baseUrl);
 
@@ -182,7 +179,7 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
 
     const shouldContinue = await confirmGuardrailsIfNeeded(guardrails);
     if (!shouldContinue) {
-      ctx.output.appendLine("Run GET cancelled by guardrails.");
+      logWarn(ctx.output,"Run GET cancelled by guardrails.");
       return;
     }
 
@@ -190,14 +187,14 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
 
     const path = normalizePath(input);
 
-    ctx.output.appendLine(`Query: ${path}`);
-    ctx.output.appendLine(`GET ${path}`);
+    logInfo(ctx.output,`Query: ${path}`);
+    logInfo(ctx.output,`GET ${path}`);
 
     const result = await client.get(path, token);
     await showJsonNamed(buildResultTitle(path), result);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Run GET failed. Check Output.");
   }
 }

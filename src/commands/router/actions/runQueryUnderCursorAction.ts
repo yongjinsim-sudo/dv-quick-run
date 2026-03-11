@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
+import { logError, logInfo, logWarn } from "../../../utils/logger.js";
 import { showJsonNamed } from "../../../utils/virtualJsonDoc.js";
 import { addQueryToHistory } from "../../../utils/queryHistory.js";
 import { normalizePath, buildResultTitle } from "./get/getQueryBuilder.js";
@@ -36,11 +37,6 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
 
     const baseUrl = await ctx.getBaseUrl();
     const scope = ctx.getScope(baseUrl);
-
-    ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-    ctx.output.appendLine(`Scope: ${scope}`);
-    ctx.output.appendLine(`Getting token via Azure CLI...`);
-
     const token = await ctx.getToken(scope);
     const client = ctx.getClient(baseUrl);
 
@@ -53,12 +49,12 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
 
     const shouldContinue = await confirmGuardrailsIfNeeded(guardrails);
     if (!shouldContinue) {
-      ctx.output.appendLine("Run Query Under Cursor cancelled by guardrails.");
+      logWarn(ctx.output,"Run Query Under Cursor cancelled by guardrails.");
       return;
     }
 
-    ctx.output.appendLine(`Run Query Under Cursor: ${path}`);
-    ctx.output.appendLine(`GET ${path}`);
+    logInfo(ctx.output,`Run Query Under Cursor: ${path}`);
+    logInfo(ctx.output,`GET ${path}`);
 
     await addQueryToHistory(ctx.ext, path.replace(/^\//, ""));
 
@@ -66,7 +62,7 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
     await showJsonNamed(buildResultTitle(path), result);
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Run Query Under Cursor failed. Check Output.");
   }
 }

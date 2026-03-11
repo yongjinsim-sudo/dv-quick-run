@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
+import { logError, logInfo } from "../../../utils/logger.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
 import { loadEntityDefs, findEntityByEntitySetName } from "./shared/metadataAccess.js";
 import { clauseFact, FILTER_OPERATOR_FACTS } from "./shared/queryExplain/factLibrary.js";
@@ -575,7 +576,7 @@ async function tryResolveEntity(
 
     return findEntityByEntitySetName(defs, entitySetName);
   } catch (e: any) {
-    ctx.output.appendLine(`Explain Query metadata resolution skipped: ${e?.message ?? String(e)}`);
+    logError(ctx.output,`Explain Query metadata resolution skipped: ${e?.message ?? String(e)}`);
     return undefined;
   }
 }
@@ -606,7 +607,7 @@ export async function runExplainQueryAction(ctx: CommandContext): Promise<void> 
       throw new Error(`Could not detect entity set from: ${text}`);
     }
 
-    ctx.output.appendLine(`Explain Query input: ${text}`);
+    logInfo(ctx.output,`Explain Query input: ${text}`);
 
     const entity = await tryResolveEntity(ctx, parsed.entitySetName);
 
@@ -620,11 +621,11 @@ export async function runExplainQueryAction(ctx: CommandContext): Promise<void> 
 
     await openMarkdownPreview(markdown);
 
-    ctx.output.appendLine(`Explain Query success for entity set: ${parsed.entitySetName}`);
+    logInfo(ctx.output,`Explain Query success for entity set: ${parsed.entitySetName}`);
     vscode.window.showInformationMessage("DV Quick Run: Query explained.");
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Explain Query failed. Check Output.");
   }
 }

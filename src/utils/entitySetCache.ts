@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import type { EntityMetadata } from "../metadata/metadataModel.js";
 
-const KEY = "dvQuickRun.entityDefsCache";
+const KEY = "dvQuickRun.entityDefsCache.v1";
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export type EntityDef = EntityMetadata;
@@ -31,4 +31,23 @@ export async function setCachedEntityDefs(
   };
 
   await context.globalState.update(KEY, payload);
+}
+
+
+export function getEntitySetCacheDiagnostics(ext: vscode.ExtensionContext): {
+  count: number;
+  logicalNames: string[];
+  entitySetNames: string[];
+} {
+  const defs = getCachedEntityDefs(ext) ?? [];
+
+  return {
+    count: defs.length,
+    logicalNames: defs.map((d) => d.logicalName).sort(),
+    entitySetNames: defs.map((d) => d.entitySetName).sort()
+  };
+}
+
+export async function clearCachedEntityDefs(ext: vscode.ExtensionContext): Promise<void> {
+  await ext.globalState.update(KEY, undefined);
 }

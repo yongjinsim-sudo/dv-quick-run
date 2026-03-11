@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
+import { logError, logInfo } from "../../../utils/logger.js";
 import { loadEntityDefs, loadFields } from "./shared/metadataAccess.js";
 import { DataverseClient } from "../../../services/dataverseClient.js";
 import { EntityDef } from "../../../utils/entitySetCache.js";
@@ -60,10 +61,6 @@ export async function runAddFieldsSelectAction(ctx: CommandContext): Promise<voi
     const baseUrl = await ctx.getBaseUrl();
     const scope = ctx.getScope(baseUrl);
 
-    ctx.output.appendLine(`BaseUrl: ${baseUrl}`);
-    ctx.output.appendLine(`Scope: ${scope}`);
-    ctx.output.appendLine(`Getting token via Azure CLI...`);
-
     const token = await ctx.getToken(scope);
     const client: DataverseClient = ctx.getClient(baseUrl);
 
@@ -84,11 +81,11 @@ export async function runAddFieldsSelectAction(ctx: CommandContext): Promise<voi
     const updated = buildEditorQuery(parsed);
     await applyEditorQueryUpdate(target, updated);
 
-    ctx.output.appendLine(`Add Fields ($select): ${target.text} -> ${updated}`);
+    logInfo(ctx.output,`Add Fields ($select): ${target.text} -> ${updated}`);
     vscode.window.showInformationMessage("DV Quick Run: Added fields to $select.");
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Add Fields ($select) failed. Check Output.");
   }
 }

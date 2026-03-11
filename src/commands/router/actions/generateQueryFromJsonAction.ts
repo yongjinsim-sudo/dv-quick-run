@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
 import { addQueryToHistory } from "../../../utils/queryHistory.js";
-
+import { logError, logInfo } from "../../../utils/logger.js";
 import { ParsedRecord } from "./generateQueryFromJson/generateQueryFromJsonTypes.js";
 import {
   readJsonFromEditor,
@@ -223,15 +223,15 @@ export async function runGenerateQueryFromJsonAction(ctx: CommandContext): Promi
 
     const baseUrl = await ctx.getBaseUrl();
 
-    ctx.output.appendLine(`Generate Query From JSON: used=${payload.used} source=${rec.source}`);
-    ctx.output.appendLine(`EntitySet: ${rec.entitySetName}`);
-    ctx.output.appendLine(`Id: ${rec.id}`);
+    logInfo(ctx.output,`Generate Query From JSON: used=${payload.used} source=${rec.source}`);
+    logInfo(ctx.output,`EntitySet: ${rec.entitySetName}`);
+    logInfo(ctx.output,`Id: ${rec.id}`);
     if (rec.primaryIdField) {
-      ctx.output.appendLine(`PrimaryIdField: ${rec.primaryIdField}`);
+      logInfo(ctx.output,`PrimaryIdField: ${rec.primaryIdField}`);
     }
-    ctx.output.appendLine(`Direct GET: /${buildGetPath(rec)}`);
-    ctx.output.appendLine(`Direct GET + $select: /${buildGetPathWithSelect(rec)}`);
-    ctx.output.appendLine(`Filter by ID: /${buildFilterPathById(rec)}`);
+    logInfo(ctx.output,`Direct GET: /${buildGetPath(rec)}`);
+    logInfo(ctx.output,`Direct GET + $select: /${buildGetPathWithSelect(rec)}`);
+    logInfo(ctx.output,`Filter by ID: /${buildFilterPathById(rec)}`);
 
     const picks = buildPrimaryPicks(rec, baseUrl);
 
@@ -276,7 +276,7 @@ export async function runGenerateQueryFromJsonAction(ctx: CommandContext): Promi
     }
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    ctx.output.appendLine(msg);
+    logError(ctx.output,msg);
     vscode.window.showErrorMessage("DV Quick Run: Generate Query From JSON failed. Check Output.");
   }
 }

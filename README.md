@@ -1,278 +1,255 @@
 # DV Quick Run
 
-**Run, build, and understand Dataverse Web API queries directly inside
-VS Code with metadata‑aware developer tooling.**
+**Run, build, and understand Dataverse Web API queries directly inside VS Code with metadata-aware developer tooling.**
 
-DV Quick Run turns VS Code into a **Dataverse developer console**.\
-Instead of jumping between Postman, browser tabs, maker portals, and
-documentation, you can **write, refine, execute, and explain queries
-without leaving the editor**.
+DV Quick Run turns VS Code into a **Dataverse developer console**.  
+Instead of jumping between Postman, browser tabs, maker portals, and documentation, you can **write, refine, execute, and explain queries without leaving the editor**.
 
-------------------------------------------------------------------------
+---
 
-## 🆕 What's New in v0.2.0
+## 🆕 What's New in v0.2.2
 
-DV Quick Run now includes a **metadata intelligence engine** that makes
-the extension significantly more powerful and accurate.
+This release focuses on **performance, reliability, and metadata intelligence**.
 
-New capabilities include:
+Major improvements:
 
--   Choice / option‑set metadata decoding
--   Navigation metadata normalization
--   Lookup target resolution
--   Metadata caching improvements
--   Relationship explorer and graph view
--   Improved query explanation accuracy
--   Better query validation and suggestions
+- Token reuse with in-memory caching
+- Metadata request deduplication
+- Layered metadata caching (session + persisted)
+- Faster metadata hover resolution
+- CodeLens refresh debounce for smoother editing
+- Metadata diagnostics tools for cache inspection
+- Reduced extension output noise
 
-These improvements make DV Quick Run much more **schema‑aware**,
-enabling smarter query helpers and better developer guidance.
+These improvements make metadata-powered features such as **Explain Query, hover metadata, builders, and relationship exploration significantly faster** during normal development sessions.
 
-------------------------------------------------------------------------
+---
 
 ## 🚀 Animated Demo
 
 ![DV Quick Run Demo](docs/demo-run-query.gif)
 
-Example workflow:
+Typical workflow:
 
-write query\
-→ refine query\
-→ run query\
-→ inspect results\
-→ explain query\
-→ improve query
+write query  
+→ refine query  
+→ run query  
+→ inspect results  
+→ explain query  
+→ improve query  
 
 Everything happens **inside VS Code**.
 
-------------------------------------------------------------------------
+---
+
+# ⚡ Quick Start
+
+1. Install **DV Quick Run**
+2. Login with Azure CLI
+    az login --allow-no-subscriptions
+
+3. Write a Dataverse query in a file
+    contacts?$top=10
+
+
+4. Click **Run Query** in CodeLens.
+
+That's it.
+
+---
 
 # ✨ Why DV Quick Run?
 
-Working with the Dataverse Web API usually involves a fragmented
-workflow:
+Working with the Dataverse Web API usually involves a fragmented workflow:
 
--   Write a query\
--   Copy it into Postman\
--   Run it\
--   Inspect results\
--   Look up metadata\
--   Adjust the query\
--   Repeat
+- Write a query
+- Copy it into Postman
+- Run it
+- Inspect results
+- Look up metadata
+- Adjust the query
+- Repeat
 
 DV Quick Run collapses that loop into a **single editor experience**.
 
-------------------------------------------------------------------------
+---
 
-# ⚡ Key Features (v0.2.0)
+# 🔎 CodeLens Query Execution
 
-## Run Dataverse Queries Instantly
+DV Quick Run automatically detects probable Dataverse queries and adds **inline CodeLens actions**.
 
-Execute Web API queries directly from the editor.
-
-Example:
-
-    accounts?$top=5
-
-or
-
-    contacts?$select=fullname,emailaddress1&$top=10
-
-Results appear instantly in a **virtual JSON document inside VS Code**.
-
-------------------------------------------------------------------------
-
-## Run Query Under Cursor
-
-Place your cursor on a query line and run it.
-
-Example file:
-
-    accounts?$top=5
-    contacts?$top=10
-    opportunities?$top=5
-
-Run only the query under your cursor.
-
-No copy‑paste required.
-
-------------------------------------------------------------------------
-
-## CodeLens Query Execution
-
-DV Quick Run automatically detects probable Dataverse queries and adds
-**inline CodeLens actions**.
-
-    accounts?$top=10
     [Run Query] [Explain]
+    accounts?$top=10
 
-This turns your editor into a **lightweight Dataverse workbench**.
 
-------------------------------------------------------------------------
+This turns your editor into a **lightweight Dataverse query workbench**.
 
-## Explain Query
+---
+
+# 🧠 Explain Query
 
 Understanding a Dataverse query can sometimes be harder than writing it.
 
-DV Quick Run can break a query into **human‑readable sections**.
+DV Quick Run breaks a query into **human-readable sections**.
 
 Example query:
-
     contacts?$select=fullname&$filter=contains(fullname,'john')&$orderby=createdon desc&$top=25
+
 
 Explain Query shows:
 
--   entity path
--   record vs collection query
--   selected fields
--   filter meaning
--   sort order
--   query shape advice
+- entity path
+- record vs collection query
+- selected fields
+- filter meaning
+- sort order
+- query shape advice
 
 Great for **learning and reviewing queries**.
 
-------------------------------------------------------------------------
+---
 
-## Relationship Explorer
+# 🔍 Metadata Hover
 
-Explore how Dataverse entities are connected.
-
-DV Quick Run can inspect entity metadata and show **navigation
-relationships**.
+Hover over fields inside a query to see **Dataverse metadata**.
 
 Example:
+    contacts?$select=fullname,emailaddress1
 
-    contact
-    ├─ createdby → systemuser
-    ├─ parentcustomerid_account → account
-    └─ parentcustomerid_contact → contact
 
-This makes it easier to understand **which \$expand paths are
-available** when building queries.
+Hovering a field may display:
 
-------------------------------------------------------------------------
+- logical name
+- display name
+- attribute type
+- choice values (if applicable)
 
-## Relationship Graph View
+Metadata is cached for fast repeated lookups.
 
-Visualize entity relationships in a simple graph.
+---
 
-The current version shows **direct (1‑level) relationships** to help
-developers understand navigation paths quickly.
-
-Future versions will support **multi‑level traversal**.
-
-------------------------------------------------------------------------
-
-## Smart GET Builder
-
-Generate Dataverse queries through guided prompts.
-
-Workflow:
-
-Choose entity\
-→ Choose fields\
-→ Optional filters\
-→ Optional sorting\
-→ Build query\
-→ Run query
-
-Example generated query:
-
-    accounts?$select=name,accountnumber
-
-------------------------------------------------------------------------
-
-## Smart GET from GUID
+# 🔧 Smart GET from GUID
 
 Select a GUID in the editor and instantly generate a record query.
 
 Example selected GUID:
-
     7d29eec7-4414-f111-8341-6045bdc42f8b
 
 Generated query:
-
     contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)
 
 Or pick fields:
-
     contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)?$select=fullname,emailaddress1
 
-------------------------------------------------------------------------
+---
 
-## Smart PATCH Builder
-
-Update records using guided prompts.
-
-Workflow:
-
-choose entity\
-→ choose record\
-→ choose fields\
-→ enter values\
-→ execute PATCH
-
-No manual request construction required.
-
-------------------------------------------------------------------------
-
-## Query Mutation Helpers
+# 🧰 Query Mutation Helpers
 
 Incrementally refine existing queries.
 
 Available helpers:
 
--   **Add Fields (\$select)**
--   **Add Filter (\$filter)**
--   **Add Expand (\$expand)**
--   **Add Order (\$orderby)**
+- **Add Fields ($select)**
+- **Add Filter ($filter)**
+- **Add Expand ($expand)**
+- **Add Order ($orderby)**
 
 Example transformation:
 
 Original:
-
     contacts
 
 Add fields:
-
     contacts?$select=fullname,emailaddress1
 
 Add filter:
-
     contacts?$select=fullname,emailaddress1&$filter=contains(fullname,'john')
 
-------------------------------------------------------------------------
 
-## Generate Query from JSON
+---
 
-Convert a JSON record into a query skeleton.
+# ⚙️ Smart GET Builder
+
+Generate Dataverse queries through guided prompts.
+
+Workflow:
+
+Choose entity  
+→ Choose fields  
+→ Optional filters  
+→ Optional sorting  
+→ Build query  
+→ Run query  
+
+Example generated query:
+    accounts?$select=name,accountnumber
+
+---
+
+# ✏️ Smart PATCH Builder
+
+Update Dataverse records using guided prompts.
+
+Workflow:
+
+choose entity  
+→ choose record  
+→ choose fields  
+→ enter values  
+→ execute PATCH  
+
+No manual request construction required.
+
+---
+
+# 🔁 Generate Query from JSON
+
+Convert a JSON record into a Dataverse query skeleton.
 
 Example JSON:
-
     {
-      "fullname": "John Smith"
+        "fullname": "John Smith"
     }
 
 Generated query:
-
     contacts?$filter=fullname eq 'John Smith'
+
 
 Useful when exploring Dataverse responses.
 
-------------------------------------------------------------------------
+---
 
-## Guardrails for Risky Queries
+# 🔗 Relationship Explorer
+
+Explore how Dataverse entities are connected.
+
+Example:
+    contact
+    ├─ createdby → systemuser
+    ├─ parentcustomerid_account → account
+    └─ parentcustomerid_contact → contact
+
+This helps developers understand **which `$expand` paths are available**.
+
+### Relationship Graph View
+
+Graph view currently shows **direct (1-level) relationships**.
+
+Future versions will support **recursive traversal**.
+
+---
+
+# 🛡 Guardrails for Risky Queries
 
 DV Quick Run detects risky query shapes such as:
 
--   missing \$top
--   overly broad queries
--   expensive query patterns
+- missing `$top`
+- overly broad queries
+- expensive query patterns
 
-Instead of silently executing them, the extension **warns and asks for
-confirmation**.
+Instead of silently executing them, the extension **warns and asks for confirmation**.
 
-------------------------------------------------------------------------
+---
 
 # 🧠 Metadata Intelligence
 
@@ -280,98 +257,77 @@ DV Quick Run uses Dataverse metadata to power many of its features.
 
 This enables:
 
--   intelligent field pickers
--   navigation property discovery
--   query explanation
--   schema‑aware helpers
--   relationship exploration
+- intelligent field pickers
+- navigation property discovery
+- query explanation
+- schema-aware helpers
+- relationship exploration
 
-This metadata intelligence layer is the foundation for future features
-such as:
+This metadata intelligence layer is the foundation for future features such as:
 
--   query validation
--   relationship traversal
--   query intent suggestions
+- query validation
+- relationship traversal
+- query intent suggestions
 
-------------------------------------------------------------------------
+---
+
+# 🔬 Metadata Diagnostics
+
+DV Quick Run includes commands to inspect and manage metadata caches.
+
+Available commands:
+
+- Show Metadata Diagnostics
+- Clear Metadata Session Cache
+- Clear Persisted Metadata Cache
+
+These tools help developers verify metadata loading behaviour and recover quickly after schema changes.
+
+---
 
 # 🔐 Authentication
 
 DV Quick Run uses **Azure CLI authentication**.
 
-If you are already logged in with Azure CLI, the extension will reuse
-that token.
+If you are already logged in with Azure CLI, the extension will reuse that token.
 
 Login example:
-
     az login --allow-no-subscriptions
 
 No client secrets or OAuth configuration required.
 
-------------------------------------------------------------------------
-
-# 🔄 Typical Workflow
-
-Example development loop:
-
-1.  Write query
-
-```{=html}
-<!-- -->
-```
-    contacts?$top=10
-
-2.  Run query with CodeLens
-
-3.  Inspect JSON result
-
-4.  Add fields with helper
-
-```{=html}
-<!-- -->
-```
-    contacts?$select=fullname,emailaddress1&$top=10
-
-5.  Explain query
-
-6.  Refine filter
-
-This loop is **much faster than traditional REST tooling**.
-
-------------------------------------------------------------------------
+---
 
 # 👥 Who Is This For?
 
 DV Quick Run is designed for:
 
--   Dataverse developers
--   Dynamics 365 engineers
--   Power Platform technical teams
--   API developers integrating with Dataverse
--   Integration engineers
+- Dataverse developers
+- Dynamics 365 engineers
+- Power Platform technical teams
+- API developers integrating with Dataverse
+- Integration engineers
 
-------------------------------------------------------------------------
+---
 
 # 🛠 Development
 
 Run locally:
-
     npm install
     npm run compile
 
 Press **F5** in VS Code to launch the **Extension Development Host**.
 
-------------------------------------------------------------------------
+---
 
 # 📜 License
 
 MIT License
 
-------------------------------------------------------------------------
+---
 
 # 💡 Final Thought
 
 DV Quick Run is built around one idea:
 
-**The fastest Dataverse workflow is the one that never leaves the
-editor.**
+**The fastest Dataverse workflow is the one that never leaves the editor.**

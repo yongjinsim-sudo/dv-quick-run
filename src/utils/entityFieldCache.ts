@@ -63,3 +63,26 @@ export async function setCachedFields(
 
   await context.globalState.update(key(logicalName), payload);
 }
+
+export function getEntityFieldCacheDiagnostics(ext: vscode.ExtensionContext): {
+  logicalNames: string[];
+  countsByLogicalName: Record<string, number>;
+} {
+  const store = ext.globalState.get<Record<string, any[]>>("dvQuickRun.entityFieldCache") ?? {};
+
+  const logicalNames = Object.keys(store).sort();
+  const countsByLogicalName: Record<string, number> = {};
+
+  for (const logicalName of logicalNames) {
+    countsByLogicalName[logicalName] = Array.isArray(store[logicalName]) ? store[logicalName].length : 0;
+  }
+
+  return {
+    logicalNames,
+    countsByLogicalName
+  };
+}
+
+export async function clearCachedFields(ext: vscode.ExtensionContext): Promise<void> {
+  await ext.globalState.update("dvQuickRun.entityFieldCache", undefined);
+}
