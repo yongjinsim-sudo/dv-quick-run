@@ -2,27 +2,33 @@ import * as vscode from "vscode";
 import type { FieldDef } from "../services/entityFieldMetadataService";
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const KEY_PREFIX = "dvQuickRun.fieldsCache";
+const KEY_VERSION = "v3";
 
 type CachePayloadV3 = {
   fetchedAt: number;
   fields: FieldDef[];
 };
 
-function key(logicalName: string) {
-  // Bump version so old string[] cache is ignored automatically.
-  return `dvQuickRun.fieldsCache.v3.${logicalName.toLowerCase()}`;
+function normalizeEnvironmentKey(environmentName: string): string {
+  return environmentName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-");
+}
+
+function key(environmentName: string, logicalName: string) {
+  return `${KEY_PREFIX}.${normalizeEnvironmentKey(environmentName)}.${KEY_VERSION}.${logicalName.toLowerCase()}`;
 }
 
 function normalizeFields(raw: any): FieldDef[] | undefined {
   if (!raw) {return undefined;}
 
-  // v2 expected shape
   if (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === "object") {
     const fields = raw as FieldDef[];
     return fields.filter(f => !!f && typeof f.logicalName === "string" && !!f.logicalName.trim());
   }
 
-  // migration: old cache might be string[]
   if (Array.isArray(raw) && (raw.length === 0 || typeof raw[0] === "string")) {
     const fields = (raw as string[])
       .map(s => (s ?? "").toString().trim())
@@ -37,9 +43,10 @@ function normalizeFields(raw: any): FieldDef[] | undefined {
 
 export function getCachedFields(
   context: vscode.ExtensionContext,
+  environmentName: string,
   logicalName: string
 ): FieldDef[] | undefined {
-  const payload = context.globalState.get<CachePayloadV3>(key(logicalName));
+  const payload = context.globalState.get<CachePayloadV3>(key(environmentName, logicalName));
   if (!payload) {return undefined;}
 
   const age = Date.now() - payload.fetchedAt;
@@ -53,6 +60,7 @@ export function getCachedFields(
 
 export async function setCachedFields(
   context: vscode.ExtensionContext,
+  environmentName: string,
   logicalName: string,
   fields: FieldDef[]
 ): Promise<void> {
@@ -61,20 +69,27 @@ export async function setCachedFields(
     fields
   };
 
-  await context.globalState.update(key(logicalName), payload);
+  await context.globalState.update(key(environmentName, logicalName), payload);
 }
 
-export function getEntityFieldCacheDiagnostics(ext: vscode.ExtensionContext): {
+export function getEntityFieldCacheDiagnostics(
+  ext: vscode.ExtensionContext,
+  environmentName: string
+): {
   logicalNames: string[];
   countsByLogicalName: Record<string, number>;
 } {
-  const store = ext.globalState.get<Record<string, any[]>>("dvQuickRun.entityFieldCache") ?? {};
+  const envKey = normalizeEnvironmentKey(environmentName);
+  const allKeys = ext.globalState.keys();
+  const prefix = `${KEY_PREFIX}.${envKey}.${KEY_VERSION}.`;
 
-  const logicalNames = Object.keys(store).sort();
+  const matchingKeys = allKeys.filter(k => k.startsWith(prefix)).sort();
+  const logicalNames = matchingKeys.map(k => k.slice(prefix.length));
   const countsByLogicalName: Record<string, number> = {};
 
   for (const logicalName of logicalNames) {
-    countsByLogicalName[logicalName] = Array.isArray(store[logicalName]) ? store[logicalName].length : 0;
+    const payload = ext.globalState.get<CachePayloadV3>(key(environmentName, logicalName));
+    countsByLogicalName[logicalName] = Array.isArray(payload?.fields) ? payload!.fields.length : 0;
   }
 
   return {
@@ -83,6 +98,16 @@ export function getEntityFieldCacheDiagnostics(ext: vscode.ExtensionContext): {
   };
 }
 
-export async function clearCachedFields(ext: vscode.ExtensionContext): Promise<void> {
-  await ext.globalState.update("dvQuickRun.entityFieldCache", undefined);
+export async function clearCachedFields(
+  ext: vscode.ExtensionContext,
+  environmentName: string
+): Promise<void> {
+  const envKey = normalizeEnvironmentKey(environmentName);
+  const prefix = `${KEY_PREFIX}.${envKey}.${KEY_VERSION}.`;
+
+  await Promise.all(
+    ext.globalState.keys()
+      .filter(k => k.startsWith(prefix))
+      .map(k => ext.globalState.update(k, undefined))
+  );
 }

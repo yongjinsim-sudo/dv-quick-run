@@ -2,26 +2,34 @@
 
 **Run, build, and understand Dataverse Web API queries directly inside VS Code with metadata-aware developer tooling.**
 
+### A Dataverse developer console inside VS Code
+
 DV Quick Run turns VS Code into a **Dataverse developer console**.  
 Instead of jumping between Postman, browser tabs, maker portals, and documentation, you can **write, refine, execute, and explain queries without leaving the editor**.
 
 ---
 
-## 🆕 What's New in v0.2.2
+## Keywords
 
-This release focuses on **performance, reliability, and metadata intelligence**.
+Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code extension • Developer tooling
+
+---
+
+## 🆕 What's New in v0.3.0
+
+This release introduces **environment profiles** and improves the safety of working across multiple Dataverse environments.
 
 Major improvements:
 
-- Token reuse with in-memory caching
-- Metadata request deduplication
-- Layered metadata caching (session + persisted)
-- Faster metadata hover resolution
-- CodeLens refresh debounce for smoother editing
-- Metadata diagnostics tools for cache inspection
-- Reduced extension output noise
+- Support for **multiple Dataverse environments**
+- First-run **environment setup wizard**
+- Commands to **add, select, and remove environments**
+- **Status bar indicator** showing the active environment
+- Optional **environment color hints** (white / amber / red)
+- **Environment-scoped metadata caching**
+- Metadata diagnostics now display the **active environment and cache prefix**
 
-These improvements make metadata-powered features such as **Explain Query, hover metadata, builders, and relationship exploration significantly faster** during normal development sessions.
+These changes make it easier and safer to work across **DEV, UAT, and PROD environments** without risking metadata mismatches.
 
 ---
 
@@ -48,14 +56,57 @@ Everything happens **inside VS Code**.
 2. Login with Azure CLI
     az login --allow-no-subscriptions
 
-3. Write a Dataverse query in a file
-    contacts?$top=10
+
+3. The first time you run DV Quick Run you will be prompted to **configure a Dataverse environment**.
+
+Provide:
+
+- **Environment name** (example: DEV)
+- **Dataverse URL** (example: https://org.crm6.dynamics.com)
+- **Optional status color** (white / amber / red)
+
+4. Write a Dataverse query in a file
+contacts?$top=10
+
+5. Click **Run Query** in CodeLens.
 
 
-4. Click **Run Query** in CodeLens.
+# 🌍 Environment Profiles
 
-That's it.
+DV Quick Run supports working with **multiple Dataverse environments**.
 
+Typical setups include:
+
+- DEV
+- SIT
+- UAT
+- PROD
+
+The currently active environment is shown in the **VS Code status bar**.
+
+Example:
+DV: DEV
+
+## Environment Commands
+
+Available commands:
+
+- **DV Quick Run: Add Environment**
+- **DV Quick Run: Select Environment**
+- **DV Quick Run: Remove Environment**
+
+These commands manage the environments stored in:
+dvQuickRun.environments
+
+inside your VS Code settings.
+
+## Environment Safety
+
+To prevent cross-environment issues:
+
+- Metadata caches are **scoped per environment**
+- Session caches are **cleared automatically when switching environments**
+- Diagnostics clearly show **which environment's cache is being inspected**
 ---
 
 # ✨ Why DV Quick Run?
@@ -247,7 +298,7 @@ DV Quick Run detects risky query shapes such as:
 - overly broad queries
 - expensive query patterns
 
-Instead of silently executing them, the extension **warns and asks for confirmation**.
+Instead of silently executing them, the extension warns and asks for confirmation before sending the request.
 
 ---
 
@@ -283,6 +334,8 @@ Available commands:
 
 These tools help developers verify metadata loading behaviour and recover quickly after schema changes.
 
+Diagnostics are **scoped to the currently active environment**, ensuring caches from different environments do not mix.
+
 ---
 
 # 🔐 Authentication
@@ -295,6 +348,8 @@ Login example:
     az login --allow-no-subscriptions
 
 No client secrets or OAuth configuration required.
+
+Tokens are cached per Dataverse environment scope, allowing DV Quick Run to safely switch between environments without re-authenticating unnecessarily.
 
 ---
 

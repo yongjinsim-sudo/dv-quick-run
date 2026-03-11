@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import type { EntityMetadata } from "../metadata/metadataModel.js";
 
-const KEY = "dvQuickRun.entityDefsCache.v1";
+const KEY_PREFIX = "dvQuickRun.entityDefsCache";
+const KEY_VERSION = "v1";
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export type EntityDef = EntityMetadata;
@@ -11,18 +12,38 @@ type CachePayload = {
   defs: EntityDef[];
 };
 
-export function getCachedEntityDefs(context: vscode.ExtensionContext): EntityDef[] | undefined {
-  const payload = context.globalState.get<CachePayload>(KEY);
-  if (!payload?.defs?.length) {return undefined;}
+function normalizeEnvironmentKey(environmentName: string): string {
+  return environmentName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-");
+}
+
+function buildKey(environmentName: string): string {
+  const envKey = normalizeEnvironmentKey(environmentName || "unknown");
+  return `${KEY_PREFIX}.${envKey}.${KEY_VERSION}`;
+}
+
+export function getCachedEntityDefs(
+  context: vscode.ExtensionContext,
+  environmentName: string
+): EntityDef[] | undefined {
+  const payload = context.globalState.get<CachePayload>(buildKey(environmentName));
+  if (!payload?.defs?.length) {
+    return undefined;
+  }
 
   const age = Date.now() - payload.fetchedAt;
-  if (age > TTL_MS) {return undefined;}
+  if (age > TTL_MS) {
+    return undefined;
+  }
 
   return payload.defs;
 }
 
 export async function setCachedEntityDefs(
   context: vscode.ExtensionContext,
+  environmentName: string,
   defs: EntityDef[]
 ): Promise<void> {
   const payload: CachePayload = {
@@ -30,16 +51,18 @@ export async function setCachedEntityDefs(
     defs
   };
 
-  await context.globalState.update(KEY, payload);
+  await context.globalState.update(buildKey(environmentName), payload);
 }
 
-
-export function getEntitySetCacheDiagnostics(ext: vscode.ExtensionContext): {
+export function getEntitySetCacheDiagnostics(
+  ext: vscode.ExtensionContext,
+  environmentName: string
+): {
   count: number;
   logicalNames: string[];
   entitySetNames: string[];
 } {
-  const defs = getCachedEntityDefs(ext) ?? [];
+  const defs = getCachedEntityDefs(ext, environmentName) ?? [];
 
   return {
     count: defs.length,
@@ -48,6 +71,9 @@ export function getEntitySetCacheDiagnostics(ext: vscode.ExtensionContext): {
   };
 }
 
-export async function clearCachedEntityDefs(ext: vscode.ExtensionContext): Promise<void> {
-  await ext.globalState.update(KEY, undefined);
+export async function clearCachedEntityDefs(
+  ext: vscode.ExtensionContext,
+  environmentName: string
+): Promise<void> {
+  await ext.globalState.update(buildKey(environmentName), undefined);
 }

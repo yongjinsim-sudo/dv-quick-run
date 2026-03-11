@@ -36,9 +36,9 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
     const path = normalizePath(raw);
 
     const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
+    const scope = ctx.getScope();
     const token = await ctx.getToken(scope);
-    const client = ctx.getClient(baseUrl);
+    const client = ctx.getClient();
 
     const guardrails = await analyzeQueryGuardrails(ctx, client, token, raw);
 

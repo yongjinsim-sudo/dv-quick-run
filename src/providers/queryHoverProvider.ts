@@ -190,9 +190,9 @@ class HoverRequestContext {
     if (!this.connectionPromise) {
       this.connectionPromise = (async () => {
         const baseUrl = await this.ctx.getBaseUrl();
-        const scope = this.ctx.getScope(baseUrl);
+        const scope = this.ctx.getScope();
         const token = await this.ctx.getToken(scope);
-        const client = this.ctx.getClient(baseUrl);
+        const client = this.ctx.getClient();
 
         return { baseUrl, scope, token, client };
       })();

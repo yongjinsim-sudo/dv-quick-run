@@ -389,9 +389,9 @@ async function showRelationshipGraphDocument(content: string): Promise<void> {
 
 export async function runRelationshipGraphViewAction(ctx: CommandContext): Promise<void> {
   const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
+  const scope = ctx.getScope();
   const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
+  const client = ctx.getClient();
   
   const defs = await loadEntityDefs(ctx, client, token);
 
@@ -427,12 +427,12 @@ export async function runRelationshipGraphViewAction(ctx: CommandContext): Promi
     logicalName = picked.label;
     entitySetName = picked.description ?? picked.label;
   }
-
-  let relationships = getCachedEntityRelationships(ctx.ext, logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  let relationships = getCachedEntityRelationships(ctx.ext, envName, logicalName);
 
   if (!relationships) {
    relationships = await fetchEntityRelationships(client, token, logicalName);
-   await setCachedEntityRelationships(ctx.ext, logicalName, relationships);
+   await setCachedEntityRelationships(ctx.ext, envName, logicalName, relationships);
   }
 
   const tokenUnderCursor = getHoverLikeTokenUnderCursor();

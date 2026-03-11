@@ -74,7 +74,8 @@ export async function loadChoiceMetadata(
     return memory;
   }
 
-  const cached = getCachedChoiceMetadata(ctx.ext, logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  const cached = getCachedChoiceMetadata(ctx.ext, envName, logicalName);
   if (cached?.length) {
     setChoiceMemory(logicalName, cached);
     appendOutput(
@@ -97,7 +98,7 @@ export async function loadChoiceMetadata(
           async () => await fetchEntityChoiceMetadata(client, token, logicalName)
         );
 
-    await setCachedChoiceMetadata(ctx.ext, logicalName, fetched);
+    await setCachedChoiceMetadata(ctx.ext, envName, logicalName, fetched);
     setChoiceMemory(logicalName, fetched);
     appendOutput(
       ctx,

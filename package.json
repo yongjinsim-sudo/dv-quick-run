@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Run, build, and understand Dataverse Web API queries directly inside VS Code. Includes smart query builders, query explanation, metadata intelligence, and relationship exploration.",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -72,7 +72,10 @@
       { "command": "dvQuickRun.relationshipGraphView", "title": "DV Quick Run: View Relationship Graph" },
       { "command": "dvQuickRun.showMetadataDiagnostics", "title": "DV Quick Run: Show Metadata Diagnostics" },
       { "command": "dvQuickRun.clearMetadataSessionCache", "title": "DV Quick Run: Clear Metadata Session Cache" },
-      { "command": "dvQuickRun.clearPersistedMetadataCache", "title": "DV Quick Run: Clear Persisted Metadata Cache" }
+      { "command": "dvQuickRun.clearPersistedMetadataCache", "title": "DV Quick Run: Clear Persisted Metadata Cache" },
+      { "command": "dvQuickRun.selectEnvironment", "title": "DV Quick Run: Select Environment" },
+      { "command": "dvQuickRun.addEnvironment", "title": "DV Quick Run: Add Environment" },
+      { "command": "dvQuickRun.removeEnvironment", "title": "DV Quick Run: Remove Environment" }
     ],
     "menus": {
       "commandPalette": [
@@ -145,16 +148,30 @@
     ],
     "configuration": {
       "title": "DV Quick Run",
-      "properties": {
-        "dvQuickRun.baseUrl": {
-          "type": "string",
-          "default": "",
-          "description": "Dataverse Web API base URL, e.g. https://yourorg.crm6.dynamics.com/api/data/v9.2"
-        },
-        "dvQuickRun.tenantId": {
-          "type": "string",
-          "default": "",
-          "description": "Optional Entra tenant ID. Only needed if Azure CLI is logged into multiple tenants or the wrong tenant is being used."
+        "properties": {
+          "dvQuickRun.environments": {
+          "type": "array",
+          "description": "List of Dataverse environments available to DV Quick Run.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Environment name"
+              },
+              "url": {
+                "type": "string",
+                "description": "Dataverse base URL (e.g. https://org.crm.dynamics.com)"
+              },
+              "statusBarColor": {
+              "type": "string",
+              "enum": ["white", "amber", "red"],
+              "default": "white",
+              "description": "Status bar color hint for this environment."
+              }
+            }
+          },
+          "default": []
         },
         "dvQuickRun.enableCodeLens": {
           "type": "boolean",

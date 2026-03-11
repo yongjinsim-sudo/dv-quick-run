@@ -5,6 +5,7 @@ import { CommandContext } from "./commands/context/commandContext.js";
 import { registerClearHistoryCommand } from "./commands/clearHistory.js";
 import { registerVirtualJsonProvider } from "./utils/virtualJsonDoc.js";
 import { createCommandContext } from "./commands/context/commandContext.js";
+import { EnvironmentContext } from "./services/environmentContext.js";
 import { registerGetMetadataCommand } from "./commands/getMetadata.js";
 import { registerSmartGetCommand } from "./commands/smartGet.js";
 import { registerSmartGetRerunLastCommand } from "./commands/smartGetRerunLast.js";
@@ -22,7 +23,7 @@ import { addExpand } from "./commands/addExpand.js";
 import { addOrderBy } from "./commands/addOrderBy.js";
 import { explainQuery } from "./commands/explainQuery.js";
 import { QueryCodeLensProvider } from "./providers/queryCodeLensProvider.js";
-import { QueryHoverProvider } from "./providers/queryHoverProvider.js";
+import { clearNavigationHoverEnrichmentCache, QueryHoverProvider } from "./providers/queryHoverProvider.js";
 import { relationshipExplorer } from "./commands/relationshipExplorer.js";
 import { relationshipGraphView } from "./commands/relationshipGraphView.js";
 import { registerShowMetadataDiagnosticsCommand } from "./commands/showMetadataDiagnostics.js";
@@ -30,7 +31,13 @@ import { registerClearMetadataSessionCacheCommand } from "./commands/clearMetada
 import { registerClearPersistedMetadataCacheCommand } from "./commands/clearPersistedMetadataCache.js";
 import { fetchEntityDefs } from "./services/entityMetadataService.js";
 import { getCachedEntityDefs, setCachedEntityDefs } from "./utils/entitySetCache.js";
-import { logDebug, logError } from "./utils/logger.js";
+import { logDebug, logError, logInfo } from "./utils/logger.js";
+import { registerSelectEnvironmentCommand } from "./commands/selectEnvironment.js";
+import { EnvironmentStatusBar } from "./ui/environmentStatusBar.js";
+import { registerAddEnvironmentCommand } from "./commands/addEnvironment.js";
+import { clearHoverFieldContextCache } from "./providers/hoverFieldContextCache.js";
+import { clearMetadataSessionCache } from "./commands/router/actions/shared/metadataLoadCache.js";
+import { registerRemoveEnvironmentCommand } from "./commands/removeEnvironment.js";
 
 async function runCommandAtLine(
   documentUri: vscode.Uri,
@@ -77,23 +84,20 @@ function shouldRefreshCodeLensForDocument(document: vscode.TextDocument): boolea
 
 async function prewarmEntityDefs(ctx: CommandContext): Promise<void> {
   try {
-    // Step 1 — load persisted cache first (instant)
-    const cached = getCachedEntityDefs(ctx.ext);
+    const cached = getCachedEntityDefs(ctx.ext, ctx.envContext.getEnvironmentName());
     if (cached?.length) {
       ctx.output.appendLine(`DV Quick Run: Entity defs loaded from persisted cache (${cached.length}).`);
       return;
     }
 
-    // Step 2 — fallback to network fetch
-    const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
+    const scope = ctx.getScope();
     const token = await ctx.getToken(scope);
-    const client = ctx.getClient(baseUrl);
+    const client = ctx.getClient();
 
     const defs = await fetchEntityDefs(client, token);
 
     if (defs?.length) {
-      await setCachedEntityDefs(ctx.ext, defs);
+      await setCachedEntityDefs(ctx.ext, ctx.envContext.getEnvironmentName(),defs);
       logDebug(ctx.output, `DV Quick Run: Entity defs fetched and cached (${defs.length}).`);
     }
 
@@ -102,10 +106,21 @@ async function prewarmEntityDefs(ctx: CommandContext): Promise<void> {
   }
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   registerVirtualJsonProvider(context);
 
-  const ctx = createCommandContext(context);
+  const envContext = new EnvironmentContext(context);
+  await envContext.initialize();
+  const ctx = createCommandContext(context, envContext);
+
+  // log active environment on startup
+  logInfo(ctx.output, `DV Quick Run: Active environment: ${envContext.getEnvironmentName()}`);
+
+  // show environment in status bar
+  const environmentStatusBar = new EnvironmentStatusBar(envContext);
+  environmentStatusBar.show();
+
+  context.subscriptions.push(environmentStatusBar);
 
   setTimeout(() => {
     void prewarmEntityDefs(ctx);
@@ -127,6 +142,15 @@ export function activate(context: vscode.ExtensionContext) {
   registerShowMetadataDiagnosticsCommand(context, ctx, vscode);
   registerClearMetadataSessionCacheCommand(context, ctx, vscode);
   registerClearPersistedMetadataCacheCommand(context, ctx, vscode);
+  registerSelectEnvironmentCommand(context, ctx, () => {
+    environmentStatusBar.refresh();
+  });
+  registerAddEnvironmentCommand(context, ctx, () => {
+    environmentStatusBar.refresh();
+  });
+  registerRemoveEnvironmentCommand(context, ctx, () => {
+    environmentStatusBar.refresh();
+  });
 
   context.subscriptions.push(
     vscode.commands.registerCommand("dvQuickRun.runQueryUnderCursor", async () => {
@@ -190,6 +214,29 @@ export function activate(context: vscode.ExtensionContext) {
         await runCommandAtLine(documentUri, lineNumber, "dvQuickRun.explainQuery");
       }
     )
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(async (event) => {
+      if (event.affectsConfiguration("dvQuickRun.environments")) {
+        logInfo(ctx.output, "DV Quick Run: Environment configuration changed. Reloading...");
+
+        await envContext.initialize();
+        clearMetadataSessionCache();
+        clearHoverFieldContextCache();
+        clearNavigationHoverEnrichmentCache();
+        logInfo(ctx.output, "DV Quick Run: Cleared metadata session caches after environment switch.");
+        environmentStatusBar.refresh();
+        logInfo(
+          ctx.output,
+          `DV Quick Run: Active environment: ${envContext.getEnvironmentName()}`
+        );
+
+        vscode.window.showInformationMessage(
+          `DV Quick Run environment: ${envContext.getEnvironmentName()}`
+        );
+      }
+    })
   );
 
   const codeLensProvider = new QueryCodeLensProvider();
