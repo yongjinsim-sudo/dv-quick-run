@@ -1,53 +1,50 @@
 import * as vscode from "vscode";
-import { ensureBaseUrl, getTenantId } from "../../utils/config.js";
+import { getTenantId } from "../../utils/config.js";
 import { getDataverseAccessToken } from "../../auth/azureCliAuth.js";
 import { DataverseClient } from "../../services/dataverseClient.js";
+import { EnvironmentContext } from "../../services/environmentContext.js";
+
+
 
 export type CommandContext = {
   ext: vscode.ExtensionContext;
   output: vscode.OutputChannel;
+  envContext: EnvironmentContext;
 
-  // Normalized config
+  // Environment-driven config
   getBaseUrl(): Promise<string>;
-  getScope(baseUrl: string): string;
+  getScope(): string;
 
   // Auth + client
   getToken(scope: string): Promise<string>;
-  getClient(baseUrl: string): DataverseClient;
+  getClient(): DataverseClient;
 };
 
-function deriveScopeFromBaseUrl(baseUrl: string): string {
-  // baseUrl: https://orgxxxx.api.crm6.dynamics.com/api/data/v9.2
-  // scope  : https://orgxxxx.api.crm6.dynamics.com/.default
-  const m = baseUrl.match(/^(https:\/\/[^/]+)\//i);
-  if (!m) {throw new Error(`Cannot derive scope from baseUrl: ${baseUrl}`);}
-  return `${m[1]}/.default`;
-}
-
-export function createCommandContext(ext: vscode.ExtensionContext): CommandContext {
+export function createCommandContext(
+  ext: vscode.ExtensionContext,
+  envContext: EnvironmentContext
+): CommandContext {
   const output = vscode.window.createOutputChannel("DV Quick Run");
 
   return {
     ext,
     output,
+    envContext,
 
     async getBaseUrl(): Promise<string> {
-      // Keep your existing behavior: prompt and persist if missing
-      const baseUrl = (await ensureBaseUrl()).replace(/\/+$/, "");
-      return baseUrl;
+      return envContext.getBaseUrl().replace(/\/+$/, "");
     },
 
-    getScope(baseUrl: string): string {
-      return deriveScopeFromBaseUrl(baseUrl);
+    getScope(): string {
+      return envContext.getScope();
     },
 
     async getToken(scope: string): Promise<string> {
-      // Keep tenantId behavior
       return await getDataverseAccessToken(scope, getTenantId());
     },
 
-    getClient(baseUrl: string): DataverseClient {
-      return new DataverseClient(baseUrl);
+    getClient(): DataverseClient {
+      return new DataverseClient(envContext.getBaseUrl().replace(/\/+$/, ""));
     }
   };
 }

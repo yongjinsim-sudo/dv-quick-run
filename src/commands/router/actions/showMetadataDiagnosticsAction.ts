@@ -27,21 +27,35 @@ function toMarkdownCountMap(
   return keys.map((k) => `- \`${k}\`: ${map[k]}`).join("\n");
 }
 
+function normalizeEnvironmentKey(environmentName: string): string {
+  return environmentName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-");
+}
+
 export async function runShowMetadataDiagnosticsAction(
   ctx: CommandContext
 ): Promise<void> {
   const now = new Date().toISOString();
+  const envName = ctx.envContext.getEnvironmentName();
+  const envCacheKeyPrefix = normalizeEnvironmentKey(envName);
 
-  const entitySetDiag = getEntitySetCacheDiagnostics(ctx.ext);
-  const fieldDiag = getEntityFieldCacheDiagnostics(ctx.ext);
-  const choiceDiag = getEntityChoiceCacheDiagnostics(ctx.ext);
-  const relationshipDiag = getEntityRelationshipCacheDiagnostics(ctx.ext);
+  const entitySetDiag = getEntitySetCacheDiagnostics(ctx.ext, envName);
+  const fieldDiag = getEntityFieldCacheDiagnostics(ctx.ext, envName);
+  const choiceDiag = getEntityChoiceCacheDiagnostics(ctx.ext, envName);
+  const relationshipDiag = getEntityRelationshipCacheDiagnostics(ctx.ext, envName);
   const sessionDiag = getMetadataSessionCacheDiagnostics();
   const hoverDiag = getHoverFieldContextCacheDiagnostics();
 
   const markdown = `# DV Quick Run — Metadata Diagnostics
 
 Generated: \`${now}\`
+
+## Environment
+
+- Active environment: \`${envName}\`
+- Environment cache key prefix: \`${envCacheKeyPrefix}\`
 
 ## Session metadata cache
 
@@ -99,9 +113,9 @@ ${toMarkdownList(hoverDiag.logicalNames)}
 - Session cache = in-memory for current extension host session
 - Persisted cache = extension global state
 - Hover field-context cache = derived field maps used by inline hover
+- Persisted metadata diagnostics shown here are scoped to the active environment
 `;
 
-  const uri = vscode.Uri.parse("dvqr:/.dvqr/metadata/metadata-diagnostics.md");
   const doc = await vscode.workspace.openTextDocument({
     content: markdown,
     language: "markdown"

@@ -597,9 +597,9 @@ async function initContext(
   session: SmartMetadataSession;
 }> {
   const baseUrl = await ctx.getBaseUrl();
-  const scope = ctx.getScope(baseUrl);
+  const scope = ctx.getScope();
   const token = await ctx.getToken(scope);
-  const client = ctx.getClient(baseUrl);
+  const client = ctx.getClient();
   const session = new SmartMetadataSession(ctx, client, token);
 
   return { baseUrl, scope, token, client, session };

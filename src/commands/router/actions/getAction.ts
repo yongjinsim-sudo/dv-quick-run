@@ -162,10 +162,10 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
 
   try {
     const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
+    const scope = ctx.getScope();
 
     const token = await ctx.getToken(scope);
-    const client = ctx.getClient(baseUrl);
+    const client = ctx.getClient();
 
     const input = await promptForQuery(ctx, client, token);
     if (!input) {return;}

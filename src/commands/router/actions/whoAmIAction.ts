@@ -8,11 +8,11 @@ export async function runWhoAmIAction(ctx: CommandContext): Promise<void> {
 
   try {
     const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
+    const scope = ctx.getScope();
     const token = await ctx.getToken(scope);
 
     logInfo(ctx.output,`Calling WhoAmI...`);
-    const client = ctx.getClient(baseUrl);
+    const client = ctx.getClient();
 
     const result = await client.get("/WhoAmI", token);
     await showJsonNamed("DVQR - WhoAmI", result);

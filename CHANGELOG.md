@@ -6,6 +6,25 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.3.0] - Environment Profiles & Safe Multi-Environment Metadata
+
+### Added
+- Environment profile system supporting multiple Dataverse environments
+- First-run environment setup wizard
+- Commands to add, select, and remove environments
+- Status bar indicator showing the active Dataverse environment
+- Configurable environment status colors (white / amber / red)
+- Environment-aware metadata diagnostics showing active environment and cache prefix
+
+### Improved
+- Persisted metadata caches are now scoped per environment
+- Metadata diagnostics clearly show which environment cache is being inspected
+- Cache keys normalized using environment prefix to prevent cross-environment reuse
+- Prevented metadata leakage between environments when switching contexts
+- Cleared session metadata caches automatically when environment changes
+- Cleared hover and navigation enrichment caches during environment switch
+- Persisted cache clear command now clears caches for the active environment only
+
 ## [0.2.2] - Performance & Cache Observability
 
 ### Added

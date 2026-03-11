@@ -31,6 +31,7 @@ import {
   setNavigationMemory,
   getOrCreateNavigationInFlight
 } from "./metadataLoadCache.js";
+import { getCachedChoiceMetadata } from "../../../../utils/entityChoiceCache.js";
 
 type MetadataLoadOptions = {
   silent?: boolean;
@@ -94,7 +95,8 @@ export async function loadNavigationProperties(
     return memory;
   }
 
-  const cached = getCachedNavigationProperties(ctx.ext, logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  const cached = getCachedChoiceMetadata(ctx.ext, envName, logicalName);
   if (cached?.length) {
     setNavigationMemory(logicalName, cached);
     appendOutput(
@@ -112,7 +114,7 @@ export async function loadNavigationProperties(
       options
     );
 
-    await setCachedNavigationProperties(ctx.ext, logicalName, fetched);
+    await setCachedNavigationProperties(ctx.ext, envName, logicalName, fetched);
     setNavigationMemory(logicalName, fetched);
     appendOutput(
       ctx,
@@ -185,8 +187,8 @@ export async function loadEntityDefs(
   if (memory?.length) {
     return memory;
   }
-
-  const cached = getCachedEntityDefs(ctx.ext);
+  const envName = ctx.envContext.getEnvironmentName();
+  const cached = getCachedEntityDefs(ctx.ext, envName);
   if (cached?.length) {
     setEntityDefsMemory(cached);
     appendOutput(ctx, `Entity defs cache hit: ${cached.length} items.`, options);
@@ -201,7 +203,7 @@ export async function loadEntityDefs(
         options
       );
 
-      await setCachedEntityDefs(ctx.ext, fetched);
+      await setCachedEntityDefs(ctx.ext, envName, fetched);
       setEntityDefsMemory(fetched);
       appendOutput(ctx, `Entity defs fetched: ${fetched.length} items.`, options);
 
@@ -248,7 +250,8 @@ export async function loadFields(
     return memory;
   }
 
-  const cached = getCachedFields(ctx.ext, logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  const cached = getCachedFields(ctx.ext, envName, logicalName);
   if (cached?.length) {
     setFieldsMemory(logicalName, cached);
     appendOutput(ctx, `Fields cache hit for ${logicalName}: ${cached.length} fields.`, options);
@@ -262,7 +265,7 @@ export async function loadFields(
       options
     );
 
-    await setCachedFields(ctx.ext, logicalName, fetched);
+    await setCachedFields(ctx.ext, envName, logicalName, fetched);
     setFieldsMemory(logicalName, fetched);
     appendOutput(ctx, `Fields fetched for ${logicalName}: ${fetched.length} fields.`, options);
 

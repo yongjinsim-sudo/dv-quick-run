@@ -569,9 +569,9 @@ async function tryResolveEntity(
 
   try {
     const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
+    const scope = ctx.getScope();
     const token = await ctx.getToken(scope);
-    const client: DataverseClient = ctx.getClient(baseUrl);
+    const client: DataverseClient = ctx.getClient();
     const defs = await loadEntityDefs(ctx, client, token);
 
     return findEntityByEntitySetName(defs, entitySetName);
@@ -612,9 +612,9 @@ export async function runExplainQueryAction(ctx: CommandContext): Promise<void> 
     const entity = await tryResolveEntity(ctx, parsed.entitySetName);
 
     const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
+    const scope = ctx.getScope();
     const token = await ctx.getToken(scope);
-    const client: DataverseClient = ctx.getClient(baseUrl);
+    const client: DataverseClient = ctx.getClient();
 
     const validationIssues = await validateParsedQuery(ctx, client, token, parsed, entity);
     const markdown = toMarkdown(parsed, entity, validationIssues);

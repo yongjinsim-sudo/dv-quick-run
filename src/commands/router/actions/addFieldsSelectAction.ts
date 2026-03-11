@@ -59,10 +59,10 @@ export async function runAddFieldsSelectAction(ctx: CommandContext): Promise<voi
     }
 
     const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope(baseUrl);
+    const scope = ctx.getScope();
 
     const token = await ctx.getToken(scope);
-    const client: DataverseClient = ctx.getClient(baseUrl);
+    const client: DataverseClient = ctx.getClient();
 
     const defs = await loadEntityDefs(ctx, client, token);
     const def = await pickEntity(defs, entitySetName);
