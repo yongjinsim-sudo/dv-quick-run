@@ -10,17 +10,10 @@ import {
   showGuardrailErrors
 } from "./shared/guardrails/queryGuardrails.js";
 import { getLogicalEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
+import { looksLikeDataverseQuery } from "./shared/editorIntelligence/queryDetection.js";
 
 function getQueryFromEditor(): string {
   return getLogicalEditorQueryTarget().text;
-}
-
-function looksLikeDataverseQuery(input: string): boolean {
-  const q = input.trim();
-
-  if (!q) {return false;}
-
-  return /^\/?[A-Za-z_][A-Za-z0-9_]*([(][^)]*[)])?([?].*)?$/.test(q);
 }
 
 export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<void> {
