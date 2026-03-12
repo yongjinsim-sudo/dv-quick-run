@@ -4,23 +4,15 @@ import { logError, logInfo, logWarn } from "../../../utils/logger.js";
 import { showJsonNamed } from "../../../utils/virtualJsonDoc.js";
 import { addQueryToHistory } from "../../../utils/queryHistory.js";
 import { normalizePath, buildResultTitle } from "./get/getQueryBuilder.js";
-import {
-  analyzeQueryGuardrails,
-  confirmGuardrailsIfNeeded,
-  showGuardrailErrors
-} from "./shared/guardrails/queryGuardrails.js";
-import { getLogicalEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
-import { looksLikeDataverseQuery } from "./shared/editorIntelligence/queryDetection.js";
-
-function getQueryFromEditor(): string {
-  return getLogicalEditorQueryTarget().text;
-}
+import { analyzeQueryGuardrails, confirmGuardrailsIfNeeded, showGuardrailErrors} from "./shared/guardrails/queryGuardrails.js";
+import { looksLikeDataverseQuery } from "../../../shared/editorIntelligence/queryDetection.js";
+import { resolveEditorQueryText } from "../../../shared/editorIntelligence/queryCursorResolver.js";
 
 export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<void> {
   ctx.output.show(true);
 
   try {
-    const raw = getQueryFromEditor();
+    const raw = resolveEditorQueryText();
 
     if (!looksLikeDataverseQuery(raw)) {
       throw new Error(`Current line does not look like a Dataverse Web API path: ${raw}`);

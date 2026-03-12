@@ -9,7 +9,7 @@ import { getFieldHint } from "./shared/queryExplain/fieldHints.js";
 import { narrateExpression } from "./shared/queryExplain/filterNarrator.js";
 import { buildQueryShapeAdvice } from "./shared/queryExplain/queryShapeAdvisor.js";
 import { validateParsedQuery, type ValidationIssue } from "./shared/queryExplain/queryValidation.js";
-import { getLogicalEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
+import { resolveEditorQueryText } from "../../../shared/editorIntelligence/queryCursorResolver.js";
 
 type QueryParam = {
   key: string;
@@ -49,11 +49,6 @@ type ExplanationSection = {
   heading: string;
   lines: string[];
 };
-
-function getEditorAndRangeText(): { text: string } {
-  const { text } = getLogicalEditorQueryTarget();
-  return { text };
-}
 
 function normalizeInput(input: string): string {
   return input.trim().replace(/^\/+/, "");
@@ -597,7 +592,7 @@ export async function runExplainQueryAction(ctx: CommandContext): Promise<void> 
   ctx.output.show(true);
 
   try {
-    const { text } = getEditorAndRangeText();
+    const text = resolveEditorQueryText();
     if (!text) {
       throw new Error("No Dataverse query found on the current line or selection.");
     }

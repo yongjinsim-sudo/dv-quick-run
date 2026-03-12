@@ -10,13 +10,8 @@ import type { FieldDef } from "../services/entityFieldMetadataService.js";
 import type { NavPropertyDef } from "../services/entityRelationshipMetadataService.js";
 import type { ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
 import type { DataverseClient } from "../services/dataverseClient.js";
-import {
-  buildHoverFieldContext,
-  getCachedHoverFieldContext,
-  setCachedHoverFieldContext,
-  type HoverFieldContext
-} from "./hoverFieldContextCache.js";
-import { looksLikeDataverseQuery } from "../commands/router/actions/shared/editorIntelligence/queryDetection.js";
+import { buildHoverFieldContext, getCachedHoverFieldContext, setCachedHoverFieldContext, type HoverFieldContext } from "./hoverFieldContextCache.js";
+import { looksLikeDataverseQuery } from "../shared/editorIntelligence/queryDetection.js";
 
 const navHoverEnrichmentCache = new Map<
   string,

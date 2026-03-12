@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { looksLikeDataverseQuery } from "../commands/router/actions/shared/editorIntelligence/queryDetection.js";
+import { looksLikeDataverseQuery } from "../shared/editorIntelligence/queryDetection.js";
 
 function isCodeLensEnabled(): boolean {
   return vscode.workspace

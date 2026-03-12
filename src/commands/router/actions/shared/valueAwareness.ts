@@ -1,30 +1,5 @@
-import * as vscode from "vscode";
-import { CommandContext } from "../../../context/commandContext.js";
-import { DataverseClient } from "../../../../services/dataverseClient.js";
-import { logDebug } from "../../../../utils/logger.js";
-import { fetchEntityChoiceMetadata, type ChoiceMetadataDef } from "../../../../services/entityChoiceMetadataService.js";
-import { getCachedChoiceMetadata, setCachedChoiceMetadata } from "../../../../utils/entityChoiceCache.js";
+import type { ChoiceMetadataDef } from "../../../../services/entityChoiceMetadataService.js";
 import { normalizeChoiceLabel } from "../../../../metadata/metadataModel.js";
-import {
-  getChoiceMemory,
-  setChoiceMemory,
-  getOrCreateChoiceInFlight
-} from "./metadataLoadCache.js";
-
-type MetadataLoadOptions = {
-  silent?: boolean;
-  suppressOutput?: boolean;
-};
-
-function appendOutput(
-  ctx: CommandContext,
-  message: string,
-  options?: MetadataLoadOptions
-): void {
-  if (!options?.suppressOutput) {
-    logDebug(ctx.output,message);
-  }
-}
 
 export type ResolvedChoiceValue = {
   metadata: ChoiceMetadataDef;
@@ -62,56 +37,6 @@ function normalizeRawScalarValue(rawValue: string | number | boolean): number | 
   return Number.isFinite(numeric) ? numeric : undefined;
 }
 
-export async function loadChoiceMetadata(
-  ctx: CommandContext,
-  client: DataverseClient,
-  token: string,
-  logicalName: string,
-  options?: MetadataLoadOptions
-): Promise<ChoiceMetadataDef[]> {
-  const memory = getChoiceMemory<ChoiceMetadataDef>(logicalName);
-  if (memory?.length) {
-    return memory;
-  }
-
-  const envName = ctx.envContext.getEnvironmentName();
-  const cached = getCachedChoiceMetadata(ctx.ext, envName, logicalName);
-  if (cached?.length) {
-    setChoiceMemory(logicalName, cached);
-    appendOutput(
-      ctx,
-      `Choice metadata cache hit for ${logicalName}: ${cached.length} fields.`,
-      options
-    );
-    return cached;
-  }
-
-  const values = await getOrCreateChoiceInFlight<ChoiceMetadataDef>(logicalName, async () => {
-    const fetched = options?.silent
-      ? await fetchEntityChoiceMetadata(client, token, logicalName)
-      : await vscode.window.withProgress<ChoiceMetadataDef[]>(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: `DV Quick Run: Loading choice metadata for ${logicalName}...`,
-            cancellable: false
-          },
-          async () => await fetchEntityChoiceMetadata(client, token, logicalName)
-        );
-
-    await setCachedChoiceMetadata(ctx.ext, envName, logicalName, fetched);
-    setChoiceMemory(logicalName, fetched);
-    appendOutput(
-      ctx,
-      `Choice metadata fetched for ${logicalName}: ${fetched.length} fields.`,
-      options
-    );
-
-    return fetched;
-  });
-
-  return values;
-}
-
 export function findChoiceMetadataForField(
   values: ChoiceMetadataDef[],
   fieldLogicalName: string
@@ -120,15 +45,11 @@ export function findChoiceMetadataForField(
   return values.find((item) => normalizeName(item.fieldLogicalName) === target);
 }
 
-export async function resolveChoiceValue(
-  ctx: CommandContext,
-  client: DataverseClient,
-  token: string,
-  logicalName: string,
+export function resolveChoiceValueFromMetadata(
+  values: ChoiceMetadataDef[],
   fieldLogicalName: string,
   rawValue: string | number | boolean
-): Promise<ResolvedChoiceValue | undefined> {
-  const values = await loadChoiceMetadata(ctx, client, token, logicalName);
+): ResolvedChoiceValue | undefined {
   const metadata = findChoiceMetadataForField(values, fieldLogicalName);
   if (!metadata) {
     return undefined;
@@ -143,15 +64,11 @@ export async function resolveChoiceValue(
   return option ? { metadata, option } : undefined;
 }
 
-export async function matchChoiceLabel(
-  ctx: CommandContext,
-  client: DataverseClient,
-  token: string,
-  logicalName: string,
+export function matchChoiceLabelFromMetadata(
+  values: ChoiceMetadataDef[],
   fieldLogicalName: string,
   rawLabel: string
-): Promise<ResolvedChoiceValue | undefined> {
-  const values = await loadChoiceMetadata(ctx, client, token, logicalName);
+): ResolvedChoiceValue | undefined {
   const metadata = findChoiceMetadataForField(values, fieldLogicalName);
   if (!metadata) {
     return undefined;
