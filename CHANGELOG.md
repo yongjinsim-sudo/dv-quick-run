@@ -6,6 +6,34 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.3.1] - Architecture Stabilization & Query Reliability
+
+### Added
+- Unit tests covering core query intelligence components
+  - query detection
+  - filter expression rules
+  - filter value validation
+  - choice metadata interpretation
+- Validation safeguards for `$filter` value formatting across string, numeric, datetime, and lookup fields
+- Shared utilities for query mutation and filter construction
+- Additional internal diagnostics coverage for metadata interpretation logic
+
+### Improved
+- Refactored metadata architecture separating **metadata loading** from **value interpretation**
+- Centralized metadata retrieval and caching through `metadataAccess`
+- Introduced pure interpretation layer `valueAwareness` for choice metadata resolution
+- Reduced duplication across query mutation actions using a shared mutation runner
+- Improved field picker experience by hiding non-selectable fields
+- Improved string escaping for OData filter expressions
+- Improved handling of numeric, GUID, and datetime filter values
+- Improved testability of core query analysis components
+
+### Fixed
+- Incorrect quoting behavior for datetime filter expressions
+- Duplicate query detection logic across mutation actions
+- Edge cases where non-selectable metadata fields appeared in `$select` field pickers
+- Several internal metadata interpretation inconsistencies
+
 ## [0.3.0] - Environment Profiles & Safe Multi-Environment Metadata
 
 ### Added

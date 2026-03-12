@@ -4,30 +4,15 @@ import { logError, logInfo, logWarn } from "../../../utils/logger.js";
 import { showJsonNamed } from "../../../utils/virtualJsonDoc.js";
 import { addQueryToHistory } from "../../../utils/queryHistory.js";
 import { normalizePath, buildResultTitle } from "./get/getQueryBuilder.js";
-import {
-  analyzeQueryGuardrails,
-  confirmGuardrailsIfNeeded,
-  showGuardrailErrors
-} from "./shared/guardrails/queryGuardrails.js";
-import { getLogicalEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
-
-function getQueryFromEditor(): string {
-  return getLogicalEditorQueryTarget().text;
-}
-
-function looksLikeDataverseQuery(input: string): boolean {
-  const q = input.trim();
-
-  if (!q) {return false;}
-
-  return /^\/?[A-Za-z_][A-Za-z0-9_]*([(][^)]*[)])?([?].*)?$/.test(q);
-}
+import { analyzeQueryGuardrails, confirmGuardrailsIfNeeded, showGuardrailErrors} from "./shared/guardrails/queryGuardrails.js";
+import { looksLikeDataverseQuery } from "../../../shared/editorIntelligence/queryDetection.js";
+import { resolveEditorQueryText } from "../../../shared/editorIntelligence/queryCursorResolver.js";
 
 export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<void> {
   ctx.output.show(true);
 
   try {
-    const raw = getQueryFromEditor();
+    const raw = resolveEditorQueryText();
 
     if (!looksLikeDataverseQuery(raw)) {
       throw new Error(`Current line does not look like a Dataverse Web API path: ${raw}`);

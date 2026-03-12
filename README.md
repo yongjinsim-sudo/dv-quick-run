@@ -1,4 +1,5 @@
 # DV Quick Run
+A metadata-aware Dataverse Web API console for VS Code.
 
 **Run, build, and understand Dataverse Web API queries directly inside VS Code with metadata-aware developer tooling.**
 
@@ -15,21 +16,19 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
-## 🆕 What's New in v0.3.0
+## 🆕 What's New in v0.3.1
 
-This release introduces **environment profiles** and improves the safety of working across multiple Dataverse environments.
+This release focuses on **architecture stabilization, reliability, and query correctness improvements**.
 
 Major improvements:
 
-- Support for **multiple Dataverse environments**
-- First-run **environment setup wizard**
-- Commands to **add, select, and remove environments**
-- **Status bar indicator** showing the active environment
-- Optional **environment color hints** (white / amber / red)
-- **Environment-scoped metadata caching**
-- Metadata diagnostics now display the **active environment and cache prefix**
-
-These changes make it easier and safer to work across **DEV, UAT, and PROD environments** without risking metadata mismatches.
+- Improved query mutation helpers and filter construction
+- Correct handling of string, numeric, GUID, and datetime filter values
+- Hidden non-selectable metadata fields from `$select` field pickers
+- Improved metadata architecture separating **metadata loading** from **value interpretation**
+- Reduced internal duplication across query mutation actions
+- Added unit tests for core query intelligence components
+- Improved reliability of query detection and filter expression rules
 
 ---
 
@@ -129,8 +128,8 @@ DV Quick Run collapses that loop into a **single editor experience**.
 
 DV Quick Run automatically detects probable Dataverse queries and adds **inline CodeLens actions**.
 
-    [Run Query] [Explain]
-    accounts?$top=10
+[Run Query] [Explain]
+accounts?$top=10
 
 
 This turns your editor into a **lightweight Dataverse query workbench**.
@@ -144,7 +143,7 @@ Understanding a Dataverse query can sometimes be harder than writing it.
 DV Quick Run breaks a query into **human-readable sections**.
 
 Example query:
-    contacts?$select=fullname&$filter=contains(fullname,'john')&$orderby=createdon desc&$top=25
+contacts?$select=fullname&$filter=contains(fullname,'john')&$orderby=createdon desc&$top=25
 
 
 Explain Query shows:
@@ -165,7 +164,7 @@ Great for **learning and reviewing queries**.
 Hover over fields inside a query to see **Dataverse metadata**.
 
 Example:
-    contacts?$select=fullname,emailaddress1
+contacts?$select=fullname,emailaddress1
 
 
 Hovering a field may display:
@@ -184,13 +183,13 @@ Metadata is cached for fast repeated lookups.
 Select a GUID in the editor and instantly generate a record query.
 
 Example selected GUID:
-    7d29eec7-4414-f111-8341-6045bdc42f8b
+7d29eec7-4414-f111-8341-6045bdc42f8b
 
 Generated query:
-    contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)
+contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)
 
 Or pick fields:
-    contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)?$select=fullname,emailaddress1
+contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)?$select=fullname,emailaddress1
 
 ---
 
@@ -208,13 +207,13 @@ Available helpers:
 Example transformation:
 
 Original:
-    contacts
+contacts
 
 Add fields:
-    contacts?$select=fullname,emailaddress1
+contacts?$select=fullname,emailaddress1
 
 Add filter:
-    contacts?$select=fullname,emailaddress1&$filter=contains(fullname,'john')
+contacts?$select=fullname,emailaddress1&$filter=contains(fullname,'john')
 
 
 ---
@@ -233,7 +232,7 @@ Choose entity
 → Run query  
 
 Example generated query:
-    accounts?$select=name,accountnumber
+accounts?$select=name,accountnumber
 
 ---
 
@@ -258,13 +257,12 @@ No manual request construction required.
 Convert a JSON record into a Dataverse query skeleton.
 
 Example JSON:
-    {
-        "fullname": "John Smith"
-    }
+{
+	"fullname": "John Smith"
+}
 
 Generated query:
-    contacts?$filter=fullname eq 'John Smith'
-
+contacts?$filter=fullname eq 'John Smith'
 
 Useful when exploring Dataverse responses.
 
@@ -275,10 +273,10 @@ Useful when exploring Dataverse responses.
 Explore how Dataverse entities are connected.
 
 Example:
-    contact
-    ├─ createdby → systemuser
-    ├─ parentcustomerid_account → account
-    └─ parentcustomerid_contact → contact
+contact
+├─ createdby → systemuser
+├─ parentcustomerid_account → account
+└─ parentcustomerid_contact → contact
 
 This helps developers understand **which `$expand` paths are available**.
 
@@ -368,8 +366,8 @@ DV Quick Run is designed for:
 # 🛠 Development
 
 Run locally:
-    npm install
-    npm run compile
+npm install
+npm run compile
 
 Press **F5** in VS Code to launch the **Extension Development Host**.
 

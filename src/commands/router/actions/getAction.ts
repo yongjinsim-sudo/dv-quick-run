@@ -60,17 +60,20 @@ async function buildSelectFieldsQuery(
   def: EntityDef
 ): Promise<string | undefined> {
   const fields = await getFieldsForEntity(ctx, client, token, def.logicalName);
+  const selectableFields = fields.filter((f) => !!selectTokenForField(f));
 
-  const selectableCount = fields.filter((f) => !!selectTokenForField(f)).length;
-  logDebug(ctx.output,`Selectable fields for ${def.logicalName}: ${selectableCount} / ${fields.length}`);
+  logDebug(
+    ctx.output,
+    `Selectable fields for ${def.logicalName}: ${selectableFields.length} / ${fields.length}`
+  );
 
   const picked = await vscode.window.showQuickPick(
-    fields.map((f) => {
-      const tok = selectTokenForField(f);
+    selectableFields.map((f) => {
+      const tok = selectTokenForField(f)!;
       return {
         label: f.logicalName,
         description: f.attributeType || "",
-        detail: tok ? `$select token: ${tok}` : "Not selectable via $select",
+        detail: `$select token: ${tok}`,
         field: f
       };
     }),

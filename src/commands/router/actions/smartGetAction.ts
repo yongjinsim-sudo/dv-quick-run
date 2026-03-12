@@ -9,7 +9,7 @@ import { loadFields } from "./shared/metadataAccess.js";
 import { SmartField, SmartGetState, SmartGetFilterState, FilterExpr } from "./smartGet/smartGetTypes.js";
 import { promptOrderBy } from "./smartGet/smartGetOrderBy.js";
 import { normalizePath, buildResultTitle, buildQueryFromState, buildGetCurl } from "./smartGet/smartGetQueryBuilder.js";
-import { toSelectableFields } from "./shared/selectableFields.js";
+import { getSelectableFields } from "./shared/selectableFields.js";
 import { shouldExecuteQueryWithGuardrails } from "./shared/guardrails/guardedExecution.js";
 import { buildLookupSelectToken } from "../../../metadata/metadataModel.js";
 import { SmartMetadataSession } from "./smart/shared/smartMetadataSession.js";
@@ -48,7 +48,8 @@ function tryParseFieldsFromOpenAttributesDoc(logicalName: string): SmartField[] 
       f.selectToken = selectTokenForField(f);
     }
 
-    return fields;
+    return fields.filter((f) => !!f.selectToken);
+
   } catch {
     return undefined;
   }
@@ -93,7 +94,7 @@ async function getFieldsForEntity(
 
   const fields = await loadFields(ctx, client, token, logicalName);
 
-  return toSelectableFields(fields).map((f) => ({
+  return getSelectableFields(fields).map((f) => ({
     logicalName: f.logicalName,
     attributeType: f.attributeType,
     isValidForRead: f.isValidForRead,
@@ -108,13 +109,21 @@ async function pickFields(
 ): Promise<SmartField[] | undefined> {
   const pre = new Set((preselectedLogicalNames ?? []).map((x) => x.toLowerCase()));
 
+  const selectableFields = fields
+    .filter((f) => !!f.selectToken)
+    .map((f) => ({
+      field: f,
+      logicalNameLower: f.logicalName.toLowerCase()
+    }))
+    .sort((a, b) => a.logicalNameLower.localeCompare(b.logicalNameLower));
+
   const picked = await vscode.window.showQuickPick(
-    fields.map((f) => ({
-      label: f.logicalName,
-      description: f.attributeType || "",
-      detail: f.selectToken ? `$select token: ${f.selectToken}` : "Not selectable via $select",
-      picked: pre.has(f.logicalName.toLowerCase()),
-      field: f
+    selectableFields.map(({ field, logicalNameLower }) => ({
+      label: field.logicalName,
+      description: field.attributeType || "",
+      detail: `$select token: ${field.selectToken}`,
+      picked: pre.has(logicalNameLower),
+      field
     })),
     {
       title: `DV Quick Run: Fields (${def.entitySetName})`,

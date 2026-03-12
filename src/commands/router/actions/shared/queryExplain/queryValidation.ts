@@ -6,13 +6,13 @@ import {
   findFieldByLogicalName,
   findFieldBySelectToken,
   findFieldOnDirectlyRelatedEntity,
-  findChoiceMetadataForField,
   loadChoiceMetadata,
   loadEntityDefs,
   loadFields,
   type RelationshipHit,
   matchChoiceLabel
 } from "../metadataAccess.js";
+import { findChoiceMetadataForField } from "../valueAwareness.js";
 
 type ParsedOrderBy = {
   field: string;

@@ -38,6 +38,7 @@ import { registerAddEnvironmentCommand } from "./commands/addEnvironment.js";
 import { clearHoverFieldContextCache } from "./providers/hoverFieldContextCache.js";
 import { clearMetadataSessionCache } from "./commands/router/actions/shared/metadataLoadCache.js";
 import { registerRemoveEnvironmentCommand } from "./commands/removeEnvironment.js";
+import { registerCommand } from "./commands/registerCommandHelpers.js";
 
 async function runCommandAtLine(
   documentUri: vscode.Uri,
@@ -151,52 +152,14 @@ export async function activate(context: vscode.ExtensionContext) {
   registerRemoveEnvironmentCommand(context, ctx, () => {
     environmentStatusBar.refresh();
   });
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("dvQuickRun.runQueryUnderCursor", async () => {
-      await runQueryUnderCursor(ctx);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("dvQuickRun.addFieldsSelect", async () => {
-      await addFieldsSelect(ctx);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("dvQuickRun.addFilter", async () => {
-      await addFilter(ctx);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("dvQuickRun.addExpand", async () => {
-      await addExpand(ctx);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("dvQuickRun.addOrderBy", async () => {
-      await addOrderBy(ctx);
-    })
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("dvQuickRun.explainQuery", async () => {
-      await explainQuery(ctx);
-    })
-  );
-
-  context.subscriptions.push(
-	vscode.commands.registerCommand("dvQuickRun.relationshipExplorer", () => relationshipExplorer(ctx))
-	);
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("dvQuickRun.relationshipGraphView", () =>
-      relationshipGraphView(ctx)
-    )
-  );
+  registerCommand(context, "dvQuickRun.runQueryUnderCursor", runQueryUnderCursor, ctx);
+  registerCommand(context, "dvQuickRun.addFieldsSelect", addFieldsSelect, ctx);
+  registerCommand(context, "dvQuickRun.addFilter", addFilter, ctx);
+  registerCommand(context, "dvQuickRun.addExpand", addExpand, ctx);
+  registerCommand(context, "dvQuickRun.addOrderBy", addOrderBy, ctx);
+  registerCommand(context, "dvQuickRun.explainQuery", explainQuery, ctx);
+  registerCommand(context, "dvQuickRun.relationshipExplorer", relationshipExplorer, ctx);
+  registerCommand(context, "dvQuickRun.relationshipGraphView", relationshipGraphView, ctx);
 
   context.subscriptions.push(
     vscode.commands.registerCommand(

@@ -1,21 +1,10 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../context/commandContext.js";
-import { DataverseClient } from "../../../services/dataverseClient.js";
-import { logError, logInfo } from "../../../utils/logger.js";
-import { EntityDef } from "../../../utils/entitySetCache.js";
 import { FieldDef } from "../../../services/entityFieldMetadataService.js";
-import { loadEntityDefs, loadFields } from "./shared/metadataAccess.js";
+import { loadFields } from "./shared/metadataAccess.js";
 import { getSelectableFields } from "./shared/selectableFields.js";
-import { getEditorQueryTarget } from "./shared/queryMutation/editorQueryTarget.js";
-import {
-  parseEditorQuery,
-  buildEditorQuery,
-  getEntitySetNameFromEditorQuery
-} from "./shared/queryMutation/parsedEditorQuery.js";
-import {
-  appendOrderByExpression
-} from "./shared/queryMutation/queryOptionMutator.js";
-import { applyEditorQueryUpdate } from "./shared/queryMutation/applyEditorQueryUpdate.js";
+import { appendOrderByExpression } from "./shared/queryMutation/queryOptionMutator.js";
+import { runQueryMutationAction } from "./shared/queryMutation/runQueryMutationAction.js";
 
 type OrderableField = {
   logicalName: string;
@@ -23,10 +12,6 @@ type OrderableField = {
   isValidForRead?: boolean;
   selectToken?: string;
 };
-
-function pickEntity(defs: EntityDef[], entitySetName: string): EntityDef | undefined {
-  return defs.find((d) => d.entitySetName.toLowerCase() === entitySetName.toLowerCase());
-}
 
 function toOrderableFields(fields: FieldDef[]): OrderableField[] {
   return getSelectableFields(fields).map((f) => ({
@@ -95,59 +80,39 @@ function buildOrderClause(field: OrderableField, direction: "asc" | "desc"): str
 }
 
 export async function runAddOrderByAction(ctx: CommandContext): Promise<void> {
-  ctx.output.show(true);
+  await runQueryMutationAction(
+    ctx,
+    "Add Order ($orderby)",
+    "DV Quick Run: Added order to $orderby.",
+    async ({ parsed, token, client, entityDef }) => {
+      const rawFields = await loadFields(ctx, client, token, entityDef.logicalName);
+      const fields = toOrderableFields(rawFields);
 
-  try {
-    const target = getEditorQueryTarget();
-    const parsed = parseEditorQuery(target.text);
+      const pickedField = await pickField(entityDef.entitySetName, fields);
+      if (!pickedField) {
+        return false;
+      }
 
-    const entitySetName = getEntitySetNameFromEditorQuery(parsed.entityPath);
-    if (!entitySetName) {
-      throw new Error(`Could not detect entity set name from: ${target.text}`);
+      const direction = await pickDirection();
+      if (!direction) {
+        return false;
+      }
+
+      const newClause = buildOrderClause(pickedField, direction);
+
+      const existingOrder = parsed.queryOptions.get("$orderby");
+      let replaceExisting = false;
+
+      if (existingOrder) {
+        const pickedStrategy = await pickExistingOrderStrategy(existingOrder);
+        if (!pickedStrategy) {
+          return false;
+        }
+        replaceExisting = pickedStrategy === "replace";
+      }
+
+      appendOrderByExpression(parsed, newClause, replaceExisting);
+      return true;
     }
-
-    const baseUrl = await ctx.getBaseUrl();
-    const scope = ctx.getScope();
-
-    const token = await ctx.getToken(scope);
-    const client: DataverseClient = ctx.getClient();
-
-    const defs = await loadEntityDefs(ctx, client, token);
-    const def = await pickEntity(defs, entitySetName);
-    if (!def) {
-      throw new Error(`Could not find metadata for entity set: ${entitySetName}`);
-    }
-
-    const rawFields = await loadFields(ctx, client, token, def.logicalName);
-    const fields = toOrderableFields(rawFields);
-
-    const pickedField = await pickField(def.entitySetName, fields);
-    if (!pickedField) {return;}
-
-    const direction = await pickDirection();
-    if (!direction) {return;}
-
-    const newClause = buildOrderClause(pickedField, direction);
-
-    const existingOrder = parsed.queryOptions.get("$orderby");
-    let replaceExisting = false;
-
-    if (existingOrder) {
-      const pickedStrategy = await pickExistingOrderStrategy(existingOrder);
-      if (!pickedStrategy) {return;}
-      replaceExisting = pickedStrategy === "replace";
-    }
-
-    appendOrderByExpression(parsed, newClause, replaceExisting);
-
-    const updated = buildEditorQuery(parsed);
-    await applyEditorQueryUpdate(target, updated);
-
-    logInfo(ctx.output,`Add Order ($orderby): ${target.text} -> ${updated}`);
-    vscode.window.showInformationMessage("DV Quick Run: Added order to $orderby.");
-  } catch (e: any) {
-    const msg = e?.message ?? String(e);
-    logError(ctx.output,msg);
-    vscode.window.showErrorMessage("DV Quick Run: Add Order ($orderby) failed. Check Output.");
-  }
+  );
 }

@@ -1,40 +1,5 @@
 import * as vscode from "vscode";
-
-function looksLikeDataverseQuery(text: string): boolean {
-  const line = text.trim();
-
-  if (!line) {
-    return false;
-  }
-
-  if (line.startsWith("//") || line.startsWith("#")) {
-    return false;
-  }
-
-  const entityPattern = /^\/?[A-Za-z_][A-Za-z0-9_]*(\([^)]+\))?(\?.+)?$/;
-
-  if (!entityPattern.test(line)) {
-    return false;
-  }
-
-  if (line.includes("?$")) {
-    return true;
-  }
-
-  if (/\([0-9a-fA-F-]{8,}\)/.test(line)) {
-    return true;
-  }
-
-  if (/^\/?[A-Za-z_][A-Za-z0-9_]*$/.test(line) && line.length >= 4) {
-    return true;
-  }
-
-  if (line.includes("?")) {
-    return true;
-  }
-
-  return false;
-}
+import { looksLikeDataverseQuery } from "../shared/editorIntelligence/queryDetection.js";
 
 function isCodeLensEnabled(): boolean {
   return vscode.workspace
@@ -62,7 +27,12 @@ export class QueryCodeLensProvider implements vscode.CodeLensProvider {
 
     for (let lineNumber = 0; lineNumber < document.lineCount; lineNumber++) {
       const line = document.lineAt(lineNumber);
-      const text = line.text.trim();
+      const raw = line.text;
+      const text = raw.trim();
+
+      if (!text.includes("?") && !text.includes("(") && text.length < 4) {
+        continue;
+      }
 
       if (!looksLikeDataverseQuery(text)) {
         continue;
