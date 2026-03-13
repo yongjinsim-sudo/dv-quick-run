@@ -3,7 +3,7 @@ import { CommandContext } from "../../../context/commandContext.js";
 import { DataverseClient } from "../../../../services/dataverseClient.js";
 import { addQueryToHistory } from "../../../../utils/queryHistory.js";
 import { SmartMetadataSession } from "../smart/shared/smartMetadataSession.js";
-import { SmartField, SmartGetFilterState, SmartGetState } from "./smartGetTypes.js";
+import { FilterExpr, SmartField, SmartGetFilterState, SmartGetState } from "./smartGetTypes.js";
 import { buildGetCurl, buildQueryFromState } from "./smartGetQueryBuilder.js";
 import {
   buildFilterClause,
@@ -17,32 +17,61 @@ import {
 import { getFieldsForEntity, pickSmartGetEntity, pickSmartGetFields } from "./smartGetFieldSelection.js";
 import { promptOrderBy } from "./smartGetOrderBy.js";
 
-export async function buildOrEditState(
+export type BuildOrEditStateDeps = {
+  getEntityDefs: (session: SmartMetadataSession) => Promise<any[]>;
+  pickEntity: (defs: any[], initialLogicalName?: string) => Promise<any | undefined>;
+  getSmartFields: (session: SmartMetadataSession, logicalName: string) => Promise<SmartField[]>;
+  pickFields: (def: any, fields: SmartField[], selected?: string[]) => Promise<SmartField[] | undefined>;
+  pickFilterField: (fields: SmartField[], selected?: string) => Promise<SmartField | undefined>;
+  pickOperator: (field: SmartField, expr?: FilterExpr) => Promise<FilterExpr | undefined>;
+  promptFilterValue: (field: SmartField, initial?: string) => Promise<string | undefined>;
+  validateFilterValue: (field: SmartField, value: string) => string | undefined;
+  showError: (message: string) => Thenable<string | undefined>;
+  promptTopValue: (initial?: number) => Promise<number | undefined>;
+  promptOrderByValue: (fields: SmartField[], initial?: SmartGetState["orderBy"]) => Promise<SmartGetState["orderBy"] | undefined>;
+};
+
+const defaultBuildDeps: BuildOrEditStateDeps = {
+  getEntityDefs: (session) => session.getEntityDefs(),
+  pickEntity: pickSmartGetEntity,
+  getSmartFields: (session, logicalName) => session.getSmartFields(logicalName),
+  pickFields: pickSmartGetFields,
+  pickFilterField: pickOptionalFilterField,
+  pickOperator: pickFilterOperator,
+  promptFilterValue: promptSmartGetFilterValue,
+  validateFilterValue: validateSmartGetFilterValue,
+  showError: (message) => vscode.window.showErrorMessage(message),
+  promptTopValue: promptSmartGetTop,
+  promptOrderByValue: promptOrderBy
+};
+
+export async function buildOrEditStateWithDeps(
   session: SmartMetadataSession,
+  deps: BuildOrEditStateDeps,
   initial?: SmartGetState
 ): Promise<{ state: SmartGetState; fields: SmartField[] } | undefined> {
-  const defs = await session.getEntityDefs();
-  const def = await pickSmartGetEntity(defs, initial?.entityLogicalName);
+  const defs = await deps.getEntityDefs(session);
+  const def = await deps.pickEntity(defs, initial?.entityLogicalName);
   if (!def) {return undefined;}
 
-  const fields = await session.getSmartFields(def.logicalName);
+  const fields = await deps.getSmartFields(session, def.logicalName);
 
-  const pickedFields = await pickSmartGetFields(def, fields, initial?.selectedFieldLogicalNames);
+  const pickedFields = await deps.pickFields(def, fields, initial?.selectedFieldLogicalNames);
   if (!pickedFields) {return undefined;}
 
   const selectedFieldLogicalNames = pickedFields.map((f) => f.logicalName);
 
   const preFilterField = initial?.filter?.fieldLogicalName;
-  const filterField = await pickOptionalFilterField(fields, preFilterField);
+  const filterField = await deps.pickFilterField(fields, preFilterField);
 
   let filter: SmartGetFilterState | undefined;
 
   if (filterField) {
     const preExpr = initial?.filter?.expr;
-    const expr = await pickFilterOperator(filterField, preExpr);
+    const expr = await deps.pickOperator(filterField, preExpr);
     if (!expr) {return undefined;}
 
-    const value = await promptSmartGetFilterValue(
+    const value = await deps.promptFilterValue(
       filterField,
       initial?.filter?.fieldLogicalName?.toLowerCase() === filterField.logicalName.toLowerCase()
         ? initial?.filter?.rawValue
@@ -50,9 +79,9 @@ export async function buildOrEditState(
     );
 
     if (value && value.length > 0) {
-      const validationMessage = validateSmartGetFilterValue(filterField, value);
+      const validationMessage = deps.validateFilterValue(filterField, value);
       if (validationMessage) {
-        vscode.window.showErrorMessage(validationMessage);
+        await deps.showError(validationMessage);
         return undefined;
       }
 
@@ -60,10 +89,10 @@ export async function buildOrEditState(
     }
   }
 
-  const top = await promptSmartGetTop(initial?.top);
+  const top = await deps.promptTopValue(initial?.top);
   if (top === undefined) {return undefined;}
 
-  const orderBy = await promptOrderBy(pickedFields, initial?.orderBy);
+  const orderBy = await deps.promptOrderByValue(pickedFields, initial?.orderBy);
 
   const state: SmartGetState = {
     entityLogicalName: def.logicalName,
@@ -75,6 +104,13 @@ export async function buildOrEditState(
   };
 
   return { state, fields };
+}
+
+export async function buildOrEditState(
+  session: SmartMetadataSession,
+  initial?: SmartGetState
+): Promise<{ state: SmartGetState; fields: SmartField[] } | undefined> {
+  return buildOrEditStateWithDeps(session, defaultBuildDeps, initial);
 }
 
 type ReviewChoice =
@@ -136,7 +172,7 @@ export async function reviewAndEditLoop(
     if (choice.kind === "cancel") {return undefined;}
 
     if (choice.kind === "copyPath") {
-      await vscode.env.clipboard.writeText(path);
+      await vscode.env.clipboard.writeText(toDisplayQueryPath(path));
       vscode.window.showInformationMessage("DV Quick Run: Query path copied to clipboard.");
       continue;
     }
@@ -148,7 +184,7 @@ export async function reviewAndEditLoop(
     }
 
     if (choice.kind === "openInRunGet") {
-      await addQueryToHistory(ctx.ext, path.replace(/^\//, ""));
+      await addQueryToHistory(ctx.ext, toDisplayQueryPath(path).replace(/^\//, ""));
       await vscode.commands.executeCommand("dvQuickRun.runGet");
       return undefined;
     }
@@ -211,13 +247,7 @@ export async function reviewAndEditLoop(
       const expr = await pickFilterOperator(filterField, current.filter?.expr);
       if (!expr) {return undefined;}
 
-      const value = await promptSmartGetFilterValue(
-        filterField,
-        current.filter?.fieldLogicalName?.toLowerCase() === filterField.logicalName.toLowerCase()
-          ? current.filter?.rawValue
-          : undefined
-      );
-
+      const value = await promptSmartGetFilterValue(filterField, current.filter?.rawValue);
       if (!value || value.length === 0) {
         current = { ...current, filter: undefined };
         continue;
@@ -246,4 +276,12 @@ export async function getGuidTargetFields(
   token: string
 ): Promise<SmartField[]> {
   return getFieldsForEntity(ctx, client, token, entityLogicalName, session);
+}
+
+function toDisplayQueryPath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
 }

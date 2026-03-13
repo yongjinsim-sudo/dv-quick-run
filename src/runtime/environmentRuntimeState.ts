@@ -4,12 +4,38 @@ import { clearNavigationHoverEnrichmentCache } from "../providers/queryHoverProv
 import { clearMetadataSessionCache } from "../commands/router/actions/shared/metadataAccess/metadataSessionCache.js";
 import { logInfo } from "../utils/logger.js";
 
-export function clearEnvironmentScopedRuntimeCaches(output?: OutputChannel): void {
-  clearMetadataSessionCache();
-  clearHoverFieldContextCache();
-  clearNavigationHoverEnrichmentCache();
+export type EnvironmentRuntimeCacheDeps = {
+  clearMetadataSessionCache: () => void;
+  clearHoverFieldContextCache: () => void;
+  clearNavigationHoverEnrichmentCache: () => void;
+  logInfo: (message: string) => void;
+};
+
+export function clearEnvironmentScopedRuntimeCachesWithDeps(
+  deps: EnvironmentRuntimeCacheDeps,
+  output?: OutputChannel
+): void {
+  deps.clearMetadataSessionCache();
+  deps.clearHoverFieldContextCache();
+  deps.clearNavigationHoverEnrichmentCache();
 
   if (output) {
-    logInfo(output, "DV Quick Run: Cleared metadata session caches after environment change.");
+    deps.logInfo("DV Quick Run: Cleared metadata session caches after environment change.");
   }
+}
+
+export function clearEnvironmentScopedRuntimeCaches(output?: OutputChannel): void {
+  clearEnvironmentScopedRuntimeCachesWithDeps(
+    {
+      clearMetadataSessionCache,
+      clearHoverFieldContextCache,
+      clearNavigationHoverEnrichmentCache,
+      logInfo: (message: string) => {
+        if (output) {
+          logInfo(output, message);
+        }
+      }
+    },
+    output
+  );
 }

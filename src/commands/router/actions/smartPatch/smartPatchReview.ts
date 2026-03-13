@@ -25,14 +25,43 @@ type ReviewChoice =
   | { kind: "copyCurl" }
   | { kind: "cancel" };
 
-export async function runSmartPatchReviewLoop(
+export type SmartPatchReviewDeps = {
+  showQuickPick: typeof vscode.window.showQuickPick;
+  writeClipboard: (text: string) => Thenable<void>;
+  showInformationMessage: typeof vscode.window.showInformationMessage;
+  executeCommand: typeof vscode.commands.executeCommand;
+  addQueryHistory: typeof addQueryToHistory;
+  getDefs: (session: SmartMetadataSession) => Promise<Array<{ logicalName: string; entitySetName: string }>>;
+  pickEntityDef: typeof pickPatchEntity;
+  promptId: typeof promptPatchRecordId;
+  getFields: typeof getFieldsForPatchEntity;
+  pickFields: typeof pickPatchableFields;
+  promptValues: typeof promptPatchValues;
+};
+
+const defaultDeps: SmartPatchReviewDeps = {
+  showQuickPick: vscode.window.showQuickPick,
+  writeClipboard: vscode.env.clipboard.writeText,
+  showInformationMessage: vscode.window.showInformationMessage,
+  executeCommand: vscode.commands.executeCommand,
+  addQueryHistory: addQueryToHistory,
+  getDefs: (session) => session.getEntityDefs(),
+  pickEntityDef: pickPatchEntity,
+  promptId: promptPatchRecordId,
+  getFields: getFieldsForPatchEntity,
+  pickFields: pickPatchableFields,
+  promptValues: promptPatchValues
+};
+
+export async function runSmartPatchReviewLoopWithDeps(
   ctx: CommandContext,
   _client: DataverseClient,
   _token: string,
   baseUrl: string,
   session: SmartMetadataSession,
   initial: SmartPatchState,
-  initialFields: SmartField[]
+  initialFields: SmartField[],
+  deps: SmartPatchReviewDeps
 ): Promise<{ state: SmartPatchState; fields: SmartField[] } | undefined> {
   let current = initial;
   let fields = initialFields;
@@ -67,7 +96,7 @@ export async function runSmartPatchReviewLoop(
       { label: "❌ Cancel", choice: { kind: "cancel" } }
     ];
 
-    const picked = await vscode.window.showQuickPick(items, {
+    const picked = await deps.showQuickPick(items, {
       title: "DV Quick Run: Smart PATCH — Review",
       placeHolder: "Run or adjust parameters",
       ignoreFocusOut: true
@@ -79,28 +108,28 @@ export async function runSmartPatchReviewLoop(
     }
 
     if (choice.kind === "copyPayload") {
-      await vscode.env.clipboard.writeText(JSON.stringify(patchBody, null, 2));
-      vscode.window.showInformationMessage("DV Quick Run: PATCH payload copied.");
+      await deps.writeClipboard(JSON.stringify(patchBody, null, 2));
+      await deps.showInformationMessage("DV Quick Run: PATCH payload copied.");
       continue;
     }
 
     if (choice.kind === "copyPatchPath") {
-      await vscode.env.clipboard.writeText(patchPath);
-      vscode.window.showInformationMessage("DV Quick Run: PATCH path copied.");
+      await deps.writeClipboard(patchPath);
+      await deps.showInformationMessage("DV Quick Run: PATCH path copied.");
       continue;
     }
 
     if (choice.kind === "copyCurl") {
       const curl = buildPatchCurl(baseUrl, patchPath, patchBody);
-      await vscode.env.clipboard.writeText(curl);
-      vscode.window.showInformationMessage("DV Quick Run: curl command copied.");
+      await deps.writeClipboard(curl);
+      await deps.showInformationMessage("DV Quick Run: curl command copied.");
       continue;
     }
 
     if (choice.kind === "openInRunGet") {
       const getPath = `${current.entitySetName}(${current.id})`;
-      await addQueryToHistory(ctx.ext, getPath);
-      await vscode.commands.executeCommand("dvQuickRun.runGet");
+      await deps.addQueryHistory(ctx.ext, getPath);
+      await deps.executeCommand("dvQuickRun.runGet");
       return undefined;
     }
 
@@ -109,7 +138,7 @@ export async function runSmartPatchReviewLoop(
     }
 
     if (choice.kind === "editId") {
-      const id = await promptPatchRecordId(current.id);
+      const id = await deps.promptId(current.id);
       if (!id) {
         return undefined;
       }
@@ -119,18 +148,18 @@ export async function runSmartPatchReviewLoop(
     }
 
     if (choice.kind === "editEntity") {
-      const defs = await session.getEntityDefs();
-      const def = await pickPatchEntity(defs, current.entityLogicalName);
+      const defs = await deps.getDefs(session);
+      const def = await deps.pickEntityDef(defs, current.entityLogicalName);
       if (!def) {
         return undefined;
       }
 
-      const id = await promptPatchRecordId(undefined);
+      const id = await deps.promptId(undefined);
       if (!id) {
         return undefined;
       }
 
-      fields = await getFieldsForPatchEntity(session, def.logicalName);
+      fields = await deps.getFields(session, def.logicalName);
 
       current = {
         entityLogicalName: def.logicalName,
@@ -144,12 +173,12 @@ export async function runSmartPatchReviewLoop(
 
     if (choice.kind === "editFields") {
       const pre = current.fields.map((x) => x.logicalName);
-      const pickedFields = await pickPatchableFields(current.entitySetName, fields, pre);
+      const pickedFields = await deps.pickFields(current.entitySetName, fields, pre);
       if (!pickedFields) {
         return undefined;
       }
 
-      const values = await promptPatchValues(pickedFields, current.fields);
+      const values = await deps.promptValues(pickedFields, current.fields);
       if (!values) {
         return undefined;
       }
@@ -164,7 +193,7 @@ export async function runSmartPatchReviewLoop(
         .map((x) => map.get(x.logicalName.toLowerCase()))
         .filter((x): x is SmartField => !!x);
 
-      const values = await promptPatchValues(pickedFields, current.fields);
+      const values = await deps.promptValues(pickedFields, current.fields);
       if (!values) {
         return undefined;
       }
@@ -173,4 +202,16 @@ export async function runSmartPatchReviewLoop(
       continue;
     }
   }
+}
+
+export async function runSmartPatchReviewLoop(
+  ctx: CommandContext,
+  client: DataverseClient,
+  token: string,
+  baseUrl: string,
+  session: SmartMetadataSession,
+  initial: SmartPatchState,
+  initialFields: SmartField[]
+): Promise<{ state: SmartPatchState; fields: SmartField[] } | undefined> {
+  return runSmartPatchReviewLoopWithDeps(ctx, client, token, baseUrl, session, initial, initialFields, defaultDeps);
 }

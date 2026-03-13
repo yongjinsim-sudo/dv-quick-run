@@ -7,6 +7,7 @@ import { analyzeQueryGuardrails, confirmGuardrailsIfNeeded, showGuardrailErrors}
 import { looksLikeDataverseQuery } from "../../../../shared/editorIntelligence/queryDetection.js";
 import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/queryCursorResolver.js";
 import { runAction } from "../shared/actionRunner.js";
+import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
 
 export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<void> {
   await runAction(ctx, "DV Quick Run: Run Query Under Cursor failed. Check Output.", async () => {
@@ -33,13 +34,21 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
       return;
     }
 
-    logInfo(ctx.output, "Run Query Under Cursor request issued.");
-    logInfo(ctx.output, `Entity path: ${path.split("?")[0]}`);
-    logDebug(ctx.output, `GET ${path}`);
+    logDataverseExecutionStart(ctx.output, ctx.envContext.getEnvironmentName(), "GET", path);
 
-    await addQueryToHistory(ctx.ext, path.replace(/^\//, ""));
-
+    const startedAt = Date.now();
     const result = await client.get(path, token);
+    const durationMs = Date.now() - startedAt;
+
+    const recordCount = Array.isArray((result as any)?.value)
+      ? (result as any).value.length
+      : Array.isArray(result)
+        ? result.length
+        : result
+          ? 1
+          : 0;
+
+    logDataverseExecutionResult(ctx.output, recordCount, durationMs);
     await showJsonNamed(buildResultTitle(path), result);
   });
 }

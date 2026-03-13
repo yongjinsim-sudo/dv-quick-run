@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
-import { logDebug, logInfo } from "../../../../utils/logger.js";
 import { showJsonNamed } from "../../../../utils/virtualJsonDoc.js";
 import { EntityDef } from "../../../../utils/entitySetCache.js";
-
 import { loadEntityDefs } from "../shared/metadataAccess.js";
 import { runAction } from "../shared/actionRunner.js";
 import { METADATA_KINDS, MetadataKind } from "./metadataTypes.js";
 import { buildMetadataPath, metadataVirtualPath } from "./metadataBuilders.js";
+import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
+
 
 async function pickEntity(defs: EntityDef[]): Promise<EntityDef | undefined> {
   const picked = await vscode.window.showQuickPick(
@@ -45,7 +45,6 @@ export async function runGetMetadataAction(ctx: CommandContext): Promise<void> {
     const scope = ctx.getScope();
     const token = await ctx.getToken(scope);
     const client = ctx.getClient();
-
     const defs = await loadEntityDefs(ctx, client, token);
     const def = await pickEntity(defs);
     if (!def) {return;}
@@ -55,10 +54,14 @@ export async function runGetMetadataAction(ctx: CommandContext): Promise<void> {
 
     const path = buildMetadataPath(def.logicalName, kind);
 
-    logInfo(ctx.output, `Metadata request: entity=${def.logicalName} kind=${kind}`);
-    logDebug(ctx.output, `GET ${path}`);
+    const env = ctx.envContext.getEnvironmentName();
+    logDataverseExecutionStart(ctx.output, env, "GET", path);
 
+    const start = Date.now();
     const result = await client.get(path, token);
+    const duration = Date.now() - start;
+
     await showJsonNamed(metadataVirtualPath(def.logicalName, kind), result);
+    logDataverseExecutionResult(ctx.output, 1, duration);
   });
 }

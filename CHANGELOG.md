@@ -6,6 +6,67 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.3.2] - Execution Transparency, Test Coverage & Developer UX
+
+### Added
+- Comprehensive automated test suite covering core DV Quick Run subsystems
+- Query mutation pipeline
+- Guardrail execution logic
+- Environment runtime state handling
+- Smart GET workflows and GUID flows
+- Smart PATCH workflows
+- Explain Query parsing and section generation
+- Metadata access and session caching
+- Hover field, navigation, and choice resolution
+- Structured execution logging for Dataverse operations
+- Shared execution logging helpers for consistent command output
+- Result timing and record-count summaries for GET operations
+
+### Improved
+- Execution output now clearly displays the exact query executed:
+    [DV:DEV] GET contacts?$select=fullname&$top=10
+    → 10 records returned (85ms)
+- Improved developer visibility when running queries directly from the editor
+- Consistent execution output format across Smart GET, Run Query, and metadata operations
+- Review menu UX improvements for Smart GET workflows
+- Clipboard actions now produce human-readable query paths instead of URL-encoded strings
+- Improved command output clarity by reducing noisy intermediate messages
+- Refactored action-level execution flows for improved runtime safety and consistency
+
+### Fixed
+- Result preview window not appearing after query execution in certain refactor scenarios
+- Incorrect URL-encoded query text produced by **Copy Query Path**
+- Inconsistent query history entries when opening queries via the review menu
+- Several minor execution-flow edge cases uncovered during test expansion
+
+## [0.3.1] - Architecture Stabilization & Query Reliability
+
+### Added
+- Unit tests covering core query intelligence components
+  - query detection
+  - filter expression rules
+  - filter value validation
+  - choice metadata interpretation
+- Validation safeguards for `$filter` value formatting across string, numeric, datetime, and lookup fields
+- Shared utilities for query mutation and filter construction
+- Additional internal diagnostics coverage for metadata interpretation logic
+
+### Improved
+- Refactored metadata architecture separating **metadata loading** from **value interpretation**
+- Centralized metadata retrieval and caching through `metadataAccess`
+- Introduced pure interpretation layer `valueAwareness` for choice metadata resolution
+- Reduced duplication across query mutation actions using a shared mutation runner
+- Improved field picker experience by hiding non-selectable fields
+- Improved string escaping for OData filter expressions
+- Improved handling of numeric, GUID, and datetime filter values
+- Improved testability of core query analysis components
+
+### Fixed
+- Incorrect quoting behavior for datetime filter expressions
+- Duplicate query detection logic across mutation actions
+- Edge cases where non-selectable metadata fields appeared in `$select` field pickers
+- Several internal metadata interpretation inconsistencies
+
 ## [0.3.0] - Environment Profiles & Safe Multi-Environment Metadata
 
 ### Added

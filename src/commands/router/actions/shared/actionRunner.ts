@@ -2,6 +2,28 @@ import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { logError } from "../../../../utils/logger.js";
 
+export type ActionFailureDeps = {
+  logError: (message: string) => void;
+  showErrorMessage: (message: string) => void | Thenable<unknown>;
+};
+
+export function handleActionFailure(
+  error: unknown,
+  failureMessage: string,
+  deps: ActionFailureDeps
+): void {
+  const msg = error instanceof Error ? error.message : String(error);
+  deps.logError(msg);
+  void deps.showErrorMessage(failureMessage);
+}
+
+function createActionFailureDeps(ctx: CommandContext): ActionFailureDeps {
+  return {
+    logError: (message: string) => logError(ctx.output, message),
+    showErrorMessage: (message: string) => vscode.window.showErrorMessage(message)
+  };
+}
+
 export async function runAction(
   ctx: CommandContext,
   failureMessage: string,
@@ -12,9 +34,7 @@ export async function runAction(
   try {
     await work();
   } catch (e: any) {
-    const msg = e?.message ?? String(e);
-    logError(ctx.output, msg);
-    vscode.window.showErrorMessage(failureMessage);
+    handleActionFailure(e, failureMessage, createActionFailureDeps(ctx));
   }
 }
 
@@ -28,9 +48,7 @@ export async function runActionWithResult<T>(
   try {
     return await work();
   } catch (e: any) {
-    const msg = e?.message ?? String(e);
-    logError(ctx.output, msg);
-    vscode.window.showErrorMessage(failureMessage);
+    handleActionFailure(e, failureMessage, createActionFailureDeps(ctx));
     return undefined;
   }
 }

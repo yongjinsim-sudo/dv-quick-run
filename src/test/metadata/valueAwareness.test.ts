@@ -3,7 +3,7 @@ import {
   findChoiceMetadataForField,
   resolveChoiceValueFromMetadata,
   matchChoiceLabelFromMetadata
-} from "../commands/router/actions/shared/valueAwareness.js";
+} from "../../commands/router/actions/shared/valueAwareness.js";
 
 suite("valueAwareness", () => {
   const values = [

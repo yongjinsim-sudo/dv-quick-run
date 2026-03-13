@@ -9,6 +9,7 @@ import { buildResultTitle, buildQueryFromState, normalizePath } from "./smartGet
 import { saveLastSmartGetState } from "./smartGetPersistence.js";
 import { buildFilterClause, isGuidLike } from "./smartGetFilters.js";
 import { SmartField, SmartGetState } from "./smartGetTypes.js";
+import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
 
 export function getSelectedGuidOrThrow(): string {
   const editor = vscode.window.activeTextEditor;
@@ -57,10 +58,22 @@ export async function executeSmartGetState(
   await saveLastSmartGetState(ctx, state);
   await addQueryToHistory(ctx.ext, path.replace(/^\//, ""));
 
-  logInfo(ctx.output, `Smart GET: entity=${state.entitySetName} fields=${state.selectedFieldLogicalNames.length}`);
-  logDebug(ctx.output, `GET ${transportPath}`);
+  const env = ctx.envContext.getEnvironmentName();
 
+  logDataverseExecutionStart(ctx.output, env, "GET", path);
+
+  const start = Date.now();
   const result = await client.get(transportPath, token);
+  const duration = Date.now() - start;
+
+  const count = Array.isArray((result as any)?.value)
+    ? (result as any).value.length
+    : result
+      ? 1
+      : 0;
+
+  logDataverseExecutionResult(ctx.output, count, duration);
+
   await showJsonNamed(buildResultTitle(path), result);
 }
 
@@ -74,9 +87,6 @@ export async function executeSmartGetGuidRaw(
   const path = normalizePath(`${entitySetName}(${guid})`);
   const transportPath = ensureTransportPath(path);
 
-  logInfo(ctx.output, `Smart GET (GUID raw): entity=${entitySetName}`);
-  logDebug(ctx.output, `GET ${transportPath}`);
-
   const shouldExecute = await shouldExecuteQueryWithGuardrails(
     ctx,
     client,
@@ -88,8 +98,21 @@ export async function executeSmartGetGuidRaw(
   if (!shouldExecute) {
     return;
   }
+  const env = ctx.envContext.getEnvironmentName();
+  logDataverseExecutionStart(ctx.output, env, "GET", path);
 
+  const start = Date.now();
   const result = await client.get(transportPath, token);
+  const duration = Date.now() - start;
+
+  const count = Array.isArray((result as any)?.value)
+    ? (result as any).value.length
+    : result
+      ? 1
+      : 0;
+
+  logDataverseExecutionResult(ctx.output, count, duration);
+
   await showJsonNamed(buildResultTitle(path), result);
 }
 
@@ -105,9 +128,6 @@ export async function executeSmartGetGuidPickFields(
   const path = normalizePath(`${entitySetName}(${guid})?$select=${select}`);
   const transportPath = ensureTransportPath(path);
 
-  logInfo(ctx.output, `Smart GET (GUID pick fields): entity=${entitySetName} fields=${selectTokens.length}`);
-  logDebug(ctx.output, `GET ${transportPath}`);
-
   const shouldExecute = await shouldExecuteQueryWithGuardrails(
     ctx,
     client,
@@ -115,11 +135,20 @@ export async function executeSmartGetGuidPickFields(
     path,
     "Smart GET GUID execution cancelled by guardrails."
   );
+  const env = ctx.envContext.getEnvironmentName();
+  logDataverseExecutionStart(ctx.output, env, "GET", path);
 
-  if (!shouldExecute) {
-    return;
-  }
-
+  const start = Date.now();
   const result = await client.get(transportPath, token);
+  const duration = Date.now() - start;
+
+  const count = Array.isArray((result as any)?.value)
+    ? (result as any).value.length
+    : result
+      ? 1
+      : 0;
+
+  logDataverseExecutionResult(ctx.output, count, duration);
+
   await showJsonNamed(buildResultTitle(path), result);
 }

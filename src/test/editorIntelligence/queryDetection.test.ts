@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { looksLikeDataverseQuery } from "../shared/editorIntelligence/queryDetection.js";
+import { looksLikeDataverseQuery } from "../../shared/editorIntelligence/queryDetection.js";
 
 suite("queryDetection", () => {
   test("detects simple select query", () => {

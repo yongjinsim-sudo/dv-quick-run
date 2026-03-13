@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { validateFilterRawValue } from "../commands/router/actions/shared/queryMutation/filterValueValidation.js";
+import { validateFilterRawValue } from "../../commands/router/actions/shared/queryMutation/filterValueValidation.js";
 
 suite("filterValueValidation", () => {
   test("accepts valid guid for lookup field", () => {

@@ -3,7 +3,7 @@ import {
   buildFilterClause,
   fieldCategory,
   getFilterOperatorOptions
-} from "../commands/router/actions/shared/queryMutation/filterExpressionRules.js";
+} from "../../commands/router/actions/shared/queryMutation/filterExpressionRules.js";
 
 suite("filterExpressionRules", () => {
   test("categorizes datetime field", () => {
