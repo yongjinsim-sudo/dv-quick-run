@@ -1,4 +1,5 @@
 # DV Quick Run
+A metadata-aware Dataverse Web API console for VS Code.
 
 **Run, build, and understand Dataverse Web API queries directly inside VS Code with metadata-aware developer tooling.**
 
@@ -135,8 +136,8 @@ DV Quick Run collapses that loop into a **single editor experience**.
 
 DV Quick Run automatically detects probable Dataverse queries and adds **inline CodeLens actions**.
 
-    [Run Query] [Explain]
-    accounts?$top=10
+[Run Query] [Explain]
+accounts?$top=10
 
 This turns your editor into a **lightweight Dataverse query workbench**.
 
@@ -149,7 +150,7 @@ Understanding a Dataverse query can sometimes be harder than writing it.
 DV Quick Run breaks a query into **human-readable sections**.
 
 Example query:
-    contacts?$select=fullname&$filter=contains(fullname,'john')&$orderby=createdon desc&$top=25
+contacts?$select=fullname&$filter=contains(fullname,'john')&$orderby=createdon desc&$top=25
 
 
 Explain Query shows:
@@ -170,7 +171,7 @@ Great for **learning and reviewing queries**.
 Hover over fields inside a query to see **Dataverse metadata**.
 
 Example:
-    contacts?$select=fullname,emailaddress1
+contacts?$select=fullname,emailaddress1
 
 
 Hovering a field may display:
@@ -244,7 +245,7 @@ Choose entity
 → Run query  
 
 Example generated query:
-    accounts?$select=name,accountnumber
+accounts?$select=name,accountnumber
 
 ---
 
@@ -277,7 +278,6 @@ Example JSON:
 Generated query:
 
     contacts?$filter=fullname eq 'John Smith'
-
 
 Useful when exploring Dataverse responses.
 
@@ -383,8 +383,8 @@ DV Quick Run is designed for:
 # 🛠 Development
 
 Run locally:
-    npm install
-    npm run compile
+npm install
+npm run compile
 
 Press **F5** in VS Code to launch the **Extension Development Host**.
 

@@ -27,9 +27,6 @@ export class QueryHoverProvider implements vscode.HoverProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | undefined> {
-    if (!isInlineHoverEnabled()) {
-      return undefined;
-    }
 
     const line = document.lineAt(position.line);
     const lineText = line.text.trim();

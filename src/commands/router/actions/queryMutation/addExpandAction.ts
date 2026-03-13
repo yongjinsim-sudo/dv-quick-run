@@ -173,7 +173,21 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
       if (!pickedNav) {
         return false;
       }
+  await runQueryMutationAction(
+    ctx,
+    "Add Expand ($expand)",
+    "DV Quick Run: Added expand to $expand.",
+    async ({ parsed, token, client, defs, entityDef }) => {
+      const navOptions = await loadNavigationOptions(ctx, client, token, entityDef.logicalName);
+      const pickedNav = await pickNavigationProperty(entityDef.entitySetName, defs, navOptions);
+      if (!pickedNav) {
+        return false;
+      }
 
+      const targetDef = findEntityByLogicalName(defs, pickedNav.targetLogicalName);
+      if (!targetDef) {
+        throw new Error(`Could not find target entity metadata for: ${pickedNav.targetLogicalName}`);
+      }
       const targetDef = findEntityByLogicalName(defs, pickedNav.targetLogicalName);
       if (!targetDef) {
         throw new Error(`Could not find target entity metadata for: ${pickedNav.targetLogicalName}`);
@@ -185,12 +199,28 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
       if (!pickedTokens?.length) {
         return false;
       }
+      const targetFields = await loadFields(ctx, client, token, targetDef.logicalName);
+      const selectable = getSelectableFields(targetFields);
+      const pickedTokens = await pickExpandFields(targetDef.entitySetName, selectable);
+      if (!pickedTokens?.length) {
+        return false;
+      }
 
+      const newClause = buildExpandClause(pickedNav.navigationPropertyName, pickedTokens);
       const newClause = buildExpandClause(pickedNav.navigationPropertyName, pickedTokens);
 
       const existingExpand = parsed.queryOptions.get("$expand");
       let strategy: "replace" | "append" = "replace";
+      const existingExpand = parsed.queryOptions.get("$expand");
+      let strategy: "replace" | "append" = "replace";
 
+      if (existingExpand) {
+        const pickedStrategy = await pickExistingExpandStrategy(existingExpand);
+        if (!pickedStrategy) {
+          return false;
+        }
+        strategy = pickedStrategy;
+      }
       if (existingExpand) {
         const pickedStrategy = await pickExistingExpandStrategy(existingExpand);
         if (!pickedStrategy) {
@@ -203,7 +233,15 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
         existingExpand && strategy === "append"
           ? mergeExpandClause(existingExpand, newClause)
           : newClause;
+      const finalExpand =
+        existingExpand && strategy === "append"
+          ? mergeExpandClause(existingExpand, newClause)
+          : newClause;
 
+      setQueryOption(parsed, "$expand", finalExpand);
+      return true;
+    }
+  );
       setQueryOption(parsed, "$expand", finalExpand);
       return true;
     }
