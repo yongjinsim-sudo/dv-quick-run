@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "./context/commandContext.js";
-import { removeEnvironmentAction } from "./router/actions/removeEnvironmentAction.js";
+import { removeEnvironmentAction } from "./router/actions/environment/removeEnvironmentAction.js";
 
 export function registerRemoveEnvironmentCommand(
   context: vscode.ExtensionContext,

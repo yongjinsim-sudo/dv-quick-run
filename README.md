@@ -16,19 +16,27 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
-## 🆕 What's New in v0.3.1
+## 🆕 What's New in v0.3.2
 
-This release focuses on **architecture stabilization, reliability, and query correctness improvements**.
+This release focuses on **execution transparency, developer ergonomics, and reliability improvements** across DV Quick Run workflows.
 
 Major improvements:
 
-- Improved query mutation helpers and filter construction
-- Correct handling of string, numeric, GUID, and datetime filter values
-- Hidden non-selectable metadata fields from `$select` field pickers
-- Improved metadata architecture separating **metadata loading** from **value interpretation**
-- Reduced internal duplication across query mutation actions
-- Added unit tests for core query intelligence components
-- Improved reliability of query detection and filter expression rules
+- Query execution output now shows the **exact request being sent to Dataverse**
+
+Example:
+    [DV:DEV] GET contacts?$select=fullname&$top=10
+    → 10 records returned (85ms)
+
+- Added **structured execution summaries** including record counts and response timing
+- Improved Smart GET review workflow and command output clarity
+- Clipboard actions now produce **human-readable query paths** instead of URL-encoded strings
+- Expanded automated test coverage across core query analysis and metadata interpretation components
+- Refactored internal execution logging to support consistent output across Smart GET, Run Query, and Smart PATCH flows
+- Fixed edge cases where result preview windows could fail to appear after query execution
+- Improved reliability of query history and review menu actions
+
+These improvements make DV Quick Run feel more like a **true Dataverse developer console inside VS Code**, with clearer execution feedback and more predictable workflows.
 
 ---
 
@@ -131,7 +139,6 @@ DV Quick Run automatically detects probable Dataverse queries and adds **inline 
 [Run Query] [Explain]
 accounts?$top=10
 
-
 This turns your editor into a **lightweight Dataverse query workbench**.
 
 ---
@@ -183,13 +190,16 @@ Metadata is cached for fast repeated lookups.
 Select a GUID in the editor and instantly generate a record query.
 
 Example selected GUID:
-7d29eec7-4414-f111-8341-6045bdc42f8b
+
+    7d29eec7-4414-f111-8341-6045bdc42f8b
 
 Generated query:
-contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)
+
+    contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)
 
 Or pick fields:
-contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)?$select=fullname,emailaddress1
+
+    contacts(7d29eec7-4414-f111-8341-6045bdc42f8b)?$select=fullname,emailaddress1
 
 ---
 
@@ -207,13 +217,16 @@ Available helpers:
 Example transformation:
 
 Original:
-contacts
+
+    contacts
 
 Add fields:
-contacts?$select=fullname,emailaddress1
+
+    contacts?$select=fullname,emailaddress1
 
 Add filter:
-contacts?$select=fullname,emailaddress1&$filter=contains(fullname,'john')
+
+    contacts?$select=fullname,emailaddress1&$filter=contains(fullname,'john')
 
 
 ---
@@ -257,12 +270,14 @@ No manual request construction required.
 Convert a JSON record into a Dataverse query skeleton.
 
 Example JSON:
-{
-	"fullname": "John Smith"
-}
+
+    {
+      "fullname": "John Smith"
+    }
 
 Generated query:
-contacts?$filter=fullname eq 'John Smith'
+
+    contacts?$filter=fullname eq 'John Smith'
 
 Useful when exploring Dataverse responses.
 
@@ -273,10 +288,11 @@ Useful when exploring Dataverse responses.
 Explore how Dataverse entities are connected.
 
 Example:
-contact
-├─ createdby → systemuser
-├─ parentcustomerid_account → account
-└─ parentcustomerid_contact → contact
+
+    contact
+    ├─ createdby → systemuser
+    ├─ parentcustomerid_account → account
+    └─ parentcustomerid_contact → contact
 
 This helps developers understand **which `$expand` paths are available**.
 
@@ -343,6 +359,7 @@ DV Quick Run uses **Azure CLI authentication**.
 If you are already logged in with Azure CLI, the extension will reuse that token.
 
 Login example:
+
     az login --allow-no-subscriptions
 
 No client secrets or OAuth configuration required.

@@ -4,7 +4,7 @@ import { DataverseClient } from "../../../../../services/dataverseClient.js";
 import { loadEntityDefs } from "../metadataAccess.js";
 import { runQueryGuardrailRules } from "./queryGuardrailRunner.js";
 import { ParsedDvQuery, QueryGuardrailResult } from "./queryGuardrailTypes.js";
-import { logInfo } from "../../../../../utils/logger.js";
+import { logDebug, logError, logWarn } from "../../../../../utils/logger.js";
 
 function splitQueryString(raw: string): { pathPart: string; queryPart: string } {
   const idx = raw.indexOf("?");
@@ -86,15 +86,19 @@ function formatIssuesForDialog(result: QueryGuardrailResult): string {
 
 function logGuardrailIssues(ctx: CommandContext, result: QueryGuardrailResult): void {
   if (!result.issues.length) {
-    logInfo(ctx.output,"Guardrails: no issues detected.");
+    logDebug(ctx.output,"Guardrails: no issues detected.");
     return;
   }
 
-  logInfo(ctx.output,"Guardrails:");
-
   for (const issue of result.issues) {
     const suffix = issue.suggestion ? ` Suggestion: ${issue.suggestion}` : "";
-    logInfo(ctx.output,` - [${issue.severity.toUpperCase()}] ${issue.message}${suffix}`);
+    const line = `Guardrails [${issue.severity.toUpperCase()}]: ${issue.message}${suffix}`;
+
+    if (issue.severity === "error") {
+      logError(ctx.output, line);
+    } else {
+      logWarn(ctx.output, line);
+    }
   }
 }
 
@@ -113,7 +117,7 @@ export async function analyzeQueryGuardrails(
       const defs = await loadEntityDefs(ctx, client, token);
       knownEntitySetNames = new Set(defs.map((d) => d.entitySetName.trim().toLowerCase()));
     } catch (e: any) {
-      logInfo(ctx.output,`Guardrails metadata lookup skipped: ${e?.message ?? String(e)}`);
+      logDebug(ctx.output,`Guardrails metadata lookup skipped: ${e?.message ?? String(e)}`);
     }
   }
 

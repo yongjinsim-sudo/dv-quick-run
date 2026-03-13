@@ -1,4 +1,4 @@
-import { DataverseClient } from "./dataverseClient";
+import { DataverseClient } from "./dataverseClient.js";
 import { fetchNormalizedFieldMetadata } from "../metadata/metadataService.js";
 import type { FieldMetadata } from "../metadata/metadataModel.js";
 

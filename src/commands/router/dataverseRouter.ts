@@ -1,19 +1,19 @@
 import { CommandContext } from "../context/commandContext.js";
-import { runGetAction } from "./actions/getAction.js";
-import { runWhoAmIAction } from "./actions/whoAmIAction.js";
-import { runClearHistoryAction } from "./actions/clearHistoryAction.js";
-import { runGetMetadataAction } from "./actions/metadataAction.js";
-import { runSmartGetAction, runSmartGetEditLastAction, runSmartGetRerunLastAction, runSmartGetFromGuidPickFieldsAction, runSmartGetFromGuidRawAction } from "./actions/smartGetAction.js";
-import { runSmartPatchAction, runSmartPatchEditLastAction, runSmartPatchRerunLastAction} from "./actions/smartPatchAction.js";
-import { runGenerateQueryFromJsonAction } from "./actions/generateQueryFromJsonAction.js";
-import { runQueryUnderCursorAction } from "./actions/runQueryUnderCursorAction.js";
-import { runAddFieldsSelectAction } from "./actions/addFieldsSelectAction.js";
-import { runAddFilterAction } from "./actions/addFilterAction.js";
-import { runAddExpandAction } from "./actions/addExpandAction.js";
-import { runAddOrderByAction } from "./actions/addOrderByAction.js";
-import { runExplainQueryAction } from "./actions/explainQueryAction.js";
-import { runRelationshipExplorerAction } from "./actions/relationshipExplorerAction.js";
-import { runRelationshipGraphViewAction } from "./actions/relationshipGraphViewAction.js";
+import { runGetAction } from "./actions/execution/getAction.js";
+import { runWhoAmIAction } from "./actions/execution/whoAmIAction.js";
+import { runClearHistoryAction } from "./actions/execution/clearHistoryAction.js";
+import { runGetMetadataAction } from "./actions/metadata/metadataAction.js";
+import { runSmartGetAction, runSmartGetEditLastAction, runSmartGetRerunLastAction, runSmartGetFromGuidPickFieldsAction, runSmartGetFromGuidRawAction } from "./actions/smartGet/smartGetAction.js";
+import { runSmartPatchAction, runSmartPatchEditLastAction, runSmartPatchRerunLastAction} from "./actions/smartPatch/smartPatchAction.js";
+import { runGenerateQueryFromJsonAction } from "./actions/generation/generateQueryFromJsonAction.js";
+import { runQueryUnderCursorAction } from "./actions/execution/runQueryUnderCursorAction.js";
+import { runAddFieldsSelectAction } from "./actions/queryMutation/addFieldsSelectAction.js";
+import { runAddFilterAction } from "./actions/queryMutation/addFilterAction.js";
+import { runAddExpandAction } from "./actions/queryMutation/addExpandAction.js";
+import { runAddOrderByAction } from "./actions/queryMutation/addOrderByAction.js";
+import { runExplainQueryAction } from "./actions/explain/explainQueryAction.js";
+import { runRelationshipExplorerAction } from "./actions/relationships/relationshipExplorerAction.js";
+import { runRelationshipGraphViewAction } from "./actions/relationships/relationshipGraphViewAction.js";
 
 export type DvQuickRunAction = "get" 
   | "whoAmI" 

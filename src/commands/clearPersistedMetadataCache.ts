@@ -1,5 +1,5 @@
 import { CommandContext } from "./context/commandContext.js";
-import { runClearPersistedMetadataCacheAction } from "./router/actions/clearPersistedMetadataCacheAction.js";
+import { runClearPersistedMetadataCacheAction } from "./router/actions/metadata/clearPersistedMetadataCacheAction.js";
 
 export function registerClearPersistedMetadataCacheCommand(
   context: { subscriptions: { push(...items: any[]): void } },

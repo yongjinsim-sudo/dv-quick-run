@@ -1,5 +1,5 @@
 import { CommandContext } from "./context/commandContext.js";
-import { runShowMetadataDiagnosticsAction } from "./router/actions/showMetadataDiagnosticsAction.js";
+import { runShowMetadataDiagnosticsAction } from "./router/actions/metadata/showMetadataDiagnosticsAction.js";
 
 export function registerShowMetadataDiagnosticsCommand(
   context: { subscriptions: { push(...items: any[]): void } },
