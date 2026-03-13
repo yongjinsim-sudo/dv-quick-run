@@ -52,5 +52,7 @@ export function toSelectableFields(fields: FieldDef[]): SelectableField[] {
 export function getSelectableFields(fields: FieldDef[]): SelectableField[] {
   return fields
     .filter((field) => isSelectableMetadataField(field, fields))
-    .map(toSelectableField);
+    .map(toSelectableField)
+    .filter((field) => !!field.selectToken)
+    .sort((a, b) => a.logicalName.localeCompare(b.logicalName));
 }

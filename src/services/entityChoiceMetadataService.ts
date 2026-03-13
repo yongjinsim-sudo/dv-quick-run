@@ -1,4 +1,4 @@
-import { DataverseClient } from "./dataverseClient";
+import { DataverseClient } from "./dataverseClient.js";
 import { fetchNormalizedChoiceMetadata } from "../metadata/metadataService.js";
 import type { ChoiceMetadata } from "../metadata/metadataModel.js";
 

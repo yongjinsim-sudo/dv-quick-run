@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getTenantId } from "../../utils/config.js";
+import { getTenantId } from "../../utils/authConfig.js";
 import { getDataverseAccessToken } from "../../auth/azureCliAuth.js";
 import { DataverseClient } from "../../services/dataverseClient.js";
 import { EnvironmentContext } from "../../services/environmentContext.js";

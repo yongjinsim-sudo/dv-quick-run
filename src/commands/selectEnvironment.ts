@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "./context/commandContext.js";
-import { selectEnvironmentAction } from "./router/actions/selectEnvironmentAction.js";
+import { selectEnvironmentAction } from "./router/actions/environment/selectEnvironmentAction.js";
 
 export function registerSelectEnvironmentCommand(
   context: vscode.ExtensionContext,

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { FieldDef } from "../services/entityFieldMetadataService";
+import type { FieldDef } from "../services/entityFieldMetadataService.js";
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const KEY_PREFIX = "dvQuickRun.fieldsCache";

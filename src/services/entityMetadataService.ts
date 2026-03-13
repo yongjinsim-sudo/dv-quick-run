@@ -1,4 +1,4 @@
-import { DataverseClient } from "./dataverseClient";
+import { DataverseClient } from "./dataverseClient.js";
 import { fetchNormalizedEntityMetadata } from "../metadata/metadataService.js";
 import type { EntityMetadata } from "../metadata/metadataModel.js";
 

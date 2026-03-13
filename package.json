@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Run, build, and understand Dataverse Web API queries directly inside VS Code. Includes smart query builders, query explanation, metadata intelligence, and relationship exploration.",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
