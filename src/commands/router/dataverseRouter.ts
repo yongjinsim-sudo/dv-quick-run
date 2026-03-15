@@ -14,6 +14,7 @@ import { runAddOrderByAction } from "./actions/queryMutation/addOrderByAction.js
 import { runExplainQueryAction } from "./actions/explain/explainQueryAction.js";
 import { runRelationshipExplorerAction } from "./actions/relationships/relationshipExplorerAction.js";
 import { runRelationshipGraphViewAction } from "./actions/relationships/relationshipGraphViewAction.js";
+import { investigateRecordAction } from "./actions/investigateRecord/investigateRecordAction.js";
 
 export type DvQuickRunAction = "get" 
   | "whoAmI" 
@@ -35,7 +36,8 @@ export type DvQuickRunAction = "get"
   | "addOrderBy"
   | "explainQuery"
   | "relationshipExplorer"
-  | "relationshipGraphView";
+  | "relationshipGraphView"
+  | "investigateRecord";
 
 export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext): Promise<void> {
   switch (action) {
@@ -101,6 +103,9 @@ export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: Command
 
     case "relationshipGraphView":
         return await runRelationshipGraphViewAction(ctx);
+
+    case "investigateRecord":
+    return investigateRecordAction(ctx);
 
     default: {
       const _exhaustive: never = action;

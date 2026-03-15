@@ -1,0 +1,169 @@
+============================================================================
+DATAVERSE RECORD INVESTIGATION
+============================================================================
+
+OVERVIEW
+--------
+  Environment      : SIT
+  Entity           : contact
+  Entity Set       : contacts
+  Record Id        : 8129eec7-4414-f111-8341-6045bdc42f8b
+  Primary Name     : Nancy Anderson (sample)
+  Open In Dataverse : https://org.api.crm.dynamics.com/main.aspx?etn=contact&id=%7B8129eec7-4414-f111-8341-6045bdc42f8b%7D&pagetype=entityrecord
+
+SUMMARY
+-------
+  Prioritized factual fields from the fetched row. Blank or noisy values are omitted.
+
+  Identity
+  --------
+  Full Name : Nancy Anderson (sample)
+  Contact   : 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  Lifecycle
+  ---------
+  Status        : 0 (Active)
+  Status Reason : 1 (Active)
+  Created On    : 2026-02-28T01:28:58Z
+  Modified On   : 2026-02-28T01:28:58Z
+
+  Ownership
+  ---------
+  Owner                : bcec9497-f213-f111-8341-6045bdc330de
+  Created By           : bcec9497-f213-f111-8341-6045bdc330de
+  Modified By          : bcec9497-f213-f111-8341-6045bdc330de
+  Owning User          : bcec9497-f213-f111-8341-6045bdc330de
+  Owning Business Unit : cae59497-f213-f111-8341-6045bdc330de
+
+  Business-relevant fields
+  ------------------------
+  Email : someone_c@example.com
+
+SIGNALS
+-------
+  Heuristic hints only. These are not root-cause findings or business-rule conclusions.
+
+  [i] No lightweight signals were surfaced.
+
+POINTS TO
+---------
+  Direct lookup references present on the fetched row.
+  Target resolution is factual when a single target is known, and explicitly marked when a lookup is polymorphic.
+
+  → Company Name
+      Target    : Contact / Account
+      Note      : Polymorphic lookup — multiple valid target entities.
+      Record Id : 6d29eec7-4414-f111-8341-6045bdc42f8b
+      contacts(6d29eec7-4414-f111-8341-6045bdc42f8b)
+      accounts(6d29eec7-4414-f111-8341-6045bdc42f8b)
+
+  → Owner
+      Target    : User / Team
+      Record Id : bcec9497-f213-f111-8341-6045bdc330de
+
+  → Created By
+      Target    : Systemuser
+      Record Id : bcec9497-f213-f111-8341-6045bdc330de
+      systemusers(bcec9497-f213-f111-8341-6045bdc330de)
+
+  → Currency
+      Target    : Transactioncurrency
+      Record Id : 8ee69dcb-3f14-f111-8341-6045bdc330de
+      transactioncurrencies(8ee69dcb-3f14-f111-8341-6045bdc330de)
+
+  → Modified By
+      Target    : Systemuser
+      Record Id : bcec9497-f213-f111-8341-6045bdc330de
+      systemusers(bcec9497-f213-f111-8341-6045bdc330de)
+
+  → Owning Business Unit
+      Target    : Businessunit
+      Record Id : cae59497-f213-f111-8341-6045bdc330de
+      businessunits(cae59497-f213-f111-8341-6045bdc330de)
+
+  → Owning User
+      Target    : Systemuser
+      Record Id : bcec9497-f213-f111-8341-6045bdc330de
+      systemusers(bcec9497-f213-f111-8341-6045bdc330de)
+
+POTENTIAL REVERSE LINKS
+-----------------------
+  Metadata-derived follow-up suggestions for records that may point back to this record.
+  These are suggestions, not evidence that related rows currently exist.
+
+  ← Contact Activity Parties
+      Source : Activityparty
+      Via    : partyid
+      activityparties?$filter=_partyid_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  ← Contact Annotation
+      Source : Annotation
+      Via    : objectid
+      annotations?$filter=_objectid_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  ← Contact Activitypointers
+      Source : Activitypointer
+      Via    : regardingobjectid
+      activitypointers?$filter=_regardingobjectid_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  ← Contact Socialactivities
+      Source : Socialactivity
+      Via    : regardingobjectid
+      socialactivities?$filter=_regardingobjectid_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  ← Socialactivity Postauthor Contacts
+      Source : Socialactivity
+      Via    : postauthor
+      socialactivities?$filter=_postauthor_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  ← Socialactivity Postauthoraccount Contacts
+      Source : Socialactivity
+      Via    : postauthoraccount
+      socialactivities?$filter=_postauthoraccount_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  ← Contact Tasks
+      Source : Task
+      Via    : regardingobjectid
+      tasks?$filter=_regardingobjectid_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+  ← Contact Appointments
+      Source : Appointment
+      Via    : regardingobjectid
+      appointments?$filter=_regardingobjectid_value eq 8129eec7-4414-f111-8341-6045bdc42f8b
+
+SUGGESTED QUERIES
+-----------------
+  Suggested next queries only. These are convenience starting points, not verified findings.
+
+  Base record
+  contacts(8129eec7-4414-f111-8341-6045bdc42f8b)
+
+  Compact summary query
+  contacts(8129eec7-4414-f111-8341-6045bdc42f8b)?$select=contactid,fullname,statecode,statuscode,createdon,modifiedon,_ownerid_value
+
+  Compact summary query
+  contacts(8129eec7-4414-f111-8341-6045bdc42f8b)?$select=contactid,fullname,statecode,statuscode,createdon,modifiedon,_createdby_value,_modifiedby_value,_ownerid_value
+
+  Base record
+  contacts(6d29eec7-4414-f111-8341-6045bdc42f8b)
+
+  Base record
+  accounts(6d29eec7-4414-f111-8341-6045bdc42f8b)
+
+  Base record
+  systemusers(bcec9497-f213-f111-8341-6045bdc330de)
+
+DEVELOPER HANDOFF
+-----------------
+  Candidate Selection
+  -------------------
+  Field      : contactid
+  Type       : primary
+  Confidence : 92
+  Reason     : Matches OData-context primary id pattern
+
+  Resolution Notes
+  ---------------
+  - Input type: json
+  - Context source: recordPath
+  - Selection mode: selection/object-driven
