@@ -9,6 +9,7 @@ import { registerCommandSurface } from "./runtime/commandSurface.js";
 import { registerEnvironmentLifecycle } from "./runtime/environmentLifecycle.js";
 import { registerEditorIntelligence } from "./runtime/editorIntelligence.js";
 import { registerInternalSupportCommands } from "./runtime/internalSupportCommands.js";
+import { registerSelectionContext } from "./runtime/selectionContext.js";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerVirtualJsonProvider(context);
@@ -29,6 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerEnvironmentLifecycle(context, ctx, envContext, environmentStatusBar);
   registerInternalSupportCommands(context);
   registerEditorIntelligence(context, ctx);
+  registerSelectionContext(context, ctx);
 }
 
 export function deactivate() {}

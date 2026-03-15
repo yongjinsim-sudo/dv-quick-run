@@ -25,6 +25,7 @@ import { addOrderBy } from "../commands/addOrderBy.js";
 import { explainQuery } from "../commands/explainQuery.js";
 import { relationshipExplorer } from "../commands/relationshipExplorer.js";
 import { relationshipGraphView } from "../commands/relationshipGraphView.js";
+import { investigateRecord } from "../commands/investigateRecord.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 type DirectRegistration = {
@@ -65,7 +66,8 @@ const directRegistrations: readonly DirectRegistration[] = [
   { commandId: "dvQuickRun.addOrderBy", handler: addOrderBy },
   { commandId: "dvQuickRun.explainQuery", handler: explainQuery },
   { commandId: "dvQuickRun.relationshipExplorer", handler: relationshipExplorer },
-  { commandId: "dvQuickRun.relationshipGraphView", handler: relationshipGraphView }
+  { commandId: "dvQuickRun.relationshipGraphView", handler: relationshipGraphView },
+  { commandId: "dvQuickRun.investigateRecord", handler: investigateRecord }
 ];
 
 function registerContextCommands(

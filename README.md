@@ -1,12 +1,12 @@
 # DV Quick Run
 A metadata-aware Dataverse Web API console for VS Code.
 
-**Run, build, and understand Dataverse Web API queries directly inside VS Code with metadata-aware developer tooling.**
+**Run, build, understand, and investigate Dataverse Web API data directly inside VS Code with metadata‑aware developer tooling.**
 
 ### A Dataverse developer console inside VS Code
 
 DV Quick Run turns VS Code into a **Dataverse developer console**.  
-Instead of jumping between Postman, browser tabs, maker portals, and documentation, you can **write, refine, execute, and explain queries without leaving the editor**.
+Instead of jumping between Postman, browser tabs, maker portals, and documentation, you can **write, refine, execute, investigate, and explain queries without leaving the editor**.
 
 ---
 
@@ -16,27 +16,45 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
-## 🆕 What's New in v0.3.2
+## 🆕 What's New in v0.4.0
 
-This release focuses on **execution transparency, developer ergonomics, and reliability improvements** across DV Quick Run workflows.
+### 🔎 Investigate Record
 
-Major improvements:
+DV Quick Run can now **investigate a Dataverse record directly from a GUID**.
 
-- Query execution output now shows the **exact request being sent to Dataverse**
+Highlight a GUID in the editor and run:
 
-Example:
-    [DV:DEV] GET contacts?$select=fullname&$top=10
-    → 10 records returned (85ms)
+DV Quick Run: Investigate Record
 
-- Added **structured execution summaries** including record counts and response timing
-- Improved Smart GET review workflow and command output clarity
-- Clipboard actions now produce **human-readable query paths** instead of URL-encoded strings
-- Expanded automated test coverage across core query analysis and metadata interpretation components
-- Refactored internal execution logging to support consistent output across Smart GET, Run Query, and Smart PATCH flows
-- Fixed edge cases where result preview windows could fail to appear after query execution
-- Improved reliability of query history and review menu actions
+The extension analyzes the identifier, infers the entity type using metadata and context signals, and produces a structured investigation report.
 
-These improvements make DV Quick Run feel more like a **true Dataverse developer console inside VS Code**, with clearer execution feedback and more predictable workflows.
+Example workflow:
+
+highlight GUID  
+→ right click  
+→ Investigate Record  
+→ get investigation summary  
+→ explore relationships  
+→ run suggested follow‑up queries  
+
+Investigation reports include:
+
+- **SUMMARY** – key identity, lifecycle, ownership, and business fields  
+- **POINTS TO** – direct lookup relationships from the record  
+- **REVERSE LINKS** – entities that may reference this record  
+- **SUGGESTED QUERIES** – follow‑up queries to continue investigation  
+
+Example investigation:
+
+![Investigate Record Demo](docs/demo-investigate-record.gif)
+
+Example investigation output:
+
+[Example investigation output](docs/investigation-contact-example.txt)
+
+This feature turns DV Quick Run into a **Dataverse investigation tool**, allowing engineers, testers, and support teams to understand a record quickly without navigating the Dataverse UI.
+
+Investigate Record is designed for situations where a GUID appears in logs, payloads, or integration traces and the engineer needs to quickly understand what that record represents and how it relates to other entities.
 
 ---
 

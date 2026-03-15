@@ -6,6 +6,44 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.4.0] - Investigate Record
+
+### Added
+- **Investigate Record** feature for rapid Dataverse record analysis directly from VS Code
+- Investigation report generation including:
+  - structured **SUMMARY**
+  - **POINTS TO** lookup relationships
+  - **REVERSE LINKS** suggestions
+  - **SUGGESTED QUERIES** for further exploration
+- Deterministic candidate extraction for record identifiers from:
+  - GUID selections
+  - JSON payloads
+  - OData entity paths
+  - query results
+- Entity inference engine for resolving record entity types using:
+  - JSON `@odata.context`
+  - query path hints
+  - metadata lookup relationships
+- Canonical **Resolved Investigation Context** ensuring consistent entity resolution across the investigation pipeline
+- Polymorphic lookup awareness for relationships with multiple valid target entities
+- Investigation reports now include meaningful document titles:
+DV Investigation [ENV] - entity - guid
+- Metadata-enriched summary fields including choice label resolution:
+Priority : 1 (Normal)
+- Investigation summaries organized into ranked categories:
+- Identity
+- Lifecycle
+- Ownership
+- Business-relevant fields
+- Automated regression tests covering the investigation engine components:
+- candidate extraction
+- candidate scoring
+- candidate selection
+- input resolution
+- resolved investigation context
+- investigation document generation
+- signals and suggested queries
+
 ## [0.3.2] - Execution Transparency, Test Coverage & Developer UX
 
 ### Added

@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Run, build, and understand Dataverse Web API queries directly inside VS Code. Includes smart query builders, query explanation, metadata intelligence, and relationship exploration.",
-  "version": "0.3.2",
+  "description": "Run, build, and understand Dataverse Web API queries directly inside VS Code. Includes smart query builders, query explanation, record investigation from GUIDs, metadata intelligence, and relationship exploration.",
+  "version": "0.4.0",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -75,7 +75,8 @@
       { "command": "dvQuickRun.clearPersistedMetadataCache", "title": "DV Quick Run: Clear Persisted Metadata Cache" },
       { "command": "dvQuickRun.selectEnvironment", "title": "DV Quick Run: Select Environment" },
       { "command": "dvQuickRun.addEnvironment", "title": "DV Quick Run: Add Environment" },
-      { "command": "dvQuickRun.removeEnvironment", "title": "DV Quick Run: Remove Environment" }
+      { "command": "dvQuickRun.removeEnvironment", "title": "DV Quick Run: Remove Environment" },
+      { "command": "dvQuickRun.investigateRecord", "title": "DV Quick Run: Investigate Dataverse Record", "category": "DV Quick Run" }
     ],
     "menus": {
       "commandPalette": [
@@ -88,34 +89,39 @@
       ],
       "editor/context": [
         {
+          "command": "dvQuickRun.investigateRecord",
+          "group": "dvQuickRun_diagnostics@10",
+          "when": "editorTextFocus && editorHasSelection"
+        },
+        {
           "command": "dvQuickRun.runQueryUnderCursor",
           "when": "editorTextFocus && !editorReadonly",
-          "group": "dvQuickRun_core@1"
+          "group": "dvQuickRun_diagnostics@20"
         },
         {
           "command": "dvQuickRun.explainQuery",
           "when": "editorTextFocus && !editorReadonly",
-          "group": "dvQuickRun_core@2"
+          "group": "dvQuickRun_diagnostics@21"
         },
         {
           "command": "dvQuickRun.addFieldsSelect",
           "when": "editorTextFocus && !editorReadonly",
-          "group": "dvQuickRun_edit@1"
+          "group": "dvQuickRun_queryBuilder@31"
         },
         {
           "command": "dvQuickRun.addFilter",
           "when": "editorTextFocus && !editorReadonly",
-          "group": "dvQuickRun_edit@2"
+          "group": "dvQuickRun_queryBuilder@32"
         },
         {
           "command": "dvQuickRun.addExpand",
           "when": "editorTextFocus && !editorReadonly",
-          "group": "dvQuickRun_edit@3"
+          "group": "dvQuickRun_queryBuilder@33"
         },
         {
           "command": "dvQuickRun.addOrderBy",
           "when": "editorTextFocus && !editorReadonly",
-          "group": "dvQuickRun_edit@4"
+          "group": "dvQuickRun_queryBuilder@34"
         },
         {
           "command": "dvQuickRun.smartGetFromGuidRaw",
