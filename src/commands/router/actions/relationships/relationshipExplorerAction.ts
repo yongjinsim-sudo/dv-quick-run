@@ -197,7 +197,10 @@ function tryGetEntitySetNameFromActiveEditor(): string | undefined {
   }
 }
 
-export async function runRelationshipExplorerAction(ctx: CommandContext): Promise<void> {
+export async function runRelationshipExplorerAction(
+    ctx: CommandContext,
+    entitySetNameOverride?: string
+): Promise<void> {
   const baseUrl = await ctx.getBaseUrl();
   const scope = ctx.getScope();
   const token = await ctx.getToken(scope);
@@ -208,7 +211,8 @@ export async function runRelationshipExplorerAction(ctx: CommandContext): Promis
   let logicalName: string | undefined;
   let entitySetName: string | undefined;
 
-  const inferredEntitySetName = tryGetEntitySetNameFromActiveEditor();
+  const inferredEntitySetName =
+    entitySetNameOverride?.trim() || tryGetEntitySetNameFromActiveEditor();
 
   if (inferredEntitySetName) {
     const inferredEntity = findEntityByEntitySetName(defs, inferredEntitySetName);

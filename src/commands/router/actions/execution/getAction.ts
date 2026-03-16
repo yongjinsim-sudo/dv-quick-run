@@ -1,16 +1,13 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { logDebug, logInfo, logWarn } from "../../../../utils/logger.js";
-import { showJsonNamed } from "../../../../utils/virtualJsonDoc.js";
 import { getQueryHistory, addQueryToHistory } from "../../../../utils/queryHistory.js";
 import { DataverseClient } from "../../../../services/dataverseClient.js";
 import { EntityDef } from "../../../../utils/entitySetCache.js";
-
 import { ACTIONS, Action } from "./get/getTypes.js";
 import { getEntityDefs, getFieldsForEntity } from "./get/getMetadata.js";
 import {
   normalizePath,
-  buildResultTitle,
   selectTokenForField,
   buildTopQuery,
   buildCustomQuery
@@ -21,6 +18,7 @@ import {
   showGuardrailErrors
 } from "../shared/guardrails/queryGuardrails.js";
 import { runAction } from "../shared/actionRunner.js";
+import { showResultViewerForQuery } from "./shared/resultViewerLauncher.js";
 
 async function pickEntity(defs: EntityDef[]): Promise<EntityDef | undefined> {
   const picked = await vscode.window.showQuickPick(
@@ -189,6 +187,7 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
     logDebug(ctx.output, `GET ${path}`);
 
     const result = await client.get(path, token);
-    await showJsonNamed(buildResultTitle(path), result);
+
+    await showResultViewerForQuery(ctx, result, path);
   });
 }

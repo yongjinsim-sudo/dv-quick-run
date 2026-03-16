@@ -6,6 +6,36 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.4.2] - Interactive Result Viewer
+
+### Added
+- **Interactive Query Result Viewer** providing a structured table interface for Dataverse query results
+- Results now display in a dedicated viewer panel instead of raw JSON output
+- Toolbar actions allowing users to switch between:
+  - **TABLE view**
+  - **JSON view**
+  - **RELATIONSHIPS** analysis
+- Inline **record actions** for primary key values including:
+  - 🔎 **Investigate Record**
+  - ↗ **Open Record in Dataverse UI**
+- Automatic detection of Dataverse **primary key fields** using metadata
+- Primary key cells now surface contextual record actions directly within the result grid
+- Consistent result viewer behavior across:
+  - Run Query
+  - Run Query Under Cursor
+  - Smart GET
+
+### Improved
+- Query execution results now open in the **Result Viewer** by default for improved inspection workflows
+- Smart GET queries now use the same result viewer interface for consistent developer experience
+- Result viewer automatically resolves entity metadata to enable contextual record actions
+- Improved discoverability of record investigation and navigation actions
+- Result viewer header now includes **row count and environment context**
+
+### Fixed
+- Fixed Smart GET results opening in raw JSON instead of the result viewer
+- Fixed inconsistent result rendering between different query execution commands
+
 ## [0.4.1] - Stabilization & Investigation Reliability
 
 ### Added
