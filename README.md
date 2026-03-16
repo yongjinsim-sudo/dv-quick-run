@@ -16,6 +16,34 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
+## 🆕 What's New in v0.4.1
+
+### 🔧 Stabilization & Investigation Reliability
+
+This release focuses on **stabilizing the Investigate Record engine** and improving behavior in real-world Dataverse environments.
+
+Improvements include:
+
+- More reliable entity inference when investigating records from:
+  - JSON payloads
+  - mixed API responses
+  - diagnostic logs
+- Improved handling of **custom tables** and complex Dataverse schemas
+- Fixed investigation failures caused by incorrect `@odata.context` resolution
+- Improved error transparency when Dataverse permissions prevent relationship traversal
+- Investigation reports now correctly resolve entity context in documents containing multiple payload blocks
+
+### 🧭 Relationship Analysis Improvements
+
+Relationship exploration artifacts now open with **entity-aware document names**:
+
+- `Relationship Explorer - entity.txt`
+- `Relationship Graph - entity.txt`
+
+This makes it easier to work with multiple investigation artifacts inside VS Code.
+
+---
+
 ## 🆕 What's New in v0.4.0
 
 ### 🔎 Investigate Record
@@ -314,7 +342,21 @@ Example:
 
 This helps developers understand **which `$expand` paths are available**.
 
+The generated report opens as:
+
+`Relationship Explorer - entity.txt`
+
+making it easy to inspect relationships while investigating records.
+
 ### Relationship Graph View
+
+Graph view shows the **relationship structure of an entity** in a readable hierarchy.
+
+Example output:
+
+`Relationship Graph - entity.txt`
+
+This provides a quick structural overview of how an entity connects to other tables.
 
 Graph view currently shows **direct (1-level) relationships**.
 

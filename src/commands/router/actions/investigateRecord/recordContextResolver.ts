@@ -42,15 +42,17 @@ export async function resolveRecordContext(
         entitySetName: entity.entitySetName,
         primaryIdField: entity.primaryIdAttribute,
         primaryNameField: entity.primaryNameAttribute,
-        inferenceSource: "recordPath"
+        inferenceSource: input.type === "json" ? "jsonContext" : "recordPath"
       };
     }
 
-    return {
-      entityLogicalName: singularizeEntitySetName(input.entitySetName),
-      entitySetName: input.entitySetName,
-      inferenceSource: "recordPath"
-    };
+    if (input.type === "recordPath") {
+      return {
+        entityLogicalName: singularizeEntitySetName(input.entitySetName),
+        entitySetName: input.entitySetName,
+        inferenceSource: "recordPath"
+      };
+    }
   }
 
   const picked = await promptForEntity(ctx, client, token);

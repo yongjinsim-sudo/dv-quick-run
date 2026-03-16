@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "./context/commandContext.js";
+import type { DvQuickRunAction } from "./router/dataverseRouter.js";
 
 export function registerCommand(
   context: vscode.ExtensionContext,
@@ -10,6 +11,20 @@ export function registerCommand(
   context.subscriptions.push(
     vscode.commands.registerCommand(commandId, async () => {
       await handler(ctx);
+    })
+  );
+}
+
+export function registerRouterCommand(
+  context: vscode.ExtensionContext,
+  commandId: string,
+  actionName: DvQuickRunAction,
+  ctx: CommandContext
+) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandId, async () => {
+      const { runDvQuickRunAction } = await import("./router/dataverseRouter.js");
+      await runDvQuickRunAction(actionName, ctx);
     })
   );
 }

@@ -1,5 +1,8 @@
 import * as assert from "assert";
-import { scoreInvestigationCandidates } from "../../commands/router/actions/investigateRecord/investigationCandidateScorer.js";
+import {
+  rescoreSelectedInvestigationCandidate,
+  scoreInvestigationCandidates
+} from "../../commands/router/actions/investigateRecord/investigationCandidateScorer.js";
 import type { InvestigationCandidate } from "../../commands/router/actions/investigateRecord/investigationCandidateTypes.js";
 
 suite("investigationCandidateScorer", () => {
@@ -35,6 +38,25 @@ suite("investigationCandidateScorer", () => {
     assert.strictEqual(result[1].precedenceTier, 5);
   });
 
+  test("metadata rescoring upgrades selected primary id candidate", () => {
+    const result = rescoreSelectedInvestigationCandidate(
+      {
+        recordId: "8129eec7-4414-f111-8341-6045bdc42f8b",
+        fieldName: "contactid",
+        sourceType: "rootField"
+      },
+      {
+        entityLogicalName: "contact",
+        primaryIdField: "contactid",
+        entitySetName: "contacts"
+      }
+    );
+
+    assert.strictEqual(result.candidateType, "primary");
+    assert.strictEqual(result.confidence, 96);
+    assert.match(result.reason, /primary id attribute/i);
+  });
+
   test("common system lookups are heavily penalized", () => {
     const result = scoreInvestigationCandidates([
       { recordId: "22222222-2222-2222-2222-222222222222", fieldName: "_createdby_value", sourceType: "lookup" }
@@ -56,4 +78,24 @@ suite("investigationCandidateScorer", () => {
     assert.strictEqual(result[1].fieldName, "_ownerid_value");
     assert.strictEqual(result[2].fieldName, "id");
   });
+
+  test("metadata rescoring upgrades generic custom primary id candidates", () => {
+    const result = rescoreSelectedInvestigationCandidate(
+      {
+        recordId: "11111111-1111-1111-1111-111111111111",
+        fieldName: "sample_customactivitydefinitionid",
+        sourceType: "rootField"
+      },
+      {
+        entityLogicalName: "sample_customactivitydefinition",
+        primaryIdField: "sample_customactivitydefinitionid",
+        entitySetName: "sample_customactivitydefinitions"
+      }
+    );
+
+    assert.strictEqual(result.candidateType, "primary");
+    assert.ok(result.confidence >= 95);
+    assert.match(result.reason, /primary id/i);
+  });
+
 });

@@ -18,7 +18,9 @@ suite("metadataAccess exports", () => {
       "findFieldOnDirectlyRelatedEntity",
       "loadChoiceMetadata",
       "resolveChoiceValue",
-      "matchChoiceLabel"
+      "matchChoiceLabel",
+      "loadEntityRelationships",
+      "clearRelationshipMetadataMemory"
     ];
 
     for (const key of expected) {

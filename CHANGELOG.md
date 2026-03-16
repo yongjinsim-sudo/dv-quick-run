@@ -6,6 +6,31 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.4.1] - Stabilization & Investigation Reliability
+
+### Added
+- Relationship analysis documents now include entity-aware filenames:
+  - `Relationship Explorer - entity.txt`
+  - `Relationship Graph - entity.txt`
+- Improved investigation handling for mixed JSON documents containing multiple `@odata.context` blocks
+
+### Improved
+- Stabilized **Investigate Record** behavior for real-world Dataverse payloads
+- Improved entity inference when investigating records from:
+  - partial JSON fragments
+  - copied API responses
+  - mixed diagnostic logs
+- Improved investigation candidate selection to avoid incorrect entity resolution
+- Improved handling of custom tables and non-standard entity names
+- Improved error transparency when relationship traversal encounters Dataverse permission restrictions
+
+### Fixed
+- Fixed incorrect entity inference when earlier `@odata.context` values appeared elsewhere in the document
+- Fixed duplicate entity selection prompts in some investigation scenarios
+- Fixed incorrect request URL formatting in investigation error messages
+- Fixed investigation failures caused by incorrect context resolution in multi-block JSON payloads
+- Fixed several investigation edge cases discovered during real-world testing against enterprise Dataverse environments
+
 ## [0.4.0] - Investigate Record
 
 ### Added

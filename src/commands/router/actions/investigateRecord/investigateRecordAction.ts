@@ -14,10 +14,13 @@ import {
   buildSummaryFields,
   tryGetPrimaryName
 } from "./recordSummaryBuilder.js";
-import { InvestigationDocumentModel } from "./types.js";
+import { InvestigationDocumentModel, InvestigationInput, RecordContext } from "./types.js";
 import { buildInvestigationSignals } from "./investigationSignalsBuilder.js";
 import { buildSuggestedQueries } from "./investigationSuggestedQueriesBuilder.js";
-
+import { extractInvestigationCandidatesFromJson } from "./investigationCandidateExtractor.js";
+import { extractInvestigationCandidatesFromSelection } from "./investigationSelectionExtractor.js";
+import { pickInvestigationCandidate } from "./investigationCandidatePicker.js";
+import { rescoreSelectedInvestigationCandidate, scoreInvestigationCandidates } from "./investigationCandidateScorer.js";
 
 export async function investigateRecordAction(ctx: CommandContext): Promise<void> {
   try {
@@ -29,55 +32,56 @@ export async function investigateRecordAction(ctx: CommandContext): Promise<void
 
     const selectedText = getSelectedTextOrCurrentLine(editor);
     const fullDocumentText = editor.document.getText();
-    const input = await resolveInvestigationInput(selectedText, fullDocumentText);
+    const selectionStartOffset = editor.document.offsetAt(editor.selection.start);
+    const input = await resolveInvestigationInput(selectedText, fullDocumentText, selectionStartOffset);
 
     if (!input?.recordId) {
       vscode.window.showErrorMessage("No record identifier or supported input detected.");
       return;
     }
 
-    const recordContext = await resolveRecordContext(ctx, input);
-    if (!recordContext) {
+    let activeInput: InvestigationInput = { ...input };
+    let activeRecordContext = await resolveRecordContext(ctx, activeInput);
+    if (!activeRecordContext) {
       return;
     }
 
-    const queries = buildRecordQueries(recordContext, input.recordId);
     const baseUrl = await ctx.getBaseUrl();
     const token = await ctx.getToken(ctx.getScope());
     const client = ctx.getClient();
 
-    let activeRecordContext = recordContext;
-    let activeQueries = queries;
-    let record: Record<string, unknown>;
+    const activeRecordId = activeInput.recordId!;
+    let activeQueries = buildRecordQueries(activeRecordContext, activeRecordId);
+    let record = await tryGetRecord(client, token, activeQueries.rawQuery);
 
-    try {
-    record = await client.get(`/${activeQueries.rawQuery}`, token) as Record<string, unknown>;
-    } catch (error) {
-    const message = toErrorMessage(error);
-
-    const shouldRetryWithEntityPicker =
-        message.includes("Dataverse error 404") &&
-        activeRecordContext.inferenceSource !== "recordPath" &&
-        activeRecordContext.inferenceSource !== "explicit";
-
-    if (!shouldRetryWithEntityPicker) {
-        throw error;
+    if (!record && shouldRetryWithEntityPicker(activeRecordContext)) {
+      const fallbackContext = await promptForRecordContext(ctx);
+      if (fallbackContext) {
+        activeRecordContext = fallbackContext;
+        activeQueries = buildRecordQueries(activeRecordContext, activeRecordId);
+        record = await tryGetRecord(client, token, activeQueries.rawQuery);
+      }
     }
 
-    const fallbackContext = await promptForRecordContext(ctx);
-    if (!fallbackContext) {
-        throw error;
+    if (!record) {
+      const retriedInput = await promptForCandidateRetry(activeInput, activeRecordContext);
+      if (retriedInput) {
+        activeInput = retriedInput;
+        activeQueries = buildRecordQueries(activeRecordContext, activeInput.recordId!);
+        record = await tryGetRecord(client, token, activeQueries.rawQuery);
+      }
     }
 
-    activeRecordContext = fallbackContext;
-    activeQueries = buildRecordQueries(activeRecordContext, input.recordId);
-    record = await client.get(`/${activeQueries.rawQuery}`, token) as Record<string, unknown>;
+    if (!record) {
+      throw new Error(`Dataverse error 404 for GET ${joinDataverseUrl(baseUrl, activeQueries.rawQuery)}`);
     }
+
+    const rescoredCandidate = rescoreActiveCandidate(activeInput, activeRecordContext);
 
     const uiLink = buildDataverseRecordUiLink(
       baseUrl,
       activeRecordContext.entityLogicalName,
-      input.recordId
+      activeInput.recordId!
     );
 
     const summaryFields = await buildSummaryFields(
@@ -86,7 +90,7 @@ export async function investigateRecordAction(ctx: CommandContext): Promise<void
       token,
       activeRecordContext,
       record,
-      input.sourceJson
+      activeInput.sourceJson
     );
 
     const relatedRecords = await buildRelatedRecords(
@@ -102,20 +106,20 @@ export async function investigateRecordAction(ctx: CommandContext): Promise<void
       client,
       token,
       activeRecordContext,
-      input.recordId
+      activeInput.recordId!
     );
 
     const signals = buildInvestigationSignals({
       recordContext: activeRecordContext,
       record,
       relatedRecords,
-      selectedCandidateType: input.selectedCandidateType,
-      selectedCandidateConfidence: input.selectedCandidateConfidence
+      selectedCandidateType: rescoredCandidate?.candidateType ?? activeInput.selectedCandidateType,
+      selectedCandidateConfidence: rescoredCandidate?.confidence ?? activeInput.selectedCandidateConfidence
     });
 
     const suggestedQueries = buildSuggestedQueries({
       recordContext: activeRecordContext,
-      recordId: input.recordId,
+      recordId: activeInput.recordId!,
       rawQuery: activeQueries.rawQuery,
       minimalQuery: activeQueries.minimalQuery,
       relatedRecords
@@ -125,7 +129,7 @@ export async function investigateRecordAction(ctx: CommandContext): Promise<void
       environmentName: ctx.envContext.getEnvironmentName(),
       entityLogicalName: activeRecordContext.entityLogicalName,
       entitySetName: activeRecordContext.entitySetName,
-      recordId: input.recordId,
+      recordId: activeInput.recordId!,
       primaryName: tryGetPrimaryName(activeRecordContext, record),
       uiLink,
       minimalQuery: activeQueries.minimalQuery,
@@ -136,15 +140,15 @@ export async function investigateRecordAction(ctx: CommandContext): Promise<void
       suggestedQueries,
       signals,
       inferenceNotes: [
-        `Input type: ${input.type}`,
+        `Input type: ${activeInput.type}`,
         `Context source: ${activeRecordContext.inferenceSource}`,
-        `Selection mode: ${input.sourceJson ? "selection/object-driven" : "document/guid-driven"}`
+        `Selection mode: ${activeInput.sourceJson ? "selection/object-driven" : "document/guid-driven"}`
       ],
 
-      selectedCandidateFieldName: input.selectedCandidateFieldName,
-      selectedCandidateType: input.selectedCandidateType,
-      selectedCandidateConfidence: input.selectedCandidateConfidence,
-      selectedCandidateReason: input.selectedCandidateReason
+      selectedCandidateFieldName: rescoredCandidate?.fieldName ?? activeInput.selectedCandidateFieldName,
+      selectedCandidateType: rescoredCandidate?.candidateType ?? activeInput.selectedCandidateType,
+      selectedCandidateConfidence: rescoredCandidate?.confidence ?? activeInput.selectedCandidateConfidence,
+      selectedCandidateReason: rescoredCandidate?.reason ?? activeInput.selectedCandidateReason
     };
 
     const content = buildInvestigationDocument(model);
@@ -224,10 +228,118 @@ function sanitizeInvestigationDocumentTitle(value: string): string {
     .trim() || "DV Investigation";
 }
 
+async function tryGetRecord(
+  client: ReturnType<CommandContext["getClient"]>,
+  token: string,
+  rawQuery: string
+): Promise<Record<string, unknown> | undefined> {
+  try {
+    return await client.get(`/${rawQuery}`, token) as Record<string, unknown>;
+  } catch (error) {
+    if (isDataverse404(error)) {
+      return undefined;
+    }
+
+    throw error;
+  }
+}
+
+function shouldRetryWithEntityPicker(recordContext: RecordContext): boolean {
+  return (
+    recordContext.inferenceSource !== "recordPath" &&
+    recordContext.inferenceSource !== "explicit" &&
+    recordContext.inferenceSource !== "quickPick"
+  );
+}
+
+async function promptForCandidateRetry(
+  input: InvestigationInput,
+  recordContext: RecordContext
+): Promise<InvestigationInput | undefined> {
+  const rescoredCandidates = buildRetryCandidates(input, recordContext);
+  if (!rescoredCandidates.length) {
+    return undefined;
+  }
+
+  const chosenCandidate = await pickInvestigationCandidate(rescoredCandidates);
+  if (!chosenCandidate?.recordId) {
+    return undefined;
+  }
+
+  return {
+    ...input,
+    recordId: chosenCandidate.recordId,
+    selectedCandidateFieldName: chosenCandidate.fieldName,
+    selectedCandidateType: chosenCandidate.candidateType,
+    selectedCandidateConfidence: chosenCandidate.confidence,
+    selectedCandidateReason: chosenCandidate.reason
+  };
+}
+
+function buildRetryCandidates(
+  input: InvestigationInput,
+  recordContext: RecordContext
+) {
+  const candidates = input.sourceJson
+    ? extractInvestigationCandidatesFromJson(input.sourceJson, recordContext.entitySetName)
+    : extractInvestigationCandidatesFromSelection(input.rawText, recordContext.entitySetName);
+
+  return scoreInvestigationCandidates(candidates, {
+    entityLogicalName: recordContext.entityLogicalName,
+    primaryIdField: recordContext.primaryIdField,
+    entitySetName: recordContext.entitySetName
+  }).filter(candidate => !isSameCandidate(candidate, input));
+}
+
+function isSameCandidate(
+  candidate: { recordId: string; fieldName?: string },
+  input: InvestigationInput
+): boolean {
+  return (
+    candidate.recordId === input.recordId &&
+    (candidate.fieldName ?? "") === (input.selectedCandidateFieldName ?? "")
+  );
+}
+
+function rescoreActiveCandidate(
+  input: InvestigationInput,
+  recordContext: RecordContext
+) {
+  if (!input.recordId || !input.selectedCandidateFieldName) {
+    return undefined;
+  }
+
+  return rescoreSelectedInvestigationCandidate(
+    {
+      recordId: input.recordId,
+      fieldName: input.selectedCandidateFieldName,
+      sourceType: input.selectedCandidateFieldName.endsWith("_value")
+        ? "lookup"
+        : "rootField"
+    },
+    {
+      entityLogicalName: recordContext.entityLogicalName,
+      primaryIdField: recordContext.primaryIdField,
+      entitySetName: recordContext.entitySetName
+    }
+  );
+}
+
+function isDataverse404(error: unknown): boolean {
+  return toErrorMessage(error).includes("Dataverse error 404");
+}
+
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
 
   return String(error);
+}
+
+
+function joinDataverseUrl(baseUrl: string, rawQuery: string): string {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
+  const normalizedQuery = rawQuery.replace(/^\/+/, "");
+  return `${normalizedBaseUrl}/${normalizedQuery}`;
 }

@@ -27,3 +27,8 @@ export {
   resolveChoiceValue,
   matchChoiceLabel
 } from "./metadataAccess/metadataChoiceAccess.js";
+
+export {
+  loadEntityRelationships,
+  clearRelationshipMetadataMemory
+} from "./metadataAccess/metadataRelationshipAccess.js";

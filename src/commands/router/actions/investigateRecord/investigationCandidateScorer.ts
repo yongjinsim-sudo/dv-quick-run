@@ -25,6 +25,17 @@ export function scoreInvestigationCandidates(
     .sort(compareScoredCandidates);
 }
 
+export function rescoreSelectedInvestigationCandidate(
+  candidate: Pick<InvestigationCandidate, "recordId" | "fieldName" | "sourceType">,
+  options: {
+    entityLogicalName?: string;
+    primaryIdField?: string;
+    entitySetName?: string;
+  }
+): ScoredInvestigationCandidate {
+  return scoreCandidate(candidate, options);
+}
+
 function scoreCandidate(
   candidate: InvestigationCandidate,
   options: {

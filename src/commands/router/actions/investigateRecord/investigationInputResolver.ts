@@ -12,15 +12,15 @@ const RECORD_PATH_REGEX =
 
 export async function resolveInvestigationInput(
   rawText: string,
-  fullDocumentText?: string
+  fullDocumentText?: string,
+  selectionStartOffset?: number
 ): Promise<InvestigationInput | undefined> {
   const text = rawText.trim();
   if (!text) {
     return undefined;
   }
 
-  const documentContext = fullDocumentText?.trim() ?? text;
-  const contextUrl = tryExtractODataContext(documentContext);
+  const contextUrl = tryExtractRelevantODataContext(text, fullDocumentText, selectionStartOffset);
   const {
     entitySetName,
     primaryIdFieldHint
@@ -204,15 +204,28 @@ function extractEntitySetAndPrimaryIdHintFromODataContext(contextUrl?: string): 
 
   const fragment = contextUrl.slice(hashIndex + 1).trim();
 
-  // Matches: contacts(contactid)
-  const collectionWithPrimaryIdMatch = fragment.match(
-    /^([A-Za-z_][A-Za-z0-9_]*)\(([A-Za-z_][A-Za-z0-9_]*)\)$/
+  // Matches: contacts(contactid) OR contacts(fullname,emailaddress1,contactid)
+  const collectionWithProjectionMatch = fragment.match(
+    /^([A-Za-z_][A-Za-z0-9_]*)\(([^)]+)\)$/
   );
-  if (collectionWithPrimaryIdMatch) {
-    return {
-      entitySetName: collectionWithPrimaryIdMatch[1],
-      primaryIdFieldHint: collectionWithPrimaryIdMatch[2]
-    };
+  if (collectionWithProjectionMatch) {
+    const entitySetName = collectionWithProjectionMatch[1];
+    const projectionTokens = collectionWithProjectionMatch[2]
+      .split(",")
+      .map(token => token.trim())
+      .filter(Boolean);
+
+    if (
+      projectionTokens.length === 1 &&
+      /^[A-Za-z_][A-Za-z0-9_]*$/.test(projectionTokens[0])
+    ) {
+      return {
+        entitySetName,
+        primaryIdFieldHint: projectionTokens[0]
+      };
+    }
+
+    return { entitySetName };
   }
 
   // Matches: contacts/$entity
@@ -300,9 +313,52 @@ function tryExtractJsonObjectBlock(text: string): string | undefined {
   return undefined;
 }
 
+function tryExtractRelevantODataContext(
+  selectedText: string,
+  fullDocumentText?: string,
+  selectionStartOffset?: number
+): string | undefined {
+  const selectedMatch = tryExtractODataContext(selectedText);
+  if (selectedMatch) {
+    return selectedMatch;
+  }
+
+  if (!fullDocumentText?.trim()) {
+    return undefined;
+  }
+
+  if (typeof selectionStartOffset === "number" && selectionStartOffset >= 0) {
+    const beforeSelection = fullDocumentText.slice(0, selectionStartOffset);
+    const nearestBefore = tryExtractLastODataContext(beforeSelection);
+    if (nearestBefore) {
+      return nearestBefore;
+    }
+
+    const afterSelection = fullDocumentText.slice(selectionStartOffset);
+    const nearestAfter = tryExtractODataContext(afterSelection);
+    if (nearestAfter) {
+      return nearestAfter;
+    }
+  }
+
+  return tryExtractLastODataContext(fullDocumentText);
+}
+
 function tryExtractODataContext(text: string): string | undefined {
   const match = text.match(/"@odata\.context"\s*:\s*"([^"]+)"/);
   return match?.[1];
+}
+
+function tryExtractLastODataContext(text: string): string | undefined {
+  const regex = /"@odata\.context"\s*:\s*"([^"]+)"/g;
+  let last: string | undefined;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    last = match[1];
+  }
+
+  return last;
 }
 
 function tryParseSelectionObject(text: string): Record<string, unknown> | undefined {
