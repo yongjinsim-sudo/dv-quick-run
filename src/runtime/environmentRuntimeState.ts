@@ -2,10 +2,12 @@ import type { OutputChannel } from "vscode";
 import { clearHoverFieldContextCache } from "../providers/hoverFieldContextCache.js";
 import { clearNavigationHoverEnrichmentCache } from "../providers/queryHoverProvider.js";
 import { clearMetadataSessionCache } from "../commands/router/actions/shared/metadataAccess/metadataSessionCache.js";
+import { clearRelationshipMetadataMemory } from "../commands/router/actions/shared/metadataAccess/metadataRelationshipAccess.js";
 import { logInfo } from "../utils/logger.js";
 
 export type EnvironmentRuntimeCacheDeps = {
   clearMetadataSessionCache: () => void;
+  clearRelationshipMetadataMemory: () => void;
   clearHoverFieldContextCache: () => void;
   clearNavigationHoverEnrichmentCache: () => void;
   logInfo: (message: string) => void;
@@ -16,6 +18,7 @@ export function clearEnvironmentScopedRuntimeCachesWithDeps(
   output?: OutputChannel
 ): void {
   deps.clearMetadataSessionCache();
+  deps.clearRelationshipMetadataMemory();
   deps.clearHoverFieldContextCache();
   deps.clearNavigationHoverEnrichmentCache();
 
@@ -28,6 +31,7 @@ export function clearEnvironmentScopedRuntimeCaches(output?: OutputChannel): voi
   clearEnvironmentScopedRuntimeCachesWithDeps(
     {
       clearMetadataSessionCache,
+      clearRelationshipMetadataMemory,
       clearHoverFieldContextCache,
       clearNavigationHoverEnrichmentCache,
       logInfo: (message: string) => {

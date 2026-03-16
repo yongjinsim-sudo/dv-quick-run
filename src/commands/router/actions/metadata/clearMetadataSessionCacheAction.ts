@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { clearMetadataSessionCache } from "../shared/metadataAccess/metadataSessionCache.js";
+import { clearRelationshipMetadataMemory } from "../shared/metadataAccess/metadataRelationshipAccess.js";
 import { clearHoverFieldContextCache } from "../../../../providers/hoverFieldContextCache.js";
 import { clearNavigationHoverEnrichmentCache } from "../../../../providers/queryHoverProvider.js";
 import { logInfo } from "../../../../utils/logger.js";
@@ -9,6 +10,7 @@ export async function runClearMetadataSessionCacheAction(
   ctx: CommandContext
 ): Promise<void> {
   clearMetadataSessionCache();
+  clearRelationshipMetadataMemory();
   clearHoverFieldContextCache();
   clearNavigationHoverEnrichmentCache();
 

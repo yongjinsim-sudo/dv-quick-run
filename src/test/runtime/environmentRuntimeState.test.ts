@@ -4,6 +4,7 @@ import { clearEnvironmentScopedRuntimeCachesWithDeps } from "../../runtime/envir
 suite("environmentRuntimeState", () => {
   test("clears all runtime caches and logs when output is present", () => {
     let metadataCleared = 0;
+    let relationshipCleared = 0;
     let hoverCleared = 0;
     let navigationCleared = 0;
     const logs: string[] = [];
@@ -11,6 +12,7 @@ suite("environmentRuntimeState", () => {
     clearEnvironmentScopedRuntimeCachesWithDeps(
       {
         clearMetadataSessionCache: () => { metadataCleared++; },
+        clearRelationshipMetadataMemory: () => { relationshipCleared++; },
         clearHoverFieldContextCache: () => { hoverCleared++; },
         clearNavigationHoverEnrichmentCache: () => { navigationCleared++; },
         logInfo: (message: string) => { logs.push(message); }
@@ -19,6 +21,7 @@ suite("environmentRuntimeState", () => {
     );
 
     assert.strictEqual(metadataCleared, 1);
+    assert.strictEqual(relationshipCleared, 1);
     assert.strictEqual(hoverCleared, 1);
     assert.strictEqual(navigationCleared, 1);
     assert.strictEqual(logs.length, 1);
@@ -30,6 +33,7 @@ suite("environmentRuntimeState", () => {
     clearEnvironmentScopedRuntimeCachesWithDeps(
       {
         clearMetadataSessionCache: () => undefined,
+        clearRelationshipMetadataMemory: () => undefined,
         clearHoverFieldContextCache: () => undefined,
         clearNavigationHoverEnrichmentCache: () => undefined,
         logInfo: (message: string) => { logs.push(message); }

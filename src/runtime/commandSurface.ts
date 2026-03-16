@@ -16,23 +16,17 @@ import { registerGenerateQueryFromJsonCommand } from "../commands/generateQueryF
 import { registerShowMetadataDiagnosticsCommand } from "../commands/showMetadataDiagnostics.js";
 import { registerClearMetadataSessionCacheCommand } from "../commands/clearMetadataSessionCache.js";
 import { registerClearPersistedMetadataCacheCommand } from "../commands/clearPersistedMetadataCache.js";
-import { registerCommand } from "../commands/registerCommandHelpers.js";
-import { runQueryUnderCursor } from "../commands/runQueryUnderCursor.js";
-import { addFieldsSelect } from "../commands/addFieldsSelect.js";
-import { addFilter } from "../commands/addFilter.js";
-import { addExpand } from "../commands/addExpand.js";
-import { addOrderBy } from "../commands/addOrderBy.js";
-import { explainQuery } from "../commands/explainQuery.js";
-import { relationshipExplorer } from "../commands/relationshipExplorer.js";
-import { relationshipGraphView } from "../commands/relationshipGraphView.js";
-import { investigateRecord } from "../commands/investigateRecord.js";
+import { registerRunQueryUnderCursorCommand } from "../commands/runQueryUnderCursor.js";
+import { registerAddFieldsSelectCommand } from "../commands/addFieldsSelect.js";
+import { registerAddFilterCommand } from "../commands/addFilter.js";
+import { registerAddExpandCommand } from "../commands/addExpand.js";
+import { registerAddOrderByCommand } from "../commands/addOrderBy.js";
+import { registerExplainQueryCommand } from "../commands/explainQuery.js";
+import { registerRelationshipExplorerCommand } from "../commands/relationshipExplorer.js";
+import { registerRelationshipGraphViewCommand } from "../commands/relationshipGraphView.js";
+import { registerInvestigateRecordCommand } from "../commands/investigateRecord.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
-type DirectRegistration = {
-  commandId: string;
-  handler: (ctx: CommandContext) => Promise<void> | void;
-};
-
 const coreRegistrations: readonly ContextRegistration[] = [
   registerWhoAmICommand,
   registerRunGetCommand,
@@ -46,7 +40,16 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerSmartPatchRerunLastCommand,
   registerSmartGetFromGuidPickFieldsCommand,
   registerSmartGetFromGuidRawCommand,
-  registerGenerateQueryFromJsonCommand
+  registerGenerateQueryFromJsonCommand,
+  registerRunQueryUnderCursorCommand,
+  registerAddFieldsSelectCommand,
+  registerAddFilterCommand,
+  registerAddExpandCommand,
+  registerAddOrderByCommand,
+  registerExplainQueryCommand,
+  registerRelationshipExplorerCommand,
+  registerRelationshipGraphViewCommand,
+  registerInvestigateRecordCommand
 ];
 
 const diagnosticsRegistrations = (
@@ -58,18 +61,6 @@ const diagnosticsRegistrations = (
   registerClearPersistedMetadataCacheCommand(context, ctx, vscode);
 };
 
-const directRegistrations: readonly DirectRegistration[] = [
-  { commandId: "dvQuickRun.runQueryUnderCursor", handler: runQueryUnderCursor },
-  { commandId: "dvQuickRun.addFieldsSelect", handler: addFieldsSelect },
-  { commandId: "dvQuickRun.addFilter", handler: addFilter },
-  { commandId: "dvQuickRun.addExpand", handler: addExpand },
-  { commandId: "dvQuickRun.addOrderBy", handler: addOrderBy },
-  { commandId: "dvQuickRun.explainQuery", handler: explainQuery },
-  { commandId: "dvQuickRun.relationshipExplorer", handler: relationshipExplorer },
-  { commandId: "dvQuickRun.relationshipGraphView", handler: relationshipGraphView },
-  { commandId: "dvQuickRun.investigateRecord", handler: investigateRecord }
-];
-
 function registerContextCommands(
   context: vscode.ExtensionContext,
   ctx: CommandContext,
@@ -78,21 +69,10 @@ function registerContextCommands(
   registrations.forEach((register) => register(context, ctx));
 }
 
-function registerDirectCommands(
-  context: vscode.ExtensionContext,
-  ctx: CommandContext,
-  registrations: readonly DirectRegistration[]
-): void {
-  registrations.forEach(({ commandId, handler }) => {
-    registerCommand(context, commandId, handler, ctx);
-  });
-}
-
 export function registerCommandSurface(
   context: vscode.ExtensionContext,
   ctx: CommandContext
 ): void {
   registerContextCommands(context, ctx, coreRegistrations);
   diagnosticsRegistrations(context, ctx);
-  registerDirectCommands(context, ctx, directRegistrations);
 }

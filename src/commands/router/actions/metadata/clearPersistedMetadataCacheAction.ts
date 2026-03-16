@@ -5,6 +5,7 @@ import { clearCachedFields } from "../../../../utils/entityFieldCache.js";
 import { clearCachedChoiceMetadata } from "../../../../utils/entityChoiceCache.js";
 import { clearCachedNavigationProperties } from "../../../../utils/entityRelationshipCache.js";
 import { clearMetadataSessionCache } from "../shared/metadataAccess/metadataSessionCache.js";
+import { clearRelationshipMetadataMemory } from "../shared/metadataAccess/metadataRelationshipAccess.js";
 import { clearHoverFieldContextCache } from "../../../../providers/hoverFieldContextCache.js";
 import { clearNavigationHoverEnrichmentCache } from "../../../../providers/queryHoverProvider.js";
 import { logInfo } from "../../../../utils/logger.js";
@@ -30,6 +31,7 @@ export async function runClearPersistedMetadataCacheAction(
   await clearCachedEntityRelationships(ctx.ext, envName);
 
   clearMetadataSessionCache();
+  clearRelationshipMetadataMemory();
   clearHoverFieldContextCache();
   clearNavigationHoverEnrichmentCache();
 

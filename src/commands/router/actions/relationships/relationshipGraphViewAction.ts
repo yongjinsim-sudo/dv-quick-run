@@ -1,15 +1,12 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../../../context/commandContext.js";
-import { fetchEntityRelationships } from "../../../../services/entityRelationshipExplorerService.js";
-import {
-  getCachedEntityRelationships,
-  setCachedEntityRelationships
-} from "../../../../utils/entityRelationshipExplorerCache.js";
+import type { EntityRelationshipExplorerResult } from "../../../../services/entityRelationshipExplorerService.js";
 import {
   findEntityByEntitySetName,
   findEntityByLogicalName,
   loadEntityDefs,
-  loadFields
+  loadFields,
+  loadEntityRelationships
 } from "../shared/metadataAccess.js";
 import { getSelectableFields } from "../shared/selectableFields.js";
 import {
@@ -202,7 +199,7 @@ function getHoverLikeTokenUnderCursor(): string | undefined {
 
 function tryGetFocusedRelationship(
   token: string | undefined,
-  data: Awaited<ReturnType<typeof fetchEntityRelationships>>
+  data: EntityRelationshipExplorerResult
 ): FocusedRelationship | undefined {
   if (!token) {
     return undefined;
@@ -302,7 +299,7 @@ function appendFocusedRelationshipSection(
 function buildGraphText(
   entitySetName: string,
   logicalName: string,
-  data: Awaited<ReturnType<typeof fetchEntityRelationships>>,
+  data: EntityRelationshipExplorerResult,
   focusedRelationship?: FocusedRelationship
 ): string {
   const lines: string[] = [];
@@ -376,15 +373,20 @@ function buildGraphText(
   return lines.join("\n");
 }
 
-async function showRelationshipGraphDocument(content: string): Promise<void> {
-  const doc = await vscode.workspace.openTextDocument({
-    language: "plaintext",
-    content
-  });
+async function showRelationshipGraphDocument(
+  content: string,
+  logicalName: string
+): Promise<void> {
 
-  await vscode.window.showTextDocument(doc, {
-    preview: false
-  });
+  const uri = vscode.Uri.parse(`untitled:Relationship Graph - ${logicalName}.txt`);
+
+  const doc = await vscode.workspace.openTextDocument(uri);
+
+  const editor = await vscode.window.showTextDocument(doc, { preview: false });
+
+  const edit = new vscode.WorkspaceEdit();
+  edit.insert(uri, new vscode.Position(0, 0), content);
+  await vscode.workspace.applyEdit(edit);
 }
 
 export async function runRelationshipGraphViewAction(ctx: CommandContext): Promise<void> {
@@ -427,13 +429,13 @@ export async function runRelationshipGraphViewAction(ctx: CommandContext): Promi
     logicalName = picked.label;
     entitySetName = picked.description ?? picked.label;
   }
-  const envName = ctx.envContext.getEnvironmentName();
-  let relationships = getCachedEntityRelationships(ctx.ext, envName, logicalName);
-
-  if (!relationships) {
-   relationships = await fetchEntityRelationships(client, token, logicalName);
-   await setCachedEntityRelationships(ctx.ext, envName, logicalName, relationships);
+  const selectedLogicalName = logicalName;
+  const selectedEntitySetName = entitySetName;
+  if (!selectedLogicalName || !selectedEntitySetName) {
+    return;
   }
+
+  const relationships = await loadEntityRelationships(ctx, client, token, selectedLogicalName);
 
   const tokenUnderCursor = getHoverLikeTokenUnderCursor();
   const focusedRaw = tryGetFocusedRelationship(tokenUnderCursor, relationships);
@@ -444,7 +446,7 @@ export async function runRelationshipGraphViewAction(ctx: CommandContext): Promi
     focusedRelationship = await enrichFocusedRelationship(
       ctx,
       defs,
-      entitySetName,
+      selectedEntitySetName,
       focusedRaw,
       token,
       client
@@ -452,11 +454,11 @@ export async function runRelationshipGraphViewAction(ctx: CommandContext): Promi
   }
   
   const content = buildGraphText(
-    entitySetName,
-    logicalName,
+    selectedEntitySetName,
+    selectedLogicalName,
     relationships,
     focusedRelationship
   );
-  await showRelationshipGraphDocument(content);
+  await showRelationshipGraphDocument(content, selectedLogicalName);
 
 }

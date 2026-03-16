@@ -1,17 +1,13 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../../../context/commandContext.js";
-import { fetchEntityRelationships } from "../../../../services/entityRelationshipExplorerService.js";
 import {
   findEntityByEntitySetName,
   findEntityByLogicalName,
   loadEntityDefs,
-  loadFields
+  loadFields,
+  loadEntityRelationships
 } from "../shared/metadataAccess.js";
 import { getSelectableFields } from "../shared/selectableFields.js";
-import {
-  getCachedEntityRelationships,
-  setCachedEntityRelationships
-} from "../../../../utils/entityRelationshipExplorerCache.js";
 import {
   getEntitySetNameFromEditorQuery,
   parseEditorQuery
@@ -166,15 +162,20 @@ function buildExplorerText(
   return lines.join("\n");
 }
 
-async function showRelationshipExplorerDocument(content: string, logicalName: string): Promise<void> {
-  const doc = await vscode.workspace.openTextDocument({
-    language: "plaintext",
-    content
-  });
+async function showRelationshipExplorerDocument(
+  content: string,
+  logicalName: string
+): Promise<void> {
 
-  await vscode.window.showTextDocument(doc, {
-    preview: false
-  });
+  const uri = vscode.Uri.parse(`untitled:Relationship Explorer - ${logicalName}.txt`);
+
+  const doc = await vscode.workspace.openTextDocument(uri);
+
+  const editor = await vscode.window.showTextDocument(doc, { preview: false });
+
+  const edit = new vscode.WorkspaceEdit();
+  edit.insert(uri, new vscode.Position(0, 0), content);
+  await vscode.workspace.applyEdit(edit);
 }
 
 function tryGetEntitySetNameFromActiveEditor(): string | undefined {
@@ -237,42 +238,41 @@ export async function runRelationshipExplorerAction(ctx: CommandContext): Promis
     entitySetName = picked.description ?? picked.label;
   }
 
-  const envName = ctx.envContext.getEnvironmentName();
-
-  let relationships = getCachedEntityRelationships(ctx.ext, envName, logicalName);
-
-  if (!relationships) {
-    relationships = await fetchEntityRelationships(client, token, logicalName);
-    await setCachedEntityRelationships(ctx.ext, envName, logicalName, relationships);
+  const selectedLogicalName = logicalName;
+  const selectedEntitySetName = entitySetName;
+  if (!selectedLogicalName || !selectedEntitySetName) {
+    return;
   }
+
+  const relationships = await loadEntityRelationships(ctx, client, token, selectedLogicalName);
 
   const manyToOne = await Promise.all(
     relationships.manyToOne.map((rel) =>
-      buildRelationshipDisplay(ctx, logicalName!, entitySetName!, defs, rel, "manyToOne", token, client)
+      buildRelationshipDisplay(ctx, selectedLogicalName, selectedEntitySetName, defs, rel, "manyToOne", token, client)
     )
   );
 
   const oneToMany = await Promise.all(
     relationships.oneToMany.map((rel) =>
-      buildRelationshipDisplay(ctx, logicalName!, entitySetName!, defs, rel, "oneToMany", token, client)
+      buildRelationshipDisplay(ctx, selectedLogicalName, selectedEntitySetName, defs, rel, "oneToMany", token, client)
     )
   );
 
   const manyToMany = await Promise.all(
     relationships.manyToMany.map((rel) =>
-      buildRelationshipDisplay(ctx, logicalName!, entitySetName!, defs, rel, "manyToMany", token, client)
+      buildRelationshipDisplay(ctx, selectedLogicalName, selectedEntitySetName, defs, rel, "manyToMany", token, client)
     )
   );
 
   const content = buildExplorerText(
-    entitySetName,
-    logicalName,
+    selectedEntitySetName,
+    selectedLogicalName,
     manyToOne,
     oneToMany,
     manyToMany
   );
 
-  await showRelationshipExplorerDocument(content, logicalName);
+  await showRelationshipExplorerDocument(content, selectedLogicalName);
 
 }
 
