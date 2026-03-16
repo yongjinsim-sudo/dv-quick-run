@@ -16,6 +16,87 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
+## 🆕 What's New in v0.4.2
+
+### 📊 Interactive Result Viewer
+
+![Result Viewer Demo](docs/demo-result-viewer.gif)
+
+DV Quick Run now opens query results in an **interactive Result Viewer** instead of a raw JSON document.
+
+This transforms query execution from a simple API response preview into a **structured Dataverse inspection workspace**.
+
+Features include:
+
+- **TABLE view** for structured query result inspection
+- **JSON view** for raw API response analysis
+- **RELATIONSHIPS** shortcut for exploring entity relationships
+- **Click-to-copy** cells for rapid debugging workflows
+- **Row count indicator** and environment context in the viewer header
+
+Example workflow:
+
+run query  
+→ inspect results as table  
+→ click values to copy  
+→ investigate record  
+→ jump to Dataverse UI  
+
+All without leaving VS Code.
+
+---
+
+### 🔎 Record Actions Inside Query Results
+
+Primary key fields in the result grid now include **contextual actions**:
+    contactid
+    7d29eec7-4414-f111-8341-6045bdc42f8b 🔎 ↗
+
+
+Available actions:
+
+- **🔎 Investigate Record** – run the investigation engine directly from the result grid
+- **↗ Open in Dataverse UI** – jump directly to the record in the Dataverse web interface
+
+Actions are automatically enabled for the **entity primary key column**, ensuring the viewer stays clean and avoids noisy UI.
+
+---
+
+### 🔁 Consistent Query Result Experience
+
+All Dataverse GET workflows now use the **Result Viewer**:
+
+- Run Query
+- Run Query Under Cursor
+- Smart GET
+- Smart GET from GUID
+
+This ensures a consistent developer experience when inspecting data returned from Dataverse.
+
+---
+
+### 🧠 Result Viewer Design Philosophy
+
+The Result Viewer introduces the first **visual data inspection layer** inside DV Quick Run.
+
+Instead of treating query results as static JSON, the extension now provides a lightweight **Dataverse debugging workbench** directly inside the editor.
+
+The viewer is designed to support:
+
+- rapid data inspection
+- record investigation
+- navigation to Dataverse UI
+- relationship exploration
+
+without leaving the developer workflow.
+
+This capability lays the groundwork for future features such as:
+
+- query troubleshooting tools
+- lookup expansion helpers
+- metadata-aware column enrichment
+- result filtering and sorting
+
 ## 🆕 What's New in v0.4.1
 
 ### 🔧 Stabilization & Investigation Reliability
