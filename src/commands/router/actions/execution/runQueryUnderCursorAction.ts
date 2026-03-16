@@ -1,13 +1,13 @@
 import { CommandContext } from "../../../context/commandContext.js";
-import { logDebug, logInfo, logWarn } from "../../../../utils/logger.js";
-import { showJsonNamed } from "../../../../utils/virtualJsonDoc.js";
-import { addQueryToHistory } from "../../../../utils/queryHistory.js";
-import { normalizePath, buildResultTitle } from "./get/getQueryBuilder.js";
+import { logWarn } from "../../../../utils/logger.js";
+import { normalizePath } from "./get/getQueryBuilder.js";
 import { analyzeQueryGuardrails, confirmGuardrailsIfNeeded, showGuardrailErrors} from "../shared/guardrails/queryGuardrails.js";
 import { looksLikeDataverseQuery } from "../../../../shared/editorIntelligence/queryDetection.js";
 import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/queryCursorResolver.js";
 import { runAction } from "../shared/actionRunner.js";
 import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
+import { showResultViewerForQuery } from "./shared/resultViewerLauncher.js";
+
 
 export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<void> {
   await runAction(ctx, "DV Quick Run: Run Query Under Cursor failed. Check Output.", async () => {
@@ -49,6 +49,7 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
           : 0;
 
     logDataverseExecutionResult(ctx.output, recordCount, durationMs);
-    await showJsonNamed(buildResultTitle(path), result);
+
+    await showResultViewerForQuery(ctx, result, path);
   });
 }

@@ -1,15 +1,14 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { DataverseClient } from "../../../../services/dataverseClient.js";
-import { logDebug, logInfo } from "../../../../utils/logger.js";
-import { showJsonNamed } from "../../../../utils/virtualJsonDoc.js";
 import { addQueryToHistory } from "../../../../utils/queryHistory.js";
 import { shouldExecuteQueryWithGuardrails } from "../shared/guardrails/guardedExecution.js";
-import { buildResultTitle, buildQueryFromState, normalizePath } from "./smartGetQueryBuilder.js";
+import { buildQueryFromState, normalizePath } from "./smartGetQueryBuilder.js";
 import { saveLastSmartGetState } from "./smartGetPersistence.js";
 import { buildFilterClause, isGuidLike } from "./smartGetFilters.js";
 import { SmartField, SmartGetState } from "./smartGetTypes.js";
 import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
+import { showResultViewerForQuery } from "../execution/shared/resultViewerLauncher.js";
 
 export function getSelectedGuidOrThrow(): string {
   const editor = vscode.window.activeTextEditor;
@@ -74,7 +73,7 @@ export async function executeSmartGetState(
 
   logDataverseExecutionResult(ctx.output, count, duration);
 
-  await showJsonNamed(buildResultTitle(path), result);
+  await showResultViewerForQuery(ctx, result, path);
 }
 
 export async function executeSmartGetGuidRaw(
@@ -113,7 +112,7 @@ export async function executeSmartGetGuidRaw(
 
   logDataverseExecutionResult(ctx.output, count, duration);
 
-  await showJsonNamed(buildResultTitle(path), result);
+  await showResultViewerForQuery(ctx, result, path);
 }
 
 export async function executeSmartGetGuidPickFields(
@@ -150,5 +149,5 @@ export async function executeSmartGetGuidPickFields(
 
   logDataverseExecutionResult(ctx.output, count, duration);
 
-  await showJsonNamed(buildResultTitle(path), result);
+  await showResultViewerForQuery(ctx, result, path);
 }

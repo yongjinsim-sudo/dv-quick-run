@@ -22,18 +22,41 @@ import { extractInvestigationCandidatesFromSelection } from "./investigationSele
 import { pickInvestigationCandidate } from "./investigationCandidatePicker.js";
 import { rescoreSelectedInvestigationCandidate, scoreInvestigationCandidates } from "./investigationCandidateScorer.js";
 
-export async function investigateRecordAction(ctx: CommandContext): Promise<void> {
+export async function investigateRecordAction(
+    ctx: CommandContext,
+    inputOverride?: string
+): Promise<void> {
   try {
     const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      vscode.window.showErrorMessage("No active editor found.");
-      return;
+
+    const selectedText = inputOverride?.trim()
+        ? inputOverride.trim()
+        : editor
+            ? getSelectedTextOrCurrentLine(editor)
+            : "";
+
+    if (!selectedText) {
+        vscode.window.showErrorMessage("No record identifier or supported input detected.");
+        return;
     }
 
-    const selectedText = getSelectedTextOrCurrentLine(editor);
-    const fullDocumentText = editor.document.getText();
-    const selectionStartOffset = editor.document.offsetAt(editor.selection.start);
-    const input = await resolveInvestigationInput(selectedText, fullDocumentText, selectionStartOffset);
+    const fullDocumentText = inputOverride?.trim()
+        ? selectedText
+        : editor
+            ? editor.document.getText()
+            : selectedText;
+
+    const selectionStartOffset = inputOverride?.trim()
+        ? 0
+        : editor
+            ? editor.document.offsetAt(editor.selection.start)
+            : 0;
+
+    const input = await resolveInvestigationInput(
+        selectedText,
+        fullDocumentText,
+        selectionStartOffset
+    );
 
     if (!input?.recordId) {
       vscode.window.showErrorMessage("No record identifier or supported input detected.");
