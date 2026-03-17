@@ -1,12 +1,11 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../commands/context/commandContext.js";
-import { buildDataverseRecordUiLink } from "../commands/router/actions/investigateRecord/dataverseUiLinkBuilder.js";
 import {
-    findEntityByEntitySetName,
-    loadEntityDefs
-} from "../commands/router/actions/shared/metadataAccess.js";
-import { ResultViewerModel } from "../services/resultViewModelBuilder";
-import { getResultViewerHtml } from "../ui/resultViewerHtml";
+    executeResultViewerAction
+} from "./resultViewerActions/registry.js";
+import { ResultViewerModel } from "../services/resultViewModelBuilder.js";
+import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
+import { getResultViewerHtml } from "../ui/resultViewerHtml.js";
 
 type ResultViewerMessage =
     | {
@@ -14,23 +13,29 @@ type ResultViewerMessage =
         payload: string;
     }
     | {
-        type: "investigateRecord";
-        payload: {
-            guid: string;
-            entitySetName?: string;
-        };
-    }
-    | {
-        type: "openInDataverseUi";
-        payload: {
-            guid: string;
-            entitySetName?: string;
+        type: "executeResultViewerAction";
+        payload: ResultViewerActionPayload & {
+            actionId?: string;
         };
     }
     | {
         type: "showRelationships";
         payload: {
             entitySetName?: string;
+        };
+    }
+    | {
+        type: "showMetadata";
+        payload: {
+            entitySetName?: string;
+            entityLogicalName?: string;
+        };
+    }
+    | {
+        type: "exportCsv";
+        payload: {
+            fileName?: string;
+            csv?: string;
         };
     };
 
@@ -79,22 +84,11 @@ export class ResultViewerPanel {
 
         switch (message.type) {
             case "copyToClipboard":
-                await vscode.env.clipboard.writeText(String(message.payload ?? ""));
+                await ResultViewerPanel.copyToClipboard(message.payload);
                 return;
 
-            case "investigateRecord":
-                await ResultViewerPanel.investigateRecord(
-                    String(message.payload.guid ?? ""),
-                    message.payload.entitySetName
-                );
-                return;
-
-            case "openInDataverseUi":
-                await ResultViewerPanel.openInDataverseUi(
-                    ctx,
-                    String(message.payload.guid ?? ""),
-                    message.payload.entitySetName
-                );
+            case "executeResultViewerAction":
+                await ResultViewerPanel.handleExecuteResultViewerAction(ctx, message.payload);
                 return;
 
             case "showRelationships":
@@ -102,22 +96,45 @@ export class ResultViewerPanel {
                     message.payload.entitySetName
                 );
                 return;
+
+            case "showMetadata":
+                await ResultViewerPanel.showMetadata(
+                    message.payload.entitySetName,
+                    message.payload.entityLogicalName
+                );
+                return;
+
+            case "exportCsv":
+                await ResultViewerPanel.exportCsv(
+                    message.payload.fileName,
+                    message.payload.csv
+                );
+                return;
         }
     }
 
-    private static async investigateRecord(
-        guid: string,
-        entitySetName?: string
+    private static async copyToClipboard(payload: string): Promise<void> {
+        await vscode.env.clipboard.writeText(String(payload ?? ""));
+    }
+
+    private static async handleExecuteResultViewerAction(
+        ctx: CommandContext,
+        payload: ResultViewerActionPayload & {
+            actionId?: string;
+        }
     ): Promise<void> {
-        if (!guid.trim()) {
+        const actionId = String(payload.actionId ?? "").trim();
+        if (!actionId) {
             return;
         }
 
-        const input = entitySetName?.trim()
-            ? `${entitySetName}(${guid})`
-            : guid;
-
-        await vscode.commands.executeCommand("dvQuickRun.investigateRecord", input);
+        await executeResultViewerAction(ctx, actionId, {
+            guid: payload.guid,
+            entitySetName: payload.entitySetName,
+            entityLogicalName: payload.entityLogicalName,
+            columnName: payload.columnName,
+            rawValue: payload.rawValue
+        });
     }
 
     private static async showRelationships(
@@ -134,40 +151,55 @@ export class ResultViewerPanel {
         );
     }
 
-    private static async openInDataverseUi(
-        ctx: CommandContext,
-        guid: string,
-        entitySetName?: string
+    private static async showMetadata(
+        entitySetName?: string,
+        entityLogicalName?: string
     ): Promise<void> {
-        if (!guid.trim()) {
+
+        const entity = entityLogicalName?.trim();
+
+        if (!entity) {
+            void vscode.window.showWarningMessage(
+                "DV Quick Run: Could not determine entity for metadata inspection."
+            );
             return;
         }
 
-        if (!entitySetName?.trim()) {
-            void vscode.window.showWarningMessage("DV Quick Run: Could not determine entity set for Dataverse UI link.");
+        await vscode.commands.executeCommand(
+            "dvQuickRun.showEntityMetadata",
+            entity
+        );
+    }
+
+    private static async exportCsv(
+        fileName?: string,
+        csv?: string
+    ): Promise<void> {
+        const csvText = String(csv ?? "");
+        if (!csvText) {
+            void vscode.window.showWarningMessage("DV Quick Run: Nothing to export.");
             return;
         }
 
-        try {
-            const token = await ctx.getToken(ctx.getScope());
-            const client = ctx.getClient();
-            const defs = await loadEntityDefs(ctx, client, token);
-            const entityDef = findEntityByEntitySetName(defs, entitySetName);
+        const targetUri = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(fileName?.trim() || "dv-quick-run-results.csv"),
+            filters: {
+                "CSV Files": ["csv"]
+            },
+            saveLabel: "Export CSV"
+        });
 
-            if (!entityDef?.logicalName) {
-                throw new Error(`Could not resolve logical name for entity set '${entitySetName}'.`);
-            }
-
-            const baseUrl = await ctx.getBaseUrl();
-            const url = buildDataverseRecordUiLink(baseUrl, entityDef.logicalName, guid);
-
-            await vscode.env.openExternal(vscode.Uri.parse(url));
-        } catch (error) {
-            const message = error instanceof Error
-                ? error.message
-                : String(error);
-
-            void vscode.window.showErrorMessage(`DV Quick Run: Failed to open Dataverse UI. ${message}`);
+        if (!targetUri) {
+            return;
         }
+
+        await vscode.workspace.fs.writeFile(
+            targetUri,
+            Buffer.from(csvText, "utf8")
+        );
+
+        void vscode.window.showInformationMessage(
+            `DV Quick Run: Exported CSV to ${targetUri.fsPath}`
+        );
     }
 }
