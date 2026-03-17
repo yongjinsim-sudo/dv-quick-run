@@ -10,7 +10,7 @@ import type {
 } from "./metadataReasoningTypes.js";
 
 const DEFAULT_QUERY_ASSIST_MAX_DEPTH = 2;
-const DEFAULT_ADVISORY_MAX_DEPTH = 4;
+const DEFAULT_ADVISORY_MAX_DEPTH = 5;
 
 export function resolveMetadataReasoning(
   graph: MetadataReasoningGraph,
