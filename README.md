@@ -1,12 +1,12 @@
 # DV Quick Run
-A metadata-aware Dataverse Web API console for VS Code.
+A metadata-aware Dataverse query, investigation, and action workbench for VS Code.
 
 **Run, build, understand, and investigate Dataverse Web API data directly inside VS Code with metadata‑aware developer tooling.**
 
 ### A Dataverse developer console inside VS Code
 
-DV Quick Run turns VS Code into a **Dataverse developer console**.  
-Instead of jumping between Postman, browser tabs, maker portals, and documentation, you can **write, refine, execute, investigate, and explain queries without leaving the editor**.
+DV Quick Run turns VS Code into a **Dataverse developer workbench**.  
+Instead of jumping between Postman, browser tabs, maker portals, and documentation, you can **write, refine, execute, investigate, and act on Dataverse data without leaving the editor**.
 
 ---
 
@@ -16,11 +16,27 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
+## 🆕 What's New in v0.4.4
+
+### 🧭 Result Viewer Usability Improvements
+
+The Result Viewer now correctly handles **wide Dataverse tables**.
+
+Previously, tables with many columns could feel compressed and difficult to navigate.
+
+Now:
+
+- **Horizontal scrolling works as expected**
+- Tables expand naturally based on column width
+- Large datasets are significantly easier to explore
+
+This improves real-world usability when working with enterprise Dataverse data.
+
 ## 🆕 What's New in v0.4.3
 
 ### 🧠 Result Viewer Intelligence
 
-The Result Viewer evolves into a **Dataverse investigation surface**.
+The Result Viewer evolves into an **interactive Dataverse investigation and action surface**.
 
 Query results are no longer just displayed — they can now be **interacted with, transformed, and acted upon directly**.
 
@@ -362,7 +378,7 @@ Working with the Dataverse Web API usually involves a fragmented workflow:
 - Adjust the query
 - Repeat
 
-DV Quick Run collapses that loop into a **single editor experience**.
+DV Quick Run collapses that loop into a **single, continuous developer workflow inside VS Code**.
 
 ---
 
@@ -648,4 +664,4 @@ MIT License
 
 DV Quick Run is built around one idea:
 
-**The fastest Dataverse workflow is the one that never leaves the editor.**
+**The fastest Dataverse workflow is the one where you never leave the editor — and never break your flow.**
