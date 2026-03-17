@@ -6,6 +6,8 @@ import { getEntityChoiceCacheDiagnostics } from "../../../../utils/entityChoiceC
 import { getEntityRelationshipCacheDiagnostics } from "../../../../utils/entityRelationshipCache.js";
 import { getMetadataSessionCacheDiagnostics } from "../shared/metadataAccess/metadataSessionCache.js";
 import { getHoverFieldContextCacheDiagnostics } from "../../../../providers/hoverFieldContextCache.js";
+import { getEntityRelationshipExplorerCacheDiagnostics } from "../../../../utils/entityRelationshipExplorerCache.js";
+import { getMetadataStorageDiagnostics } from "../../../../utils/metadataStorage.js";
 
 function toMarkdownList(items: string[], emptyText = "_none_"): string {
   if (!items.length) {
@@ -45,6 +47,8 @@ export async function runShowMetadataDiagnosticsAction(
   const fieldDiag = getEntityFieldCacheDiagnostics(ctx.ext, envName);
   const choiceDiag = getEntityChoiceCacheDiagnostics(ctx.ext, envName);
   const relationshipDiag = getEntityRelationshipCacheDiagnostics(ctx.ext, envName);
+  const relationshipExplorerDiag = getEntityRelationshipExplorerCacheDiagnostics(ctx.ext, envName);
+  const storageDiag = getMetadataStorageDiagnostics(ctx.ext, envName);
   const sessionDiag = getMetadataSessionCacheDiagnostics();
   const hoverDiag = getHoverFieldContextCacheDiagnostics();
 
@@ -73,9 +77,24 @@ ${toMarkdownList(sessionDiag.navigationLogicalNames)}
 ### Session choice cache entities
 ${toMarkdownList(sessionDiag.choiceLogicalNames)}
 
+## Persisted metadata storage
+
+- Storage mode: \`disk-backed JSON under globalStorageUri\`
+- Metadata root: \`${storageDiag.rootPath}\`
+- Environment metadata root: \`${storageDiag.environmentRootPath}\`
+- Total persisted metadata bytes: \`${storageDiag.totalBytes}\`
+
+### Persisted bucket sizes
+- entityDefs: \`${storageDiag.bucketBytes.entityDefs}\` bytes
+- fields: \`${storageDiag.bucketBytes.fields}\` bytes
+- choices: \`${storageDiag.bucketBytes.choices}\` bytes
+- relationships: \`${storageDiag.bucketBytes.relationships}\` bytes
+- relationshipExplorer: \`${storageDiag.bucketBytes.relationshipExplorer}\` bytes
+
 ## Persisted entity defs cache
 
 - Entity defs count: \`${entitySetDiag.count}\`
+- Entity defs bytes: \`${entitySetDiag.storageBytes}\`
 
 ### Logical names
 ${toMarkdownList(entitySetDiag.logicalNames.slice(0, 100))}
@@ -83,6 +102,7 @@ ${toMarkdownList(entitySetDiag.logicalNames.slice(0, 100))}
 ## Persisted field metadata cache
 
 - Entity count: \`${fieldDiag.logicalNames.length}\`
+- Field cache bytes: \`${fieldDiag.storageBytes}\`
 
 ### Field counts by entity
 ${toMarkdownCountMap(fieldDiag.countsByLogicalName)}
@@ -90,6 +110,7 @@ ${toMarkdownCountMap(fieldDiag.countsByLogicalName)}
 ## Persisted choice metadata cache
 
 - Entity count: \`${choiceDiag.logicalNames.length}\`
+- Choice cache bytes: \`${choiceDiag.storageBytes}\`
 
 ### Choice counts by entity
 ${toMarkdownCountMap(choiceDiag.countsByLogicalName)}
@@ -97,9 +118,18 @@ ${toMarkdownCountMap(choiceDiag.countsByLogicalName)}
 ## Persisted relationship metadata cache
 
 - Entity count: \`${relationshipDiag.logicalNames.length}\`
+- Relationship cache bytes: \`${relationshipDiag.storageBytes}\`
 
 ### Relationship counts by entity
 ${toMarkdownCountMap(relationshipDiag.countsByLogicalName)}
+
+## Persisted relationship explorer cache
+
+- Entity count: \`${relationshipExplorerDiag.logicalNames.length}\`
+- Relationship explorer bytes: \`${relationshipExplorerDiag.storageBytes}\`
+
+### Relationship explorer cached entities
+${toMarkdownList(relationshipExplorerDiag.logicalNames)}
 
 ## Hover field-context cache
 
@@ -111,7 +141,8 @@ ${toMarkdownList(hoverDiag.logicalNames)}
 ## Notes
 
 - Session cache = in-memory for current extension host session
-- Persisted cache = extension global state
+- Persisted metadata cache = disk-backed JSON storage under the extension global storage path
+- Legacy globalState/workspaceState entries are lazily migrated when read and cleared by the cache reset command
 - Hover field-context cache = derived field maps used by inline hover
 - Persisted metadata diagnostics shown here are scoped to the active environment
 `;

@@ -4,6 +4,9 @@ import { getCachedEntityDefs, setCachedEntityDefs } from "../../utils/entitySetC
 import { getCachedFields, setCachedFields } from "../../utils/entityFieldCache.js";
 import { getCachedChoiceMetadata, setCachedChoiceMetadata } from "../../utils/entityChoiceCache.js";
 import { getCachedNavigationProperties, setCachedNavigationProperties } from "../../utils/entityRelationshipCache.js";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 type FakeMemento = {
   values: Record<string, unknown>;
@@ -29,10 +32,21 @@ function makeMemento(seed: Record<string, unknown> = {}): FakeMemento {
 }
 
 function makeExtensionContext() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "dvqr-cache-test-"));
+
   return {
     globalState: makeMemento(),
-    workspaceState: makeMemento()
+    workspaceState: makeMemento(),
+    globalStorageUri: { fsPath: path.join(root, "global") },
+    storageUri: { fsPath: path.join(root, "workspace") }
   } as any;
+}
+
+function removeTestStorage(ctx: any) {
+  const roots = [ctx.globalStorageUri?.fsPath, ctx.storageUri?.fsPath].filter(Boolean);
+  for (const root of roots) {
+    fs.rmSync(path.dirname(root), { recursive: true, force: true });
+  }
 }
 
 suite("environmentCacheIsolation", () => {

@@ -1,5 +1,13 @@
 import * as vscode from "vscode";
 import type { FieldDef } from "../services/entityFieldMetadataService.js";
+import {
+  clearBucketStorage,
+  getMetadataStorageDiagnostics,
+  listBucketLogicalNames,
+  readPerEntityCacheSync,
+  writePerEntityCache,
+  writePerEntityCacheSync
+} from "./metadataStorage.js";
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const KEY_PREFIX = "dvQuickRun.fieldsCache";
@@ -41,12 +49,31 @@ function normalizeFields(raw: any): FieldDef[] | undefined {
   return undefined;
 }
 
+function readPayload(
+  context: vscode.ExtensionContext,
+  environmentName: string,
+  logicalName: string
+): CachePayloadV3 | undefined {
+  const normalizedLogicalName = logicalName.toLowerCase();
+  const stored = readPerEntityCacheSync<CachePayloadV3>(context, environmentName, normalizedLogicalName, "fields");
+  if (stored) {
+    return stored;
+  }
+
+  const legacyPayload = context.globalState.get<CachePayloadV3>(key(environmentName, logicalName));
+  if (legacyPayload) {
+    writePerEntityCacheSync(context, environmentName, normalizedLogicalName, "fields", legacyPayload);
+  }
+
+  return legacyPayload;
+}
+
 export function getCachedFields(
   context: vscode.ExtensionContext,
   environmentName: string,
   logicalName: string
 ): FieldDef[] | undefined {
-  const payload = context.globalState.get<CachePayloadV3>(key(environmentName, logicalName));
+  const payload = readPayload(context, environmentName, logicalName);
   if (!payload) {return undefined;}
 
   const age = Date.now() - payload.fetchedAt;
@@ -69,7 +96,7 @@ export async function setCachedFields(
     fields
   };
 
-  await context.globalState.update(key(environmentName, logicalName), payload);
+  await writePerEntityCache(context, environmentName, logicalName.toLowerCase(), "fields", payload);
 }
 
 export function getEntityFieldCacheDiagnostics(
@@ -78,23 +105,20 @@ export function getEntityFieldCacheDiagnostics(
 ): {
   logicalNames: string[];
   countsByLogicalName: Record<string, number>;
+  storageBytes: number;
 } {
-  const envKey = normalizeEnvironmentKey(environmentName);
-  const allKeys = ext.globalState.keys();
-  const prefix = `${KEY_PREFIX}.${envKey}.${KEY_VERSION}.`;
-
-  const matchingKeys = allKeys.filter(k => k.startsWith(prefix)).sort();
-  const logicalNames = matchingKeys.map(k => k.slice(prefix.length));
+  const logicalNames = listBucketLogicalNames(ext, environmentName, "fields");
   const countsByLogicalName: Record<string, number> = {};
 
   for (const logicalName of logicalNames) {
-    const payload = ext.globalState.get<CachePayloadV3>(key(environmentName, logicalName));
-    countsByLogicalName[logicalName] = Array.isArray(payload?.fields) ? payload!.fields.length : 0;
+    const payload = readPerEntityCacheSync<CachePayloadV3>(ext, environmentName, logicalName, "fields");
+    countsByLogicalName[logicalName] = Array.isArray(payload?.fields) ? payload.fields.length : 0;
   }
 
   return {
     logicalNames,
-    countsByLogicalName
+    countsByLogicalName,
+    storageBytes: getMetadataStorageDiagnostics(ext, environmentName).bucketBytes.fields
   };
 }
 
@@ -105,9 +129,10 @@ export async function clearCachedFields(
   const envKey = normalizeEnvironmentKey(environmentName);
   const prefix = `${KEY_PREFIX}.${envKey}.${KEY_VERSION}.`;
 
+  await clearBucketStorage(ext, environmentName, "fields");
   await Promise.all(
     ext.globalState.keys()
-      .filter(k => k.startsWith(prefix))
-      .map(k => ext.globalState.update(k, undefined))
+      .filter((k: string) => k.startsWith(prefix))
+      .map((k: string) => ext.globalState.update(k, undefined))
   );
 }

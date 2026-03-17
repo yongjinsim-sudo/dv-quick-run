@@ -1,5 +1,13 @@
 import * as vscode from "vscode";
 import type { NavPropertyDef } from "../services/entityRelationshipMetadataService.js";
+import {
+  clearBucketStorage,
+  getMetadataStorageDiagnostics,
+  listBucketLogicalNames,
+  readPerEntityCacheSync,
+  writePerEntityCache,
+  writePerEntityCacheSync
+} from "./metadataStorage.js";
 
 const KEY_PREFIX = "dvQuickRun.entityRelationshipCache";
 const KEY_VERSION = "v1";
@@ -21,16 +29,8 @@ function buildKey(environmentName: string): string {
   return `${KEY_PREFIX}.${normalizeEnvironmentKey(environmentName)}.${KEY_VERSION}`;
 }
 
-function readAll(ctx: vscode.ExtensionContext, environmentName: string): CacheShape {
+function readLegacyAll(ctx: vscode.ExtensionContext, environmentName: string): CacheShape {
   return ctx.workspaceState.get<CacheShape>(buildKey(environmentName)) ?? {};
-}
-
-async function writeAll(
-  ctx: vscode.ExtensionContext,
-  environmentName: string,
-  value: CacheShape
-): Promise<void> {
-  await ctx.workspaceState.update(buildKey(environmentName), value);
 }
 
 export function getCachedNavigationProperties(
@@ -38,8 +38,18 @@ export function getCachedNavigationProperties(
   environmentName: string,
   logicalName: string
 ): NavPropertyDef[] | undefined {
-  const all = readAll(ctx, environmentName);
-  return all[normalize(logicalName)];
+  const normalizedLogicalName = normalize(logicalName);
+  const stored = readPerEntityCacheSync<NavPropertyDef[]>(ctx, environmentName, normalizedLogicalName, "relationships");
+  if (stored) {
+    return stored;
+  }
+
+  const legacyPayload = readLegacyAll(ctx, environmentName)[normalizedLogicalName];
+  if (legacyPayload) {
+    writePerEntityCacheSync(ctx, environmentName, normalizedLogicalName, "relationships", legacyPayload);
+  }
+
+  return legacyPayload;
 }
 
 export async function setCachedNavigationProperties(
@@ -48,9 +58,7 @@ export async function setCachedNavigationProperties(
   logicalName: string,
   value: NavPropertyDef[]
 ): Promise<void> {
-  const all = readAll(ctx, environmentName);
-  all[normalize(logicalName)] = value;
-  await writeAll(ctx, environmentName, all);
+  await writePerEntityCache(ctx, environmentName, normalize(logicalName), "relationships", value);
 }
 
 export function getEntityRelationshipCacheDiagnostics(
@@ -59,19 +67,20 @@ export function getEntityRelationshipCacheDiagnostics(
 ): {
   logicalNames: string[];
   countsByLogicalName: Record<string, number>;
+  storageBytes: number;
 } {
-  const store = readAll(ext, environmentName);
-
-  const logicalNames = Object.keys(store).sort();
+  const logicalNames = listBucketLogicalNames(ext, environmentName, "relationships");
   const countsByLogicalName: Record<string, number> = {};
 
   for (const logicalName of logicalNames) {
-    countsByLogicalName[logicalName] = Array.isArray(store[logicalName]) ? store[logicalName].length : 0;
+    const payload = readPerEntityCacheSync<NavPropertyDef[]>(ext, environmentName, logicalName, "relationships");
+    countsByLogicalName[logicalName] = Array.isArray(payload) ? payload.length : 0;
   }
 
   return {
     logicalNames,
-    countsByLogicalName
+    countsByLogicalName,
+    storageBytes: getMetadataStorageDiagnostics(ext, environmentName).bucketBytes.relationships
   };
 }
 
@@ -79,5 +88,6 @@ export async function clearCachedNavigationProperties(
   ext: vscode.ExtensionContext,
   environmentName: string
 ): Promise<void> {
+  await clearBucketStorage(ext, environmentName, "relationships");
   await ext.workspaceState.update(buildKey(environmentName), undefined);
 }

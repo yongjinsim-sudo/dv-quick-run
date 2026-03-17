@@ -1,5 +1,12 @@
 import * as vscode from "vscode";
 import type { EntityMetadata } from "../metadata/metadataModel.js";
+import {
+  clearBucketStorage,
+  getMetadataStorageDiagnostics,
+  readEntityDefsCacheSync,
+  writeEntityDefsCache,
+  writeEntityDefsCacheSync
+} from "./metadataStorage.js";
 
 const KEY_PREFIX = "dvQuickRun.entityDefsCache";
 const KEY_VERSION = "v1";
@@ -24,11 +31,28 @@ function buildKey(environmentName: string): string {
   return `${KEY_PREFIX}.${envKey}.${KEY_VERSION}`;
 }
 
+function readPayload(
+  context: vscode.ExtensionContext,
+  environmentName: string
+): CachePayload | undefined {
+  const stored = readEntityDefsCacheSync<CachePayload>(context, environmentName);
+  if (stored) {
+    return stored;
+  }
+
+  const legacyPayload = context.globalState.get<CachePayload>(buildKey(environmentName));
+  if (legacyPayload) {
+    writeEntityDefsCacheSync(context, environmentName, legacyPayload);
+  }
+
+  return legacyPayload;
+}
+
 export function getCachedEntityDefs(
   context: vscode.ExtensionContext,
   environmentName: string
 ): EntityDef[] | undefined {
-  const payload = context.globalState.get<CachePayload>(buildKey(environmentName));
+  const payload = readPayload(context, environmentName);
   if (!payload?.defs?.length) {
     return undefined;
   }
@@ -51,7 +75,7 @@ export async function setCachedEntityDefs(
     defs
   };
 
-  await context.globalState.update(buildKey(environmentName), payload);
+  await writeEntityDefsCache(context, environmentName, payload);
 }
 
 export function getEntitySetCacheDiagnostics(
@@ -61,13 +85,15 @@ export function getEntitySetCacheDiagnostics(
   count: number;
   logicalNames: string[];
   entitySetNames: string[];
+  storageBytes: number;
 } {
   const defs = getCachedEntityDefs(ext, environmentName) ?? [];
 
   return {
     count: defs.length,
     logicalNames: defs.map((d) => d.logicalName).sort(),
-    entitySetNames: defs.map((d) => d.entitySetName).sort()
+    entitySetNames: defs.map((d) => d.entitySetName).sort(),
+    storageBytes: getMetadataStorageDiagnostics(ext, environmentName).bucketBytes.entityDefs
   };
 }
 
@@ -75,5 +101,6 @@ export async function clearCachedEntityDefs(
   ext: vscode.ExtensionContext,
   environmentName: string
 ): Promise<void> {
+  await clearBucketStorage(ext, environmentName, "entityDefs");
   await ext.globalState.update(buildKey(environmentName), undefined);
 }

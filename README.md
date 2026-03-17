@@ -1,5 +1,5 @@
 # DV Quick Run
-A metadata-aware Dataverse query, investigation, and action workbench for VS Code.
+A metadata-aware Dataverse query, investigation, and action workbench for VS Code — now powered by a scalable disk-backed metadata engine.
 
 **Run, build, understand, and investigate Dataverse Web API data directly inside VS Code with metadata‑aware developer tooling.**
 
@@ -16,277 +16,109 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
-## 🆕 What's New in v0.4.4
+## 🆕 What's New in v0.5.0
 
-### 🧭 Result Viewer Usability Improvements
+### 🧠 Metadata Engine Stabilization (Major)
 
-The Result Viewer now correctly handles **wide Dataverse tables**.
+This release introduces a **fundamental upgrade to how metadata is stored and managed**, dramatically improving performance and stability for metadata-heavy workflows.
 
-Previously, tables with many columns could feel compressed and difficult to navigate.
-
-Now:
-
-- **Horizontal scrolling works as expected**
-- Tables expand naturally based on column width
-- Large datasets are significantly easier to explore
-
-This improves real-world usability when working with enterprise Dataverse data.
-
-## 🆕 What's New in v0.4.3
-
-### 🧠 Result Viewer Intelligence
-
-The Result Viewer evolves into an **interactive Dataverse investigation and action surface**.
-
-Query results are no longer just displayed — they can now be **interacted with, transformed, and acted upon directly**.
+DV Quick Run now uses a **disk-backed metadata cache** instead of storing large payloads in VS Code extension state.
 
 ---
 
-### ✨ Column-Aware Query Helpers
+### 💾 Disk-Backed Metadata Storage
 
-Cells in the result grid now support **query helper actions**:
+Metadata is now persisted to disk under VS Code’s extension storage instead of global state.
 
-- **Copy OData filter**
-- **Copy FetchXML condition**
+- File-per-entity storage model
+- Environment-scoped metadata directories
+- Granular reads and writes (no large blob rewrites)
+
+This results in:
+
+- faster metadata access
+- more predictable performance
+- easier cache inspection and debugging
+
+---
+
+### ⚡ Performance & Stability Improvements
+
+This change eliminates a major source of extension host slowdowns.
+
+- No more large metadata payload growth in VS Code state
+- Significantly reduced risk of extension host freezes
+- Improved responsiveness for:
+  - Explain Query
+  - metadata hover
+  - relationship exploration
+  - Smart GET workflows
+
+---
+
+### 🔬 Enhanced Metadata Diagnostics
+
+Diagnostics now provide better visibility into metadata cache health.
+
+You can now see:
+
+- storage mode (disk-backed)
+- per-cache bucket sizes
+- total metadata footprint
+
+This makes it easier to understand and troubleshoot metadata behaviour.
+
+---
+
+### 🔎 Explain Query – Relationship Advice (Phase 2A)
+
+Explain Query now provides **Field Provenance & Relationship Advice**.
+
+When a field does not belong to the base entity, DV Quick Run can now suggest:
+
+- which related entity the field likely belongs to
+- where the field is coming from in the query context
 
 Example:
+    contacts?$select=fullname,revenue
 
-    statecode = Active
 
-Copy OData filter:
+Explain Query will indicate:
 
-    statecode eq 0
+> `revenue` appears to belong to related entity `account`, not `contact`
 
-Copy FetchXML:
+This works for:
 
-    <condition attribute="statecode" operator="eq" value="0" />
+- `$select`
+- `$orderby`
 
-These helpers use the **underlying raw values**, even when labels are displayed.
-
----
-
-### 🏷 Choice / Option Set Labels
-
-Choice and option set fields are now rendered using **human-readable labels** instead of numeric codes.
-
-Example:
-
-    statecode → Active
-
-This makes result inspection significantly easier, especially for business-related data.
+Advice is derived safely from validation signals — no heavy runtime traversal.
 
 ---
 
-### 📘 Schema (Metadata) from Result Viewer
+### 🧱 Foundation for Future Intelligence
 
-Open entity metadata directly from the Result Viewer toolbar.
+This release lays the groundwork for upcoming capabilities:
 
-No need to re-select the entity — DV Quick Run already knows the context of your query.
-
-This enables a fast workflow:
-
-run query  
-→ inspect data  
-→ open schema  
-→ understand fields  
+- structured metadata reasoning
+- scope-aware hover (including `$expand` context)
+- deeper Explain Query insights
+- advanced investigation workflows
 
 ---
 
-### 🔗 Relationships Explorer Shortcut
+### 💡 Why This Matters
 
-Access entity relationships directly from the Result Viewer using the **🔗 Relationships** button.
+This is not just a feature release — it’s a **platform stabilization milestone**.
 
-Quickly understand how the current entity connects to others without leaving your workflow.
+By moving metadata out of VS Code state and into a proper storage model, DV Quick Run is now better equipped to scale:
 
----
+- larger environments
+- richer metadata reasoning
+- more advanced developer tooling
 
-### ⬇ Export Current View to CSV
+without compromising performance.
 
-Export the current table view directly to CSV.
-
-Export respects:
-
-- current filtering
-- current sorting
-- displayed values (including labels)
-
-This allows quick workflows such as:
-
-- sharing results with teammates
-- analysing data in Excel
-- attaching results to tickets
-
----
-
-### 🎯 Cleaner Result Grid UX
-
-The result viewer now includes several usability improvements:
-
-- **Hover-based row actions** for a cleaner table
-- **Primary key column prioritised** for faster navigation
-- **Resizable columns**
-- **Client-side sorting and filtering**
-- Improved **overflow (kebab) menu behaviour**
-
----
-
-### 🧭 Toolbar Improvements
-
-The Result Viewer toolbar now separates:
-
-- **View modes** (TABLE / JSON)
-- **Tools** (🔗 Relationships, 📘 Schema, ⬇ Export)
-
-This creates a clearer and more intuitive workflow.
-
----
-
-## 🆕 What's New in v0.4.2
-
-### 📊 Interactive Result Viewer
-
-![Result Viewer Demo](docs/demo-result-viewer.gif)
-
-DV Quick Run now opens query results in an **interactive Result Viewer** instead of a raw JSON document.
-
-This transforms query execution from a simple API response preview into a **structured Dataverse inspection workspace**.
-
-Features include:
-
-- **TABLE view** for structured query result inspection
-- **JSON view** for raw API response analysis
-- **RELATIONSHIPS** shortcut for exploring entity relationships
-- **Click-to-copy** cells for rapid debugging workflows
-- **Row count indicator** and environment context in the viewer header
-
-Example workflow:
-
-run query  
-→ inspect results as table  
-→ click values to copy  
-→ investigate record  
-→ jump to Dataverse UI  
-
-All without leaving VS Code.
-
----
-
-### 🔎 Record Actions Inside Query Results
-
-Primary key fields in the result grid now include **contextual actions**:
-    contactid
-    7d29eec7-4414-f111-8341-6045bdc42f8b 🔎 ↗
-
-
-Available actions:
-
-- **🔎 Investigate Record** – run the investigation engine directly from the result grid
-- **↗ Open in Dataverse UI** – jump directly to the record in the Dataverse web interface
-
-Actions are automatically enabled for the **entity primary key column**, ensuring the viewer stays clean and avoids noisy UI.
-
----
-
-### 🔁 Consistent Query Result Experience
-
-All Dataverse GET workflows now use the **Result Viewer**:
-
-- Run Query
-- Run Query Under Cursor
-- Smart GET
-- Smart GET from GUID
-
-This ensures a consistent developer experience when inspecting data returned from Dataverse.
-
----
-
-### 🧠 Result Viewer Design Philosophy
-
-The Result Viewer introduces the first **visual data inspection layer** inside DV Quick Run.
-
-Instead of treating query results as static JSON, the extension now provides a lightweight **Dataverse debugging workbench** directly inside the editor.
-
-The viewer is designed to support:
-
-- rapid data inspection
-- record investigation
-- navigation to Dataverse UI
-- relationship exploration
-
-without leaving the developer workflow.
-
-This capability lays the groundwork for future features such as:
-
-- query troubleshooting tools
-- lookup expansion helpers
-- metadata-aware column enrichment
-- result filtering and sorting
-
-## 🆕 What's New in v0.4.1
-
-### 🔧 Stabilization & Investigation Reliability
-
-This release focuses on **stabilizing the Investigate Record engine** and improving behavior in real-world Dataverse environments.
-
-Improvements include:
-
-- More reliable entity inference when investigating records from:
-  - JSON payloads
-  - mixed API responses
-  - diagnostic logs
-- Improved handling of **custom tables** and complex Dataverse schemas
-- Fixed investigation failures caused by incorrect `@odata.context` resolution
-- Improved error transparency when Dataverse permissions prevent relationship traversal
-- Investigation reports now correctly resolve entity context in documents containing multiple payload blocks
-
-### 🧭 Relationship Analysis Improvements
-
-Relationship exploration artifacts now open with **entity-aware document names**:
-
-- `Relationship Explorer - entity.txt`
-- `Relationship Graph - entity.txt`
-
-This makes it easier to work with multiple investigation artifacts inside VS Code.
-
----
-
-## 🆕 What's New in v0.4.0
-
-### 🔎 Investigate Record
-
-DV Quick Run can now **investigate a Dataverse record directly from a GUID**.
-
-Highlight a GUID in the editor and run:
-
-DV Quick Run: Investigate Record
-
-The extension analyzes the identifier, infers the entity type using metadata and context signals, and produces a structured investigation report.
-
-Example workflow:
-
-highlight GUID  
-→ right click  
-→ Investigate Record  
-→ get investigation summary  
-→ explore relationships  
-→ run suggested follow‑up queries  
-
-Investigation reports include:
-
-- **SUMMARY** – key identity, lifecycle, ownership, and business fields  
-- **POINTS TO** – direct lookup relationships from the record  
-- **REVERSE LINKS** – entities that may reference this record  
-- **SUGGESTED QUERIES** – follow‑up queries to continue investigation  
-
-Example investigation:
-
-![Investigate Record Demo](docs/demo-investigate-record.gif)
-
-[Example investigation output](docs/investigation-contact-example.txt)
-
-This feature turns DV Quick Run into a **Dataverse investigation tool**, allowing engineers, testers, and support teams to understand a record quickly without navigating the Dataverse UI.
-
-Investigate Record is designed for situations where a GUID appears in logs, payloads, or integration traces and the engineer needs to quickly understand what that record represents and how it relates to other entities.
 
 ---
 
@@ -431,7 +263,7 @@ Hovering a field may display:
 - attribute type
 - choice values (if applicable)
 
-Metadata is cached for fast repeated lookups.
+Metadata is cached using a **disk-backed storage model** for fast, scalable, and stable repeated lookups across large environments.
 
 ---
 
@@ -592,11 +424,15 @@ This enables:
 - schema-aware helpers
 - relationship exploration
 
-This metadata intelligence layer is the foundation for future features such as:
+This metadata intelligence layer is now backed by a disk-based storage architecture, enabling:
 
-- query validation
-- relationship traversal
-- query intent suggestions
+- scalable metadata access across large environments
+- stable performance during metadata-heavy operations
+- future capabilities such as:
+  - query validation
+  - relationship reasoning
+  - scope-aware query understanding
+  - investigation and troubleshooting workflows
 
 ---
 
@@ -613,6 +449,14 @@ Available commands:
 These tools help developers verify metadata loading behaviour and recover quickly after schema changes.
 
 Diagnostics are **scoped to the currently active environment**, ensuring caches from different environments do not mix.
+
+Diagnostics now also provide insight into metadata storage behaviour, including:
+
+- storage mode (disk-backed)
+- per-cache metadata size
+- total metadata footprint
+
+This helps identify performance issues and understand how metadata is being cached.
 
 ---
 

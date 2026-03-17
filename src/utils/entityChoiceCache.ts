@@ -1,5 +1,13 @@
 import * as vscode from "vscode";
 import type { ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
+import {
+  clearBucketStorage,
+  getMetadataStorageDiagnostics,
+  listBucketLogicalNames,
+  readPerEntityCacheSync,
+  writePerEntityCache,
+  writePerEntityCacheSync
+} from "./metadataStorage.js";
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const KEY_PREFIX = "dvQuickRun.choiceMetadataCache";
@@ -9,6 +17,11 @@ type CacheShape = Record<string, {
   fetchedAt: number;
   values: ChoiceMetadataDef[];
 }>;
+
+type CachePayload = {
+  fetchedAt: number;
+  values: ChoiceMetadataDef[];
+};
 
 function normalizeEnvironmentKey(environmentName: string): string {
   return environmentName
@@ -25,16 +38,27 @@ function buildKey(environmentName: string): string {
   return `${KEY_PREFIX}.${normalizeEnvironmentKey(environmentName)}.${KEY_VERSION}`;
 }
 
-function readAll(ctx: vscode.ExtensionContext, environmentName: string): CacheShape {
+function readLegacyAll(ctx: vscode.ExtensionContext, environmentName: string): CacheShape {
   return ctx.globalState.get<CacheShape>(buildKey(environmentName)) ?? {};
 }
 
-async function writeAll(
+function tryReadPayload(
   ctx: vscode.ExtensionContext,
   environmentName: string,
-  value: CacheShape
-): Promise<void> {
-  await ctx.globalState.update(buildKey(environmentName), value);
+  logicalName: string
+): CachePayload | undefined {
+  const normalizedLogicalName = normalize(logicalName);
+  const stored = readPerEntityCacheSync<CachePayload>(ctx, environmentName, normalizedLogicalName, "choices");
+  if (stored) {
+    return stored;
+  }
+
+  const legacyPayload = readLegacyAll(ctx, environmentName)[normalizedLogicalName];
+  if (legacyPayload) {
+    writePerEntityCacheSync(ctx, environmentName, normalizedLogicalName, "choices", legacyPayload);
+  }
+
+  return legacyPayload;
 }
 
 export function getCachedChoiceMetadata(
@@ -42,8 +66,7 @@ export function getCachedChoiceMetadata(
   environmentName: string,
   logicalName: string
 ): ChoiceMetadataDef[] | undefined {
-  const all = readAll(ctx, environmentName);
-  const payload = all[normalize(logicalName)];
+  const payload = tryReadPayload(ctx, environmentName, logicalName);
   if (!payload?.values?.length) {
     return undefined;
   }
@@ -62,12 +85,10 @@ export async function setCachedChoiceMetadata(
   logicalName: string,
   values: ChoiceMetadataDef[]
 ): Promise<void> {
-  const all = readAll(ctx, environmentName);
-  all[normalize(logicalName)] = {
+  await writePerEntityCache(ctx, environmentName, normalize(logicalName), "choices", {
     fetchedAt: Date.now(),
     values
-  };
-  await writeAll(ctx, environmentName, all);
+  } satisfies CachePayload);
 }
 
 export function getEntityChoiceCacheDiagnostics(
@@ -76,21 +97,22 @@ export function getEntityChoiceCacheDiagnostics(
 ): {
   logicalNames: string[];
   countsByLogicalName: Record<string, number>;
+  storageBytes: number;
 } {
-  const store = readAll(ext, environmentName);
-
-  const logicalNames = Object.keys(store).sort();
+  const logicalNames = listBucketLogicalNames(ext, environmentName, "choices");
   const countsByLogicalName: Record<string, number> = {};
 
   for (const logicalName of logicalNames) {
-    countsByLogicalName[logicalName] = Array.isArray(store[logicalName]?.values)
-      ? store[logicalName].values.length
+    const payload = readPerEntityCacheSync<CachePayload>(ext, environmentName, logicalName, "choices");
+    countsByLogicalName[logicalName] = Array.isArray(payload?.values)
+      ? payload.values.length
       : 0;
   }
 
   return {
     logicalNames,
-    countsByLogicalName
+    countsByLogicalName,
+    storageBytes: getMetadataStorageDiagnostics(ext, environmentName).bucketBytes.choices
   };
 }
 
@@ -98,5 +120,6 @@ export async function clearCachedChoiceMetadata(
   ext: vscode.ExtensionContext,
   environmentName: string
 ): Promise<void> {
+  await clearBucketStorage(ext, environmentName, "choices");
   await ext.globalState.update(buildKey(environmentName), undefined);
 }

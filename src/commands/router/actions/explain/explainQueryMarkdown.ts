@@ -1,12 +1,27 @@
 import { EntityDef } from "../../../../utils/entitySetCache.js";
 import { type ValidationIssue } from "../shared/queryExplain/queryValidation.js";
 import { buildDesignNotes, buildIntentLines, buildSections, buildSummary, buildValidationLines } from "./explainQuerySections.js";
-import { ParsedDataverseQuery } from "./explainQueryTypes.js";
+import { ExplainRelationshipReasoningNote, ParsedDataverseQuery } from "./explainQueryTypes.js";
+
+function buildRelationshipReasoningLines(notes: ExplainRelationshipReasoningNote[]): string[] {
+  const lines: string[] = [];
+
+  for (const note of notes) {
+    lines.push(`- ${note.summary}`);
+    lines.push(`  - Clause: \`${note.clause}\``);
+    if (note.suggestion) {
+      lines.push(`  - Suggestion: ${note.suggestion}`);
+    }
+  }
+
+  return lines;
+}
 
 export function toExplainMarkdown(
   parsed: ParsedDataverseQuery,
   entity: EntityDef | undefined,
-  validationIssues: ValidationIssue[] = []
+  validationIssues: ValidationIssue[] = [],
+  relationshipReasoningNotes: ExplainRelationshipReasoningNote[] = []
 ): string {
   const summary = buildSummary(parsed, entity);
   const sections = buildSections(parsed, entity);
@@ -43,6 +58,13 @@ export function toExplainMarkdown(
     lines.push("## Validation");
     lines.push("");
     lines.push(...buildValidationLines(validationIssues));
+    lines.push("");
+  }
+
+  if (relationshipReasoningNotes.length) {
+    lines.push("## Field Provenance & Relationship Advice");
+    lines.push("");
+    lines.push(...buildRelationshipReasoningLines(relationshipReasoningNotes));
     lines.push("");
   }
 

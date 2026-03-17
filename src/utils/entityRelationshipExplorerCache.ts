@@ -1,5 +1,13 @@
 import * as vscode from "vscode";
 import type { EntityRelationshipExplorerResult } from "../services/entityRelationshipExplorerService.js";
+import {
+  clearBucketStorage,
+  getMetadataStorageDiagnostics,
+  listBucketLogicalNames,
+  readPerEntityCacheSync,
+  writePerEntityCache,
+  writePerEntityCacheSync
+} from "./metadataStorage.js";
 
 const KEY_PREFIX = "dvQuickRun.entityRelationshipExplorerCache";
 const KEY_VERSION = "v1";
@@ -21,16 +29,8 @@ function buildKey(environmentName: string): string {
   return `${KEY_PREFIX}.${normalizeEnvironmentKey(environmentName)}.${KEY_VERSION}`;
 }
 
-function readAll(ctx: vscode.ExtensionContext, environmentName: string): CacheShape {
+function readLegacyAll(ctx: vscode.ExtensionContext, environmentName: string): CacheShape {
   return ctx.workspaceState.get<CacheShape>(buildKey(environmentName)) ?? {};
-}
-
-async function writeAll(
-  ctx: vscode.ExtensionContext,
-  environmentName: string,
-  value: CacheShape
-): Promise<void> {
-  await ctx.workspaceState.update(buildKey(environmentName), value);
 }
 
 export function getCachedEntityRelationships(
@@ -38,7 +38,18 @@ export function getCachedEntityRelationships(
   environmentName: string,
   logicalName: string
 ): EntityRelationshipExplorerResult | undefined {
-  return readAll(ctx, environmentName)[normalize(logicalName)];
+  const normalizedLogicalName = normalize(logicalName);
+  const stored = readPerEntityCacheSync<EntityRelationshipExplorerResult>(ctx, environmentName, normalizedLogicalName, "relationshipExplorer");
+  if (stored) {
+    return stored;
+  }
+
+  const legacyPayload = readLegacyAll(ctx, environmentName)[normalizedLogicalName];
+  if (legacyPayload) {
+    writePerEntityCacheSync(ctx, environmentName, normalizedLogicalName, "relationshipExplorer", legacyPayload);
+  }
+
+  return legacyPayload;
 }
 
 export async function setCachedEntityRelationships(
@@ -47,14 +58,26 @@ export async function setCachedEntityRelationships(
   logicalName: string,
   value: EntityRelationshipExplorerResult
 ): Promise<void> {
-  const all = readAll(ctx, environmentName);
-  all[normalize(logicalName)] = value;
-  await writeAll(ctx, environmentName, all);
+  await writePerEntityCache(ctx, environmentName, normalize(logicalName), "relationshipExplorer", value);
+}
+
+export function getEntityRelationshipExplorerCacheDiagnostics(
+  ext: vscode.ExtensionContext,
+  environmentName: string
+): {
+  logicalNames: string[];
+  storageBytes: number;
+} {
+  return {
+    logicalNames: listBucketLogicalNames(ext, environmentName, "relationshipExplorer"),
+    storageBytes: getMetadataStorageDiagnostics(ext, environmentName).bucketBytes.relationshipExplorer
+  };
 }
 
 export async function clearCachedEntityRelationships(
   ctx: vscode.ExtensionContext,
   environmentName: string
 ): Promise<void> {
+  await clearBucketStorage(ctx, environmentName, "relationshipExplorer");
   await ctx.workspaceState.update(buildKey(environmentName), undefined);
 }
