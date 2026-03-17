@@ -6,6 +6,57 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.4.4] - Result Viewer Usability Fix
+
+### Fixed
+- Fixed horizontal scrolling behaviour for wide tables in the Result Viewer
+- Table now expands based on column content instead of compressing into viewport
+- Improved usability when working with large Dataverse result sets (many columns)
+
+### Improved
+- Result Viewer now correctly supports horizontal exploration of data
+- Significantly better experience when inspecting real-world enterprise datasets
+
+
+## [0.4.3] - Result Viewer Intelligence & Action Foundations
+
+### Added
+- **Column-aware result viewer actions** for Dataverse query results
+- Query helper actions for visible cell values:
+  - **Copy OData filter**
+  - **Copy FetchXML condition**
+- **Schema / Metadata** toolbar action directly from the Result Viewer
+- **CSV export** for the current table view
+  - exports the current filtered and sorted result set
+  - exports the currently displayed values shown in the table
+- Result viewer toolbar action icons for:
+  - **Relationships**
+  - **Schema / Metadata**
+  - **Export**
+- Result viewer environment indicator shown in the viewer header
+- Hover-reveal row actions for a cleaner result grid experience
+
+### Improved
+- Result Viewer now behaves more like an interactive Dataverse investigation surface
+- **Primary key column** is consistently shown first in the table when available
+- **Choice / Option Set values** are rendered using labels in the table view instead of raw numeric codes
+- Result viewer now supports:
+  - **client-side sorting**
+  - **client-side filtering**
+  - **resizable columns**
+- Improved toolbar visual grouping by separating view modes from tool actions
+- Improved kebab / overflow menu behavior for row actions
+- Result viewer action handling was consolidated to better support future command-surface features
+- Stabilized viewer event handling and reduced fragility during rerenders
+
+### Fixed
+- Fixed result viewer cases where the table failed to render due to embedded webview script issues
+- Fixed overflow / kebab menu clipping and positioning issues near the bottom of the table
+- Fixed filter input losing focus during rerender
+- Fixed row action inconsistencies caused by repeated event rebinding
+- Fixed schema toolbar action so metadata can be opened directly for the current query entity
+- Fixed query helper actions so they correctly use raw underlying values even when labels are displayedh
+
 ## [0.4.2] - Interactive Result Viewer
 
 ### Added

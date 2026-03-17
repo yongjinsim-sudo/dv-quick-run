@@ -206,9 +206,10 @@ export function getResultViewerHtml(
 
         table {
             border-collapse: collapse;
-            width: 100%;
+            width: max-content;
+            min-width: 100%;
             font-size: 12px;
-            table-layout: fixed;
+            table-layout: auto;
         }
 
         thead {
