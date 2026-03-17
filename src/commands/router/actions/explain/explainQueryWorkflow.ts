@@ -14,7 +14,12 @@ type ExplainWorkflowDeps = {
   resolveText: () => string | undefined;
   parseQuery: (text: string) => ParsedDataverseQuery;
   analyse: (ctx: CommandContext, parsed: ParsedDataverseQuery) => Promise<ExplainAnalysis>;
-  buildMarkdown: (parsed: ParsedDataverseQuery, entity: ExplainAnalysis["entity"], validationIssues: ExplainAnalysis["validationIssues"]) => string;
+  buildMarkdown: (
+    parsed: ParsedDataverseQuery,
+    entity: ExplainAnalysis["entity"],
+    validationIssues: ExplainAnalysis["validationIssues"],
+    relationshipReasoningNotes?: ExplainAnalysis["relationshipReasoningNotes"]
+  ) => string;
   openPreview: (markdown: string) => Promise<void>;
   logDebugMessage: (output: CommandContext["output"], message: string) => void;
   logInfoMessage: (output: CommandContext["output"], message: string) => void;
@@ -46,7 +51,12 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   deps.logDebugMessage(ctx.output, `Explain Query: entitySet=${parsed.entitySetName} sourceLength=${text.length}`);
 
   const analysis = await deps.analyse(ctx, parsed);
-  const markdown = deps.buildMarkdown(parsed, analysis.entity, analysis.validationIssues);
+  const markdown = deps.buildMarkdown(
+    parsed,
+    analysis.entity,
+    analysis.validationIssues,
+    analysis.relationshipReasoningNotes ?? []
+  );
 
   await deps.openPreview(markdown);
 

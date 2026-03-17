@@ -6,6 +6,64 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.5.0] - Metadata Engine Stabilization & Explain Query Foundations
+
+### Added
+- **Disk-backed metadata cache storage**
+  - Metadata caches are now persisted to disk under VS Code `globalStorageUri`
+  - File-per-entity storage model for:
+    - fields
+    - choices
+    - relationships
+    - relationship explorer
+  - Environment-scoped metadata storage directories
+- **Metadata storage abstraction layer**
+  - Introduced structured storage modules:
+    - `storagePaths`
+    - `jsonStorage`
+    - `metadataStorage`
+  - Centralized metadata read/write operations via storage facade
+- **Enhanced metadata diagnostics**
+  - Diagnostics now show:
+    - storage mode (disk-backed vs legacy state)
+    - per-cache bucket sizes
+    - total persisted metadata size
+  - Improved visibility into metadata cache health
+- **Lightweight Explain Query relationship advice (Phase 2A)**
+  - Explain Query now surfaces **Field Provenance & Relationship Advice**
+  - Provides guidance when fields belong to related entities instead of the base entity
+  - Supports:
+    - `$select`
+    - `$orderby`
+  - Advice is derived safely from validation results (no heavy runtime traversal)
+
+### Improved
+- **Extension host performance and stability**
+  - Eliminated large metadata payloads from VS Code extension state
+  - Reduced risk of extension host freezes during metadata-heavy operations
+  - Improved responsiveness of:
+    - Explain Query
+    - metadata-aware features
+    - relationship exploration
+- **Metadata persistence granularity**
+  - Updates now occur at entity level instead of rewriting large environment-wide blobs
+  - More efficient cache writes and reads
+- **Cache clear behavior**
+  - Clear metadata command now removes disk-backed files
+  - Legacy state keys are also cleared for consistency
+- **Foundation for future metadata reasoning**
+  - Enables safe expansion into deeper Explain Query reasoning
+  - Prepares groundwork for:
+    - structured provenance signals
+    - scope-aware hover
+    - advanced investigation features
+
+### Fixed
+- Fixed extension host performance degradation caused by large persisted metadata state
+- Fixed repeated growth of metadata payloads in VS Code global state
+- Fixed metadata cache inconsistencies during repeated metadata operations
+
+
 ## [0.4.4] - Result Viewer Usability Fix
 
 ### Fixed

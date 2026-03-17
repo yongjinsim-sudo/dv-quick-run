@@ -35,6 +35,6 @@ export async function runClearPersistedMetadataCacheAction(
   clearHoverFieldContextCache();
   clearNavigationHoverEnrichmentCache();
 
-  logInfo(ctx.output, "DV Quick Run: Cleared persisted and session metadata caches.");
-  vscode.window.showInformationMessage("DV Quick Run: Persisted metadata cache cleared.");
+  logInfo(ctx.output, "DV Quick Run: Cleared persisted disk-backed metadata cache, legacy state cache, and session metadata caches.");
+  vscode.window.showInformationMessage("DV Quick Run: Persisted metadata cache cleared (disk + legacy state). ");
 }
