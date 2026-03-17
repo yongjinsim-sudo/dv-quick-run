@@ -16,6 +16,115 @@ Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code 
 
 ---
 
+## 🆕 What's New in v0.4.3
+
+### 🧠 Result Viewer Intelligence
+
+The Result Viewer evolves into a **Dataverse investigation surface**.
+
+Query results are no longer just displayed — they can now be **interacted with, transformed, and acted upon directly**.
+
+---
+
+### ✨ Column-Aware Query Helpers
+
+Cells in the result grid now support **query helper actions**:
+
+- **Copy OData filter**
+- **Copy FetchXML condition**
+
+Example:
+
+    statecode = Active
+
+Copy OData filter:
+
+    statecode eq 0
+
+Copy FetchXML:
+
+    <condition attribute="statecode" operator="eq" value="0" />
+
+These helpers use the **underlying raw values**, even when labels are displayed.
+
+---
+
+### 🏷 Choice / Option Set Labels
+
+Choice and option set fields are now rendered using **human-readable labels** instead of numeric codes.
+
+Example:
+
+    statecode → Active
+
+This makes result inspection significantly easier, especially for business-related data.
+
+---
+
+### 📘 Schema (Metadata) from Result Viewer
+
+Open entity metadata directly from the Result Viewer toolbar.
+
+No need to re-select the entity — DV Quick Run already knows the context of your query.
+
+This enables a fast workflow:
+
+run query  
+→ inspect data  
+→ open schema  
+→ understand fields  
+
+---
+
+### 🔗 Relationships Explorer Shortcut
+
+Access entity relationships directly from the Result Viewer using the **🔗 Relationships** button.
+
+Quickly understand how the current entity connects to others without leaving your workflow.
+
+---
+
+### ⬇ Export Current View to CSV
+
+Export the current table view directly to CSV.
+
+Export respects:
+
+- current filtering
+- current sorting
+- displayed values (including labels)
+
+This allows quick workflows such as:
+
+- sharing results with teammates
+- analysing data in Excel
+- attaching results to tickets
+
+---
+
+### 🎯 Cleaner Result Grid UX
+
+The result viewer now includes several usability improvements:
+
+- **Hover-based row actions** for a cleaner table
+- **Primary key column prioritised** for faster navigation
+- **Resizable columns**
+- **Client-side sorting and filtering**
+- Improved **overflow (kebab) menu behaviour**
+
+---
+
+### 🧭 Toolbar Improvements
+
+The Result Viewer toolbar now separates:
+
+- **View modes** (TABLE / JSON)
+- **Tools** (🔗 Relationships, 📘 Schema, ⬇ Export)
+
+This creates a clearer and more intuitive workflow.
+
+---
+
 ## 🆕 What's New in v0.4.2
 
 ### 📊 Interactive Result Viewer
@@ -156,8 +265,6 @@ Investigation reports include:
 Example investigation:
 
 ![Investigate Record Demo](docs/demo-investigate-record.gif)
-
-Example investigation output:
 
 [Example investigation output](docs/investigation-contact-example.txt)
 

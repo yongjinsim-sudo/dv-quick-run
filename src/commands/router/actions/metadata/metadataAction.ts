@@ -49,19 +49,49 @@ export async function runGetMetadataAction(ctx: CommandContext): Promise<void> {
     const def = await pickEntity(defs);
     if (!def) {return;}
 
-    const kind = await pickKind();
-    if (!kind) {return;}
-
-    const path = buildMetadataPath(def.logicalName, kind);
-
-    const env = ctx.envContext.getEnvironmentName();
-    logDataverseExecutionStart(ctx.output, env, "GET", path);
-
-    const start = Date.now();
-    const result = await client.get(path, token);
-    const duration = Date.now() - start;
-
-    await showJsonNamed(metadataVirtualPath(def.logicalName, kind), result);
-    logDataverseExecutionResult(ctx.output, 1, duration);
+    await showMetadataForEntity(ctx, def.logicalName);
   });
+}
+
+export async function runShowEntityMetadataAction(
+  ctx: CommandContext,
+  entityLogicalName?: string
+): Promise<void> {
+  const logicalName = entityLogicalName?.trim();
+  if (!logicalName) {
+    void vscode.window.showWarningMessage(
+      "DV Quick Run: Could not determine entity for metadata inspection."
+    );
+    return;
+  }
+
+  await runAction(ctx, "DV Quick Run: Show Entity Metadata failed. Check Output.", async () => {
+    await showMetadataForEntity(ctx, logicalName);
+  });
+}
+
+async function showMetadataForEntity(
+  ctx: CommandContext,
+  logicalName: string
+): Promise<void> {
+  const scope = ctx.getScope();
+  const token = await ctx.getToken(scope);
+  const client = ctx.getClient();
+
+  const kind = await pickKind();
+  if (!kind) {
+    return;
+  }
+
+  const path = buildMetadataPath(logicalName, kind);
+
+  const env = ctx.envContext.getEnvironmentName();
+  logDataverseExecutionStart(ctx.output, env, "GET", path);
+
+  const start = Date.now();
+  const result = await client.get(path, token);
+  const duration = Date.now() - start;
+
+  await showJsonNamed(metadataVirtualPath(logicalName, kind), result);
+  logDataverseExecutionResult(ctx.output, 1, duration);
 }

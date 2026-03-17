@@ -4,6 +4,7 @@ import { registerRunGetCommand } from "../commands/runGet.js";
 import { registerWhoAmICommand } from "../commands/whoAmI.js";
 import { registerClearHistoryCommand } from "../commands/clearHistory.js";
 import { registerGetMetadataCommand } from "../commands/getMetadata.js";
+import { registerShowEntityMetadataCommand } from "../commands/showEntityMetadata.js";
 import { registerSmartGetCommand } from "../commands/smartGet.js";
 import { registerSmartGetRerunLastCommand } from "../commands/smartGetRerunLast.js";
 import { registerSmartGetEditLastCommand } from "../commands/smartGetEditLast.js";
@@ -32,6 +33,7 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerRunGetCommand,
   registerClearHistoryCommand,
   registerGetMetadataCommand,
+  registerShowEntityMetadataCommand,
   registerSmartGetCommand,
   registerSmartGetRerunLastCommand,
   registerSmartGetEditLastCommand,

@@ -1,7 +1,11 @@
 import type { CommandContext } from "../../../../context/commandContext.js";
 import { ResultViewerPanel } from "../../../../../providers/resultViewerPanel.js";
 import { buildResultViewerModel } from "../../../../../services/resultViewModelBuilder.js";
-import { loadEntityDefByEntitySetName } from "../../shared/metadataAccess.js";
+import {
+    loadChoiceMetadata,
+    loadEntityDefByEntitySetName,
+    loadFields
+} from "../../shared/metadataAccess.js";
 
 export async function showResultViewerForQuery(
     ctx: CommandContext,
@@ -17,9 +21,28 @@ export async function showResultViewerForQuery(
         ? await loadEntityDefByEntitySetName(ctx, client, token, entitySetName)
         : undefined;
 
+    const fields = entityDef?.logicalName
+        ? await loadFields(ctx, client, token, entityDef.logicalName, { silent: true })
+        : [];
+
+    const choiceMetadata = entityDef?.logicalName
+        ? await loadChoiceMetadata(ctx, client, token, entityDef.logicalName, { silent: true })
+        : [];
+
+    const activeEnvironment = ctx.envContext.getActiveEnvironment();
+
     const model = buildResultViewerModel(result, path, {
         entitySetName: entityDef?.entitySetName ?? entitySetName,
-        primaryIdField: entityDef?.primaryIdAttribute
+        entityLogicalName: entityDef?.logicalName,
+        primaryIdField: entityDef?.primaryIdAttribute,
+        fields,
+        choiceMetadata,
+        environment: activeEnvironment
+            ? {
+                name: activeEnvironment.name,
+                colorHint: activeEnvironment.statusBarColor ?? "white"
+            }
+            : undefined
     });
 
     ResultViewerPanel.show(ctx, model);

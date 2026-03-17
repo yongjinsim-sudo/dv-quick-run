@@ -1,5 +1,27 @@
+import type { ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
+import type { FieldDef } from "../services/entityFieldMetadataService.js";
+import {
+    resolveResultViewerActions
+} from "../providers/resultViewerActions/registry.js";
+import type {
+    ResultViewerResolvedAction
+} from "../providers/resultViewerActions/types.js";
+import { isChoiceAttributeType } from "../metadata/metadataModel.js";
+import {
+    isLookupColumn,
+    isSystemColumn
+} from "../providers/resultViewerActions/columnIntelligence.js";
+import { resolveChoiceValueFromMetadata } from "../commands/router/actions/shared/valueAwareness.js";
+
+export interface ResultViewerEnvironmentInfo {
+    name: string;
+    colorHint: "white" | "amber" | "red";
+}
+
 export interface ResultViewerCell {
     value: string;
+    rawValue: string;
+    actions?: ResultViewerResolvedAction[];
 }
 
 export interface ResultViewerModel {
@@ -11,12 +33,18 @@ export interface ResultViewerModel {
     rowCount: number;
     queryPath: string;
     entitySetName?: string;
+    entityLogicalName?: string;
     primaryIdField?: string;
+    environment?: ResultViewerEnvironmentInfo;
 }
 
 export interface ResultViewerBuildOptions {
     entitySetName?: string;
+    entityLogicalName?: string;
     primaryIdField?: string;
+    environment?: ResultViewerEnvironmentInfo;
+    fields?: FieldDef[];
+    choiceMetadata?: ChoiceMetadataDef[];
 }
 
 function toDisplayCell(value: unknown): string {
@@ -39,6 +67,18 @@ function sortColumns(columns: string[]): string[] {
     return [...columns].sort(compareColumns);
 }
 
+function prioritizePrimaryIdField(columns: string[], primaryIdField?: string): string[] {
+    if (!primaryIdField) {
+        return columns;
+    }
+
+    const remaining = columns.filter((column) => column !== primaryIdField);
+
+    return columns.includes(primaryIdField)
+        ? [primaryIdField, ...remaining]
+        : columns;
+}
+
 function compareColumns(left: string, right: string): number {
     const rankCompare = getColumnRank(left) - getColumnRank(right);
 
@@ -50,11 +90,11 @@ function compareColumns(left: string, right: string): number {
 }
 
 function getColumnRank(column: string): number {
-    if (column.startsWith("@odata.")) {
+    if (isSystemColumn(column)) {
         return 30;
     }
 
-    if (column.startsWith("_") && column.endsWith("_value")) {
+    if (isLookupColumn(column)) {
         return 20;
     }
 
@@ -74,6 +114,59 @@ function deriveEntitySetName(queryPath: string): string | undefined {
     return normalized || undefined;
 }
 
+function buildFieldMap(fields?: FieldDef[]): Map<string, FieldDef> {
+    return new Map((fields ?? [])
+        .filter((field) => !!field.logicalName)
+        .map((field) => [field.logicalName.toLowerCase(), field]));
+}
+
+function resolveDisplayValue(
+    rowValue: unknown,
+    column: string,
+    fieldMap: Map<string, FieldDef>,
+    choiceMetadata: ChoiceMetadataDef[]
+): string {
+    const rawDisplay = toDisplayCell(rowValue);
+    if (!rawDisplay) {
+        return rawDisplay;
+    }
+
+    const field = fieldMap.get(column.toLowerCase());
+    if (!field || !isChoiceAttributeType(field.attributeType)) {
+        return rawDisplay;
+    }
+
+    const resolved = resolveChoiceValueFromMetadata(choiceMetadata, field.logicalName, rawDisplay);
+    return resolved?.option?.label ?? rawDisplay;
+}
+
+function buildCell(
+    rowValue: unknown,
+    column: string,
+    options: ResultViewerBuildOptions,
+    fieldMap: Map<string, FieldDef>,
+    choiceMetadata: ChoiceMetadataDef[]
+): ResultViewerCell {
+    const rawValue = toDisplayCell(rowValue);
+    const displayValue = resolveDisplayValue(rowValue, column, fieldMap, choiceMetadata);
+    const actions = rawValue
+        ? resolveResultViewerActions({
+            guid: options.primaryIdField && column === options.primaryIdField ? rawValue : undefined,
+            entitySetName: options.entitySetName,
+            entityLogicalName: options.entityLogicalName,
+            primaryIdField: options.primaryIdField,
+            columnName: column,
+            rawValue
+        })
+        : undefined;
+
+    return {
+        value: displayValue,
+        rawValue,
+        actions: actions?.length ? actions : undefined
+    };
+}
+
 export function buildResultViewerModel(
     result: unknown,
     query: string,
@@ -81,7 +174,11 @@ export function buildResultViewerModel(
 ): ResultViewerModel {
     const rawJson = JSON.stringify(result, null, 2);
     const entitySetName = options?.entitySetName ?? deriveEntitySetName(query);
+    const entityLogicalName = options?.entityLogicalName;
     const primaryIdField = options?.primaryIdField;
+    const environment = options?.environment;
+    const fieldMap = buildFieldMap(options?.fields);
+    const choiceMetadata = options?.choiceMetadata ?? [];
 
     if (
         typeof result === "object" &&
@@ -92,7 +189,10 @@ export function buildResultViewerModel(
         const rows = (result as { value: unknown[] }).value;
 
         const columns = rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null
-            ? sortColumns(Object.keys(rows[0] as Record<string, unknown>))
+            ? prioritizePrimaryIdField(
+                sortColumns(Object.keys(rows[0] as Record<string, unknown>)),
+                primaryIdField
+            )
             : [];
 
         const mappedRows = rows.map((row): Record<string, ResultViewerCell> => {
@@ -104,9 +204,13 @@ export function buildResultViewerModel(
                         ? (row as Record<string, unknown>)[column]
                         : undefined;
 
-                mapped[column] = {
-                    value: toDisplayCell(rowValue)
-                };
+                mapped[column] = buildCell(rowValue, column, {
+                    ...options,
+                    entitySetName,
+                    entityLogicalName,
+                    primaryIdField,
+                    environment
+                }, fieldMap, choiceMetadata);
             });
 
             return mapped;
@@ -121,19 +225,28 @@ export function buildResultViewerModel(
             rowCount: mappedRows.length,
             queryPath: query,
             entitySetName,
-            primaryIdField
+            entityLogicalName,
+            primaryIdField,
+            environment
         };
     }
 
     if (typeof result === "object" && result !== null) {
-        const columns = sortColumns(Object.keys(result as Record<string, unknown>));
+        const columns = prioritizePrimaryIdField(
+            sortColumns(Object.keys(result as Record<string, unknown>)),
+            primaryIdField
+        );
 
         const mapped: Record<string, ResultViewerCell> = {};
 
         columns.forEach((column) => {
-            mapped[column] = {
-                value: toDisplayCell((result as Record<string, unknown>)[column])
-            };
+            mapped[column] = buildCell((result as Record<string, unknown>)[column], column, {
+                ...options,
+                entitySetName,
+                entityLogicalName,
+                primaryIdField,
+                environment
+            }, fieldMap, choiceMetadata);
         });
 
         return {
@@ -145,7 +258,9 @@ export function buildResultViewerModel(
             rowCount: 1,
             queryPath: query,
             entitySetName,
-            primaryIdField
+            entityLogicalName,
+            primaryIdField,
+            environment
         };
     }
 
@@ -158,6 +273,8 @@ export function buildResultViewerModel(
         rowCount: 0,
         queryPath: query,
         entitySetName,
-        primaryIdField
+        entityLogicalName,
+        primaryIdField,
+        environment
     };
 }
