@@ -50,4 +50,38 @@ suite("investigationCandidatePicker", () => {
 
     assert.strictEqual(result?.fieldName, "contactid");
   });
+
+  test("prefers primary id candidate over lookup candidate", async () => {
+    const lookupCandidate: ScoredInvestigationCandidate = {
+      recordId: "11111111-1111-4111-8111-111111111111",
+      fieldName: "_ownerid_value",
+      sourceType: "lookup",
+      confidence: 85,
+      candidateType: "related",
+      reason: "Common related/system lookup field",
+      precedenceTier: 4,
+      autoSelectEligible: false
+    };
+
+    const primaryCandidate: ScoredInvestigationCandidate = {
+      recordId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      fieldName: "contactid",
+      sourceType: "rootField",
+      confidence: 90,
+      candidateType: "primary",
+      reason: "Matches table primary id attribute",
+      precedenceTier: 1,
+      autoSelectEligible: true
+    };
+
+    const result = await pickInvestigationCandidate([
+      lookupCandidate,
+      primaryCandidate
+    ]);
+
+    assert.strictEqual(result?.fieldName, "contactid");
+    assert.strictEqual(result?.candidateType, "primary");
+    assert.strictEqual(result?.recordId, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  });
+
 });

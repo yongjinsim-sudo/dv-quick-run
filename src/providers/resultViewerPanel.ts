@@ -5,7 +5,7 @@ import {
 } from "./resultViewerActions/registry.js";
 import { ResultViewerModel } from "../services/resultViewModelBuilder.js";
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
-import { getResultViewerHtml } from "../ui/resultViewerHtml.js";
+import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 
 type ResultViewerMessage =
     | {

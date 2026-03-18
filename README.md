@@ -1,5 +1,5 @@
 # DV Quick Run
-A metadata-aware Dataverse query, investigation, and action workbench for VS Code — now powered by a scalable disk-backed metadata engine.
+A metadata-aware Dataverse query, investigation, and action workbench for VS Code — now powered by a scalable disk-backed metadata engine and a stabilised Result Viewer.
 
 **Run, build, understand, and investigate Dataverse Web API data directly inside VS Code with metadata‑aware developer tooling.**
 
@@ -15,6 +15,50 @@ Instead of jumping between Postman, browser tabs, maker portals, and documentati
 Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code extension • Developer tooling
 
 ---
+
+## 🆕 What's New in v0.5.1
+
+### 🛠 Result Viewer Stabilization
+
+This release focuses on **stability, correctness, and real-world usability** of the Result Viewer.
+
+- Improved rendering reliability across nested and complex payloads  
+- Better handling of objects and arrays within table cells  
+- More consistent column ordering and display behaviour  
+- Strengthened separation between display values and raw values (for actions)
+
+---
+
+### 🔍 Investigation Input Hardening
+
+Investigation workflows are now more resilient to real-world inputs.
+
+- Improved GUID extraction from:
+  - noisy log text
+  - partial JSON fragments
+  - mixed selections  
+- Case-insensitive GUID handling  
+- More reliable candidate resolution when multiple identifiers are present  
+
+---
+
+### ⚙️ Behavioural Improvements
+
+- Improved fallback handling when metadata inference is ambiguous  
+- Better error messaging for failed investigations  
+- Increased consistency across query → result → action flows  
+
+---
+
+### 🧪 Test Coverage Expansion
+
+- Added and refined tests for:
+  - investigation input resolution  
+  - edge-case candidate selection  
+  - result view model behaviour  
+
+---
+
 
 ## 🆕 What's New in v0.5.0
 
@@ -122,18 +166,18 @@ without compromising performance.
 
 ---
 
-## 🚀 Animated Demo
+## 🚀 Result Viewer Demo
 
-![DV Quick Run Demo](docs/demo-run-query.gif)
+![DV Quick Run Result Viewer](docs/demo-result-viewer.gif)
 
 Typical workflow:
 
 write query  
-→ refine query  
 → run query  
-→ inspect results  
-→ explain query  
-→ improve query  
+→ inspect results in table view  
+→ drill into nested data (drawer)  
+→ switch to JSON when needed  
+→ refine and re-run   
 
 Everything happens **inside VS Code**.
 

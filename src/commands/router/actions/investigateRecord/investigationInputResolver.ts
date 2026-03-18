@@ -5,7 +5,7 @@ import { scoreInvestigationCandidates } from "./investigationCandidateScorer.js"
 import { extractInvestigationCandidatesFromSelection } from "./investigationSelectionExtractor.js";
 
 const GUID_REGEX =
-  /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/;
+  /[\{\[\(]?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})[\}\]\)]?/;
 
 const RECORD_PATH_REGEX =
   /([A-Za-z_][A-Za-z0-9_]*)\(([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/i;
@@ -83,7 +83,7 @@ export async function resolveInvestigationInput(
     return {
       type: "guid",
       rawText: text,
-      recordId: guidMatch[0]
+      recordId: guidMatch[1]
     };
   }
 
@@ -362,15 +362,21 @@ function tryExtractLastODataContext(text: string): string | undefined {
 }
 
 function tryParseSelectionObject(text: string): Record<string, unknown> | undefined {
-  try {
-    const parsed = JSON.parse(text);
+  const candidates = [text, tryExtractJsonObjectBlock(text)].filter(
+    (value): value is string => Boolean(value?.trim())
+  );
 
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Try next candidate
     }
-
-    return undefined;
-  } catch {
-    return undefined;
   }
+
+  return undefined;
 }
