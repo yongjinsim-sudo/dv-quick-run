@@ -6,14 +6,14 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
-### [0.5.2] – Internal Foundations Release
+### [0.5.2] – Stability & Foundations Release
 
-- Refactored Result Viewer architecture
+- Improved Result Viewer architecture for future enhancements
 - Improved reliability and consistency of table rendering
-- Established model-driven rendering pipeline for future features
-- Enhanced test coverage and stability
+- Strengthened model-driven rendering pipeline for future features
+- Expanded test coverage and improved overall stability
 
-(No visible UI changes in this release)
+(No visible UI changes — foundation release)
 
 ## [0.5.1] - Result Viewer Stabilization & Investigation Input Hardening
 
