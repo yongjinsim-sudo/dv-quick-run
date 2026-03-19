@@ -414,6 +414,191 @@ export function getResultViewerHtml(
             padding: 18px 14px;
             opacity: 0.75;
         }
+
+        .array-cell {
+            cursor: default;
+            background: rgba(47, 129, 247, 0.10);
+        }
+
+        .array-cell:hover {
+            background: rgba(47, 129, 247, 0.18);
+        }
+
+        .array-cell-content {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .array-cell-text {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #9ecbff;
+        }
+
+        .array-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 999px;
+            background: #2f81f7;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            flex: 0 0 auto;
+        }
+
+        .legend {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-top: 1px solid var(--vscode-panel-border);
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--vscode-editor-foreground);
+        }
+
+        .legend-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 18px;
+        }
+
+        .legend-item code {
+            font-family: var(--vscode-editor-font-family, var(--vscode-font-family));
+            font-size: 12px;
+        }
+
+        .drawer {
+            display: none;
+            margin-top: 12px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            background: var(--vscode-editorWidget-background);
+            overflow: hidden;
+        }
+
+        .drawer.open {
+            display: block;
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .drawer-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .drawer-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .drawer-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .drawer-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 320px;
+            overflow: auto;
+        }
+
+        .drawer-tab-strip {
+            display: flex;
+            gap: 8px;
+        }
+
+        .drawer-tab {
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--vscode-panel-border);
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .drawer-tab.active {
+            background: rgba(47, 129, 247, 0.18);
+            border-color: rgba(47, 129, 247, 0.45);
+        }
+
+        .drawer-json {
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            padding: 10px;
+            background: var(--vscode-editor-background);
+            margin: 0;
+        }
+
+        .drawer-table-wrap {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            overflow: auto;
+        }
+
+        .drawer-empty {
+            opacity: 0.75;
+            padding: 12px;
+        }
+
+        .drawer-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .drawer-chip {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(47, 129, 247, 0.18);
+            color: #9ecbff;
+            font-size: 12px;
+        }
+
+        .drawer-resize-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 100%;
+            cursor: col-resize;
+        }
+
+        .drawer-resize-handle:hover,
+        .drawer-resizing .drawer-resize-handle {
+            background: var(--vscode-focusBorder);
+            opacity: 0.35;
+        }
+
+        .drawer-table-wrap thead {
+            position: static;
+        }
     </style>
 </head>
 <body>
@@ -439,6 +624,24 @@ export function getResultViewerHtml(
             <div id="tableView"></div>
             <pre id="jsonView"></pre>
         </div>
+
+        <div id="arrayDrawer" class="drawer">
+            <div class="drawer-header">
+                <div>
+                    <div id="arrayDrawerTitle" class="drawer-title">Expanded records</div>
+                    <div id="arrayDrawerSubtitle" class="drawer-subtitle"></div>
+                </div>
+                <div class="drawer-actions">
+                    <button id="arrayDrawerTableTab" class="drawer-tab" type="button">TABLE</button>
+                    <button id="arrayDrawerJsonTab" class="drawer-tab" type="button">JSON</button>
+                    <button id="arrayDrawerCloseBtn" type="button">Close</button>
+                </div>
+            </div>
+            <div class="drawer-body">
+                <div id="arrayDrawerTableView"></div>
+                <pre id="arrayDrawerJsonView" class="drawer-json"></pre>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -454,6 +657,14 @@ export function getResultViewerHtml(
         const rowCount = document.getElementById("rowCount");
         const copyStatus = document.getElementById("copyStatus");
         const environmentBadge = document.getElementById("environmentBadge");
+        const arrayDrawer = document.getElementById("arrayDrawer");
+        const arrayDrawerTitle = document.getElementById("arrayDrawerTitle");
+        const arrayDrawerSubtitle = document.getElementById("arrayDrawerSubtitle");
+        const arrayDrawerTableTab = document.getElementById("arrayDrawerTableTab");
+        const arrayDrawerJsonTab = document.getElementById("arrayDrawerJsonTab");
+        const arrayDrawerCloseBtn = document.getElementById("arrayDrawerCloseBtn");
+        const arrayDrawerTableView = document.getElementById("arrayDrawerTableView");
+        const arrayDrawerJsonView = document.getElementById("arrayDrawerJsonView");
 
         const model = JSON.parse(\`${initialModelJson}\`);
 
@@ -467,9 +678,16 @@ export function getResultViewerHtml(
         const MIN_COLUMN_WIDTH = 80;
         let copyStatusTimeout;
         let activeResize = null;
+        let activeDrawerResize = null;
+        const drawerColumnWidths = {};
         let activeOverflowMenu = null;
         let activeOverflowAnchor = null;
         let tableEventsBound = false;
+        const arrayDrawerPayloads = new Map();
+        const nestedDrawerPayloads = new Map();
+        let activeArrayDrawerKey = null;
+        let arrayDrawerView = "table";
+        let nestedDrawerCounter = 0;
 
         showTableBtn.addEventListener("click", () => {
             showTable();
@@ -513,6 +731,20 @@ export function getResultViewerHtml(
                     csv
                 }
             });
+        });
+
+        arrayDrawerTableTab.addEventListener("click", () => {
+            arrayDrawerView = "table";
+            renderActiveArrayDrawer();
+        });
+
+        arrayDrawerJsonTab.addEventListener("click", () => {
+            arrayDrawerView = "json";
+            renderActiveArrayDrawer();
+        });
+
+        arrayDrawerCloseBtn.addEventListener("click", () => {
+            closeArrayDrawer();
         });
 
         document.addEventListener("click", () => {
@@ -596,22 +828,24 @@ export function getResultViewerHtml(
             html += "</tr></thead>";
             html += "<tbody>";
 
-            visibleRows.forEach((row) => {
+            arrayDrawerPayloads.clear();
+            visibleRows.forEach((row, rowIndex) => {
                 html += "<tr>";
 
                 currentModel.columns.forEach((column) => {
                     const cell = row[column];
                     const value = cell?.value ?? "";
+                    const copyValue = cell?.copyValue ?? value;
                     const actions = Array.isArray(cell?.actions) ? cell.actions : [];
                     const primaryActions = actions.filter((action) => action.placement === "primary");
                     const overflowActions = actions.filter((action) => action.placement === "overflow");
                     const width = getColumnWidth(column);
                     const widthStyle = width ? " style=\\"width:" + width + "px; min-width:" + width + "px; max-width:" + width + "px;\\"" : "";
 
-                    if (actions.length > 0 && value) {
+                    if (actions.length > 0 && value && !Array.isArray(cell && cell.rawValue)) {
                         html += "<td data-column=\\"" + escapeAttribute(column) + "\\"" + widthStyle + ">";
                         html += "<span class=\\"guid-cell\\">";
-                        html += "<span class=\\"guid-value copyable\\" data-copy-value=\\"" + escapeAttribute(value) + "\\">" + escapeHtml(value) + "</span>";
+                        html += "<span class=\\"guid-value copyable\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\">" + escapeHtml(value) + "</span>";
                         html += "<span class=\\"cell-actions\\">";
 
                         primaryActions.forEach((action) => {
@@ -654,7 +888,21 @@ export function getResultViewerHtml(
                         html += "</span>";
                         html += "</td>";
                     } else {
-                        html += "<td class=\\"copyable\\" data-column=\\"" + escapeAttribute(column) + "\\" data-copy-value=\\"" + escapeAttribute(value) + "\\"" + widthStyle + ">" + escapeHtml(value) + "</td>";
+                        const isArrayCell = Array.isArray(cell && cell.rawValue);
+                        const arrayDrawerKey = isArrayCell ? (column + "::" + rowIndex) : "";
+
+                        if (isArrayCell) {
+                            arrayDrawerPayloads.set(arrayDrawerKey, {
+                                column,
+                                payload: cell.rawValue
+                            });
+                        }
+
+                        html += "<td class=\\"" + (isArrayCell ? "array-cell" : "copyable") + "\\" data-column=\\"" + escapeAttribute(column) + "\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\"" + (isArrayCell ? " data-array-drawer-key=\\"" + escapeAttribute(arrayDrawerKey) + "\\"" : "") + widthStyle + ">" +
+                            (isArrayCell
+                                ? "<span class=\\"array-cell-content\\"><span class=\\"array-badge\\">ARRAY</span><span class=\\"array-cell-text\\">" + escapeHtml(value) + "</span></span>"
+                                : escapeHtml(value)) +
+                            "</td>";
                     }
                 });
 
@@ -662,9 +910,225 @@ export function getResultViewerHtml(
             });
 
             html += "</tbody></table>";
+            html += renderLegend(currentModel);
 
             tableView.innerHTML = html;
             applyColumnWidthsToLiveTable();
+        }
+
+        function closeArrayDrawer() {
+            activeArrayDrawerKey = null;
+            if (arrayDrawer instanceof HTMLElement) {
+                arrayDrawer.classList.remove("open");
+            }
+        }
+
+        function openArrayDrawer(drawerKey) {
+            if (!drawerKey || !arrayDrawerPayloads.has(drawerKey)) {
+                return;
+            }
+
+            activeArrayDrawerKey = drawerKey;
+            arrayDrawerView = "table";
+            renderActiveArrayDrawer();
+
+            if (arrayDrawer instanceof HTMLElement) {
+                arrayDrawer.classList.add("open");
+                arrayDrawer.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+        }
+
+        function renderActiveArrayDrawer() {
+            if (!activeArrayDrawerKey) {
+                return;
+            }
+
+            const drawerItem = arrayDrawerPayloads.get(activeArrayDrawerKey);
+            if (!drawerItem) {
+                closeArrayDrawer();
+                return;
+            }
+
+            const payload = drawerItem.payload;
+            const column = drawerItem.column || "expanded";
+            const itemCount = Array.isArray(payload) ? payload.length : 0;
+
+            arrayDrawerTitle.textContent = column;
+            arrayDrawerSubtitle.textContent = itemCount + " record" + (itemCount === 1 ? "" : "s");
+            arrayDrawerJsonView.textContent = JSON.stringify(payload, null, 2);
+
+            arrayDrawerTableTab.classList.toggle("active", arrayDrawerView === "table");
+            arrayDrawerJsonTab.classList.toggle("active", arrayDrawerView === "json");
+            arrayDrawerTableView.style.display = arrayDrawerView === "table" ? "block" : "none";
+            arrayDrawerJsonView.style.display = arrayDrawerView === "json" ? "block" : "none";
+
+            nestedDrawerPayloads.clear();
+            nestedDrawerCounter = 0;
+
+            if (arrayDrawerView === "table") {
+                arrayDrawerTableView.innerHTML = buildArrayDrawerTable(payload);
+                applyDrawerColumnWidths();
+            }
+        }
+
+        function buildArrayDrawerTable(payload) {
+            if (!Array.isArray(payload) || payload.length === 0) {
+                return "<div class=\\"drawer-empty\\">No records to display.</div>";
+            }
+
+            if (payload.every((item) => isPlainObject(item))) {
+                return buildArrayDrawerObjectTable(payload);
+            }
+
+            return "<div class=\\"drawer-list\\">" +
+                payload.map((item) => "<span class=\\"drawer-chip\\">" + escapeHtml(summariseNestedValue(item)) + "</span>").join("") +
+                "</div>";
+        }
+
+        function buildArrayDrawerObjectTable(records) {
+            const preparedRows = records.map((record) => flattenDrawerRecord(record));
+            const columns = [];
+            const seen = new Set();
+
+            preparedRows.forEach((record) => {
+                Object.keys(record).forEach((key) => {
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        columns.push(key);
+                    }
+                });
+            });
+
+            if (columns.length === 0) {
+                return "<div class=\\"drawer-empty\\">No visible fields to display.</div>";
+            }
+
+            let html = "<div class=\\"drawer-table-wrap\\"><table><thead><tr>";
+            columns.forEach((column) => {
+                const width = drawerColumnWidths[column];
+                const widthStyle = width ? " style=\\"width:" + width + "px; min-width:" + width + "px; max-width:" + width + "px;\\"" : "";
+
+                html += "<th data-drawer-column=\\"" + escapeAttribute(column) + "\\"" + widthStyle + ">";
+                html += "<div class=\\"th-content\\">" + escapeHtml(column) + "</div>";
+                html += "<div class=\\"drawer-resize-handle\\" data-drawer-resize-column=\\"" + escapeAttribute(column) + "\\"></div>";
+                html += "</th>";
+            });
+            html += "</tr></thead><tbody>";
+
+            preparedRows.forEach((record) => {
+                html += "<tr>";
+                columns.forEach((column) => {
+                    const cellValue = record[column];
+                    const isNestedExpandable =
+                        Array.isArray(cellValue) ||
+                        isPlainObject(cellValue);
+
+                    if (isNestedExpandable) {
+                        const nestedKey = "nested::" + nestedDrawerCounter++;
+                        nestedDrawerPayloads.set(nestedKey, {
+                            column,
+                            payload: cellValue
+                        });
+
+                        html += "<td class=\\"array-cell\\" data-nested-drawer-key=\\"" + escapeAttribute(nestedKey) + "\\">" +
+                            "<span class=\\"array-cell-content\\"><span class=\\"array-badge\\">OPEN</span><span class=\\"array-cell-text\\">" +
+                            escapeHtml(summariseNestedValue(cellValue)) +
+                            "</span></span>" +
+                            "</td>";
+                    } else {
+                        const width = drawerColumnWidths[column];
+                        const widthStyle = width ? " style=\\"width:" + width + "px; min-width:" + width + "px; max-width:" + width + "px;\\"" : "";
+                        html += "<td data-drawer-column=\\"" + escapeAttribute(column) + "\\"" + widthStyle + ">" + escapeHtml(summariseNestedValue(cellValue)) + "</td>";
+                    }
+                });
+                html += "</tr>";
+            });
+
+            html += "</tbody></table></div>";
+            return html;
+        }
+
+        function flattenDrawerRecord(record, depth = 0, maxDepth = 1, prefix = "") {
+            const flattened = {};
+
+            if (!isPlainObject(record)) {
+                return flattened;
+            }
+
+            Object.entries(record).forEach(([key, value]) => {
+                if (shouldHideDrawerField(key)) {
+                    return;
+                }
+
+                const fullKey = prefix ? prefix + "." + key : key;
+
+                if (Array.isArray(value) && value.length === 1 && isPlainObject(value[0]) && depth < maxDepth) {
+                    Object.assign(flattened, flattenDrawerRecord(value[0], depth + 1, maxDepth, fullKey));
+                    return;
+                }
+
+                if (isPlainObject(value) && depth < maxDepth) {
+                    Object.assign(flattened, flattenDrawerRecord(value, depth + 1, maxDepth, fullKey));
+                    return;
+                }
+
+                flattened[fullKey] = value;
+            });
+
+            return flattened;
+        }
+
+        function summariseNestedValue(value) {
+            if (value === null || value === undefined) {
+                return "";
+            }
+
+            if (Array.isArray(value)) {
+                return value.length + " record" + (value.length === 1 ? "" : "s");
+            }
+
+            if (isPlainObject(value)) {
+                return "[Object]";
+            }
+
+            return String(value);
+        }
+
+        function isPlainObject(value) {
+            return typeof value === "object" && value !== null && !Array.isArray(value);
+        }
+
+        function shouldHideDrawerField(key) {
+            if (key.startsWith("@odata.")) {
+                return true;
+            }
+
+            if (key.startsWith("_") && key.endsWith("_value")) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function renderLegend(currentModel) {
+            if (!Array.isArray(currentModel.legend) || currentModel.legend.length === 0) {
+                return "";
+            }
+
+            let html = "<div class=\\"legend\\">";
+            html += "<div class=\\"legend-title\\">Legend</div>";
+            html += "<div class=\\"legend-list\\">";
+
+            currentModel.legend.forEach((item) => {
+                html += "<div class=\\"legend-item\\"><code>" +
+                    escapeHtml(item.alias) +
+                    "</code> = <code>" +
+                    escapeHtml(item.fullName) +
+                    "</code></div>";
+            });
+
+            html += "</div></div>";
+            return html;
         }
 
         function bindTableEventsOnce() {
@@ -742,6 +1206,16 @@ export function getResultViewerHtml(
                     return;
                 }
 
+                const arrayCell = target.closest("[data-array-drawer-key]");
+                if (arrayCell instanceof HTMLElement) {
+                    event.stopPropagation();
+                    const drawerKey = arrayCell.getAttribute("data-array-drawer-key") ?? "";
+                    if (drawerKey) {
+                        openArrayDrawer(drawerKey);
+                    }
+                    return;
+                }
+
                 const copyable = target.closest(".copyable");
                 if (copyable instanceof HTMLElement) {
                     const value = copyable.getAttribute("data-copy-value") ?? "";
@@ -753,23 +1227,23 @@ export function getResultViewerHtml(
                 }
             });
 
-            tableView.addEventListener("mousedown", (event) => {
+            arrayDrawerTableView.addEventListener("mousedown", (event) => {
                 const target = event.target;
                 if (!(target instanceof HTMLElement)) {
                     return;
                 }
 
-                const resizeHandle = target.closest("[data-resize-column]");
+                const resizeHandle = target.closest("[data-drawer-resize-column]");
                 if (!(resizeHandle instanceof HTMLElement)) {
                     return;
                 }
 
-                const column = resizeHandle.getAttribute("data-resize-column") ?? "";
+                const column = resizeHandle.getAttribute("data-drawer-resize-column") ?? "";
                 if (!column) {
                     return;
                 }
 
-                beginResize(event, resizeHandle, column);
+                beginDrawerResize(event, resizeHandle, column);
             });
 
             tableView.addEventListener("contextmenu", (event) => {
@@ -791,6 +1265,40 @@ export function getResultViewerHtml(
                 event.preventDefault();
                 event.stopPropagation();
                 openOverflowMenuAtPosition(event.clientX, event.clientY, menu);
+            });
+
+            arrayDrawerTableView.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const nestedCell = target.closest("[data-nested-drawer-key]");
+                if (!(nestedCell instanceof HTMLElement)) {
+                    return;
+                }
+
+                const nestedKey = nestedCell.getAttribute("data-nested-drawer-key") ?? "";
+                const nestedItem = nestedDrawerPayloads.get(nestedKey);
+
+                if (!nestedItem) {
+                    return;
+                }
+
+                arrayDrawerTitle.textContent = nestedItem.column;
+                arrayDrawerSubtitle.textContent = Array.isArray(nestedItem.payload)
+                    ? nestedItem.payload.length + " record" + (nestedItem.payload.length === 1 ? "" : "s")
+                    : "object";
+
+                arrayDrawerJsonView.textContent = JSON.stringify(nestedItem.payload, null, 2);
+                arrayDrawerTableView.innerHTML = buildArrayDrawerTable(nestedItem.payload);
+                applyDrawerColumnWidths();
+                arrayDrawerView = "table";
+                showArrayDrawerTable();
+                nestedDrawerPayloads.clear();
+                nestedDrawerCounter = 0;
+                arrayDrawerTableView.innerHTML = buildArrayDrawerTable(nestedItem.payload);
+                showArrayDrawerTable();
             });
         }
 
@@ -990,6 +1498,64 @@ export function getResultViewerHtml(
             activeOverflowAnchor = anchor ?? null;
         }
 
+        function beginDrawerResize(event, handle, column) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const header = handle.closest("th");
+            if (!header) {
+                return;
+            }
+
+            activeDrawerResize = {
+                column,
+                startX: event.clientX,
+                startWidth: header.getBoundingClientRect().width,
+                header
+            };
+
+            header.classList.add("drawer-resizing");
+            window.addEventListener("mousemove", onDrawerResizeMove);
+            window.addEventListener("mouseup", endDrawerResize);
+        }
+
+        function onDrawerResizeMove(event) {
+            if (!activeDrawerResize) {
+                return;
+            }
+
+            const delta = event.clientX - activeDrawerResize.startX;
+            const nextWidth = Math.max(MIN_COLUMN_WIDTH, Math.round(activeDrawerResize.startWidth + delta));
+            drawerColumnWidths[activeDrawerResize.column] = nextWidth;
+            applyDrawerColumnWidths();
+        }
+
+        function endDrawerResize() {
+            if (activeDrawerResize?.header) {
+                activeDrawerResize.header.classList.remove("drawer-resizing");
+            }
+
+            window.removeEventListener("mousemove", onDrawerResizeMove);
+            window.removeEventListener("mouseup", endDrawerResize);
+            activeDrawerResize = null;
+        }
+
+        function applyDrawerColumnWidths() {
+            const allDrawerColumns = arrayDrawerTableView.querySelectorAll("[data-drawer-column]");
+            allDrawerColumns.forEach((element) => {
+                const column = element.getAttribute("data-drawer-column") ?? "";
+                const width = drawerColumnWidths[column];
+
+                if (!column || !width) {
+                    return;
+                }
+
+                element.style.width = width + "px";
+                element.style.minWidth = width + "px";
+                element.style.maxWidth = width + "px";
+            });
+        }
+
         function closeAllOverflowMenus() {
             if (activeOverflowMenu && activeOverflowMenu.parentNode) {
                 activeOverflowMenu.parentNode.removeChild(activeOverflowMenu);
@@ -1046,7 +1612,16 @@ export function getResultViewerHtml(
             const header = columns.map((column) => csvEscape(column)).join(",");
             const lines = rows.map((row) => {
                 return columns
-                    .map((column) => csvEscape(row[column]?.value ?? ""))
+                    .map((column) => {
+                        const cell = row[column];
+                        const rawValue = cell?.rawValue;
+
+                        if (Array.isArray(rawValue) || (rawValue && typeof rawValue === "object")) {
+                            return csvEscape(JSON.stringify(rawValue));
+                        }
+
+                        return csvEscape(cell?.copyValue ?? cell?.value ?? "");
+                    })
                     .join(",");
             });
 

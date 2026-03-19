@@ -88,4 +88,67 @@ suite("investigationInputResolver", () => {
     assert.strictEqual(result?.recordId, "8129eec7-4414-f111-8341-6045bdc42f8b");
   });
 
+    test("resolves uppercase guid input", async () => {
+    const result = await resolveInvestigationInput("8129EEC7-4414-4F11-8341-6045BDC42F8B");
+
+    assert.ok(result);
+    assert.strictEqual(result?.type, "guid");
+    assert.strictEqual(result?.recordId, "8129EEC7-4414-4F11-8341-6045BDC42F8B");
+  });
+
+  test("extracts record id from noisy prose when no full json object is present", async () => {
+    const input = "2026-03-18 10:11:12Z ERROR failed to load row contactid=8129eec7-4414-4f11-8341-6045bdc42f8b while rendering result viewer";
+
+    const result = await resolveInvestigationInput(input);
+
+    assert.ok(result);
+    assert.strictEqual(result?.type, "json");
+    assert.strictEqual(result?.recordId, "8129eec7-4414-4f11-8341-6045bdc42f8b");
+    assert.strictEqual(result?.selectedCandidateFieldName, "contactid");
+  });
+
+  test("prefers primary id candidate from json over lookup guid when multiple guid fields exist", async () => {
+    const json = JSON.stringify({
+      "@odata.context": "https://example.crm.dynamics.com/api/data/v9.2/$metadata#accounts/$entity",
+      _primarycontactid_value: "11111111-1111-4111-8111-111111111111",
+      accountid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      name: "Acme"
+    });
+
+    const result = await resolveInvestigationInput(json);
+
+    assert.ok(result);
+    assert.strictEqual(result?.type, "json");
+    assert.strictEqual(result?.recordId, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    assert.strictEqual(result?.selectedCandidateFieldName, "accountid");
+    assert.strictEqual(result?.selectedCandidateType, "primary");
+    assert.strictEqual(result?.entitySetName, "accounts");
+  });
+
+  test("returns undefined for malformed text with no valid guid", async () => {
+    const result = await resolveInvestigationInput("contactid=not-a-guid and no usable payload here");
+
+    assert.strictEqual(result, undefined);
+  });
+
+    test("resolves brace-wrapped guid input", async () => {
+    const result = await resolveInvestigationInput("{8129eec7-4414-4f11-8341-6045bdc42f8b}");
+
+    assert.ok(result);
+    assert.strictEqual(result?.type, "guid");
+    assert.strictEqual(result?.recordId, "8129eec7-4414-4f11-8341-6045bdc42f8b");
+  });
+
+  test("extracts json row from surrounding prose for selection sourceJson", async () => {
+    const input = 'INFO payload received { "contactid": "8129eec7-4414-4f11-8341-6045bdc42f8b", "fullname": "Alice" }';
+
+    const result = await resolveInvestigationInput(input);
+
+    assert.ok(result);
+    assert.strictEqual(result?.type, "json");
+    assert.strictEqual(result?.recordId, "8129eec7-4414-4f11-8341-6045bdc42f8b");
+    assert.ok(result?.sourceJson);
+  });
+
 });
+

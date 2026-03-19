@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { CommandContext } from "../commands/context/commandContext.js";
 import { EnvironmentContext } from "../services/environmentContext.js";
 import { logInfo } from "../utils/logger.js";
-import { EnvironmentStatusBar } from "../ui/environmentStatusBar.js";
+import { EnvironmentStatusBar } from "../webview/environmentStatusBar.js";
 import { registerSelectEnvironmentCommand } from "../commands/selectEnvironment.js";
 import { registerAddEnvironmentCommand } from "../commands/addEnvironment.js";
 import { registerRemoveEnvironmentCommand } from "../commands/removeEnvironment.js";

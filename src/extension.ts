@@ -3,7 +3,7 @@ import { createCommandContext } from "./commands/context/commandContext.js";
 import { registerVirtualJsonProvider } from "./utils/virtualJsonDoc.js";
 import { EnvironmentContext } from "./services/environmentContext.js";
 import { logInfo } from "./utils/logger.js";
-import { EnvironmentStatusBar } from "./ui/environmentStatusBar.js";
+import { EnvironmentStatusBar } from "./webview/environmentStatusBar.js";
 import { initializeMetadataRuntime } from "./runtime/metadataRuntime.js";
 import { registerCommandSurface } from "./runtime/commandSurface.js";
 import { registerEnvironmentLifecycle } from "./runtime/environmentLifecycle.js";

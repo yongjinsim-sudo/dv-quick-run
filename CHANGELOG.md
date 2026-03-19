@@ -6,6 +6,39 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.5.1] - Result Viewer Stabilization & Investigation Input Hardening
+
+### Added
+- **Enhanced investigation input handling**
+  - Improved support for extracting identifiers from:
+    - noisy log text
+    - partial JSON fragments
+    - mixed content selections
+  - Normalized GUID handling (case-insensitive resolution)
+  - More reliable candidate selection when multiple identifiers are present
+
+- **Expanded Result Viewer behaviour coverage**
+  - Improved handling of complex cells (objects, arrays) via drawer inspection
+  - Strengthened raw vs display value separation for action correctness
+  - Additional safeguards for column-aware actions on flattened data
+
+### Improved
+- **Result Viewer stability**
+  - Improved reliability of table rendering across nested and aliased data
+  - Reduced UI fragility during re-render cycles
+  - Improved consistency of row-level and column-level actions
+
+- **Investigation engine robustness**
+  - More resilient input resolution across real-world payloads and logs
+  - Improved fallback behaviour when metadata inference is ambiguous
+  - Better error messaging when identifier extraction fails
+
+- **Test coverage expansion**
+  - Added and refined tests for:
+    - investigation input resolution
+    - candidate selection edge cases
+    - result view model behaviour (flattening, ordering, raw values)
+
 ## [0.5.0] - Metadata Engine Stabilization & Explain Query Foundations
 
 ### Added

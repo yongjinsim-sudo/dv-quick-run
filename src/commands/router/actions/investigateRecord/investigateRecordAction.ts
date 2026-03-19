@@ -27,26 +27,33 @@ export async function investigateRecordAction(
     inputOverride?: string
 ): Promise<void> {
   try {
+
+    const INVESTIGATION_INPUT_HELP =
+      "No valid record identifier found. Try selecting a Dataverse record ID, a record path like contacts(<guid>), or a JSON row/object containing an id field.";
+
     const editor = vscode.window.activeTextEditor;
 
-    const selectedText = inputOverride?.trim()
-        ? inputOverride.trim()
+    const safeInputOverride =
+      typeof inputOverride === "string" ? inputOverride.trim() : "";
+
+    const selectedText = safeInputOverride
+        ? safeInputOverride
         : editor
             ? getSelectedTextOrCurrentLine(editor)
             : "";
 
     if (!selectedText) {
-        vscode.window.showErrorMessage("No record identifier or supported input detected.");
+        vscode.window.showErrorMessage(INVESTIGATION_INPUT_HELP);
         return;
     }
 
-    const fullDocumentText = inputOverride?.trim()
+    const fullDocumentText = safeInputOverride
         ? selectedText
         : editor
             ? editor.document.getText()
             : selectedText;
 
-    const selectionStartOffset = inputOverride?.trim()
+    const selectionStartOffset = safeInputOverride
         ? 0
         : editor
             ? editor.document.offsetAt(editor.selection.start)
@@ -59,7 +66,7 @@ export async function investigateRecordAction(
     );
 
     if (!input?.recordId) {
-      vscode.window.showErrorMessage("No record identifier or supported input detected.");
+      vscode.window.showErrorMessage(INVESTIGATION_INPUT_HELP);
       return;
     }
 

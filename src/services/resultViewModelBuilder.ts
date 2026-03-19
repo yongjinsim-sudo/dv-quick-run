@@ -20,7 +20,8 @@ export interface ResultViewerEnvironmentInfo {
 
 export interface ResultViewerCell {
     value: string;
-    rawValue: string;
+    rawValue: unknown;
+    copyValue?: string;
     actions?: ResultViewerResolvedAction[];
 }
 
@@ -36,6 +37,7 @@ export interface ResultViewerModel {
     entityLogicalName?: string;
     primaryIdField?: string;
     environment?: ResultViewerEnvironmentInfo;
+    legend?: ResultViewerLegendItem[];
 }
 
 export interface ResultViewerBuildOptions {
@@ -47,6 +49,11 @@ export interface ResultViewerBuildOptions {
     choiceMetadata?: ChoiceMetadataDef[];
 }
 
+export interface ResultViewerLegendItem {
+    alias: string;
+    fullName: string;
+}
+
 function toDisplayCell(value: unknown): string {
     if (value === null || value === undefined) {
         return "";
@@ -54,13 +61,95 @@ function toDisplayCell(value: unknown): string {
 
     if (typeof value === "object") {
         if (Array.isArray(value)) {
-            return "[Array]";
+            return summariseArray(value);
         }
 
         return "[Object]";
     }
 
     return String(value);
+}
+
+function isPrimitiveArray(value: unknown[]): boolean {
+    return value.every((item) =>
+        item === null ||
+        typeof item === "string" ||
+        typeof item === "number" ||
+        typeof item === "boolean"
+    );
+}
+
+function isObjectArray(value: unknown[]): boolean {
+    return value.length > 0 && value.every((item) =>
+        item !== null &&
+        typeof item === "object" &&
+        !Array.isArray(item)
+    );
+}
+
+function summariseObjectArrayFields(items: unknown[]): string {
+    const fieldSet = new Set<string>();
+
+    items.forEach((item) => {
+        if (isPlainObject(item)) {
+            Object.keys(item).forEach((key) => {
+                if (key.startsWith("@odata.")) {
+                    return;
+                }
+
+                if (key.startsWith("_") && key.endsWith("_value")) {
+                    return;
+                }
+
+                fieldSet.add(key);
+            });
+        }
+    });
+
+    const preview = Array.from(fieldSet).slice(0, 2);
+    return preview.join(", ");
+}
+
+function summarisePrimitiveArray(items: unknown[]): string {
+    const printable = items
+        .filter((item) => item !== null && item !== undefined)
+        .map((item) => String(item));
+
+    if (printable.length === 0) {
+        return "Empty";
+    }
+
+    const preview = printable.slice(0, 2).join(", ");
+    return printable.length <= 2
+        ? `${printable.length} value${printable.length === 1 ? "" : "s"} • ${preview}`
+        : `${printable.length} values • ${preview}`;
+}
+
+function summariseObjectArray(items: unknown[]): string {
+    if (items.length === 0) {
+        return "Empty";
+    }
+
+    const preview = summariseObjectArrayFields(items);
+    const label = items.length === 1 ? "1 record" : `${items.length} records`;
+
+    return preview ? `${label} • ${preview}` : label;
+}
+
+function summariseArray(items: unknown[]): string {
+    if (items.length === 0) {
+        return "Empty";
+    }
+
+    if (isPrimitiveArray(items)) {
+        return summarisePrimitiveArray(items);
+    }
+
+    if (isObjectArray(items)) {
+        return summariseObjectArray(items);
+    }
+
+    return `${items.length} items`;
 }
 
 function sortColumns(columns: string[]): string[] {
@@ -90,6 +179,10 @@ function compareColumns(left: string, right: string): number {
 }
 
 function getColumnRank(column: string): number {
+    if (column.includes(".")) {
+        return 5;
+    }
+
     if (isSystemColumn(column)) {
         return 30;
     }
@@ -99,6 +192,22 @@ function getColumnRank(column: string): number {
     }
 
     return 10;
+}
+
+function shouldKeepFlattenedChildField(childKey: string): boolean {
+    const leafKey = childKey.includes(".")
+        ? childKey.slice(childKey.lastIndexOf(".") + 1)
+        : childKey;
+
+    if (leafKey.startsWith("@odata.")) {
+        return false;
+    }
+
+    if (leafKey.startsWith("_") && leafKey.endsWith("_value")) {
+        return false;
+    }
+
+    return true;
 }
 
 function deriveEntitySetName(queryPath: string): string | undefined {
@@ -140,6 +249,126 @@ function resolveDisplayValue(
     return resolved?.option?.label ?? rawDisplay;
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function shouldFlattenExpandedArray(value: unknown): value is Record<string, unknown>[] {
+    return (
+        Array.isArray(value) &&
+        value.length === 1 &&
+        isPlainObject(value[0])
+    );
+}
+
+function shouldFlattenExpandedObject(value: unknown): value is Record<string, unknown> {
+    return isPlainObject(value);
+}
+
+function buildRelationshipAlias(value: string): string {
+    return value
+        .split("_")
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join("")
+        .toLowerCase();
+}
+
+function buildRelationshipAliasMap(columns: string[]): Map<string, string> {
+    const aliasMap = new Map<string, string>();
+    const usedAliases = new Set<string>();
+
+    columns.forEach((column) => {
+        const parts = column.split(".");
+        if (parts.length <= 1) {
+            return;
+        }
+
+        const relationshipParts = parts.slice(0, -1);
+
+        relationshipParts.forEach((part) => {
+            if (aliasMap.has(part)) {
+                return;
+            }
+
+            const baseAlias = buildRelationshipAlias(part) || "rel";
+            let alias = baseAlias;
+            let counter = 2;
+
+            while (usedAliases.has(alias)) {
+                alias = `${baseAlias}${counter}`;
+                counter++;
+            }
+
+            aliasMap.set(part, alias);
+            usedAliases.add(alias);
+        });
+    });
+
+    return aliasMap;
+}
+
+function applyColumnAliases(columns: string[], aliasMap: Map<string, string>): string[] {
+    return columns.map((column) => {
+        const parts = column.split(".");
+        if (parts.length <= 1) {
+            return column;
+        }
+
+        const leaf = parts[parts.length - 1];
+        const relationshipParts = parts.slice(0, -1);
+
+        const aliasedPrefix = relationshipParts
+            .map((part) => aliasMap.get(part) ?? part)
+            .join(".");
+
+        return `${aliasedPrefix}.${leaf}`;
+    });
+}
+
+function flattenExpandedRow(
+    row: Record<string, unknown>,
+    depth = 0,
+    maxDepth = 2
+): Record<string, unknown> {
+    const flattened: Record<string, unknown> = {};
+
+    Object.entries(row).forEach(([key, value]) => {
+        if (shouldFlattenExpandedArray(value) && depth < maxDepth) {
+            const child = value[0];
+            const flattenedChild = flattenExpandedRow(child, depth + 1, maxDepth);
+
+            Object.entries(flattenedChild).forEach(([childKey, childValue]) => {
+                if (!shouldKeepFlattenedChildField(childKey)) {
+                    return;
+                }
+
+                flattened[`${key}.${childKey}`] = childValue;
+            });
+
+            return;
+        }
+
+        if (shouldFlattenExpandedObject(value) && depth < maxDepth) {
+            const flattenedChild = flattenExpandedRow(value, depth + 1, maxDepth);
+
+            Object.entries(flattenedChild).forEach(([childKey, childValue]) => {
+                if (!shouldKeepFlattenedChildField(childKey)) {
+                    return;
+                }
+
+                flattened[`${key}.${childKey}`] = childValue;
+            });
+
+            return;
+        }
+
+        flattened[key] = value;
+    });
+
+    return flattened;
+}
+
 function buildCell(
     rowValue: unknown,
     column: string,
@@ -147,22 +376,36 @@ function buildCell(
     fieldMap: Map<string, FieldDef>,
     choiceMetadata: ChoiceMetadataDef[]
 ): ResultViewerCell {
-    const rawValue = toDisplayCell(rowValue);
+    const rawValue = rowValue;
     const displayValue = resolveDisplayValue(rowValue, column, fieldMap, choiceMetadata);
-    const actions = rawValue
+    const copyValue = toDisplayCell(rowValue);
+
+    const shouldResolveActions =
+        !!rawValue &&
+        !Array.isArray(rowValue) &&
+        typeof rowValue !== "object";
+
+    const actionRawValue = shouldResolveActions ? toDisplayCell(rowValue) : "";
+    const actionGuid =
+        shouldResolveActions && options.primaryIdField && column === options.primaryIdField
+            ? toDisplayCell(rowValue)
+            : "";
+
+    const actions = shouldResolveActions
         ? resolveResultViewerActions({
-            guid: options.primaryIdField && column === options.primaryIdField ? rawValue : undefined,
+            guid: actionGuid,
             entitySetName: options.entitySetName,
             entityLogicalName: options.entityLogicalName,
             primaryIdField: options.primaryIdField,
             columnName: column,
-            rawValue
+            rawValue: actionRawValue
         })
         : undefined;
 
     return {
         value: displayValue,
         rawValue,
+        copyValue,
         actions: actions?.length ? actions : undefined
     };
 }
@@ -187,24 +430,49 @@ export function buildResultViewerModel(
         Array.isArray((result as { value?: unknown[] }).value)
     ) {
         const rows = (result as { value: unknown[] }).value;
+        const flattenedRows = rows.map((row) =>
+            isPlainObject(row) ? flattenExpandedRow(row) : row
+        );
 
-        const columns = rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null
-            ? prioritizePrimaryIdField(
-                sortColumns(Object.keys(rows[0] as Record<string, unknown>)),
-                primaryIdField
-            )
-            : [];
+        const columnSet = new Set<string>();
 
-        const mappedRows = rows.map((row): Record<string, ResultViewerCell> => {
+        flattenedRows.forEach((row) => {
+            if (isPlainObject(row)) {
+                Object.keys(row).forEach((key) => {
+                    if (key.includes("@odata.")) {
+                        return;
+                    }
+
+                    columnSet.add(key);
+                });
+            }
+        });
+
+        const columns = prioritizePrimaryIdField(
+            sortColumns(Array.from(columnSet)),
+            primaryIdField
+        );
+
+        const relationshipAliasMap = buildRelationshipAliasMap(columns);
+        const displayColumns = applyColumnAliases(columns, relationshipAliasMap);
+
+        const displayToSourceColumn = new Map<string, string>();
+        displayColumns.forEach((displayColumn, index) => {
+            displayToSourceColumn.set(displayColumn, columns[index]);
+        });
+
+        const mappedRows = flattenedRows.map((row): Record<string, ResultViewerCell> => {
             const mapped: Record<string, ResultViewerCell> = {};
 
-            columns.forEach((column) => {
+            displayColumns.forEach((displayColumn) => {
+                const sourceColumn = displayToSourceColumn.get(displayColumn) ?? displayColumn;
+
                 const rowValue =
-                    typeof row === "object" && row !== null
-                        ? (row as Record<string, unknown>)[column]
+                    isPlainObject(row)
+                        ? row[sourceColumn]
                         : undefined;
 
-                mapped[column] = buildCell(rowValue, column, {
+                mapped[displayColumn] = buildCell(rowValue, sourceColumn, {
                     ...options,
                     entitySetName,
                     entityLogicalName,
@@ -219,8 +487,12 @@ export function buildResultViewerModel(
         return {
             title: `Query Result (${mappedRows.length} rows)`,
             mode: "collection",
-            columns,
+            columns: displayColumns,
             rows: mappedRows,
+            legend: Array.from(relationshipAliasMap.entries()).map(([fullName, alias]) => ({
+                alias,
+                fullName
+            })),
             rawJson,
             rowCount: mappedRows.length,
             queryPath: query,
