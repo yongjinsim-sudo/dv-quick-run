@@ -1,5 +1,5 @@
 # DV Quick Run
-A metadata-aware Dataverse query, investigation, and action workbench for VS Code — now powered by a scalable disk-backed metadata engine and a stabilised Result Viewer.
+A metadata-aware Dataverse query, investigation, and action workbench for VS Code — powered by a scalable disk-backed metadata engine and a stabilised, model-driven Result Viewer.
 
 **Run, build, understand, and investigate Dataverse Web API data directly inside VS Code with metadata‑aware developer tooling.**
 
@@ -15,6 +15,49 @@ Instead of jumping between Postman, browser tabs, maker portals, and documentati
 Dataverse • Dynamics 365 • Power Platform • Web API • OData • VS Code extension • Developer tooling
 
 ---
+
+## 🆕 What's New in v0.5.2
+
+### 🧱 Result Viewer Architecture Refactor
+
+This release introduces a **major internal refactor of the Result Viewer**, improving maintainability, consistency, and future extensibility.
+
+- Introduced a **model-driven rendering pipeline**
+  - Result semantics (value types, actions, export values) are now computed in the ViewModel layer
+  - Webview is simplified to a rendering-only layer
+- Reduced coupling between UI rendering and business logic
+- Established a clean separation between:
+  - data interpretation
+  - rendering
+  - interaction handling
+
+---
+
+### 🔒 Stability & Consistency Improvements
+
+- Improved consistency across:
+  - table rendering
+  - action behaviour
+  - export handling
+- Eliminated several edge-case inconsistencies between raw values and display values
+- Strengthened internal invariants to prevent future regressions
+
+---
+
+### 🧪 Test Coverage & Refactor Safety
+
+- Expanded Result Viewer test coverage to lock down:
+  - cell semantics (scalar / object / array)
+  - action grouping (primary vs overflow)
+  - export and drawer behaviour
+- Ensures future changes do not unintentionally alter rendering behaviour
+
+---
+
+### 💡 Why This Matters
+
+While this release introduces **no visible UI changes**, it is a critical foundation upgrade.
+
 
 ## 🆕 What's New in v0.5.1
 
