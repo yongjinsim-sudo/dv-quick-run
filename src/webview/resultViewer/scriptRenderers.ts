@@ -70,7 +70,9 @@ function renderEnvironmentBadge(environment) {
 
                 currentModel.columns.forEach((column) => {
                     const cell = row[column];
-                    const value = cell?.value ?? "";
+                    const rawValue = cell && cell.rawValue;
+                    const isObjectCell = isPlainObject(rawValue);
+                    const value = isObjectCell ? "{...}" : (cell?.value ?? "");
                     const copyValue = cell?.copyValue ?? value;
                     const actions = Array.isArray(cell?.actions) ? cell.actions : [];
                     const primaryActions = actions.filter((action) => action.placement === "primary");
@@ -123,22 +125,26 @@ function renderEnvironmentBadge(environment) {
                         html += "</span>";
                         html += "</span>";
                         html += "</td>";
-                    } else {
-                        const isArrayCell = Array.isArray(cell && cell.rawValue);
-                        const arrayDrawerKey = isArrayCell ? (column + "::" + rowIndex) : "";
+                        } else {
+                            const valueType = cell?.valueType ?? "scalar";
+                            const isArrayCell = valueType === "array";
+                            const isObjectDrawerCell = valueType === "object";
+                            const isDrawerCell = isArrayCell || isObjectDrawerCell;
+                            const drawerPayload = cell?.drawerPayload?.payload;
+                            const arrayDrawerKey = isDrawerCell ? (column + "::" + rowIndex) : "";
 
-                        if (isArrayCell) {
-                            arrayDrawerPayloads.set(arrayDrawerKey, {
-                                column,
-                                payload: cell.rawValue
-                            });
-                        }
+                            if (isDrawerCell && drawerPayload !== undefined) {
+                                arrayDrawerPayloads.set(arrayDrawerKey, {
+                                    column,
+                                    payload: isObjectDrawerCell ? [drawerPayload] : drawerPayload
+                                });
+                            }
 
-                        html += "<td class=\\"" + (isArrayCell ? "array-cell" : "copyable") + "\\" data-column=\\"" + escapeAttribute(column) + "\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\"" + (isArrayCell ? " data-array-drawer-key=\\"" + escapeAttribute(arrayDrawerKey) + "\\"" : "") + widthStyle + ">" +
-                            (isArrayCell
-                                ? "<span class=\\"array-cell-content\\"><span class=\\"array-badge\\">ARRAY</span><span class=\\"array-cell-text\\">" + escapeHtml(value) + "</span></span>"
-                                : escapeHtml(value)) +
-                            "</td>";
+                            html += "<td class=\\"" + (isDrawerCell ? "array-cell" : "copyable") + "\\" data-column=\\"" + escapeAttribute(column) + "\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\"" + (isDrawerCell ? " data-array-drawer-key=\\"" + escapeAttribute(arrayDrawerKey) + "\\"" : "") + widthStyle + ">" +
+                                (isDrawerCell
+                                    ? "<span class=\\"array-cell-content\\"><span class=\\"array-badge\\">" + escapeHtml(isArrayCell ? "ARRAY" : "OBJECT") + "</span><span class=\\"array-cell-text\\">" + escapeHtml(value) + "</span></span>"
+                                    : escapeHtml(value)) +
+                                "</td>";
                     }
                 });
 

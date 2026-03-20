@@ -11,9 +11,15 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 - Improved Result Viewer architecture for future enhancements
 - Improved reliability and consistency of table rendering
 - Strengthened model-driven rendering pipeline for future features
+- Improved handling of object values in the Result Viewer
+  - Objects are now correctly classified and rendered via the model-driven pipeline
+  - Prevents incorrect table rendering or silent fallback behaviour for object cells
+- Metadata retrieval (`Get Metadata`) now opens in the Result Viewer (Table view) instead of raw JSON document
+  - Aligns metadata inspection with the standard result exploration workflow
+  - Enables consistent use of table, JSON toggle, and future viewer actions
 - Expanded test coverage and improved overall stability
 
-(No visible UI changes — foundation release)
+(Minimal UI changes — primarily a foundation release with improved consistency and unified result viewer behaviour)
 
 ## [0.5.1] - Result Viewer Stabilization & Investigation Input Hardening
 

@@ -26,9 +26,11 @@ All inside VS Code.
 
 * Improved Result Viewer architecture for future enhancements
 * More consistent table rendering and action behaviour
+* Improved handling of object values in the Result Viewer
+* **Get Metadata now opens in the Result Viewer (Table view)** for a consistent exploration experience
 * Expanded test coverage and overall stability
 
-*(No visible UI changes — foundation release)*
+*(Minimal UI changes — primarily a foundation release with improved consistency and alignment)*
 
 ---
 
