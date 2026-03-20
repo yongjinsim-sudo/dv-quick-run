@@ -18,10 +18,23 @@ export interface ResultViewerEnvironmentInfo {
     colorHint: "white" | "amber" | "red";
 }
 
+export type ResultViewerCellValueType = "scalar" | "object" | "array" | "empty";
+
+export interface ResultViewerDrawerPayload {
+    column: string;
+    payload: unknown;
+}
+
 export interface ResultViewerCell {
     value: string;
     rawValue: unknown;
     copyValue?: string;
+    exportValue?: string;
+    valueType?: ResultViewerCellValueType;
+    originalColumnName?: string;
+    primaryActions?: ResultViewerResolvedAction[];
+    overflowActions?: ResultViewerResolvedAction[];
+    drawerPayload?: ResultViewerDrawerPayload;
     actions?: ResultViewerResolvedAction[];
 }
 
@@ -53,6 +66,11 @@ export interface ResultViewerLegendItem {
     alias: string;
     fullName: string;
 }
+
+// Result viewer detanglement guardrail:
+// keep flattening depth intentionally capped so the builder remains the
+// single place that defines how nested payloads are interpreted.
+export const RESULT_VIEWER_MAX_FLATTEN_DEPTH = 2;
 
 function toDisplayCell(value: unknown): string {
     if (value === null || value === undefined) {
@@ -329,7 +347,7 @@ function applyColumnAliases(columns: string[], aliasMap: Map<string, string>): s
 function flattenExpandedRow(
     row: Record<string, unknown>,
     depth = 0,
-    maxDepth = 2
+    maxDepth = RESULT_VIEWER_MAX_FLATTEN_DEPTH
 ): Record<string, unknown> {
     const flattened: Record<string, unknown> = {};
 
@@ -369,6 +387,23 @@ function flattenExpandedRow(
     return flattened;
 }
 
+
+function classifyCellValueType(value: unknown): ResultViewerCellValueType {
+    if (value === null || value === undefined) {
+        return "empty";
+    }
+
+    if (Array.isArray(value)) {
+        return "array";
+    }
+
+    if (typeof value === "object") {
+        return "object";
+    }
+
+    return "scalar";
+}
+
 function buildCell(
     rowValue: unknown,
     column: string,
@@ -377,6 +412,7 @@ function buildCell(
     choiceMetadata: ChoiceMetadataDef[]
 ): ResultViewerCell {
     const rawValue = rowValue;
+    const valueType = classifyCellValueType(rowValue);
     const displayValue = resolveDisplayValue(rowValue, column, fieldMap, choiceMetadata);
     const copyValue = toDisplayCell(rowValue);
 
@@ -402,10 +438,30 @@ function buildCell(
         })
         : undefined;
 
+    const primaryActions = actions?.filter((action) => action.placement === "primary");
+    const overflowActions = actions?.filter((action) => action.placement === "overflow");
+
+    const exportValue = Array.isArray(rawValue) || (typeof rawValue === "object" && rawValue !== null)
+        ? JSON.stringify(rawValue)
+        : copyValue;
+
+    const drawerPayload = valueType === "array" || valueType === "object"
+        ? {
+            column,
+            payload: rawValue
+        }
+        : undefined;
+
     return {
         value: displayValue,
         rawValue,
         copyValue,
+        exportValue,
+        valueType,
+        originalColumnName: column,
+        primaryActions: primaryActions?.length ? primaryActions : undefined,
+        overflowActions: overflowActions?.length ? overflowActions : undefined,
+        drawerPayload,
         actions: actions?.length ? actions : undefined
     };
 }

@@ -7,7 +7,8 @@ import { runAction } from "../shared/actionRunner.js";
 import { METADATA_KINDS, MetadataKind } from "./metadataTypes.js";
 import { buildMetadataPath, metadataVirtualPath } from "./metadataBuilders.js";
 import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
-
+import { ResultViewerPanel } from "../../../../providers/resultViewerPanel.js";
+import { buildResultViewerModel } from "../../../../services/resultViewModelBuilder.js";
 
 async function pickEntity(defs: EntityDef[]): Promise<EntityDef | undefined> {
   const picked = await vscode.window.showQuickPick(
@@ -92,6 +93,21 @@ async function showMetadataForEntity(
   const result = await client.get(path, token);
   const duration = Date.now() - start;
 
-  await showJsonNamed(metadataVirtualPath(logicalName, kind), result);
+  const activeEnvironment = ctx.envContext.getActiveEnvironment();
+
+  const model = buildResultViewerModel(result, path, {
+    entityLogicalName: logicalName,
+    entitySetName: logicalName,
+    environment: activeEnvironment
+      ? {
+          name: activeEnvironment.name,
+          colorHint: activeEnvironment.statusBarColor ?? "white"
+        }
+      : undefined
+  });
+
+  model.title = metadataVirtualPath(logicalName, kind);
+
+  ResultViewerPanel.show(ctx, model);
   logDataverseExecutionResult(ctx.output, 1, duration);
 }
