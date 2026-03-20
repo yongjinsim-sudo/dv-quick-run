@@ -22,15 +22,36 @@ All inside VS Code.
 
 ---
 
-## 🆕 What's New in v0.5.2
+## 🆕 What's New in v0.6.0
 
-* Improved Result Viewer architecture for future enhancements
-* More consistent table rendering and action behaviour
-* Improved handling of object values in the Result Viewer
-* **Get Metadata now opens in the Result Viewer (Table view)** for a consistent exploration experience
-* Expanded test coverage and overall stability
+* **FetchXML execution support**
+  - Run FetchXML queries directly from the editor (**Run FetchXML**)
+  - Results open in the Result Viewer (table / JSON view supported)
+  - Works alongside existing OData queries with a unified execution experience
 
-*(Minimal UI changes — primarily a foundation release with improved consistency and alignment)*
+* **FetchXML-aware editor experience**
+  - Automatic detection of FetchXML queries under cursor
+  - Context-aware CodeLens:
+    - **Run FetchXML** for FetchXML queries
+    - **Explain Query** remains OData-only
+
+* **FetchXML hover (first cut)**
+  - Hover on:
+    - `<entity name="...">`
+    - `<attribute name="...">`
+  - Displays logical and display names using metadata
+  - Brings FetchXML closer to OData-level developer ergonomics
+
+* **Operator foundation (extensible design)**
+  - Introduced a data-driven operator catalog
+  - Supports polished / raw / grouped label modes
+  - Enables future extensibility without code changes
+
+* **Unified query experience**
+  - OData and FetchXML now share the same execution and result viewer pipeline
+  - Improved consistency across query workflows
+
+*(Minimal UI changes — major functional expansion introducing FetchXML support and metadata-aware hover)*
 
 ---
 
@@ -65,7 +86,7 @@ write query → run → explore → investigate → refine → repeat
 
 ### 🔎 Run & Explore Queries
 
-* Run Dataverse Web API queries directly in VS Code
+* Run Dataverse queries (OData & FetchXML) directly in VS Code
 * View results in an interactive table or JSON
 * Sort, filter, and inspect data inline
 

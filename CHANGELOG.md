@@ -6,6 +6,60 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+### [0.6.0] – FetchXML Execution & Hover Foundation
+
+### Added
+- **FetchXML execution support**
+  - Execute FetchXML queries directly from the editor (Run FetchXML)
+  - Unified execution pipeline alongside existing OData support
+  - Results open in the Result Viewer with full table/JSON toggle support
+  - Supports:
+    - multiple attributes
+    - aliased fields
+    - empty result sets
+    - Dataverse error propagation (invalid entity, malformed XML, etc.)
+
+- **FetchXML-aware query detection**
+  - Automatic detection of FetchXML queries under cursor
+  - Context-aware CodeLens:
+    - **Run FetchXML** shown for FetchXML queries
+    - **Explain Query** remains OData-only
+
+- **FetchXML hover support (first cut)**
+  - Hover on:
+    - `<entity name="...">`
+    - `<attribute name="...">`
+  - Displays:
+    - logical name
+    - display name (if available)
+    - basic metadata context
+  - Aligns FetchXML experience with existing OData hover model
+
+- **Operator catalog foundation (data-driven)**
+  - Introduced JSON-based operator registry
+  - Supports:
+    - multiple label modes (polished, raw, grouped)
+    - diagnostics metadata
+    - value contract definition (none/single/multiple)
+  - Enables future extensibility without code changes
+
+### Improved
+- **Unified query execution experience**
+  - OData and FetchXML now share a consistent execution + viewer pipeline
+  - Improved consistency across result handling and error surfacing
+
+- **CodeLens clarity**
+  - Clear separation between OData and FetchXML actions
+  - Reduced confusion by removing unsupported actions for FetchXML
+
+### Fixed
+- Fixed incorrect action rendering where FetchXML queries previously showed OData-specific options
+- Fixed edge cases in query detection when switching between OData and FetchXML contexts
+
+---
+
+(Minimal UI changes — major functional expansion introducing FetchXML execution and metadata-aware hover)
+
 ### [0.5.2] – Stability & Foundations Release
 
 - Improved Result Viewer architecture for future enhancements

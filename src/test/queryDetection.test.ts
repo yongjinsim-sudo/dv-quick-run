@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { looksLikeDataverseQuery } from "../shared/editorIntelligence/queryDetection.js";
+import { looksLikeDataverseQuery, detectQueryKind } from "../shared/editorIntelligence/queryDetection.js";
 
 suite("queryDetection", () => {
   test("detects simple select query", () => {
@@ -24,5 +24,40 @@ suite("queryDetection", () => {
 
   test("rejects empty line", () => {
     assert.strictEqual(looksLikeDataverseQuery("   "), false);
+  });
+
+  test("detects fetchxml root query", () => {
+    assert.strictEqual(
+      looksLikeDataverseQuery("<fetch><entity name='contact' /></fetch>"),
+      true
+    );
+  });
+
+  test("detects fetchxml query kind", () => {
+    assert.strictEqual(
+      detectQueryKind("<fetch><entity name='contact' /></fetch>"),
+      "fetchxml"
+    );
+  });
+
+  test("detects odata query kind", () => {
+    assert.strictEqual(
+      detectQueryKind("contacts?$select=fullname"),
+      "odata"
+    );
+  });
+
+  test("rejects partial xml fragment for now", () => {
+    assert.strictEqual(
+      looksLikeDataverseQuery("<entity name='contact' />"),
+      false
+    );
+  });
+
+  test("rejects random xml that is not fetchxml", () => {
+    assert.strictEqual(
+      looksLikeDataverseQuery("<root><x /></root>"),
+      false
+    );
   });
 });

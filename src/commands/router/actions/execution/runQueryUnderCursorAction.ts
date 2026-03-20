@@ -1,5 +1,5 @@
 import { CommandContext } from "../../../context/commandContext.js";
-import { logWarn } from "../../../../utils/logger.js";
+import { logDebug, logInfo, logWarn } from "../../../../utils/logger.js";
 import { normalizePath } from "./get/getQueryBuilder.js";
 import { analyzeQueryGuardrails, confirmGuardrailsIfNeeded, showGuardrailErrors} from "../shared/guardrails/queryGuardrails.js";
 import { looksLikeDataverseQuery } from "../../../../shared/editorIntelligence/queryDetection.js";
@@ -7,31 +7,42 @@ import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/qu
 import { runAction } from "../shared/actionRunner.js";
 import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
 import { showResultViewerForQuery } from "./shared/resultViewerLauncher.js";
+import { detectQueryKind } from "../../../../shared/editorIntelligence/queryDetection.js";
+import { prepareFetchXmlQuery } from "../../../../shared/fetchXml/fetchXmlExecution.js";
 
 
 export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<void> {
   await runAction(ctx, "DV Quick Run: Run Query Under Cursor failed. Check Output.", async () => {
     const raw = resolveEditorQueryText();
+    const kind = detectQueryKind(raw);
 
-    if (!looksLikeDataverseQuery(raw)) {
-      throw new Error(`Current line does not look like a Dataverse Web API path: ${raw}`);
+    if (kind === "unknown") {
+      throw new Error(`Current line does not look like a supported Dataverse query: ${raw}`);
     }
 
-    const path = normalizePath(raw);
     const token = await ctx.getToken(ctx.getScope());
     const client = ctx.getClient();
 
-    const guardrails = await analyzeQueryGuardrails(ctx, client, token, raw);
+    let path: string;
 
-    if (guardrails.hasErrors) {
-      await showGuardrailErrors(guardrails);
-      return;
-    }
+    if (kind === "odata") {
+      path = normalizePath(raw);
 
-    const shouldContinue = await confirmGuardrailsIfNeeded(guardrails);
-    if (!shouldContinue) {
-      logWarn(ctx.output, "Run Query Under Cursor cancelled by guardrails.");
-      return;
+      const guardrails = await analyzeQueryGuardrails(ctx, client, token, raw);
+
+      if (guardrails.hasErrors) {
+        await showGuardrailErrors(guardrails);
+        return;
+      }
+
+      const shouldContinue = await confirmGuardrailsIfNeeded(guardrails);
+      if (!shouldContinue) {
+        logWarn(ctx.output, "Run Query Under Cursor cancelled by guardrails.");
+        return;
+      }
+    } else {
+      const prepared = await prepareFetchXmlQuery(raw, ctx);
+      path = prepared.requestPath;
     }
 
     logDataverseExecutionStart(ctx.output, ctx.envContext.getEnvironmentName(), "GET", path);

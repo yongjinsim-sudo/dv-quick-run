@@ -140,4 +140,13 @@ export class HoverRequestContext {
     this.choicePromises.set(key, promise);
     return promise;
   }
+
+  async getEntityByLogicalName(logicalName: string): Promise<EntityDef | undefined> {
+    const target = normalizeWord(logicalName);
+    const defs = await this.getEntityDefs();
+
+    return defs.find((d) => normalizeWord(d.logicalName) === target);
+  }
+
 }
+
