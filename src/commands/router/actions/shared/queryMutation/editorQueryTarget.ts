@@ -73,17 +73,42 @@ export function getLogicalEditorQueryTarget(): EditorQueryTarget {
 
   const { editor } = target;
   const document = editor.document;
-  const currentLineNumber = editor.selection.active.line;
-  const currentLineText = normalizeLine(document.lineAt(currentLineNumber).text);
+  const currentLine = editor.selection.active.line;
+  const currentLineText = document.lineAt(currentLine).text;
 
-  if (!currentLineText) {
+  if (looksLikeFetchXmlStartLine(currentLineText)) {
+      const lines: string[] = [currentLineText];
+      let endLine = currentLine;
+
+      for (let lineNumber = currentLine + 1; lineNumber < document.lineCount; lineNumber++) {
+          const lineText = document.lineAt(lineNumber).text;
+          lines.push(lineText);
+          endLine = lineNumber;
+
+          if (looksLikeFetchXmlEndLine(lineText)) {
+              break;
+          }
+      }
+
+      return {
+          editor,
+          range: new vscode.Range(
+              document.lineAt(currentLine).range.start,
+              document.lineAt(endLine).range.end
+          ),
+          text: lines.join("\n").trim(),
+          source: "line"
+      };
+  }
+
+  if (!normalizeLine(currentLineText)) {
     throw new Error("Current line is empty.");
   }
 
-  let startLine = currentLineNumber;
+  let startLine = currentLine;
 
   if (isContinuationLine(currentLineText)) {
-    let probe = currentLineNumber - 1;
+    let probe = currentLine - 1;
 
     while (probe >= 0) {
       const probeText = normalizeLine(document.lineAt(probe).text);
@@ -139,4 +164,22 @@ export function getLogicalEditorQueryTarget(): EditorQueryTarget {
     text: buildLogicalQueryFromLines(lines),
     source: "line"
   };
+}
+
+function looksLikeFetchXmlStartLine(text: string): boolean {
+    const line = text.trim();
+
+    if (!line) {
+        return false;
+    }
+
+    if (line.startsWith("<?xml")) {
+        return /<fetch[\s>]/i.test(line);
+    }
+
+    return /^<fetch[\s>]/i.test(line);
+}
+
+function looksLikeFetchXmlEndLine(text: string): boolean {
+    return /<\/fetch\s*>/i.test(text.trim());
 }

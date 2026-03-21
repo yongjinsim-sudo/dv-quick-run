@@ -14,6 +14,9 @@ import { HoverRequestContext } from "./hover/hoverRequestContext.js";
 import { resolveChoiceValueHover } from "./hover/hoverChoiceResolver.js";
 import { resolveNavigationHover } from "./hover/hoverNavigationResolver.js";
 import { resolveFieldHover } from "./hover/hoverFieldResolver.js";
+import { detectQueryKind } from "../shared/editorIntelligence/queryDetection.js";
+import { resolveFetchXmlHover } from "./hover/hoverFetchXmlResolver.js";
+
 
 export class QueryHoverProvider implements vscode.HoverProvider {
   private readonly requestContext: HoverRequestContext;
@@ -33,6 +36,16 @@ export class QueryHoverProvider implements vscode.HoverProvider {
 
     const line = document.lineAt(position.line);
     const lineText = line.text.trim();
+    const documentText = document.getText();
+    const queryKind = detectQueryKind(documentText);
+
+    if (queryKind === "fetchxml") {
+      return resolveFetchXmlHover({
+        document,
+        position,
+        requestContext: this.requestContext
+      });
+    }
 
     if (!looksLikeDataverseQuery(lineText)) {
       return undefined;

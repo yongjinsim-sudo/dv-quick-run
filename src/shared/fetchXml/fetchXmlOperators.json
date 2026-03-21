@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "presentationModes": ["polished", "raw", "grouped"],
+  "supportTiers": ["official", "candidate", "seeded"],
+  "operators": [
+    {
+      "key": "eq",
+      "labels": {
+        "raw": "eq",
+        "polished": "Equals",
+        "grouped": "Equality"
+      },
+      "classification": "comparison",
+      "supportTier": "official",
+      "visibleInFetchXmlUi": true,
+      "requiresValue": true,
+      "valueCount": "single",
+      "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "description": "Matches values exactly.",
+      "diagnostics": {
+        "summary": "Use when the field must match exactly.",
+        "notes": [
+          "Suitable for exact scalar comparison.",
+          "Preferred default for equality checks."
+        ]
+      },
+      "order": 10
+    },
+    {
+      "key": "ne",
+      "labels": {
+        "raw": "ne",
+        "polished": "Does Not Equal",
+        "grouped": "Equality"
+      },
+      "classification": "comparison",
+      "supportTier": "official",
+      "visibleInFetchXmlUi": true,
+      "requiresValue": true,
+      "valueCount": "single",
+      "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "description": "Excludes exact matches.",
+      "diagnostics": {
+        "summary": "Use when the field must not match the provided value.",
+        "notes": [
+          "Inverse of Equals."
+        ]
+      },
+      "order": 20
+    },
+    {
+      "key": "null",
+      "labels": {
+        "raw": "null",
+        "polished": "Is Null",
+        "grouped": "Null Checks"
+      },
+      "classification": "nullability",
+      "supportTier": "official",
+      "visibleInFetchXmlUi": true,
+      "requiresValue": false,
+      "valueCount": "none",
+      "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "description": "Matches records where the field has no value.",
+      "diagnostics": {
+        "summary": "Checks whether the field is empty.",
+        "notes": [
+          "No value input is required."
+        ]
+      },
+      "order": 30
+    },
+    {
+      "key": "not-null",
+      "labels": {
+        "raw": "not-null",
+        "polished": "Is Not Null",
+        "grouped": "Null Checks"
+      },
+      "classification": "nullability",
+      "supportTier": "official",
+      "visibleInFetchXmlUi": true,
+      "requiresValue": false,
+      "valueCount": "none",
+      "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "description": "Matches records where the field has a value.",
+      "diagnostics": {
+        "summary": "Checks whether the field is populated.",
+        "notes": [
+          "No value input is required."
+        ]
+      },
+      "order": 40
+    },
+    {
+      "key": "like",
+      "labels": {
+        "raw": "like",
+        "polished": "Like",
+        "grouped": "Text Matching"
+      },
+      "classification": "pattern",
+      "supportTier": "official",
+      "visibleInFetchXmlUi": true,
+      "requiresValue": true,
+      "valueCount": "single",
+      "supportedCategories": ["string"],
+      "description": "Matches text using wildcard patterns.",
+      "diagnostics": {
+        "summary": "Use for wildcard text matching.",
+        "notes": [
+          "String fields only."
+        ]
+      },
+      "order": 50
+    },
+    {
+      "key": "in",
+      "labels": {
+        "raw": "in",
+        "polished": "In",
+        "grouped": "Set Membership"
+      },
+      "classification": "set",
+      "supportTier": "candidate",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "supportedCategories": ["string", "number", "lookup", "choice", "guid"],
+      "description": "Matches any of the provided values.",
+      "diagnostics": {
+        "summary": "Checks whether the field matches one of several values.",
+        "notes": [
+          "Useful for multi-value membership checks."
+        ]
+      },
+      "order": 60
+    },
+    {
+      "key": "olderthan-x-days",
+      "labels": {
+        "raw": "olderthan-x-days",
+        "polished": "Older Than X Days",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "supportedCategories": ["date", "datetime"],
+      "description": "Matches dates older than the specified number of days.",
+      "diagnostics": {
+        "summary": "Relative date comparison.",
+        "notes": [
+          "Seeded for future support."
+        ]
+      },
+      "order": 70
+    }
+  ]
+}

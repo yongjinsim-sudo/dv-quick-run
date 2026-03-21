@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Run, inspect, and investigate Dataverse Web API queries directly inside VS Code. Includes an interactive result viewer, smart query builders, query explanation, record investigation from GUIDs, metadata intelligence, and relationship exploration.",
-  "version": "0.5.2",
+  "description": "Run, inspect, and investigate Dataverse queries (OData & FetchXML) directly inside VS Code. Includes an interactive result viewer, smart query builders, query explanation, record investigation from GUIDs, metadata intelligence, and relationship exploration — all without leaving your editor.",
+  "version": "0.6.0",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",

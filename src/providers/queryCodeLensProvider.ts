@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { looksLikeDataverseQuery } from "../shared/editorIntelligence/queryDetection.js";
+import { looksLikeDataverseQuery , detectQueryKind } from "../shared/editorIntelligence/queryDetection.js";
 
 function isCodeLensEnabled(): boolean {
   return vscode.workspace
@@ -30,7 +30,13 @@ export class QueryCodeLensProvider implements vscode.CodeLensProvider {
       const raw = line.text;
       const text = raw.trim();
 
-      if (!text.includes("?") && !text.includes("(") && text.length < 4) {
+      const looksPotentiallyInteresting =
+        text.includes("?") ||
+        text.includes("(") ||
+        text.startsWith("<") ||
+        text.length >= 4;
+
+      if (!looksPotentiallyInteresting) {
         continue;
       }
 
@@ -40,23 +46,39 @@ export class QueryCodeLensProvider implements vscode.CodeLensProvider {
 
       const range = new vscode.Range(lineNumber, 0, lineNumber, line.text.length);
 
+      const kind = detectQueryKind(text);
+
+      if (kind === "fetchxml") {
+          lenses.push(
+              new vscode.CodeLens(range, {
+                  title: "Run FetchXML",
+                  tooltip: "Run this FetchXML query",
+                  command: "dvQuickRun.runQueryAtLine",
+                  arguments: [document.uri, lineNumber]
+              })
+          );
+
+          continue;
+      }
+
       lenses.push(
-        new vscode.CodeLens(range, {
-          title: "Run Query",
-          tooltip: "Run this Dataverse query",
-          command: "dvQuickRun.runQueryAtLine",
-          arguments: [document.uri, lineNumber]
-        })
+          new vscode.CodeLens(range, {
+              title: "Run Query",
+              tooltip: "Run this Dataverse query",
+              command: "dvQuickRun.runQueryAtLine",
+              arguments: [document.uri, lineNumber]
+          })
       );
 
       lenses.push(
-        new vscode.CodeLens(range, {
-          title: "Explain",
-          tooltip: "Explain this Dataverse query",
-          command: "dvQuickRun.explainQueryAtLine",
-          arguments: [document.uri, lineNumber]
-        })
+          new vscode.CodeLens(range, {
+              title: "Explain",
+              tooltip: "Explain this Dataverse query",
+              command: "dvQuickRun.explainQueryAtLine",
+              arguments: [document.uri, lineNumber]
+          })
       );
+
     }
 
     return lenses;
