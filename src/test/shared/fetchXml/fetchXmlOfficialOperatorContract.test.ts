@@ -1,5 +1,8 @@
 import * as assert from "assert";
-import { getOfficialFetchXmlOperators, getAllFetchXmlOperators } from "../../../shared/fetchXml/fetchXmlOperatorCatalog.js";
+import {
+    getAllFetchXmlOperators,
+    getOfficialFetchXmlOperators
+} from "../../../shared/fetchXml/fetchXmlOperatorCatalog.js";
 
 suite("fetchXmlOfficialOperatorContract", () => {
     test("official operators are all visible in standard FetchXML UX", () => {
@@ -21,6 +24,17 @@ suite("fetchXmlOfficialOperatorContract", () => {
         operators.forEach((operator) => {
             assert.ok(["none", "single", "multiple"].includes(operator.valueCount));
             assert.strictEqual(operator.requiresValue, operator.valueCount !== "none");
+        });
+    });
+
+    test("official operators expose stable v0.6.1 value contracts", () => {
+        const operators = getOfficialFetchXmlOperators();
+
+        operators.forEach((operator) => {
+            assert.ok(
+                ["none", "single", "multi", "range"].includes(operator.valueContract),
+                `${operator.key} has invalid valueContract`
+            );
         });
     });
 

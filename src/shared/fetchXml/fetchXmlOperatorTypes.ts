@@ -4,6 +4,8 @@ export type FetchXmlOperatorSupportTier = "official" | "candidate" | "seeded";
 
 export type FetchXmlOperatorValueCount = "none" | "single" | "multiple";
 
+export type FetchXmlOperatorValueContract = "none" | "single" | "multi" | "range";
+
 export type FetchXmlOperatorClassification =
     | "comparison"
     | "nullability"
@@ -27,6 +29,8 @@ export type FetchXmlOperatorCategory =
 export interface FetchXmlOperatorDiagnostics {
     summary: string;
     notes?: string[];
+    commonMistakes?: string[];
+    examples?: string[];
 }
 
 export interface FetchXmlOperatorLabels {
@@ -43,7 +47,9 @@ export interface FetchXmlOperatorDef {
     visibleInFetchXmlUi: boolean;
     requiresValue: boolean;
     valueCount: FetchXmlOperatorValueCount;
+    valueContract: FetchXmlOperatorValueContract;
     supportedCategories: FetchXmlOperatorCategory[];
+    supportedContexts?: string[];
     description: string;
     diagnostics: FetchXmlOperatorDiagnostics;
     order: number;

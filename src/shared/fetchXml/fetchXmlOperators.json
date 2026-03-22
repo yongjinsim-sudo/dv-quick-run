@@ -15,13 +15,23 @@
       "visibleInFetchXmlUi": true,
       "requiresValue": true,
       "valueCount": "single",
+      "valueContract": "single",
       "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "supportedContexts": ["condition"],
       "description": "Matches values exactly.",
       "diagnostics": {
         "summary": "Use when the field must match exactly.",
         "notes": [
           "Suitable for exact scalar comparison.",
           "Preferred default for equality checks."
+        ],
+        "commonMistakes": [
+          "Using eq when wildcard matching is intended.",
+          "Using a value format that does not match the field type."
+        ],
+        "examples": [
+          "<condition attribute=\"name\" operator=\"eq\" value=\"Contoso\" />",
+          "<condition attribute=\"statecode\" operator=\"eq\" value=\"0\" />"
         ]
       },
       "order": 10
@@ -38,16 +48,236 @@
       "visibleInFetchXmlUi": true,
       "requiresValue": true,
       "valueCount": "single",
+      "valueContract": "single",
       "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "supportedContexts": ["condition"],
       "description": "Excludes exact matches.",
       "diagnostics": {
         "summary": "Use when the field must not match the provided value.",
         "notes": [
           "Inverse of Equals."
+        ],
+        "commonMistakes": [
+          "Using ne when a null check is actually intended.",
+          "Assuming ne behaves the same as not-null."
+        ],
+        "examples": [
+          "<condition attribute=\"statuscode\" operator=\"ne\" value=\"1\" />",
+          "<condition attribute=\"name\" operator=\"ne\" value=\"Contoso\" />"
+        ]
+      },
+      "order": 11
+    },
+    {
+      "key": "gt",
+      "labels": {
+        "raw": "gt",
+        "polished": "Greater Than",
+        "grouped": "Comparison"
+      },
+      "classification": "comparison",
+      "supportTier": "official",
+      "visibleInFetchXmlUi": true,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["number", "date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values greater than the supplied value.",
+      "diagnostics": {
+        "summary": "Use for numeric or date/datetime comparisons where the field must be greater than the provided value.",
+        "notes": [
+          "Commonly used for dates and numeric thresholds."
+        ],
+        "commonMistakes": [
+          "Using gt on string fields.",
+          "Providing a value format that does not match the field type."
+        ],
+        "examples": [
+          "<condition attribute=\"createdon\" operator=\"gt\" value=\"2023-01-01\" />",
+          "<condition attribute=\"revenue\" operator=\"gt\" value=\"1000\" />"
         ]
       },
       "order": 20
     },
+    {
+      "key": "ge",
+      "labels": {
+        "raw": "ge",
+        "polished": "Greater Than Or Equal",
+        "grouped": "Comparison"
+      },
+      "classification": "comparison",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["number", "date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values greater than or equal to the supplied value.",
+      "diagnostics": {
+        "summary": "Inclusive comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 21
+    },
+    {
+      "key": "lt",
+      "labels": {
+        "raw": "lt",
+        "polished": "Less Than",
+        "grouped": "Comparison"
+      },
+      "classification": "comparison",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["number", "date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values less than the supplied value.",
+      "diagnostics": {
+        "summary": "Numeric/date comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 22
+    },
+    {
+      "key": "le",
+      "labels": {
+        "raw": "le",
+        "polished": "Less Than Or Equal",
+        "grouped": "Comparison"
+      },
+      "classification": "comparison",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["number", "date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values less than or equal to the supplied value.",
+      "diagnostics": {
+        "summary": "Inclusive comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 23
+    },
+    {
+      "key": "on",
+      "labels": {
+        "raw": "on",
+        "polished": "On",
+        "grouped": "Date Comparison"
+      },
+      "classification": "comparison",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values on the supplied date or datetime.",
+      "diagnostics": {
+        "summary": "Use for exact date or datetime matching.",
+        "notes": ["Seeded"]
+      },
+      "order": 24
+    },
+    {
+      "key": "on-or-after",
+      "labels": {
+        "raw": "on-or-after",
+        "polished": "On Or After",
+        "grouped": "Date Comparison"
+      },
+      "classification": "comparison",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values on or after the supplied date or datetime.",
+      "diagnostics": {
+        "summary": "Inclusive date or datetime comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 25
+    },
+    {
+      "key": "on-or-before",
+      "labels": {
+        "raw": "on-or-before",
+        "polished": "On Or Before",
+        "grouped": "Date Comparison"
+      },
+      "classification": "comparison",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values on or before the supplied date or datetime.",
+      "diagnostics": {
+        "summary": "Inclusive date or datetime comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 26
+    },
+
+    {
+      "key": "between",
+      "labels": {
+        "raw": "between",
+        "polished": "Between",
+        "grouped": "Range"
+      },
+      "classification": "range",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "range",
+      "supportedCategories": ["number", "date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values within an inclusive lower and upper bound.",
+      "diagnostics": {
+        "summary": "Use when a field must fall within a range.",
+        "notes": ["Seeded"]
+      },
+      "order": 30
+    },
+    {
+      "key": "not-between",
+      "labels": {
+        "raw": "not-between",
+        "polished": "Not Between",
+        "grouped": "Range"
+      },
+      "classification": "range",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "range",
+      "supportedCategories": ["number", "date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes values within the supplied lower and upper bound.",
+      "diagnostics": {
+        "summary": "Inverse of between.",
+        "notes": ["Seeded"]
+      },
+      "order": 31
+    },
+
     {
       "key": "null",
       "labels": {
@@ -60,15 +290,25 @@
       "visibleInFetchXmlUi": true,
       "requiresValue": false,
       "valueCount": "none",
+      "valueContract": "none",
       "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "supportedContexts": ["condition"],
       "description": "Matches records where the field has no value.",
       "diagnostics": {
         "summary": "Checks whether the field is empty.",
         "notes": [
           "No value input is required."
+        ],
+        "commonMistakes": [
+          "Providing a value when the operator does not take one.",
+          "Using null when not-null is intended."
+        ],
+        "examples": [
+          "<condition attribute=\"parentcustomerid\" operator=\"null\" />",
+          "<condition attribute=\"telephone1\" operator=\"null\" />"
         ]
       },
-      "order": 30
+      "order": 40
     },
     {
       "key": "not-null",
@@ -82,16 +322,27 @@
       "visibleInFetchXmlUi": true,
       "requiresValue": false,
       "valueCount": "none",
+      "valueContract": "none",
       "supportedCategories": ["string", "number", "date", "datetime", "lookup", "choice", "boolean", "guid"],
+      "supportedContexts": ["condition"],
       "description": "Matches records where the field has a value.",
       "diagnostics": {
         "summary": "Checks whether the field is populated.",
         "notes": [
           "No value input is required."
+        ],
+        "commonMistakes": [
+          "Providing a value when the operator does not take one.",
+          "Using not-null when ne is intended."
+        ],
+        "examples": [
+          "<condition attribute=\"emailaddress1\" operator=\"not-null\" />",
+          "<condition attribute=\"ownerid\" operator=\"not-null\" />"
         ]
       },
-      "order": 40
+      "order": 41
     },
+
     {
       "key": "like",
       "labels": {
@@ -104,16 +355,137 @@
       "visibleInFetchXmlUi": true,
       "requiresValue": true,
       "valueCount": "single",
+      "valueContract": "single",
       "supportedCategories": ["string"],
+      "supportedContexts": ["condition"],
       "description": "Matches text using wildcard patterns.",
       "diagnostics": {
         "summary": "Use for wildcard text matching.",
         "notes": [
           "String fields only."
+        ],
+        "commonMistakes": [
+          "Using like on non-string fields.",
+          "Forgetting to include wildcard characters when partial matching is intended."
+        ],
+        "examples": [
+          "<condition attribute=\"fullname\" operator=\"like\" value=\"%john%\" />",
+          "<condition attribute=\"name\" operator=\"like\" value=\"A%\" />"
         ]
       },
       "order": 50
     },
+    {
+      "key": "not-like",
+      "labels": {
+        "raw": "not-like",
+        "polished": "Not Like",
+        "grouped": "Text Matching"
+      },
+      "classification": "pattern",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["string"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes values matching a wildcard pattern.",
+      "diagnostics": {
+        "summary": "Inverse of like.",
+        "notes": ["Seeded"]
+      },
+      "order": 51
+    },
+    {
+      "key": "begins-with",
+      "labels": {
+        "raw": "begins-with",
+        "polished": "Begins With",
+        "grouped": "Text Matching"
+      },
+      "classification": "pattern",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["string"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values starting with the provided text.",
+      "diagnostics": {
+        "summary": "Prefix match.",
+        "notes": ["Seeded"]
+      },
+      "order": 52
+    },
+    {
+      "key": "ends-with",
+      "labels": {
+        "raw": "ends-with",
+        "polished": "Ends With",
+        "grouped": "Text Matching"
+      },
+      "classification": "pattern",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["string"],
+      "supportedContexts": ["condition"],
+      "description": "Matches values ending with the provided text.",
+      "diagnostics": {
+        "summary": "Suffix match.",
+        "notes": ["Seeded"]
+      },
+      "order": 53
+    },
+    {
+      "key": "not-begin-with",
+      "labels": {
+        "raw": "not-begin-with",
+        "polished": "Does Not Begin With",
+        "grouped": "Text Matching"
+      },
+      "classification": "pattern",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["string"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes values that begin with the provided text.",
+      "diagnostics": {
+        "summary": "Inverse prefix match.",
+        "notes": ["Seeded"]
+      },
+      "order": 54
+    },
+    {
+      "key": "not-end-with",
+      "labels": {
+        "raw": "not-end-with",
+        "polished": "Does Not End With",
+        "grouped": "Text Matching"
+      },
+      "classification": "pattern",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["string"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes values that end with the provided text.",
+      "diagnostics": {
+        "summary": "Inverse suffix match.",
+        "notes": ["Seeded"]
+      },
+      "order": 55
+    },
+
     {
       "key": "in",
       "labels": {
@@ -126,16 +498,93 @@
       "visibleInFetchXmlUi": false,
       "requiresValue": true,
       "valueCount": "multiple",
+      "valueContract": "multi",
       "supportedCategories": ["string", "number", "lookup", "choice", "guid"],
+      "supportedContexts": ["condition"],
       "description": "Matches any of the provided values.",
       "diagnostics": {
         "summary": "Checks whether the field matches one of several values.",
         "notes": [
           "Useful for multi-value membership checks."
+        ],
+        "commonMistakes": [
+          "Supplying only a single scalar value when multiple values are expected.",
+          "Treating in as equivalent to eq."
+        ],
+        "examples": [
+          "<condition attribute=\"statecode\" operator=\"in\"><value>0</value><value>1</value></condition>",
+          "<condition attribute=\"accountid\" operator=\"in\"><value>{GUID-1}</value><value>{GUID-2}</value></condition>"
         ]
       },
       "order": 60
     },
+    {
+      "key": "not-in",
+      "labels": {
+        "raw": "not-in",
+        "polished": "Not In",
+        "grouped": "Set Membership"
+      },
+      "classification": "set",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "multi",
+      "supportedCategories": ["string", "number", "lookup", "choice", "guid"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes records matching any of the provided values.",
+      "diagnostics": {
+        "summary": "Inverse of in.",
+        "notes": ["Seeded"]
+      },
+      "order": 61
+    },
+    {
+      "key": "contain-values",
+      "labels": {
+        "raw": "contain-values",
+        "polished": "Contains Values",
+        "grouped": "Set Membership"
+      },
+      "classification": "set",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "multi",
+      "supportedCategories": ["choice"],
+      "supportedContexts": ["condition"],
+      "description": "Matches multi-select choice fields containing any of the provided values.",
+      "diagnostics": {
+        "summary": "Use for multi-select choice containment checks.",
+        "notes": ["Seeded"]
+      },
+      "order": 62
+    },
+    {
+      "key": "not-contain-values",
+      "labels": {
+        "raw": "not-contain-values",
+        "polished": "Does Not Contain Values",
+        "grouped": "Set Membership"
+      },
+      "classification": "set",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "multi",
+      "supportedCategories": ["choice"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes multi-select choice fields containing any of the provided values.",
+      "diagnostics": {
+        "summary": "Inverse of contain-values.",
+        "notes": ["Seeded"]
+      },
+      "order": 63
+    },
+
     {
       "key": "olderthan-x-days",
       "labels": {
@@ -148,7 +597,9 @@
       "visibleInFetchXmlUi": false,
       "requiresValue": true,
       "valueCount": "single",
+      "valueContract": "single",
       "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
       "description": "Matches dates older than the specified number of days.",
       "diagnostics": {
         "summary": "Relative date comparison.",
@@ -157,6 +608,1285 @@
         ]
       },
       "order": 70
+    },
+    {
+      "key": "last-x-days",
+      "labels": {
+        "raw": "last-x-days",
+        "polished": "Last X Days",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the last X days.",
+      "diagnostics": {
+        "summary": "Relative date window.",
+        "notes": ["Seeded"]
+      },
+      "order": 71
+    },
+    {
+      "key": "next-x-days",
+      "labels": {
+        "raw": "next-x-days",
+        "polished": "Next X Days",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next X days.",
+      "diagnostics": {
+        "summary": "Forward-looking relative window.",
+        "notes": ["Seeded"]
+      },
+      "order": 72
+    },
+    {
+      "key": "today",
+      "labels": {
+        "raw": "today",
+        "polished": "Today",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches today's date.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 73
+    },
+    {
+      "key": "yesterday",
+      "labels": {
+        "raw": "yesterday",
+        "polished": "Yesterday",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches yesterday's date.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 74
+    },
+    {
+      "key": "tomorrow",
+      "labels": {
+        "raw": "tomorrow",
+        "polished": "Tomorrow",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches tomorrow's date.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 75
+    },
+    {
+      "key": "last-seven-days",
+      "labels": {
+        "raw": "last-seven-days",
+        "polished": "Last Seven Days",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the previous seven days including today.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 76
+    },
+    {
+      "key": "next-seven-days",
+      "labels": {
+        "raw": "next-seven-days",
+        "polished": "Next Seven Days",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next seven days.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 77
+    },
+    {
+      "key": "last-week",
+      "labels": {
+        "raw": "last-week",
+        "polished": "Last Week",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the previous week.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 78
+    },
+    {
+      "key": "next-week",
+      "labels": {
+        "raw": "next-week",
+        "polished": "Next Week",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next week.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 79
+    },
+    {
+      "key": "this-week",
+      "labels": {
+        "raw": "this-week",
+        "polished": "This Week",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the current week.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 80
+    },
+    {
+      "key": "last-month",
+      "labels": {
+        "raw": "last-month",
+        "polished": "Last Month",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the previous month.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 81
+    },
+    {
+      "key": "next-month",
+      "labels": {
+        "raw": "next-month",
+        "polished": "Next Month",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next month.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 82
+    },
+    {
+      "key": "this-month",
+      "labels": {
+        "raw": "this-month",
+        "polished": "This Month",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the current month.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 83
+    },
+    {
+      "key": "last-year",
+      "labels": {
+        "raw": "last-year",
+        "polished": "Last Year",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the previous year.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 84
+    },
+    {
+      "key": "next-year",
+      "labels": {
+        "raw": "next-year",
+        "polished": "Next Year",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next year.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 85
+    },
+    {
+      "key": "this-year",
+      "labels": {
+        "raw": "this-year",
+        "polished": "This Year",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the current year.",
+      "diagnostics": {
+        "summary": "No value required.",
+        "notes": ["Seeded"]
+      },
+      "order": 86
+    },
+    {
+      "key": "last-x-weeks",
+      "labels": {
+        "raw": "last-x-weeks",
+        "polished": "Last X Weeks",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the previous specified number of weeks.",
+      "diagnostics": {
+        "summary": "Relative week window.",
+        "notes": ["Seeded"]
+      },
+      "order": 87
+    },
+    {
+      "key": "next-x-weeks",
+      "labels": {
+        "raw": "next-x-weeks",
+        "polished": "Next X Weeks",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next specified number of weeks.",
+      "diagnostics": {
+        "summary": "Forward-looking relative week window.",
+        "notes": ["Seeded"]
+      },
+      "order": 88
+    },
+    {
+      "key": "last-x-months",
+      "labels": {
+        "raw": "last-x-months",
+        "polished": "Last X Months",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the previous specified number of months.",
+      "diagnostics": {
+        "summary": "Relative month window.",
+        "notes": ["Seeded"]
+      },
+      "order": 89
+    },
+    {
+      "key": "next-x-months",
+      "labels": {
+        "raw": "next-x-months",
+        "polished": "Next X Months",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next specified number of months.",
+      "diagnostics": {
+        "summary": "Forward-looking relative month window.",
+        "notes": ["Seeded"]
+      },
+      "order": 90
+    },
+    {
+      "key": "last-x-years",
+      "labels": {
+        "raw": "last-x-years",
+        "polished": "Last X Years",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the previous specified number of years.",
+      "diagnostics": {
+        "summary": "Relative year window.",
+        "notes": ["Seeded"]
+      },
+      "order": 91
+    },
+    {
+      "key": "next-x-years",
+      "labels": {
+        "raw": "next-x-years",
+        "polished": "Next X Years",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates within the next specified number of years.",
+      "diagnostics": {
+        "summary": "Forward-looking relative year window.",
+        "notes": ["Seeded"]
+      },
+      "order": 92
+    },
+    {
+      "key": "last-x-hours",
+      "labels": {
+        "raw": "last-x-hours",
+        "polished": "Last X Hours",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches datetimes within the previous specified number of hours.",
+      "diagnostics": {
+        "summary": "Relative hour window.",
+        "notes": ["Seeded"]
+      },
+      "order": 93
+    },
+    {
+      "key": "next-x-hours",
+      "labels": {
+        "raw": "next-x-hours",
+        "polished": "Next X Hours",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches datetimes within the next specified number of hours.",
+      "diagnostics": {
+        "summary": "Forward-looking relative hour window.",
+        "notes": ["Seeded"]
+      },
+      "order": 94
+    },
+    {
+      "key": "olderthan-x-hours",
+      "labels": {
+        "raw": "olderthan-x-hours",
+        "polished": "Older Than X Hours",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches datetimes older than the specified number of hours.",
+      "diagnostics": {
+        "summary": "Relative age comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 95
+    },
+    {
+      "key": "olderthan-x-minutes",
+      "labels": {
+        "raw": "olderthan-x-minutes",
+        "polished": "Older Than X Minutes",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches datetimes older than the specified number of minutes.",
+      "diagnostics": {
+        "summary": "Relative age comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 96
+    },
+    {
+      "key": "olderthan-x-weeks",
+      "labels": {
+        "raw": "olderthan-x-weeks",
+        "polished": "Older Than X Weeks",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates older than the specified number of weeks.",
+      "diagnostics": {
+        "summary": "Relative age comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 97
+    },
+    {
+      "key": "olderthan-x-months",
+      "labels": {
+        "raw": "olderthan-x-months",
+        "polished": "Older Than X Months",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates older than the specified number of months.",
+      "diagnostics": {
+        "summary": "Relative age comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 98
+    },
+    {
+      "key": "olderthan-x-years",
+      "labels": {
+        "raw": "olderthan-x-years",
+        "polished": "Older Than X Years",
+        "grouped": "Relative Date"
+      },
+      "classification": "relativeDate",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches dates older than the specified number of years.",
+      "diagnostics": {
+        "summary": "Relative age comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 99
+    },
+
+    {
+      "key": "eq-userid",
+      "labels": {
+        "raw": "eq-userid",
+        "polished": "Equals Current User",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records owned by the current user.",
+      "diagnostics": {
+        "summary": "Context-based operator.",
+        "notes": ["Seeded"]
+      },
+      "order": 110
+    },
+    {
+      "key": "eq-userlanguage",
+      "labels": {
+        "raw": "eq-userlanguage",
+        "polished": "Equals User Language",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["choice", "number"],
+      "supportedContexts": ["condition"],
+      "description": "Matches the current user's language setting.",
+      "diagnostics": {
+        "summary": "Context-based operator.",
+        "notes": ["Seeded"]
+      },
+      "order": 111
+    },
+    {
+      "key": "eq-userteams",
+      "labels": {
+        "raw": "eq-userteams",
+        "polished": "Equals User Teams",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records owned by any team the current user belongs to.",
+      "diagnostics": {
+        "summary": "User team context filter.",
+        "notes": ["Seeded"]
+      },
+      "order": 112
+    },
+    {
+      "key": "eq-useroruserteams",
+      "labels": {
+        "raw": "eq-useroruserteams",
+        "polished": "Equals User Or User Teams",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records owned by the current user or their teams.",
+      "diagnostics": {
+        "summary": "Combined ownership context.",
+        "notes": ["Seeded"]
+      },
+      "order": 113
+    },
+    {
+      "key": "eq-useroruserhierarchy",
+      "labels": {
+        "raw": "eq-useroruserhierarchy",
+        "polished": "Equals User Or Hierarchy",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records owned by the current user or their reporting hierarchy.",
+      "diagnostics": {
+        "summary": "Hierarchy + user context.",
+        "notes": ["Seeded"]
+      },
+      "order": 114
+    },
+    {
+      "key": "eq-useroruserhierarchyandteams",
+      "labels": {
+        "raw": "eq-useroruserhierarchyandteams",
+        "polished": "Equals User Hierarchy And Teams",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records owned by the user, their hierarchy, or their teams.",
+      "diagnostics": {
+        "summary": "Full ownership scope.",
+        "notes": ["Seeded"]
+      },
+      "order": 115
+    },
+    {
+      "key": "eq-businessid",
+      "labels": {
+        "raw": "eq-businessid",
+        "polished": "Equals Business Unit",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records belonging to the current business unit.",
+      "diagnostics": {
+        "summary": "Business unit context.",
+        "notes": ["Seeded"]
+      },
+      "order": 116
+    },
+    {
+      "key": "ne-businessid",
+      "labels": {
+        "raw": "ne-businessid",
+        "polished": "Not Equals Business Unit",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes records belonging to the current business unit.",
+      "diagnostics": {
+        "summary": "Inverse business unit filter.",
+        "notes": ["Seeded"]
+      },
+      "order": 117
+    },
+    {
+      "key": "ne-userid",
+      "labels": {
+        "raw": "ne-userid",
+        "polished": "Not Equals Current User",
+        "grouped": "Ownership"
+      },
+      "classification": "ownership",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes records owned by the current user.",
+      "diagnostics": {
+        "summary": "Inverse user ownership.",
+        "notes": ["Seeded"]
+      },
+      "order": 118
+    },
+
+    {
+      "key": "in-fiscal-period",
+      "labels": {
+        "raw": "in-fiscal-period",
+        "polished": "In Fiscal Period",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records within a specific fiscal period.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 130
+    },
+    {
+      "key": "in-fiscal-year",
+      "labels": {
+        "raw": "in-fiscal-year",
+        "polished": "In Fiscal Year",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records within a specific fiscal year.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 131
+    },
+    {
+      "key": "in-fiscal-period-and-year",
+      "labels": {
+        "raw": "in-fiscal-period-and-year",
+        "polished": "In Fiscal Period And Year",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "multi",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records within a fiscal period and year combination.",
+      "diagnostics": {
+        "summary": "Composite fiscal filter.",
+        "notes": ["Seeded"]
+      },
+      "order": 132
+    },
+    {
+      "key": "in-or-after-fiscal-period-and-year",
+      "labels": {
+        "raw": "in-or-after-fiscal-period-and-year",
+        "polished": "In Or After Fiscal Period And Year",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "multi",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in or after a fiscal period and year.",
+      "diagnostics": {
+        "summary": "Forward fiscal comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 133
+    },
+    {
+      "key": "in-or-before-fiscal-period-and-year",
+      "labels": {
+        "raw": "in-or-before-fiscal-period-and-year",
+        "polished": "In Or Before Fiscal Period And Year",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "multiple",
+      "valueContract": "multi",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in or before a fiscal period and year.",
+      "diagnostics": {
+        "summary": "Backward fiscal comparison.",
+        "notes": ["Seeded"]
+      },
+      "order": 134
+    },
+    {
+      "key": "last-fiscal-period",
+      "labels": {
+        "raw": "last-fiscal-period",
+        "polished": "Last Fiscal Period",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the previous fiscal period.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 135
+    },
+    {
+      "key": "last-fiscal-year",
+      "labels": {
+        "raw": "last-fiscal-year",
+        "polished": "Last Fiscal Year",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the previous fiscal year.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 136
+    },
+    {
+      "key": "next-fiscal-period",
+      "labels": {
+        "raw": "next-fiscal-period",
+        "polished": "Next Fiscal Period",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the next fiscal period.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 137
+    },
+    {
+      "key": "next-fiscal-year",
+      "labels": {
+        "raw": "next-fiscal-year",
+        "polished": "Next Fiscal Year",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the next fiscal year.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 138
+    },
+    {
+      "key": "this-fiscal-period",
+      "labels": {
+        "raw": "this-fiscal-period",
+        "polished": "This Fiscal Period",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the current fiscal period.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 139
+    },
+    {
+      "key": "this-fiscal-year",
+      "labels": {
+        "raw": "this-fiscal-year",
+        "polished": "This Fiscal Year",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": false,
+      "valueCount": "none",
+      "valueContract": "none",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the current fiscal year.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 140
+    },
+    {
+      "key": "last-x-fiscal-periods",
+      "labels": {
+        "raw": "last-x-fiscal-periods",
+        "polished": "Last X Fiscal Periods",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the previous specified number of fiscal periods.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 141
+    },
+    {
+      "key": "last-x-fiscal-years",
+      "labels": {
+        "raw": "last-x-fiscal-years",
+        "polished": "Last X Fiscal Years",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the previous specified number of fiscal years.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 142
+    },
+    {
+      "key": "next-x-fiscal-periods",
+      "labels": {
+        "raw": "next-x-fiscal-periods",
+        "polished": "Next X Fiscal Periods",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the next specified number of fiscal periods.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 143
+    },
+    {
+      "key": "next-x-fiscal-years",
+      "labels": {
+        "raw": "next-x-fiscal-years",
+        "polished": "Next X Fiscal Years",
+        "grouped": "Fiscal Date"
+      },
+      "classification": "fiscal",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["date", "datetime"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records in the next specified number of fiscal years.",
+      "diagnostics": {
+        "summary": "Requires fiscal calendar configuration.",
+        "notes": ["Seeded"]
+      },
+      "order": 144
+    },
+
+    {
+      "key": "above",
+      "labels": {
+        "raw": "above",
+        "polished": "Above",
+        "grouped": "Hierarchy"
+      },
+      "classification": "hierarchy",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records above a specified record in the hierarchy.",
+      "diagnostics": {
+        "summary": "Hierarchy traversal upward.",
+        "notes": ["Seeded"]
+      },
+      "order": 150
+    },
+    {
+      "key": "under",
+      "labels": {
+        "raw": "under",
+        "polished": "Under",
+        "grouped": "Hierarchy"
+      },
+      "classification": "hierarchy",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records under a specified record in the hierarchy.",
+      "diagnostics": {
+        "summary": "Hierarchy traversal downward.",
+        "notes": ["Seeded"]
+      },
+      "order": 151
+    },
+    {
+      "key": "not-under",
+      "labels": {
+        "raw": "not-under",
+        "polished": "Not Under",
+        "grouped": "Hierarchy"
+      },
+      "classification": "hierarchy",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Excludes records under a specified hierarchy node.",
+      "diagnostics": {
+        "summary": "Inverse hierarchy filter.",
+        "notes": ["Seeded"]
+      },
+      "order": 152
+    },
+    {
+      "key": "eq-or-above",
+      "labels": {
+        "raw": "eq-or-above",
+        "polished": "Equal Or Above",
+        "grouped": "Hierarchy"
+      },
+      "classification": "hierarchy",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records equal to or above a specified hierarchy node.",
+      "diagnostics": {
+        "summary": "Inclusive upward hierarchy.",
+        "notes": ["Seeded"]
+      },
+      "order": 153
+    },
+    {
+      "key": "eq-or-under",
+      "labels": {
+        "raw": "eq-or-under",
+        "polished": "Equal Or Under",
+        "grouped": "Hierarchy"
+      },
+      "classification": "hierarchy",
+      "supportTier": "seeded",
+      "visibleInFetchXmlUi": false,
+      "requiresValue": true,
+      "valueCount": "single",
+      "valueContract": "single",
+      "supportedCategories": ["lookup"],
+      "supportedContexts": ["condition"],
+      "description": "Matches records equal to or under a specified hierarchy node.",
+      "diagnostics": {
+        "summary": "Inclusive downward hierarchy.",
+        "notes": ["Seeded"]
+      },
+      "order": 154
     }
   ]
 }

@@ -62,3 +62,11 @@ export function getFetchXmlOperatorsGroupedByClassification(
             return groups;
         }, {});
 }
+
+export function findFetchXmlOperator(key: string): FetchXmlOperatorDef | undefined {
+    const normalizedKey = key.trim().toLowerCase();
+
+    return getAllFetchXmlOperators().find(
+        (operator) => operator.key.trim().toLowerCase() === normalizedKey
+    );
+}

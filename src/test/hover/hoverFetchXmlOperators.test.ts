@@ -2,7 +2,8 @@ import * as assert from "assert";
 import {
     getOfficialFetchXmlOperators,
     getFetchXmlOperatorLabel,
-    getFetchXmlOperatorsGroupedByClassification
+    getFetchXmlOperatorsGroupedByClassification,
+    getAllFetchXmlOperators
 } from "../../shared/fetchXml/fetchXmlOperatorCatalog.js";
 
 suite("hoverFetchXmlOperators", () => {
@@ -78,14 +79,41 @@ suite("hoverFetchXmlOperators", () => {
 
         operators.forEach((operator) => {
             assert.ok(
-                ["none", "single", "multiple"].includes(operator.valueCount),
-                `${operator.key} has invalid valueCount`
+                ["none", "single", "multi", "range"].includes(operator.valueContract),
+                `${operator.key} has invalid valueContract`
             );
 
-            assert.strictEqual(
-                operator.requiresValue,
-                operator.valueCount !== "none",
-                `${operator.key} has inconsistent requiresValue/valueCount`
+            if (operator.valueContract === "none") {
+                assert.strictEqual(operator.requiresValue, false, `${operator.key} should not require value`);
+            }
+        });
+    });
+
+    test("official visible operators provide user-facing diagnostics content", () => {
+        const operators = getOfficialFetchXmlOperators();
+
+        operators.forEach((operator) => {
+            assert.ok(operator.description.trim().length > 0);
+            assert.ok(operator.diagnostics.summary.trim().length > 0);
+
+            const enrichedOperators = ["eq", "ne", "null", "not-null", "like"];
+
+            if (enrichedOperators.includes(operator.key)) {
+                assert.ok((operator.diagnostics.commonMistakes?.length ?? 0) > 0, `${operator.key} missing commonMistakes`);
+                assert.ok((operator.diagnostics.examples?.length ?? 0) > 0, `${operator.key} missing examples`);
+            }
+        });
+    });
+
+    test("enriched official operators define supportedContexts", () => {
+        const enrichedOperators = ["eq", "ne", "null", "not-null", "like", "in"];
+        const operators = getOfficialFetchXmlOperators()
+            .filter((operator) => enrichedOperators.includes(operator.key));
+
+        operators.forEach((operator) => {
+            assert.ok(
+                (operator.supportedContexts?.length ?? 0) > 0,
+                `${operator.key} missing supportedContexts`
             );
         });
     });

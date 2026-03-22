@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import {
+    findFetchXmlOperator,
     getAllFetchXmlOperators,
     getFetchXmlOperatorCatalog,
     getFetchXmlOperatorLabel,
@@ -64,4 +65,80 @@ suite("fetchXmlOperatorCatalog", () => {
             assert.ok(operator.labels.grouped.trim().length > 0);
         });
     });
+
+    test("resolved operators expose valueContract for new v0.6.1 logic", () => {
+        const operators = getAllFetchXmlOperators();
+
+        operators.forEach((operator) => {
+            assert.ok(
+                ["none", "single", "multi", "range"].includes(operator.valueContract),
+                `${operator.key} has invalid valueContract`
+            );
+        });
+    });
+
+    test("legacy multiple valueCount maps to multi valueContract", () => {
+        const operator = findFetchXmlOperator("in");
+
+        assert.ok(operator);
+        assert.strictEqual(operator!.valueCount, "multiple");
+        assert.strictEqual(operator!.valueContract, "multi");
+    });
+
+    test("legacy none valueCount maps to none valueContract", () => {
+        const operator = findFetchXmlOperator("null");
+
+        assert.ok(operator);
+        assert.strictEqual(operator!.valueCount, "none");
+        assert.strictEqual(operator!.valueContract, "none");
+    });
+
+    test("like operator exposes enriched diagnostics metadata", () => {
+        const like = findFetchXmlOperator("like");
+
+        assert.ok(like);
+        assert.strictEqual(like!.valueContract, "single");
+        assert.deepStrictEqual(like!.supportedContexts, ["condition"]);
+        assert.ok((like!.diagnostics.commonMistakes?.length ?? 0) > 0);
+        assert.ok((like!.diagnostics.examples?.length ?? 0) > 0);
+    });
+
+    test("eq operator exposes supported condition context", () => {
+        const eq = findFetchXmlOperator("eq");
+
+        assert.ok(eq);
+        assert.strictEqual(eq!.valueContract, "single");
+        assert.deepStrictEqual(eq!.supportedContexts, ["condition"]);
+    });
+
+    test("null operator uses no-value contract", () => {
+        const operator = findFetchXmlOperator("null");
+
+        assert.ok(operator);
+        assert.strictEqual(operator!.requiresValue, false);
+        assert.strictEqual(operator!.valueCount, "none");
+        assert.strictEqual(operator!.valueContract, "none");
+        assert.deepStrictEqual(operator!.supportedContexts, ["condition"]);
+    });
+
+    test("not-null operator uses no-value contract", () => {
+        const operator = findFetchXmlOperator("not-null");
+
+        assert.ok(operator);
+        assert.strictEqual(operator!.requiresValue, false);
+        assert.strictEqual(operator!.valueCount, "none");
+        assert.strictEqual(operator!.valueContract, "none");
+        assert.deepStrictEqual(operator!.supportedContexts, ["condition"]);
+    });
+
+    test("in operator uses multi value contract", () => {
+        const operator = findFetchXmlOperator("in");
+
+        assert.ok(operator);
+        assert.strictEqual(operator!.valueCount, "multiple");
+        assert.strictEqual(operator!.valueContract, "multi");
+        assert.deepStrictEqual(operator!.supportedContexts, ["condition"]);
+        assert.ok((operator!.diagnostics.examples?.length ?? 0) > 0);
+    });
+
 });

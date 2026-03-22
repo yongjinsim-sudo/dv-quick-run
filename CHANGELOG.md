@@ -6,6 +6,98 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+### [0.6.1] – FetchXML Semantic Hover & Operator Intelligence
+
+### Added
+- **Full FetchXML operator hover support**
+  - Hover on `<condition operator="...">`
+  - Displays:
+    - polished operator meaning (human-readable)
+    - raw operator name
+    - grouped classification (comparison, set, relative date, etc.)
+    - value expectations (none / single / multiple / range)
+    - supported data categories
+    - usage examples and diagnostics
+  - Covers:
+    - comparison (`eq`, `gt`, `on-or-after`, etc.)
+    - pattern (`like`, `begins-with`, etc.)
+    - set (`in`, `contain-values`, etc.)
+    - range (`between`)
+    - relative date (`last-x-days`, `this-week`, etc.)
+    - fiscal, hierarchy, and ownership operators
+
+- **Choice / OptionSet hover enrichment**
+  - Hover on:
+    - `<condition attribute="statecode" ... />`
+    - `<value>1</value>` and `value="1"`
+  - Displays:
+    - selected label (e.g. `Active`)
+    - full available choice set
+  - Aligns FetchXML experience with existing OData choice awareness
+
+- **Relationship-aware hover (FetchXML)**
+  - Hover on:
+    - `<link-entity name="...">`
+    - `from`, `to`, `alias`
+  - Displays:
+    - relationship metadata
+    - target/source entity context
+  - Enables understanding of joins directly from the editor
+
+- **Linked-entity field hover**
+  - Hover on attributes inside nested `<link-entity>`
+  - Displays metadata from the correct related entity scope
+  - Supports multi-level nesting
+
+- **Expanded metadata-aware hover coverage**
+  - Hover now supports:
+    - entity names
+    - attribute names
+    - operators
+    - relationship attributes
+    - choice literals
+  - Brings FetchXML hover close to OData parity
+
+- **Operator catalog expansion (data-driven)**
+  - Fully seeded operator registry covering:
+    - core operators
+    - relative date family
+    - fiscal operators
+    - hierarchy operators
+    - ownership/context operators
+  - Clean grouping and ordering across categories
+  - Enables future features (Explain, validation, query doctor)
+
+### Improved
+- **FetchXML hover quality and consistency**
+  - Hover output now uses:
+    - polished labels (human-readable)
+    - structured diagnostics
+    - consistent formatting across all operator types
+
+- **Scope-aware metadata resolution**
+  - Correct entity resolution across:
+    - root entity
+    - linked entities
+    - nested link-entities
+  - Eliminates incorrect hover results in complex queries
+
+- **Parity with OData experience**
+  - FetchXML now provides:
+    - comparable metadata awareness
+    - comparable choice decoding
+    - comparable developer guidance
+
+- **Foundation for semantic reasoning**
+  - Operator metadata now includes:
+    - classification
+    - value contracts
+    - diagnostics
+  - Prepares groundwork for:
+    - Explain FetchXML
+    - query validation
+    - query optimisation suggestions
+
 ### [0.6.0] – FetchXML Execution & Hover Foundation
 
 ### Added

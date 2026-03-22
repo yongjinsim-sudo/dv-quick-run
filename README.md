@@ -22,6 +22,59 @@ All inside VS Code.
 
 ---
 
+## 🆕 What's New in v0.6.1
+
+* **FetchXML semantic hover (major upgrade)**
+  - Hover now works across the full FetchXML surface:
+    - `<entity>`, `<attribute>`
+    - `<condition operator="...">`
+    - `<link-entity>` (`from`, `to`, `alias`)
+    - nested linked entities
+  - Displays:
+    - metadata context (logical + display names)
+    - operator meaning (polished + raw)
+    - classification (comparison, set, relative date, etc.)
+    - value expectations and usage guidance
+
+* **Full operator intelligence**
+  - Complete operator coverage including:
+    - comparison, pattern, set, range
+    - relative date (e.g. `last-x-days`, `this-week`)
+    - fiscal operators
+    - hierarchy operators
+    - ownership/context operators
+  - Data-driven operator catalog enables future extensibility (no code changes required)
+
+* **Choice / OptionSet awareness (FetchXML)**
+  - Hover on:
+    - `value="0"`
+    - `<value>1</value>`
+  - Displays:
+    - selected label (e.g. `Active`)
+    - full available option set values
+  - Achieves parity with OData choice decoding
+
+* **Relationship-aware hover**
+  - Hover on `link-entity` attributes shows:
+    - relationship metadata
+    - source/target entity context
+  - Makes joins understandable directly from the editor
+
+* **Linked-entity scope awareness**
+  - Correct metadata resolution for:
+    - linked entities
+    - nested link-entities
+  - Eliminates incorrect hover results in complex FetchXML queries
+
+* **Near parity with OData experience**
+  - FetchXML now provides:
+    - metadata-aware hover
+    - choice decoding
+    - semantic operator guidance
+  - Brings FetchXML to the same level of developer ergonomics as OData
+
+---
+
 ## 🆕 What's New in v0.6.0
 
 * **FetchXML execution support**
@@ -35,12 +88,12 @@ All inside VS Code.
     - **Run FetchXML** for FetchXML queries
     - **Explain Query** remains OData-only
 
-* **FetchXML hover (first cut)**
+* **FetchXML hover (foundation)**
   - Hover on:
     - `<entity name="...">`
     - `<attribute name="...">`
   - Displays logical and display names using metadata
-  - Brings FetchXML closer to OData-level developer ergonomics
+  - Introduced metadata-aware hover model for FetchXML
 
 * **Operator foundation (extensible design)**
   - Introduced a data-driven operator catalog
@@ -51,7 +104,7 @@ All inside VS Code.
   - OData and FetchXML now share the same execution and result viewer pipeline
   - Improved consistency across query workflows
 
-*(Minimal UI changes — major functional expansion introducing FetchXML support and metadata-aware hover)*
+*(Minimal UI changes — major functional expansion introducing FetchXML support and metadata-aware hover foundation)*
 
 ---
 
