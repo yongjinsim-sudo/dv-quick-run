@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code.
+A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — built for real-world Dataverse debugging and exploration.
 
 **Run, understand, and explore Dataverse data — without leaving your editor.**
 
@@ -21,6 +21,33 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 All inside VS Code.
 
 ---
+
+## 🆕 What's New in v0.6.3
+
+* **Investigation engine refactor (architecture consolidation)**
+  - Refactored Investigate Record into focused modules:
+    - summary field generation
+    - lookup relationship suggestions
+    - reverse link discovery
+  - Improves maintainability and enables future reasoning features
+
+* **Result Viewer render layer separation**
+  - Extracted rendering logic into dedicated modules
+  - Simplified viewer bootstrap for improved stability
+  - Cleaner separation between data, rendering, and interactions
+
+* **Shared helper consolidation**
+  - Unified common logic:
+    - label formatting
+    - entity name formatting
+    - normalization
+  - Removed duplication across investigation modules
+
+* **Internal stability improvements**
+  - Fixed minor edge cases uncovered during refactor
+  - Improved consistency across investigation pipeline
+
+*(No major UI changes — this release focuses on stability, structure, and long-term extensibility)*
 
 ## 🆕 What's New in v0.6.2
 

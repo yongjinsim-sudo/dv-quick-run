@@ -58,13 +58,13 @@ export interface InvestigationLookupTargetOption {
 }
 
 export interface InvestigationLookupSuggestion {
-  logicalName: string;
-  targetEntityLogicalName?: string;
-  targetEntitySetName?: string;
-  recordId?: string;
-  displayName?: string;
-  targetEntityLogicalNameRaw?: string;
-  targetOptions?: InvestigationLookupTargetOption[];
+    logicalName: string;
+    targetEntityLogicalNameRaw?: string;
+    targetEntityLogicalName?: string;
+    targetEntitySetName?: string;
+    recordId: string;
+    displayName?: string;
+    targetOptions?: InvestigationLookupTargetOption[];
 }
 
 export interface InvestigationDocumentModel {
