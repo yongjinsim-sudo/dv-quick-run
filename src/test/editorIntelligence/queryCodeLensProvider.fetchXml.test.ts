@@ -16,7 +16,7 @@ suite("queryCodeLensProvider - fetchxml", () => {
     return (lenses ?? []).map((lens) => lens.command?.title ?? "");
   }
 
-  test("fetchxml shows Run FetchXML only", async () => {
+  test("fetchxml shows Run FetchXML and Explain", async () => {
     const text = [
       `<fetch top="5">`,
       `  <entity name="contact">`,
@@ -29,7 +29,7 @@ suite("queryCodeLensProvider - fetchxml", () => {
 
     assert.ok(titles.includes("Run FetchXML"));
     assert.ok(!titles.includes("Run Query"));
-    assert.ok(!titles.includes("Explain"));
+    assert.ok(titles.includes("Explain"));
   });
 
   test("odata still shows Run Query and Explain", async () => {

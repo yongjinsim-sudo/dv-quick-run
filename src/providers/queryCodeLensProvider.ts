@@ -49,16 +49,25 @@ export class QueryCodeLensProvider implements vscode.CodeLensProvider {
       const kind = detectQueryKind(text);
 
       if (kind === "fetchxml") {
-          lenses.push(
-              new vscode.CodeLens(range, {
-                  title: "Run FetchXML",
-                  tooltip: "Run this FetchXML query",
-                  command: "dvQuickRun.runQueryAtLine",
-                  arguments: [document.uri, lineNumber]
-              })
-          );
+        lenses.push(
+          new vscode.CodeLens(range, {
+            title: "Run FetchXML",
+            tooltip: "Run this FetchXML query",
+            command: "dvQuickRun.runQueryAtLine",
+            arguments: [document.uri, lineNumber]
+          })
+        );
 
-          continue;
+        lenses.push(
+          new vscode.CodeLens(range, {
+            title: "Explain",
+            tooltip: "Explain this FetchXML query",
+            command: "dvQuickRun.explainQueryAtLine",
+            arguments: [document.uri, lineNumber]
+          })
+        );
+
+        continue;
       }
 
       lenses.push(

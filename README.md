@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and action workbench for VS Code.
+A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code.
 
 **Run, understand, and explore Dataverse data — without leaving your editor.**
 
@@ -19,6 +19,64 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Refine and repeat
 
 All inside VS Code.
+
+---
+
+## 🆕 What's New in v0.6.2
+
+* **FetchXML Explain (Teaching Mode)**
+  - Explain FetchXML queries directly from the editor (**Explain**)
+  - Produces a structured, human-readable walkthrough of the query
+  - Helps developers understand *what the query does*, not just how it is written
+
+* **Query Overview & Result Shape**
+  - Clearly explains:
+    - root entity
+    - linked entities
+    - selected attributes
+    - expected result structure
+  - Introduces **Result Shape** to describe what each row represents
+
+* **Structure Walkthrough (hierarchical)**
+  - Explains the full FetchXML tree in execution order
+  - Covers:
+    - root entity
+    - nested link-entities
+    - attribute selection per scope
+  - Preserves hierarchy (no flattening)
+
+* **Relationship Explanation**
+  - Explains joins in plain language
+  - Describes:
+    - how entities are connected
+    - why linked entities are included
+    - join behaviour and direction
+
+* **Scope-aware Filter Narration**
+  - Groups filters by entity / alias scope
+  - Distinguishes:
+    - root filters vs linked-entity filters
+  - Supports:
+    - nested filters
+    - AND / OR logic
+    - multi-value conditions (`contain-values`)
+
+* **Operator & Metadata-aware Explanation**
+  - Reuses operator intelligence from v0.6.1
+  - Explains operators such as:
+    - `eq`, `not-null`, `this-month`, `contain-values`
+  - Displays choice labels when metadata is available
+  - Falls back gracefully to raw values when not available
+
+* **Advisory Diagnostics**
+  - Provides non-blocking guidance:
+    - alias usage recommendations
+    - readability notes for deep nesting
+  - Maintains a safe, non-mutating approach
+
+* **FetchXML Explain CodeLens**
+  - `Explain` now available for FetchXML queries
+  - Aligns FetchXML with OData developer workflow
 
 ---
 
