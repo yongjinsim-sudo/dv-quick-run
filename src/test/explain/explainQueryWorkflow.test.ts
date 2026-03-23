@@ -26,9 +26,11 @@ suite("explainQueryWorkflow", () => {
 
     await runExplainQueryWorkflowWithDeps({ output: {} } as any, {
       resolveText: () => "contacts?$select=fullname",
+      detectKind: () => "odata",
       parseQuery: () => parsed,
       analyse: async () => ({ entity: { logicalName: "contact" } as any, validationIssues: [{ severity: "warning", message: "ok" }] as any }),
       buildMarkdown: (_parsed, entity, issues) => `entity=${entity?.logicalName};issues=${issues.length}`,
+      buildFetchXmlMarkdown: async () => "",
       openPreview: async (markdown: string) => { previewMarkdown = markdown; },
       logDebugMessage: (_output: any, message: string) => { debug.push(message); },
       logInfoMessage: (_output: any, message: string) => { info.push(message); },
@@ -45,9 +47,11 @@ suite("explainQueryWorkflow", () => {
     await assert.rejects(
       () => runExplainQueryWorkflowWithDeps({ output: {} } as any, {
         resolveText: () => undefined,
+        detectKind: () => "odata",
         parseQuery: () => parsed,
         analyse: async () => ({ entity: undefined, validationIssues: [] }),
         buildMarkdown: () => "",
+        buildFetchXmlMarkdown: async () => "",
         openPreview: async () => undefined,
         logDebugMessage: () => undefined,
         logInfoMessage: () => undefined,
@@ -61,9 +65,11 @@ suite("explainQueryWorkflow", () => {
     await assert.rejects(
       () => runExplainQueryWorkflowWithDeps({ output: {} } as any, {
         resolveText: () => "???",
+        detectKind: () => "odata",
         parseQuery: () => ({ ...parsed, entitySetName: undefined }),
         analyse: async () => ({ entity: undefined, validationIssues: [] }),
         buildMarkdown: () => "",
+        buildFetchXmlMarkdown: async () => "",
         openPreview: async () => undefined,
         logDebugMessage: () => undefined,
         logInfoMessage: () => undefined,
@@ -72,4 +78,23 @@ suite("explainQueryWorkflow", () => {
       /Could not detect entity set/
     );
   });
+  test("routes FetchXML queries through FetchXML explain pipeline", async () => {
+    let previewMarkdown = "";
+
+    await runExplainQueryWorkflowWithDeps({ output: {} } as any, {
+      resolveText: () => `<fetch><entity name="contact" /></fetch>`,
+      detectKind: () => "fetchxml",
+      parseQuery: () => parsed,
+      analyse: async () => ({ entity: undefined, validationIssues: [] }),
+      buildMarkdown: () => "odata-markdown",
+      buildFetchXmlMarkdown: async () => "fetchxml-markdown",
+      openPreview: async (markdown: string) => { previewMarkdown = markdown; },
+      logDebugMessage: () => undefined,
+      logInfoMessage: () => undefined,
+      showInformationMessage: async () => undefined
+    });
+
+    assert.strictEqual(previewMarkdown, "fetchxml-markdown");
+  });
+
 });

@@ -6,6 +6,96 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+### [0.6.2] – FetchXML Explain (Teaching Mode) & Reasoning Foundation
+
+### Added
+- **FetchXML Explain Query (Teaching Mode)**
+  - Explain FetchXML queries directly from the editor
+  - Provides a structured, human-readable walkthrough of the query
+  - Designed to help developers understand query intent, not just syntax
+
+- **Query Overview & Result Shape Explanation**
+  - Explains:
+    - root entity
+    - number of linked entities
+    - selected attributes
+    - expected result structure
+  - Introduces **Result Shape** section describing what each row represents
+
+- **Structure Walkthrough (hierarchical)**
+  - Explains FetchXML tree structure in execution order
+  - Covers:
+    - root entity
+    - nested link-entities
+    - attribute selection per scope
+  - Preserves full hierarchy (no flattening)
+
+- **Relationship Explanation (purpose-based)**
+  - Explains joins in plain language
+  - Describes:
+    - how entities are connected
+    - why linked entities are included
+    - join direction and behaviour
+
+- **Scope-aware Filter Narration**
+  - Groups filters by entity / alias scope
+  - Clearly distinguishes:
+    - root-level filters
+    - linked-entity filters
+  - Supports:
+    - nested filters
+    - AND / OR groupings
+    - multi-value conditions (`contain-values`)
+
+- **Operator Meaning Integration**
+  - Reuses operator intelligence system from v0.6.1
+  - Explains operators such as:
+    - `eq`, `not-null`, `this-month`, `contain-values`
+  - Includes value contract awareness
+
+- **Advisory Diagnostics & Suggestions**
+  - Non-blocking guidance including:
+    - missing alias recommendations
+    - deep nesting readability notes
+  - Maintains advisory (non-mutating) philosophy
+
+- **FetchXML Explain CodeLens support**
+  - `Explain` now available for FetchXML queries
+  - Aligns FetchXML with OData developer workflow
+
+### Improved
+- **FetchXML developer experience**
+  - FetchXML evolves from:
+    - execution-only → semantic understanding → full query explanation
+  - Significantly reduces cognitive load when reading complex queries
+
+- **Metadata enrichment consistency**
+  - Unified enrichment for:
+    - attributes
+    - conditions
+    - choice values
+  - Choice labels displayed when metadata is available locally
+  - Graceful fallback to raw values when metadata is unavailable
+
+- **Metadata enrichment performance**
+  - Parallel metadata loading for all entities in the query
+  - Deduplicated metadata access per entity
+  - Reduced repeated metadata lookups for large queries
+
+- **Explain output readability**
+  - Improved narrative flow:
+    - Executive Summary
+    - Query Overview
+    - Result Shape
+    - Structure Walkthrough
+    - Relationship Explanation
+    - Filter Narration
+  - More natural, teaching-oriented wording
+
+---
+
+(Major functional expansion introducing FetchXML reasoning and explanation capabilities)
+
 ### [0.6.1] – FetchXML Semantic Hover & Operator Intelligence
 
 ### Added
