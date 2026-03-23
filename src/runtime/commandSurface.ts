@@ -26,6 +26,8 @@ import { registerExplainQueryCommand } from "../commands/explainQuery.js";
 import { registerRelationshipExplorerCommand } from "../commands/relationshipExplorer.js";
 import { registerRelationshipGraphViewCommand } from "../commands/relationshipGraphView.js";
 import { registerInvestigateRecordCommand } from "../commands/investigateRecord.js";
+import { registerTrySampleQueryCommand } from "../commands/trySampleQuery.js";
+import { registerTryFetchXmlSampleCommand } from "../commands/tryFetchXmlSample.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -51,7 +53,9 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerExplainQueryCommand,
   registerRelationshipExplorerCommand,
   registerRelationshipGraphViewCommand,
-  registerInvestigateRecordCommand
+  registerInvestigateRecordCommand,
+  registerTrySampleQueryCommand,
+  registerTryFetchXmlSampleCommand
 ];
 
 const diagnosticsRegistrations = (

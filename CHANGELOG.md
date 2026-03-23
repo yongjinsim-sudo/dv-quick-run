@@ -6,6 +6,52 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+### [0.6.3] – Architecture Consolidation & Investigation Engine Refactor
+
+### Added
+- **Investigation engine modular architecture**
+  - Split investigation logic into focused modules:
+    - `investigationSummaryFields`
+    - `investigationLookupSuggestions`
+    - `investigationReverseLinks`
+  - Introduced `investigationDisplayHelpers` as a shared utility layer
+  - Improved separation of concerns across investigation pipeline
+
+### Improved
+- **Investigate Record maintainability and structure**
+  - Refactored previously large and multi-responsibility modules into cohesive units
+  - Reduced complexity of investigation logic for easier future enhancements
+  - Improved readability and reasoning of:
+    - summary field generation
+    - lookup suggestion analysis
+    - reverse relationship discovery
+
+- **Result Viewer architecture (render layer separation)**
+  - Extracted rendering logic into:
+    - `scriptRenderers`
+    - `scriptUtilities`
+  - Simplified `resultViewerHtml` into a lightweight bootstrap layer
+  - Improved separation between:
+    - data preparation
+    - rendering logic
+    - UI interaction handling
+
+- **Codebase consistency and reuse**
+  - Consolidated shared helpers:
+    - label formatting
+    - entity name formatting
+    - normalization logic
+  - Removed duplicate helper implementations across modules
+
+### Fixed
+- Fixed edge cases introduced during refactor where helper dependencies were not correctly resolved
+- Fixed reverse-link generation inconsistencies during modular extraction
+- Fixed minor type mismatches uncovered during module separation
+
+---
+
+(Structural refactor release focused on maintainability, modularity, and long-term extensibility)
+
 ### [0.6.2] – FetchXML Explain (Teaching Mode) & Reasoning Foundation
 
 ### Added

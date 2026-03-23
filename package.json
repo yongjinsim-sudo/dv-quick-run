@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Run, inspect, and investigate Dataverse queries (OData & FetchXML) directly inside VS Code. Includes an interactive result viewer, smart query builders, query explanation, record investigation from GUIDs, metadata intelligence, and relationship exploration — all without leaving your editor.",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -78,7 +78,9 @@
       { "command": "dvQuickRun.selectEnvironment", "title": "DV Quick Run: Select Environment" },
       { "command": "dvQuickRun.addEnvironment", "title": "DV Quick Run: Add Environment" },
       { "command": "dvQuickRun.removeEnvironment", "title": "DV Quick Run: Remove Environment" },
-      { "command": "dvQuickRun.investigateRecord", "title": "DV Quick Run: Investigate Record", "category": "DV Quick Run" }
+      { "command": "dvQuickRun.investigateRecord", "title": "DV Quick Run: Investigate Record", "category": "DV Quick Run" },
+      { "command": "dvQuickRun.trySampleQuery", "title": "DV Quick Run: Try Sample Query" },
+      { "command": "dvQuickRun.tryFetchXmlSample", "title": "DV Quick Run: Try FetchXML Query" }
     ],
     "menus": {
       "commandPalette": [

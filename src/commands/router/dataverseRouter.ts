@@ -15,6 +15,8 @@ import { runExplainQueryAction } from "./actions/explain/explainQueryAction.js";
 import { runRelationshipExplorerAction } from "./actions/relationships/relationshipExplorerAction.js";
 import { runRelationshipGraphViewAction } from "./actions/relationships/relationshipGraphViewAction.js";
 import { investigateRecordAction } from "./actions/investigateRecord/investigateRecordAction.js";
+import { runTrySampleQueryAction } from "./actions/onboarding/trySampleQueryAction.js";
+import { runTryFetchXmlSampleAction } from "./actions/onboarding/tryFetchXmlSampleAction.js";
 
 export type DvQuickRunAction = "get" 
   | "whoAmI" 
@@ -37,7 +39,9 @@ export type DvQuickRunAction = "get"
   | "explainQuery"
   | "relationshipExplorer"
   | "relationshipGraphView"
-  | "investigateRecord";
+  | "investigateRecord"
+  | "trySampleQuery"
+  | "tryFetchXmlSample";
 
 export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext): Promise<void> {
   switch (action) {
@@ -81,31 +85,37 @@ export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: Command
       return await runGenerateQueryFromJsonAction(ctx);
 
     case "runQueryUnderCursor":
-        return await runQueryUnderCursorAction(ctx);
+      return await runQueryUnderCursorAction(ctx);
 
     case "addFieldsSelect":
-        return await runAddFieldsSelectAction(ctx);
+      return await runAddFieldsSelectAction(ctx);
 
     case "addFilter":
-        return await runAddFilterAction(ctx);
+      return await runAddFilterAction(ctx);
 
     case "addExpand":
-        return await runAddExpandAction(ctx);
+      return await runAddExpandAction(ctx);
 
     case "addOrderBy":
-        return await runAddOrderByAction(ctx);
+      return await runAddOrderByAction(ctx);
 
     case "explainQuery":
-        return await runExplainQueryAction(ctx);
+      return await runExplainQueryAction(ctx);
 
     case "relationshipExplorer":
-        return await runRelationshipExplorerAction(ctx);
+      return await runRelationshipExplorerAction(ctx);
 
     case "relationshipGraphView":
-        return await runRelationshipGraphViewAction(ctx);
+      return await runRelationshipGraphViewAction(ctx);
 
     case "investigateRecord":
-    return investigateRecordAction(ctx);
+      return investigateRecordAction(ctx);
+
+    case "trySampleQuery":
+      return await runTrySampleQueryAction(ctx);
+
+    case "tryFetchXmlSample":
+      return await runTryFetchXmlSampleAction(ctx);
 
     default: {
       const _exhaustive: never = action;
