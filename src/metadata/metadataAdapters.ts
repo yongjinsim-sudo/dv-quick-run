@@ -197,6 +197,10 @@ export function normalizeFieldMetadataList(value: any[]): FieldMetadata[] {
           attribute?.IsValidForUpdate ?? attribute?.isvalidforupdate,
           true
         ),
+        isValidForAdvancedFind: normalizeMetadataBool(
+          attribute?.IsValidForAdvancedFind ?? attribute?.isvalidforadvancedfind,
+          true
+        ),
         lookupTargets: normalizeMetadataStringArray(attribute?.Targets ?? attribute?.targets)
       };
     })

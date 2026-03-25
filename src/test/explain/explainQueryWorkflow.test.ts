@@ -29,8 +29,10 @@ suite("explainQueryWorkflow", () => {
       detectKind: () => "odata",
       parseQuery: () => parsed,
       analyse: async () => ({ entity: { logicalName: "contact" } as any, validationIssues: [{ severity: "warning", message: "ok" }] as any }),
-      buildMarkdown: (_parsed, entity, issues) => `entity=${entity?.logicalName};issues=${issues.length}`,
+      buildMarkdown: (_parsed, entity, issues, _notes, diagnostics) => `entity=${entity?.logicalName};issues=${issues.length};diagnostics=${diagnostics.findings.length}`,
+      resolveCapabilities: () => ({ queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }),
       buildFetchXmlMarkdown: async () => "",
+      loadFieldsForEntity: async () => [],
       openPreview: async (markdown: string) => { previewMarkdown = markdown; },
       logDebugMessage: (_output: any, message: string) => { debug.push(message); },
       logInfoMessage: (_output: any, message: string) => { info.push(message); },
@@ -38,8 +40,8 @@ suite("explainQueryWorkflow", () => {
     });
 
     assert.ok(debug[0].includes("entitySet=contacts"));
-    assert.ok(info[0].includes("contacts"));
-    assert.strictEqual(previewMarkdown, "entity=contact;issues=1");
+    assert.ok(info.some((message) => message.includes("contacts")));
+    assert.strictEqual(previewMarkdown, "entity=contact;issues=1;diagnostics=1");
     assert.strictEqual(messages[0], "DV Quick Run: Query explained.");
   });
 
@@ -51,7 +53,9 @@ suite("explainQueryWorkflow", () => {
         parseQuery: () => parsed,
         analyse: async () => ({ entity: undefined, validationIssues: [] }),
         buildMarkdown: () => "",
+        resolveCapabilities: () => ({ queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }),
         buildFetchXmlMarkdown: async () => "",
+        loadFieldsForEntity: async () => [],
         openPreview: async () => undefined,
         logDebugMessage: () => undefined,
         logInfoMessage: () => undefined,
@@ -69,7 +73,9 @@ suite("explainQueryWorkflow", () => {
         parseQuery: () => ({ ...parsed, entitySetName: undefined }),
         analyse: async () => ({ entity: undefined, validationIssues: [] }),
         buildMarkdown: () => "",
+        resolveCapabilities: () => ({ queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }),
         buildFetchXmlMarkdown: async () => "",
+        loadFieldsForEntity: async () => [],
         openPreview: async () => undefined,
         logDebugMessage: () => undefined,
         logInfoMessage: () => undefined,
@@ -87,7 +93,9 @@ suite("explainQueryWorkflow", () => {
       parseQuery: () => parsed,
       analyse: async () => ({ entity: undefined, validationIssues: [] }),
       buildMarkdown: () => "odata-markdown",
+      resolveCapabilities: () => ({ queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }),
       buildFetchXmlMarkdown: async () => "fetchxml-markdown",
+      loadFieldsForEntity: async () => [],
       openPreview: async (markdown: string) => { previewMarkdown = markdown; },
       logDebugMessage: () => undefined,
       logInfoMessage: () => undefined,

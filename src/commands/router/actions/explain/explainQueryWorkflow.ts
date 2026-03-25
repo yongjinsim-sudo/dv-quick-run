@@ -1,14 +1,21 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { logDebug, logInfo } from "../../../../utils/logger.js";
+import type { FieldDef } from "../../../../services/entityFieldMetadataService.js";
 import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/queryCursorResolver.js";
 import { detectQueryKind } from "../../../../shared/editorIntelligence/queryDetection.js";
 import { runFetchXmlExplainPipeline } from "../shared/fetchXmlExplain/fetchXmlExplainPipeline.js";
+import { runDiagnostics } from "../shared/diagnostics/diagnosticRuleEngine.js";
+import { resolveCapabilities } from "../../../../product/capabilities/capabilityResolver.js";
+import { resolveEntitlement } from "../../../../product/capabilities/entitlementResolver.js";
+import { loadFields } from "../shared/metadataAccess.js";
 import { parseDataverseQuery } from "./explainQueryParser.js";
 import { toExplainMarkdown } from "./explainQueryMarkdown.js";
 import { openMarkdownPreview } from "./explainQueryRuntime.js";
 import { analyseExplainQuery } from "./explainQueryAnalysis.js";
 import type { ParsedDataverseQuery } from "./explainQueryTypes.js";
+import { hasExpandClause } from "../shared/diagnostics/expandDetection.js";
+import { buildExpandNotFullySupportedDiagnostic } from "../shared/diagnostics/diagnosticSuggestionBuilder.js";
 
 type ExplainAnalysis = Awaited<ReturnType<typeof analyseExplainQuery>>;
 
@@ -21,8 +28,11 @@ type ExplainWorkflowDeps = {
     parsed: ParsedDataverseQuery,
     entity: ExplainAnalysis["entity"],
     validationIssues: ExplainAnalysis["validationIssues"],
-    relationshipReasoningNotes?: ExplainAnalysis["relationshipReasoningNotes"]
+    relationshipReasoningNotes: ExplainAnalysis["relationshipReasoningNotes"] | undefined,
+    diagnostics: Awaited<ReturnType<typeof runDiagnostics>>
   ) => string;
+  resolveCapabilities: () => import("../../../../product/capabilities/capabilityTypes.js").CapabilitySet;
+  loadFieldsForEntity: (ctx: CommandContext, logicalName: string) => Promise<FieldDef[]>;
   buildFetchXmlMarkdown: (ctx: CommandContext, text: string) => Promise<string>;
   openPreview: (markdown: string) => Promise<void>;
   logDebugMessage: (output: CommandContext["output"], message: string) => void;
@@ -36,7 +46,13 @@ const defaultDeps: ExplainWorkflowDeps = {
   parseQuery: parseDataverseQuery,
   analyse: analyseExplainQuery,
   buildMarkdown: toExplainMarkdown,
+  resolveCapabilities: () => resolveCapabilities(resolveEntitlement()),
   buildFetchXmlMarkdown: runFetchXmlExplainPipeline,
+  loadFieldsForEntity: async (ctx: CommandContext, logicalName: string) => {
+    const client = ctx.getClient();
+    const token = await ctx.getToken(ctx.getScope());
+    return await loadFields(ctx, client, token, logicalName);
+  },
   openPreview: openMarkdownPreview,
   logDebugMessage: logDebug,
   logInfoMessage: logInfo,
@@ -68,11 +84,32 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   deps.logDebugMessage(ctx.output, `Explain Query: entitySet=${parsed.entitySetName} sourceLength=${text.length}`);
 
   const analysis = await deps.analyse(ctx, parsed);
+  const capabilities = deps.resolveCapabilities();
+  deps.logInfoMessage(ctx.output, `Query Doctor: level=${capabilities.queryDoctor} entity=${analysis.entity?.logicalName ?? "unknown"}`);
+  const diagnostics = await runDiagnostics(
+    {
+      parsed,
+      validationIssues: analysis.validationIssues,
+      entityLogicalName: analysis.entity?.logicalName,
+      loadFieldsForEntity: async (logicalName: string) => await deps.loadFieldsForEntity(ctx, logicalName)
+    },
+    capabilities
+  );
+  if (hasExpandClause(text)) {
+    const alreadyExists = diagnostics.findings.some((f) =>
+      f.message.includes('Expand support is currently partial')
+    );
+
+    if (!alreadyExists) {
+      diagnostics.findings.unshift(buildExpandNotFullySupportedDiagnostic());
+    }
+  }
   const markdown = deps.buildMarkdown(
     parsed,
     analysis.entity,
     analysis.validationIssues,
-    analysis.relationshipReasoningNotes ?? []
+    analysis.relationshipReasoningNotes ?? [],
+    diagnostics
   );
 
   await deps.openPreview(markdown);

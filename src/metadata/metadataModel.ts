@@ -23,6 +23,7 @@ export interface FieldMetadata {
   isValidForRead?: boolean;
   isValidForCreate?: boolean;
   isValidForUpdate?: boolean;
+  isValidForAdvancedFind?: boolean;
   lookupTargets?: string[];
 }
 
