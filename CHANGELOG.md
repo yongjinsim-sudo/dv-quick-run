@@ -6,6 +6,84 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+### [0.7.0] – Query Doctor Foundation & Suggested Fix Engine
+
+### Added
+- **Query Doctor (Foundation)**
+  - Introduced a structured diagnostic engine for Dataverse queries
+  - Provides:
+    - issue detection
+    - advisory guidance
+    - prioritised diagnostic output
+  - Designed as a non-blocking, developer-assist layer (not strict validation)
+
+- **Suggested Fix Engine**
+  - Diagnostics now include actionable suggested fixes where applicable
+  - Suggested fixes provide:
+    - clear intent (`label`)
+    - explanation (`detail`)
+    - optional examples for direct usage
+  - Enables future expansion into auto-fix and interactive query refinement
+
+- **Diagnostic pipeline architecture**
+  - Introduced:
+    - `DiagnosticFinding`
+    - `DiagnosticSuggestedFix`
+  - Separation between:
+    - issue detection
+    - suggested remediation
+  - Supports confidence scoring and future ranking strategies
+
+- **Rule-based diagnostic engine**
+  - Introduced modular rule sets:
+    - `basicQueryShapeRules`
+    - `metadataValidationRules`
+  - Enables incremental expansion of Query Doctor capabilities
+  - Clean separation between:
+    - syntax/shape guidance
+    - metadata-aware validation
+
+- **Capability-gated Query Doctor levels**
+  - Query Doctor behaviour now scales via capability levels
+  - Foundation supports:
+    - Level 1: query shape diagnostics
+    - Level 2: metadata-aware validation
+  - Designed to support future Pro-level expansion
+
+- **Expand advisory (boundary awareness)**
+  - Detects `$expand` usage in OData queries
+  - Surfaces advisory:
+    - Expand diagnostics are currently partial
+  - Prevents misleading or incomplete diagnostic guidance
+  - Establishes clear capability boundaries for Query Doctor
+
+### Improved
+- **Explain Query output with diagnostics integration**
+  - Diagnostics are now embedded into Explain output
+  - Clear separation between:
+    - explanation
+    - diagnostics
+  - Improved readability and developer guidance
+
+- **Developer experience (actionable feedback)**
+  - Queries now provide:
+    - what is wrong
+    - why it matters
+    - how to fix it
+  - Reduces guesswork when debugging Dataverse queries
+
+- **Extensibility for future diagnostic features**
+  - Architecture now supports:
+    - auto-fix generation
+    - interactive query refinement
+    - deeper semantic reasoning
+  - Aligns with future “Query Doctor+” capabilities
+
+### Notes
+- Query Doctor in v0.7.0 focuses on **foundation and correctness**
+- Advanced scenarios (e.g. deep `$expand`, complex FetchXML semantics) are intentionally scoped for future releases
+- Emphasis on **trustworthy guidance over exhaustive validation**
+
 ### [0.6.3] – Architecture Consolidation & Investigation Engine Refactor
 
 ### Added

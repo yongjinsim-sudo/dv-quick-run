@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — built for real-world Dataverse debugging and exploration.
+A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with built-in Query Doctor for diagnostics and suggested fixes.
 
 **Run, understand, and explore Dataverse data — without leaving your editor.**
 
@@ -22,176 +22,52 @@ All inside VS Code.
 
 ---
 
-## 🆕 What's New in v0.6.3
+## 🆕 What's New in v0.7.0
 
-* **Investigation engine refactor (architecture consolidation)**
-  - Refactored Investigate Record into focused modules:
-    - summary field generation
-    - lookup relationship suggestions
-    - reverse link discovery
-  - Improves maintainability and enables future reasoning features
+* **Query Doctor (foundation)**
+  - Analyses Dataverse queries and surfaces diagnostics directly within Explain Query
+  - Provides:
+    - issue detection
+    - advisory guidance
+    - prioritised diagnostic output
+  - Designed as a non-blocking developer assist layer (not strict validation)
 
-* **Result Viewer render layer separation**
-  - Extracted rendering logic into dedicated modules
-  - Simplified viewer bootstrap for improved stability
-  - Cleaner separation between data, rendering, and interactions
+* **Suggested Fixes**
+  - Diagnostics now include actionable suggested fixes
+  - Each suggestion provides:
+    - clear intent
+    - explanation
+    - example queries where applicable
+  - Helps developers move from “what’s wrong” → “how to fix it”
 
-* **Shared helper consolidation**
-  - Unified common logic:
-    - label formatting
-    - entity name formatting
-    - normalization
-  - Removed duplication across investigation modules
+* **Query shape & metadata-aware diagnostics**
+  - Detects common issues such as:
+    - missing `$select`
+    - missing `$top`
+    - inefficient query patterns
+  - Extends into metadata-aware validation (Level 2 capability)
 
-* **Internal stability improvements**
-  - Fixed minor edge cases uncovered during refactor
-  - Improved consistency across investigation pipeline
+* **Expand boundary awareness**
+  - Detects `$expand` usage and surfaces advisory guidance
+  - Prevents misleading diagnostics for nested or complex expand scenarios
+  - Establishes clear capability boundaries for Query Doctor
 
-*(No major UI changes — this release focuses on stability, structure, and long-term extensibility)*
+* **Diagnostics integrated into Explain Query**
+  - Explain output now includes a dedicated **Diagnostics** section
+  - Clear separation between:
+    - explanation (what the query does)
+    - diagnostics (how to improve it)
 
-## 🆕 What's New in v0.6.2
+* **Foundation for future Query Doctor capabilities**
+  - Architecture now supports:
+    - auto-fix workflows
+    - interactive query refinement
+    - deeper semantic reasoning (planned)
 
-* **FetchXML Explain (Teaching Mode)**
-  - Explain FetchXML queries directly from the editor (**Explain**)
-  - Produces a structured, human-readable walkthrough of the query
-  - Helps developers understand *what the query does*, not just how it is written
-
-* **Query Overview & Result Shape**
-  - Clearly explains:
-    - root entity
-    - linked entities
-    - selected attributes
-    - expected result structure
-  - Introduces **Result Shape** to describe what each row represents
-
-* **Structure Walkthrough (hierarchical)**
-  - Explains the full FetchXML tree in execution order
-  - Covers:
-    - root entity
-    - nested link-entities
-    - attribute selection per scope
-  - Preserves hierarchy (no flattening)
-
-* **Relationship Explanation**
-  - Explains joins in plain language
-  - Describes:
-    - how entities are connected
-    - why linked entities are included
-    - join behaviour and direction
-
-* **Scope-aware Filter Narration**
-  - Groups filters by entity / alias scope
-  - Distinguishes:
-    - root filters vs linked-entity filters
-  - Supports:
-    - nested filters
-    - AND / OR logic
-    - multi-value conditions (`contain-values`)
-
-* **Operator & Metadata-aware Explanation**
-  - Reuses operator intelligence from v0.6.1
-  - Explains operators such as:
-    - `eq`, `not-null`, `this-month`, `contain-values`
-  - Displays choice labels when metadata is available
-  - Falls back gracefully to raw values when not available
-
-* **Advisory Diagnostics**
-  - Provides non-blocking guidance:
-    - alias usage recommendations
-    - readability notes for deep nesting
-  - Maintains a safe, non-mutating approach
-
-* **FetchXML Explain CodeLens**
-  - `Explain` now available for FetchXML queries
-  - Aligns FetchXML with OData developer workflow
+*(This release focuses on correctness, trust, and extensibility — advanced scenarios such as deep `$expand` and complex FetchXML reasoning are planned for future releases.)*
 
 ---
 
-## 🆕 What's New in v0.6.1
-
-* **FetchXML semantic hover (major upgrade)**
-  - Hover now works across the full FetchXML surface:
-    - `<entity>`, `<attribute>`
-    - `<condition operator="...">`
-    - `<link-entity>` (`from`, `to`, `alias`)
-    - nested linked entities
-  - Displays:
-    - metadata context (logical + display names)
-    - operator meaning (polished + raw)
-    - classification (comparison, set, relative date, etc.)
-    - value expectations and usage guidance
-
-* **Full operator intelligence**
-  - Complete operator coverage including:
-    - comparison, pattern, set, range
-    - relative date (e.g. `last-x-days`, `this-week`)
-    - fiscal operators
-    - hierarchy operators
-    - ownership/context operators
-  - Data-driven operator catalog enables future extensibility (no code changes required)
-
-* **Choice / OptionSet awareness (FetchXML)**
-  - Hover on:
-    - `value="0"`
-    - `<value>1</value>`
-  - Displays:
-    - selected label (e.g. `Active`)
-    - full available option set values
-  - Achieves parity with OData choice decoding
-
-* **Relationship-aware hover**
-  - Hover on `link-entity` attributes shows:
-    - relationship metadata
-    - source/target entity context
-  - Makes joins understandable directly from the editor
-
-* **Linked-entity scope awareness**
-  - Correct metadata resolution for:
-    - linked entities
-    - nested link-entities
-  - Eliminates incorrect hover results in complex FetchXML queries
-
-* **Near parity with OData experience**
-  - FetchXML now provides:
-    - metadata-aware hover
-    - choice decoding
-    - semantic operator guidance
-  - Brings FetchXML to the same level of developer ergonomics as OData
-
----
-
-## 🆕 What's New in v0.6.0
-
-* **FetchXML execution support**
-  - Run FetchXML queries directly from the editor (**Run FetchXML**)
-  - Results open in the Result Viewer (table / JSON view supported)
-  - Works alongside existing OData queries with a unified execution experience
-
-* **FetchXML-aware editor experience**
-  - Automatic detection of FetchXML queries under cursor
-  - Context-aware CodeLens:
-    - **Run FetchXML** for FetchXML queries
-    - **Explain Query** remains OData-only
-
-* **FetchXML hover (foundation)**
-  - Hover on:
-    - `<entity name="...">`
-    - `<attribute name="...">`
-  - Displays logical and display names using metadata
-  - Introduced metadata-aware hover model for FetchXML
-
-* **Operator foundation (extensible design)**
-  - Introduced a data-driven operator catalog
-  - Supports polished / raw / grouped label modes
-  - Enables future extensibility without code changes
-
-* **Unified query experience**
-  - OData and FetchXML now share the same execution and result viewer pipeline
-  - Improved consistency across query workflows
-
-*(Minimal UI changes — major functional expansion introducing FetchXML support and metadata-aware hover foundation)*
-
----
 
 ## 🎬 Result Viewer
 
@@ -230,10 +106,27 @@ write query → run → explore → investigate → refine → repeat
 
 ---
 
-### 🧠 Explain Query
+### 🧠 Explain Query + Query Doctor
 
 * Break queries into human-readable explanations
 * Understand filters, sorting, and structure instantly
+
+**Now includes Query Doctor:**
+
+* Analyse your query and detect issues
+* Get prioritised diagnostics with confidence scoring
+* Receive actionable **Suggested Fixes** with examples
+
+Turn this:
+  accounts?$expand=primarycontactid
+
+Into:
+
+* what the query does
+* what’s missing
+* how to improve it
+
+All directly inside VS Code.
 
 ---
 

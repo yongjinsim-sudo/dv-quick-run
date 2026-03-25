@@ -49,7 +49,7 @@ export async function fetchNormalizedFieldMetadata(
   const safeLogicalName = logicalName.replace(/'/g, "''");
   const path =
     `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes` +
-    "?$select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,AttributeOf,SchemaName,DisplayName&$top=5000";
+    "?$select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName&$top=5000";
 
   try {
     const rows = await getList<any>(client, token, path);
@@ -62,7 +62,7 @@ export async function fetchNormalizedFieldMetadata(
   }
 
   const response = await client.get(
-    `/EntityDefinitions(LogicalName='${safeLogicalName}')?$select=LogicalName&$expand=Attributes($select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,AttributeOf,SchemaName,DisplayName)`,
+    `/EntityDefinitions(LogicalName='${safeLogicalName}')?$select=LogicalName&$expand=Attributes($select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName)`,
     token
   );
 

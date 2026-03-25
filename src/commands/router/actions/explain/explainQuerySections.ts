@@ -55,8 +55,16 @@ function buildFilterLines(filter: string): string[] {
     `Plain English: ${narrateExpression(filter)}`
   ].filter(Boolean);
 
+  const loweredFilter = filter.toLowerCase();
   const recognised = FILTER_OPERATOR_FACTS
-    .filter((x) => filter.toLowerCase().includes(x.token.trim().toLowerCase()))
+    .filter((x) => {
+      const token = x.token.toLowerCase();
+      if (token === "not ") {
+        return /(^|\W)not\s+(\(|[a-z_])/i.test(filter);
+      }
+
+      return loweredFilter.includes(token.trim().startsWith("$") ? token.trim() : token);
+    })
     .map((x) => `- \`${x.token.trim()}\` → ${x.meaning}`);
 
   if (recognised.length) {

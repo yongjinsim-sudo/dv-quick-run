@@ -1,4 +1,6 @@
 import { EntityDef } from "../../../../utils/entitySetCache.js";
+import type { DiagnosticResult } from "../shared/diagnostics/diagnosticTypes.js";
+import { buildDiagnosticMarkdownLines } from "../shared/diagnostics/diagnosticOutputBuilder.js";
 import { type ValidationIssue } from "../shared/queryExplain/queryValidation.js";
 import { buildDesignNotes, buildIntentLines, buildSections, buildSummary, buildValidationLines } from "./explainQuerySections.js";
 import { ExplainRelationshipReasoningNote, ParsedDataverseQuery } from "./explainQueryTypes.js";
@@ -21,7 +23,8 @@ export function toExplainMarkdown(
   parsed: ParsedDataverseQuery,
   entity: EntityDef | undefined,
   validationIssues: ValidationIssue[] = [],
-  relationshipReasoningNotes: ExplainRelationshipReasoningNote[] = []
+  relationshipReasoningNotes: ExplainRelationshipReasoningNote[] = [],
+  diagnostics?: DiagnosticResult
 ): string {
   const summary = buildSummary(parsed, entity);
   const sections = buildSections(parsed, entity);
@@ -66,6 +69,10 @@ export function toExplainMarkdown(
     lines.push("");
     lines.push(...buildRelationshipReasoningLines(relationshipReasoningNotes));
     lines.push("");
+  }
+
+  if (diagnostics?.findings.length) {
+    lines.push(...buildDiagnosticMarkdownLines(diagnostics));
   }
 
   lines.push("## Design Notes");
