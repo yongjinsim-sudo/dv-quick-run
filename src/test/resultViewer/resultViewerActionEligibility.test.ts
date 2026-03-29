@@ -180,4 +180,86 @@ suite("resultViewerActionEligibility", () => {
     assert.ok(actions.some((action) => action.id === "open-in-dataverse-ui"));
     assert.ok(actions.some((action) => action.id === "copy-record-url"));
   });
+
+  test("traversal row exposes continue action only when required carry field matches", () => {
+    const actions = resolveResultViewerActions({
+      columnName: "contactid",
+      rawValue: "contact-1",
+      traversal: {
+        traversalSessionId: "session-1",
+        legIndex: 0,
+        hasNextLeg: true,
+        nextLegEntityName: "task",
+        requiredCarryField: "contactid",
+        isFinalLeg: false
+      }
+    });
+
+    assert.deepStrictEqual(actions.map((action) => action.id), [
+      "continue-traversal"
+    ]);
+
+    assert.strictEqual(actions[0]?.placement, "primary");
+    assert.strictEqual(actions[0]?.payload.traversalSessionId, "session-1");
+    assert.strictEqual(actions[0]?.payload.traversalLegIndex, 0);
+    assert.strictEqual(actions[0]?.payload.carryField, "contactid");
+    assert.strictEqual(actions[0]?.payload.carryValue, "contact-1");
+  });
+
+  test("traversal row hides continue action when current column is not the required carry field", () => {
+    const actions = resolveResultViewerActions({
+      columnName: "fullname",
+      rawValue: "Alice",
+      traversal: {
+        traversalSessionId: "session-1",
+        legIndex: 0,
+        hasNextLeg: true,
+        nextLegEntityName: "task",
+        requiredCarryField: "contactid",
+        isFinalLeg: false
+      }
+    });
+
+    assert.deepStrictEqual(actions, []);
+  });
+
+  test("traversal row hides continue action for final leg", () => {
+    const actions = resolveResultViewerActions({
+      columnName: "contactid",
+      rawValue: "contact-1",
+      traversal: {
+        traversalSessionId: "session-1",
+        legIndex: 1,
+        hasNextLeg: false,
+        nextLegEntityName: undefined,
+        requiredCarryField: "contactid",
+        isFinalLeg: true
+      }
+    });
+
+    assert.deepStrictEqual(actions, []);
+  });
+
+  test("traversal row hides all standard record actions and shows continuation only", () => {
+    const actions = resolveResultViewerActions({
+      guid: "8129eec7-4414-4f11-8341-6045bdc42f8b",
+      entitySetName: "contacts",
+      entityLogicalName: "contact",
+      primaryIdField: "contactid",
+      columnName: "contactid",
+      rawValue: "8129eec7-4414-4f11-8341-6045bdc42f8b",
+      traversal: {
+        traversalSessionId: "session-1",
+        legIndex: 0,
+        hasNextLeg: true,
+        nextLegEntityName: "task",
+        requiredCarryField: "contactid",
+        isFinalLeg: false
+      }
+    });
+
+    assert.deepStrictEqual(actions.map((action) => action.id), [
+      "continue-traversal"
+    ]);
+  });
 });

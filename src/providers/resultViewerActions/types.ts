@@ -1,26 +1,41 @@
 export type ResultViewerActionPlacement = "primary" | "overflow";
 
 export interface ResultViewerActionPayload {
-    guid?: string;
-    entitySetName?: string;
-    entityLogicalName?: string;
-    columnName?: string;
-    rawValue?: string;
+  guid?: string;
+  entitySetName?: string;
+  entityLogicalName?: string;
+  columnName?: string;
+  rawValue?: string;
+  traversalSessionId?: string;
+  traversalLegIndex?: number;
+  carryField?: string;
+  carryValue?: string;
 }
 
 export interface ResultViewerResolvedAction {
-    id: string;
-    title: string;
-    icon: string;
-    placement: ResultViewerActionPlacement;
-    payload: ResultViewerActionPayload;
+  id: string;
+  title: string;
+  icon: string;
+  placement: ResultViewerActionPlacement;
+  payload: ResultViewerActionPayload;
+}
+
+export interface ResultViewerTraversalActionContext {
+  traversalSessionId: string;
+  legIndex: number;
+  hasNextLeg: boolean;
+  nextLegLabel?: string;
+  nextLegEntityName?: string;
+  requiredCarryField?: string;
+  isFinalLeg: boolean;
 }
 
 export interface ResultViewerActionContext {
-    guid?: string;
-    entitySetName?: string;
-    entityLogicalName?: string;
-    primaryIdField?: string;
-    columnName: string;
-    rawValue: string;
+  guid?: string;
+  entitySetName?: string;
+  entityLogicalName?: string;
+  primaryIdField?: string;
+  columnName: string;
+  rawValue: string;
+  traversal?: ResultViewerTraversalActionContext;
 }

@@ -7,95 +7,126 @@ import {
 } from "../../commands/router/actions/shared/metadataAccess.js";
 import type {
     ResultViewerActionContext,
-    ResultViewerResolvedAction
+    ResultViewerResolvedAction,
+    ResultViewerActionPayload
 } from "./types.js";
 import {
     analyzeResultViewerColumn,
     isGuidValue
 } from "./columnIntelligence.js";
+import { runContinueTraversalAction } from "../../commands/router/actions/traversal/continueTraversalAction.js";
 
 export function resolveResultViewerActions(
-    context: ResultViewerActionContext
+  context: ResultViewerActionContext
 ): ResultViewerResolvedAction[] {
-    const rawValue = String(context.rawValue ?? "").trim();
-    const columnName = String(context.columnName ?? "").trim();
-    const analysis = analyzeResultViewerColumn({
-        columnName,
-        rawValue,
-        primaryIdField: context.primaryIdField,
-        guid: context.guid
-    });
+  const rawValue = String(context.rawValue ?? "").trim();
+  const columnName = String(context.columnName ?? "").trim();
 
-    if (!analysis.hasUsableValue) {
-        return [];
+  if (context.traversal) {
+    const canContinue =
+      context.traversal.hasNextLeg &&
+      !context.traversal.isFinalLeg &&
+      !!context.traversal.requiredCarryField &&
+      columnName === context.traversal.requiredCarryField &&
+      !!rawValue;
+
+    if (!canContinue) {
+      return [];
     }
 
-    const payload = {
-        guid: context.guid,
-        entitySetName: context.entitySetName,
-        entityLogicalName: context.entityLogicalName,
-        columnName,
-        rawValue
-    };
+    const continueTitle = context.traversal.nextLegEntityName
+        ? `Continue to ${context.traversal.nextLegEntityName}`
+        : "Continue Traversal";
 
-    const actions: ResultViewerResolvedAction[] = [];
-
-    if (analysis.isPrimaryId) {
-        actions.push(
-            {
-                id: "investigate-record",
-                title: "Investigate record",
-                icon: "🔎",
-                placement: "primary",
-                payload
-            },
-            {
-                id: "open-in-dataverse-ui",
-                title: "Open in Dataverse UI",
-                icon: "↗",
-                placement: "primary",
-                payload
-            },
-            {
-                id: "copy-record-url",
-                title: "Copy record URL",
-                icon: "🔗",
-                placement: "overflow",
-                payload
-            }
-        );
-    }
-
-    actions.push(
-        {
-            id: "copy-odata-filter",
-            title: "Copy OData filter",
-            icon: "ƒ",
-            placement: "overflow",
-            payload
-        },
-        {
-            id: "copy-fetchxml-condition",
-            title: "Copy FetchXML condition",
-            icon: "⟪⟫",
-            placement: "overflow",
-            payload
+    return [
+      {
+        id: "continue-traversal",
+        title: continueTitle,
+        icon: "➤",
+        placement: "primary",
+        payload: {
+          columnName,
+          rawValue,
+          traversalSessionId: context.traversal.traversalSessionId,
+          traversalLegIndex: context.traversal.legIndex,
+          carryField: columnName,
+          carryValue: rawValue
         }
-    );
+      }
+    ];
+  }
 
-    return actions;
+  const analysis = analyzeResultViewerColumn({
+    columnName,
+    rawValue,
+    primaryIdField: context.primaryIdField,
+    guid: context.guid
+  });
+
+  if (!analysis.hasUsableValue) {
+    return [];
+  }
+
+  const payload = {
+    guid: context.guid,
+    entitySetName: context.entitySetName,
+    entityLogicalName: context.entityLogicalName,
+    columnName,
+    rawValue
+  };
+
+  const actions: ResultViewerResolvedAction[] = [];
+
+  if (analysis.isPrimaryId) {
+    actions.push(
+      {
+        id: "investigate-record",
+        title: "Investigate record",
+        icon: "🔎",
+        placement: "primary",
+        payload
+      },
+      {
+        id: "open-in-dataverse-ui",
+        title: "Open in Dataverse UI",
+        icon: "↗",
+        placement: "primary",
+        payload
+      },
+      {
+        id: "copy-record-url",
+        title: "Copy record URL",
+        icon: "🔗",
+        placement: "overflow",
+        payload
+      }
+    );
+  }
+
+  actions.push(
+    {
+      id: "copy-odata-filter",
+      title: "Copy OData filter",
+      icon: "ƒ",
+      placement: "overflow",
+      payload
+    },
+    {
+      id: "copy-fetchxml-condition",
+      title: "Copy FetchXML condition",
+      icon: "⟪⟫",
+      placement: "overflow",
+      payload
+    }
+  );
+
+  return actions;
 }
 
 export async function executeResultViewerAction(
-    ctx: CommandContext,
-    actionId: string,
-    payload: {
-        guid?: string;
-        entitySetName?: string;
-        entityLogicalName?: string;
-        columnName?: string;
-        rawValue?: string;
-    }
+  ctx: CommandContext,
+  actionId: string,
+  payload: ResultViewerActionPayload
 ): Promise<void> {
     const guid = String(payload.guid ?? "").trim();
     const entitySetName = payload.entitySetName?.trim();
@@ -103,6 +134,7 @@ export async function executeResultViewerAction(
     const rawValue = String(payload.rawValue ?? "").trim();
 
     switch (actionId) {
+
         case "investigate-record": {
             if (!guid) {
                 return;
@@ -113,6 +145,16 @@ export async function executeResultViewerAction(
                 : guid;
 
             await vscode.commands.executeCommand("dvQuickRun.investigateRecord", input);
+            return;
+        }
+
+        case "continue-traversal": {
+            await runContinueTraversalAction(ctx, {
+                traversalSessionId: String(payload.traversalSessionId ?? "").trim(),
+                legIndex: Number(payload.traversalLegIndex ?? 0),
+                carryField: String(payload.carryField ?? "").trim(),
+                carryValue: String(payload.carryValue ?? "").trim()
+            });
             return;
         }
 

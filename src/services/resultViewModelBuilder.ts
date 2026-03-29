@@ -4,7 +4,8 @@ import {
     resolveResultViewerActions
 } from "../providers/resultViewerActions/registry.js";
 import type {
-    ResultViewerResolvedAction
+    ResultViewerResolvedAction,
+    ResultViewerTraversalActionContext
 } from "../providers/resultViewerActions/types.js";
 import { isChoiceAttributeType } from "../metadata/metadataModel.js";
 import {
@@ -16,6 +17,23 @@ import { resolveChoiceValueFromMetadata } from "../commands/router/actions/share
 export interface ResultViewerEnvironmentInfo {
     name: string;
     colorHint: "white" | "amber" | "red";
+}
+
+export interface ResultViewerTraversalStatus {
+    title: string;
+    subtitle?: string;
+}
+
+export interface ResultViewerEmptyState {
+    title: string;
+    message?: string;
+}
+
+export interface ResultViewerTraversalContext extends ResultViewerTraversalActionContext {
+    legCount: number;
+    nextLegLabel?: string;
+    nextLegEntityName?: string;
+    currentEntityName?: string;
 }
 
 export type ResultViewerCellValueType = "scalar" | "object" | "array" | "empty";
@@ -49,6 +67,8 @@ export interface ResultViewerModel {
     entitySetName?: string;
     entityLogicalName?: string;
     primaryIdField?: string;
+    traversal?: ResultViewerTraversalStatus;
+    emptyState?: ResultViewerEmptyState;
     environment?: ResultViewerEnvironmentInfo;
     legend?: ResultViewerLegendItem[];
 }
@@ -60,6 +80,7 @@ export interface ResultViewerBuildOptions {
     environment?: ResultViewerEnvironmentInfo;
     fields?: FieldDef[];
     choiceMetadata?: ChoiceMetadataDef[];
+    traversalContext?: ResultViewerTraversalContext;
 }
 
 export interface ResultViewerLegendItem {
@@ -434,7 +455,18 @@ function buildCell(
             entityLogicalName: options.entityLogicalName,
             primaryIdField: options.primaryIdField,
             columnName: column,
-            rawValue: actionRawValue
+            rawValue: actionRawValue,
+            traversal: options.traversalContext
+                ? {
+                    traversalSessionId: options.traversalContext.traversalSessionId,
+                    legIndex: options.traversalContext.legIndex,
+                    hasNextLeg: options.traversalContext.hasNextLeg,
+                    nextLegLabel: options.traversalContext.nextLegLabel,
+                    nextLegEntityName: options.traversalContext.nextLegEntityName,
+                    requiredCarryField: options.traversalContext.requiredCarryField,
+                    isFinalLeg: options.traversalContext.isFinalLeg
+                }
+                : undefined
         })
         : undefined;
 
@@ -476,6 +508,36 @@ export function buildResultViewerModel(
     const entityLogicalName = options?.entityLogicalName;
     const primaryIdField = options?.primaryIdField;
     const environment = options?.environment;
+    const traversalContext = options?.traversalContext;
+    const traversal = traversalContext
+        ? {
+            title: traversalContext.isFinalLeg
+                ? "Guided Traversal complete"
+                : `Guided Traversal: leg ${traversalContext.legIndex + 1} of ${traversalContext.legCount}`,
+            subtitle: traversalContext.isFinalLeg
+                ? (traversalContext.currentEntityName
+                    ? `Reached: ${traversalContext.currentEntityName}`
+                    : "Reached destination")
+                : traversalContext.nextLegLabel
+                    ? `Next: ${traversalContext.nextLegLabel}`
+                    : "Select a row to continue"
+        }
+        : undefined;
+
+    const emptyState = traversalContext
+        ? (traversalContext.isFinalLeg
+            ? {
+                title: "Traversal finished",
+                message: "This route reached the destination, but no usable rows were returned."
+            }
+            : {
+                title: "No results for this path",
+                message: "This route did not produce usable data. Try another variant."
+            })
+        : {
+            title: "No rows returned."
+        };
+
     const fieldMap = buildFieldMap(options?.fields);
     const choiceMetadata = options?.choiceMetadata ?? [];
 
@@ -555,7 +617,8 @@ export function buildResultViewerModel(
             entitySetName,
             entityLogicalName,
             primaryIdField,
-            environment
+            environment,
+            emptyState
         };
     }
 
@@ -588,7 +651,8 @@ export function buildResultViewerModel(
             entitySetName,
             entityLogicalName,
             primaryIdField,
-            environment
+            environment,
+            emptyState
         };
     }
 

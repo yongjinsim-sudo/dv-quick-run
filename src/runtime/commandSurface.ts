@@ -28,6 +28,9 @@ import { registerRelationshipGraphViewCommand } from "../commands/relationshipGr
 import { registerInvestigateRecordCommand } from "../commands/investigateRecord.js";
 import { registerTrySampleQueryCommand } from "../commands/trySampleQuery.js";
 import { registerTryFetchXmlSampleCommand } from "../commands/tryFetchXmlSample.js";
+import { registerFindPathToTableCommand } from "../commands/findPathToTable.js";
+import { registerContinueTraversalCommand } from "../commands/continueTraversal.js";
+import { registerClearTraversalCacheCommand } from '../commands/clearTraversalCache';
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -55,7 +58,10 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerRelationshipGraphViewCommand,
   registerInvestigateRecordCommand,
   registerTrySampleQueryCommand,
-  registerTryFetchXmlSampleCommand
+  registerTryFetchXmlSampleCommand,
+  registerFindPathToTableCommand,
+  registerContinueTraversalCommand,
+  registerClearTraversalCacheCommand
 ];
 
 const diagnosticsRegistrations = (

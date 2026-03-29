@@ -276,6 +276,10 @@ async function copyValueToClipboard(value) {
             const entityLogicalName = element.getAttribute("data-entity-logical-name") ?? "";
             const columnName = element.getAttribute("data-column-name") ?? "";
             const rawValue = element.getAttribute("data-raw-value") ?? "";
+            const traversalSessionId = element.getAttribute("data-traversal-session-id") ?? "";
+            const traversalLegIndex = element.getAttribute("data-traversal-leg-index") ?? "";
+            const carryField = element.getAttribute("data-carry-field") ?? "";
+            const carryValue = element.getAttribute("data-carry-value") ?? "";
 
             if (!actionId) {
                 return;
@@ -289,7 +293,11 @@ async function copyValueToClipboard(value) {
                     entitySetName,
                     entityLogicalName,
                     columnName,
-                    rawValue
+                    rawValue,
+                    traversalSessionId,
+                    traversalLegIndex,
+                    carryField,
+                    carryValue
                 }
             });
         }

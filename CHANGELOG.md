@@ -6,6 +6,83 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.7.1] – Guided Traversal & Continuation Workflow
+
+> Introduces guided traversal with continuation, enabling step-by-step navigation across Dataverse relationships directly from VS Code.
+
+### Added
+
+- **Guided Traversal (Find Path to Table)**
+  - Discover relationship paths between Dataverse tables directly from the editor
+  - Supports multi-hop traversal with variant (route) selection
+  - Introduces itinerary concepts:
+    - **Compact** (nested expand / join-like execution)
+    - **Mixed** (step-by-step continuation)
+  - Provides structured execution output with step-by-step breakdown
+
+- **Traversal Continuation (Multi-leg execution)**
+  - Continue traversal across hops using **Continue Traversal**
+  - Step-based execution model:
+    - `Step X/Y` progression
+    - clear landing context at each hop
+  - Row-driven continuation:
+    - traversal proceeds from selected/landed records
+  - Traversal session state maintained across steps
+
+- **Traversal-aware Result Viewer integration**
+  - Row-level action:
+    - **Continue to {Entity}**
+  - Contextual continuation only shown when applicable
+  - Traversal state cleared on completion or new traversal
+  - Prevents invalid continuation via session key validation
+
+- **Execution strategy support (itinerary-based)**
+  - Introduced multiple execution strategies:
+    - step-based continuation (sampling-safe)
+    - nested expand (context-preserving)
+  - Compact itinerary uses nested expand for multi-hop joins
+  - Mixed itinerary uses controlled step traversal with safety limits
+
+- **Traversal outcome clarity**
+  - Explicit outcomes after each step:
+    - landed entity
+    - row counts
+    - next step availability
+  - Clear messaging for:
+    - successful landing
+    - empty results
+    - traversal completion
+
+- **Proven Route Detection (in-session)**
+  - Tracks successful traversal variants during session
+  - Highlights previously successful paths in picker
+  - Displays:
+    - ⭐ Proven routes
+    - usage count
+  - Enables faster reuse of known-good traversal paths
+
+- **Configuration Migration Loader**
+  - Automatically injects new settings for existing users:
+    - `dvQuickRun.productPlan`
+    - `dvQuickRun.traversal.allowedTables`
+    - `dvQuickRun.traversal.excludedTables`
+  - Runs on activation
+  - Only applies when settings are missing (non-destructive)
+  - Ensures backward compatibility for existing installations
+
+---
+
+### Notes
+
+- Guided Traversal introduces a new **multi-leg workflow model** for Dataverse queries
+- Step-based traversal may return empty results when intermediate sampling does not preserve relationship continuity
+- Compact (nested expand) itinerary provides better results for **dependent multi-hop relationships**
+- Proven routes are currently **in-memory only** (session-scoped)
+- Future enhancements will focus on:
+  - adaptive execution strategy
+  - persisted traversal history
+  - shareable traversal keys
+
 ### [0.7.0] – Query Doctor Foundation & Suggested Fix Engine
 
 ### Added

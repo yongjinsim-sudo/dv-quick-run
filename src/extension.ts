@@ -10,14 +10,16 @@ import { registerEnvironmentLifecycle } from "./runtime/environmentLifecycle.js"
 import { registerEditorIntelligence } from "./runtime/editorIntelligence.js";
 import { registerInternalSupportCommands } from "./runtime/internalSupportCommands.js";
 import { registerSelectionContext } from "./runtime/selectionContext.js";
+import { ensureTraversalSettingsExist } from "./runtime/configMigration.js";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerVirtualJsonProvider(context);
 
   const envContext = new EnvironmentContext(context);
-  await envContext.initialize();
-
   const ctx = createCommandContext(context, envContext);
+
+  await ensureTraversalSettingsExist(ctx.output);
+  await envContext.initialize();
 
   logInfo(ctx.output, `DV Quick Run: Active environment: ${envContext.getEnvironmentName()}`);
 

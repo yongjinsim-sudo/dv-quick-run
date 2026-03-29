@@ -25,4 +25,25 @@ function showCopyStatus(message) {
                 .replace(/&/g, "&amp;")
                 .replace(/\"/g, "&quot;");
         }
+
+        function renderTraversalStatus(traversal) {
+            if (!traversalStatus) {
+                return;
+            }
+
+            if (!traversal || !traversal.title) {
+                traversalStatus.innerHTML = "";
+                return;
+            }
+
+            const subtitle = traversal.subtitle
+                ? "<span class='traversal-status-subtitle'>" + escapeHtml(traversal.subtitle) + "</span>"
+                : "";
+
+            traversalStatus.innerHTML =
+                "<span class='traversal-status-pill'>" +
+                "<span class='traversal-status-title'>" + escapeHtml(traversal.title) + "</span>" +
+                subtitle +
+                "</span>";
+        }
 `;

@@ -88,15 +88,19 @@ function renderEnvironmentBadge(environment) {
 
                         primaryActions.forEach((action) => {
                             html +=
-                                "<button class=\\"inline-action\\"" +
+                                "<button class=\\"inline-action inline-action-labeled\\"" +
                                 " title=\\"" + escapeAttribute(action.title) + "\\"" +
                                 " data-action-id=\\"" + escapeAttribute(action.id) + "\\"" +
                                 " data-guid=\\"" + escapeAttribute(action.payload?.guid ?? "") + "\\"" +
                                 " data-entity-set-name=\\"" + escapeAttribute(action.payload?.entitySetName ?? "") + "\\"" +
                                 " data-entity-logical-name=\\"" + escapeAttribute(action.payload?.entityLogicalName ?? "") + "\\"" +
                                 " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
-                                " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\">" +
-                                escapeHtml(action.icon) +
+                                " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
+                                " data-traversal-session-id=\\"" + escapeAttribute(action.payload?.traversalSessionId ?? "") + "\\"" +
+                                " data-traversal-leg-index=\\"" + escapeAttribute(String(action.payload?.traversalLegIndex ?? "")) + "\\"" +
+                                " data-carry-field=\\"" + escapeAttribute(action.payload?.carryField ?? "") + "\\"" +
+                                " data-carry-value=\\"" + escapeAttribute(action.payload?.carryValue ?? "") + "\\">" +
+                                  "<span class=\\"inline-action-icon\\">" + escapeHtml(action.icon) + "</span>" +
                                 "</button>";
                         });
 
@@ -107,15 +111,20 @@ function renderEnvironmentBadge(environment) {
 
                             overflowActions.forEach((action) => {
                                 html +=
-                                    "<button class=\\"overflow-item\\" type=\\"button\\"" +
+                                    "<button class=\\"inline-action inline-action-labeled\\"" +
+                                    " title=\\"" + escapeAttribute(action.title) + "\\"" +
                                     " data-action-id=\\"" + escapeAttribute(action.id) + "\\"" +
                                     " data-guid=\\"" + escapeAttribute(action.payload?.guid ?? "") + "\\"" +
                                     " data-entity-set-name=\\"" + escapeAttribute(action.payload?.entitySetName ?? "") + "\\"" +
                                     " data-entity-logical-name=\\"" + escapeAttribute(action.payload?.entityLogicalName ?? "") + "\\"" +
                                     " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
-                                    " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\">" +
-                                    "<span>" + escapeHtml(action.icon) + "</span>" +
-                                    "<span>" + escapeHtml(action.title) + "</span>" +
+                                    " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
+                                    " data-traversal-session-id=\\"" + escapeAttribute(action.payload?.traversalSessionId ?? "") + "\\"" +
+                                    " data-traversal-leg-index=\\"" + escapeAttribute(String(action.payload?.traversalLegIndex ?? "")) + "\\"" +
+                                    " data-carry-field=\\"" + escapeAttribute(action.payload?.carryField ?? "") + "\\"" +
+                                    " data-carry-value=\\"" + escapeAttribute(action.payload?.carryValue ?? "") + "\\">" +
+                                    "<span class=\\"inline-action-icon\\">" + escapeHtml(action.icon) + "</span>" +
+                                    "<span class=\\"inline-action-label\\">" + escapeHtml(action.title) + "</span>" +
                                     "</button>";
                             });
 
