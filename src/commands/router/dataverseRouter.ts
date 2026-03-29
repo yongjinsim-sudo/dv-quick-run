@@ -17,6 +17,8 @@ import { runRelationshipGraphViewAction } from "./actions/relationships/relation
 import { investigateRecordAction } from "./actions/investigateRecord/investigateRecordAction.js";
 import { runTrySampleQueryAction } from "./actions/onboarding/trySampleQueryAction.js";
 import { runTryFetchXmlSampleAction } from "./actions/onboarding/tryFetchXmlSampleAction.js";
+import { runFindPathToTableAction } from "./actions/traversal/findPathToTableAction.js";
+import { runContinueTraversalAction } from "./actions/traversal/continueTraversalAction.js";
 
 export type DvQuickRunAction = "get" 
   | "whoAmI" 
@@ -41,7 +43,9 @@ export type DvQuickRunAction = "get"
   | "relationshipGraphView"
   | "investigateRecord"
   | "trySampleQuery"
-  | "tryFetchXmlSample";
+  | "tryFetchXmlSample"
+  | "findPathToTable"
+  | "continueTraversal";
 
 export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext): Promise<void> {
   switch (action) {
@@ -116,6 +120,12 @@ export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: Command
 
     case "tryFetchXmlSample":
       return await runTryFetchXmlSampleAction(ctx);
+
+    case "findPathToTable":
+      return await runFindPathToTableAction(ctx);
+    
+    case "continueTraversal":
+      return await runContinueTraversalAction(ctx);
 
     default: {
       const _exhaustive: never = action;

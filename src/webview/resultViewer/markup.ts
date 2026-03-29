@@ -12,6 +12,7 @@ export function getResultViewerMarkup(iconUri: string): string {
             <div class="toolbar-right">
                 <img src="${iconUri}" class="viewer-icon" />
                 <span class="viewer-title">DV Quick Run Result Viewer</span>
+                <span id="traversalStatus" class="traversal-status"></span>
                 <span id="rowCount" class="row-count"></span>
                 <span id="copyStatus" class="copy-status"></span>
                 <span id="environmentBadge"></span>

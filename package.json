@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Run, inspect, and investigate Dataverse queries (OData & FetchXML) directly inside VS Code. Includes an interactive result viewer, smart query builders, query explanation, record investigation from GUIDs, metadata intelligence, and relationship exploration — all without leaving your editor.",
-  "version": "0.7.0",
+  "version": "0.7.2",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -71,10 +71,12 @@
       { "command": "dvQuickRun.runQueryAtLine", "title": "DV Quick Run: Run Query At Line" },
       { "command": "dvQuickRun.explainQueryAtLine", "title": "DV Quick Run: Explain Query At Line" },
       { "command": "dvQuickRun.relationshipExplorer", "title": "DV Quick Run: Explore Relationships" },
+      { "command": "dvQuickRun.findPathToTable", "title": "DV Quick Run: Find Path to Table" },
       { "command": "dvQuickRun.relationshipGraphView", "title": "DV Quick Run: View Relationship Graph" },
       { "command": "dvQuickRun.showMetadataDiagnostics", "title": "DV Quick Run: Show Metadata Diagnostics" },
       { "command": "dvQuickRun.clearMetadataSessionCache", "title": "DV Quick Run: Clear Metadata Session Cache" },
       { "command": "dvQuickRun.clearPersistedMetadataCache", "title": "DV Quick Run: Clear Persisted Metadata Cache" },
+      { "command": "dvQuickRun.clearTraversalCache", "title": "DV Quick Run: Clear Traversal Cache" },
       { "command": "dvQuickRun.selectEnvironment", "title": "DV Quick Run: Select Environment" },
       { "command": "dvQuickRun.addEnvironment", "title": "DV Quick Run: Add Environment" },
       { "command": "dvQuickRun.removeEnvironment", "title": "DV Quick Run: Remove Environment" },
@@ -204,6 +206,46 @@
         "default": "info",
         "enum": ["error", "warn", "info", "debug"],
         "description": "Controls DV Quick Run logging verbosity."
+        },
+        "dvQuickRun.traversal.allowedTables": {
+          "type": "array",
+          "default": [
+            "account",
+            "contact",
+            "lead",
+            "opportunity",
+            "incident",
+            "task",
+            "appointment",
+            "email",
+            "phonecall",
+            "systemuser",
+            "team"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional allow-list for Find Path to Table traversal. When populated, traversal only expands through these tables, while always still allowing the selected source and target tables."
+        },
+        "dvQuickRun.traversal.excludedTables": {
+          "type": "array",
+          "default": [
+            "activitypointer",
+            "connection",
+            "duplicaterecord",
+            "postfollow",
+            "postregarding",
+            "postrole",
+            "principalobjectattributeaccess",
+            "processsession",
+            "syncerror",
+            "slakpinstance",
+            "sharepointdocumentlocation"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional block-list for Find Path to Table traversal. Excluded tables are skipped during expansion, except when they are the selected source or target table."
         }
       }
     }

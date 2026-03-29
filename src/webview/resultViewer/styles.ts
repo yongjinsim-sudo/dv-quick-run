@@ -571,4 +571,66 @@ export const RESULT_VIEWER_STYLES = `
         .drawer-table-wrap thead {
             position: static;
         }
+
+        .traversal-status {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 8px;
+        }
+
+        .traversal-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--vscode-editorWidget-border, rgba(255,255,255,0.12));
+            background: var(--vscode-editorWidget-background, rgba(255,255,255,0.04));
+            font-size: 11px;
+        }
+
+        .traversal-status-title {
+            font-weight: 600;
+        }
+
+        .traversal-status-subtitle {
+            opacity: 0.8;
+        }
+
+        .inline-action-labeled {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 28px;
+            height: 28px;
+
+            border-radius: 6px;
+            cursor: pointer;
+
+            transition: all 0.15s ease;
+        }
+
+        .inline-action-icon {
+            font-size: 18px;   
+            line-height: 1;
+        }
+
+        .inline-action-labeled:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .inline-action-labeled:hover .inline-action-icon {
+            transform: translateX(2px); /* subtle forward motion */
+        }
+
+        .empty-state-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .empty-state-message {
+            opacity: 0.8;
+            font-size: 12px;
+        }
 `;

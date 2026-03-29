@@ -3,13 +3,16 @@ import { clearHoverFieldContextCache } from "../providers/hoverFieldContextCache
 import { clearNavigationHoverEnrichmentCache } from "../providers/queryHoverProvider.js";
 import { clearMetadataSessionCache } from "../commands/router/actions/shared/metadataAccess/metadataSessionCache.js";
 import { clearRelationshipMetadataMemory } from "../commands/router/actions/shared/metadataAccess/metadataRelationshipAccess.js";
+import { TraversalCacheService  } from "../commands/router/actions/shared/traversal/traversalCacheService.js";
 import { logInfo } from "../utils/logger.js";
+import { clearActiveTraversalProgress } from "../commands/router/actions/shared/traversal/traversalProgressStore.js";
 
 export type EnvironmentRuntimeCacheDeps = {
   clearMetadataSessionCache: () => void;
   clearRelationshipMetadataMemory: () => void;
   clearHoverFieldContextCache: () => void;
   clearNavigationHoverEnrichmentCache: () => void;
+  clearTraversalCache: () => void;
   logInfo: (message: string) => void;
 };
 
@@ -19,11 +22,13 @@ export function clearEnvironmentScopedRuntimeCachesWithDeps(
 ): void {
   deps.clearMetadataSessionCache();
   deps.clearRelationshipMetadataMemory();
+  deps.clearTraversalCache();
+  clearActiveTraversalProgress();
   deps.clearHoverFieldContextCache();
   deps.clearNavigationHoverEnrichmentCache();
 
   if (output) {
-    deps.logInfo("DV Quick Run: Cleared metadata session caches after environment change.");
+        deps.logInfo("DV Quick Run: Cleared metadata, traversal caches, and active traversal state after environment change.");
   }
 }
 
@@ -32,6 +37,9 @@ export function clearEnvironmentScopedRuntimeCaches(output?: OutputChannel): voi
     {
       clearMetadataSessionCache,
       clearRelationshipMetadataMemory,
+      clearTraversalCache: () => {
+        TraversalCacheService.clearAll();
+      },
       clearHoverFieldContextCache,
       clearNavigationHoverEnrichmentCache,
       logInfo: (message: string) => {

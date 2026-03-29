@@ -19,6 +19,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = String.raw`
         const arrayDrawerCloseBtn = document.getElementById("arrayDrawerCloseBtn");
         const arrayDrawerTableView = document.getElementById("arrayDrawerTableView");
         const arrayDrawerJsonView = document.getElementById("arrayDrawerJsonView");
+        const traversalStatus = document.getElementById("traversalStatus");
 
         const model = JSON.parse(\`__INITIAL_MODEL_JSON__\`);
 
@@ -107,6 +108,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = String.raw`
 
         bindTableEventsOnce();
         renderEnvironmentBadge(model.environment);
+        renderTraversalStatus(model.traversal);
         renderTable(model);
         jsonView.textContent = model.rawJson;
         rowCount.textContent = model.rowCount + " rows returned";

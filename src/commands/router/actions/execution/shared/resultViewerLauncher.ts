@@ -1,16 +1,24 @@
 import type { CommandContext } from "../../../../context/commandContext.js";
 import { ResultViewerPanel } from "../../../../../providers/resultViewerPanel.js";
-import { buildResultViewerModel } from "../../../../../services/resultViewModelBuilder.js";
+import {
+    buildResultViewerModel,
+    type ResultViewerTraversalContext
+} from "../../../../../services/resultViewModelBuilder.js";
 import {
     loadChoiceMetadata,
     loadEntityDefByEntitySetName,
     loadFields
 } from "../../shared/metadataAccess.js";
 
+export type ResultViewerLaunchOptions = {
+    traversalContext?: ResultViewerTraversalContext;
+};
+
 export async function showResultViewerForQuery(
     ctx: CommandContext,
     result: unknown,
-    path: string
+    path: string,
+    options?: ResultViewerLaunchOptions
 ): Promise<void> {
     const client = ctx.getClient();
     const token = await ctx.getToken(ctx.getScope());
@@ -37,6 +45,7 @@ export async function showResultViewerForQuery(
         primaryIdField: entityDef?.primaryIdAttribute,
         fields,
         choiceMetadata,
+        traversalContext: options?.traversalContext,
         environment: activeEnvironment
             ? {
                 name: activeEnvironment.name,
