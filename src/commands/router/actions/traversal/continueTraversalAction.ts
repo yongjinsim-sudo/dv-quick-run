@@ -5,9 +5,7 @@ import { executeTraversalStep } from "../shared/traversal/traversalStepExecutor.
 import { appendTraversalInsightActions } from "../shared/traversal/traversalInsightActions.js";
 import type {
   ContinueTraversalRequest,
-  TraversalExecutionPlan,
-  TraversalLandingContext,
-  TraversalViewerContext
+  TraversalLandingContext
 } from "../shared/traversal/traversalTypes.js";
 import {
   clearActiveTraversalProgress,
@@ -15,30 +13,8 @@ import {
   isActiveTraversalSession,
   setActiveTraversalProgress
 } from "../shared/traversal/traversalProgressStore.js";
+import { buildTraversalViewerContext } from "./traversalSessionHelpers.js";
 import { recordSuccessfulTraversalRoute } from "../shared/traversal/traversalHistoryStore.js";
-
-function buildTraversalViewerContext(args: {
-  sessionId: string;
-  itinerary: TraversalExecutionPlan;
-  currentStepIndex: number;
-  currentEntityName?: string;
-  requiredCarryField?: string;
-}): TraversalViewerContext {
-  const nextStep = args.itinerary.steps[args.currentStepIndex + 1];
-
-  return {
-    openedFrom: "guidedTraversal",
-    traversalSessionId: args.sessionId,
-    legIndex: args.currentStepIndex,
-    legCount: args.itinerary.steps.length,
-    hasNextLeg: !!nextStep,
-    nextLegLabel: nextStep?.stageLabel,
-    nextLegEntityName: nextStep?.toEntity,
-    requiredCarryField: args.requiredCarryField,
-    currentEntityName: args.currentEntityName,
-    isFinalLeg: !nextStep
-  };
-}
 
 export async function runContinueTraversalAction(
   ctx: CommandContext,
@@ -65,7 +41,8 @@ export async function runContinueTraversalAction(
 
     if (!nextStep) {
       logInfo(ctx.output, "Traversal is already complete.");
-      clearActiveTraversalProgress();
+      logInfo(ctx.output, `Reached: ${progress.lastLanding?.entityName ?? progress.itinerary.steps[progress.currentStepIndex]?.toEntity ?? progress.route.targetEntity}`);
+      logInfo(ctx.output, "Sibling expand remains available on this landed result.");
       return;
     }
 
@@ -99,8 +76,10 @@ export async function runContinueTraversalAction(
           itinerary: progress.itinerary,
           currentStepIndex: nextStepIndex,
           currentEntityName: nextStep.toEntity,
-          requiredCarryField: landedNode?.primaryIdAttribute
-        })
+          requiredCarryField: landedNode?.primaryIdAttribute,
+          canSiblingExpand: true
+        }),
+        siblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex]
       }
     );
 
@@ -136,6 +115,8 @@ export async function runContinueTraversalAction(
       ...progress,
       currentStepIndex: nextStepIndex,
       lastLanding: execution.landing,
+      currentStepInput: effectiveLanding,
+      currentStepSiblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex],
       currentStepInsightActions: insightActions,
       nextQuerySequenceNumber:
         (progress.nextQuerySequenceNumber ?? 1) + execution.executedQueryCount
@@ -146,9 +127,13 @@ export async function runContinueTraversalAction(
         await recordSuccessfulTraversalRoute(ctx, progress.route);
       }
 
-      clearActiveTraversalProgress();
+      setActiveTraversalProgress({
+        ...updatedProgress,
+        isCompleted: true
+      });
       logInfo(ctx.output, "Guided Traversal complete.");
       logInfo(ctx.output, `Reached: ${nextStep.toEntity}`);
+      logInfo(ctx.output, "Sibling expand remains available on this landed result.");
       return;
     }
 

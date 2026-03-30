@@ -28,6 +28,7 @@ export interface ResultViewerTraversalActionContext {
   nextLegEntityName?: string;
   requiredCarryField?: string;
   isFinalLeg: boolean;
+  canSiblingExpand?: boolean;
 }
 
 export interface ResultViewerActionContext {

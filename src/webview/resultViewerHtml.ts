@@ -45,6 +45,7 @@ ${getResultViewerMarkup(String(iconUri))}
         const showRelationshipsBtn = document.getElementById("showRelationshipsBtn");
         const showMetadataBtn = document.getElementById("showMetadataBtn");
         const exportCsvBtn = document.getElementById("exportCsvBtn");
+        const siblingExpandBtn = document.getElementById("siblingExpandBtn");
         const rowCount = document.getElementById("rowCount");
         const copyStatus = document.getElementById("copyStatus");
         const environmentBadge = document.getElementById("environmentBadge");
@@ -124,6 +125,15 @@ ${getResultViewerMarkup(String(iconUri))}
             });
         });
 
+        siblingExpandBtn.addEventListener("click", () => {
+            vscodeApi.postMessage({
+                type: "applySiblingExpand",
+                payload: {
+                    traversalSessionId: model.traversal?.traversalSessionId || ""
+                }
+            });
+        });
+
         arrayDrawerTableTab.addEventListener("click", () => {
             arrayDrawerView = "table";
             renderActiveArrayDrawer();
@@ -144,6 +154,7 @@ ${getResultViewerMarkup(String(iconUri))}
 
         bindTableEventsOnce();
         renderEnvironmentBadge(model.environment);
+        renderSiblingExpandButton(model);
         renderTable(model);
         jsonView.textContent = model.rawJson;
         rowCount.textContent = model.rowCount + " rows returned";
@@ -154,6 +165,11 @@ ${getResultViewerMarkup(String(iconUri))}
             showJson();
         }
 
+
+        function renderSiblingExpandButton(currentModel) {
+            const canShow = !!currentModel.traversal && !!currentModel.traversal.canSiblingExpand && !!currentModel.traversal.traversalSessionId;
+            siblingExpandBtn.hidden = !canShow;
+        }
         function renderEnvironmentBadge(environment) {
             if (!environment || !environment.name) {
                 environmentBadge.innerHTML = "";

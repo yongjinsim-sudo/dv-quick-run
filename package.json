@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Run, inspect, and investigate Dataverse queries (OData & FetchXML) directly inside VS Code. Includes an interactive result viewer, smart query builders, query explanation, record investigation from GUIDs, metadata intelligence, and relationship exploration — all without leaving your editor.",
-  "version": "0.7.1",
+  "description": "A metadata-aware Dataverse workbench for VS Code to run, explore, navigate, and enrich queries (OData & FetchXML). Includes guided traversal, in-place enrichment (sibling expand), Query Doctor diagnostics, interactive result viewer, and smart query builders — all without leaving your editor.",
+  "version": "0.7.2",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",

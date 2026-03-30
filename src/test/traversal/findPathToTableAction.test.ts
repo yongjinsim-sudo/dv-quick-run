@@ -9,12 +9,14 @@ import type {
 } from "../../commands/router/actions/shared/traversal/traversalTypes.js";
 import { TraversalCacheService } from "../../commands/router/actions/shared/traversal/traversalCacheService.js";
 
-function createStubContext(): CommandContext {
+function createStubContext(logs?: string[]): CommandContext {
   return {
     ext: {} as CommandContext["ext"],
     output: {
       append: () => undefined,
-      appendLine: () => undefined,
+      appendLine: (value: string) => {
+        logs?.push(value);
+      },
       clear: () => undefined,
       dispose: () => undefined,
       hide: () => undefined,
@@ -111,6 +113,52 @@ suite("findPathToTableAction", () => {
 
     assert.strictEqual(messages.length, 1);
     assert.strictEqual(messages[0], "DV Quick Run: No route found from account to contact.");
+  });
+
+
+  test("applies traversal scope logging once per workflow run", async () => {
+    const logs: string[] = [];
+    const selectedRoute = buildSelectedRoute();
+    const plannedRoute = buildPlannedRoute(selectedRoute);
+    const selectedPlan = plannedRoute.candidatePlans[0] as TraversalExecutionPlan;
+
+    const graph: TraversalGraph = {
+      entities: {
+        account: {
+          logicalName: "account",
+          entitySetName: "accounts",
+          primaryIdAttribute: "accountid",
+          primaryNameAttribute: "name",
+          fieldLogicalNames: [],
+          outboundRelationships: []
+        },
+        patient: {
+          logicalName: "patient",
+          entitySetName: "patients",
+          primaryIdAttribute: "patientid",
+          primaryNameAttribute: "name",
+          fieldLogicalNames: [],
+          outboundRelationships: []
+        }
+      }
+    };
+
+    await runFindPathToTableWorkflow(createStubContext(logs), {
+      loadEntityOptions: async () => [
+        { logicalName: "account", entitySetName: "accounts", fieldLogicalNames: [] },
+        { logicalName: "patient", entitySetName: "patients", fieldLogicalNames: [] }
+      ],
+      pickSourceEntity: async (options) => options[0],
+      pickTargetEntity: async (options) => options[1],
+      buildTraversalGraph: async () => graph,
+      pickTraversalRoute: async () => selectedRoute,
+      pickExecutionPlan: async () => selectedPlan,
+      executeFirstStep: async () => undefined,
+      showInfoMessage: () => undefined
+    });
+
+    const scopeLogs = logs.filter((entry) => entry.includes("[Traversal] Scope applied:"));
+    assert.strictEqual(scopeLogs.length, 1);
   });
 
     test("executes first step for the selected route and itinerary", async () => {

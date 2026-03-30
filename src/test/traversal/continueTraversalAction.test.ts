@@ -3,6 +3,7 @@ import type { CommandContext } from "../../commands/context/commandContext.js";
 import { runContinueTraversalAction } from "../../commands/router/actions/traversal/continueTraversalAction.js";
 import {
   clearActiveTraversalProgress,
+  getActiveTraversalProgress,
   setActiveTraversalProgress
 } from "../../commands/router/actions/shared/traversal/traversalProgressStore.js";
 import type { ActiveTraversalProgress } from "../../commands/router/actions/shared/traversal/traversalTypes.js";
@@ -135,13 +136,20 @@ suite("continueTraversalAction", () => {
     clearActiveTraversalProgress();
   });
 
-  test("clears progress and logs when traversal is already complete", async () => {
+  test("keeps completed traversal progress so sibling expand remains available on the landed result", async () => {
     clearActiveTraversalProgress();
-    setActiveTraversalProgress(buildProgress({
-      sessionId: "complete-session",
-      currentStepIndex: 1,
-      stepCount: 2
-    }));
+    setActiveTraversalProgress({
+      ...buildProgress({
+        sessionId: "complete-session",
+        currentStepIndex: 1,
+        stepCount: 2
+      }),
+      isCompleted: true,
+      lastLanding: {
+        entityName: "task",
+        ids: ["task-1"]
+      }
+    });
 
     const logs: string[] = [];
     await runContinueTraversalAction(createStubContext(logs), {
@@ -154,10 +162,11 @@ suite("continueTraversalAction", () => {
     assert.ok(
       logs.some((entry) => entry.includes("Traversal is already complete."))
     );
-
-    assert.strictEqual(
-      clearActiveTraversalProgress(),
-      undefined
+    assert.ok(
+      logs.some((entry) => entry.includes("Sibling expand remains available on this landed result."))
     );
+    assert.strictEqual(getActiveTraversalProgress()?.sessionId, "complete-session");
+
+    clearActiveTraversalProgress();
   });
 });
