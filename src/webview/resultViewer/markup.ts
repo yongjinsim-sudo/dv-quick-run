@@ -8,6 +8,7 @@ export function getResultViewerMarkup(iconUri: string): string {
                 <button id="showRelationshipsBtn" title="View Relationships">🔗</button>
                 <button id="showMetadataBtn" title="View Entity Metadata">📘</button>
                 <button id="exportCsvBtn" title="Export current view to CSV">⬇️</button>
+                <button id="siblingExpandBtn" title="Sibling expand current traversal leg" hidden>✨</button>
             </div>
             <div class="toolbar-right">
                 <img src="${iconUri}" class="viewer-icon" />

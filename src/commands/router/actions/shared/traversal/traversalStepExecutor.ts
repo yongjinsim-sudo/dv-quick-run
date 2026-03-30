@@ -36,7 +36,8 @@ export function buildStepExecutionPlan(
   itinerary: TraversalExecutionPlan,
   step: TraversalExecutionStep,
   landingContext?: TraversalLandingContext,
-  startQuerySequenceNumber = 1
+  startQuerySequenceNumber = 1,
+  siblingExpandClause?: string
 ): TraversalStepExecutionPlan {
   const enrichmentCandidates = buildEnrichmentCandidates(graph, step.toEntity);
 
@@ -44,7 +45,8 @@ export function buildStepExecutionPlan(
     graph,
     step,
     landingContext,
-    startQuerySequenceNumber
+    startQuerySequenceNumber,
+    siblingExpandClause
   );
   if (directExpandPlan) {
     return {
@@ -78,7 +80,7 @@ export async function executeTraversalStep(
   step: TraversalExecutionStep,
   landingContext?: TraversalLandingContext,
   startQuerySequenceNumber = 1,
-  viewerOptions?: ResultViewerLaunchOptions
+  viewerOptions?: ResultViewerLaunchOptions & { siblingExpandClause?: string }
 ): Promise<ExecutionResult> {
   const client = ctx.getClient();
   const token = await ctx.getToken(ctx.getScope());
@@ -88,7 +90,8 @@ export async function executeTraversalStep(
     itinerary,
     step,
     landingContext,
-    startQuerySequenceNumber
+    startQuerySequenceNumber,
+    viewerOptions?.siblingExpandClause
   );
 
   if (!executionPlan.queries.length) {
@@ -153,15 +156,27 @@ export async function executeTraversalStep(
 
   const landedIds = extractLandingIds(graph, step.toEntity, finalResult);
 
-  if (!landedIds.length) {
+  if (viewerOptions?.siblingExpandClause) {
+    if (!landedIds.length) {
+      logInfo(
+        ctx.output,
+        `Sibling enrichment applied to current leg, but 0 rows landed at ${step.toEntity}.`
+      );
+    } else {
+      logInfo(
+        ctx.output,
+        `Sibling enrichment applied to current leg. Current landing remains: ${step.toEntity} (${landedIds.length} row(s))`
+      );
+    }
+  } else if (!landedIds.length) {
     logInfo(
       ctx.output,
-      `Traversal complete. Target "${step.toEntity}" reached, but 0 rows landed from this path.`
+      `Current landing: ${step.toEntity} (0 row(s))`
     );
   } else {
     logInfo(
       ctx.output,
-      `Traversal complete. Final landing: ${step.toEntity} (${landedIds.length} row(s))`
+      `Current landing: ${step.toEntity} (${landedIds.length} row(s))`
     );
   }
 
@@ -181,7 +196,8 @@ function tryBuildExpandExecutionPlan(
   graph: TraversalGraph,
   step: TraversalExecutionStep,
   landingContext: TraversalLandingContext | undefined,
-  startQuerySequenceNumber: number
+  startQuerySequenceNumber: number,
+  siblingExpandClause?: string
 ): TraversalStepExecutionPlan | undefined {
   if (step.hopCount < 1 || step.hopCount > 2) {
     return undefined;
@@ -193,7 +209,7 @@ function tryBuildExpandExecutionPlan(
   }
 
   const rootSelect = buildSafeSelectFields(rootNode);
-  const expandClause = buildExpandClause(graph, step, 0);
+  const expandClause = buildExpandClause(graph, step, 0, siblingExpandClause);
 
   if (!expandClause) {
     return undefined;
@@ -245,7 +261,8 @@ function tryBuildExpandExecutionPlan(
 function buildExpandClause(
   graph: TraversalGraph,
   step: TraversalExecutionStep,
-  edgeIndex: number
+  edgeIndex: number,
+  siblingExpandClause?: string
 ): string | undefined {
   const edge = step.edges[edgeIndex];
   if (!edge) {
@@ -259,9 +276,13 @@ function buildExpandClause(
 
   const selectFields = buildSafeSelectFields(targetNode);
 
-  const nested = buildExpandClause(graph, step, edgeIndex + 1);
+  const nested = buildExpandClause(graph, step, edgeIndex + 1, siblingExpandClause);
   if (nested) {
     return `${edge.navigationPropertyName}($select=${selectFields.join(",")};$expand=${nested})`;
+  }
+
+  if (siblingExpandClause) {
+    return `${edge.navigationPropertyName}($select=${selectFields.join(",")};$expand=${siblingExpandClause})`;
   }
 
   return `${edge.navigationPropertyName}($select=${selectFields.join(",")})`;

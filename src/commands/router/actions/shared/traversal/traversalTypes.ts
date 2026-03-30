@@ -217,6 +217,7 @@ export type TraversalViewerContext = {
   requiredCarryField?: string;
   currentEntityName?: string;
   isFinalLeg: boolean;
+  canSiblingExpand?: boolean;
 };
 
 export type ContinueTraversalRequest = {
@@ -234,6 +235,10 @@ export type ActiveTraversalProgress = {
   currentStepIndex: number;
   graph: TraversalGraph;
   lastLanding?: TraversalLandingContext;
+  currentStepInput?: TraversalLandingContext;
+  currentStepSiblingExpandClause?: string;
+  siblingExpandClausesByStep?: Record<number, string>;
   currentStepInsightActions?: TraversalInsightAction[];
   nextQuerySequenceNumber?: number;
+  isCompleted?: boolean;
 };

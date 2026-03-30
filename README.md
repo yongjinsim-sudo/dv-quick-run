@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with built-in Query Doctor for diagnostics and suggested fixes.
+A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with guided traversal, enrichment, and Query Doctor diagnostics.
 
 **Run, understand, and explore Dataverse data — without leaving your editor.**
 
@@ -17,12 +17,86 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Explore results in a table
 * Investigate records
 * Refine and repeat
+* Navigate relationships step-by-step
+* Enrich results without rewriting queries
 
 All inside VS Code.
 
 ---
 
-## 🆕 What's New in v0.7.1
+## 🆕 What's New in v0.7.2
+
+* **Sibling Expand (Enrich without leaving context)**
+  - Enrich results directly from the Result Viewer
+  - Add related data without rewriting your query
+  - Works during:
+    - traversal steps
+    - final results
+    - single queries
+  - Smart behaviour:
+    - additive (does not overwrite existing `$expand`)
+    - merge-aware (same entity expansions are combined)
+
+* **Enrich-as-you-go workflow**
+  - New flow:
+    ```
+    navigate → land → enrich → continue
+    ```
+  - No need to stop and manually rebuild queries mid-exploration
+
+* **Seamless Traversal Integration**
+  - Sibling expand works alongside:
+    - Continue Traversal
+    - multi-leg workflows
+  - Operates on the current result set (no context switching)
+
+* **Smarter Expand behaviour**
+  - Prevents duplicate expands
+  - Prevents accidental overwrite of previous expand clauses
+  - Consistent behaviour across:
+    - Add Expand helper
+    - traversal-driven expand
+
+* **Cleaner execution feedback**
+  - Reduced noisy logs
+  - More readable execution output
+
+---
+
+### ✨ New Workflow: Enrich in Place
+
+Instead of rewriting queries:
+ ```
+contact → careplan → careplanactivity → task
+ ```
+
+You can now:
+
+1. Traverse to your target
+2. Select a row or result set
+3. Apply **Sibling Expand**
+4. Instantly enrich results with related data
+
+No manual `$expand` needed.
+
+---
+
+### 🧠 Notes
+
+* Sibling expand is **not traversal**
+  - traversal = navigation
+  - sibling expand = enrichment
+
+* Expand is now:
+  - additive
+  - merge-aware
+  - safe to apply multiple times
+
+* This release introduces the foundation for:
+  - composed multi-hop queries
+  - `$batch` execution (future optimisation)
+
+## 🆕 What's New in v0.7.1 (Navigation)
 
 * **Guided Traversal (Find Path to Table)**
   - Discover relationship paths between Dataverse tables directly from VS Code
@@ -220,7 +294,7 @@ In complex environments, tuning these settings can significantly improve:
 
 Typical workflow:
 
-write query → run → explore → investigate → refine → repeat
+write → run → explore → navigate → enrich → refine → repeat
 
 ---
 
@@ -248,6 +322,15 @@ write query → run → explore → investigate → refine → repeat
 * Run Dataverse queries (OData & FetchXML) directly in VS Code
 * View results in an interactive table or JSON
 * Sort, filter, and inspect data inline
+
+---
+
+### 🔗 Guided Traversal + Enrichment
+
+* Traverse relationships step-by-step across Dataverse tables
+* Continue traversal using real data (row-driven)
+* Enrich results in-place using **Sibling Expand**
+* Build complex multi-entity queries without manual `$expand`
 
 ---
 

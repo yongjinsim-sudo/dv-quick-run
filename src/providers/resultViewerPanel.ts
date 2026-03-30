@@ -3,6 +3,7 @@ import type { CommandContext } from "../commands/context/commandContext.js";
 import {
     executeResultViewerAction
 } from "./resultViewerActions/registry.js";
+import { runApplySiblingExpandAction } from "../commands/router/actions/traversal/applySiblingExpandAction.js";
 import { ResultViewerModel } from "../services/resultViewModelBuilder.js";
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
@@ -36,6 +37,12 @@ type ResultViewerMessage =
         payload: {
             fileName?: string;
             csv?: string;
+        };
+    }
+    | {
+        type: "applySiblingExpand";
+        payload: {
+            traversalSessionId?: string;
         };
     };
 
@@ -109,6 +116,12 @@ export class ResultViewerPanel {
                     message.payload.fileName,
                     message.payload.csv
                 );
+                return;
+
+            case "applySiblingExpand":
+                await runApplySiblingExpandAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId
+                });
                 return;
         }
     }

@@ -22,6 +22,8 @@ export interface ResultViewerEnvironmentInfo {
 export interface ResultViewerTraversalStatus {
     title: string;
     subtitle?: string;
+    traversalSessionId?: string;
+    canSiblingExpand?: boolean;
 }
 
 export interface ResultViewerEmptyState {
@@ -464,7 +466,8 @@ function buildCell(
                     nextLegLabel: options.traversalContext.nextLegLabel,
                     nextLegEntityName: options.traversalContext.nextLegEntityName,
                     requiredCarryField: options.traversalContext.requiredCarryField,
-                    isFinalLeg: options.traversalContext.isFinalLeg
+                    isFinalLeg: options.traversalContext.isFinalLeg,
+                    canSiblingExpand: options.traversalContext.canSiblingExpand
                 }
                 : undefined
         })
@@ -520,7 +523,9 @@ export function buildResultViewerModel(
                     : "Reached destination")
                 : traversalContext.nextLegLabel
                     ? `Next: ${traversalContext.nextLegLabel}`
-                    : "Select a row to continue"
+                    : "Select a row to continue",
+            traversalSessionId: traversalContext.traversalSessionId,
+            canSiblingExpand: traversalContext.canSiblingExpand
         }
         : undefined;
 
@@ -617,6 +622,7 @@ export function buildResultViewerModel(
             entitySetName,
             entityLogicalName,
             primaryIdField,
+            traversal,
             environment,
             emptyState
         };
@@ -651,6 +657,7 @@ export function buildResultViewerModel(
             entitySetName,
             entityLogicalName,
             primaryIdField,
+            traversal,
             environment,
             emptyState
         };
@@ -667,6 +674,7 @@ export function buildResultViewerModel(
         entitySetName,
         entityLogicalName,
         primaryIdField,
+        traversal,
         environment
     };
 }

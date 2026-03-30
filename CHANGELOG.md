@@ -6,6 +6,85 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.7.2] – Sibling Expand & Actionable Insight Foundation
+
+> Introduces metadata-driven enrichment within traversal and lays the foundation for intent-driven execution through the Actionable Insight model.
+
+### Added
+
+- **Sibling Expand (Traversal Enrichment)**
+  - Enrich traversal results without leaving the current context
+  - Triggered directly from Result Viewer (row/table-driven)
+  - Allows selection of fields and related entity for expansion
+  - Works on:
+    - intermediate legs
+    - final legs
+    - single-leg traversal
+  - Additive behaviour:
+    - does not overwrite existing `$expand`
+    - merges when expanding the same entity
+  - Guardrails:
+    - max 3 expands per leg
+    - single-level expand only
+    - suppressed when no valid relationship exists
+
+- **Actionable Insight (Foundation Layer)**
+  - Introduced structured execution intent model
+  - Represents user actions (e.g. sibling expand) as deterministic intent
+  - Execution flow:
+    - user action → insight → mutation pipeline → query execution
+  - Enables:
+    - additive operations
+    - replayable execution patterns
+    - future optimisation strategies (composition / $batch)
+  - Internal-only foundation (not exposed as user-facing feature)
+
+- **Traversal + Result Viewer integration (enhanced)**
+  - Sibling expand available alongside traversal continuation
+  - Operates on current landing node
+  - Fully compatible with:
+    - Continue Traversal
+    - multi-leg workflows
+    - table viewer interactions
+
+- **Expand mutation behaviour (additive + merge-aware)**
+  - Expand is now:
+    - additive (no reset of existing expand)
+    - merge-aware (same entity expansions combined)
+  - Prevents:
+    - duplicate expand paths
+    - accidental overwrite of previous expansions
+
+- **Traversal enrichment workflow**
+  - Users can now:
+    - navigate → land → enrich → continue
+  - Removes need for manual query rewriting mid-traversal
+
+- **Execution consistency via shared mutation pipeline**
+  - All expand operations now flow through the shared mutation pipeline
+  - Aligns behaviour across:
+    - Add Expand mutator
+    - traversal-driven expand
+
+- **Logging clarity (reduced noise)**
+  - Removed duplicate scope logs
+  - Improved signal-to-noise ratio in execution output
+
+### Notes
+
+- Sibling expand is **not traversal**
+  - traversal = navigation
+  - sibling expand = enrichment
+
+- Actionable Insight is currently:
+  - scoped to traversal/enrichment workflows
+  - not yet used across all mutation features
+
+- Future releases will build on this foundation to support:
+  - composed multi-hop queries (single query execution)
+  - `$batch` execution for multi-request optimisation
+  - broader migration of mutation features into Actionable Insight model
+
 ## [0.7.1] – Guided Traversal & Continuation Workflow
 
 > Introduces guided traversal with continuation, enabling step-by-step navigation across Dataverse relationships directly from VS Code.

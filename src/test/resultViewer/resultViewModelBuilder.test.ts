@@ -350,4 +350,30 @@ suite("resultViewModelBuilder", () => {
     assert.strictEqual(model.rows.length, 0);
     assert.strictEqual(model.rowCount, 0);
   });
+  test("preserves traversal toolbar state including sibling expand availability", () => {
+    const result = {
+      value: [
+        {
+          contactid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        }
+      ]
+    };
+
+    const model = buildResultViewerModel(result, "contacts?$select=contactid", {
+      primaryIdField: "contactid",
+      traversalContext: {
+        traversalSessionId: "session-1",
+        legIndex: 0,
+        legCount: 1,
+        hasNextLeg: false,
+        currentEntityName: "contact",
+        isFinalLeg: true,
+        canSiblingExpand: true
+      }
+    });
+
+    assert.strictEqual(model.traversal?.traversalSessionId, "session-1");
+    assert.strictEqual(model.traversal?.canSiblingExpand, true);
+  });
+
 });
