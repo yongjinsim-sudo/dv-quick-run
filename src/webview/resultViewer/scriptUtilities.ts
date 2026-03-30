@@ -1,4 +1,4 @@
-export const RESULT_VIEWER_SCRIPT_UTILITIES = String.raw`
+export const RESULT_VIEWER_SCRIPT_UTILITIES = `
 function showCopyStatus(message) {
             copyStatus.textContent = message;
 

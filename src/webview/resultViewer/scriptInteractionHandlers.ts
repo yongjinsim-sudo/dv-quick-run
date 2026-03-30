@@ -1,4 +1,4 @@
-export const RESULT_VIEWER_SCRIPT_INTERACTION_HANDLERS = String.raw`
+export const RESULT_VIEWER_SCRIPT_INTERACTION_HANDLERS = `
 function bindTableEventsOnce() {
             if (tableEventsBound) {
                 return;

@@ -1,5 +1,10 @@
-export const RESULT_VIEWER_SCRIPT_RENDERERS = String.raw`
-function renderEnvironmentBadge(environment) {
+export const RESULT_VIEWER_SCRIPT_RENDERERS = `
+function renderSiblingExpandButton(currentModel) {
+            const canShow = !!currentModel.traversal && !!currentModel.traversal.canSiblingExpand && !!currentModel.traversal.traversalSessionId;
+            siblingExpandBtn.hidden = !canShow;
+        }
+
+        function renderEnvironmentBadge(environment) {
             if (!environment || !environment.name) {
                 environmentBadge.innerHTML = "";
                 return;
@@ -15,16 +20,69 @@ function renderEnvironmentBadge(environment) {
 
         function showTable() {
             tableView.style.display = "block";
-            jsonView.style.display = "none";
+            if (jsonPanel instanceof HTMLElement) {
+                jsonPanel.hidden = true;
+            }
+            if (jsonTools instanceof HTMLElement) {
+                jsonTools.hidden = true;
+            }
             showTableBtn.classList.add("active");
             showJsonBtn.classList.remove("active");
         }
 
         function showJson() {
             tableView.style.display = "none";
-            jsonView.style.display = "block";
+            if (jsonPanel instanceof HTMLElement) {
+                jsonPanel.hidden = false;
+            }
+            if (jsonTools instanceof HTMLElement) {
+                jsonTools.hidden = false;
+            }
             showJsonBtn.classList.add("active");
             showTableBtn.classList.remove("active");
+
+            const activeJsonSearchInput = document.getElementById("jsonSearchInput");
+            if (activeJsonSearchInput instanceof HTMLInputElement) {
+                activeJsonSearchInput.focus();
+                activeJsonSearchInput.select();
+            }
+        }
+
+
+        function renderJson(currentModel) {
+            const searchText = String(jsonState.searchText ?? "");
+
+            if (jsonSearchInput instanceof HTMLInputElement && jsonSearchInput.value !== searchText) {
+                jsonSearchInput.value = searchText;
+            }
+
+            const normalizedSearchText = searchText.trim();
+            if (!normalizedSearchText) {
+                jsonState.currentMatchIndex = -1;
+                jsonView.innerHTML = escapeHtml(currentModel.rawJson);
+                updateJsonMatchStatus(0, 0);
+                updateJsonNavigationButtons(0);
+                return;
+            }
+
+            const highlightedHtml = buildHighlightedJsonHtml(currentModel.rawJson, normalizedSearchText);
+            jsonView.innerHTML = highlightedHtml;
+
+            const matches = Array.from(jsonView.querySelectorAll(".json-match"));
+            if (matches.length === 0) {
+                jsonState.currentMatchIndex = -1;
+                updateJsonMatchStatus(0, 0);
+                updateJsonNavigationButtons(0);
+                return;
+            }
+
+            if (jsonState.currentMatchIndex < 0 || jsonState.currentMatchIndex >= matches.length) {
+                jsonState.currentMatchIndex = 0;
+            }
+
+            activateJsonMatch(matches, jsonState.currentMatchIndex);
+            updateJsonMatchStatus(jsonState.currentMatchIndex + 1, matches.length);
+            updateJsonNavigationButtons(matches.length);
         }
 
         function renderTable(currentModel) {

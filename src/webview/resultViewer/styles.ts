@@ -1,4 +1,8 @@
 export const RESULT_VIEWER_STYLES = `
+        [hidden] {
+            display: none !important;
+        }
+
         body {
             font-family: var(--vscode-font-family);
             font-size: var(--vscode-font-size);
@@ -139,17 +143,66 @@ export const RESULT_VIEWER_STYLES = `
             border-radius: 6px;
         }
 
-        #jsonView {
-            display: none;
-            white-space: pre-wrap;
-            word-break: break-word;
+        #jsonPanel {
+            display: block;
             border: 1px solid var(--vscode-panel-border);
             border-radius: 6px;
+            overflow: hidden;
+            background: var(--vscode-editor-background);
+        }
+
+        .json-tools {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editorWidget-background);
+            position: sticky;
+            top: 0;
+            z-index: 3;
+        }
+
+        .json-search-input {
+            min-width: 240px;
+            max-width: 360px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--vscode-input-border);
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            font-size: 12px;
+        }
+
+        .json-match-status {
+            min-width: 60px;
+            text-align: right;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        #jsonView {
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-word;
             padding: 12px;
             overflow: auto;
-            max-height: calc(100vh - 90px);
+            max-height: calc(100vh - 138px);
             box-sizing: border-box;
             background: var(--vscode-editor-background);
+            margin: 0;
+        }
+
+        .json-match {
+            background: rgba(255, 215, 0, 0.35);
+            color: inherit;
+            border-radius: 2px;
+        }
+
+        .json-match-active {
+            background: rgba(255, 140, 0, 0.55);
+            outline: 1px solid var(--vscode-focusBorder);
         }
 
         .table-tools {

@@ -1,13 +1,21 @@
-export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = String.raw`
+export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const vscodeApi = acquireVsCodeApi();
 
         const tableView = document.getElementById("tableView");
+        const jsonPanel = document.getElementById("jsonPanel");
+        const jsonTools = document.getElementById("jsonTools");
         const jsonView = document.getElementById("jsonView");
+        const jsonSearchInput = document.getElementById("jsonSearchInput");
+        const jsonPrevMatchBtn = document.getElementById("jsonPrevMatchBtn");
+        const jsonNextMatchBtn = document.getElementById("jsonNextMatchBtn");
+        const jsonClearSearchBtn = document.getElementById("jsonClearSearchBtn");
+        const jsonMatchStatus = document.getElementById("jsonMatchStatus");
         const showTableBtn = document.getElementById("showTableBtn");
         const showJsonBtn = document.getElementById("showJsonBtn");
         const showRelationshipsBtn = document.getElementById("showRelationshipsBtn");
         const showMetadataBtn = document.getElementById("showMetadataBtn");
         const exportCsvBtn = document.getElementById("exportCsvBtn");
+        const siblingExpandBtn = document.getElementById("siblingExpandBtn");
         const rowCount = document.getElementById("rowCount");
         const copyStatus = document.getElementById("copyStatus");
         const environmentBadge = document.getElementById("environmentBadge");
@@ -21,13 +29,18 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = String.raw`
         const arrayDrawerJsonView = document.getElementById("arrayDrawerJsonView");
         const traversalStatus = document.getElementById("traversalStatus");
 
-        const model = JSON.parse(\`__INITIAL_MODEL_JSON__\`);
+        const model = JSON.parse(__INITIAL_MODEL_JSON__);
 
         const tableState = {
             sortColumn: null,
             sortDirection: "asc",
             filterText: "",
             columnWidths: {}
+        };
+
+        const jsonState = {
+            searchText: "",
+            currentMatchIndex: -1
         };
 
         const MIN_COLUMN_WIDTH = 80;
@@ -50,6 +63,46 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = String.raw`
 
         showJsonBtn.addEventListener("click", () => {
             showJson();
+        });
+
+        jsonSearchInput.addEventListener("input", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) {
+                return;
+            }
+
+            const nextSearchText = target.value;
+            const selectionStart = target.selectionStart ?? nextSearchText.length;
+            const selectionEnd = target.selectionEnd ?? nextSearchText.length;
+
+            jsonState.searchText = nextSearchText;
+            jsonState.currentMatchIndex = -1;
+            renderJson(model);
+
+            const nextJsonSearchInput = document.getElementById("jsonSearchInput");
+            if (nextJsonSearchInput instanceof HTMLInputElement) {
+                nextJsonSearchInput.focus();
+                nextJsonSearchInput.setSelectionRange(selectionStart, selectionEnd);
+            }
+        });
+
+        jsonPrevMatchBtn.addEventListener("click", () => {
+            moveJsonMatch(-1);
+        });
+
+        jsonNextMatchBtn.addEventListener("click", () => {
+            moveJsonMatch(1);
+        });
+
+        jsonClearSearchBtn.addEventListener("click", () => {
+            jsonState.searchText = "";
+            jsonState.currentMatchIndex = -1;
+            renderJson(model);
+
+            const nextJsonSearchInput = document.getElementById("jsonSearchInput");
+            if (nextJsonSearchInput instanceof HTMLInputElement) {
+                nextJsonSearchInput.focus();
+            }
         });
 
         showRelationshipsBtn.addEventListener("click", () => {
@@ -88,6 +141,15 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = String.raw`
             });
         });
 
+        siblingExpandBtn.addEventListener("click", () => {
+            vscodeApi.postMessage({
+                type: "applySiblingExpand",
+                payload: {
+                    traversalSessionId: model.traversal?.traversalSessionId || ""
+                }
+            });
+        });
+
         arrayDrawerTableTab.addEventListener("click", () => {
             arrayDrawerView = "table";
             renderActiveArrayDrawer();
@@ -109,8 +171,9 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = String.raw`
         bindTableEventsOnce();
         renderEnvironmentBadge(model.environment);
         renderTraversalStatus(model.traversal);
+        renderSiblingExpandButton(model);
         renderTable(model);
-        jsonView.textContent = model.rawJson;
+        renderJson(model);
         rowCount.textContent = model.rowCount + " rows returned";
 
         if (model.mode === "collection") {

@@ -22,7 +22,16 @@ export function getResultViewerMarkup(iconUri: string): string {
 
         <div class="view-container">
             <div id="tableView"></div>
-            <pre id="jsonView"></pre>
+            <div id="jsonPanel" hidden>
+                <div id="jsonTools" class="json-tools" hidden>
+                    <input id="jsonSearchInput" class="json-search-input" type="text" placeholder="Search JSON keys and values..." />
+                    <button id="jsonPrevMatchBtn" type="button" title="Previous match">↑</button>
+                    <button id="jsonNextMatchBtn" type="button" title="Next match">↓</button>
+                    <button id="jsonClearSearchBtn" type="button" title="Clear JSON search">✕</button>
+                    <span id="jsonMatchStatus" class="json-match-status"></span>
+                </div>
+                <pre id="jsonView"></pre>
+            </div>
         </div>
 
         <div id="arrayDrawer" class="drawer">
