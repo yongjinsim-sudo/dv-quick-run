@@ -1,4 +1,4 @@
-export const RESULT_VIEWER_SCRIPT_MESSAGE_BRIDGE = String.raw`
+export const RESULT_VIEWER_SCRIPT_MESSAGE_BRIDGE = `
 async function copyValueToClipboard(value) {
             try {
                 await navigator.clipboard.writeText(value);

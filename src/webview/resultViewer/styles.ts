@@ -1,4 +1,8 @@
 export const RESULT_VIEWER_STYLES = `
+        [hidden] {
+            display: none !important;
+        }
+
         body {
             font-family: var(--vscode-font-family);
             font-size: var(--vscode-font-size);
@@ -30,7 +34,7 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         #showRelationshipsBtn {
-            margin-left: 16px;
+            margin-left: 30px;
         }
 
         .toolbar-left {
@@ -139,17 +143,76 @@ export const RESULT_VIEWER_STYLES = `
             border-radius: 6px;
         }
 
-        #jsonView {
-            display: none;
-            white-space: pre-wrap;
-            word-break: break-word;
+        #jsonPanel {
+            display: block;
             border: 1px solid var(--vscode-panel-border);
             border-radius: 6px;
+            overflow: hidden;
+            background: var(--vscode-editor-background);
+        }
+
+        .json-tools {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editorWidget-background);
+            position: sticky;
+            top: 0;
+            z-index: 3;
+        }
+
+        .json-search-input {
+            min-width: 240px;
+            max-width: 360px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--vscode-input-border);
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            font-size: 12px;
+        }
+
+        .json-search-input:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 0;
+        }
+
+        .json-match-status {
+            min-width: 60px;
+            text-align: right;
+            font-size: 12px;
+            opacity: 0.9;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #jsonView {
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-word;
             padding: 12px;
             overflow: auto;
-            max-height: calc(100vh - 90px);
+            max-height: calc(100vh - 138px);
             box-sizing: border-box;
             background: var(--vscode-editor-background);
+            margin: 0;
+        }
+
+        .json-match {
+            background: rgba(255, 215, 0, 0.28);
+            color: inherit;
+            border-radius: 3px;
+            box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.18);
+        }
+
+        .json-match-active {
+            background: rgba(255, 140, 0, 0.62);
+            color: inherit;
+            border-radius: 3px;
+            outline: 1px solid var(--vscode-focusBorder);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
         }
 
         .table-tools {
@@ -174,6 +237,34 @@ export const RESULT_VIEWER_STYLES = `
             background: var(--vscode-input-background);
             color: var(--vscode-input-foreground);
             font-size: 12px;
+        }
+
+        .table-filter-clear-btn {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--vscode-button-border, transparent);
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .table-filter-clear-btn:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .table-filter-status {
+            min-width: 120px;
+            text-align: right;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .empty-filter-state {
+            text-align: center;
+            font-style: italic;
+            opacity: 0.8;
+            padding: 16px 10px;
         }
 
         table {
@@ -387,6 +478,23 @@ export const RESULT_VIEWER_STYLES = `
             opacity: 0.75;
         }
 
+        .empty-title {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .empty-hint {
+            margin-top: 6px;
+            margin-bottom: 6px;
+            opacity: 0.7;
+        }
+
+        .empty-list {
+          margin-top: 0;
+          padding-left: 18px;
+          opacity: 0.85;
+        }
+
         .array-cell {
             cursor: default;
             background: rgba(47, 129, 247, 0.10);
@@ -578,10 +686,11 @@ export const RESULT_VIEWER_STYLES = `
             margin-right: 8px;
         }
 
-        .traversal-status-pill {
+        .traversal-status-pill {global
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            flex-wrap: wrap;
             padding: 4px 10px;
             border-radius: 999px;
             border: 1px solid var(--vscode-editorWidget-border, rgba(255,255,255,0.12));
