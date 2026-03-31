@@ -75,7 +75,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             const selectionStart = target.selectionStart ?? nextSearchText.length;
             const selectionEnd = target.selectionEnd ?? nextSearchText.length;
 
-            jsonState.searchText = nextSearchText;
+            setUnifiedSearchText(nextSearchText, "json");
             jsonState.currentMatchIndex = -1;
             renderJson(model);
 
@@ -83,6 +83,32 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             if (nextJsonSearchInput instanceof HTMLInputElement) {
                 nextJsonSearchInput.focus();
                 nextJsonSearchInput.setSelectionRange(selectionStart, selectionEnd);
+            }
+        });
+
+        jsonSearchInput.addEventListener("keydown", (event) => {
+            if (!(event instanceof KeyboardEvent)) {
+                return;
+            }
+
+            if (event.key === "Enter") {
+                event.preventDefault();
+                moveJsonMatch(event.shiftKey ? -1 : 1);
+                return;
+            }
+
+            if (event.key === "Escape") {
+                if (jsonState.searchText.trim()) {
+                    event.preventDefault();
+                    jsonState.searchText = "";
+                    jsonState.currentMatchIndex = -1;
+                    renderJson(model);
+
+                    const nextJsonSearchInput = document.getElementById("jsonSearchInput");
+                    if (nextJsonSearchInput instanceof HTMLInputElement) {
+                        nextJsonSearchInput.focus();
+                    }
+                }
             }
         });
 
@@ -95,7 +121,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         });
 
         jsonClearSearchBtn.addEventListener("click", () => {
-            jsonState.searchText = "";
+            setUnifiedSearchText("", "json");
             jsonState.currentMatchIndex = -1;
             renderJson(model);
 

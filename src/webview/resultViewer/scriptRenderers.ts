@@ -28,6 +28,8 @@ function renderSiblingExpandButton(currentModel) {
             }
             showTableBtn.classList.add("active");
             showJsonBtn.classList.remove("active");
+            assertExclusiveViewMode();
+            renderTable(model);
         }
 
         function showJson() {
@@ -40,11 +42,15 @@ function renderSiblingExpandButton(currentModel) {
             }
             showJsonBtn.classList.add("active");
             showTableBtn.classList.remove("active");
+            assertExclusiveViewMode();
+            renderJson(model);
 
             const activeJsonSearchInput = document.getElementById("jsonSearchInput");
             if (activeJsonSearchInput instanceof HTMLInputElement) {
                 activeJsonSearchInput.focus();
-                activeJsonSearchInput.select();
+                if (!activeJsonSearchInput.value.trim()) {
+                    activeJsonSearchInput.select();
+                }
             }
         }
 
@@ -87,7 +93,16 @@ function renderSiblingExpandButton(currentModel) {
 
         function renderTable(currentModel) {
             if (!currentModel.columns || currentModel.columns.length === 0) {
-                tableView.innerHTML = "<div class=\\"empty-state\\">No rows returned.</div>";
+                tableView.innerHTML =
+                    "<div class=\\"empty-state\\">" +
+                    "<div class=\\"empty-title\\">No results found</div>" +
+                    "<div class=\\"empty-hint\\">Try:</div>" +
+                    "<ul class=\\"empty-list\\">" +
+                    "<li>Removing filters</li>" +
+                    "<li>Increasing $top</li>" +
+                    "<li>Running without $filter</li>" +
+                    "</ul>" +
+                    "</div>";
                 return;
             }
 
@@ -96,8 +111,17 @@ function renderSiblingExpandButton(currentModel) {
                 currentModel.columns
             );
 
+            const totalRowCount = Array.isArray(currentModel.rows) ? currentModel.rows.length : 0;
+            const visibleRowCount = visibleRows.length;
+            const hasFilter = String(tableState.filterText ?? "").trim().length > 0;
+            const tableStatusText = hasFilter
+                ? visibleRowCount + " of " + totalRowCount + " rows visible"
+                : totalRowCount + " rows";
+
             let html = "<div class=\\"table-tools\\">" +
                 "<input id=\\"tableFilterInput\\" class=\\"table-filter-input\\" type=\\"text\\" placeholder=\\"Filter visible rows...\\" value=\\"" + escapeAttribute(tableState.filterText) + "\\" />" +
+                "<button id=\\"tableFilterClearBtn\\" class=\\"table-filter-clear-btn\\" type=\\"button\\" title=\\"Clear table filter\\">Clear</button>" +
+                "<span id=\\"tableFilterStatus\\" class=\\"table-filter-status\\">" + escapeHtml(tableStatusText) + "</span>" +
                 "</div>";
             html += "<table>";
             html += "<thead><tr>";
@@ -121,6 +145,10 @@ function renderSiblingExpandButton(currentModel) {
 
             html += "</tr></thead>";
             html += "<tbody>";
+
+            if (visibleRows.length === 0) {
+                html += "<tr><td class=\\"empty-filter-state\\" colspan=\\"" + currentModel.columns.length + "\\">No matching rows.</td></tr>";
+            }
 
             arrayDrawerPayloads.clear();
             visibleRows.forEach((row, rowIndex) => {

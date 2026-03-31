@@ -540,7 +540,7 @@ export function buildResultViewerModel(
                 message: "This route did not produce usable data. Try another variant."
             })
         : {
-            title: "No rows returned."
+            title: "No results found."
         };
 
     const fieldMap = buildFieldMap(options?.fields);

@@ -16,7 +16,7 @@ function bindTableEventsOnce() {
                 const selectionStart = target.selectionStart ?? nextFilterText.length;
                 const selectionEnd = target.selectionEnd ?? nextFilterText.length;
 
-                tableState.filterText = nextFilterText;
+                setUnifiedSearchText(nextFilterText, "table");
                 renderTable(model);
 
                 const nextFilterInput = document.getElementById("tableFilterInput");
@@ -26,9 +26,48 @@ function bindTableEventsOnce() {
                 }
             });
 
+            tableView.addEventListener("keydown", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLInputElement) || target.id !== "tableFilterInput") {
+                    return;
+                }
+
+                if (event.key !== "Escape") {
+                    return;
+                }
+
+                if (!target.value) {
+                    return;
+                }
+
+                event.preventDefault();
+                setUnifiedSearchText("", "table");
+                renderTable(model);
+
+                const nextFilterInput = document.getElementById("tableFilterInput");
+                if (nextFilterInput instanceof HTMLInputElement) {
+                    nextFilterInput.focus();
+                }
+            });
+
             tableView.addEventListener("click", (event) => {
                 const target = event.target;
                 if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const clearFilterButton = target.closest("#tableFilterClearBtn");
+                if (clearFilterButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setUnifiedSearchText("", "table");
+                    renderTable(model);
+
+                    const nextFilterInput = document.getElementById("tableFilterInput");
+                    if (nextFilterInput instanceof HTMLInputElement) {
+                        nextFilterInput.focus();
+                    }
+
                     return;
                 }
 

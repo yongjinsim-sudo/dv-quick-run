@@ -34,9 +34,12 @@ export function resolveResultViewerActions(
       return [];
     }
 
-    const continueTitle = context.traversal.nextLegEntityName
-        ? `Continue to ${context.traversal.nextLegEntityName}`
-        : "Continue Traversal";
+    const nextTarget = context.traversal.nextLegEntityName?.trim();
+    const carryField = context.traversal.requiredCarryField?.trim() || columnName;
+
+    const continueTitle = nextTarget
+        ? `Continue to ${nextTarget} using ${carryField}`
+        : `Continue traversal using ${carryField}`;
 
     return [
       {

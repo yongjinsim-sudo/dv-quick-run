@@ -34,7 +34,7 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         #showRelationshipsBtn {
-            margin-left: 16px;
+            margin-left: 30px;
         }
 
         .toolbar-left {
@@ -175,11 +175,17 @@ export const RESULT_VIEWER_STYLES = `
             font-size: 12px;
         }
 
+        .json-search-input:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 0;
+        }
+
         .json-match-status {
             min-width: 60px;
             text-align: right;
             font-size: 12px;
-            opacity: 0.85;
+            opacity: 0.9;
+            font-variant-numeric: tabular-nums;
         }
 
         #jsonView {
@@ -195,14 +201,18 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         .json-match {
-            background: rgba(255, 215, 0, 0.35);
+            background: rgba(255, 215, 0, 0.28);
             color: inherit;
-            border-radius: 2px;
+            border-radius: 3px;
+            box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.18);
         }
 
         .json-match-active {
-            background: rgba(255, 140, 0, 0.55);
+            background: rgba(255, 140, 0, 0.62);
+            color: inherit;
+            border-radius: 3px;
             outline: 1px solid var(--vscode-focusBorder);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
         }
 
         .table-tools {
@@ -227,6 +237,34 @@ export const RESULT_VIEWER_STYLES = `
             background: var(--vscode-input-background);
             color: var(--vscode-input-foreground);
             font-size: 12px;
+        }
+
+        .table-filter-clear-btn {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--vscode-button-border, transparent);
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .table-filter-clear-btn:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .table-filter-status {
+            min-width: 120px;
+            text-align: right;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .empty-filter-state {
+            text-align: center;
+            font-style: italic;
+            opacity: 0.8;
+            padding: 16px 10px;
         }
 
         table {
@@ -440,6 +478,23 @@ export const RESULT_VIEWER_STYLES = `
             opacity: 0.75;
         }
 
+        .empty-title {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .empty-hint {
+            margin-top: 6px;
+            margin-bottom: 6px;
+            opacity: 0.7;
+        }
+
+        .empty-list {
+          margin-top: 0;
+          padding-left: 18px;
+          opacity: 0.85;
+        }
+
         .array-cell {
             cursor: default;
             background: rgba(47, 129, 247, 0.10);
@@ -631,10 +686,11 @@ export const RESULT_VIEWER_STYLES = `
             margin-right: 8px;
         }
 
-        .traversal-status-pill {
+        .traversal-status-pill {global
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            flex-wrap: wrap;
             padding: 4px 10px;
             border-radius: 999px;
             border: 1px solid var(--vscode-editorWidget-border, rgba(255,255,255,0.12));

@@ -11,6 +11,7 @@ import { registerEditorIntelligence } from "./runtime/editorIntelligence.js";
 import { registerInternalSupportCommands } from "./runtime/internalSupportCommands.js";
 import { registerSelectionContext } from "./runtime/selectionContext.js";
 import { ensureTraversalSettingsExist } from "./runtime/configMigration.js";
+import { maybeOpenQuickStartOnFirstRun } from "./runtime/quickStartLifecycle.js";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerVirtualJsonProvider(context);
@@ -33,6 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerInternalSupportCommands(context);
   registerEditorIntelligence(context, ctx);
   registerSelectionContext(context, ctx);
+  await maybeOpenQuickStartOnFirstRun(ctx);
 }
 
 export function deactivate() {}

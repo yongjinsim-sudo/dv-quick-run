@@ -24,6 +24,27 @@ All inside VS Code.
 
 ---
 
+## 🆕 What's New in v0.7.3 (UX & First-Run Experience)
+
+> Makes exploring large Dataverse datasets dramatically faster with instant search and guided onboarding.
+
+-   **First-Run Quickstart**
+    -   Automatically opens on first install
+    -   Runnable examples with CodeLens
+    -   Covers Run, Explain, Expand, FetchXML, Traversal
+-   **Result Viewer Search**
+    -   Works across Table + JSON
+    -   Instantly locate fields and values in large datasets
+    -   Eliminates manual scanning
+    -   Quickly find fields and values
+-   **Improved Empty State**
+    -   Suggestions:
+        -   remove filters
+        -   increase \$top
+        -   run without \$filter
+
+---
+
 ## 🆕 What's New in v0.7.2
 
 * **Sibling Expand (Enrich without leaving context)**
