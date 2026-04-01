@@ -2,6 +2,8 @@ import type {
   TraversalExecutionPlan,
   TraversalViewerContext
 } from "../shared/traversal/traversalTypes.js";
+import type { TraversalExplainVerbosity } from "../shared/traversal/traversalTypes.js";
+import { buildTraversalBannerContext } from "./traversalExplainability.js";
 
 export function buildTraversalSessionId(): string {
   return `trv_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -23,8 +25,18 @@ export function buildTraversalViewerContext(args: {
   currentEntityName?: string;
   requiredCarryField?: string;
   canSiblingExpand?: boolean;
+  verbosity: TraversalExplainVerbosity;
 }): TraversalViewerContext {
   const nextStep = args.itinerary.steps[args.currentStepIndex + 1];
+
+  const banner = buildTraversalBannerContext({
+    itinerary: args.itinerary,
+    currentStepIndex: args.currentStepIndex,
+    currentEntityName: args.currentEntityName,
+    requiredCarryField: args.requiredCarryField,
+    canSiblingExpand: args.canSiblingExpand,
+    verbosity: args.verbosity
+  });
 
   return {
     openedFrom: "guidedTraversal",
@@ -37,6 +49,9 @@ export function buildTraversalViewerContext(args: {
     requiredCarryField: args.requiredCarryField,
     currentEntityName: args.currentEntityName,
     isFinalLeg: !nextStep,
-    canSiblingExpand: args.canSiblingExpand
+    canSiblingExpand: args.canSiblingExpand,
+    showBanner: banner.showBanner,
+    bannerTitle: banner.bannerTitle,
+    bannerSubtitle: banner.bannerSubtitle
   };
 }

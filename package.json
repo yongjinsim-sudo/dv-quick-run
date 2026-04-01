@@ -1,7 +1,7 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "A metadata-aware Dataverse workbench for VS Code to run, explore, navigate, and enrich queries (OData & FetchXML). Includes guided traversal, in-place enrichment (sibling expand), Query Doctor diagnostics, interactive result viewer, and smart query builders — all without leaving your editor.",
+  "description": "A metadata-aware Dataverse workbench for VS Code to run, explore, navigate, and enrich queries (OData & FetchXML). Includes guided traversal, in-place enrichment (sibling expand), Query Doctor diagnostics, interactive result viewer, and smart query builders \u2014 all without leaving your editor.",
   "version": "0.7.3",
   "publisher": "dv-forgelab",
   "repository": {
@@ -48,51 +48,178 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      { "command": "dvQuickRun.whoAmI", "title": "DV Quick Run: Who Am I" },
-      { "command": "dvQuickRun.runGet", "title": "DV Quick Run: Run Query" },
-      { "command": "dvQuickRun.clearHistory", "title": "DV Quick Run: Clear Query History" },
-      { "command": "dvQuickRun.getMetadata", "title": "DV Quick Run: Get Metadata" },
-      { "command": "dvQuickRun.showEntityMetadata", "title": "DV Quick Run: Show Entity Metadata"},
-      { "command": "dvQuickRun.smartGet", "title": "DV Quick Run: Build Smart GET" },
-      { "command": "dvQuickRun.smartGetRerunLast", "title": "DV Quick Run: Smart GET (Re-run Last)" },
-      { "command": "dvQuickRun.smartGetEditLast", "title": "DV Quick Run: Smart GET (Edit Last)" },
-      { "command": "dvQuickRun.smartGetFromGuidPickFields", "title": "DV Quick Run: Build Smart GET from GUID (Pick Fields)" },
-      { "command": "dvQuickRun.smartGetFromGuidRaw", "title": "DV Quick Run: Build Smart GET from GUID" },
-      { "command": "dvQuickRun.smartPatch", "title": "DV Quick Run: Build Smart PATCH" },
-      { "command": "dvQuickRun.smartPatchRerunLast", "title": "DV Quick Run: Smart PATCH (Re-run Last)" },
-      { "command": "dvQuickRun.smartPatchEditLast", "title": "DV Quick Run: Smart PATCH (Edit Last)" },
-      { "command": "dvQuickRun.generateQueryFromJson", "title": "DV Quick Run: Generate Query from JSON" },
-      { "command": "dvQuickRun.runQueryUnderCursor", "title": "DV Quick Run: Run Query Under Cursor" },
-      { "command": "dvQuickRun.addFieldsSelect", "title": "DV Quick Run: Add Select Fields" },
-      { "command": "dvQuickRun.addFilter", "title": "DV Quick Run: Add Filter" },
-      { "command": "dvQuickRun.addExpand", "title": "DV Quick Run: Add Expand" },
-      { "command": "dvQuickRun.addOrderBy", "title": "DV Quick Run: Add Order By" },
-      { "command": "dvQuickRun.explainQuery", "title": "DV Quick Run: Explain Query" },
-      { "command": "dvQuickRun.runQueryAtLine", "title": "DV Quick Run: Run Query At Line" },
-      { "command": "dvQuickRun.explainQueryAtLine", "title": "DV Quick Run: Explain Query At Line" },
-      { "command": "dvQuickRun.relationshipExplorer", "title": "DV Quick Run: Explore Relationships" },
-      { "command": "dvQuickRun.findPathToTable", "title": "DV Quick Run: Find Path to Table" },
-      { "command": "dvQuickRun.relationshipGraphView", "title": "DV Quick Run: View Relationship Graph" },
-      { "command": "dvQuickRun.showMetadataDiagnostics", "title": "DV Quick Run: Show Metadata Diagnostics" },
-      { "command": "dvQuickRun.clearMetadataSessionCache", "title": "DV Quick Run: Clear Metadata Session Cache" },
-      { "command": "dvQuickRun.clearPersistedMetadataCache", "title": "DV Quick Run: Clear Persisted Metadata Cache" },
-      { "command": "dvQuickRun.clearTraversalCache", "title": "DV Quick Run: Clear Traversal Cache" },
-      { "command": "dvQuickRun.selectEnvironment", "title": "DV Quick Run: Select Environment" },
-      { "command": "dvQuickRun.addEnvironment", "title": "DV Quick Run: Add Environment" },
-      { "command": "dvQuickRun.removeEnvironment", "title": "DV Quick Run: Remove Environment" },
-      { "command": "dvQuickRun.investigateRecord", "title": "DV Quick Run: Investigate Record", "category": "DV Quick Run" },
-      { "command": "dvQuickRun.trySampleQuery", "title": "DV Quick Run: Try Sample Query" },
-      { "command": "dvQuickRun.tryFetchXmlSample", "title": "DV Quick Run: Try FetchXML Query" },
-      { "command": "dvQuickRun.openQuickStart", "title": "DV Quick Run: Open Quickstart" }
+      {
+        "command": "dvQuickRun.whoAmI",
+        "title": "DV Quick Run: Who Am I"
+      },
+      {
+        "command": "dvQuickRun.runGet",
+        "title": "DV Quick Run: Run Query"
+      },
+      {
+        "command": "dvQuickRun.clearHistory",
+        "title": "DV Quick Run: Clear Query History"
+      },
+      {
+        "command": "dvQuickRun.getMetadata",
+        "title": "DV Quick Run: Get Metadata"
+      },
+      {
+        "command": "dvQuickRun.showEntityMetadata",
+        "title": "DV Quick Run: Show Entity Metadata"
+      },
+      {
+        "command": "dvQuickRun.smartGet",
+        "title": "DV Quick Run: Build Smart GET"
+      },
+      {
+        "command": "dvQuickRun.smartGetRerunLast",
+        "title": "DV Quick Run: Smart GET (Re-run Last)"
+      },
+      {
+        "command": "dvQuickRun.smartGetEditLast",
+        "title": "DV Quick Run: Smart GET (Edit Last)"
+      },
+      {
+        "command": "dvQuickRun.smartGetFromGuidPickFields",
+        "title": "DV Quick Run: Build Smart GET from GUID (Pick Fields)"
+      },
+      {
+        "command": "dvQuickRun.smartGetFromGuidRaw",
+        "title": "DV Quick Run: Build Smart GET from GUID"
+      },
+      {
+        "command": "dvQuickRun.smartPatch",
+        "title": "DV Quick Run: Build Smart PATCH"
+      },
+      {
+        "command": "dvQuickRun.smartPatchRerunLast",
+        "title": "DV Quick Run: Smart PATCH (Re-run Last)"
+      },
+      {
+        "command": "dvQuickRun.smartPatchEditLast",
+        "title": "DV Quick Run: Smart PATCH (Edit Last)"
+      },
+      {
+        "command": "dvQuickRun.generateQueryFromJson",
+        "title": "DV Quick Run: Generate Query from JSON"
+      },
+      {
+        "command": "dvQuickRun.runQueryUnderCursor",
+        "title": "DV Quick Run: Run Query Under Cursor"
+      },
+      {
+        "command": "dvQuickRun.addFieldsSelect",
+        "title": "DV Quick Run: Add Select Fields"
+      },
+      {
+        "command": "dvQuickRun.addFilter",
+        "title": "DV Quick Run: Add Filter"
+      },
+      {
+        "command": "dvQuickRun.addExpand",
+        "title": "DV Quick Run: Add Expand"
+      },
+      {
+        "command": "dvQuickRun.addOrderBy",
+        "title": "DV Quick Run: Add Order By"
+      },
+      {
+        "command": "dvQuickRun.explainQuery",
+        "title": "DV Quick Run: Explain Query"
+      },
+      {
+        "command": "dvQuickRun.runQueryAtLine",
+        "title": "DV Quick Run: Run Query At Line"
+      },
+      {
+        "command": "dvQuickRun.explainQueryAtLine",
+        "title": "DV Quick Run: Explain Query At Line"
+      },
+      {
+        "command": "dvQuickRun.relationshipExplorer",
+        "title": "DV Quick Run: Explore Relationships"
+      },
+      {
+        "command": "dvQuickRun.findPathToTable",
+        "title": "DV Quick Run: Find Path to Table"
+      },
+      {
+        "command": "dvQuickRun.relationshipGraphView",
+        "title": "DV Quick Run: View Relationship Graph"
+      },
+      {
+        "command": "dvQuickRun.showMetadataDiagnostics",
+        "title": "DV Quick Run: Show Metadata Diagnostics"
+      },
+      {
+        "command": "dvQuickRun.clearMetadataSessionCache",
+        "title": "DV Quick Run: Clear Metadata Session Cache"
+      },
+      {
+        "command": "dvQuickRun.clearPersistedMetadataCache",
+        "title": "DV Quick Run: Clear Persisted Metadata Cache"
+      },
+      {
+        "command": "dvQuickRun.clearTraversalCache",
+        "title": "DV Quick Run: Clear Traversal Cache"
+      },
+      {
+        "command": "dvQuickRun.selectEnvironment",
+        "title": "DV Quick Run: Select Environment"
+      },
+      {
+        "command": "dvQuickRun.addEnvironment",
+        "title": "DV Quick Run: Add Environment"
+      },
+      {
+        "command": "dvQuickRun.removeEnvironment",
+        "title": "DV Quick Run: Remove Environment"
+      },
+      {
+        "command": "dvQuickRun.investigateRecord",
+        "title": "DV Quick Run: Investigate Record",
+        "category": "DV Quick Run"
+      },
+      {
+        "command": "dvQuickRun.trySampleQuery",
+        "title": "DV Quick Run: Try Sample Query"
+      },
+      {
+        "command": "dvQuickRun.tryFetchXmlSample",
+        "title": "DV Quick Run: Try FetchXML Query"
+      },
+      {
+        "command": "dvQuickRun.openQuickStart",
+        "title": "DV Quick Run: Open Quickstart"
+      }
     ],
     "menus": {
       "commandPalette": [
-        { "command": "dvQuickRun.runQueryAtLine", "when": "false" },
-        { "command": "dvQuickRun.explainQueryAtLine", "when": "false" },
-        { "command": "dvQuickRun.smartGetRerunLast", "when": "false" },
-        { "command": "dvQuickRun.smartGetEditLast", "when": "false" },
-        { "command": "dvQuickRun.smartPatchRerunLast", "when": "false" },
-        { "command": "dvQuickRun.smartPatchEditLast", "when": "false" }
+        {
+          "command": "dvQuickRun.runQueryAtLine",
+          "when": "false"
+        },
+        {
+          "command": "dvQuickRun.explainQueryAtLine",
+          "when": "false"
+        },
+        {
+          "command": "dvQuickRun.smartGetRerunLast",
+          "when": "false"
+        },
+        {
+          "command": "dvQuickRun.smartGetEditLast",
+          "when": "false"
+        },
+        {
+          "command": "dvQuickRun.smartPatchRerunLast",
+          "when": "false"
+        },
+        {
+          "command": "dvQuickRun.smartPatchEditLast",
+          "when": "false"
+        }
       ],
       "editor/context": [
         {
@@ -161,14 +288,20 @@
     ],
     "configuration": {
       "title": "DV Quick Run",
-        "properties": {
-          "dvQuickRun.productPlan": {
-            "type": "string",
-            "default": "free",
-            "enum": ["free", "pro", "team", "enterprise", "dev"],
-            "description": "Controls DV Quick Run capability level for Query Doctor and future gated features."
-          },
-          "dvQuickRun.environments": {
+      "properties": {
+        "dvQuickRun.productPlan": {
+          "type": "string",
+          "default": "free",
+          "enum": [
+            "free",
+            "pro",
+            "team",
+            "enterprise",
+            "dev"
+          ],
+          "description": "Controls DV Quick Run capability level for Query Doctor and future gated features."
+        },
+        "dvQuickRun.environments": {
           "type": "array",
           "description": "List of Dataverse environments available to DV Quick Run.",
           "items": {
@@ -183,10 +316,14 @@
                 "description": "Dataverse base URL (e.g. https://org.crm.dynamics.com)"
               },
               "statusBarColor": {
-              "type": "string",
-              "enum": ["white", "amber", "red"],
-              "default": "white",
-              "description": "Status bar color hint for this environment."
+                "type": "string",
+                "enum": [
+                  "white",
+                  "amber",
+                  "red"
+                ],
+                "default": "white",
+                "description": "Status bar color hint for this environment."
               }
             }
           },
@@ -203,10 +340,15 @@
           "description": "Show inline metadata hover for Dataverse query entities, clauses, operators, and fields."
         },
         "dvQuickRun.logLevel": {
-        "type": "string",
-        "default": "info",
-        "enum": ["error", "warn", "info", "debug"],
-        "description": "Controls DV Quick Run logging verbosity."
+          "type": "string",
+          "default": "info",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ],
+          "description": "Controls DV Quick Run logging verbosity."
         },
         "dvQuickRun.traversal.allowedTables": {
           "type": "array",
@@ -247,6 +389,16 @@
             "type": "string"
           },
           "description": "Optional block-list for Find Path to Table traversal. Excluded tables are skipped during expansion, except when they are the selected source or target table."
+        },
+        "dvQuickRun.traversal.explainVerbosity": {
+          "type": "string",
+          "default": "verbose",
+          "enum": [
+            "off",
+            "minimal",
+            "verbose"
+          ],
+          "description": "Controls how much traversal explanation is shown during Guided Traversal."
         }
       }
     }

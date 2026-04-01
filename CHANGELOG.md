@@ -6,6 +6,60 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.7.3] – First-Run Experience, Result Viewer UX & Search
+
+> Focused UX release improving onboarding, discoverability, and day-to-day usability. Establishes the Result Viewer as a true command surface for data exploration and action.
+
+### Added
+
+- **First-Run Quickstart Experience**
+  - Automatically launches on first install
+  - Provides runnable examples with CodeLens integration
+  - Guides users through:
+    - Run Query
+    - Explain Query
+    - Expand usage
+    - FetchXML execution
+    - Relationship exploration (Find Path to Table)
+  - Reduces initial friction and improves discoverability of core features
+
+- **Result Viewer Search (Table + JSON)**
+  - Unified search across:
+    - Table view
+    - JSON view
+  - Enables fast field/value discovery without manual scanning
+  - Significantly improves usability for large result sets
+
+### Improved
+
+- **Result Viewer Empty State UX**
+  - Improved “No results found” messaging
+  - Added actionable guidance:
+    - remove filters
+    - increase `$top`
+    - run without `$filter`
+  - Enhanced spacing and readability for better visual clarity
+
+- **Result Viewer as Command Surface (UX refinement)**
+  - Reinforced interaction model:
+    - view → search → act → refine
+  - Improved alignment with:
+    - traversal workflows
+    - row-level actions
+  - Sets foundation for future table-driven actions (investigate, traversal, mutators)
+
+- **Onboarding discoverability**
+  - Key capabilities are now visible immediately on first run
+  - Reduces reliance on documentation or prior knowledge
+
+### Notes
+
+- This release focuses on **usability and workflow clarity**, not new core features
+- Establishes a stronger foundation for:
+  - table-driven actions
+  - Query Doctor evolution
+  - actionable insight expansion
+
 ## [0.7.2] – Sibling Expand & Actionable Insight Foundation
 
 > Introduces metadata-driven enrichment within traversal and lays the foundation for intent-driven execution through the Actionable Insight model.

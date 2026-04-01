@@ -147,6 +147,8 @@ export type PlannedTraversalRoute = {
   recommendedPlanId?: string;
 };
 
+export type TraversalExplainVerbosity = "off" | "minimal" | "verbose";
+
 export type TraversalExecutionMode =
   | "direct"
   | "nested_expand"
@@ -218,6 +220,9 @@ export type TraversalViewerContext = {
   currentEntityName?: string;
   isFinalLeg: boolean;
   canSiblingExpand?: boolean;
+  showBanner?: boolean;
+  bannerTitle?: string;
+  bannerSubtitle?: string;
 };
 
 export type ContinueTraversalRequest = {

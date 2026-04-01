@@ -91,7 +91,43 @@ function renderSiblingExpandButton(currentModel) {
             updateJsonNavigationButtons(matches.length);
         }
 
-        function renderTable(currentModel) {
+        function groupActionsByGroup(actions) {
+            const order = ["navigation", "inspection", "query"];
+            const labels = { navigation: "Navigation", inspection: "Inspection", query: "Query" };
+            return order
+                .map((group) => ({ group, label: labels[group], actions: actions.filter((action) => action.group === group) }))
+                .filter((entry) => entry.actions.length > 0);
+        }
+
+        function buildActionButtonHtml(action, includeLabel) {
+            return "<button class=\\"inline-action inline-action-labeled\\"" +
+                " title=\\"" + escapeAttribute(action.title) + "\\"" +
+                " data-action-id=\\"" + escapeAttribute(action.id) + "\\"" +
+                " data-guid=\\"" + escapeAttribute(action.payload?.guid ?? "") + "\\"" +
+                " data-entity-set-name=\\"" + escapeAttribute(action.payload?.entitySetName ?? "") + "\\"" +
+                " data-entity-logical-name=\\"" + escapeAttribute(action.payload?.entityLogicalName ?? "") + "\\"" +
+                " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
+                " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
+                " data-traversal-session-id=\\"" + escapeAttribute(action.payload?.traversalSessionId ?? "") + "\\"" +
+                " data-traversal-leg-index=\\"" + escapeAttribute(String(action.payload?.traversalLegIndex ?? "")) + "\\"" +
+                " data-carry-field=\\"" + escapeAttribute(action.payload?.carryField ?? "") + "\\"" +
+                " data-carry-value=\\"" + escapeAttribute(action.payload?.carryValue ?? "") + "\\">" +
+                "<span class=\\"inline-action-icon\\">" + escapeHtml(action.icon) + "</span>" +
+                (includeLabel ? "<span class=\\"inline-action-label\\">" + escapeHtml(action.title) + "</span>" : "") +
+                "</button>";
+        }
+
+        function buildGroupedOverflowMenuHtml(actions) {
+            const groups = groupActionsByGroup(actions);
+            return groups.map((entry) => {
+                return "<div class=\\"overflow-group\\">" +
+                    "<div class=\\"overflow-group-title\\">" + escapeHtml(entry.label) + "</div>" +
+                    entry.actions.map((action) => buildActionButtonHtml(action, true)).join("") +
+                    "</div>";
+            }).join("");
+        }
+
+function renderTable(currentModel) {
             if (!currentModel.columns || currentModel.columns.length === 0) {
                 tableView.innerHTML =
                     "<div class=\\"empty-state\\">" +
@@ -173,48 +209,13 @@ function renderSiblingExpandButton(currentModel) {
                         html += "<span class=\\"cell-actions\\">";
 
                         primaryActions.forEach((action) => {
-                            html +=
-                                "<button class=\\"inline-action inline-action-labeled\\"" +
-                                " title=\\"" + escapeAttribute(action.title) + "\\"" +
-                                " data-action-id=\\"" + escapeAttribute(action.id) + "\\"" +
-                                " data-guid=\\"" + escapeAttribute(action.payload?.guid ?? "") + "\\"" +
-                                " data-entity-set-name=\\"" + escapeAttribute(action.payload?.entitySetName ?? "") + "\\"" +
-                                " data-entity-logical-name=\\"" + escapeAttribute(action.payload?.entityLogicalName ?? "") + "\\"" +
-                                " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
-                                " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
-                                " data-traversal-session-id=\\"" + escapeAttribute(action.payload?.traversalSessionId ?? "") + "\\"" +
-                                " data-traversal-leg-index=\\"" + escapeAttribute(String(action.payload?.traversalLegIndex ?? "")) + "\\"" +
-                                " data-carry-field=\\"" + escapeAttribute(action.payload?.carryField ?? "") + "\\"" +
-                                " data-carry-value=\\"" + escapeAttribute(action.payload?.carryValue ?? "") + "\\">" +
-                                  "<span class=\\"inline-action-icon\\">" + escapeHtml(action.icon) + "</span>" +
-                                "</button>";
+                            html += buildActionButtonHtml(action, false);
                         });
 
                         if (overflowActions.length > 0) {
                             html +=
                                 "<button class=\\"inline-action overflow-trigger\\" type=\\"button\\" title=\\"More actions\\">⋮</button>" +
-                                "<div class=\\"overflow-menu\\" hidden>";
-
-                            overflowActions.forEach((action) => {
-                                html +=
-                                    "<button class=\\"inline-action inline-action-labeled\\"" +
-                                    " title=\\"" + escapeAttribute(action.title) + "\\"" +
-                                    " data-action-id=\\"" + escapeAttribute(action.id) + "\\"" +
-                                    " data-guid=\\"" + escapeAttribute(action.payload?.guid ?? "") + "\\"" +
-                                    " data-entity-set-name=\\"" + escapeAttribute(action.payload?.entitySetName ?? "") + "\\"" +
-                                    " data-entity-logical-name=\\"" + escapeAttribute(action.payload?.entityLogicalName ?? "") + "\\"" +
-                                    " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
-                                    " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
-                                    " data-traversal-session-id=\\"" + escapeAttribute(action.payload?.traversalSessionId ?? "") + "\\"" +
-                                    " data-traversal-leg-index=\\"" + escapeAttribute(String(action.payload?.traversalLegIndex ?? "")) + "\\"" +
-                                    " data-carry-field=\\"" + escapeAttribute(action.payload?.carryField ?? "") + "\\"" +
-                                    " data-carry-value=\\"" + escapeAttribute(action.payload?.carryValue ?? "") + "\\">" +
-                                    "<span class=\\"inline-action-icon\\">" + escapeHtml(action.icon) + "</span>" +
-                                    "<span class=\\"inline-action-label\\">" + escapeHtml(action.title) + "</span>" +
-                                    "</button>";
-                            });
-
-                            html += "</div>";
+                                "<div class=\\"overflow-menu\\" hidden>" + buildGroupedOverflowMenuHtml(overflowActions) + "</div>";
                         }
 
                         html += "</span>";

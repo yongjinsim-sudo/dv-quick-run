@@ -47,6 +47,7 @@ export function resolveResultViewerActions(
         title: continueTitle,
         icon: "➤",
         placement: "primary",
+        group: "navigation",
         payload: {
           columnName,
           rawValue,
@@ -87,6 +88,7 @@ export function resolveResultViewerActions(
         title: "Investigate record",
         icon: "🔎",
         placement: "primary",
+        group: "inspection",
         payload
       },
       {
@@ -94,6 +96,7 @@ export function resolveResultViewerActions(
         title: "Open in Dataverse UI",
         icon: "↗",
         placement: "primary",
+        group: "inspection",
         payload
       },
       {
@@ -101,6 +104,7 @@ export function resolveResultViewerActions(
         title: "Copy record URL",
         icon: "🔗",
         placement: "overflow",
+        group: "inspection",
         payload
       }
     );
@@ -112,6 +116,7 @@ export function resolveResultViewerActions(
       title: "Copy OData filter",
       icon: "ƒ",
       placement: "overflow",
+      group: "query",
       payload
     },
     {
@@ -119,6 +124,7 @@ export function resolveResultViewerActions(
       title: "Copy FetchXML condition",
       icon: "⟪⟫",
       placement: "overflow",
+      group: "query",
       payload
     }
   );

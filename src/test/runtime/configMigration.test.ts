@@ -15,6 +15,10 @@ suite("configMigration", () => {
       {
         section: "traversal.excludedTables",
         defaultValue: ["activitypointer"]
+      },
+      {
+        section: "traversal.explainVerbosity",
+        defaultValue: "verbose"
       }
     ]);
 
@@ -30,6 +34,10 @@ suite("configMigration", () => {
       {
         section: "traversal.excludedTables",
         value: ["activitypointer"]
+      },
+      {
+        section: "traversal.explainVerbosity",
+        value: "verbose"
       }
     ]);
   });
@@ -45,13 +53,19 @@ suite("configMigration", () => {
         section: "traversal.excludedTables",
         defaultValue: ["activitypointer"],
         globalValue: []
+      },
+      {
+        section: "traversal.explainVerbosity",
+        defaultValue: "verbose",
+        globalValue: "minimal"
       }
     ]);
 
     assert.deepStrictEqual(result.writes, []);
     assert.deepStrictEqual(result.skipped.sort(), [
       "traversal.allowedTables",
-      "traversal.excludedTables"
+      "traversal.excludedTables",
+      "traversal.explainVerbosity"
     ]);
   });
 
@@ -96,7 +110,8 @@ suite("configMigration", () => {
     assert.deepStrictEqual(result.writes, []);
     assert.deepStrictEqual(result.skipped.sort(), [
       "traversal.allowedTables",
-      "traversal.excludedTables"
+      "traversal.excludedTables",
+      "traversal.explainVerbosity"
     ]);
   });
 });

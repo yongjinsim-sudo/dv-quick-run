@@ -159,6 +159,10 @@ suite("resultViewerInvariants", () => {
       "investigate-record",
       "open-in-dataverse-ui"
     ]);
+    assert.deepStrictEqual(idCell?.primaryActions?.map((action) => action.group), [
+      "inspection",
+      "inspection"
+    ]);
     assert.deepStrictEqual(idCell?.overflowActions?.map((action) => action.id), [
       "copy-record-url",
       "copy-odata-filter",
@@ -174,6 +178,13 @@ suite("resultViewerInvariants", () => {
 
     assert.strictEqual(nameCell?.primaryActions, undefined);
     assert.deepStrictEqual(nameCell?.overflowActions?.map((action) => action.id), [
+      "copy-odata-filter",
+      "copy-fetchxml-condition"
+    ]);
+    assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
+      "investigate-record",
+      "open-in-dataverse-ui",
+      "copy-record-url",
       "copy-odata-filter",
       "copy-fetchxml-condition"
     ]);

@@ -8,7 +8,8 @@ import {
 export const CONFIG_SECTIONS_TO_MIGRATE = [
   "productPlan",
   "traversal.allowedTables",
-  "traversal.excludedTables"
+  "traversal.excludedTables",
+  "traversal.explainVerbosity"
 ] as const;
 
 function readConfigInspections(

@@ -4,13 +4,14 @@ import { logInfo, logWarn } from "../../../../utils/logger.js";
 import { runAction } from "../shared/actionRunner.js";
 import { resolveSiblingExpandCandidates } from "../shared/expand/expandCandidateResolver.js";
 import { buildSiblingExpandPlan } from "../shared/expand/expandPlanBuilder.js";
-import { buildExpandClause } from "../shared/expand/expandClauseBuilder.js";
 import { MAX_SIBLING_EXPANDS, validateCandidateForSiblingExpand } from "../shared/expand/expandPolicy.js";
+import { applyExpand, parseExpandClause, type ExpandNode } from "../shared/expand/expandComposer.js";
 import { loadEntityDefs, loadFields, findEntityByLogicalName } from "../shared/metadataAccess.js";
 import { getSelectableFields } from "../shared/selectableFields.js";
 import { getActiveTraversalProgress, isActiveTraversalSession, setActiveTraversalProgress } from "../shared/traversal/traversalProgressStore.js";
 import { executeTraversalStep } from "../shared/traversal/traversalStepExecutor.js";
 import { buildTraversalViewerContext } from "./traversalSessionHelpers.js";
+import { getTraversalExplainVerbosity } from "./traversalExplainConfig.js";
 
 
 type ExistingSiblingExpandSelection = {
@@ -18,70 +19,11 @@ type ExistingSiblingExpandSelection = {
   selectedFieldLogicalNames: string[];
 };
 
-function parseExistingSiblingExpandClause(clause: string | undefined): ExistingSiblingExpandSelection[] {
-  if (!clause) {
-    return [];
-  }
-
-  const selections: ExistingSiblingExpandSelection[] = [];
-  let index = 0;
-
-  while (index < clause.length) {
-    while (index < clause.length && /[\s,]/.test(clause[index] ?? "")) {
-      index += 1;
-    }
-
-    if (index >= clause.length) {
-      break;
-    }
-
-    const openParen = clause.indexOf("(", index);
-    if (openParen === -1) {
-      break;
-    }
-
-    const navigationPropertyName = clause.slice(index, openParen).trim();
-    if (!navigationPropertyName) {
-      break;
-    }
-
-    let depth = 1;
-    let cursor = openParen + 1;
-    while (cursor < clause.length && depth > 0) {
-      const character = clause[cursor];
-      if (character === "(") {
-        depth += 1;
-      } else if (character === ")") {
-        depth -= 1;
-      }
-      cursor += 1;
-    }
-
-    if (depth !== 0) {
-      break;
-    }
-
-    const inner = clause.slice(openParen + 1, cursor - 1).trim();
-    const selectPrefix = "$select=";
-    if (inner.startsWith(selectPrefix)) {
-      const selectSegment = inner.slice(selectPrefix.length).split(";")[0] ?? "";
-      const fields = selectSegment
-        .split(",")
-        .map((field) => field.trim())
-        .filter((field) => field.length > 0);
-
-      if (fields.length > 0) {
-        selections.push({
-          navigationPropertyName,
-          selectedFieldLogicalNames: fields
-        });
-      }
-    }
-
-    index = cursor;
-  }
-
-  return selections;
+function toExistingSiblingExpandSelections(nodes: ExpandNode[]): ExistingSiblingExpandSelection[] {
+  return nodes.map((node) => ({
+    navigationPropertyName: node.relationship,
+    selectedFieldLogicalNames: [...(node.select ?? [])]
+  }));
 }
 
 
@@ -91,13 +33,22 @@ export function buildMergedSiblingExpandClause(args: {
   existingClause?: string;
   selectedFieldSets: Array<{ navigationPropertyName: string; selectedFieldLogicalNames: string[] }>;
 }): string {
-  const existingSelections = parseExistingSiblingExpandClause(args.existingClause);
+  const existingSelections = toExistingSiblingExpandSelections(parseExpandClause(args.existingClause));
   const plan = buildSiblingExpandPlan(
     args.currentEntityLogicalName,
     args.candidates,
     [...existingSelections, ...args.selectedFieldSets]
   );
-  return buildExpandClause(plan);
+
+  let mergedClause = args.existingClause ?? "";
+  for (const entry of plan.entries) {
+    mergedClause = applyExpand(mergedClause, {
+      relationship: entry.navigationPropertyName,
+      select: entry.selectedFieldLogicalNames
+    });
+  }
+
+  return mergedClause;
 }
 
 export async function runApplySiblingExpandAction(
@@ -213,6 +164,7 @@ export async function runApplySiblingExpandAction(
     logInfo(ctx.output, `Sibling expand selected: ${siblingExpandClause}`);
 
     const landedNode = progress.graph.entities[currentStep.toEntity];
+    const explainVerbosity = getTraversalExplainVerbosity();
     const execution = await executeTraversalStep(
       ctx,
       progress.graph,
@@ -227,7 +179,8 @@ export async function runApplySiblingExpandAction(
           currentStepIndex: progress.currentStepIndex,
           currentEntityName: currentStep.toEntity,
           requiredCarryField: landedNode?.primaryIdAttribute,
-          canSiblingExpand: candidates.length > 0
+          canSiblingExpand: candidates.length > 0,
+          verbosity: explainVerbosity
         }),
         siblingExpandClause
       }

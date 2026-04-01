@@ -1,5 +1,12 @@
 import type { CommandContext } from "../../../context/commandContext.js";
 import { logInfo } from "../../../../utils/logger.js";
+import { getTraversalExplainVerbosity } from "./traversalExplainConfig.js";
+import {
+  buildExecutionStrategyHintLines,
+  buildLegExplanationLines,
+  buildNoResultGuidanceLines,
+  buildRouteExplanationLines
+} from "./traversalExplainability.js";
 import { appendTraversalInsightActions } from "../shared/traversal/traversalInsightActions.js";
 import {
   clearActiveTraversalProgress,
@@ -30,6 +37,7 @@ export async function executeFirstStepDefault(
   progress?: TraversalProgressReporter
 ): Promise<void> {
   const firstStep = itinerary.steps[0];
+  const explainVerbosity = getTraversalExplainVerbosity();
 
   if (!firstStep) {
     return;
@@ -43,6 +51,10 @@ export async function executeFirstStepDefault(
     `Selected route: ${buildReadableTraversalRouteLabel(route)} (${buildTraversalRouteDescription(route)})`
   );
   logInfo(ctx.output, `Selected itinerary: ${itinerary.label}`);
+
+  for (const line of buildRouteExplanationLines(route, explainVerbosity)) {
+    logInfo(ctx.output, line);
+  }
   logInfo(ctx.output, `Executing Step 1/${itinerary.steps.length}: ${firstStep.stageLabel}`);
   logInfo(ctx.output, `Main mission target: ${firstStep.toEntity}`);
   logInfo(ctx.output, "Queries executed:");
@@ -74,17 +86,35 @@ export async function executeFirstStepDefault(
         currentStepIndex: 0,
         currentEntityName: firstStep.toEntity,
         requiredCarryField: landedNodeForViewer?.primaryIdAttribute,
-        canSiblingExpand: firstStep.toEntity !== route.targetEntity ? true : true
+        canSiblingExpand: firstStep.toEntity !== route.targetEntity ? true : true,
+        verbosity: explainVerbosity
       })
     }
   );
 
+  for (const line of buildExecutionStrategyHintLines({ executionPlan: execution.executionPlan, verbosity: explainVerbosity })) {
+    logInfo(ctx.output, line);
+  }
+
   if (execution.landing.ids.length === 0) {
+    for (const line of buildNoResultGuidanceLines({ step: firstStep, verbosity: explainVerbosity })) {
+      logInfo(ctx.output, line);
+    }
     logInfo(
       ctx.output,
       `This variant did not produce usable data at ${firstStep.toEntity}. Try another variant.`
     );
     return;
+  }
+
+  for (const line of buildLegExplanationLines({
+    itinerary,
+    step: firstStep,
+    stepIndex: 0,
+    rowCount: execution.landing.ids.length,
+    verbosity: explainVerbosity
+  })) {
+    logInfo(ctx.output, line);
   }
 
   logInfo(ctx.output, `Step 1/${itinerary.steps.length} complete: landed on ${execution.landing.entityName}`);

@@ -1,4 +1,5 @@
 export type ResultViewerActionPlacement = "primary" | "overflow";
+export type ResultViewerActionGroup = "navigation" | "inspection" | "query";
 
 export interface ResultViewerActionPayload {
   guid?: string;
@@ -17,6 +18,7 @@ export interface ResultViewerResolvedAction {
   title: string;
   icon: string;
   placement: ResultViewerActionPlacement;
+  group: ResultViewerActionGroup;
   payload: ResultViewerActionPayload;
 }
 

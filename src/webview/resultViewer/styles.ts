@@ -456,6 +456,48 @@ export const RESULT_VIEWER_STYLES = `
             white-space: nowrap;
         }
 
+        .row-actions-header {
+            width: 56px;
+            min-width: 56px;
+        }
+
+        .row-action-cell {
+            width: 56px;
+            min-width: 56px;
+            text-align: center;
+        }
+
+        .row-action-shell {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        tbody tr:hover .row-action-shell,
+        .row-action-cell:focus-within .row-action-shell {
+            opacity: 1;
+        }
+
+        .overflow-group {
+            padding: 2px 0;
+        }
+
+        .overflow-group + .overflow-group {
+            margin-top: 4px;
+            padding-top: 6px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .overflow-group-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.7;
+            padding: 4px 8px 2px;
+        }
+
         .overflow-item {
             display: flex;
             width: 100%;
