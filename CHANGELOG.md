@@ -6,6 +6,128 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.7.4] – Preview-First Query Refinement (OData + FetchXML)
+
+> Introduces safe, preview-first query mutation directly from the Result Viewer. Establishes a consistent “generate → preview → apply” workflow across OData and FetchXML.
+
+### Added
+
+- **Preview OData Filter (Result Viewer)**
+  - Generate OData `$filter` clauses directly from cell values
+  - Opens a reusable preview document showing:
+    - original query
+    - proposed filter clause
+    - full preview query
+  - Requires explicit confirmation before applying changes
+  - Supports:
+    - GUID, numeric, boolean, and string values
+  - Automatically merges with existing `$filter` using logical `and`
+
+- **Preview FetchXML Condition (Result Viewer)**
+  - Generate FetchXML `<condition>` elements from cell values
+  - Preview-first workflow with:
+    - original FetchXML
+    - proposed condition
+    - updated query preview
+  - Safe insertion into existing `<filter type="and">` blocks
+  - Applies only after user confirmation
+  - Fallback to copy when safe insertion is not possible
+
+- **Reusable Query Preview Document**
+  - Single preview document reused across all preview actions
+  - Prevents tab spamming and keeps workflow focused
+  - Standardized structure for:
+    - OData
+    - FetchXML
+    - future mutation features
+
+### Improved
+
+- **Result Viewer → Query refinement workflow**
+  - Result Viewer now acts as a **direct mutation surface**
+  - Enables:
+    - inspect → preview → apply → rerun loop
+  - Reduces need for manual query editing
+
+- **Context-aware action visibility**
+  - Preview actions are now gated by visible editor mode:
+    - OData editor → shows OData preview only
+    - FetchXML editor → shows FetchXML preview only
+  - Prevents misleading actions and fallback warnings
+
+- **Safer mutation boundaries**
+  - Preview actions limited to:
+    - root-level scalar fields
+  - Aliased / flattened fields (e.g. `a.name`) are excluded from preview
+  - Copy actions remain available as fallback
+
+- **Action clarity and UX consistency**
+  - Removed confusing “preview → fallback to copy” flow
+  - Actions now reflect only what is executable in the current context
+
+### Notes
+
+- Preview actions are intentionally scoped to **safe, deterministic scenarios**
+- Complex cases (e.g. nested `link-entity` conditions, polymorphic joins) are deferred to future releases
+- Establishes foundation for:
+  - Query Doctor auto-fix (preview → apply)
+  - table-driven query refinement
+  - multi-step mutation workflows
+
+## [0.7.3] – First-Run Experience, Result Viewer UX & Search
+
+> Focused UX release improving onboarding, discoverability, and day-to-day usability. Establishes the Result Viewer as a true command surface for data exploration and action.
+
+### Added
+
+- **First-Run Quickstart Experience**
+  - Automatically launches on first install
+  - Provides runnable examples with CodeLens integration
+  - Guides users through:
+    - Run Query
+    - Explain Query
+    - Expand usage
+    - FetchXML execution
+    - Relationship exploration (Find Path to Table)
+  - Reduces initial friction and improves discoverability of core features
+
+- **Result Viewer Search (Table + JSON)**
+  - Unified search across:
+    - Table view
+    - JSON view
+  - Enables fast field/value discovery without manual scanning
+  - Significantly improves usability for large result sets
+
+### Improved
+
+- **Result Viewer Empty State UX**
+  - Improved “No results found” messaging
+  - Added actionable guidance:
+    - remove filters
+    - increase `$top`
+    - run without `$filter`
+  - Enhanced spacing and readability for better visual clarity
+
+- **Result Viewer as Command Surface (UX refinement)**
+  - Reinforced interaction model:
+    - view → search → act → refine
+  - Improved alignment with:
+    - traversal workflows
+    - row-level actions
+  - Sets foundation for future table-driven actions (investigate, traversal, mutators)
+
+- **Onboarding discoverability**
+  - Key capabilities are now visible immediately on first run
+  - Reduces reliance on documentation or prior knowledge
+
+### Notes
+
+- This release focuses on **usability and workflow clarity**, not new core features
+- Establishes a stronger foundation for:
+  - table-driven actions
+  - Query Doctor evolution
+  - actionable insight expansion
+
 ## [0.7.2] – Sibling Expand & Actionable Insight Foundation
 
 > Introduces metadata-driven enrichment within traversal and lays the foundation for intent-driven execution through the Actionable Insight model.

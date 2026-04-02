@@ -15,6 +15,12 @@ import {
     isGuidValue
 } from "./columnIntelligence.js";
 import { runContinueTraversalAction } from "../../commands/router/actions/traversal/continueTraversalAction.js";
+import { buildODataFilter, previewAndApplyODataFilter } from "./previewODataFilter.js";
+import {
+  buildFetchXmlCondition as buildPreviewFetchXmlCondition,
+  previewAndApplyFetchXmlCondition
+} from "./previewFetchXmlCondition.js";
+import { parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 
 export function resolveResultViewerActions(
   context: ResultViewerActionContext
@@ -47,6 +53,7 @@ export function resolveResultViewerActions(
         title: continueTitle,
         icon: "➤",
         placement: "primary",
+        group: "navigation",
         payload: {
           columnName,
           rawValue,
@@ -79,7 +86,7 @@ export function resolveResultViewerActions(
   };
 
   const actions: ResultViewerResolvedAction[] = [];
-
+  const visibleQueryMode = detectVisibleQueryMode();
   if (analysis.isPrimaryId) {
     actions.push(
       {
@@ -87,6 +94,7 @@ export function resolveResultViewerActions(
         title: "Investigate record",
         icon: "🔎",
         placement: "primary",
+        group: "inspection",
         payload
       },
       {
@@ -94,6 +102,7 @@ export function resolveResultViewerActions(
         title: "Open in Dataverse UI",
         icon: "↗",
         placement: "primary",
+        group: "inspection",
         payload
       },
       {
@@ -101,27 +110,46 @@ export function resolveResultViewerActions(
         title: "Copy record URL",
         icon: "🔗",
         placement: "overflow",
+        group: "inspection",
         payload
       }
     );
   }
 
-  actions.push(
-    {
-      id: "copy-odata-filter",
-      title: "Copy OData filter",
-      icon: "ƒ",
-      placement: "overflow",
-      payload
-    },
-    {
-      id: "copy-fetchxml-condition",
-      title: "Copy FetchXML condition",
-      icon: "⟪⟫",
-      placement: "overflow",
-      payload
+  const isSafePreviewFilterColumn = !columnName.includes(".");
+
+  if (isSafePreviewFilterColumn) {
+    if (visibleQueryMode === "odata") {
+        actions.push({
+        id: "preview-odata-filter",
+        title: "Preview OData filter",
+        icon: "ƒ",
+        placement: "overflow",
+        group: "query",
+        payload
+        });
     }
-  );
+
+    if (visibleQueryMode === "fetchxml") {
+        actions.push({
+        id: "preview-fetchxml-condition",
+        title: "Preview FetchXML condition",
+        icon: "⟪⟫",
+        placement: "overflow",
+        group: "query",
+        payload
+        });
+    }
+    }
+
+    actions.push({
+    id: "copy-fetchxml-condition",
+    title: "Copy FetchXML condition",
+    icon: "⟪⟫",
+    placement: "overflow",
+    group: "query",
+    payload
+    });
 
   return actions;
 }
@@ -190,14 +218,35 @@ export async function executeResultViewerAction(
             return;
         }
 
-        case "copy-odata-filter": {
+        case "preview-odata-filter": {
             if (!columnName || !rawValue) {
                 return;
             }
 
-            const filter = buildODataFilter(columnName, rawValue);
-            await vscode.env.clipboard.writeText(filter);
-            void vscode.window.showInformationMessage("DV Quick Run: OData filter copied.");
+            try {
+                await previewAndApplyODataFilter(columnName, rawValue);
+            } catch (error) {
+                const filter = buildODataFilter(columnName, rawValue);
+                await vscode.env.clipboard.writeText(filter);
+                const message = error instanceof Error ? error.message : String(error);
+                void vscode.window.showWarningMessage(`DV Quick Run: ${message} Falling back to copied OData filter.`);
+            }
+            return;
+        }
+
+        case "preview-fetchxml-condition": {
+            if (!columnName || !rawValue) {
+                return;
+            }
+
+            try {
+                await previewAndApplyFetchXmlCondition(columnName, rawValue);
+            } catch (error) {
+                const condition = buildPreviewFetchXmlCondition(columnName, rawValue);
+                await vscode.env.clipboard.writeText(condition);
+                const message = error instanceof Error ? error.message : String(error);
+                void vscode.window.showWarningMessage(`DV Quick Run: ${message} Falling back to copied FetchXML condition.`);
+            }
             return;
         }
 
@@ -206,7 +255,7 @@ export async function executeResultViewerAction(
                 return;
             }
 
-            const condition = buildFetchXmlCondition(columnName, rawValue);
+            const condition = buildPreviewFetchXmlCondition(columnName, rawValue);
             await vscode.env.clipboard.writeText(condition);
             void vscode.window.showInformationMessage("DV Quick Run: FetchXML condition copied.");
             return;
@@ -249,36 +298,11 @@ async function buildRecordUiUrl(
     }
 }
 
-function buildODataFilter(columnName: string, rawValue: string): string {
-    return `${columnName} eq ${formatODataValue(rawValue)}`;
-}
 
 function buildFetchXmlCondition(columnName: string, rawValue: string): string {
     return `<condition attribute="${escapeXmlAttribute(columnName)}" operator="eq" value="${escapeXmlAttribute(rawValue)}" />`;
 }
 
-function formatODataValue(rawValue: string): string {
-    const value = rawValue.trim();
-
-    if (!value) {
-        return "''";
-    }
-
-    if (isGuidValue(value)) {
-        return value;
-    }
-
-    if (/^-?\d+(\.\d+)?$/.test(value)) {
-        return value;
-    }
-
-    const lowered = value.toLowerCase();
-    if (lowered === "true" || lowered === "false") {
-        return lowered;
-    }
-
-    return `'${value.replace(/'/g, "''")}'`;
-}
 
 function escapeXmlAttribute(value: string): string {
     return value
@@ -287,4 +311,59 @@ function escapeXmlAttribute(value: string): string {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/'/g, "&apos;");
+}
+
+function detectVisibleQueryMode(): "odata" | "fetchxml" | undefined {
+  const editors = [
+    vscode.window.activeTextEditor,
+    ...vscode.window.visibleTextEditors.filter(
+      (editor) => editor !== vscode.window.activeTextEditor
+    )
+  ].filter((editor): editor is vscode.TextEditor => !!editor);
+
+  for (const editor of editors) {
+    const text = getEditorCandidateText(editor);
+    if (!text) {
+      continue;
+    }
+
+    const trimmed = text.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    if (looksLikeFetchXmlText(trimmed)) {
+      return "fetchxml";
+    }
+
+    try {
+      const parsed = parseEditorQuery(trimmed);
+      if (parsed.entityPath) {
+        return "odata";
+      }
+    } catch {
+      // ignore and continue
+    }
+  }
+
+  return undefined;
+}
+
+function getEditorCandidateText(editor: vscode.TextEditor): string {
+  const selectionText = editor.document.getText(editor.selection).trim();
+  if (selectionText) {
+    return selectionText;
+  }
+
+  const line = editor.document.lineAt(editor.selection.active.line).text.trim();
+  if (line) {
+    return line;
+  }
+
+  return editor.document.getText().trim();
+}
+
+function looksLikeFetchXmlText(text: string): boolean {
+  const trimmed = text.trim();
+  return trimmed.startsWith("<fetch") || trimmed.startsWith("<?xml");
 }

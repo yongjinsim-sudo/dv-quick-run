@@ -14,6 +14,12 @@ import {
   setActiveTraversalProgress
 } from "../shared/traversal/traversalProgressStore.js";
 import { buildTraversalViewerContext } from "./traversalSessionHelpers.js";
+import { getTraversalExplainVerbosity } from "./traversalExplainConfig.js";
+import {
+  buildExecutionStrategyHintLines,
+  buildLegExplanationLines,
+  buildNoResultGuidanceLines
+} from "./traversalExplainability.js";
 import { recordSuccessfulTraversalRoute } from "../shared/traversal/traversalHistoryStore.js";
 
 export async function runContinueTraversalAction(
@@ -37,6 +43,7 @@ export async function runContinueTraversalAction(
     }
 
     const nextStepIndex = progress.currentStepIndex + 1;
+    const explainVerbosity = getTraversalExplainVerbosity();
     const nextStep = progress.itinerary.steps[nextStepIndex];
 
     if (!nextStep) {
@@ -77,17 +84,35 @@ export async function runContinueTraversalAction(
           currentStepIndex: nextStepIndex,
           currentEntityName: nextStep.toEntity,
           requiredCarryField: landedNode?.primaryIdAttribute,
-          canSiblingExpand: true
+          canSiblingExpand: true,
+          verbosity: explainVerbosity
         }),
         siblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex]
       }
     );
 
+    for (const line of buildExecutionStrategyHintLines({ executionPlan: execution.executionPlan, verbosity: explainVerbosity })) {
+      logInfo(ctx.output, line);
+    }
+
     if (execution.landing.ids.length === 0) {
       clearActiveTraversalProgress();
       logInfo(ctx.output, `No usable rows were returned for this path.`);
+      for (const line of buildNoResultGuidanceLines({ step: nextStep, verbosity: explainVerbosity })) {
+        logInfo(ctx.output, line);
+      }
       logInfo(ctx.output, `This variant did not produce usable data at ${nextStep.toEntity}. Try another variant.`);
       return;
+    }
+
+    for (const line of buildLegExplanationLines({
+      itinerary: progress.itinerary,
+      step: nextStep,
+      stepIndex: nextStepIndex,
+      rowCount: execution.landing.ids.length,
+      verbosity: explainVerbosity
+    })) {
+      logInfo(ctx.output, line);
     }
 
     const insightActions = appendTraversalInsightActions({

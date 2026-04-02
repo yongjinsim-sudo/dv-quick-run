@@ -24,6 +24,7 @@ export interface ResultViewerTraversalStatus {
     subtitle?: string;
     traversalSessionId?: string;
     canSiblingExpand?: boolean;
+    requiredCarryField?: string;
 }
 
 export interface ResultViewerEmptyState {
@@ -36,6 +37,9 @@ export interface ResultViewerTraversalContext extends ResultViewerTraversalActio
     nextLegLabel?: string;
     nextLegEntityName?: string;
     currentEntityName?: string;
+    showBanner?: boolean;
+    bannerTitle?: string;
+    bannerSubtitle?: string;
 }
 
 export type ResultViewerCellValueType = "scalar" | "object" | "array" | "empty";
@@ -58,6 +62,11 @@ export interface ResultViewerCell {
     actions?: ResultViewerResolvedAction[];
 }
 
+export interface ResultViewerRowActionItem {
+    rowIndex: number;
+    actions: ResultViewerResolvedAction[];
+}
+
 export interface ResultViewerModel {
     title: string;
     mode: "collection" | "record" | "raw";
@@ -73,6 +82,7 @@ export interface ResultViewerModel {
     emptyState?: ResultViewerEmptyState;
     environment?: ResultViewerEnvironmentInfo;
     legend?: ResultViewerLegendItem[];
+    rowActions?: ResultViewerRowActionItem[];
 }
 
 export interface ResultViewerBuildOptions {
@@ -501,6 +511,23 @@ function buildCell(
     };
 }
 
+function buildRowActions(row: Record<string, ResultViewerCell>): ResultViewerResolvedAction[] {
+    const priority = ["continue-traversal", "investigate-record", "open-in-dataverse-ui", "copy-record-url", "preview-odata-filter", "preview-fetchxml-condition", "copy-fetchxml-condition"];
+    const byId = new Map<string, ResultViewerResolvedAction>();
+
+    Object.values(row).forEach((cell) => {
+        (cell.actions ?? []).forEach((action) => {
+            if (!byId.has(action.id)) {
+                byId.set(action.id, action);
+            }
+        });
+    });
+
+    return priority
+        .map((id) => byId.get(id))
+        .filter((action): action is ResultViewerResolvedAction => !!action);
+}
+
 export function buildResultViewerModel(
     result: unknown,
     query: string,
@@ -512,22 +539,27 @@ export function buildResultViewerModel(
     const primaryIdField = options?.primaryIdField;
     const environment = options?.environment;
     const traversalContext = options?.traversalContext;
-    const traversal = traversalContext
-        ? {
-            title: traversalContext.isFinalLeg
-                ? "Guided Traversal complete"
-                : `Guided Traversal: leg ${traversalContext.legIndex + 1} of ${traversalContext.legCount}`,
-            subtitle: traversalContext.isFinalLeg
-                ? (traversalContext.currentEntityName
-                    ? `Reached: ${traversalContext.currentEntityName}`
-                    : "Reached destination")
-                : traversalContext.nextLegLabel
-                    ? `Next: ${traversalContext.nextLegLabel}`
-                    : "Select a row to continue",
-            traversalSessionId: traversalContext.traversalSessionId,
-            canSiblingExpand: traversalContext.canSiblingExpand
-        }
-        : undefined;
+    const traversal = traversalContext?.showBanner === false
+        ? undefined
+        : traversalContext
+            ? {
+                title: traversalContext.bannerTitle
+                    ?? (traversalContext.isFinalLeg
+                        ? "Guided Traversal complete • "
+                        : `Guided Traversal: leg ${traversalContext.legIndex + 1} of ${traversalContext.legCount} • `),
+                subtitle: traversalContext.bannerSubtitle
+                    ?? (traversalContext.isFinalLeg
+                        ? (traversalContext.currentEntityName
+                            ? `Reached: ${traversalContext.currentEntityName}`
+                            : "Reached destination")
+                        : traversalContext.nextLegLabel
+                            ? `Next: ${traversalContext.nextLegLabel}`
+                            : "Select a row to continue"),
+                traversalSessionId: traversalContext.traversalSessionId,
+                canSiblingExpand: traversalContext.canSiblingExpand,
+                requiredCarryField: traversalContext.requiredCarryField
+            }
+            : undefined;
 
     const emptyState = traversalContext
         ? (traversalContext.isFinalLeg
@@ -537,7 +569,7 @@ export function buildResultViewerModel(
             }
             : {
                 title: "No results for this path",
-                message: "This route did not produce usable data. Try another variant."
+                message: "This route is structurally valid, but valid routes do not guarantee matching data. Try another variant."
             })
         : {
             title: "No results found."
@@ -607,6 +639,10 @@ export function buildResultViewerModel(
             return mapped;
         });
 
+        const rowActions = mappedRows
+            .map((row, rowIndex) => ({ rowIndex, actions: buildRowActions(row) }))
+            .filter((item) => item.actions.length > 0);
+
         return {
             title: `Query Result (${mappedRows.length} rows)`,
             mode: "collection",
@@ -624,7 +660,8 @@ export function buildResultViewerModel(
             primaryIdField,
             traversal,
             environment,
-            emptyState
+            emptyState,
+            rowActions: rowActions.length ? rowActions : undefined
         };
     }
 
@@ -646,6 +683,8 @@ export function buildResultViewerModel(
             }, fieldMap, choiceMetadata);
         });
 
+        const recordRowActions = [{ rowIndex: 0, actions: buildRowActions(mapped) }].filter((item) => item.actions.length > 0);
+
         return {
             title: "Record Result",
             mode: "record",
@@ -659,7 +698,8 @@ export function buildResultViewerModel(
             primaryIdField,
             traversal,
             environment,
-            emptyState
+            emptyState,
+            rowActions: recordRowActions.length ? recordRowActions : undefined
         };
     }
 

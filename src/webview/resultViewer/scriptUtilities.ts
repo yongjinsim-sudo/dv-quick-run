@@ -150,7 +150,7 @@ function showCopyStatus(message) {
                 : "";
 
             const carryHint = traversal.requiredCarryField
-                ? "<span class='traversal-status-subtitle'>Choose a row to continue using " + escapeHtml(traversal.requiredCarryField) + "</span>"
+                ? "<span class='traversal-status-subtitle'> • Choose a row to continue using " + escapeHtml(traversal.requiredCarryField) + "</span>"
                 : "";
 
             traversalStatus.innerHTML =

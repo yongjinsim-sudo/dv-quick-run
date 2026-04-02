@@ -7,6 +7,7 @@ import { loadFields, loadNavigationProperties, findEntityByLogicalName } from ".
 import { getSelectableFields } from "../shared/selectableFields.js";
 import { setQueryOption } from "../shared/queryMutation/queryOptionMutator.js";
 import { runQueryMutationAction } from "../shared/queryMutation/runQueryMutationAction.js";
+import { applyExpand } from "../shared/expand/expandComposer.js";
 
 type NavOption = {
   navigationPropertyName: string;
@@ -137,15 +138,6 @@ async function pickExpandFields(
   return picked.map((item) => item.token);
 }
 
-function buildExpandClause(navigationPropertyName: string, selectTokens: string[]): string {
-  const tokens = selectTokens.map((token) => token.trim()).filter(Boolean);
-  if (!tokens.length) {
-    return navigationPropertyName;
-  }
-
-  return `${navigationPropertyName}($select=${tokens.join(",")})`;
-}
-
 async function pickExistingExpandStrategy(existingExpand: string): Promise<"replace" | "append" | undefined> {
   const picked = await vscode.window.showQuickPick(
     [
@@ -186,8 +178,6 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
         return false;
       }
 
-      const newClause = buildExpandClause(pickedNav.navigationPropertyName, pickedTokens);
-
       const existingExpand = parsed.queryOptions.get("$expand");
       let strategy: "replace" | "append" = "replace";
 
@@ -199,10 +189,15 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
         strategy = pickedStrategy;
       }
 
-      const finalExpand =
-        existingExpand && strategy === "append"
-          ? mergeExpandClause(existingExpand, newClause)
-          : newClause;
+      const finalExpand = strategy === "append"
+        ? applyExpand(existingExpand ?? undefined, {
+            relationship: pickedNav.navigationPropertyName,
+            select: pickedTokens
+          })
+        : applyExpand(undefined, {
+            relationship: pickedNav.navigationPropertyName,
+            select: pickedTokens
+          });
 
       setQueryOption(parsed, "$expand", finalExpand);
       return true;
@@ -210,101 +205,3 @@ export async function runAddExpandAction(ctx: CommandContext): Promise<void> {
   );
 }
 
-function splitTopLevelExpandItems(expand: string): string[] {
-  const items: string[] = [];
-  let current = "";
-  let depth = 0;
-
-  for (const ch of expand) {
-    if (ch === "(") {
-      depth++;
-    } else if (ch === ")") {
-      depth = Math.max(0, depth - 1);
-    }
-
-    if (ch === "," && depth === 0) {
-      if (current.trim()) {
-        items.push(current.trim());
-      }
-      current = "";
-      continue;
-    }
-
-    current += ch;
-  }
-
-  if (current.trim()) {
-    items.push(current.trim());
-  }
-
-  return items;
-}
-
-function getExpandNavName(item: string): string {
-  const trimmed = item.trim();
-  const idx = trimmed.indexOf("(");
-  return idx >= 0 ? trimmed.slice(0, idx).trim() : trimmed;
-}
-
-function getNestedSelectFields(item: string): string[] {
-  const match = item.match(/\$select=([^)]+)/i);
-  if (!match?.[1]) {
-    return [];
-  }
-
-  return match[1]
-    .split(",")
-    .map((x) => x.trim())
-    .filter(Boolean);
-}
-
-function buildExpandItem(navName: string, selectFields: string[]): string {
-  const distinct = Array.from(new Set(selectFields.map((x) => x.trim()).filter(Boolean)));
-
-  if (!distinct.length) {
-    return navName;
-  }
-
-  return `${navName}($select=${distinct.join(",")})`;
-}
-
-function mergeExpandItem(existingItem: string, incomingItem: string): string {
-  const navName = getExpandNavName(existingItem);
-
-  const existingFields = getNestedSelectFields(existingItem);
-  const incomingFields = getNestedSelectFields(incomingItem);
-
-  if (!existingFields.length && !incomingFields.length) {
-    return navName;
-  }
-
-  const mergedFields = Array.from(new Set([...existingFields, ...incomingFields]));
-  return buildExpandItem(navName, mergedFields);
-}
-
-function mergeExpandClause(existingExpand: string | undefined, incomingItem: string): string {
-  if (!existingExpand?.trim()) {
-    return incomingItem;
-  }
-
-  const incomingNav = getExpandNavName(incomingItem);
-
-  const items = splitTopLevelExpandItems(existingExpand);
-
-  let found = false;
-
-  const merged = items.map((item) => {
-    if (getExpandNavName(item).toLowerCase() === incomingNav.toLowerCase()) {
-      found = true;
-      return mergeExpandItem(item, incomingItem);
-    }
-
-    return item;
-  });
-
-  if (!found) {
-    merged.push(incomingItem);
-  }
-
-  return merged.join(",");
-}
