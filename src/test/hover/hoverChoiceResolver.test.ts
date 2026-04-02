@@ -33,13 +33,16 @@ suite("hoverChoiceResolver", () => {
         getFieldContext: async () => buildHoverFieldContext(fields),
         getChoiceMetadata: async () => choices
       } as any,
-      token: new vscode.CancellationTokenSource().token
+      token: new vscode.CancellationTokenSource().token,
+      documentUri: vscode.Uri.parse("file:///tmp/test.http"),
+      lineNumber: 0
     });
 
     assert.ok(hover);
     const markdown = getHoverMarkdown(hover!);
     assert.ok(markdown.includes("**Value: `1`**"));
     assert.ok(markdown.includes("Meaning: **Active**"));
+    assert.ok(markdown.includes("Preview replace"));
   });
 
   test("returns undefined when hovered token is not a scalar value", async () => {

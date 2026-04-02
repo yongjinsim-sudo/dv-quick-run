@@ -84,4 +84,43 @@ suite("queryGuardrails", () => {
     const confirmed = await confirmGuardrailsIfNeeded(result);
     assert.strictEqual(confirmed, false);
   });
+  test("confirmGuardrailsIfNeeded offers preview actions for missing top", async () => {
+    let items: string[] = [];
+    const result: QueryGuardrailResult = {
+      issues: [{ code: "missing-top", severity: "warning", message: "Missing $top" }],
+      hasWarnings: true,
+      hasErrors: false
+    };
+
+    (vscode.window as any).showWarningMessage = async (_message: string, _options: any, ...choices: string[]) => {
+      items = choices;
+      return undefined;
+    };
+
+    const confirmed = await confirmGuardrailsIfNeeded(result);
+    assert.strictEqual(confirmed, false);
+    assert.ok(items.includes("Preview add $top=10"));
+    assert.ok(items.includes("Preview add $top=50"));
+    assert.ok(items.includes("Run Anyway"));
+  });
+
+  test("confirmGuardrailsIfNeeded offers preview action for missing select", async () => {
+    let items: string[] = [];
+    const result: QueryGuardrailResult = {
+      issues: [{ code: "missing-select", severity: "warning", message: "Missing $select" }],
+      hasWarnings: true,
+      hasErrors: false
+    };
+
+    (vscode.window as any).showWarningMessage = async (_message: string, _options: any, ...choices: string[]) => {
+      items = choices;
+      return undefined;
+    };
+
+    const confirmed = await confirmGuardrailsIfNeeded(result);
+    assert.strictEqual(confirmed, false);
+    assert.ok(items.includes("Preview add $select..."));
+    assert.ok(items.includes("Run Anyway"));
+  });
+
 });

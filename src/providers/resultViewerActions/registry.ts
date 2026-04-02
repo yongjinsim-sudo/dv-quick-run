@@ -86,7 +86,6 @@ export function resolveResultViewerActions(
   };
 
   const actions: ResultViewerResolvedAction[] = [];
-  const visibleQueryMode = detectVisibleQueryMode();
   if (analysis.isPrimaryId) {
     actions.push(
       {
@@ -119,37 +118,33 @@ export function resolveResultViewerActions(
   const isSafePreviewFilterColumn = !columnName.includes(".");
 
   if (isSafePreviewFilterColumn) {
-    if (visibleQueryMode === "odata") {
-        actions.push({
-        id: "preview-odata-filter",
-        title: "Preview OData filter",
-        icon: "ƒ",
-        placement: "overflow",
-        group: "query",
-        payload
-        });
-    }
-
-    if (visibleQueryMode === "fetchxml") {
-        actions.push({
-        id: "preview-fetchxml-condition",
-        title: "Preview FetchXML condition",
-        icon: "⟪⟫",
-        placement: "overflow",
-        group: "query",
-        payload
-        });
-    }
-    }
+    actions.push({
+      id: "preview-odata-filter",
+      title: "Preview OData filter",
+      icon: "ƒ",
+      placement: "overflow",
+      group: "query",
+      payload
+    });
 
     actions.push({
-    id: "copy-fetchxml-condition",
-    title: "Copy FetchXML condition",
-    icon: "⟪⟫",
-    placement: "overflow",
-    group: "query",
-    payload
+      id: "preview-fetchxml-condition",
+      title: "Preview FetchXML condition",
+      icon: "⟪⟫",
+      placement: "overflow",
+      group: "query",
+      payload
     });
+  } else {
+    actions.push({
+      id: "copy-fetchxml-condition",
+      title: "Copy FetchXML condition",
+      icon: "⟪⟫",
+      placement: "overflow",
+      group: "query",
+      payload
+    });
+  }
 
   return actions;
 }

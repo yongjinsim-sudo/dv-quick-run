@@ -3,6 +3,7 @@ import { parseEditorQuery } from "../../commands/router/actions/shared/queryMuta
 import { isChoiceAttributeType } from "../../metadata/metadataModel.js";
 import { findChoiceMetadataForField, getSelectedRawValueForField } from "./hoverFilterAnalysis.js";
 import { buildFieldHover } from "./hoverBuilders.js";
+import { buildChoiceRefinementOptions } from "../../refinement/filterValueReplacement.js";
 import { isHoverCancelled, normalizeWord } from "./hoverCommon.js";
 import type { HoverRequestContext } from "./hoverRequestContext.js";
 
@@ -12,6 +13,8 @@ export async function resolveFieldHover(args: {
   hoveredWord: string;
   requestContext: HoverRequestContext;
   token: vscode.CancellationToken;
+  documentUri?: vscode.Uri;
+  lineNumber?: number;
 }): Promise<vscode.Hover | undefined> {
   const { parsed, entitySetName, hoveredWord, requestContext, token } = args;
 
@@ -34,13 +37,28 @@ export async function resolveFieldHover(args: {
       token
     });
     const selectedRawValue = getSelectedRawValueForField(parsed, fieldMatch.logicalName);
+    const refinementOptions =
+      choiceMetadata &&
+      selectedRawValue !== undefined &&
+      args.documentUri !== undefined &&
+      args.lineNumber !== undefined
+        ? buildChoiceRefinementOptions({
+            parsed,
+            hoveredWord: selectedRawValue,
+            fieldLogicalName: fieldMatch.logicalName,
+            options: choiceMetadata.options,
+            documentUri: args.documentUri,
+            lineNumber: args.lineNumber
+          })
+        : undefined;
 
     return buildFieldHover(
       fieldMatch,
       selectableMatch?.selectToken,
       hoveredWord,
       choiceMetadata,
-      selectedRawValue
+      selectedRawValue,
+      refinementOptions
     );
   }
 
@@ -62,13 +80,28 @@ export async function resolveFieldHover(args: {
     token
   });
   const selectedRawValue = getSelectedRawValueForField(parsed, backingField.logicalName);
+  const refinementOptions =
+    choiceMetadata &&
+    selectedRawValue !== undefined &&
+    args.documentUri !== undefined &&
+    args.lineNumber !== undefined
+      ? buildChoiceRefinementOptions({
+          parsed,
+          hoveredWord: selectedRawValue,
+          fieldLogicalName: backingField.logicalName,
+          options: choiceMetadata.options,
+          documentUri: args.documentUri,
+          lineNumber: args.lineNumber
+        })
+      : undefined;
 
   return buildFieldHover(
     backingField,
     selectTokenMatch.selectToken,
     hoveredWord,
     choiceMetadata,
-    selectedRawValue
+    selectedRawValue,
+    refinementOptions
   );
 }
 

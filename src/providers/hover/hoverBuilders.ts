@@ -93,7 +93,8 @@ export function buildFieldHover(
   selectToken?: string,
   matchedToken?: string,
   choiceMetadata?: ChoiceMetadataDef,
-  selectedRawValue?: string
+  selectedRawValue?: string,
+  refinementOptions?: { label: string; value: string; commandUri: string }[]
 ): vscode.Hover {
   const md = new vscode.MarkdownString();
   const attributeType = field.attributeType?.trim() || "unknown";
@@ -128,6 +129,17 @@ export function buildFieldHover(
 
   if (choiceMetadata?.options?.length) {
     md.appendMarkdown("\n\n**Values**\n");
+
+    if (refinementOptions !== undefined && refinementOptions.length > 0) {
+    md.isTrusted = true;
+    md.appendMarkdown("\n\n**Refine filter**\n");
+
+    for (const option of refinementOptions) {
+      md.appendMarkdown(
+        `- [Preview replace current filter value: ${option.label}](${option.commandUri})\n`
+      );
+    }
+  }
 
     const maxToShow = 8;
     const shown = choiceMetadata.options.slice(0, maxToShow);

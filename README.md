@@ -2,7 +2,7 @@
 
 A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with guided traversal, preview-first query refinement, enrichment, and Query Doctor diagnostics.
 
-**Run, understand, explore, and refine Dataverse queries — without leaving your editor.**
+**Run, understand, explore, and refine Dataverse queries — now with Query-by-Canvas — without leaving your editor.**
 
 ---
 
@@ -16,11 +16,78 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Run them instantly
 * Explore results in a table
 * Investigate records
-* Refine queries safely from results (preview-first)
+* Refine queries safely using Query-by-Canvas (preview-first)
 * Navigate relationships step-by-step
 * Enrich results without rewriting queries
 
 All inside VS Code.
+
+---
+
+## 🆕 What's New in v0.7.5 (Query-by-Canvas)
+
+> Introduces **Query-by-Canvas** — a new way to build Dataverse queries through guided, incremental refinement instead of writing full syntax upfront.
+
+- **Query-by-Canvas (Preview-First Construction)**
+  - Start with a minimal query (e.g. `contacts`)
+  - DV Quick Run detects missing elements and suggests safe refinements
+  - Build queries step-by-step:
+    - add `$top`
+    - refine `$select`
+    - adjust filters (preview-first)
+  - No need to memorise full OData syntax upfront
+
+- **Preview Add `$top`**
+  - Detects missing `$top`
+  - Offers quick preview options:
+    - `$top=10`
+    - `$top=50`
+  - Prevents large, unbounded queries
+
+- **Preview Add `$select`**
+  - Detects missing `$select`
+  - Guides field selection before applying
+  - Encourages efficient, focused queries
+
+- **Hover-based Filter Refinement**
+  - Hover on filter values (e.g. `statuscode eq 1`)
+  - See decoded meaning and alternatives
+  - Preview replace filter value safely
+
+---
+
+### ✨ New Workflow: Query-by-Canvas
+
+Think of your query as a **canvas**, not a finished string.
+
+Instead of writing everything upfront:
+
+1. Start simple  
+2. Let DV Quick Run suggest improvements  
+3. Preview changes  
+4. Apply safely  
+5. Iterate  
+
+contacts
+→ + $top
+→ + $select
+→ refine filters
+→ (more coming soon)
+
+detect → preview → apply → rerun
+
+---
+
+### 🧪 We’d love your feedback
+
+Query-by-Canvas is a new direction for DV Quick Run.
+
+Try it out and tell us:
+- Does this make query writing easier?
+- What would you expect next?
+- Anything confusing or missing?
+
+👉 Open Quickstart: `DV Quick Run: Open Quickstart`
 
 ---
 
@@ -360,7 +427,7 @@ In complex environments, tuning these settings can significantly improve:
 
 Typical workflow:
 
-write → run → explore → refine → enrich → refine → repeat
+start simple → run → explore → refine (Query-by-Canvas) → enrich → refine → repeat
 
 ---
 

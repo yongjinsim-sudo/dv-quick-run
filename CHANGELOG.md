@@ -6,6 +6,67 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.7.5] – Query-by-Canvas (Preview-First Query Construction)
+
+> Introduces **Query-by-Canvas**, a new interaction model for building Dataverse queries through guided, incremental refinement instead of writing full syntax upfront.
+
+### Added
+
+- **Query-by-Canvas (Preview-First Query Construction)**
+  - Start with a minimal query (e.g. `contacts`)
+  - DV Quick Run detects missing elements and suggests safe refinements
+  - Establishes a consistent workflow:
+    - detect → suggest → preview → apply
+  - Enables progressive query construction without requiring full syntax upfront
+
+- **Preview Add `$top` (Guardrail Actions)**
+  - Detects missing `$top`
+  - Offers:
+    - `Preview add $top=10`
+    - `Preview add $top=50`
+  - Opens preview document before applying
+  - Helps prevent large, unbounded queries
+
+- **Preview Add `$select` (Guardrail Actions)**
+  - Detects missing `$select`
+  - Offers:
+    - `Preview add $select...`
+  - Guides users to choose fields before applying
+  - Encourages focused, efficient queries
+
+- **Hover-based Filter Value Refinement**
+  - Hover on filter values (e.g. `statuscode eq 1`)
+  - Shows:
+    - decoded meaning (e.g. Active)
+    - available alternative values
+  - Provides:
+    - `Preview replace current filter value`
+  - Enables safe, in-place refinement of query semantics
+
+### Improved
+
+- **Guardrail → Preview workflow consistency**
+  - Guardrails now provide actionable preview options instead of warnings only
+  - Aligns with preview-first philosophy across the extension
+
+- **Query construction UX**
+  - Moves from:
+    - manual syntax writing
+  - to:
+    - guided, incremental refinement
+  - Reduces need to memorise OData syntax
+
+### Notes
+
+- Query-by-Canvas establishes the foundation for future capabilities:
+  - guided `$filter` construction
+  - relationship expansion
+  - traversal-driven query building
+- Focus is on **safe, deterministic, user-approved refinement**
+- Complex query generation is intentionally deferred to future releases
+
+---
+
 ## [0.7.4] – Preview-First Query Refinement (OData + FetchXML)
 
 > Introduces safe, preview-first query mutation directly from the Result Viewer. Establishes a consistent “generate → preview → apply” workflow across OData and FetchXML.

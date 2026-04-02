@@ -1,8 +1,13 @@
 import * as vscode from "vscode";
 import { parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { isChoiceAttributeType } from "../../metadata/metadataModel.js";
-import { findChoiceMetadataForField, findMatchingScalarComparison, buildChoiceValueHover } from "./hoverFilterAnalysis.js";
-import { isHoverCancelled, isScalarValueToken, normalizeScalarToken, normalizeWord } from "./hoverCommon.js";
+import {
+  findChoiceMetadataForField,
+  findMatchingScalarComparison,
+  buildChoiceValueHover
+} from "./hoverFilterAnalysis.js";
+import { buildChoiceRefinementOptions } from "../../refinement/filterValueReplacement.js";
+import { isHoverCancelled, normalizeScalarToken, normalizeWord } from "./hoverCommon.js";
 import type { HoverRequestContext } from "./hoverRequestContext.js";
 
 export async function resolveChoiceValueHover(args: {
@@ -11,12 +16,10 @@ export async function resolveChoiceValueHover(args: {
   hoveredWord: string;
   requestContext: HoverRequestContext;
   token: vscode.CancellationToken;
+  documentUri?: vscode.Uri;
+  lineNumber?: number;
 }): Promise<vscode.Hover | undefined> {
   const { parsed, entitySetName, hoveredWord, requestContext, token } = args;
-
-  if (!isScalarValueToken(hoveredWord)) {
-    return undefined;
-  }
 
   const matchingComparison = findMatchingScalarComparison(parsed, hoveredWord);
   if (!matchingComparison) {
@@ -49,10 +52,23 @@ export async function resolveChoiceValueHover(args: {
     return undefined;
   }
 
+  const refinementOptions =
+    args.documentUri !== undefined && args.lineNumber !== undefined
+      ? buildChoiceRefinementOptions({
+          parsed,
+          hoveredWord,
+          fieldLogicalName: field.logicalName,
+          options: choiceMetadata.options,
+          documentUri: args.documentUri,
+          lineNumber: args.lineNumber
+        })
+      : undefined;
+
   return buildChoiceValueHover({
     rawValue: matchingComparison.rawValue,
     fieldLogicalName: field.logicalName,
     attributeType: field.attributeType,
-    label: option.label
+    label: option.label,
+    refinementOptions
   });
 }

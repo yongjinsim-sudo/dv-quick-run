@@ -512,7 +512,14 @@ function buildCell(
 }
 
 function buildRowActions(row: Record<string, ResultViewerCell>): ResultViewerResolvedAction[] {
-    const priority = ["continue-traversal", "investigate-record", "open-in-dataverse-ui", "copy-record-url", "preview-odata-filter", "preview-fetchxml-condition", "copy-fetchxml-condition"];
+    const priority = [
+        "continue-traversal",
+        "investigate-record",
+        "open-in-dataverse-ui",
+        "copy-record-url",
+        "preview-fetchxml-condition",
+        "copy-fetchxml-condition"
+        ];
     const byId = new Map<string, ResultViewerResolvedAction>();
 
     Object.values(row).forEach((cell) => {

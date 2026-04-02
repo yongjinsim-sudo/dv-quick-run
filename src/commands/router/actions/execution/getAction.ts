@@ -17,6 +17,7 @@ import {
   confirmGuardrailsIfNeeded,
   showGuardrailErrors
 } from "../shared/guardrails/queryGuardrails.js";
+import { previewAndApplyAddSelectInActiveEditor } from "../../../../refinement/addSelectPreview.js";
 import { runAction } from "../shared/actionRunner.js";
 import { showResultViewerForQuery } from "./shared/resultViewerLauncher.js";
 
@@ -173,7 +174,9 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
       return;
     }
 
-    const shouldContinue = await confirmGuardrailsIfNeeded(guardrails);
+    const shouldContinue = await confirmGuardrailsIfNeeded(guardrails, {
+        previewAddSelect: async () => previewAndApplyAddSelectInActiveEditor(ctx)
+      });
     if (!shouldContinue) {
       logWarn(ctx.output, "Run GET cancelled by guardrails.");
       return;

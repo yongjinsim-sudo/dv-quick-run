@@ -88,7 +88,9 @@ export class QueryHoverProvider implements vscode.HoverProvider {
         entitySetName,
         hoveredWord,
         requestContext: this.requestContext,
-        token
+        token,
+        documentUri: document.uri,
+        lineNumber: position.line
       });
       if (choiceValueHover) {
         return choiceValueHover;
@@ -123,7 +125,9 @@ export class QueryHoverProvider implements vscode.HoverProvider {
         entitySetName,
         hoveredWord,
         requestContext: this.requestContext,
-        token
+        token,
+        documentUri: document.uri,
+        lineNumber: position.line
       });
     } catch {
       if (isHoverCancelled(token)) {
