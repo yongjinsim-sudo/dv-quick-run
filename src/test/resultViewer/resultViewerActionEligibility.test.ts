@@ -17,8 +17,8 @@ suite("resultViewerActionEligibility", () => {
       "investigate-record",
       "open-in-dataverse-ui",
       "copy-record-url",
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-odata-filter",
+      "preview-fetchxml-condition"
     ]);
   });
 
@@ -33,8 +33,8 @@ suite("resultViewerActionEligibility", () => {
     });
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-odata-filter",
+      "preview-fetchxml-condition"
     ]);
   });
 
@@ -49,8 +49,8 @@ suite("resultViewerActionEligibility", () => {
     });
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-odata-filter",
+      "preview-fetchxml-condition"
     ]);
   });
 
@@ -150,7 +150,6 @@ suite("resultViewerActionEligibility", () => {
     const actions = model.rows[0]["pa.accountnumber"]?.actions ?? [];
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "copy-odata-filter",
       "copy-fetchxml-condition"
     ]);
 

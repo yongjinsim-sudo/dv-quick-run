@@ -53,11 +53,6 @@ suite("configMigration", () => {
         section: "traversal.excludedTables",
         defaultValue: ["activitypointer"],
         globalValue: []
-      },
-      {
-        section: "traversal.explainVerbosity",
-        defaultValue: "verbose",
-        globalValue: "minimal"
       }
     ]);
 
@@ -65,7 +60,6 @@ suite("configMigration", () => {
     assert.deepStrictEqual(result.skipped.sort(), [
       "traversal.allowedTables",
       "traversal.excludedTables",
-      "traversal.explainVerbosity"
     ]);
   });
 
@@ -111,7 +105,6 @@ suite("configMigration", () => {
     assert.deepStrictEqual(result.skipped.sort(), [
       "traversal.allowedTables",
       "traversal.excludedTables",
-      "traversal.explainVerbosity"
     ]);
   });
 });

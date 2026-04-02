@@ -22,14 +22,13 @@ suite("resultViewerInvariants", () => {
     });
 
     const nameCell = model.rows[0]["pa.name"];
-    const filterAction = nameCell?.actions?.find((action) => action.id === "copy-odata-filter");
+    const filterAction = nameCell?.actions?.find((action) => action.id === "preview-odata-filter");
     const fetchXmlAction = nameCell?.actions?.find((action) => action.id === "copy-fetchxml-condition");
 
-    assert.ok(filterAction);
+    assert.strictEqual(filterAction, undefined);
     assert.ok(fetchXmlAction);
-    assert.strictEqual(filterAction?.payload.columnName, "parentcustomerid_account.name");
     assert.strictEqual(fetchXmlAction?.payload.columnName, "parentcustomerid_account.name");
-    assert.strictEqual(filterAction?.payload.rawValue, "Acme Pty Ltd");
+    assert.strictEqual(fetchXmlAction?.payload.rawValue, "Acme Pty Ltd");
   });
 
   test("depth guardrail stops flattening beyond the configured maximum depth", () => {
@@ -126,12 +125,12 @@ suite("resultViewerInvariants", () => {
       "investigate-record",
       "open-in-dataverse-ui",
       "copy-record-url",
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-odata-filter",
+      "preview-fetchxml-condition"
     ]);
     assert.deepStrictEqual(lookupIds, [
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-odata-filter",
+      "preview-fetchxml-condition"
     ]);
   });
 
@@ -165,8 +164,8 @@ suite("resultViewerInvariants", () => {
     ]);
     assert.deepStrictEqual(idCell?.overflowActions?.map((action) => action.id), [
       "copy-record-url",
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-odata-filter",
+      "preview-fetchxml-condition"
     ]);
     assert.deepStrictEqual(
       idCell?.actions?.map((action) => action.id),
@@ -178,15 +177,14 @@ suite("resultViewerInvariants", () => {
 
     assert.strictEqual(nameCell?.primaryActions, undefined);
     assert.deepStrictEqual(nameCell?.overflowActions?.map((action) => action.id), [
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-odata-filter",
+      "preview-fetchxml-condition"
     ]);
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",
       "open-in-dataverse-ui",
       "copy-record-url",
-      "copy-odata-filter",
-      "copy-fetchxml-condition"
+      "preview-fetchxml-condition"
     ]);
   });
 

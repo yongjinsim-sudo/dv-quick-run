@@ -1,8 +1,8 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with guided traversal, enrichment, and Query Doctor diagnostics.
+A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with guided traversal, preview-first query refinement, enrichment, and Query Doctor diagnostics.
 
-**Run, understand, and explore Dataverse data — without leaving your editor.**
+**Run, understand, explore, and refine Dataverse queries — without leaving your editor.**
 
 ---
 
@@ -16,12 +16,57 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Run them instantly
 * Explore results in a table
 * Investigate records
-* Refine and repeat
+* Refine queries safely from results (preview-first)
 * Navigate relationships step-by-step
 * Enrich results without rewriting queries
 
 All inside VS Code.
 
+---
+
+## 🆕 What's New in v0.7.4 (Preview-First Query Refinement)
+
+> Introduces safe, preview-first query mutation directly from the Result Viewer.
+
+- **Preview OData Filter (Result Viewer)**
+  - Generate `$filter` clauses directly from cell values
+  - Preview the full query before applying
+  - Safe merge with existing filters (`and` logic)
+
+- **Preview FetchXML Condition**
+  - Generate `<condition>` elements from results
+  - Preview before applying to your FetchXML
+  - Inserts into existing `<filter type="and">` blocks when safe
+
+- **Reusable Preview Document**
+  - Single preview tab reused across actions
+  - Prevents tab clutter and keeps workflow focused
+
+- **Context-aware Actions**
+  - OData editor → OData preview only
+  - FetchXML editor → FetchXML preview only
+  - Eliminates confusing fallback behaviour
+
+- **Safer Mutation Boundaries**
+  - Preview limited to root-level scalar fields
+  - Aliased fields (e.g. `a.name`) excluded from preview
+  - Copy actions remain available as fallback
+
+---
+
+### ✨ New Workflow: Refine from Results
+
+Instead of manually editing queries:
+
+1. Run a query  
+2. Click a cell  
+3. Preview filter/condition  
+4. Apply safely  
+5. Re-run  
+
+inspect → preview → apply → rerun
+
+The Result Viewer now acts as a **query refinement surface**, not just a viewer.
 ---
 
 ## 🆕 What's New in v0.7.3 (UX & First-Run Experience)
@@ -315,7 +360,7 @@ In complex environments, tuning these settings can significantly improve:
 
 Typical workflow:
 
-write → run → explore → navigate → enrich → refine → repeat
+write → run → explore → refine → enrich → refine → repeat
 
 ---
 

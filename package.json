@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "A metadata-aware Dataverse workbench for VS Code to run, explore, navigate, and enrich queries (OData & FetchXML). Includes guided traversal, in-place enrichment (sibling expand), Query Doctor diagnostics, interactive result viewer, and smart query builders \u2014 all without leaving your editor.",
-  "version": "0.7.3",
+  "description": "A metadata-aware Dataverse workbench for VS Code to run, explore, navigate, and refine queries (OData & FetchXML). Includes guided traversal, preview-first query refinement, in-place enrichment (sibling expand), Query Doctor diagnostics, interactive result viewer, and smart query builders — all without leaving your editor.",
+  "version": "0.7.4",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -412,13 +412,13 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.109.0",
     "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "typescript-eslint": "^8.56.1",
+    "@types/node": "^22.19.15",
+    "@types/vscode": "^1.109.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.3",
     "typescript": "^5.9.3",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "typescript-eslint": "^8.56.1"
   }
 }
