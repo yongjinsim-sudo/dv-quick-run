@@ -36,13 +36,16 @@ suite("hoverFieldResolver", () => {
         getFieldContext: async () => buildHoverFieldContext(fields),
         getChoiceMetadata: async () => choices
       } as any,
-      token: new vscode.CancellationTokenSource().token
+      token: new vscode.CancellationTokenSource().token,
+      documentUri: vscode.Uri.parse("file:///tmp/test.http"),
+      lineNumber: 0
     });
 
     assert.ok(hover);
     const markdown = getHoverMarkdown(hover!);
     assert.ok(markdown.includes("**Field: `statuscode`**"));
     assert.ok(markdown.includes("➜ **`1` = Active**"));
+    assert.ok(markdown.includes("Preview replace current filter value"));
   });
 
   test("returns hover when hovered token matches select token", async () => {

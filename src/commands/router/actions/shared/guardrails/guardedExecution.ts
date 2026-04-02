@@ -5,6 +5,7 @@ import {
   confirmGuardrailsIfNeeded,
   showGuardrailErrors
 } from "./queryGuardrails.js";
+import { previewAndApplyAddSelectInActiveEditor } from "../../../../../refinement/addSelectPreview.js";
 import { logWarn } from "../../../../../utils/logger.js";
 
 export async function shouldExecuteQueryWithGuardrails(
@@ -21,7 +22,9 @@ export async function shouldExecuteQueryWithGuardrails(
     return false;
   }
 
-  const shouldContinue = await confirmGuardrailsIfNeeded(guardrails);
+  const shouldContinue = await confirmGuardrailsIfNeeded(guardrails, {
+        previewAddSelect: async () => previewAndApplyAddSelectInActiveEditor(ctx)
+      });
   if (!shouldContinue) {
     if (cancelMessage) {
       logWarn(ctx.output,cancelMessage);

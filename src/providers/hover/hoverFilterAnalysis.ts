@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import type { ChoiceMetadataDef } from "../../services/entityChoiceMetadataService.js";
 import { parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
+import type { ChoiceRefinementOption } from "../../refinement/filterValueReplacement.js";
 import { normalizeScalarToken, normalizeWord } from "./hoverCommon.js";
 
 export type SimpleFilterComparison = {
@@ -52,8 +53,10 @@ export function findMatchingScalarComparison(
   }
 
   const comparisons = parseSimpleFilterComparisons(filterValue);
+  const normalizedHovered = normalizeScalarToken(hoveredWord);
+
   return comparisons.find(
-    (c) => normalizeScalarToken(c.rawValue) === normalizeScalarToken(hoveredWord)
+    (c) => normalizeScalarToken(c.rawValue) === normalizedHovered
   );
 }
 
@@ -70,13 +73,25 @@ export function buildChoiceValueHover(args: {
   fieldLogicalName: string;
   attributeType?: string;
   label: string;
+  refinementOptions?: readonly ChoiceRefinementOption[];
 }): vscode.Hover {
   const md = new vscode.MarkdownString();
+  md.isTrusted = true;
 
   md.appendMarkdown(`**Value: \`${args.rawValue}\`**\n\n`);
   md.appendMarkdown(`- Field: \`${args.fieldLogicalName}\`\n`);
   md.appendMarkdown(`- Type: \`${args.attributeType?.trim() || "unknown"}\`\n`);
   md.appendMarkdown(`- Meaning: **${args.label}**\n`);
+
+  if (args.refinementOptions !== undefined && args.refinementOptions.length > 0) {
+    md.appendMarkdown(`\n**Refine filter**\n`);
+
+    for (const option of args.refinementOptions) {
+      md.appendMarkdown(`- [Preview replace: ${option.label}](${option.commandUri})\n`);
+    }
+  } else {
+    md.appendMarkdown(`\nPreview replace is available when alternative values are available.\n`);
+  }
 
   return new vscode.Hover(md);
 }

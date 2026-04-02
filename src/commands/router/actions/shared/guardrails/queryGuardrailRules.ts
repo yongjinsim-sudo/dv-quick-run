@@ -96,7 +96,7 @@ export function checkMissingTop(ctx: QueryGuardrailContext): QueryGuardrailIssue
       makeIssue(
         "missing-top",
         "warning",
-        "Missing $top — this may return many records.",
+        "Missing $top — this may return many records. Consider using preview action.",
         "Consider adding $top=10 or $top=50."
       )
     ];

@@ -5,6 +5,8 @@ import { loadEntityDefs } from "../metadataAccess.js";
 import { runQueryGuardrailRules } from "./queryGuardrailRunner.js";
 import { ParsedDvQuery, QueryGuardrailResult } from "./queryGuardrailTypes.js";
 import { logDebug, logError, logWarn } from "../../../../../utils/logger.js";
+import { previewAndApplyAddTopInActiveEditor } from "../../../../../refinement/addTopPreview.js";
+import { previewAndApplyAddSelectInActiveEditor } from "../../../../../refinement/addSelectPreview.js";
 
 function splitQueryString(raw: string): { pathPart: string; queryPart: string } {
   const idx = raw.indexOf("?");
@@ -143,7 +145,13 @@ export async function showGuardrailErrors(result: QueryGuardrailResult): Promise
   await vscode.window.showErrorMessage(message, { modal: true });
 }
 
-export async function confirmGuardrailsIfNeeded(result: QueryGuardrailResult): Promise<boolean> {
+export async function confirmGuardrailsIfNeeded(
+  result: QueryGuardrailResult,
+  options?: {
+    previewAddTop?: (value: number) => Promise<void>;
+    previewAddSelect?: () => Promise<void>;
+  }
+): Promise<boolean> {
   if (result.hasErrors) {
     return false;
   }
@@ -161,11 +169,45 @@ export async function confirmGuardrailsIfNeeded(result: QueryGuardrailResult): P
     "Run anyway?"
   ].join("\n");
 
+  const hasMissingTopWarning = warnings.some((x) => x.code === "missing-top");
+  const hasMissingSelectWarning = warnings.some((x) => x.code === "missing-select");
+
+  const previewTop10 = "Preview add $top=10";
+  const previewTop50 = "Preview add $top=50";
+  const previewSelect = "Preview add $select...";
+  const runAnyway = "Run Anyway";
+
+  const actions: string[] = [];
+  if (hasMissingTopWarning) {
+    actions.push(previewTop10, previewTop50);
+  }
+  if (hasMissingSelectWarning) {
+    actions.push(previewSelect);
+  }
+  actions.push(runAnyway);
+
   const choice = await vscode.window.showWarningMessage(
     message,
     { modal: true },
-    "Run Anyway"
+    ...actions
   );
 
-  return choice === "Run Anyway";
+  if (choice === previewTop10) {
+    await (options?.previewAddTop ?? previewAndApplyAddTopInActiveEditor)(10);
+    return false;
+  }
+
+  if (choice === previewTop50) {
+    await (options?.previewAddTop ?? previewAndApplyAddTopInActiveEditor)(50);
+    return false;
+  }
+
+  if (choice === previewSelect) {
+    if (options?.previewAddSelect) {
+      await options.previewAddSelect();
+    }
+    return false;
+  }
+
+  return choice === runAnyway;
 }

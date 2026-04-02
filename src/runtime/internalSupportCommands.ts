@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { previewAndApplyReplaceFilterValueAtLine } from "../refinement/filterValueReplacement.js";
 
 async function runCommandAtLine(
   documentUri: vscode.Uri,
@@ -37,6 +38,27 @@ export function registerInternalSupportCommands(context: vscode.ExtensionContext
       "dvQuickRun.explainQueryAtLine",
       async (documentUri: vscode.Uri, lineNumber: number) => {
         await runCommandAtLine(documentUri, lineNumber, "dvQuickRun.explainQuery");
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "dvQuickRun.previewReplaceFilterValueAtLine",
+      async (
+        documentUri: vscode.Uri,
+        lineNumber: number,
+        fieldLogicalName: string,
+        oldValue: string,
+        newValue: string
+      ) => {
+        await previewAndApplyReplaceFilterValueAtLine({
+          documentUri,
+          lineNumber,
+          fieldLogicalName,
+          oldValue,
+          newValue
+        });
       }
     )
   );
