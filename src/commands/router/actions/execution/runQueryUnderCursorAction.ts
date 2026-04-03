@@ -3,6 +3,7 @@ import { logDebug, logInfo, logWarn } from "../../../../utils/logger.js";
 import { normalizePath } from "./get/getQueryBuilder.js";
 import { analyzeQueryGuardrails, confirmGuardrailsIfNeeded, showGuardrailErrors} from "../shared/guardrails/queryGuardrails.js";
 import { previewAndApplyAddSelectInActiveEditor } from "../../../../refinement/addSelectPreview.js";
+import { previewAndApplyAddFilterInActiveEditor } from "../../../../refinement/addFilterPreview.js";
 import { looksLikeDataverseQuery } from "../../../../shared/editorIntelligence/queryDetection.js";
 import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/queryCursorResolver.js";
 import { runAction } from "../shared/actionRunner.js";
@@ -37,7 +38,8 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
       }
 
       const shouldContinue = await confirmGuardrailsIfNeeded(guardrails, {
-        previewAddSelect: async () => previewAndApplyAddSelectInActiveEditor(ctx)
+        previewAddSelect: async () => previewAndApplyAddSelectInActiveEditor(ctx),
+        previewAddFilter: async () => previewAndApplyAddFilterInActiveEditor(ctx)
       });
       if (!shouldContinue) {
         logWarn(ctx.output, "Run Query Under Cursor cancelled by guardrails.");

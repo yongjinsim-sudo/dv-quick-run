@@ -150,6 +150,7 @@ export async function confirmGuardrailsIfNeeded(
   options?: {
     previewAddTop?: (value: number) => Promise<void>;
     previewAddSelect?: () => Promise<void>;
+    previewAddFilter?: () => Promise<void>;
   }
 ): Promise<boolean> {
   if (result.hasErrors) {
@@ -171,10 +172,12 @@ export async function confirmGuardrailsIfNeeded(
 
   const hasMissingTopWarning = warnings.some((x) => x.code === "missing-top");
   const hasMissingSelectWarning = warnings.some((x) => x.code === "missing-select");
+  const hasMissingFilterWarning = warnings.some((x) => x.code === "missing-filter");
 
   const previewTop10 = "Preview add $top=10";
   const previewTop50 = "Preview add $top=50";
   const previewSelect = "Preview add $select...";
+  const previewFilter = "Preview add $filter...";
   const runAnyway = "Run Anyway";
 
   const actions: string[] = [];
@@ -183,6 +186,9 @@ export async function confirmGuardrailsIfNeeded(
   }
   if (hasMissingSelectWarning) {
     actions.push(previewSelect);
+  }
+  if (hasMissingFilterWarning) {
+    actions.push(previewFilter);
   }
   actions.push(runAnyway);
 
@@ -205,6 +211,13 @@ export async function confirmGuardrailsIfNeeded(
   if (choice === previewSelect) {
     if (options?.previewAddSelect) {
       await options.previewAddSelect();
+    }
+    return false;
+  }
+
+  if (choice === previewFilter) {
+    if (options?.previewAddFilter) {
+      await options.previewAddFilter();
     }
     return false;
   }

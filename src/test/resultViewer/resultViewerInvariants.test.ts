@@ -26,9 +26,7 @@ suite("resultViewerInvariants", () => {
     const fetchXmlAction = nameCell?.actions?.find((action) => action.id === "copy-fetchxml-condition");
 
     assert.strictEqual(filterAction, undefined);
-    assert.ok(fetchXmlAction);
-    assert.strictEqual(fetchXmlAction?.payload.columnName, "parentcustomerid_account.name");
-    assert.strictEqual(fetchXmlAction?.payload.rawValue, "Acme Pty Ltd");
+    assert.strictEqual(fetchXmlAction, undefined);
   });
 
   test("depth guardrail stops flattening beyond the configured maximum depth", () => {
@@ -125,12 +123,10 @@ suite("resultViewerInvariants", () => {
       "investigate-record",
       "open-in-dataverse-ui",
       "copy-record-url",
-      "preview-odata-filter",
-      "preview-fetchxml-condition"
+      "preview-odata-filter"
     ]);
     assert.deepStrictEqual(lookupIds, [
-      "preview-odata-filter",
-      "preview-fetchxml-condition"
+      "preview-odata-filter"
     ]);
   });
 
@@ -164,8 +160,7 @@ suite("resultViewerInvariants", () => {
     ]);
     assert.deepStrictEqual(idCell?.overflowActions?.map((action) => action.id), [
       "copy-record-url",
-      "preview-odata-filter",
-      "preview-fetchxml-condition"
+      "preview-odata-filter"
     ]);
     assert.deepStrictEqual(
       idCell?.actions?.map((action) => action.id),
@@ -177,14 +172,12 @@ suite("resultViewerInvariants", () => {
 
     assert.strictEqual(nameCell?.primaryActions, undefined);
     assert.deepStrictEqual(nameCell?.overflowActions?.map((action) => action.id), [
-      "preview-odata-filter",
-      "preview-fetchxml-condition"
+      "preview-odata-filter"
     ]);
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",
       "open-in-dataverse-ui",
       "copy-record-url",
-      "preview-fetchxml-condition"
     ]);
   });
 

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { CommandContext } from "../commands/context/commandContext.js";
 import { QueryCodeLensProvider } from "../providers/queryCodeLensProvider.js";
 import { QueryHoverProvider } from "../providers/queryHoverProvider.js";
+import { InteractiveFilterValueDecorator } from "../providers/interactiveFilterValueDecorator.js";
 
 function createDebouncedCallback(callback: () => void, delayMs: number): () => void {
   let handle: NodeJS.Timeout | undefined;
@@ -42,6 +43,7 @@ export function registerEditorIntelligence(
   );
 
   const hoverProvider = new QueryHoverProvider(ctx);
+  const interactiveValueDecorator = new InteractiveFilterValueDecorator(ctx);
 
   context.subscriptions.push(
     vscode.languages.registerHoverProvider(
@@ -52,6 +54,8 @@ export function registerEditorIntelligence(
       hoverProvider
     )
   );
+
+  context.subscriptions.push(interactiveValueDecorator);
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
@@ -76,4 +80,34 @@ export function registerEditorIntelligence(
       }
     })
   );
+
+
+  const refreshInteractiveValuesDebounced = createDebouncedCallback(() => {
+    void interactiveValueDecorator.refresh(vscode.window.activeTextEditor);
+  }, 150);
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      void interactiveValueDecorator.refresh(editor);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (vscode.window.activeTextEditor?.document === event.document) {
+        refreshInteractiveValuesDebounced();
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument((document) => {
+      if (vscode.window.activeTextEditor?.document === document) {
+        refreshInteractiveValuesDebounced();
+      }
+    })
+  );
+
+  void interactiveValueDecorator.refresh(vscode.window.activeTextEditor);
+
 }

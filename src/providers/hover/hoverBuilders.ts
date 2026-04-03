@@ -128,37 +128,37 @@ export function buildFieldHover(
   }
 
   if (choiceMetadata?.options?.length) {
-    md.appendMarkdown("\n\n**Values**\n");
-
     if (refinementOptions !== undefined && refinementOptions.length > 0) {
-    md.isTrusted = true;
-    md.appendMarkdown("\n\n**Refine filter**\n");
+      md.isTrusted = true;
+      md.appendMarkdown("\n\n**Refine filter**\n");
 
-    for (const option of refinementOptions) {
-      md.appendMarkdown(
-        `- [Preview replace current filter value: ${option.label}](${option.commandUri})\n`
-      );
-    }
-  }
-
-    const maxToShow = 8;
-    const shown = choiceMetadata.options.slice(0, maxToShow);
-    const normalizedSelected = selectedRawValue?.trim().toLowerCase();
-
-    for (const option of shown) {
-      const optionValue = String(option.value);
-      const isSelected = normalizedSelected === optionValue.trim().toLowerCase();
-
-      if (isSelected) {
-        md.appendMarkdown(`- ➜ **\`${optionValue}\` = ${option.label}**\n`);
-      } else {
-        md.appendMarkdown(`- \`${optionValue}\` = ${option.label}\n`);
+      for (const option of refinementOptions) {
+        md.appendMarkdown(
+          `- [Preview replace: ${option.value} = ${option.label}](${option.commandUri})\n`
+        );
       }
-    }
+    } else {
+      md.appendMarkdown("\n\n**Values**\n");
 
-    if (choiceMetadata.options.length > maxToShow) {
-      const remaining = choiceMetadata.options.length - maxToShow;
-      md.appendMarkdown(`- _…and ${remaining} more_\n`);
+      const maxToShow = 8;
+      const shown = choiceMetadata.options.slice(0, maxToShow);
+      const normalizedSelected = selectedRawValue?.trim().toLowerCase();
+
+      for (const option of shown) {
+        const optionValue = String(option.value);
+        const isSelected = normalizedSelected === optionValue.trim().toLowerCase();
+
+        if (isSelected) {
+          md.appendMarkdown(`- ➜ **\`${optionValue}\` = ${option.label}**\n`);
+        } else {
+          md.appendMarkdown(`- \`${optionValue}\` = ${option.label}\n`);
+        }
+      }
+
+      if (choiceMetadata.options.length > maxToShow) {
+        const remaining = choiceMetadata.options.length - maxToShow;
+        md.appendMarkdown(`\n_...and ${remaining} more_\n`);
+      }
     }
   }
 

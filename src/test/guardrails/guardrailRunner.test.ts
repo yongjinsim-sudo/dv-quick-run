@@ -5,14 +5,14 @@ import type { QueryGuardrailContext } from "../../commands/router/actions/shared
 function makeContext(overrides: Partial<QueryGuardrailContext> = {}): QueryGuardrailContext {
   return {
     parsed: {
-      rawQuery: "contacts?$top=10&$select=fullname",
-      normalizedQuery: "contacts?$top=10&$select=fullname",
+      rawQuery: "contacts?$top=10&$select=fullname&$filter=statecode eq 0",
+      normalizedQuery: "contacts?$top=10&$select=fullname&$filter=statecode eq 0",
       hadLeadingSlash: false,
       entityPath: "contacts",
       entitySetName: "contacts",
       isSingleRecordPath: false,
       isCollectionQuery: true,
-      queryOptions: new URLSearchParams("$top=10&$select=fullname"),
+      queryOptions: new URLSearchParams("$top=10&$select=fullname&$filter=statecode eq 0"),
       duplicateOptionCounts: new Map<string, number>()
     },
     knownEntitySetNames: new Set(["contacts", "accounts"]),
@@ -40,6 +40,7 @@ suite("guardrailRunner", () => {
     }));
 
     assert.ok(result.issues.some((x) => x.code === "missing-top"));
+    assert.ok(result.issues.some((x) => x.code === "missing-filter"));
     assert.strictEqual(result.hasWarnings, true);
   });
 

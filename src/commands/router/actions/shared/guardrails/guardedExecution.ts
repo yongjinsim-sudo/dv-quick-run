@@ -6,6 +6,7 @@ import {
   showGuardrailErrors
 } from "./queryGuardrails.js";
 import { previewAndApplyAddSelectInActiveEditor } from "../../../../../refinement/addSelectPreview.js";
+import { previewAndApplyAddFilterInActiveEditor } from "../../../../../refinement/addFilterPreview.js";
 import { logWarn } from "../../../../../utils/logger.js";
 
 export async function shouldExecuteQueryWithGuardrails(
@@ -23,7 +24,8 @@ export async function shouldExecuteQueryWithGuardrails(
   }
 
   const shouldContinue = await confirmGuardrailsIfNeeded(guardrails, {
-        previewAddSelect: async () => previewAndApplyAddSelectInActiveEditor(ctx)
+        previewAddSelect: async () => previewAndApplyAddSelectInActiveEditor(ctx),
+        previewAddFilter: async () => previewAndApplyAddFilterInActiveEditor(ctx)
       });
   if (!shouldContinue) {
     if (cancelMessage) {

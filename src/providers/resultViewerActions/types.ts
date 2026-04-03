@@ -1,5 +1,6 @@
 export type ResultViewerActionPlacement = "primary" | "overflow";
 export type ResultViewerActionGroup = "navigation" | "inspection" | "query";
+export type ResultViewerQueryMode = "odata" | "fetchxml";
 
 export interface ResultViewerActionPayload {
   guid?: string;
@@ -38,6 +39,7 @@ export interface ResultViewerActionContext {
   entitySetName?: string;
   entityLogicalName?: string;
   primaryIdField?: string;
+  queryMode?: ResultViewerQueryMode;
   columnName: string;
   rawValue: string;
   traversal?: ResultViewerTraversalActionContext;

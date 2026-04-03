@@ -1,8 +1,8 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with guided traversal, preview-first query refinement, enrichment, and Query Doctor diagnostics.
+A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with guided traversal, preview-first query refinement, **interactive filter refinement**, enrichment, and Query Doctor diagnostics.
 
-**Run, understand, explore, and refine Dataverse queries — now with Query-by-Canvas — without leaving your editor.**
+**Run, understand, explore, and refine Dataverse queries — now with Query-by-Canvas and interactive inline refinement — without leaving your editor.**
 
 ---
 
@@ -21,6 +21,67 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Enrich results without rewriting queries
 
 All inside VS Code.
+
+---
+
+## 🆕 What's New in v0.7.6 (Interactive Filter Refinement)
+
+> Advances **Query-by-Canvas** with inline, metadata-driven filter refinement — turning filter values into interactive, preview-first actions.
+
+- **Interactive Filter Refinement (Hover + Cue)**
+  - Detects filter values (e.g. `statuscode eq 1`)
+  - Provides actionable replacement options using metadata (Choice fields)
+  - Preview changes before applying (no silent mutation)
+
+- **Inline Interactive Cue**
+  - Subtle dotted underline on refinable values
+  - Cursor changes to `?` to signal available actions
+  - Improves discoverability without UI clutter
+
+- **Action-first Hover Experience**
+  - Replaces static value dump with:
+    - preview replacement options
+    - human-readable labels
+    - clean, focused output
+
+- **Safe Guardrails (First-pass scope)**
+  - Supports:
+    - `eq` operator
+    - single-value filters
+    - standard fields
+  - Skips:
+    - multi-condition (`and` / `or`)
+    - complex expressions
+    - unsupported attribute types
+
+---
+
+### ✨ New Workflow: Refine Filters Inline
+
+Instead of memorising values or editing manually:
+
+1. Hover on a filter value  
+2. See meaning + alternatives  
+3. Preview replacement  
+4. Apply safely  
+5. Re-run  
+
+statuscode eq 1  
+→ hover  
+→ preview alternatives  
+→ replace  
+→ rerun  
+
+detect → preview → apply → rerun
+
+---
+
+### 🧠 Notes
+
+- This is a foundational step toward:
+  - operator mutation (future)
+  - inline query editing
+  - Query Doctor integration
 
 ---
 
@@ -510,6 +571,7 @@ All directly inside VS Code.
 
 * Hover to see field metadata
 * Resolve choice labels automatically
+* **Refine filter values inline (preview-first)**
 * Explore entity relationships
 
 ---

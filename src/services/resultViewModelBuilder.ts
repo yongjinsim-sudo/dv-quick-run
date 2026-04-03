@@ -4,6 +4,7 @@ import {
     resolveResultViewerActions
 } from "../providers/resultViewerActions/registry.js";
 import type {
+    ResultViewerQueryMode,
     ResultViewerResolvedAction,
     ResultViewerTraversalActionContext
 } from "../providers/resultViewerActions/types.js";
@@ -421,6 +422,10 @@ function flattenExpandedRow(
 }
 
 
+function detectResultViewerQueryMode(query: string): ResultViewerQueryMode {
+    return /(?:^|[?&])fetchXml=/i.test(query) ? "fetchxml" : "odata";
+}
+
 function classifyCellValueType(value: unknown): ResultViewerCellValueType {
     if (value === null || value === undefined) {
         return "empty";
@@ -440,6 +445,7 @@ function classifyCellValueType(value: unknown): ResultViewerCellValueType {
 function buildCell(
     rowValue: unknown,
     column: string,
+    queryPath: string,
     options: ResultViewerBuildOptions,
     fieldMap: Map<string, FieldDef>,
     choiceMetadata: ChoiceMetadataDef[]
@@ -466,6 +472,7 @@ function buildCell(
             entitySetName: options.entitySetName,
             entityLogicalName: options.entityLogicalName,
             primaryIdField: options.primaryIdField,
+            queryMode: detectResultViewerQueryMode(queryPath),
             columnName: column,
             rawValue: actionRawValue,
             traversal: options.traversalContext
@@ -634,7 +641,7 @@ export function buildResultViewerModel(
                         ? row[sourceColumn]
                         : undefined;
 
-                mapped[displayColumn] = buildCell(rowValue, sourceColumn, {
+                mapped[displayColumn] = buildCell(rowValue, sourceColumn, query, {
                     ...options,
                     entitySetName,
                     entityLogicalName,
@@ -681,7 +688,7 @@ export function buildResultViewerModel(
         const mapped: Record<string, ResultViewerCell> = {};
 
         columns.forEach((column) => {
-            mapped[column] = buildCell((result as Record<string, unknown>)[column], column, {
+            mapped[column] = buildCell((result as Record<string, unknown>)[column], column, query, {
                 ...options,
                 entitySetName,
                 entityLogicalName,

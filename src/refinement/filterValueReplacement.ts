@@ -31,25 +31,8 @@ export function resolveDeterministicReplaceFilterValueIntent(
     return undefined;
   }
 
-  const normalized = filter.trim().toLowerCase();
-
-  if (normalized.includes(" and ") || normalized.includes(" or ")) {
-    return undefined;
-  }
-
-  const match = filter.match(/^\s*([\w\d_]+)\s+eq\s+(.+?)\s*$/i);
+  const match = findDeterministicEqComparison(filter, fieldLogicalName, oldValue);
   if (!match) {
-    return undefined;
-  }
-
-  const field = match[1];
-  const value = match[2].replace(/^'|'$/g, "");
-
-  if (field !== fieldLogicalName) {
-    return undefined;
-  }
-
-  if (value !== oldValue) {
     return undefined;
   }
 
@@ -66,6 +49,11 @@ export function buildFilterReplacementPreviewQuery(
   intent: ReplaceFilterValueIntent
 ): string {
   const parsed = parseEditorQuery(queryText);
+  const filter = parsed.queryOptions.get("$filter");
+
+  if (!filter) {
+    throw new Error("Replace Filter Value requires an existing $filter clause.");
+  }
 
   const confirmedIntent = resolveDeterministicReplaceFilterValueIntent(
     parsed,
@@ -75,11 +63,19 @@ export function buildFilterReplacementPreviewQuery(
   );
 
   if (!confirmedIntent) {
-    throw new Error("Replace Filter Value requires a deterministic single eq filter match.");
+    throw new Error("Replace Filter Value requires a deterministic eq filter match.");
   }
 
+  const match = findDeterministicEqComparison(filter, confirmedIntent.fieldLogicalName, confirmedIntent.oldValue);
+  if (!match) {
+    throw new Error("Replace Filter Value could not resolve the exact comparison to replace.");
+  }
+
+  const replacement = `${confirmedIntent.fieldLogicalName} eq ${formatReplacementValue(match.rawValue, confirmedIntent.newValue)}`;
+  const nextFilter = filter.slice(0, match.start) + replacement + filter.slice(match.end);
+
   const updated = new URLSearchParams(parsed.queryOptions.toString());
-  updated.set("$filter", `${confirmedIntent.fieldLogicalName} eq ${confirmedIntent.newValue}`);
+  updated.set("$filter", nextFilter);
   parsed.queryOptions = updated;
 
   return buildEditorQuery(parsed);
@@ -134,6 +130,7 @@ export function buildChoiceRefinementOptions(args: {
     );
 
     results.push({
+      value: String(opt.value), 
       label: opt.label,
       commandUri: commandUri.toString()
     });
@@ -186,6 +183,60 @@ export async function previewAndApplyReplaceFilterValueAtLine(args: {
   });
 
   void vscode.window.showInformationMessage("DV Quick Run: Preview applied to query.");
+}
+
+
+
+type DeterministicEqComparisonMatch = {
+  start: number;
+  end: number;
+  rawValue: string;
+};
+
+function findDeterministicEqComparison(
+  filter: string,
+  fieldLogicalName: string,
+  oldValue: string
+): DeterministicEqComparisonMatch | undefined {
+  const regex = /\b([A-Za-z_][A-Za-z0-9_]*)\s+eq\s+((?:true|false|-?\d+(?:\.\d+)?)|'(?:[^']|'')*')/gi;
+  const matches: DeterministicEqComparisonMatch[] = [];
+
+  for (const match of filter.matchAll(regex)) {
+    const [fullMatch, matchedField, matchedRawValue] = match;
+    if (!fullMatch || matchedField === undefined || matchedRawValue === undefined || match.index === undefined) {
+      continue;
+    }
+
+    if (matchedField.trim().toLowerCase() !== fieldLogicalName.trim().toLowerCase()) {
+      continue;
+    }
+
+    if (normalizeScalarToken(matchedRawValue) !== normalizeScalarToken(oldValue)) {
+      continue;
+    }
+
+    matches.push({
+      start: match.index,
+      end: match.index + fullMatch.length,
+      rawValue: matchedRawValue
+    });
+  }
+
+  if (matches.length !== 1) {
+    return undefined;
+  }
+
+  return matches[0];
+}
+
+function formatReplacementValue(previousRawValue: string, newValue: string): string {
+  const trimmedPrevious = previousRawValue.trim();
+  if (trimmedPrevious.startsWith("'") && trimmedPrevious.endsWith("'")) {
+    const escaped = newValue.replace(/'/g, "''");
+    return `'${escaped}'`;
+  }
+
+  return newValue;
 }
 
 function buildReplaceFilterValueCommandUri(args: {

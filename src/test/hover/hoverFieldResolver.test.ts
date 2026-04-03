@@ -43,9 +43,9 @@ suite("hoverFieldResolver", () => {
 
     assert.ok(hover);
     const markdown = getHoverMarkdown(hover!);
-    assert.ok(markdown.includes("**Field: `statuscode`**"));
-    assert.ok(markdown.includes("➜ **`1` = Active**"));
-    assert.ok(markdown.includes("Preview replace current filter value"));
+    assert.ok(markdown.includes("**Refine filter**"));
+    assert.ok(markdown.includes("Preview replace:"));
+    assert.ok(markdown.includes("Inactive"));
   });
 
   test("returns hover when hovered token matches select token", async () => {

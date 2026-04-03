@@ -86,6 +86,8 @@ export function resolveResultViewerActions(
   };
 
   const actions: ResultViewerResolvedAction[] = [];
+  const queryMode = context.queryMode ?? "odata";
+
   if (analysis.isPrimaryId) {
     actions.push(
       {
@@ -118,24 +120,26 @@ export function resolveResultViewerActions(
   const isSafePreviewFilterColumn = !columnName.includes(".");
 
   if (isSafePreviewFilterColumn) {
-    actions.push({
-      id: "preview-odata-filter",
-      title: "Preview OData filter",
-      icon: "ƒ",
-      placement: "overflow",
-      group: "query",
-      payload
-    });
-
-    actions.push({
-      id: "preview-fetchxml-condition",
-      title: "Preview FetchXML condition",
-      icon: "⟪⟫",
-      placement: "overflow",
-      group: "query",
-      payload
-    });
-  } else {
+    if (queryMode === "fetchxml") {
+      actions.push({
+        id: "preview-fetchxml-condition",
+        title: "Preview FetchXML condition",
+        icon: "⟪⟫",
+        placement: "overflow",
+        group: "query",
+        payload
+      });
+    } else {
+      actions.push({
+        id: "preview-odata-filter",
+        title: "Preview OData filter",
+        icon: "ƒ",
+        placement: "overflow",
+        group: "query",
+        payload
+      });
+    }
+  } else if (queryMode === "fetchxml") {
     actions.push({
       id: "copy-fetchxml-condition",
       title: "Copy FetchXML condition",
