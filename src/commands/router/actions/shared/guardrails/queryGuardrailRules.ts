@@ -105,6 +105,26 @@ export function checkMissingTop(ctx: QueryGuardrailContext): QueryGuardrailIssue
   return [];
 }
 
+
+export function checkMissingFilter(ctx: QueryGuardrailContext): QueryGuardrailIssue[] {
+  if (!ctx.parsed.isCollectionQuery) {
+    return [];
+  }
+
+  if (!ctx.parsed.queryOptions.has("$filter")) {
+    return [
+      makeIssue(
+        "missing-filter",
+        "warning",
+        "Missing $filter — this may return a broad result set.",
+        "Consider adding a focused $filter clause."
+      )
+    ];
+  }
+
+  return [];
+}
+
 export function checkMissingSelect(ctx: QueryGuardrailContext): QueryGuardrailIssue[] {
   if (!ctx.parsed.queryOptions.has("$select")) {
     return [

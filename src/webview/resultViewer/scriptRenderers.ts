@@ -188,7 +188,7 @@ function renderTable(currentModel) {
 
             arrayDrawerPayloads.clear();
             visibleRows.forEach((row, rowIndex) => {
-                html += "<tr>";
+                html += "<tr data-row-index=\\"" + rowIndex + "\\">";
 
                 currentModel.columns.forEach((column) => {
                     const cell = row[column];

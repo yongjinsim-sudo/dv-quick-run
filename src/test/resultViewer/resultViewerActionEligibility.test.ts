@@ -9,6 +9,7 @@ suite("resultViewerActionEligibility", () => {
       entitySetName: "contacts",
       entityLogicalName: "contact",
       primaryIdField: "contactid",
+      queryMode: "odata",
       columnName: "contactid",
       rawValue: "8129eec7-4414-4f11-8341-6045bdc42f8b"
     });
@@ -17,8 +18,7 @@ suite("resultViewerActionEligibility", () => {
       "investigate-record",
       "open-in-dataverse-ui",
       "copy-record-url",
-      "preview-odata-filter",
-      "preview-fetchxml-condition"
+      "preview-odata-filter"
     ]);
   });
 
@@ -28,13 +28,13 @@ suite("resultViewerActionEligibility", () => {
       entitySetName: "contacts",
       entityLogicalName: "contact",
       primaryIdField: "contactid",
+      queryMode: "odata",
       columnName: "_ownerid_value",
       rawValue: "8129eec7-4414-4f11-8341-6045bdc42f8b"
     });
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "preview-odata-filter",
-      "preview-fetchxml-condition"
+      "preview-odata-filter"
     ]);
   });
 
@@ -44,13 +44,13 @@ suite("resultViewerActionEligibility", () => {
       entitySetName: "contacts",
       entityLogicalName: "contact",
       primaryIdField: "contactid",
+      queryMode: "odata",
       columnName: "fullname",
       rawValue: "Alice"
     });
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "preview-odata-filter",
-      "preview-fetchxml-condition"
+      "preview-odata-filter"
     ]);
   });
 
@@ -60,6 +60,7 @@ suite("resultViewerActionEligibility", () => {
       entitySetName: "contacts",
       entityLogicalName: "contact",
       primaryIdField: "contactid",
+      queryMode: "odata",
       columnName: "fullname",
       rawValue: ""
     });
@@ -73,6 +74,7 @@ suite("resultViewerActionEligibility", () => {
       entitySetName: "contacts",
       entityLogicalName: "contact",
       primaryIdField: "contactid",
+      queryMode: "odata",
       columnName: "@odata.etag",
       rawValue: "W/\"123\""
     });
@@ -86,6 +88,7 @@ suite("resultViewerActionEligibility", () => {
       entitySetName: "contacts",
       entityLogicalName: "contact",
       primaryIdField: "contactid",
+      queryMode: "odata",
       columnName: "contactid",
       rawValue: "8129EEC7-4414-4F11-8341-6045BDC42F8B"
     });
@@ -150,7 +153,6 @@ suite("resultViewerActionEligibility", () => {
     const actions = model.rows[0]["pa.accountnumber"]?.actions ?? [];
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "copy-fetchxml-condition"
     ]);
 
     actions.forEach((action) => {
@@ -245,6 +247,7 @@ suite("resultViewerActionEligibility", () => {
       entitySetName: "contacts",
       entityLogicalName: "contact",
       primaryIdField: "contactid",
+      queryMode: "odata",
       columnName: "contactid",
       rawValue: "8129eec7-4414-4f11-8341-6045bdc42f8b",
       traversal: {

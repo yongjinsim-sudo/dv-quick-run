@@ -159,6 +159,14 @@ function bindTableEventsOnce() {
                     return;
                 }
 
+                const investigateAction = findRowInvestigateAction(target);
+                if (investigateAction instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    showInvestigateContextMenu(event.clientX, event.clientY, investigateAction);
+                    return;
+                }
+
                 const cell = target.closest(".context-action-cell");
                 if (!(cell instanceof HTMLElement)) {
                     return;
@@ -208,4 +216,54 @@ function bindTableEventsOnce() {
                 showArrayDrawerTable();
             });
         }
+
+
+        let activeResultViewerContextMenu = null;
+
+        function removeResultViewerContextMenu() {
+            if (activeResultViewerContextMenu instanceof HTMLElement) {
+                activeResultViewerContextMenu.remove();
+            }
+
+            activeResultViewerContextMenu = null;
+        }
+
+        function showInvestigateContextMenu(clientX, clientY, actionElement) {
+            removeResultViewerContextMenu();
+            closeAllOverflowMenus();
+
+            const menu = document.createElement("div");
+            menu.className = "overflow-menu-overlay";
+            menu.style.left = clientX + "px";
+            menu.style.top = clientY + "px";
+            menu.setAttribute("role", "menu");
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "overflow-action-button";
+            button.textContent = "🔎 Investigate Record";
+            button.addEventListener("click", () => {
+                executeAction(actionElement);
+                removeResultViewerContextMenu();
+            });
+
+            menu.appendChild(button);
+            document.body.appendChild(menu);
+            activeResultViewerContextMenu = menu;
+
+            window.setTimeout(() => {
+                document.addEventListener("click", removeResultViewerContextMenu, { once: true });
+            }, 0);
+        }
+
+        function findRowInvestigateAction(target) {
+            const row = target.closest("tr[data-row-index]");
+            if (!(row instanceof HTMLElement)) {
+                return null;
+            }
+
+            const investigateAction = row.querySelector('[data-action-id="investigate-record"]');
+            return investigateAction instanceof HTMLElement ? investigateAction : null;
+        }
+
 `;

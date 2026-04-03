@@ -26,6 +26,49 @@ export function parseSimpleFilterComparisons(filter: string): SimpleFilterCompar
   return results;
 }
 
+export type SimpleFilterComparisonWithRange = SimpleFilterComparison & {
+  start: number;
+  end: number;
+  rawValueStart: number;
+  rawValueEnd: number;
+};
+
+export function parseSimpleFilterComparisonsWithRanges(filter: string): SimpleFilterComparisonWithRange[] {
+  const results: SimpleFilterComparisonWithRange[] = [];
+
+  const regex =
+    /\b([A-Za-z_][A-Za-z0-9_]*)\s+(eq|ne|gt|ge|lt|le)\s+((?:true|false|-?\d+(?:\.\d+)?)|'(?:[^']|'')*')/gi;
+
+  for (const match of filter.matchAll(regex)) {
+    const [fullMatch, fieldLogicalName, operator, rawValue] = match;
+    if (!fullMatch || !fieldLogicalName || !operator || !rawValue || match.index === undefined) {
+      continue;
+    }
+
+    const rawValueOffset = fullMatch.lastIndexOf(rawValue);
+    if (rawValueOffset < 0) {
+      continue;
+    }
+
+    const start = match.index;
+    const end = start + fullMatch.length;
+    const rawValueStart = start + rawValueOffset;
+    const rawValueEnd = rawValueStart + rawValue.length;
+
+    results.push({
+      fieldLogicalName,
+      operator: operator.toLowerCase(),
+      rawValue,
+      start,
+      end,
+      rawValueStart,
+      rawValueEnd
+    });
+  }
+
+  return results;
+}
+
 export function getSelectedRawValueForField(
   parsed: ReturnType<typeof parseEditorQuery>,
   fieldLogicalName: string

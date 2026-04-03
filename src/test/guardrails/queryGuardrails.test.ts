@@ -123,4 +123,23 @@ suite("queryGuardrails", () => {
     assert.ok(items.includes("Run Anyway"));
   });
 
+  test("confirmGuardrailsIfNeeded offers preview action for missing filter", async () => {
+    let items: string[] = [];
+    const result: QueryGuardrailResult = {
+      issues: [{ code: "missing-filter", severity: "warning", message: "Missing $filter" }],
+      hasWarnings: true,
+      hasErrors: false
+    };
+
+    (vscode.window as any).showWarningMessage = async (_message: string, _options: any, ...choices: string[]) => {
+      items = choices;
+      return undefined;
+    };
+
+    const confirmed = await confirmGuardrailsIfNeeded(result);
+    assert.strictEqual(confirmed, false);
+    assert.ok(items.includes("Preview add $filter..."));
+    assert.ok(items.includes("Run Anyway"));
+  });
+
 });
