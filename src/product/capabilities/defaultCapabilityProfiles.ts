@@ -1,30 +1,35 @@
-import type { CapabilitySet } from "./capabilityTypes.js";
+import type { CapabilityProfile } from "./capabilityTypes.js";
 import type { EntitlementPlan } from "./entitlementTypes.js";
 
-export const capabilityProfiles: Record<EntitlementPlan, CapabilitySet> = {
+export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfile> = {
   free: {
-    queryDoctor: 1,
-    investigationDepth: 1,
-    traversalDepth: 0
+    queryDoctor: {
+      insightLevel: 1,
+      canApplyFix: false
+    }
   },
   pro: {
-    queryDoctor: 3,
-    investigationDepth: 2,
-    traversalDepth: 1
+    queryDoctor: {
+      insightLevel: 3,
+      canApplyFix: true
+    }
   },
   team: {
-    queryDoctor: 3,
-    investigationDepth: 3,
-    traversalDepth: 2
+    queryDoctor: {
+      insightLevel: 3,
+      canApplyFix: true
+    }
   },
   enterprise: {
-    queryDoctor: 3,
-    investigationDepth: 3,
-    traversalDepth: 3
+    queryDoctor: {
+      insightLevel: 3,
+      canApplyFix: true
+    }
   },
   dev: {
-    queryDoctor: 3,
-    investigationDepth: 3,
-    traversalDepth: 3
+    queryDoctor: {
+      insightLevel: 3,
+      canApplyFix: true
+    }
   }
 };

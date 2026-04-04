@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — now with guided traversal, preview-first query refinement, **interactive filter refinement**, enrichment, and Query Doctor diagnostics.
+A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — with guided traversal, preview-first query refinement, interactive filter refinement, enrichment, and intelligent Query Doctor diagnostics.
 
 **Run, understand, explore, and refine Dataverse queries — now with Query-by-Canvas and interactive inline refinement — without leaving your editor.**
 
@@ -20,7 +20,64 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Navigate relationships step-by-step
 * Enrich results without rewriting queries
 
-All inside VS Code.
+All inside VS Code — with a preview-first, user-controlled workflow.
+
+---
+
+## 🆕 What's New in v0.7.7 (Refinement + Preview System)
+
+> Introduces a unified refinement and preview system, enabling more consistent, transparent, and flexible query improvement workflows.
+
+- **Unified Preview System**
+  - All query refinements now go through a single preview layer
+  - Ensures consistency between suggested changes and executed queries
+  - Supports different refinement workflows (apply or reuse)
+
+- **Enhanced Query Doctor (Actionable Insights)**
+  - Suggestions are now structured into:
+    - informational guidance
+    - actionable refinements
+  - Clearer distinction between:
+    - what to understand
+    - what to change
+
+- **Improved Refinement Flow**
+  - All refinements follow:
+    ```
+    detect → preview → apply / reuse → rerun
+    ```
+  - Consistent behaviour across:
+    - guardrails
+    - filter refinement
+    - Query Doctor suggestions
+
+---
+
+### ✨ Refine with Control
+
+You now have more flexibility in how you refine queries:
+
+1. Detect improvement opportunities  
+2. Preview suggested changes  
+3. Either:
+   - apply directly  
+   - or reuse the updated query  
+4. Re-run and iterate  
+
+This keeps the workflow:
+- transparent
+- predictable
+- fully under your control
+
+---
+
+### 🧠 Notes
+
+- This release focuses on **consistency and trust**
+- Establishes the foundation for:
+  - deeper Query Doctor workflows
+  - more advanced refinement capabilities
+  - future automation (preview-first)
 
 ---
 
@@ -31,7 +88,7 @@ All inside VS Code.
 - **Interactive Filter Refinement (Hover + Cue)**
   - Detects filter values (e.g. `statuscode eq 1`)
   - Provides actionable replacement options using metadata (Choice fields)
-  - Preview changes before applying (no silent mutation)
+  - Preview changes before applying (no hidden mutation)
 
 - **Inline Interactive Cue**
   - Subtle dotted underline on refinable values
@@ -533,7 +590,7 @@ start simple → run → explore → refine (Query-by-Canvas) → enrich → ref
 * Break queries into human-readable explanations
 * Understand filters, sorting, and structure instantly
 
-**Now includes Query Doctor:**
+**Query Doctor (Intelligent Diagnostics):**
 
 * Analyse your query and detect issues
 * Get prioritised diagnostics with confidence scoring

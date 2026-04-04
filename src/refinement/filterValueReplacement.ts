@@ -1,10 +1,9 @@
 import * as vscode from "vscode";
-import { applyEditorQueryUpdate } from "../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
 import { buildEditorQuery, parseEditorQuery, type ParsedEditorQuery } from "../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { type EditorQueryTarget } from "../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
 import { parseSimpleFilterComparisons } from "../providers/hover/hoverFilterAnalysis.js";
 
-const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.txt");
+import { previewAndApplyMutationResult, type MutationResult } from "./queryPreview.js";
 
 export interface ReplaceFilterValueIntent {
   type: "replaceFilterValue";
@@ -153,36 +152,21 @@ export async function previewAndApplyReplaceFilterValueAtLine(args: {
     oldValue: args.oldValue,
     newValue: args.newValue
   });
-
-  await openOrReuseQueryPreviewDocument(buildPreviewDocumentContent({
+  const result: MutationResult = {
     originalQuery: target.text,
-    previewQuery,
-    fieldLogicalName: args.fieldLogicalName,
-    oldValue: args.oldValue,
-    newValue: args.newValue
-  }));
+    updatedQuery: previewQuery,
+    summary: `Replace filter value for ${args.fieldLogicalName}`
+  };
 
-  const choice = await vscode.window.showWarningMessage(
-    "DV Quick Run: Preview is ready. Apply it to the detected query?",
-    { modal: true },
-    "Apply Preview"
-  );
-
-  if (choice !== "Apply Preview") {
-    void vscode.window.showInformationMessage(
-      "DV Quick Run: Preview cancelled. The detected query was not changed."
-    );
-    return;
-  }
-
-  await applyEditorQueryUpdate(target, previewQuery);
-  await vscode.window.showTextDocument(target.editor.document, {
-    viewColumn: target.editor.viewColumn,
-    preserveFocus: false,
-    preview: false
+  await previewAndApplyMutationResult(target, result, {
+    heading: "Replace Filter Value",
+    sections: [
+      {
+        label: "Proposed replacement",
+        value: `${args.fieldLogicalName}: ${args.oldValue} → ${args.newValue}`
+      }
+    ]
   });
-
-  void vscode.window.showInformationMessage("DV Quick Run: Preview applied to query.");
 }
 
 
@@ -310,53 +294,3 @@ async function resolveLineTarget(documentUri: vscode.Uri, lineNumber: number): P
   };
 }
 
-async function openOrReuseQueryPreviewDocument(content: string): Promise<vscode.TextEditor> {
-  const document = await vscode.workspace.openTextDocument(QUERY_PREVIEW_URI);
-  const editor = await vscode.window.showTextDocument(document, {
-    preview: false,
-    preserveFocus: false,
-    viewColumn: vscode.ViewColumn.Beside
-  });
-
-  const fullText = document.getText();
-  const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(fullText.length));
-
-  await editor.edit((editBuilder) => {
-    if (fullText.length === 0) {
-      editBuilder.insert(new vscode.Position(0, 0), content);
-    } else {
-      editBuilder.replace(fullRange, content);
-    }
-  });
-
-  return editor;
-}
-
-function buildPreviewDocumentContent(args: {
-  originalQuery: string;
-  previewQuery: string;
-  fieldLogicalName: string;
-  oldValue: string;
-  newValue: string;
-}): string {
-  return [
-    "DV Quick Run – Query Preview",
-    "============================",
-    "",
-    "Replace Filter Value",
-    "",
-    "This preview document is reused by DV Quick Run and will be overwritten by the next preview action.",
-    "",
-    "Original query:",
-    args.originalQuery,
-    "",
-    "Proposed replacement:",
-    `${args.fieldLogicalName}: ${args.oldValue} → ${args.newValue}`,
-    "",
-    "Preview query:",
-    args.previewQuery,
-    "",
-    "Use the confirmation dialog to apply this preview.",
-    "Dismissing the dialog leaves the detected query unchanged."
-  ].join("\n");
-}

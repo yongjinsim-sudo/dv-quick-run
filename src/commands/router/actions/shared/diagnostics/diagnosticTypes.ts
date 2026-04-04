@@ -8,12 +8,21 @@ export interface DiagnosticSuggestedFix {
   isSpeculative?: boolean;
 }
 
+export type DiagnosticActionability = "none" | "previewOnly" | "previewAndApply";
+
+export interface DiagnosticFixHook {
+  kind: string;
+  label: string;
+}
+
 export interface DiagnosticFinding {
   message: string;
   severity: DiagnosticSeverity;
   suggestion?: string;
   suggestedFix?: DiagnosticSuggestedFix;
   confidence?: number;
+  actionability?: DiagnosticActionability;
+  fixHook?: DiagnosticFixHook;
 }
 
 export interface DiagnosticResult {
@@ -28,4 +37,12 @@ export interface RootCauseGroup {
 
   summary: string;
   recommendation?: string;
+}
+
+export function getDiagnosticActionability(finding: DiagnosticFinding): DiagnosticActionability {
+  return finding.actionability ?? "none";
+}
+
+export function isActionableDiagnosticFinding(finding: DiagnosticFinding): boolean {
+  return getDiagnosticActionability(finding) !== "none";
 }
