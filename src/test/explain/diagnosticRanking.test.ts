@@ -26,7 +26,7 @@ suite("diagnosticRanking", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "name", attributeType: "String", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.length >= 3);

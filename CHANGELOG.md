@@ -6,6 +6,146 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.7.7] — Preview System + Query Refinement Improvements
+
+### 🚀 New
+
+- Introduced a **unified preview system**
+  - All query refinements now go through a single preview layer
+  - Ensures consistency between suggested changes and executed queries
+  - Supports multiple refinement workflows (apply or copy)
+
+- Enhanced **Query Doctor with actionable insights**
+  - Suggestions are now structured into:
+    - informational guidance
+    - actionable refinements
+  - Enables a smoother “refine-as-you-go” experience
+
+---
+
+### 🧠 Improvements
+
+- Query Doctor now:
+  - Surfaces **clear refinement opportunities**
+  - Differentiates between:
+    - hints (informational)
+    - refinements (actionable)
+  - Aligns more closely with the **Query-by-Canvas** workflow
+
+- Improved overall **trust and transparency**
+  - All changes are preview-first
+  - No implicit or hidden query mutations
+
+---
+
+### 🔧 Behaviour Changes
+
+- Query refinements now follow a **preview-first interaction model**
+  - Users can review suggested changes before applying or reusing them
+  - Supports both direct refinement and manual control workflows
+
+- Output now includes:
+  - clearer classification of suggestions
+  - consistent preview pathways for all refinements
+
+---
+
+### 🧱 Architecture
+
+- Introduced a centralised **capability resolution layer**
+  - Ensures consistent behaviour across different interaction modes
+  - Simplifies future extensibility of refinement features
+
+- Enforced:
+  - single entry point for capability decisions
+  - consistent preview → execution pipeline
+
+- Removed:
+  - redundant or unused configuration paths
+  - early-stage extension hooks that were not yet in use
+
+---
+
+### 🧪 Testing
+
+- Expanded coverage for:
+  - refinement behaviour across interaction modes
+  - preview consistency
+  - classification of Query Doctor suggestions
+
+---
+
+### 🎯 Design Alignment
+
+- Reinforces core principles:
+  - Preview-first interactions
+  - User-controlled refinement
+  - Clear and explainable system behaviour
+  - No hidden automation
+
+---
+
+### ⚠️ Notes
+
+- Current scope focuses on **Query Doctor refinements**
+- Other areas (Traversal, Investigate, Explain) remain unchanged
+
+---
+
+## [0.7.6] - 2026-04-XX
+
+### ✨ New — Interactive Filter Refinement (Guardrail + Cue)
+
+- Added intelligent filter value refinement for OData queries
+  - Detects `eq` filter values on hover
+  - Provides actionable replacement suggestions using metadata (Choice fields)
+  - Displays preview options before applying changes (no silent mutation)
+
+- Introduced inline interactive cue system
+  - Subtle dotted underline on refinable values
+  - Cursor changes to `?` to indicate available actions
+  - Enhances discoverability without adding UI clutter
+
+- Hover experience redesigned for choice fields
+  - Replaced static value dump with actionable suggestions
+  - Shows:
+    - Preview replacement options
+    - Human-readable labels for current value
+    - Clean, focused output (reduced noise)
+
+### 🧠 Architecture
+
+- Introduced reusable refinement engine:
+  - `buildChoiceRefinementOptions`
+  - Designed for future extensibility (operators, clauses, Query Doctor)
+
+- Separation of concerns:
+  - Cue layer (editor UX)
+  - Hover layer (insight + preview)
+  - Command layer (execution)
+
+### ⚠️ Guardrails
+
+- Only supports safe first-pass scenarios:
+  - `eq` operator
+  - Single-value filters
+  - Standard (non-polymorphic) fields
+
+- Skips:
+  - multi-condition (`and` / `or`) ambiguity
+  - complex expressions
+  - unsupported attribute types
+
+### 📝 Notes
+
+- Static “full value list” removed in favour of action-first UX
+- Designed as foundation for:
+  - operator mutation (future)
+  - inline editing workflows
+  - Query Doctor integration
+
+---
+
 ## [0.7.5] – Query-by-Canvas (Preview-First Query Construction)
 
 > Introduces **Query-by-Canvas**, a new interaction model for building Dataverse queries through guided, incremental refinement instead of writing full syntax upfront.

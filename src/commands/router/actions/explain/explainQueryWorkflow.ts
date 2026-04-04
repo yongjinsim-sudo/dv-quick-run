@@ -6,8 +6,7 @@ import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/qu
 import { detectQueryKind } from "../../../../shared/editorIntelligence/queryDetection.js";
 import { runFetchXmlExplainPipeline } from "../shared/fetchXmlExplain/fetchXmlExplainPipeline.js";
 import { runDiagnostics } from "../shared/diagnostics/diagnosticRuleEngine.js";
-import { resolveCapabilities } from "../../../../product/capabilities/capabilityResolver.js";
-import { resolveEntitlement } from "../../../../product/capabilities/entitlementResolver.js";
+import { getQueryDoctorCapabilities } from "../../../../product/capabilities/capabilityResolver.js";
 import { loadFields } from "../shared/metadataAccess.js";
 import { parseDataverseQuery } from "./explainQueryParser.js";
 import { toExplainMarkdown } from "./explainQueryMarkdown.js";
@@ -31,7 +30,7 @@ type ExplainWorkflowDeps = {
     relationshipReasoningNotes: ExplainAnalysis["relationshipReasoningNotes"] | undefined,
     diagnostics: Awaited<ReturnType<typeof runDiagnostics>>
   ) => string;
-  resolveCapabilities: () => import("../../../../product/capabilities/capabilityTypes.js").CapabilitySet;
+  getQueryDoctorCapabilities: () => import("../../../../product/capabilities/capabilityTypes.js").QueryDoctorCapabilityProfile;
   loadFieldsForEntity: (ctx: CommandContext, logicalName: string) => Promise<FieldDef[]>;
   buildFetchXmlMarkdown: (ctx: CommandContext, text: string) => Promise<string>;
   openPreview: (markdown: string) => Promise<void>;
@@ -46,7 +45,7 @@ const defaultDeps: ExplainWorkflowDeps = {
   parseQuery: parseDataverseQuery,
   analyse: analyseExplainQuery,
   buildMarkdown: toExplainMarkdown,
-  resolveCapabilities: () => resolveCapabilities(resolveEntitlement()),
+  getQueryDoctorCapabilities: () => getQueryDoctorCapabilities(),
   buildFetchXmlMarkdown: runFetchXmlExplainPipeline,
   loadFieldsForEntity: async (ctx: CommandContext, logicalName: string) => {
     const client = ctx.getClient();
@@ -84,8 +83,8 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   deps.logDebugMessage(ctx.output, `Explain Query: entitySet=${parsed.entitySetName} sourceLength=${text.length}`);
 
   const analysis = await deps.analyse(ctx, parsed);
-  const capabilities = deps.resolveCapabilities();
-  deps.logInfoMessage(ctx.output, `Query Doctor: level=${capabilities.queryDoctor} entity=${analysis.entity?.logicalName ?? "unknown"}`);
+  const queryDoctorCapabilities = deps.getQueryDoctorCapabilities();
+  deps.logInfoMessage(ctx.output, `Query Doctor: level=${queryDoctorCapabilities.insightLevel} entity=${analysis.entity?.logicalName ?? "unknown"}`);
   const diagnostics = await runDiagnostics(
     {
       parsed,
@@ -93,7 +92,7 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
       entityLogicalName: analysis.entity?.logicalName,
       loadFieldsForEntity: async (logicalName: string) => await deps.loadFieldsForEntity(ctx, logicalName)
     },
-    capabilities
+    queryDoctorCapabilities
   );
   if (hasExpandClause(text)) {
     const alreadyExists = diagnostics.findings.some((f) =>

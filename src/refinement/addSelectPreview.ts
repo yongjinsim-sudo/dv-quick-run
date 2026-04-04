@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { applyEditorQueryUpdate } from "../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
 import { getLogicalEditorQueryTarget } from "../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
 import {
   buildEditorQuery,
@@ -10,7 +9,7 @@ import type { CommandContext } from "../commands/context/commandContext.js";
 import { loadEntityDefByEntitySetName, loadFields } from "../commands/router/actions/shared/metadataAccess.js";
 import { getSelectableFields } from "../commands/router/actions/shared/selectableFields.js";
 
-const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.txt");
+import { previewAndApplyMutationResult, type MutationResult } from "./queryPreview.js";
 
 export async function previewAndApplyAddSelectInActiveEditor(ctx: CommandContext): Promise<void> {
   const target = getLogicalEditorQueryTarget();
@@ -59,40 +58,15 @@ export async function previewAndApplyAddSelectInActiveEditor(ctx: CommandContext
 
   const selectedTokens = picked.map((item) => item.token);
   const previewQuery = buildAddSelectPreviewFromTarget(target, selectedTokens);
+  const result: MutationResult = {
+    originalQuery: target.text,
+    updatedQuery: previewQuery,
+    summary: `Add $select=${selectedTokens.join(",")}`
+  };
 
-  await openOrReuseQueryPreviewDocument([
-    "DV Quick Run – Query Preview",
-    "============================",
-    "",
-    `Add $select=${selectedTokens.join(",")}`,
-    "",
-    "Original query:",
-    target.text,
-    "",
-    "Preview query:",
-    previewQuery,
-    "",
-    "Use the confirmation dialog to apply this preview."
-  ].join("\n"));
-
-  const choice = await vscode.window.showWarningMessage(
-    "DV Quick Run: Preview is ready. Apply it to the detected query?",
-    { modal: true },
-    "Apply Preview"
-  );
-
-  if (choice !== "Apply Preview") {
-    void vscode.window.showInformationMessage("DV Quick Run: Preview cancelled. The detected query was not changed.");
-    return;
-  }
-
-  await applyEditorQueryUpdate(target, previewQuery);
-  await vscode.window.showTextDocument(target.editor.document, {
-    viewColumn: target.editor.viewColumn,
-    preserveFocus: false,
-    preview: false
+  await previewAndApplyMutationResult(target, result, {
+    heading: `Add $select=${selectedTokens.join(",")}`
   });
-  void vscode.window.showInformationMessage("DV Quick Run: Preview applied to query.");
 }
 
 export function buildAddSelectPreviewFromTarget(
@@ -120,22 +94,3 @@ export function buildAddSelectPreviewFromTarget(
   return buildEditorQuery(parsed);
 }
 
-async function openOrReuseQueryPreviewDocument(content: string): Promise<void> {
-  const document = await vscode.workspace.openTextDocument(QUERY_PREVIEW_URI);
-  const editor = await vscode.window.showTextDocument(document, {
-    preview: false,
-    preserveFocus: false,
-    viewColumn: vscode.ViewColumn.Beside
-  });
-
-  const fullText = document.getText();
-  const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(fullText.length));
-
-  await editor.edit((editBuilder) => {
-    if (fullText.length === 0) {
-      editBuilder.insert(new vscode.Position(0, 0), content);
-    } else {
-      editBuilder.replace(fullRange, content);
-    }
-  });
-}

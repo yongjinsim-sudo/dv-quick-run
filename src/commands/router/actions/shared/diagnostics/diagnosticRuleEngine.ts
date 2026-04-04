@@ -1,23 +1,18 @@
-import type { CapabilitySet } from "../../../../../product/capabilities/capabilityTypes.js";
+import type { QueryDoctorCapabilityProfile } from "../../../../../product/capabilities/capabilityTypes.js";
 import type { DiagnosticContext } from "./diagnosticRule.js";
 import type { DiagnosticFinding, DiagnosticResult } from "./diagnosticTypes.js";
 import { basicQueryShapeRules } from "./queryDoctorRules/basicQueryShapeRules.js";
 import { metadataValidationRules } from "./queryDoctorRules/metadataValidationRules.js";
-import { hasExpandClause } from './expandDetection';
-import { buildExpandNotFullySupportedDiagnostic } from './diagnosticSuggestionBuilder';
 
-function applyExpandAdvisory(query: string, findings: DiagnosticFinding[]) {
-  if (!hasExpandClause(query)) {
-    return;
-  }
-
-  const alreadyExists = findings.some((f) =>
-    f.message.includes('Expand support is currently partial')
-  );
-
-  if (!alreadyExists) {
-    findings.push(buildExpandNotFullySupportedDiagnostic());
-  }
+function normalizeFinding(finding: DiagnosticFinding, capabilities: QueryDoctorCapabilityProfile): DiagnosticFinding {
+  const hasSuggestedFix = !!finding.suggestedFix;
+  const actionability = finding.actionability ?? (hasSuggestedFix ? (capabilities.canApplyFix ? "previewAndApply" : "previewOnly") : "none");
+  const fixHook = finding.fixHook ?? (hasSuggestedFix ? { kind: "queryDoctor.suggestedFix", label: finding.suggestedFix?.label ?? "Suggested fix" } : undefined);
+  return {
+    ...finding,
+    actionability,
+    fixHook
+  };
 }
 
 function dedupeFindings(findings: DiagnosticFinding[]): DiagnosticFinding[] {
@@ -80,21 +75,22 @@ function rankFindings(findings: DiagnosticFinding[]): DiagnosticFinding[] {
 
 export async function runDiagnostics(
   context: DiagnosticContext,
-  capabilities: CapabilitySet
+  capabilities: QueryDoctorCapabilityProfile
 ): Promise<DiagnosticResult> {
   const findings: DiagnosticFinding[] = [];
 
-  if (capabilities.queryDoctor >= 1) {
+  if (capabilities.insightLevel >= 1) {
     for (const rule of basicQueryShapeRules) {
       findings.push(...await Promise.resolve(rule(context, capabilities)));
     }
   }
 
-  if (capabilities.queryDoctor >= 2) {
+  if (capabilities.insightLevel >= 2) {
     for (const rule of metadataValidationRules) {
       findings.push(...await Promise.resolve(rule(context, capabilities)));
     }
   }
 
-  return { findings: rankFindings(dedupeFindings(findings)) };
+  const normalizedFindings = findings.map((finding) => normalizeFinding(finding, capabilities));
+  return { findings: rankFindings(dedupeFindings(normalizedFindings)) };
 }

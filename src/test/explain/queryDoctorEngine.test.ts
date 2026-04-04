@@ -22,7 +22,7 @@ suite("queryDoctorEngine", () => {
   test("runs level 1 diagnostics for free capability", async () => {
     const result = await runDiagnostics(
       { parsed: baseParsed },
-      { queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 1, canApplyFix: false }
     );
 
     assert.strictEqual(result.findings.length, 2);
@@ -42,7 +42,7 @@ suite("queryDoctorEngine", () => {
           top: 10
         }
       },
-      { queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 1, canApplyFix: false }
     );
 
     assert.strictEqual(result.findings.length, 0);
@@ -60,7 +60,7 @@ suite("queryDoctorEngine", () => {
           unknownParams: [{ key: "$foo", value: "bar" }]
         }
       },
-      { queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 1, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("unrecognised option")));
@@ -84,7 +84,7 @@ suite("queryDoctorEngine", () => {
           suggestion: "Review the filter clause."
         }]
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.strictEqual(result.findings.length, 1);
@@ -99,7 +99,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "contact",
         loadFieldsForEntity: async () => ([{ logicalName: "fullname", isValidForAdvancedFind: false }] as any)
       },
-      { queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 1, canApplyFix: false }
     );
 
     assert.ok(!result.findings.some((finding) => finding.message.includes("may not be filterable")));
@@ -112,7 +112,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "contact",
         loadFieldsForEntity: async () => ([{ logicalName: "fullname", isValidForAdvancedFind: false }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("may not be filterable")));
@@ -136,7 +136,7 @@ suite("queryDoctorEngine", () => {
           suggestion: "Did you mean `fullname`?"
         }]
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("not recognised as a standard attribute")));
@@ -158,7 +158,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "email",
         loadFieldsForEntity: async () => ([{ logicalName: "subject", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("does not appear to be a standard scalar attribute")));
@@ -180,7 +180,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "createdon", attributeType: "DateTime", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("date/time field")));
@@ -202,7 +202,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "contact",
         loadFieldsForEntity: async () => ([{ logicalName: "donotemail", attributeType: "Boolean", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("boolean field")));
@@ -224,7 +224,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "numberofemployees", attributeType: "Integer", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("numeric field")));
@@ -248,7 +248,7 @@ suite("queryDoctorEngine", () => {
           { logicalName: "subject", isValidForAdvancedFind: true }
         ] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("does not appear to be a standard scalar attribute")));
@@ -271,7 +271,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "name", attributeType: "String", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("text field")));
@@ -293,7 +293,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "contact",
         loadFieldsForEntity: async () => ([{ logicalName: "statecode", attributeType: "State", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("choice-like field")));
@@ -315,7 +315,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "numberofemployees", attributeType: "Integer", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(!result.findings.some((finding) => finding.message.includes("text field")));
@@ -337,7 +337,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "name", attributeType: "String", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("compared to null with operator `gt`")));
@@ -359,7 +359,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "createdon", attributeType: "DateTime", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(result.findings.some((finding) => finding.message.includes("quoted literal `")));
@@ -381,7 +381,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "account",
         loadFieldsForEntity: async () => ([{ logicalName: "numberofemployees", attributeType: "Integer", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     assert.ok(!result.findings.some((finding) => finding.message.includes("compared to null with operator")));
@@ -393,7 +393,7 @@ suite("queryDoctorEngine", () => {
       {
         parsed: baseParsed
       },
-      { queryDoctor: 1, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 1, canApplyFix: false }
     );
 
     const selectFinding = result.findings.find((finding) => finding.message.includes("$select"));
@@ -423,7 +423,7 @@ suite("queryDoctorEngine", () => {
           suggestion: "Check the logical name."
         }]
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     const finding = result.findings.find((item) => item.message.includes("not recognised as a standard attribute"));
@@ -451,7 +451,7 @@ suite("queryDoctorEngine", () => {
           suggestion: "Check the logical name."
         }]
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     const finding = result.findings.find((item) => item.message.includes("not recognised as a standard attribute"));
@@ -473,7 +473,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "contact",
         loadFieldsForEntity: async () => ([{ logicalName: "parentcustomerid", attributeType: "Lookup", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     const finding = result.findings.find((item) => item.message.includes("does not appear to be a standard scalar attribute"));
@@ -495,7 +495,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "contact",
         loadFieldsForEntity: async () => ([{ logicalName: "statecode", attributeType: "State", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     const semanticFinding = operatorResult.findings.find((item) => item.message.includes("choice-like or boolean field"));
@@ -514,7 +514,7 @@ suite("queryDoctorEngine", () => {
         entityLogicalName: "contact",
         loadFieldsForEntity: async () => ([{ logicalName: "statecode", attributeType: "State", isValidForAdvancedFind: true }] as any)
       },
-      { queryDoctor: 2, investigationDepth: 1, traversalDepth: 0 }
+      { insightLevel: 2, canApplyFix: false }
     );
 
     const typeFinding = numericResult.findings.find((item) => item.message.includes("literal `'abc'` is not numeric"));

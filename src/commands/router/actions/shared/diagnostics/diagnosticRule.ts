@@ -1,4 +1,4 @@
-import type { CapabilitySet } from "../../../../../product/capabilities/capabilityTypes.js";
+import type { QueryDoctorCapabilityProfile } from "../../../../../product/capabilities/capabilityTypes.js";
 import type { ParsedDataverseQuery } from "../../explain/explainQueryTypes.js";
 import type { ValidationIssue } from "../queryExplain/queryValidation.js";
 import type { FieldDef } from "../../../../../services/entityFieldMetadataService.js";
@@ -13,5 +13,5 @@ export interface DiagnosticContext {
 
 export type DiagnosticRule = (
   context: DiagnosticContext,
-  capabilities: CapabilitySet
+  capabilities: QueryDoctorCapabilityProfile
 ) => DiagnosticFinding[] | Promise<DiagnosticFinding[]>;

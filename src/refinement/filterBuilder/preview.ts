@@ -1,14 +1,10 @@
-import * as vscode from "vscode";
-import { applyEditorQueryUpdate } from "../../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
+import { previewAndApplyMutationResult, type MutationResult } from "../queryPreview.js";
 import type { EditorQueryTarget } from "../../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
 import { buildEditorQuery, parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { odataQuoteString } from "../../commands/router/actions/shared/queryMutation/odataValueUtils.js";
 import type { BuildFilterInsight, FilterClauseModel } from "./models.js";
 
-const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.txt");
-
-export interface BuildFilterPreviewResult {
-  originalQuery: string;
+export interface BuildFilterPreviewResult extends MutationResult {
   previewQuery: string;
   generatedClause: string;
   mergeStrategy: "replace" | "appendAnd";
@@ -58,34 +54,70 @@ export function buildFilterPreviewFromInsight(
   return {
     originalQuery: queryText,
     generatedClause: clauseText,
+    updatedQuery: buildEditorQuery(parsed),
     previewQuery: buildEditorQuery(parsed),
     mergeStrategy: insight.mergeStrategy
   };
 }
 
+function wrapForAndOperand(value: string): string {
+  const trimmed = value.trim();
+
+  if (isWrappedBySingleBalancedParens(trimmed)) {
+    return trimmed;
+  }
+
+  if (/\sand\s|\sor\s/i.test(trimmed)) {
+    return `(${trimmed})`;
+  }
+
+  return trimmed;
+}
+
+function isWrappedBySingleBalancedParens(value: string): boolean {
+  if (!value.startsWith("(") || !value.endsWith(")")) {
+    return false;
+  }
+
+  let depth = 0;
+
+  for (let i = 0; i < value.length; i += 1) {
+    const ch = value[i];
+
+    if (ch === "(") {
+      depth += 1;
+    } else if (ch === ")") {
+      depth -= 1;
+
+      if (depth === 0 && i < value.length - 1) {
+        return false;
+      }
+
+      if (depth < 0) {
+        return false;
+      }
+    }
+  }
+
+  return depth === 0;
+}
+
 export async function previewAndApplyFilterInsight(target: EditorQueryTarget, insight: BuildFilterInsight): Promise<void> {
   const preview = buildFilterPreviewFromInsight(target.text, insight);
 
-  await openOrReuseQueryPreviewDocument(buildPreviewDocumentContent(preview));
-
-  const choice = await vscode.window.showWarningMessage(
-    "DV Quick Run: Preview is ready. Apply it to the detected query?",
-    { modal: true },
-    "Apply Preview"
-  );
-
-  if (choice !== "Apply Preview") {
-    void vscode.window.showInformationMessage("DV Quick Run: Preview cancelled. The detected query was not changed.");
-    return;
-  }
-
-  await applyEditorQueryUpdate(target, preview.previewQuery);
-  await vscode.window.showTextDocument(target.editor.document, {
-    viewColumn: target.editor.viewColumn,
-    preserveFocus: false,
-    preview: false
+  await previewAndApplyMutationResult(target, preview, {
+    heading: "Preview Add Filter ($filter)",
+    sections: [
+      {
+        label: "Merge strategy",
+        value: preview.mergeStrategy === "replace" ? "Replace existing filter" : "Append with AND"
+      },
+      {
+        label: "Generated filter clause",
+        value: preview.generatedClause
+      }
+    ]
   });
-  void vscode.window.showInformationMessage("DV Quick Run: Preview applied to query.");
 }
 
 function formatModelValue(clause: FilterClauseModel): string {
@@ -107,84 +139,3 @@ function formatModelValue(clause: FilterClauseModel): string {
   return odataQuoteString(rawValue);
 }
 
-async function openOrReuseQueryPreviewDocument(content: string): Promise<vscode.TextEditor> {
-  const document = await vscode.workspace.openTextDocument(QUERY_PREVIEW_URI);
-  const editor = await vscode.window.showTextDocument(document, {
-    preview: false,
-    preserveFocus: false,
-    viewColumn: vscode.ViewColumn.Beside
-  });
-
-  const fullText = document.getText();
-  const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(fullText.length));
-
-  await editor.edit((editBuilder) => {
-    if (fullText.length === 0) {
-      editBuilder.insert(new vscode.Position(0, 0), content);
-    } else {
-      editBuilder.replace(fullRange, content);
-    }
-  });
-
-  return editor;
-}
-
-function buildPreviewDocumentContent(preview: BuildFilterPreviewResult): string {
-  return [
-    "DV Quick Run – Query Preview",
-    "============================",
-    "",
-    "Preview Add Filter ($filter)",
-    "",
-    `Merge strategy: ${preview.mergeStrategy === "replace" ? "Replace existing filter" : "Append with AND"}`,
-    "",
-    "Original query:",
-    preview.originalQuery,
-    "",
-    "Generated filter clause:",
-    preview.generatedClause,
-    "",
-    "Preview query:",
-    preview.previewQuery,
-    "",
-    "Use the confirmation dialog to apply this preview.",
-    "Dismissing the dialog leaves the detected query unchanged."
-  ].join("\n");
-}
-
-
-function wrapForAndOperand(value: string): string {
-  const trimmed = value.trim();
-
-  if (isWrappedBySingleBalancedParens(trimmed)) {
-    return trimmed;
-  }
-  if (/\sand\s|\sor\s/i.test(trimmed)) {
-    return `(${trimmed})`;
-  }
-  return trimmed;
-}
-
-function isWrappedBySingleBalancedParens(value: string): boolean {
-  if (!value.startsWith("(") || !value.endsWith(")")) {
-    return false;
-  }
-
-  let depth = 0;
-  for (let i = 0; i < value.length; i++) {
-    const ch = value[i];
-    if (ch === "(") {
-      depth += 1;
-    } else if (ch === ")") {
-      depth -= 1;
-      if (depth === 0 && i < value.length - 1) {
-        return false;
-      }
-      if (depth < 0) {
-        return false;
-      }
-    }
-  }
-
-  return depth === 0;
-}

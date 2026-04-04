@@ -1,26 +1,41 @@
 import * as assert from "assert";
-import { resolveCapabilities } from "../../product/capabilities/capabilityResolver.js";
+import { canApplyQueryDoctorFix, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel } from "../../product/capabilities/capabilityResolver.js";
 import { normalizeEntitlementPlan } from "../../product/capabilities/entitlementTypes.js";
 
 suite("capabilityResolver", () => {
   test("resolves free capability profile", () => {
-    const result = resolveCapabilities({ plan: "free" });
+    const result = getCapabilityProfile("free");
 
     assert.deepStrictEqual(result, {
-      queryDoctor: 1,
-      investigationDepth: 1,
-      traversalDepth: 0
+      queryDoctor: {
+        insightLevel: 1,
+        canApplyFix: false
+      }
     });
   });
 
   test("resolves pro capability profile", () => {
-    const result = resolveCapabilities({ plan: "pro" });
+    const result = getCapabilityProfile("pro");
 
     assert.deepStrictEqual(result, {
-      queryDoctor: 3,
-      investigationDepth: 2,
-      traversalDepth: 1
+      queryDoctor: {
+        insightLevel: 3,
+        canApplyFix: true
+      }
     });
+  });
+
+  test("resolves query doctor helpers", () => {
+    assert.deepStrictEqual(getQueryDoctorCapabilities("free"), { insightLevel: 1, canApplyFix: false });
+    assert.deepStrictEqual(getQueryDoctorCapabilities("pro"), { insightLevel: 3, canApplyFix: true });
+    assert.strictEqual(getQueryDoctorInsightLevel("free"), 1);
+    assert.strictEqual(getQueryDoctorInsightLevel("pro"), 3);
+    assert.strictEqual(canApplyQueryDoctorFix("free"), false);
+    assert.strictEqual(canApplyQueryDoctorFix("pro"), true);
+  });
+
+  test("getCurrentProductPlan uses normalized configuration plan", () => {
+    assert.strictEqual(typeof getCurrentProductPlan(), "string");
   });
 
   test("normalizes unknown plan values to dev", () => {
