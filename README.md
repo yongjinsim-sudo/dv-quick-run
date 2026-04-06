@@ -24,517 +24,74 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.7.7 (Refinement + Preview System)
+## 🆕 What's New in v0.8.0 (Evidence-Aware Query Doctor)
 
-> Introduces a unified refinement and preview system, enabling more consistent, transparent, and flexible query improvement workflows.
+> Introduces an evidence-driven Query Doctor with structured narrowing insights — helping you understand and refine queries based on actual returned data patterns.
 
-- **Unified Preview System**
-  - All query refinements now go through a single preview layer
-  - Ensures consistency between suggested changes and executed queries
-  - Supports different refinement workflows (apply or reuse)
+- **Evidence-Aware Query Doctor**
+  - Uses:
+    - query shape
+    - returned row patterns
+    - lightweight execution evidence
+  - Moves beyond static advice into **result-aware guidance**
 
-- **Enhanced Query Doctor (Actionable Insights)**
-  - Suggestions are now structured into:
-    - informational guidance
-    - actionable refinements
-  - Clearer distinction between:
-    - what to understand
-    - what to change
+- **Structured Narrowing Insights**
+  - Detects meaningful patterns in returned rows
+  - Surfaces potential ways to refine queries using:
+    - repeated categorical values (e.g. status, state, priority)
+    - null vs non-null distributions
+  - Helps identify *where* to narrow — not just *that* you should
 
-- **Improved Refinement Flow**
-  - All refinements follow:
-    ```
-    detect → preview → apply / reuse → rerun
-    ```
-  - Consistent behaviour across:
-    - guardrails
-    - filter refinement
-    - Query Doctor suggestions
+- **Explainable Suggestions**
+  - Each suggestion includes a clear reason
+  - Examples:
+    - “value X appears 12 times”
+    - “field populated in 18/30 rows”
+  - Builds trust through transparent, evidence-based guidance
 
----
+- **Suggested Query Guidance**
+  - Clear, direct next steps for refining queries
 
-### ✨ Refine with Control
+- **Metadata-Accurate Suggestions**
+  - Suggested queries use valid fields for the current entity
+  - Prevents incorrect or cross-entity recommendations
 
-You now have more flexibility in how you refine queries:
-
-1. Detect improvement opportunities  
-2. Preview suggested changes  
-3. Either:
-   - apply directly  
-   - or reuse the updated query  
-4. Re-run and iterate  
-
-This keeps the workflow:
-- transparent
-- predictable
-- fully under your control
+- **Improved Readability with Formatted Values**
+  - Query Doctor prefers human-readable labels where available
+  - Example:
+    - `statecode = Active` instead of raw numeric values
 
 ---
 
-### 🧠 Notes
+### ✨ New Workflow: Evidence-Based Refinement
 
-- This release focuses on **consistency and trust**
-- Establishes the foundation for:
-  - deeper Query Doctor workflows
-  - more advanced refinement capabilities
-  - future automation (preview-first)
-
----
-
-## 🆕 What's New in v0.7.6 (Interactive Filter Refinement)
-
-> Advances **Query-by-Canvas** with inline, metadata-driven filter refinement — turning filter values into interactive, preview-first actions.
-
-- **Interactive Filter Refinement (Hover + Cue)**
-  - Detects filter values (e.g. `statuscode eq 1`)
-  - Provides actionable replacement options using metadata (Choice fields)
-  - Preview changes before applying (no hidden mutation)
-
-- **Inline Interactive Cue**
-  - Subtle dotted underline on refinable values
-  - Cursor changes to `?` to signal available actions
-  - Improves discoverability without UI clutter
-
-- **Action-first Hover Experience**
-  - Replaces static value dump with:
-    - preview replacement options
-    - human-readable labels
-    - clean, focused output
-
-- **Safe Guardrails (First-pass scope)**
-  - Supports:
-    - `eq` operator
-    - single-value filters
-    - standard fields
-  - Skips:
-    - multi-condition (`and` / `or`)
-    - complex expressions
-    - unsupported attribute types
-
----
-
-### ✨ New Workflow: Refine Filters Inline
-
-Instead of memorising values or editing manually:
-
-1. Hover on a filter value  
-2. See meaning + alternatives  
-3. Preview replacement  
-4. Apply safely  
-5. Re-run  
-
-statuscode eq 1  
-→ hover  
-→ preview alternatives  
-→ replace  
-→ rerun  
-
-detect → preview → apply → rerun
-
----
-
-### 🧠 Notes
-
-- This is a foundational step toward:
-  - operator mutation (future)
-  - inline query editing
-  - Query Doctor integration
-
----
-
-## 🆕 What's New in v0.7.5 (Query-by-Canvas)
-
-> Introduces **Query-by-Canvas** — a new way to build Dataverse queries through guided, incremental refinement instead of writing full syntax upfront.
-
-- **Query-by-Canvas (Preview-First Construction)**
-  - Start with a minimal query (e.g. `contacts`)
-  - DV Quick Run detects missing elements and suggests safe refinements
-  - Build queries step-by-step:
-    - add `$top`
-    - refine `$select`
-    - adjust filters (preview-first)
-  - No need to memorise full OData syntax upfront
-
-- **Preview Add `$top`**
-  - Detects missing `$top`
-  - Offers quick preview options:
-    - `$top=10`
-    - `$top=50`
-  - Prevents large, unbounded queries
-
-- **Preview Add `$select`**
-  - Detects missing `$select`
-  - Guides field selection before applying
-  - Encourages efficient, focused queries
-
-- **Hover-based Filter Refinement**
-  - Hover on filter values (e.g. `statuscode eq 1`)
-  - See decoded meaning and alternatives
-  - Preview replace filter value safely
-
----
-
-### ✨ New Workflow: Query-by-Canvas
-
-Think of your query as a **canvas**, not a finished string.
-
-Instead of writing everything upfront:
-
-1. Start simple  
-2. Let DV Quick Run suggest improvements  
-3. Preview changes  
-4. Apply safely  
-5. Iterate  
-
-contacts
-→ + $top
-→ + $select
-→ refine filters
-→ (more coming soon)
-
-detect → preview → apply → rerun
-
----
-
-### 🧪 We’d love your feedback
-
-Query-by-Canvas is a new direction for DV Quick Run.
-
-Try it out and tell us:
-- Does this make query writing easier?
-- What would you expect next?
-- Anything confusing or missing?
-
-👉 Open Quickstart: `DV Quick Run: Open Quickstart`
-
----
-
-## 🆕 What's New in v0.7.4 (Preview-First Query Refinement)
-
-> Introduces safe, preview-first query mutation directly from the Result Viewer.
-
-- **Preview OData Filter (Result Viewer)**
-  - Generate `$filter` clauses directly from cell values
-  - Preview the full query before applying
-  - Safe merge with existing filters (`and` logic)
-
-- **Preview FetchXML Condition**
-  - Generate `<condition>` elements from results
-  - Preview before applying to your FetchXML
-  - Inserts into existing `<filter type="and">` blocks when safe
-
-- **Reusable Preview Document**
-  - Single preview tab reused across actions
-  - Prevents tab clutter and keeps workflow focused
-
-- **Context-aware Actions**
-  - OData editor → OData preview only
-  - FetchXML editor → FetchXML preview only
-  - Eliminates confusing fallback behaviour
-
-- **Safer Mutation Boundaries**
-  - Preview limited to root-level scalar fields
-  - Aliased fields (e.g. `a.name`) excluded from preview
-  - Copy actions remain available as fallback
-
----
-
-### ✨ New Workflow: Refine from Results
-
-Instead of manually editing queries:
+Instead of guessing how to improve your query:
 
 1. Run a query  
-2. Click a cell  
-3. Preview filter/condition  
-4. Apply safely  
-5. Re-run  
+2. Open **Explain Query**  
+3. See:
+   - observed patterns
+   - narrowing opportunities
+   - suggested queries  
+4. Refine manually with confidence  
+5. Re-run and iterate  
 
-inspect → preview → apply → rerun
-
-The Result Viewer now acts as a **query refinement surface**, not just a viewer.
----
-
-## 🆕 What's New in v0.7.3 (UX & First-Run Experience)
-
-> Makes exploring large Dataverse datasets dramatically faster with instant search and guided onboarding.
-
--   **First-Run Quickstart**
-    -   Automatically opens on first install
-    -   Runnable examples with CodeLens
-    -   Covers Run, Explain, Expand, FetchXML, Traversal
--   **Result Viewer Search**
-    -   Works across Table + JSON
-    -   Instantly locate fields and values in large datasets
-    -   Eliminates manual scanning
-    -   Quickly find fields and values
--   **Improved Empty State**
-    -   Suggestions:
-        -   remove filters
-        -   increase \$top
-        -   run without \$filter
-
----
-
-## 🆕 What's New in v0.7.2
-
-* **Sibling Expand (Enrich without leaving context)**
-  - Enrich results directly from the Result Viewer
-  - Add related data without rewriting your query
-  - Works during:
-    - traversal steps
-    - final results
-    - single queries
-  - Smart behaviour:
-    - additive (does not overwrite existing `$expand`)
-    - merge-aware (same entity expansions are combined)
-
-* **Enrich-as-you-go workflow**
-  - New flow:
-    ```
-    navigate → land → enrich → continue
-    ```
-  - No need to stop and manually rebuild queries mid-exploration
-
-* **Seamless Traversal Integration**
-  - Sibling expand works alongside:
-    - Continue Traversal
-    - multi-leg workflows
-  - Operates on the current result set (no context switching)
-
-* **Smarter Expand behaviour**
-  - Prevents duplicate expands
-  - Prevents accidental overwrite of previous expand clauses
-  - Consistent behaviour across:
-    - Add Expand helper
-    - traversal-driven expand
-
-* **Cleaner execution feedback**
-  - Reduced noisy logs
-  - More readable execution output
-
----
-
-### ✨ New Workflow: Enrich in Place
-
-Instead of rewriting queries:
- ```
-contact → careplan → careplanactivity → task
- ```
-
-You can now:
-
-1. Traverse to your target
-2. Select a row or result set
-3. Apply **Sibling Expand**
-4. Instantly enrich results with related data
-
-No manual `$expand` needed.
+run → observe → understand → refine → repeat
 
 ---
 
 ### 🧠 Notes
 
-* Sibling expand is **not traversal**
-  - traversal = navigation
-  - sibling expand = enrichment
+- This release focuses on:
+  - insight quality
+  - explainability
+  - trust
+  - correctness
 
-* Expand is now:
-  - additive
-  - merge-aware
-  - safe to apply multiple times
-
-* This release introduces the foundation for:
-  - composed multi-hop queries
-  - `$batch` execution (future optimisation)
-
-## 🆕 What's New in v0.7.1 (Navigation)
-
-* **Guided Traversal (Find Path to Table)**
-  - Discover relationship paths between Dataverse tables directly from VS Code
-  - Supports multi-hop traversal with variant (route) selection
-  - Introduces itinerary concepts:
-    - **Compact** (nested expand / join-like execution)
-    - **Mixed** (step-by-step continuation)
-  - Provides structured, step-by-step execution output
-
-* **Traversal Continuation (Multi-leg workflow)**
-  - Continue across relationships using **Continue Traversal**
-  - Step-based execution model:
-    - `Step X/Y` progression
-    - clear landing context at each hop
-  - Row-driven continuation:
-    - traversal proceeds from selected/landed records
-  - Traversal session state maintained across steps
-
-* **Traversal-aware Result Viewer**
-  - Row-level action:
-    - **Continue to {Entity}**
-  - Contextual actions only shown when traversal is active
-  - Clean transition between steps with automatic state management
-
-* **Execution Strategies (Itinerary-based)**
-  - Multiple execution approaches depending on scenario:
-    - step-based traversal (sampling-safe)
-    - nested expand (context-preserving)
-  - Compact itinerary uses nested expand for multi-hop joins
-  - Mixed itinerary uses controlled step traversal
-
-* **Proven Route Detection (in-session)**
-  - Tracks successful traversal paths during your session
-  - Highlights known-good routes in the picker:
-    - ⭐ Proven routes
-  - Enables faster reuse of working relationship paths
-
-* **Clear Traversal Outcomes**
-  - Explicit results after each step:
-    - landed entity
-    - row counts
-    - next step availability
-  - Clear distinction between:
-    - successful traversal with data
-    - successful traversal with no results
-
-* **Configuration Migration Loader**
-  - Automatically injects new settings for existing users
-  - Ensures new features are available without manual config updates
-  - Non-destructive (only applies when settings are missing)
-
----
-
-### ✨ New Workflow: Traverse Relationships
-
-You can now move across Dataverse tables step-by-step:
-  contact → careplan → careplanactivity → task
-
-Workflow:
-
-1. Run **Find Path to Table**
-2. Select a route (variant)
-3. Execute step 1
-4. Continue using **Continue to {Entity}**
-5. Repeat until target is reached
-
-This enables a **multi-leg query workflow** directly inside VS Code — no need to manually construct complex `$expand` queries.
-
----
-
-### 🧠 Notes
-
-* Step-based traversal may return empty results when intermediate sampling does not preserve relationship continuity
-* Compact (nested expand) itinerary provides better results for **dependent multi-hop relationships**
-* Proven routes are currently **session-based (in-memory)**
-* Future releases will introduce:
-  - adaptive execution strategy
-  - persisted traversal history
-  - shareable traversal keys
-
-### ⚙️ Traversal Configuration (Optional Tuning)
-
-Traversal uses metadata to discover possible relationship paths between tables.  
-In large environments, this can result in many irrelevant or noisy paths.
-
-You can improve traversal quality and performance using:
-
-#### `dvQuickRun.traversal.allowedTables`
-
-Limit traversal to specific tables:
-
-```json
-{
-  "dvQuickRun.traversal.allowedTables": [
-    "contact",
-    "account",
-    "*careplan*",
-    "*invoice*"
-  ]
-}
-```
-
-Useful when:
-- working within a specific domain (e.g. healthcare, finance)
-- you want faster and more relevant path suggestions
-- You can also use `*` wildcards in traversal scope settings.
-
----
-
-#### `dvQuickRun.traversal.excludedTables`
-
-Exclude noisy or irrelevant tables:
-
-```json
-{
-  "dvQuickRun.traversal.excludedTables": [
-    "systemuser*",
-    "team*",
-    "businessunit",
-    "*audit*"
-  ]
-}
-```
-
-Useful when:
-- system tables dominate traversal results
-- you want to avoid generic ownership or audit relationships
-
----
-
-### 💡 Recommendation
-
-Start with defaults.
-
-If traversal feels:
-- too slow → use **allowedTables**
-- too noisy → use **excludedTables**
-
-In complex environments, tuning these settings can significantly improve:
-- path relevance
-- traversal performance
-- overall usability
-
-
-## 🆕 What's New in v0.7.0
-
-* **Query Doctor (foundation)**
-  - Analyses Dataverse queries and surfaces diagnostics directly within Explain Query
-  - Provides:
-    - issue detection
-    - advisory guidance
-    - prioritised diagnostic output
-  - Designed as a non-blocking developer assist layer (not strict validation)
-
-* **Suggested Fixes**
-  - Diagnostics now include actionable suggested fixes
-  - Each suggestion provides:
-    - clear intent
-    - explanation
-    - example queries where applicable
-  - Helps developers move from “what’s wrong” → “how to fix it”
-
-* **Query shape & metadata-aware diagnostics**
-  - Detects common issues such as:
-    - missing `$select`
-    - missing `$top`
-    - inefficient query patterns
-  - Extends into metadata-aware validation (Level 2 capability)
-
-* **Expand boundary awareness**
-  - Detects `$expand` usage and surfaces advisory guidance
-  - Prevents misleading diagnostics for nested or complex expand scenarios
-  - Establishes clear capability boundaries for Query Doctor
-
-* **Diagnostics integrated into Explain Query**
-  - Explain output now includes a dedicated **Diagnostics** section
-  - Clear separation between:
-    - explanation (what the query does)
-    - diagnostics (how to improve it)
-
-* **Foundation for future Query Doctor capabilities**
-  - Architecture now supports:
-    - auto-fix workflows
-    - interactive query refinement
-    - deeper semantic reasoning (planned)
-
-*(This release focuses on correctness, trust, and extensibility — advanced scenarios such as deep `$expand` and complex FetchXML reasoning are planned for future releases.)*
+- Establishes the foundation for:
+  - interactive query refinement
+  - deeper analysis workflows
+  - future execution-driven improvements
 
 ---
 

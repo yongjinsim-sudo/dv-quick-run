@@ -2,12 +2,13 @@ import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { logDebug, logInfo } from "../../../../utils/logger.js";
 import type { FieldDef } from "../../../../services/entityFieldMetadataService.js";
+import type { ChoiceMetadataDef } from "../../../../services/entityChoiceMetadataService.js";
 import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/queryCursorResolver.js";
 import { detectQueryKind } from "../../../../shared/editorIntelligence/queryDetection.js";
 import { runFetchXmlExplainPipeline } from "../shared/fetchXmlExplain/fetchXmlExplainPipeline.js";
 import { runDiagnostics } from "../shared/diagnostics/diagnosticRuleEngine.js";
 import { getQueryDoctorCapabilities } from "../../../../product/capabilities/capabilityResolver.js";
-import { loadFields } from "../shared/metadataAccess.js";
+import { loadChoiceMetadata, loadFields } from "../shared/metadataAccess.js";
 import { parseDataverseQuery } from "./explainQueryParser.js";
 import { toExplainMarkdown } from "./explainQueryMarkdown.js";
 import { openMarkdownPreview } from "./explainQueryRuntime.js";
@@ -15,6 +16,7 @@ import { analyseExplainQuery } from "./explainQueryAnalysis.js";
 import type { ParsedDataverseQuery } from "./explainQueryTypes.js";
 import { hasExpandClause } from "../shared/diagnostics/expandDetection.js";
 import { buildExpandNotFullySupportedDiagnostic } from "../shared/diagnostics/diagnosticSuggestionBuilder.js";
+import { getExecutionEvidenceForQuery } from "../shared/diagnostics/executionEvidence.js";
 
 type ExplainAnalysis = Awaited<ReturnType<typeof analyseExplainQuery>>;
 
@@ -28,10 +30,13 @@ type ExplainWorkflowDeps = {
     entity: ExplainAnalysis["entity"],
     validationIssues: ExplainAnalysis["validationIssues"],
     relationshipReasoningNotes: ExplainAnalysis["relationshipReasoningNotes"] | undefined,
-    diagnostics: Awaited<ReturnType<typeof runDiagnostics>>
+    diagnostics: Awaited<ReturnType<typeof runDiagnostics>>,
+    executionEvidence?: import("../shared/diagnostics/executionEvidence.js").ExecutionEvidence,
+    choiceMetadata?: ChoiceMetadataDef[]
   ) => string;
   getQueryDoctorCapabilities: () => import("../../../../product/capabilities/capabilityTypes.js").QueryDoctorCapabilityProfile;
   loadFieldsForEntity: (ctx: CommandContext, logicalName: string) => Promise<FieldDef[]>;
+  loadChoiceMetadataForEntity: (ctx: CommandContext, logicalName: string) => Promise<ChoiceMetadataDef[]>;
   buildFetchXmlMarkdown: (ctx: CommandContext, text: string) => Promise<string>;
   openPreview: (markdown: string) => Promise<void>;
   logDebugMessage: (output: CommandContext["output"], message: string) => void;
@@ -51,6 +56,11 @@ const defaultDeps: ExplainWorkflowDeps = {
     const client = ctx.getClient();
     const token = await ctx.getToken(ctx.getScope());
     return await loadFields(ctx, client, token, logicalName);
+  },
+  loadChoiceMetadataForEntity: async (ctx: CommandContext, logicalName: string) => {
+    const client = ctx.getClient();
+    const token = await ctx.getToken(ctx.getScope());
+    return await loadChoiceMetadata(ctx, client, token, logicalName, { silent: true });
   },
   openPreview: openMarkdownPreview,
   logDebugMessage: logDebug,
@@ -85,12 +95,14 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   const analysis = await deps.analyse(ctx, parsed);
   const queryDoctorCapabilities = deps.getQueryDoctorCapabilities();
   deps.logInfoMessage(ctx.output, `Query Doctor: level=${queryDoctorCapabilities.insightLevel} entity=${analysis.entity?.logicalName ?? "unknown"}`);
+  const executionEvidence = getExecutionEvidenceForQuery(parsed.normalized);
   const diagnostics = await runDiagnostics(
     {
       parsed,
       validationIssues: analysis.validationIssues,
       entityLogicalName: analysis.entity?.logicalName,
-      loadFieldsForEntity: async (logicalName: string) => await deps.loadFieldsForEntity(ctx, logicalName)
+      loadFieldsForEntity: async (logicalName: string) => await deps.loadFieldsForEntity(ctx, logicalName),
+      executionEvidence
     },
     queryDoctorCapabilities
   );
@@ -103,12 +115,18 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
       diagnostics.findings.unshift(buildExpandNotFullySupportedDiagnostic());
     }
   }
+  const choiceMetadata = analysis.entity?.logicalName
+    ? await deps.loadChoiceMetadataForEntity(ctx, analysis.entity.logicalName)
+    : [];
+
   const markdown = deps.buildMarkdown(
     parsed,
     analysis.entity,
     analysis.validationIssues,
     analysis.relationshipReasoningNotes ?? [],
-    diagnostics
+    diagnostics,
+    executionEvidence,
+    choiceMetadata
   );
 
   await deps.openPreview(markdown);

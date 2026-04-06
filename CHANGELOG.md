@@ -6,6 +6,132 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.8.0] — Evidence-Aware Query Doctor & Structured Narrowing Insights
+
+### 🚀 New
+
+- Introduced **evidence-aware Query Doctor**
+  - Uses query shape, returned row patterns, and lightweight execution evidence
+  - Moves beyond static advisory text into **result-aware guidance**
+
+- Added **structured narrowing insights**
+  - Surfaces narrowing opportunities based on observed result patterns
+  - Supports:
+    - **Categorical splits** (repeated low-cardinality values such as status/state)
+    - **Presence splits** (null vs non-null patterns)
+
+- Added **explainable suggestion reasoning**
+  - Each suggestion includes *why* it was surfaced
+  - Examples:
+    - repeated values with counts
+    - populated vs null distribution
+  - Improves trust and transparency of Query Doctor outputs
+
+- Introduced **structured narrowing model (foundation)**
+  - Separates:
+    - observed evidence
+    - narrowing candidates
+    - deterministic suggested queries
+  - Prepares for future interactive refinement workflows
+
+---
+
+### 🧠 Improvements
+
+- Improved **Query Doctor usefulness**
+  - From generic advice → **evidence-based narrowing guidance**
+
+- Improved **metadata accuracy of suggestions**
+  - Suggested queries now use valid fields for the target entity
+  - Prevents incorrect cross-entity field suggestions
+
+- Improved **formatted value usage**
+  - Prefers human-readable values (e.g. `Active`, `Married`)
+  - Falls back safely when formatted values are not available
+
+- Improved **narrowing candidate quality**
+  - De-prioritises low-signal fields:
+    - GUIDs / IDs
+    - booleans
+    - timestamps (initial release)
+  - Prioritises:
+    - choice / status fields
+    - repeated categorical values
+    - meaningful null/non-null splits
+
+---
+
+### 🔧 Behaviour Changes
+
+- Query Doctor is now **analysis-first**
+  - Surfaces:
+    - observed patterns
+    - narrowing opportunities
+    - suggested queries
+  - Focuses on insight before action
+
+- Narrowing suggestions are triggered by:
+  - **actual observed result patterns**
+  - not static or predefined rules
+
+---
+
+### 🧱 Architecture
+
+- Introduced **structured narrowing model**
+  - Clean separation of:
+    - evidence
+    - suggestions
+    - deterministic queries
+
+- Reinforced separation between:
+  - Result Viewer (presentation)
+  - Query Doctor (analysis)
+
+- Preserved formatted annotations for analysis while reducing UI clutter
+
+---
+
+### 🧪 Testing
+
+- Added coverage for:
+  - narrowing suggestion rendering
+  - metadata-correct query generation
+  - formatted-value-aware handling
+  - result viewer behaviour (including resize)
+
+---
+
+### 🎯 Design Alignment
+
+- Establishes Query Doctor as:
+  - **evidence-driven**
+  - **explainable**
+  - **metadata-aware**
+
+- Reinforces:
+  - insight-first workflows
+  - user-controlled refinement
+
+- Prepares the foundation for:
+  - interactive query refinement
+  - richer execution workflows
+  - without changing the analytical model introduced here
+
+---
+
+### ⚠️ Notes
+
+- This release focuses on:
+  - insight quality
+  - trust
+  - explainability
+  - correctness
+
+- Interactive refinement workflows will build on top of the structured narrowing foundation introduced in this release
+
+---
+
 ## [0.7.7] — Preview System + Query Refinement Improvements
 
 ### 🚀 New

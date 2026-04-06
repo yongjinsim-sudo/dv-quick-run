@@ -3,11 +3,13 @@ import type { DiagnosticContext } from "./diagnosticRule.js";
 import type { DiagnosticFinding, DiagnosticResult } from "./diagnosticTypes.js";
 import { basicQueryShapeRules } from "./queryDoctorRules/basicQueryShapeRules.js";
 import { metadataValidationRules } from "./queryDoctorRules/metadataValidationRules.js";
+import { evidenceAwareRules } from "./queryDoctorRules/evidenceAwareRules.js";
 
 function normalizeFinding(finding: DiagnosticFinding, capabilities: QueryDoctorCapabilityProfile): DiagnosticFinding {
   const hasSuggestedFix = !!finding.suggestedFix;
-  const actionability = finding.actionability ?? (hasSuggestedFix ? (capabilities.canApplyFix ? "previewAndApply" : "previewOnly") : "none");
-  const fixHook = finding.fixHook ?? (hasSuggestedFix ? { kind: "queryDoctor.suggestedFix", label: finding.suggestedFix?.label ?? "Suggested fix" } : undefined);
+  const hasDeterministicSuggestion = !!finding.suggestedQuery?.query || !!finding.suggestedFix?.example;
+  const actionability = finding.actionability ?? (hasDeterministicSuggestion ? (capabilities.canApplyFix ? "previewAndApply" : "previewOnly") : "none");
+  const fixHook = finding.fixHook ?? (hasDeterministicSuggestion ? { kind: "queryDoctor.suggestedFix", label: finding.suggestedFix?.label ?? finding.suggestedQuery?.label ?? "Suggested query" } : undefined);
   return {
     ...finding,
     actionability,
@@ -81,6 +83,10 @@ export async function runDiagnostics(
 
   if (capabilities.insightLevel >= 1) {
     for (const rule of basicQueryShapeRules) {
+      findings.push(...await Promise.resolve(rule(context, capabilities)));
+    }
+
+    for (const rule of evidenceAwareRules) {
       findings.push(...await Promise.resolve(rule(context, capabilities)));
     }
   }

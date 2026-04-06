@@ -102,7 +102,7 @@ suite("resultViewerInvariants", () => {
     assert.strictEqual(model.rows[0]["contact_customer_accounts"]?.actions, undefined);
   });
 
-  test("primary id actions remain isolated to the true primary id column", () => {
+  test("primary id actions remain isolated and raw lookup id columns do not receive extra actions", () => {
     const model = buildResultViewerModel({
       value: [
         {
@@ -125,9 +125,7 @@ suite("resultViewerInvariants", () => {
       "copy-record-url",
       "preview-odata-filter"
     ]);
-    assert.deepStrictEqual(lookupIds, [
-      "preview-odata-filter"
-    ]);
+    assert.deepStrictEqual(lookupIds, []);
   });
 
 

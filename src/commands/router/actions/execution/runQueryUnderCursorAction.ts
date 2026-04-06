@@ -9,6 +9,7 @@ import { resolveEditorQueryText } from "../../../../shared/editorIntelligence/qu
 import { runAction } from "../shared/actionRunner.js";
 import { logDataverseExecutionResult, logDataverseExecutionStart } from "../shared/executionLogging.js";
 import { showResultViewerForQuery } from "./shared/resultViewerLauncher.js";
+import { extractExecutionEvidence, recordExecutionEvidence } from "../shared/diagnostics/executionEvidence.js";
 import { detectQueryKind } from "../../../../shared/editorIntelligence/queryDetection.js";
 import { prepareFetchXmlQuery } from "../../../../shared/fetchXml/fetchXmlExecution.js";
 
@@ -55,6 +56,7 @@ export async function runQueryUnderCursorAction(ctx: CommandContext): Promise<vo
     const startedAt = Date.now();
     const result = await client.get(path, token);
     const durationMs = Date.now() - startedAt;
+    recordExecutionEvidence(extractExecutionEvidence(path, result, durationMs));
 
     const recordCount = Array.isArray((result as any)?.value)
       ? (result as any).value.length

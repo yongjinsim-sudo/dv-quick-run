@@ -20,7 +20,7 @@ suite("diagnosticOutputBuilder", () => {
     });
 
     assert.ok(lines.includes("    - Suggested Fix: Use true or false without quotes — Boolean fields should be compared using the literal true or false, not a quoted string."));
-    assert.ok(lines.includes("    - Example: msemr_active eq true"));
+    assert.ok(lines.includes("    - Suggested query: msemr_active eq true"));
     assert.ok(lines.includes("    - Note: This fix is advisory because the field or path could not be resolved confidently."));
   });
 

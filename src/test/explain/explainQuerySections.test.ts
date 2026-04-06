@@ -37,6 +37,27 @@ suite("explainQuerySections", () => {
     assert.ok(headings.includes("Other query options"));
   });
 
+
+  test("buildSections enriches simple choice-like filter narration when metadata is available", () => {
+    const sections = buildSections(
+      {
+        ...parsed,
+        filter: "statecode eq 0"
+      },
+      { logicalName: "contact" } as any,
+      [{
+        fieldLogicalName: "statecode",
+        options: [
+          { value: 0, label: "Active", normalizedLabel: "active" },
+          { value: 1, label: "Inactive", normalizedLabel: "inactive" }
+        ]
+      } as any]
+    );
+
+    const filterSection = sections.find((item) => item.heading === "$filter");
+    assert.ok(filterSection?.lines.some((line) => line.includes("Plain English: statecode equals 0 (Active)")));
+  });
+
   test("buildIntentLines and design notes reflect focused query shape", () => {
     const intent = buildIntentLines(parsed).join("\n");
     const notes = buildDesignNotes(parsed).join("\n");

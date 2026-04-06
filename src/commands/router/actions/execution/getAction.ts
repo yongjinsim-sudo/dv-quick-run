@@ -21,6 +21,7 @@ import { previewAndApplyAddSelectInActiveEditor } from "../../../../refinement/a
 import { previewAndApplyAddFilterInActiveEditor } from "../../../../refinement/addFilterPreview.js";
 import { runAction } from "../shared/actionRunner.js";
 import { showResultViewerForQuery } from "./shared/resultViewerLauncher.js";
+import { extractExecutionEvidence, recordExecutionEvidence } from "../shared/diagnostics/executionEvidence.js";
 
 async function pickEntity(defs: EntityDef[]): Promise<EntityDef | undefined> {
   const picked = await vscode.window.showQuickPick(
@@ -191,7 +192,10 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
     logInfo(ctx.output, "Run GET request issued.");
     logDebug(ctx.output, `GET ${path}`);
 
+    const startedAt = Date.now();
     const result = await client.get(path, token);
+    const durationMs = Date.now() - startedAt;
+    recordExecutionEvidence(extractExecutionEvidence(path, result, durationMs));
 
     await showResultViewerForQuery(ctx, result, path);
   });

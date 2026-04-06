@@ -3,12 +3,14 @@ import type { ParsedDataverseQuery } from "../../explain/explainQueryTypes.js";
 import type { ValidationIssue } from "../queryExplain/queryValidation.js";
 import type { FieldDef } from "../../../../../services/entityFieldMetadataService.js";
 import type { DiagnosticFinding } from "./diagnosticTypes.js";
+import type { ExecutionEvidence } from "./executionEvidence.js";
 
 export interface DiagnosticContext {
   parsed: ParsedDataverseQuery;
   validationIssues?: ValidationIssue[];
   entityLogicalName?: string;
   loadFieldsForEntity?: (logicalName: string) => Promise<FieldDef[]>;
+  executionEvidence?: ExecutionEvidence;
 }
 
 export type DiagnosticRule = (
