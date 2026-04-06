@@ -40,22 +40,58 @@ type ResultViewerMessage =
         };
     }
     | {
+        type: "saveJson";
+        payload: {
+            fileName?: string;
+            json?: string;
+        };
+    }
+    | {
+        type: "previousPage";
+    }
+    | {
+        type: "nextPage";
+    }
+    | {
         type: "applySiblingExpand";
         payload: {
             traversalSessionId?: string;
         };
     };
 
+type ResultViewerPageSnapshot = {
+    sourcePath: string;
+    pageNumber: number;
+    rawJson: string;
+    nextLink?: string;
+};
+
+type ResultViewerPagingState = {
+    sourcePath: string;
+    pageNumber: number;
+    nextLink?: string;
+    history: ResultViewerPageSnapshot[];
+};
+
 export class ResultViewerPanel {
 
     private static currentPanel: vscode.WebviewPanel | undefined;
     private static currentContext: CommandContext | undefined;
+    private static currentPagingState: ResultViewerPagingState | undefined;
 
     public static show(
         ctx: CommandContext,
         model: ResultViewerModel
     ): void {
         ResultViewerPanel.currentContext = ctx;
+        ResultViewerPanel.currentPagingState = {
+            sourcePath: model.queryPath,
+            pageNumber: model.paging?.pageNumber ?? 1,
+            nextLink: model.paging?.hasNextPage
+                ? ResultViewerPanel.extractNextLinkFromRawJson(model.rawJson)
+                : undefined,
+            history: model.paging?.history ?? []
+        };
 
         if (!ResultViewerPanel.currentPanel) {
             ResultViewerPanel.currentPanel = vscode.window.createWebviewPanel(
@@ -116,6 +152,21 @@ export class ResultViewerPanel {
                     message.payload.fileName,
                     message.payload.csv
                 );
+                return;
+
+            case "saveJson":
+                await ResultViewerPanel.saveJson(
+                    message.payload.fileName,
+                    message.payload.json
+                );
+                return;
+
+            case "previousPage":
+                await ResultViewerPanel.previousPage();
+                return;
+
+            case "nextPage":
+                await ResultViewerPanel.nextPage();
                 return;
 
             case "applySiblingExpand":
@@ -184,6 +235,149 @@ export class ResultViewerPanel {
         );
     }
 
+
+    private static async nextPage(): Promise<void> {
+        const ctx = ResultViewerPanel.currentContext;
+        const paging = ResultViewerPanel.currentPagingState;
+
+        if (!ctx || !paging?.nextLink) {
+            void vscode.window.showWarningMessage("DV Quick Run: No next page is available.");
+            return;
+        }
+
+        const token = await ctx.getToken(ctx.getScope());
+        const client = ctx.getClient();
+        const currentRawJson = ResultViewerPanel.currentPanel
+            ? ResultViewerPanel.extractRawJsonFromCurrentPanel(ResultViewerPanel.currentPanel.webview.html)
+            : undefined;
+        const history = [...(paging.history ?? [])];
+
+        if (currentRawJson) {
+            history.push({
+                sourcePath: paging.sourcePath,
+                pageNumber: paging.pageNumber,
+                rawJson: currentRawJson,
+                nextLink: paging.nextLink
+            });
+        }
+
+        const result = await client.get(paging.nextLink, token);
+        const nextLink = ResultViewerPanel.extractNextLink(result);
+
+        const { showResultViewerForQuery } = await import("../commands/router/actions/execution/shared/resultViewerLauncher.js");
+        await showResultViewerForQuery(ctx, result, paging.sourcePath, {
+            paging: {
+                pageNumber: paging.pageNumber + 1,
+                nextLink,
+                history
+            }
+        });
+    }
+
+    private static async previousPage(): Promise<void> {
+        const ctx = ResultViewerPanel.currentContext;
+        const paging = ResultViewerPanel.currentPagingState;
+
+        if (!ctx || !paging?.history?.length) {
+            void vscode.window.showWarningMessage("DV Quick Run: No previous page is available.");
+            return;
+        }
+
+        const history = [...paging.history];
+        const previous = history.pop();
+        if (!previous) {
+            void vscode.window.showWarningMessage("DV Quick Run: No previous page is available.");
+            return;
+        }
+
+        const result = JSON.parse(previous.rawJson);
+        const { showResultViewerForQuery } = await import("../commands/router/actions/execution/shared/resultViewerLauncher.js");
+        await showResultViewerForQuery(ctx, result, previous.sourcePath, {
+            paging: {
+                pageNumber: previous.pageNumber,
+                nextLink: previous.nextLink,
+                history
+            }
+        });
+    }
+
+    private static extractNextLink(result: unknown): string | undefined {
+        if (!result || typeof result !== "object" || Array.isArray(result)) {
+            return undefined;
+        }
+
+        const nextLink = (result as Record<string, unknown>)["@odata.nextLink"];
+        return typeof nextLink === "string" && nextLink.trim() ? nextLink.trim() : undefined;
+    }
+
+    private static extractRawJsonFromCurrentPanel(html: string): string | undefined {
+        const marker = "const model = JSON.parse(";
+        const start = html.indexOf(marker);
+        if (start < 0) {
+            return undefined;
+        }
+
+        const afterStart = start + marker.length;
+        const end = html.indexOf(");", afterStart);
+        if (end < 0) {
+            return undefined;
+        }
+
+        const jsonLiteral = html.slice(afterStart, end).trim();
+        if (!jsonLiteral) {
+            return undefined;
+        }
+
+        try {
+            const model = JSON.parse(JSON.parse(jsonLiteral)) as { rawJson?: string };
+            return typeof model.rawJson === "string" ? model.rawJson : undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+    private static extractNextLinkFromRawJson(rawJson: string): string | undefined {
+        try {
+            const parsed = JSON.parse(rawJson) as Record<string, unknown>;
+            const nextLink = parsed["@odata.nextLink"];
+            return typeof nextLink === "string" && nextLink.trim() ? nextLink.trim() : undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+
+    private static async saveJson(
+        fileName?: string,
+        json?: string
+    ): Promise<void> {
+        const jsonText = String(json ?? "").trim();
+        if (!jsonText) {
+            void vscode.window.showWarningMessage("DV Quick Run: No JSON payload is available to save.");
+            return;
+        }
+
+        const targetUri = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(fileName?.trim() || "dv-quick-run-results.json"),
+            filters: {
+                "JSON Files": ["json"]
+            },
+            saveLabel: "Save JSON"
+        });
+
+        if (!targetUri) {
+            return;
+        }
+
+        await vscode.workspace.fs.writeFile(
+            targetUri,
+            Buffer.from(jsonText, "utf8")
+        );
+
+        void vscode.window.showInformationMessage(
+            `DV Quick Run: Saved JSON to ${targetUri.fsPath}`
+        );
+    }
     private static async exportCsv(
         fileName?: string,
         csv?: string

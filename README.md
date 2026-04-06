@@ -24,6 +24,82 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
+## 🆕 What's New in v0.8.1 (Result Viewer + Business-Aware Query Doctor)
+
+> Enhances large dataset handling and improves Query Doctor with business-aware field prioritisation — making insights faster, clearer, and more useful in real-world Dataverse environments.
+
+---
+
+### ⚡ Result Viewer Enhancements (Large Dataset Ready)
+
+- **Large Result Mode**
+  - Automatically activates for large datasets (e.g. thousands of rows)
+  - Prevents UI blocking during heavy renders
+
+- **Progressive Rendering**
+  - Results render incrementally instead of all-at-once
+  - Users can see data immediately while remaining rows load
+
+- **Auto Progressive Loading (No Click Required)**
+  - Automatically continues rendering until full dataset is loaded
+  - No need for manual “Load more”
+
+- **Render Progress Indicator**
+  - Displays progress (e.g. `1200 of 5000 rows`)
+  - Provides visibility into loading state
+
+- **Large Dataset Feedback Banner**
+  - Clearly communicates partial rendering and ongoing loading
+
+---
+
+### 💾 Save JSON (Export Current Page)
+
+- Export current results directly from Result Viewer
+- Context-aware filename:
+  - `dvqr_<entity>-page-<n>.json`
+- Includes current dataset and paging metadata (`@odata.nextLink`)
+
+---
+
+### 🧠 Business-Aware Query Doctor
+
+- **Improved field prioritisation**
+  - Boosts meaningful categorical fields (e.g. status, intent, type)
+  - De-prioritises technical fields (e.g. `_..._value`, GUIDs)
+
+- **More relevant narrowing suggestions**
+  - Focuses on fields users actually care about
+  - Reduces noise from low-signal attributes
+
+- **Better real-world usefulness**
+  - Moves beyond “technically correct” suggestions
+  - Surfaces insights aligned with business context
+
+---
+
+### 🔁 Pagination Awareness
+
+- Result Viewer now reflects Dataverse paging behaviour
+- Supports:
+  - large result sets (5000+ records)
+  - navigation across pages
+- Maintains transparency when dataset is partial
+
+---
+
+### 🧠 Notes
+
+- Designed for real enterprise datasets (e.g. Bupa-scale Dataverse)
+- Improves:
+  - perceived performance
+  - usability under large data loads
+- Lays foundation for:
+  - future result insights
+  - deeper analysis workflows
+
+---
+
 ## 🆕 What's New in v0.8.0 (Evidence-Aware Query Doctor)
 
 > Introduces an evidence-driven Query Doctor with structured narrowing insights — helping you understand and refine queries based on actual returned data patterns.

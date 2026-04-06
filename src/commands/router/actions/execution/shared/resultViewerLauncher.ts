@@ -12,6 +12,16 @@ import {
 
 export type ResultViewerLaunchOptions = {
     traversalContext?: ResultViewerTraversalContext;
+    paging?: {
+        pageNumber?: number;
+        nextLink?: string;
+        history?: Array<{
+            sourcePath: string;
+            pageNumber: number;
+            rawJson: string;
+            nextLink?: string;
+        }>;
+    };
 };
 
 export async function showResultViewerForQuery(
@@ -38,6 +48,7 @@ export async function showResultViewerForQuery(
         : [];
 
     const activeEnvironment = ctx.envContext.getActiveEnvironment();
+    const nextLink = extractNextLink(result) ?? options?.paging?.nextLink;
 
     const model = buildResultViewerModel(result, path, {
         entitySetName: entityDef?.entitySetName ?? entitySetName,
@@ -51,7 +62,12 @@ export async function showResultViewerForQuery(
                 name: activeEnvironment.name,
                 colorHint: activeEnvironment.statusBarColor ?? "white"
             }
-            : undefined
+            : undefined,
+        paging: {
+            pageNumber: options?.paging?.pageNumber ?? 1,
+            hasNextPage: !!nextLink,
+            history: options?.paging?.history ?? []
+        }
     });
 
     ResultViewerPanel.show(ctx, model);
@@ -69,4 +85,13 @@ function getEntitySetNameFromPath(path: string): string | undefined {
     const entitySetName = beforeRecord.replace(/^\/+/, "").trim();
 
     return entitySetName || undefined;
+}
+
+function extractNextLink(result: unknown): string | undefined {
+    if (!result || typeof result !== "object" || Array.isArray(result)) {
+        return undefined;
+    }
+
+    const nextLink = (result as Record<string, unknown>)["@odata.nextLink"];
+    return typeof nextLink === "string" && nextLink.trim() ? nextLink.trim() : undefined;
 }

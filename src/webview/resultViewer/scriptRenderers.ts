@@ -150,15 +150,30 @@ function renderTable(currentModel) {
             const totalRowCount = Array.isArray(currentModel.rows) ? currentModel.rows.length : 0;
             const visibleRowCount = visibleRows.length;
             const hasFilter = String(tableState.filterText ?? "").trim().length > 0;
+            const progressiveRender = syncProgressiveRenderState(currentModel, visibleRowCount, hasFilter);
+            const renderedRows = progressiveRender.useLargeResultMode
+                ? visibleRows.slice(0, progressiveRender.renderedCount)
+                : visibleRows;
             const tableStatusText = hasFilter
                 ? visibleRowCount + " of " + totalRowCount + " rows visible"
-                : totalRowCount + " rows";
+                : (progressiveRender.useLargeResultMode
+                    ? progressiveRender.renderedCount + " of " + visibleRowCount + " rows rendered"
+                    : totalRowCount + " rows");
 
             let html = "<div class=\\"table-tools\\">" +
                 "<input id=\\"tableFilterInput\\" class=\\"table-filter-input\\" type=\\"text\\" placeholder=\\"Filter visible rows...\\" value=\\"" + escapeAttribute(tableState.filterText) + "\\" />" +
                 "<button id=\\"tableFilterClearBtn\\" class=\\"table-filter-clear-btn\\" type=\\"button\\" title=\\"Clear table filter\\">Clear</button>" +
                 "<span id=\\"tableFilterStatus\\" class=\\"table-filter-status\\">" + escapeHtml(tableStatusText) + "</span>" +
                 "</div>";
+
+            if (progressiveRender.useLargeResultMode) {
+                const isComplete = progressiveRender.renderedCount >= visibleRowCount;
+                html += "<div class=\\"large-result-banner\\">" +
+                    "<span class=\\"large-result-title\\">Large result mode</span>" +
+                    "<span class=\\"large-result-text\\">Showing " + progressiveRender.renderedCount + " of " + visibleRowCount + " visible rows on this page for faster initial rendering" + (isComplete ? "." : " — continuing automatically…") + "</span>" +
+                    "</div>";
+            }
+
             html += "<table>";
             html += "<thead><tr>";
 
@@ -182,12 +197,12 @@ function renderTable(currentModel) {
             html += "</tr></thead>";
             html += "<tbody>";
 
-            if (visibleRows.length === 0) {
+            if (renderedRows.length === 0) {
                 html += "<tr><td class=\\"empty-filter-state\\" colspan=\\"" + currentModel.columns.length + "\\">No matching rows.</td></tr>";
             }
 
             arrayDrawerPayloads.clear();
-            visibleRows.forEach((row, rowIndex) => {
+            renderedRows.forEach((row, rowIndex) => {
                 html += "<tr data-row-index=\\"" + rowIndex + "\\">";
 
                 currentModel.columns.forEach((column) => {
@@ -252,6 +267,12 @@ function renderTable(currentModel) {
 
             tableView.innerHTML = html;
             applyColumnWidthsToLiveTable();
+
+            if (progressiveRender.useLargeResultMode) {
+                scheduleProgressiveRender(currentModel, progressiveRender.signature, visibleRowCount, progressiveRender.renderedCount);
+            } else {
+                clearProgressiveRenderTimer();
+            }
         }
 
         function closeArrayDrawer() {

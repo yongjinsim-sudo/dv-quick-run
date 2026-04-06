@@ -22,11 +22,14 @@ export interface DiagnosticSuggestedQuery {
 
 export type NarrowingSuggestionKind = "categorical" | "presence";
 
+export type DiagnosticNarrowingSuggestionTier = "recommended" | "secondary";
+
 export interface DiagnosticNarrowingSuggestion {
   field: string;
   kind: NarrowingSuggestionKind;
   rationale: string;
   reasons: string[];
+  tier?: DiagnosticNarrowingSuggestionTier;
   suggestedOperator?: "eq" | "ne";
   suggestedValue?: string | null;
 }

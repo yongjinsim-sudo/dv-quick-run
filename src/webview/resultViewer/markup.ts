@@ -8,12 +8,16 @@ export function getResultViewerMarkup(iconUri: string): string {
                 <button id="showRelationshipsBtn" title="View Relationships">🔗</button>
                 <button id="showMetadataBtn" title="View Entity Metadata">📘</button>
                 <button id="exportCsvBtn" title="Export current view to CSV">⬇️</button>
+                <button id="saveJsonBtn" title="Save current page JSON">💾</button>
+                <button id="previousPageBtn" title="Load previous page" hidden>⬅️</button>
+                <button id="nextPageBtn" title="Load next page" hidden>➡️</button>
                 <button id="siblingExpandBtn" title="Sibling expand current traversal leg" hidden>✨</button>
             </div>
             <div class="toolbar-right">
                 <img src="${iconUri}" class="viewer-icon" />
                 <span class="viewer-title">DV Quick Run Result Viewer</span>
                 <span id="traversalStatus" class="traversal-status"></span>
+                <span id="pageIndicator" class="page-indicator" hidden></span>
                 <span id="rowCount" class="row-count"></span>
                 <span id="copyStatus" class="copy-status"></span>
                 <span id="environmentBadge"></span>
@@ -28,6 +32,7 @@ export function getResultViewerMarkup(iconUri: string): string {
                     <button id="jsonPrevMatchBtn" type="button" title="Previous match (Shift+Enter)">↑</button>
                     <button id="jsonNextMatchBtn" type="button" title="Next match (Enter)">↓</button>
                     <button id="jsonClearSearchBtn" type="button" title="Clear JSON search (Esc)">✕</button>
+                    <button id="jsonSaveBtn" type="button" title="Save current page JSON">💾 Save JSON</button>
                     <span id="jsonMatchStatus" class="json-match-status"></span>
                 </div>
                 <pre id="jsonView"></pre>
