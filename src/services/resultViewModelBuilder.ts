@@ -246,12 +246,20 @@ function getColumnRank(column: string): number {
     return 10;
 }
 
+function isFormattedValueAnnotationKey(key: string): boolean {
+    return key.includes("@OData.Community.Display.V1.FormattedValue");
+}
+
 function shouldKeepFlattenedChildField(childKey: string): boolean {
     const leafKey = childKey.includes(".")
         ? childKey.slice(childKey.lastIndexOf(".") + 1)
         : childKey;
 
     if (leafKey.startsWith("@odata.")) {
+        return false;
+    }
+
+    if (isFormattedValueAnnotationKey(childKey) || isFormattedValueAnnotationKey(leafKey)) {
         return false;
     }
 
@@ -282,11 +290,19 @@ function buildFieldMap(fields?: FieldDef[]): Map<string, FieldDef> {
 }
 
 function resolveDisplayValue(
+    row: Record<string, unknown> | undefined,
     rowValue: unknown,
     column: string,
     fieldMap: Map<string, FieldDef>,
     choiceMetadata: ChoiceMetadataDef[]
 ): string {
+    const formattedAnnotationKey = `${column}@OData.Community.Display.V1.FormattedValue`;
+    const formattedAnnotationValue = row ? row[formattedAnnotationKey] : undefined;
+    const formattedDisplay = toDisplayCell(formattedAnnotationValue);
+    if (formattedDisplay) {
+        return formattedDisplay;
+    }
+
     const rawDisplay = toDisplayCell(rowValue);
     if (!rawDisplay) {
         return rawDisplay;
@@ -443,6 +459,7 @@ function classifyCellValueType(value: unknown): ResultViewerCellValueType {
 }
 
 function buildCell(
+    row: Record<string, unknown> | undefined,
     rowValue: unknown,
     column: string,
     queryPath: string,
@@ -452,7 +469,7 @@ function buildCell(
 ): ResultViewerCell {
     const rawValue = rowValue;
     const valueType = classifyCellValueType(rowValue);
-    const displayValue = resolveDisplayValue(rowValue, column, fieldMap, choiceMetadata);
+    const displayValue = resolveDisplayValue(row, rowValue, column, fieldMap, choiceMetadata);
     const copyValue = toDisplayCell(rowValue);
 
     const shouldResolveActions =
@@ -618,7 +635,7 @@ export function buildResultViewerModel(
         });
 
         const columns = prioritizePrimaryIdField(
-            sortColumns(Array.from(columnSet)),
+            sortColumns(Array.from(columnSet).filter((column) => shouldKeepFlattenedChildField(column))),
             primaryIdField
         );
 
@@ -641,7 +658,7 @@ export function buildResultViewerModel(
                         ? row[sourceColumn]
                         : undefined;
 
-                mapped[displayColumn] = buildCell(rowValue, sourceColumn, query, {
+                mapped[displayColumn] = buildCell(isPlainObject(row) ? row : undefined, rowValue, sourceColumn, query, {
                     ...options,
                     entitySetName,
                     entityLogicalName,
@@ -681,14 +698,14 @@ export function buildResultViewerModel(
 
     if (typeof result === "object" && result !== null) {
         const columns = prioritizePrimaryIdField(
-            sortColumns(Object.keys(result as Record<string, unknown>)),
+            sortColumns(Object.keys(result as Record<string, unknown>).filter((column) => shouldKeepFlattenedChildField(column))),
             primaryIdField
         );
 
         const mapped: Record<string, ResultViewerCell> = {};
 
         columns.forEach((column) => {
-            mapped[column] = buildCell((result as Record<string, unknown>)[column], column, query, {
+            mapped[column] = buildCell(result as Record<string, unknown>, (result as Record<string, unknown>)[column], column, query, {
                 ...options,
                 entitySetName,
                 entityLogicalName,

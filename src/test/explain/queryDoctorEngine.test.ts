@@ -30,6 +30,63 @@ suite("queryDoctorEngine", () => {
     assert.ok(result.findings.some((finding) => finding.message.includes("$top")));
   });
 
+
+  test("surfaces structured narrowing guidance when evidence shows candidate fields", async () => {
+    const result = await runDiagnostics(
+      {
+        parsed: {
+          ...baseParsed,
+          raw: "contacts?$select=fullname,statecode,statuscode&$top=50",
+          normalized: "contacts?$select=fullname,statecode,statuscode&$top=50",
+          queryPart: "$select=fullname,statecode,statuscode&$top=50",
+          select: ["fullname", "statecode", "statuscode"],
+          top: 50,
+          params: [
+            { key: "$select", value: "fullname,statecode,statuscode" },
+            { key: "$top", value: "50" }
+          ]
+        },
+        executionEvidence: {
+          querySignature: "contacts?$select=fullname,statecode,statuscode&$top=50",
+          executionTimeMs: 180,
+          returnedRowCount: 50,
+          requestedTop: 50,
+          returnedFullPage: true,
+          selectedColumnCount: 3,
+          hasExpand: false,
+          filterFieldNames: [],
+          fieldObservations: [
+            {
+              field: "statecode",
+              nonNullCount: 50,
+              nullCount: 0,
+              distinctCount: 2,
+              mostCommonCount: 30,
+              kind: "categorical",
+              topValues: [{ value: "Active", count: 30 }, { value: "Inactive", count: 20 }]
+            },
+            {
+              field: "prioritycode",
+              nonNullCount: 12,
+              nullCount: 38,
+              distinctCount: 1,
+              mostCommonCount: 12,
+              kind: "presence",
+              topValues: []
+            }
+          ],
+          observedAt: Date.now()
+        }
+      },
+      { insightLevel: 1, canApplyFix: false }
+    );
+
+    const finding = result.findings.find((item) => item.narrowingSuggestions?.length);
+    assert.ok(finding);
+    assert.ok(finding?.observedDetails?.some((detail) => detail.includes("statecode")));
+    assert.ok(finding?.narrowingSuggestions?.some((suggestion) => suggestion.field === "statecode"));
+  });
+
   test("does not warn about $select or $top when already present", async () => {
     const result = await runDiagnostics(
       {

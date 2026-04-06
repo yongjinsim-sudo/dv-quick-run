@@ -15,11 +15,30 @@ export interface DiagnosticFixHook {
   label: string;
 }
 
+export interface DiagnosticSuggestedQuery {
+  query: string;
+  label?: string;
+}
+
+export type NarrowingSuggestionKind = "categorical" | "presence";
+
+export interface DiagnosticNarrowingSuggestion {
+  field: string;
+  kind: NarrowingSuggestionKind;
+  rationale: string;
+  reasons: string[];
+  suggestedOperator?: "eq" | "ne";
+  suggestedValue?: string | null;
+}
+
 export interface DiagnosticFinding {
   message: string;
   severity: DiagnosticSeverity;
   suggestion?: string;
   suggestedFix?: DiagnosticSuggestedFix;
+  suggestedQuery?: DiagnosticSuggestedQuery;
+  observedDetails?: string[];
+  narrowingSuggestions?: DiagnosticNarrowingSuggestion[];
   confidence?: number;
   actionability?: DiagnosticActionability;
   fixHook?: DiagnosticFixHook;

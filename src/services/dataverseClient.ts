@@ -8,6 +8,7 @@ export class DataverseClient {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
+        Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"',
         "OData-Version": "4.0",
         "OData-MaxVersion": "4.0"
       }

@@ -134,6 +134,26 @@ function bindTableEventsOnce() {
                 }
             });
 
+
+            tableView.addEventListener("mousedown", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const resizeHandle = target.closest("[data-resize-column]");
+                if (!(resizeHandle instanceof HTMLElement)) {
+                    return;
+                }
+
+                const column = resizeHandle.getAttribute("data-resize-column") ?? "";
+                if (!column) {
+                    return;
+                }
+
+                beginResize(event, resizeHandle, column);
+            });
+
             arrayDrawerTableView.addEventListener("mousedown", (event) => {
                 const target = event.target;
                 if (!(target instanceof HTMLElement)) {

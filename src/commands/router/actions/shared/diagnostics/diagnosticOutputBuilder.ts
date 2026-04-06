@@ -44,12 +44,31 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
       if (finding.suggestedFix) {
         lines.push(`    - Suggested Fix: ${finding.suggestedFix.label} — ${finding.suggestedFix.detail}`);
 
-        if (finding.suggestedFix.example) {
-          lines.push(`    - Example: ${finding.suggestedFix.example}`);
-        }
-
         if (finding.suggestedFix.isSpeculative) {
           lines.push("    - Note: This fix is advisory because the field or path could not be resolved confidently.");
+        }
+      }
+
+      if (finding.suggestedQuery?.query) {
+        lines.push(`    - Suggested query: ${finding.suggestedQuery.query}`);
+      } else if (finding.suggestedFix?.example) {
+        lines.push(`    - Suggested query: ${finding.suggestedFix.example}`);
+      }
+
+      if (finding.observedDetails?.length) {
+        lines.push("    - Observed from returned rows:");
+        for (const detail of finding.observedDetails) {
+          lines.push(`      - ${detail}`);
+        }
+      }
+
+      if (finding.narrowingSuggestions?.length) {
+        lines.push("    - Potential narrowing dimensions:");
+        for (const narrowingSuggestion of finding.narrowingSuggestions) {
+          lines.push(`      - \`${narrowingSuggestion.field}\` — ${narrowingSuggestion.rationale}`);
+          for (const reason of narrowingSuggestion.reasons) {
+            lines.push(`        - ${reason}`);
+          }
         }
       }
     }
@@ -86,6 +105,10 @@ function groupFindings(findings: DiagnosticFinding[]): DiagnosticGroup[] {
 }
 
 function getGroupingKey(finding: DiagnosticFinding): string {
+  if (finding.narrowingSuggestions?.length) {
+    return "narrowing-suggestions";
+  }
+
   const message = finding.message.toLowerCase();
 
   if (message.includes("not a good fit for guid or lookup comparisons")) {
@@ -156,6 +179,9 @@ function getGroupingKey(finding: DiagnosticFinding): string {
 
 function buildGroupTitle(key: string, finding: DiagnosticFinding): string {
   switch (key) {
+    case "narrowing-suggestions":
+      return "Use the observed patterns below to decide which field might be a good narrowing dimension for this result page.";
+
     case "operator-guid-lookup":
       return "Root Cause: Invalid operator for GUID / lookup field";
 
@@ -198,6 +224,9 @@ function buildGroupTitle(key: string, finding: DiagnosticFinding): string {
     case "shape-top":
       return "Advisory: Query shape missing $top";
 
+    case "narrowing-suggestions":
+      return "Suggested narrowing options";
+
     default:
       return `Issue: ${finding.message}`;
   }
@@ -210,6 +239,9 @@ function buildGroupRecommendation(key: string, findings: DiagnosticFinding[]): s
   }
 
   switch (key) {
+    case "narrowing-suggestions":
+      return "Use the observed patterns below to decide which field might be a good narrowing dimension for this result page.";
+
     case "operator-guid-lookup":
     case "operator-boolean":
       return "Use an operator compatible with the field type.";

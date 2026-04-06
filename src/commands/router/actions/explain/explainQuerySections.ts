@@ -5,6 +5,8 @@ import { narrateExpression } from "../shared/queryExplain/filterNarrator.js";
 import { buildQueryShapeAdvice } from "../shared/queryExplain/queryShapeAdvisor.js";
 import { type ValidationIssue } from "../shared/queryExplain/queryValidation.js";
 import { ExplanationSection, ParsedDataverseQuery, ParsedExpand, ParsedOrderBy } from "./explainQueryTypes.js";
+import type { ChoiceMetadataDef } from "../../../../services/entityChoiceMetadataService.js";
+import { resolveChoiceValueFromMetadata } from "../shared/valueAwareness.js";
 
 export function buildSummary(parsed: ParsedDataverseQuery, entity?: EntityDef): string {
   const target = entity?.logicalName ?? parsed.entitySetName ?? "record";
@@ -48,7 +50,7 @@ function buildFieldLines(fields: string[]): string[] {
   });
 }
 
-function buildFilterLines(filter: string): string[] {
+function buildFilterLines(filter: string, choiceMetadata: ChoiceMetadataDef[] = []): string[] {
   const lines: string[] = [
     clauseFact("$filter") ?? "",
     `Raw expression: \`${filter}\``,
@@ -70,6 +72,15 @@ function buildFilterLines(filter: string): string[] {
   if (recognised.length) {
     lines.push("Recognised operators:");
     lines.push(...recognised);
+  }
+
+  const equalityMatch = /^([A-Za-z_][A-Za-z0-9_]*)\s+eq\s+((?:true|false|-?\d+(?:\.\d+)?)|'(?:[^']|'')*')$/i.exec(filter.trim());
+  if (equalityMatch) {
+    const [, fieldLogicalName, rawValue] = equalityMatch;
+    const resolved = resolveChoiceValueFromMetadata(choiceMetadata, fieldLogicalName, rawValue);
+    if (resolved?.option?.label) {
+      lines[2] = `Plain English: ${narrateExpression(filter)} (${resolved.option.label})`;
+    }
   }
 
   if (/\bstatecode\b/i.test(filter)) {
@@ -116,7 +127,7 @@ function buildExpandLines(items: ParsedExpand[]): string[] {
   return lines;
 }
 
-export function buildSections(parsed: ParsedDataverseQuery, entity?: EntityDef): ExplanationSection[] {
+export function buildSections(parsed: ParsedDataverseQuery, entity?: EntityDef, choiceMetadata: ChoiceMetadataDef[] = []): ExplanationSection[] {
   const sections: ExplanationSection[] = [];
 
   sections.push({
@@ -138,7 +149,7 @@ export function buildSections(parsed: ParsedDataverseQuery, entity?: EntityDef):
   }
 
   if (parsed.filter) {
-    sections.push({ heading: "$filter", lines: buildFilterLines(parsed.filter) });
+    sections.push({ heading: "$filter", lines: buildFilterLines(parsed.filter, choiceMetadata) });
   }
 
   if (parsed.orderBy.length) {
