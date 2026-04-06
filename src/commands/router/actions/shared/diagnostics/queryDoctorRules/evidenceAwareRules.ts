@@ -1,7 +1,14 @@
+import type { FieldDef } from "../../../../../../services/entityFieldMetadataService.js";
+import { isChoiceAttributeType, isLookupLikeAttributeType } from "../../../../../../metadata/metadataModel.js";
 import type { DiagnosticRule } from "../diagnosticRule.js";
+import type { DiagnosticNarrowingSuggestion } from "../diagnosticTypes.js";
 import type { ExecutionFieldObservation } from "../executionEvidence.js";
 
 const MIN_ANALYSABLE_ROWS = 12;
+const MAX_CANDIDATES = 6;
+const MAX_RECOMMENDED = 3;
+
+type SuggestionTier = DiagnosticNarrowingSuggestion["tier"];
 
 function hasSimpleDeterministicFilter(filter: string | undefined): boolean {
   if (!filter) {
@@ -20,46 +27,243 @@ function hasSimpleDeterministicFilter(filter: string | undefined): boolean {
   return /^([A-Za-z_][A-Za-z0-9_]*)\s+(eq|ne|gt|ge|lt|le)\s+((?:true|false|null|-?\d+(?:\.\d+)?)|'(?:[^']|'')*')$/i.test(trimmed);
 }
 
+function toMetadataLookupToken(fieldLogicalName: string): string {
+  return `_${fieldLogicalName}_value`;
+}
+
+function getBaseFieldLogicalName(observationField: string): string {
+  const trimmed = observationField.trim();
+  const lookupMatch = /^_(.+)_value$/i.exec(trimmed);
+  return lookupMatch?.[1] ?? trimmed;
+}
+
+function buildFieldMetadataMap(fields: FieldDef[]): Map<string, FieldDef> {
+  const map = new Map<string, FieldDef>();
+
+  for (const field of fields) {
+    const logicalName = field.logicalName?.trim();
+    if (!logicalName) {
+      continue;
+    }
+
+    map.set(logicalName, field);
+
+    if (isLookupLikeAttributeType(field.attributeType)) {
+      map.set(toMetadataLookupToken(logicalName), field);
+    }
+  }
+
+  return map;
+}
+
 function isMeaningfulCandidate(
   observation: ExecutionFieldObservation,
   totalRows: number,
-  filterFieldNames: string[]
+  filterFieldNames: string[],
+  field?: FieldDef
 ): boolean {
-  if (filterFieldNames.includes(observation.field)) {
+  const baseFieldName = getBaseFieldLogicalName(observation.field);
+  if (filterFieldNames.includes(observation.field) || filterFieldNames.includes(baseFieldName)) {
     return false;
   }
 
   const nonNullRatio = observation.nonNullCount / totalRows;
   const dominanceRatio = observation.nonNullCount > 0 ? observation.mostCommonCount / observation.nonNullCount : 1;
-  const hasMeaningfulPresenceSplit = observation.nullCount >= 3 && observation.nonNullCount >= 3 && nonNullRatio <= 0.85;
+  const hasMeaningfulPresenceSplit = observation.nullCount >= 3 && observation.nonNullCount >= 3 && nonNullRatio <= 0.98;
   const hasMeaningfulCategoricalSplit = observation.kind === "categorical"
     && observation.distinctCount >= 2
-    && observation.distinctCount <= Math.min(8, Math.max(2, totalRows - 1))
-    && dominanceRatio < 0.95
+    && observation.distinctCount <= Math.min(12, Math.max(2, totalRows - 1))
+    && dominanceRatio < 0.97
     && observation.topValues.some((item) => item.count >= 2);
 
-  return hasMeaningfulPresenceSplit || hasMeaningfulCategoricalSplit;
+  const isBusinessChoiceField = Boolean(field && isChoiceAttributeType(field.attributeType))
+    || semanticBoost(observation.field) >= 2.2;
+  const hasUsefulChoiceSignal = observation.kind === "categorical"
+    && isBusinessChoiceField
+    && observation.distinctCount >= 2
+    && observation.topValues.some((item) => item.count >= 2);
+
+  return hasMeaningfulPresenceSplit || hasMeaningfulCategoricalSplit || hasUsefulChoiceSignal;
 }
 
-function rankCandidate(observation: ExecutionFieldObservation, totalRows: number): number {
+function looksLikeLookupBackingField(fieldName: string): boolean {
+  return /^_.+_value$/i.test(fieldName.trim());
+}
+
+function semanticBoost(fieldName: string): number {
+  const normalized = getBaseFieldLogicalName(fieldName).toLowerCase();
+  let score = 0;
+
+  const primaryBusinessTokens = ["status", "state"];
+  const highValueTokens = ["intent", "priority", "category", "reason", "type", "kind", "channel", "source", "outcome"];
+  const mediumValueTokens = ["stage", "classification", "result", "mode"];
+
+  if (primaryBusinessTokens.some((token) => normalized.includes(token))) {
+    score += 3.2;
+  }
+
+  if (highValueTokens.some((token) => normalized.includes(token))) {
+    score += 2.2;
+  }
+
+  if (mediumValueTokens.some((token) => normalized.includes(token))) {
+    score += 1.0;
+  }
+
+  if (normalized.endsWith("code")) {
+    score += 0.4;
+  }
+
+  return score;
+}
+
+function fieldTypeScore(field?: FieldDef): number {
+  if (!field?.attributeType) {
+    return 0;
+  }
+
+  const attributeType = field.attributeType.trim().toLowerCase();
+
+  if (attributeType === "status" || attributeType === "state") {
+    return 4.0;
+  }
+
+  if (attributeType === "picklist" || attributeType === "multipicklist" || attributeType === "multiselectpicklist") {
+    return 3.4;
+  }
+
+  if (attributeType === "boolean") {
+    return 2.0;
+  }
+
+  if (attributeType === "lookup" || attributeType === "customer" || attributeType === "owner") {
+    return -0.6;
+  }
+
+  if (attributeType === "string") {
+    return 0.4;
+  }
+
+  return 0;
+}
+
+function choiceCardinalityScore(observation: ExecutionFieldObservation, field?: FieldDef): number {
+  if (!field || !isChoiceAttributeType(field.attributeType) || observation.kind !== "categorical") {
+    return 0;
+  }
+
+  if (observation.distinctCount >= 2 && observation.distinctCount <= 8) {
+    return 1.8;
+  }
+
+  if (observation.distinctCount <= 12) {
+    return 0.9;
+  }
+
+  return -0.5;
+}
+
+function sparsityPenalty(observation: ExecutionFieldObservation, totalRows: number): number {
+  if (observation.kind === "categorical" && observation.distinctCount >= 2) {
+    return 0;
+  }
+
+  const nonNullRatio = observation.nonNullCount / totalRows;
+
+  if (nonNullRatio <= 0.01 || nonNullRatio >= 0.99) {
+    return 3.5;
+  }
+
+  if (nonNullRatio <= 0.03 || nonNullRatio >= 0.97) {
+    return 2.4;
+  }
+
+  if (nonNullRatio <= 0.08 || nonNullRatio >= 0.92) {
+    return 1.2;
+  }
+
+  return 0;
+}
+
+function distributionScore(observation: ExecutionFieldObservation, totalRows: number): number {
   const nonNullRatio = observation.nonNullCount / totalRows;
   const dominanceRatio = observation.nonNullCount > 0 ? observation.mostCommonCount / observation.nonNullCount : 1;
-  const distinctPenalty = observation.distinctCount > 8 ? 0.5 : 1;
-  const categoricalBonus = observation.kind === "categorical" ? 1.4 : 0.8;
-  const presenceBalance = observation.nullCount > 0 ? 1 - Math.abs(nonNullRatio - 0.5) : 0;
-
-  return ((1 - dominanceRatio) * 2 + presenceBalance + categoricalBonus) * distinctPenalty;
+  const presenceBalance = observation.nullCount > 0 ? 1 - Math.abs(nonNullRatio - 0.5) * 2 : 0;
+  const categoricalBalance = observation.kind === "categorical" ? 1 - dominanceRatio : 0;
+  return (presenceBalance * 2.2) + (categoricalBalance * 2.4);
 }
 
-function buildCandidateRationale(observation: ExecutionFieldObservation, totalRows: number): { rationale: string; reasons: string[]; kind: "categorical" | "presence"; suggestedOperator?: "eq" | "ne"; suggestedValue?: string | null; } {
+function lookupBackingPenalty(observation: ExecutionFieldObservation, field?: FieldDef): number {
+  if (looksLikeLookupBackingField(observation.field)) {
+    return 3.2;
+  }
+
+  if (field && isLookupLikeAttributeType(field.attributeType)) {
+    return 1.4;
+  }
+
+  return 0;
+}
+
+function rankCandidate(observation: ExecutionFieldObservation, totalRows: number, field?: FieldDef): number {
+  const rawScore = distributionScore(observation, totalRows)
+    + fieldTypeScore(field)
+    + semanticBoost(observation.field)
+    + choiceCardinalityScore(observation, field)
+    - lookupBackingPenalty(observation, field)
+    - sparsityPenalty(observation, totalRows);
+
+  if (field && isChoiceAttributeType(field.attributeType) && observation.kind === "categorical" && observation.distinctCount >= 2) {
+    return rawScore + 1.8;
+  }
+
+  return rawScore;
+}
+
+function determineTier(observation: ExecutionFieldObservation, field: FieldDef | undefined, score: number): SuggestionTier {
+  if (score < 1.2) {
+    return "secondary";
+  }
+
+  if (looksLikeLookupBackingField(observation.field)) {
+    return "secondary";
+  }
+
+  if (field && isLookupLikeAttributeType(field.attributeType)) {
+    return score >= 3 ? "recommended" : "secondary";
+  }
+
+  if (field && isChoiceAttributeType(field.attributeType) && observation.kind === "categorical" && observation.distinctCount >= 2) {
+    return "recommended";
+  }
+
+  return "recommended";
+}
+
+function buildCandidateRationale(
+  observation: ExecutionFieldObservation,
+  totalRows: number,
+  tier: SuggestionTier,
+  field?: FieldDef
+): { rationale: string; reasons: string[]; kind: "categorical" | "presence"; suggestedOperator?: "eq" | "ne"; suggestedValue?: string | null; tier: SuggestionTier; } {
+  const label = field?.displayName?.trim();
+  const fieldDescriptor = label && label.toLowerCase() !== observation.field.toLowerCase()
+    ? `${label} (${observation.field})`
+    : observation.field;
+
   if (observation.kind === "presence" || observation.nullCount >= Math.ceil(totalRows * 0.25)) {
     return {
       kind: "presence",
-      rationale: "meaningful null/non-null split observed on this page",
+      tier,
+      rationale: tier === "recommended"
+        ? "business-meaningful presence split observed on this page"
+        : "technical presence split observed on this page",
       reasons: [
         `populated in ${observation.nonNullCount} of ${totalRows} rows`,
         `null in ${observation.nullCount} of ${totalRows} rows`,
-        "filtering to non-null may narrow results"
+        tier === "recommended"
+          ? `this may be a useful first filter if ${fieldDescriptor} reflects a meaningful business state`
+          : "this can narrow the current page, but may be less intuitive as a first investigation filter"
       ],
       suggestedOperator: "ne",
       suggestedValue: null
@@ -69,9 +273,10 @@ function buildCandidateRationale(observation: ExecutionFieldObservation, totalRo
   const topRepeated = observation.topValues.filter((item) => item.count >= 2);
   return {
     kind: "categorical",
-    rationale: topRepeated.length <= 3
-      ? "low-cardinality split observed on this page"
-      : "repeated values observed across this result page",
+    tier,
+    rationale: tier === "recommended"
+      ? "business-friendly categorical split observed on this page"
+      : "repeated values observed on this page",
     reasons: topRepeated.map((item) => `\`${item.value}\` × ${item.count}`),
     suggestedOperator: topRepeated[0] ? "eq" : undefined,
     suggestedValue: topRepeated[0]?.value
@@ -79,7 +284,7 @@ function buildCandidateRationale(observation: ExecutionFieldObservation, totalRo
 }
 
 export const evidenceAwareRules: DiagnosticRule[] = [
-  (context) => {
+  async (context) => {
     const evidence = context.executionEvidence;
     const parsed = context.parsed;
 
@@ -87,12 +292,30 @@ export const evidenceAwareRules: DiagnosticRule[] = [
       return [];
     }
 
-    const candidates = evidence.fieldObservations
-      .filter((observation) => isMeaningfulCandidate(observation, evidence.returnedRowCount, evidence.filterFieldNames))
-      .sort((left, right) => rankCandidate(right, evidence.returnedRowCount) - rankCandidate(left, evidence.returnedRowCount))
-      .slice(0, 3);
+    const entityLogicalName = context.entityLogicalName?.trim();
+    const fields = context.loadFieldsForEntity && entityLogicalName
+      ? await context.loadFieldsForEntity(entityLogicalName)
+      : [];
+    const fieldMap = buildFieldMetadataMap(fields);
 
-    if (!candidates.length) {
+    const scoredCandidates = evidence.fieldObservations
+      .map((observation) => {
+        const field = fieldMap.get(observation.field) ?? fieldMap.get(getBaseFieldLogicalName(observation.field));
+        return { observation, field };
+      })
+      .filter(({ observation, field }) => isMeaningfulCandidate(observation, evidence.returnedRowCount, evidence.filterFieldNames, field))
+      .map(({ observation, field }) => {
+        const score = rankCandidate(observation, evidence.returnedRowCount, field);
+        const tier = determineTier(observation, field, score);
+        return { observation, field, score, tier };
+      })
+      .sort((left, right) => right.score - left.score || left.observation.field.localeCompare(right.observation.field));
+
+    const recommended = scoredCandidates.filter((item) => item.tier === "recommended").slice(0, MAX_RECOMMENDED);
+    const secondary = scoredCandidates.filter((item) => item.tier === "secondary").slice(0, MAX_CANDIDATES - recommended.length);
+    const selectedCandidates = [...recommended, ...secondary].slice(0, MAX_CANDIDATES);
+
+    if (!selectedCandidates.length) {
       return [];
     }
 
@@ -110,12 +333,19 @@ export const evidenceAwareRules: DiagnosticRule[] = [
       severity: "info",
       message: scopeMessage,
       suggestion,
-      observedDetails: candidates.map((candidate) => candidate.kind === "presence" || candidate.nullCount >= Math.ceil(evidence.returnedRowCount * 0.25)
-        ? `\`${candidate.field}\` is populated in ${candidate.nonNullCount} of ${evidence.returnedRowCount} rows and null in ${candidate.nullCount}`
-        : `\`${candidate.field}\` shows repeated values on this page: ${candidate.topValues.filter((item) => item.count >= 2).map((item) => `\`${item.value}\` × ${item.count}`).join(", ")}`),
-      narrowingSuggestions: candidates.map((candidate) => ({
-        field: candidate.field,
-        ...buildCandidateRationale(candidate, evidence.returnedRowCount)
+      observedDetails: selectedCandidates.map(({ observation, field, tier }) => {
+        const fieldLabel = field?.displayName?.trim();
+        const renderedField = fieldLabel && fieldLabel.toLowerCase() !== observation.field.toLowerCase()
+          ? `${fieldLabel} (\`${observation.field}\`)`
+          : `\`${observation.field}\``;
+
+        return observation.kind === "presence" || observation.nullCount >= Math.ceil(evidence.returnedRowCount * 0.25)
+          ? `${renderedField} is populated in ${observation.nonNullCount} of ${evidence.returnedRowCount} rows and null in ${observation.nullCount}${tier === "secondary" ? " (more technical / secondary narrowing option)" : ""}`
+          : `${renderedField} shows repeated values on this page: ${observation.topValues.filter((item) => item.count >= 2).map((item) => `\`${item.value}\` × ${item.count}`).join(", ")}${tier === "secondary" ? " (more technical / secondary narrowing option)" : ""}`;
+      }),
+      narrowingSuggestions: selectedCandidates.map(({ observation, field, tier }) => ({
+        field: observation.field,
+        ...buildCandidateRationale(observation, evidence.returnedRowCount, tier, field)
       })),
       confidence: evidence.returnedFullPage ? 0.9 : 0.78
     }];

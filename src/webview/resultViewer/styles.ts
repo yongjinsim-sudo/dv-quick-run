@@ -61,6 +61,15 @@ export const RESULT_VIEWER_STYLES = `
             font-weight: 600;
         }
 
+        .page-indicator {
+            font-size: 12px;
+            opacity: 0.9;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editorWidget-background);
+        }
+
         .row-count {
             font-size: 12px;
             opacity: 0.8;
@@ -226,6 +235,25 @@ export const RESULT_VIEWER_STYLES = `
             position: sticky;
             top: 0;
             z-index: 3;
+        }
+
+        .large-result-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 82%, var(--vscode-button-background) 18%);
+            font-size: 12px;
+        }
+
+        .large-result-title {
+            font-weight: 600;
+        }
+
+        .large-result-text {
+            opacity: 0.92;
         }
 
         .table-filter-input {
@@ -783,5 +811,9 @@ export const RESULT_VIEWER_STYLES = `
         .empty-state-message {
             opacity: 0.8;
             font-size: 12px;
+        }
+
+        #jsonSaveBtn {
+            margin-left: 6px;
         }
 `;

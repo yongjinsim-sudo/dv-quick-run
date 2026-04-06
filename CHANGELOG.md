@@ -6,6 +6,100 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.8.1] — Result Viewer Enhancements & Large Dataset Handling
+
+### New
+
+- Improved **business-aware field prioritisation in Query Doctor**
+  - Boosts meaningful categorical fields (e.g. status, intent, type)
+  - De-prioritises technical or low-signal fields (e.g. lookup IDs, GUIDs)
+  - Produces more relevant and actionable narrowing suggestions
+
+- Added **Save JSON action** in Result Viewer
+  - Exports current dataset to file
+  - Uses contextual filename:
+    - `dvqr_<entity>-page-<n>.json`
+
+- Introduced **Large Result Mode**
+  - Automatically activates for large datasets (thousands of rows)
+  - Prevents UI blocking during heavy renders
+
+- Added **progressive rendering engine**
+  - Rows render incrementally instead of all-at-once
+  - Improves perceived responsiveness
+
+- Added **auto-progressive loading (no user interaction required)**
+  - Automatically continues rendering until full dataset is loaded
+  - Eliminates need for manual “Load more”
+
+- Added **render progress indicator**
+  - Displays:
+    - rendered row count vs total (e.g. `1400 of 5000 rows`)
+  - Provides visibility into loading state
+
+- Added **large dataset feedback banner**
+  - Communicates:
+    - partial rendering
+    - ongoing background loading
+
+---
+
+### 🧠 Improvements
+
+- Improved **Explain (Query Doctor) relevance**
+  - Suggestions now favour business-meaningful fields over technically valid but low-value fields
+  - Reduces noise from:
+    - lookup `_..._value` fields
+    - system identifiers
+  - Surfaces fields users actually care about when analysing results
+
+- Improved **Result Viewer responsiveness for large datasets**
+  - Faster initial paint (partial render visible immediately)
+
+- Improved **export usability**
+  - Context-aware filenames replace generic defaults
+
+- Improved **perceived performance**
+  - Users can interact with partial data while rendering continues
+
+---
+
+### 🔧 Behaviour Changes
+
+- Large datasets now:
+  - render progressively instead of blocking UI
+  - load automatically without requiring manual interaction
+
+- Result Viewer prioritises:
+  - early visibility of data
+  - over full blocking render completion
+
+---
+
+### 🧱 Architecture
+
+- Introduced **chunked rendering pipeline**
+  - Breaks large datasets into smaller render batches
+
+- Added **auto-progressive render loop**
+  - Continues rendering asynchronously until completion
+
+- Strengthened separation between:
+  - data retrieval
+  - rendering pipeline
+
+---
+
+### ⚠️ Notes
+
+- Query Doctor now applies lightweight heuristics to prioritise business-relevant fields
+- Field selection is still heuristic-based and will continue to improve in future releases
+- Rendering very large datasets (thousands of rows) is still subject to browser/DOM limits
+- Progressive rendering improves visibility and responsiveness but does not eliminate total render cost
+- This release prioritises **perceived performance and usability** over full virtualization
+
+---
+
 ## [0.8.0] — Evidence-Aware Query Doctor & Structured Narrowing Insights
 
 ### 🚀 New

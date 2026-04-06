@@ -68,6 +68,19 @@ export interface ResultViewerRowActionItem {
     actions: ResultViewerResolvedAction[];
 }
 
+export interface ResultViewerPagingHistoryEntry {
+    sourcePath: string;
+    pageNumber: number;
+    rawJson: string;
+    nextLink?: string;
+}
+
+export interface ResultViewerPagingInfo {
+    pageNumber: number;
+    hasNextPage: boolean;
+    history?: ResultViewerPagingHistoryEntry[];
+}
+
 export interface ResultViewerModel {
     title: string;
     mode: "collection" | "record" | "raw";
@@ -84,6 +97,7 @@ export interface ResultViewerModel {
     environment?: ResultViewerEnvironmentInfo;
     legend?: ResultViewerLegendItem[];
     rowActions?: ResultViewerRowActionItem[];
+    paging?: ResultViewerPagingInfo;
 }
 
 export interface ResultViewerBuildOptions {
@@ -94,6 +108,7 @@ export interface ResultViewerBuildOptions {
     fields?: FieldDef[];
     choiceMetadata?: ChoiceMetadataDef[];
     traversalContext?: ResultViewerTraversalContext;
+    paging?: ResultViewerPagingInfo;
 }
 
 export interface ResultViewerLegendItem {
@@ -692,7 +707,8 @@ export function buildResultViewerModel(
             traversal,
             environment,
             emptyState,
-            rowActions: rowActions.length ? rowActions : undefined
+            rowActions: rowActions.length ? rowActions : undefined,
+            paging: options?.paging
         };
     }
 
@@ -730,7 +746,8 @@ export function buildResultViewerModel(
             traversal,
             environment,
             emptyState,
-            rowActions: recordRowActions.length ? recordRowActions : undefined
+            rowActions: recordRowActions.length ? recordRowActions : undefined,
+            paging: options?.paging
         };
     }
 
@@ -746,6 +763,7 @@ export function buildResultViewerModel(
         entityLogicalName,
         primaryIdField,
         traversal,
-        environment
+        environment,
+        paging: options?.paging
     };
 }

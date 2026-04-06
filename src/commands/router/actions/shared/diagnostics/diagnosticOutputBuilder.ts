@@ -63,11 +63,26 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
       }
 
       if (finding.narrowingSuggestions?.length) {
-        lines.push("    - Potential narrowing dimensions:");
-        for (const narrowingSuggestion of finding.narrowingSuggestions) {
-          lines.push(`      - \`${narrowingSuggestion.field}\` — ${narrowingSuggestion.rationale}`);
-          for (const reason of narrowingSuggestion.reasons) {
-            lines.push(`        - ${reason}`);
+        const recommended = finding.narrowingSuggestions.filter((item) => item.tier !== "secondary");
+        const secondary = finding.narrowingSuggestions.filter((item) => item.tier === "secondary");
+
+        if (recommended.length) {
+          lines.push("    - Recommended narrowing dimensions:");
+          for (const narrowingSuggestion of recommended) {
+            lines.push(`      - \`${narrowingSuggestion.field}\` — ${narrowingSuggestion.rationale}`);
+            for (const reason of narrowingSuggestion.reasons) {
+              lines.push(`        - ${reason}`);
+            }
+          }
+        }
+
+        if (secondary.length) {
+          lines.push("    - Other possible dimensions:");
+          for (const narrowingSuggestion of secondary) {
+            lines.push(`      - \`${narrowingSuggestion.field}\` — ${narrowingSuggestion.rationale}`);
+            for (const reason of narrowingSuggestion.reasons) {
+              lines.push(`        - ${reason}`);
+            }
           }
         }
       }

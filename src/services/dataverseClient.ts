@@ -2,7 +2,7 @@ export class DataverseClient {
   constructor(private baseUrl: string) {}
 
   async get(path: string, token: string) {
-    const url = `${this.baseUrl}${path}`;
+    const url = /^https?:\/\//i.test(path) ? path : `${this.baseUrl}${path}`;
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -22,7 +22,7 @@ export class DataverseClient {
   }
 
   async patch(path: string, token: string, body: unknown, ifMatch: string = "*") {
-    const url = `${this.baseUrl}${path}`;
+    const url = /^https?:\/\//i.test(path) ? path : `${this.baseUrl}${path}`;
 
     const response = await fetch(url, {
       method: "PATCH",
