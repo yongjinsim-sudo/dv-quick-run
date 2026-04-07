@@ -4,12 +4,14 @@ import {
   InvestigationReverseSuggestion,
   InvestigationDocumentSignal
 } from "./types.js";
+import { buildInvestigationInterpretation } from "./investigationInterpretationBuilder.js";
 
 export function buildInvestigationDocument(model: InvestigationDocumentModel): string {
   const lines: string[] = [];
 
   pushBanner(lines, "DATAVERSE RECORD INVESTIGATION");
   pushOverview(lines, model);
+  pushInterpretation(lines, model);
   pushSummary(lines, model.summaryFields);
   pushSignals(lines, model.signals);
   pushPointsTo(lines, model.relatedRecords);
@@ -36,6 +38,28 @@ function pushOverview(lines: string[], model: InvestigationDocumentModel): void 
   pushKeyValue(lines, "Record Id", model.recordId);
   pushKeyValue(lines, "Primary Name", model.primaryName);
   pushKeyValue(lines, "Open In Dataverse", model.uiLink);
+
+  lines.push("");
+}
+
+
+function pushInterpretation(lines: string[], model: InvestigationDocumentModel): void {
+  pushSectionTitle(lines, "INTERPRETATION");
+
+  const interpretation = buildInvestigationInterpretation(model);
+
+  if (!interpretation.length) {
+    lines.push("  No lightweight interpretation was available.");
+    lines.push("");
+    return;
+  }
+
+  lines.push("  Fast, heuristic meaning layer to help explain what this record likely represents.");
+  lines.push("");
+
+  for (const line of interpretation) {
+    lines.push(`  - ${line}`);
+  }
 
   lines.push("");
 }

@@ -70,7 +70,9 @@ export function resolveResultViewerActions(
     columnName,
     rawValue,
     primaryIdField: context.primaryIdField,
-    guid: context.guid
+    guid: context.guid,
+    fieldLogicalName: context.fieldLogicalName,
+    fieldAttributeType: context.fieldAttributeType
   });
 
   if (!analysis.hasUsableValue) {
@@ -81,6 +83,9 @@ export function resolveResultViewerActions(
     guid: context.guid,
     entitySetName: context.entitySetName,
     entityLogicalName: context.entityLogicalName,
+    primaryIdField: context.primaryIdField,
+    fieldLogicalName: context.fieldLogicalName,
+    fieldAttributeType: context.fieldAttributeType,
     columnName,
     rawValue
   };
@@ -115,6 +120,18 @@ export function resolveResultViewerActions(
         payload
       }
     );
+  } else if (analysis.isBusinessGuid) {
+    actions.push({
+      id: "investigate-record",
+      title: "Investigate related record",
+      icon: "🔎",
+      placement: "primary",
+      group: "inspection",
+      payload: {
+        ...payload,
+        guid: rawValue
+      }
+    });
   }
 
   const isSafePreviewFilterColumn = !columnName.includes(".");
@@ -170,7 +187,8 @@ export async function executeResultViewerAction(
                 return;
             }
 
-            const input = entitySetName
+            const canUseEntitySet = !!entitySetName && columnName === String(payload.primaryIdField ?? "").trim();
+            const input = canUseEntitySet
                 ? `${entitySetName}(${guid})`
                 : guid;
 
@@ -189,7 +207,7 @@ export async function executeResultViewerAction(
         }
 
         case "open-in-dataverse-ui": {
-            if (!guid) {
+            if (!guid || columnName !== String(payload.primaryIdField ?? "").trim()) {
                 return;
             }
 
@@ -203,7 +221,7 @@ export async function executeResultViewerAction(
         }
 
         case "copy-record-url": {
-            if (!guid) {
+            if (!guid || columnName !== String(payload.primaryIdField ?? "").trim()) {
                 return;
             }
 
