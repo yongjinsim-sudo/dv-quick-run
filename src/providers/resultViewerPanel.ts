@@ -120,6 +120,8 @@ export class ResultViewerPanel {
     }
 
     private static async handleMessage(message: ResultViewerMessage): Promise<void> {
+        console.log("[DVQR][panel] incoming webview message", message);
+
         const ctx = ResultViewerPanel.currentContext;
         if (!ctx) {
             return;
@@ -192,12 +194,27 @@ export class ResultViewerPanel {
             return;
         }
 
+        console.log("[DVQR][panel] forwarding action payload", {
+            actionId,
+            guid: payload.guid,
+            entitySetName: payload.entitySetName,
+            entityLogicalName: payload.entityLogicalName,
+            columnName: payload.columnName,
+            rawValue: payload.rawValue,
+            primaryIdField: (payload as any).primaryIdField,
+            fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
+            fieldAttributeType: (payload as any).fieldAttributeType
+        });
+
         await executeResultViewerAction(ctx, actionId, {
             guid: payload.guid,
             entitySetName: payload.entitySetName,
             entityLogicalName: payload.entityLogicalName,
             columnName: payload.columnName,
-            rawValue: payload.rawValue
+            rawValue: payload.rawValue,
+            primaryIdField: (payload as any).primaryIdField,
+            fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
+            fieldAttributeType: (payload as any).fieldAttributeType
         });
     }
 

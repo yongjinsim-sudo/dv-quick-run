@@ -106,6 +106,9 @@ function renderSiblingExpandButton(currentModel) {
                 " data-guid=\\"" + escapeAttribute(action.payload?.guid ?? "") + "\\"" +
                 " data-entity-set-name=\\"" + escapeAttribute(action.payload?.entitySetName ?? "") + "\\"" +
                 " data-entity-logical-name=\\"" + escapeAttribute(action.payload?.entityLogicalName ?? "") + "\\"" +
+                " data-primary-id-field=\\"" + escapeAttribute(action.payload?.primaryIdField ?? "") + "\\"" +
+                " data-field-logical-name=\\"" + escapeAttribute(action.payload?.fieldLogicalName ?? action.payload?.columnName ?? "") + "\\"" +
+                " data-field-attribute-type=\\"" + escapeAttribute(action.payload?.fieldAttributeType ?? "") + "\\"" +
                 " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
                 " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
                 " data-traversal-session-id=\\"" + escapeAttribute(action.payload?.traversalSessionId ?? "") + "\\"" +

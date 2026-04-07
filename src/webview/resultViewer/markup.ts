@@ -32,7 +32,6 @@ export function getResultViewerMarkup(iconUri: string): string {
                     <button id="jsonPrevMatchBtn" type="button" title="Previous match (Shift+Enter)">↑</button>
                     <button id="jsonNextMatchBtn" type="button" title="Next match (Enter)">↓</button>
                     <button id="jsonClearSearchBtn" type="button" title="Clear JSON search (Esc)">✕</button>
-                    <button id="jsonSaveBtn" type="button" title="Save current page JSON">💾 Save JSON</button>
                     <span id="jsonMatchStatus" class="json-match-status"></span>
                 </div>
                 <pre id="jsonView"></pre>

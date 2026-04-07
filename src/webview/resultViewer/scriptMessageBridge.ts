@@ -285,20 +285,27 @@ async function copyValueToClipboard(value) {
                 return;
             }
 
+            const payload = {
+                actionId,
+                guid,
+                entitySetName,
+                entityLogicalName,
+                columnName,
+                rawValue,
+                traversalSessionId,
+                traversalLegIndex,
+                carryField,
+                carryValue,
+                primaryIdField: element.getAttribute("data-primary-id-field") ?? "",
+                fieldLogicalName: element.getAttribute("data-field-logical-name") ?? "",
+                fieldAttributeType: element.getAttribute("data-field-attribute-type") ?? ""
+            };
+
+            console.log("[DVQR][webview] executeResultViewerAction payload", payload);
+
             vscodeApi.postMessage({
                 type: "executeResultViewerAction",
-                payload: {
-                    actionId,
-                    guid,
-                    entitySetName,
-                    entityLogicalName,
-                    columnName,
-                    rawValue,
-                    traversalSessionId,
-                    traversalLegIndex,
-                    carryField,
-                    carryValue
-                }
+                payload
             });
         }
 
