@@ -80,10 +80,14 @@ export async function resolveInvestigationInput(
 
   const guidMatch = text.match(GUID_REGEX);
   if (guidMatch) {
+    const nearbyHint = tryExtractNearbyGuidContext(fullDocumentText, selectionStartOffset, guidMatch[1]);
     return {
       type: "guid",
       rawText: text,
-      recordId: guidMatch[1]
+      recordId: guidMatch[1],
+      entitySetName: nearbyHint?.entitySetName,
+      selectedCandidateFieldName: nearbyHint?.fieldLogicalName,
+      selectedCandidateEntitySetNameHint: nearbyHint?.entitySetName
     };
   }
 
@@ -379,4 +383,69 @@ function tryParseSelectionObject(text: string): Record<string, unknown> | undefi
   }
 
   return undefined;
+}
+
+
+function tryExtractNearbyGuidContext(
+  fullDocumentText: string | undefined,
+  selectionStartOffset: number | undefined,
+  recordId: string
+): { entitySetName?: string; fieldLogicalName?: string } | undefined {
+  if (!fullDocumentText?.trim() || typeof selectionStartOffset !== "number" || selectionStartOffset < 0) {
+    return undefined;
+  }
+
+  const lineInfo = extractSelectionLine(fullDocumentText, selectionStartOffset);
+  const windowText = lineInfo.lineText || fullDocumentText.slice(
+    Math.max(0, selectionStartOffset - 160),
+    Math.min(fullDocumentText.length, selectionStartOffset + recordId.length + 160)
+  );
+  const escapedGuid = escapeRegex(recordId);
+
+  const recordPathPattern = new RegExp(`([A-Za-z_][A-Za-z0-9_]*)\\(\\s*${escapedGuid}\\s*\\)`, "i");
+  const recordPathMatch = windowText.match(recordPathPattern);
+  if (recordPathMatch) {
+    return { entitySetName: recordPathMatch[1] };
+  }
+
+  const filterPattern = new RegExp(
+    `([A-Za-z_][A-Za-z0-9_]*)\\?[^\\n]*?\\b([A-Za-z_][A-Za-z0-9_]*)\\b\\s+eq\\s+${escapedGuid}`,
+    "i"
+  );
+  const filterMatch = windowText.match(filterPattern);
+  if (filterMatch) {
+    return {
+      entitySetName: filterMatch[1],
+      fieldLogicalName: filterMatch[2]
+    };
+  }
+
+  const kvPatterns = [
+    new RegExp(`"([^\\"]+)"\\s*:\\s*"?\\{?${escapedGuid}\\}?"?`, "i"),
+    new RegExp(`'([^']+)'\\s*:\\s*'?\\{?${escapedGuid}\\}?'?`, "i"),
+    new RegExp(`\\b([A-Za-z_][A-Za-z0-9_]*)\\b\\s*[:=]\\s*"?\\{?${escapedGuid}\\}?"?`, "i")
+  ];
+
+  for (const pattern of kvPatterns) {
+    const match = windowText.match(pattern);
+    if (match) {
+      return {
+        fieldLogicalName: match[1]
+      };
+    }
+  }
+
+  return undefined;
+}
+
+function extractSelectionLine(text: string, offset: number): { lineText: string } {
+  const lineStart = text.lastIndexOf("\n", Math.max(0, offset - 1));
+  const lineEnd = text.indexOf("\n", offset);
+  return {
+    lineText: text.slice(lineStart < 0 ? 0 : lineStart + 1, lineEnd < 0 ? text.length : lineEnd).trim()
+  };
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

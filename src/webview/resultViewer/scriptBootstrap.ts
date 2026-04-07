@@ -9,7 +9,6 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const jsonPrevMatchBtn = document.getElementById("jsonPrevMatchBtn");
         const jsonNextMatchBtn = document.getElementById("jsonNextMatchBtn");
         const jsonClearSearchBtn = document.getElementById("jsonClearSearchBtn");
-        const jsonSaveBtn = document.getElementById("jsonSaveBtn");
         const jsonMatchStatus = document.getElementById("jsonMatchStatus");
         const showTableBtn = document.getElementById("showTableBtn");
         const showJsonBtn = document.getElementById("showJsonBtn");
@@ -264,9 +263,6 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             postSaveJson();
         });
 
-        jsonSaveBtn.addEventListener("click", () => {
-            postSaveJson();
-        });
 
         previousPageBtn.addEventListener("click", () => {
             vscodeApi.postMessage({

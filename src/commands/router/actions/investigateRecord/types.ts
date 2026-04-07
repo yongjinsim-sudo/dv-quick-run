@@ -10,6 +10,7 @@ export interface InvestigationInput {
   sourcePath?: string;
 
   selectedCandidateFieldName?: string;
+  selectedCandidateEntitySetNameHint?: string;
   selectedCandidateType?: "primary" | "related" | "unknown";
   selectedCandidateConfidence?: number;
   selectedCandidateReason?: string;

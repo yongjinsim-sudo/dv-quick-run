@@ -21,11 +21,22 @@ import { extractInvestigationCandidatesFromJson } from "./investigationCandidate
 import { extractInvestigationCandidatesFromSelection } from "./investigationSelectionExtractor.js";
 import { pickInvestigationCandidate } from "./investigationCandidatePicker.js";
 import { rescoreSelectedInvestigationCandidate, scoreInvestigationCandidates } from "./investigationCandidateScorer.js";
+import { resolveIdentifierOwnership } from "./identifierResolution/identifierResolutionResolver.js";
+import { reportIdentifierResolutionOutcome } from "./identifierResolution/identifierResolutionReporter.js";
+import { classifyInvestigationField } from "./fieldResolutionClassifier.js";
+import {
+  loadEntityDefByEntitySetName,
+  loadEntityDefByLogicalName,
+  loadEntityDefs
+} from "../shared/metadataAccess.js";
+import { loadTraversalScopeSettings } from "../traversal/traversalScope.js";
 
 export async function investigateRecordAction(
     ctx: CommandContext,
     inputOverride?: string
 ): Promise<void> {
+  console.log("[DVQR][investigate] input", inputOverride);
+
   try {
 
     const INVESTIGATION_INPUT_HELP =
@@ -59,15 +70,85 @@ export async function investigateRecordAction(
             ? editor.document.offsetAt(editor.selection.start)
             : 0;
 
-    const input = await resolveInvestigationInput(
-        selectedText,
-        fullDocumentText,
-        selectionStartOffset
-    );
+    const identifierRequest = tryParseIdentifierResolutionRequest(safeInputOverride || selectedText);
+
+    let input: InvestigationInput | undefined;
+    if (identifierRequest) {
+      console.log("[DVQR][investigate] forcing identifier-resolution branch", identifierRequest);
+      input = undefined;
+    } else {
+      input = await resolveInvestigationInput(
+          selectedText,
+          fullDocumentText,
+          selectionStartOffset
+      );
+    }
+
+    if (input?.recordId) {
+      const editorResolution = await tryResolveEditorGuidWithoutQuickPick(ctx, input, identifierRequest);
+      if (editorResolution?.handled) {
+        if (!editorResolution.input) {
+          return;
+        }
+
+        input = editorResolution.input;
+      }
+    }
 
     if (!input?.recordId) {
-      vscode.window.showErrorMessage(INVESTIGATION_INPUT_HELP);
-      return;
+      const identifierValue = identifierRequest?.value ?? (looksLikeIdentifierValue(selectedText) ? selectedText.trim() : undefined);
+      if (identifierValue) {
+        const fieldClassification = identifierRequest?.entityLogicalName && identifierRequest?.fieldLogicalName
+          ? await classifyInvestigationField(ctx, {
+              entityLogicalName: identifierRequest.entityLogicalName,
+              fieldLogicalName: identifierRequest.fieldLogicalName,
+              primaryIdField: identifierRequest.primaryIdField
+            })
+          : undefined;
+
+        if (fieldClassification?.kind === "referenceKey" && fieldClassification.targetEntityLogicalName && fieldClassification.targetEntitySetName) {
+          input = {
+            type: "recordPath",
+            rawText: identifierValue,
+            recordId: identifierValue,
+            entityLogicalName: fieldClassification.targetEntityLogicalName,
+            entitySetName: fieldClassification.targetEntitySetName,
+            selectedCandidateFieldName: identifierRequest?.fieldLogicalName,
+            selectedCandidateType: "related",
+            selectedCandidateConfidence: 0.98,
+            selectedCandidateReason: `Referenced via ${identifierRequest?.entityLogicalName}.${identifierRequest?.fieldLogicalName}`
+          };
+        } else {
+          const resolution = await resolveIdentifierOwnership(ctx, {
+            value: identifierValue,
+            currentEntityLogicalName: identifierRequest?.entityLogicalName,
+            currentEntitySetName: identifierRequest?.entitySetName,
+            currentFieldLogicalName: identifierRequest?.fieldLogicalName,
+            currentFieldAttributeType: identifierRequest?.fieldAttributeType,
+            primaryIdField: identifierRequest?.primaryIdField
+          });
+
+          if (resolution.outcome !== "resolved" || !resolution.resolved) {
+            await reportIdentifierResolutionOutcome(resolution);
+            return;
+          }
+
+          input = {
+            type: "recordPath",
+            rawText: identifierValue,
+            recordId: resolution.resolved.recordId,
+            entityLogicalName: resolution.resolved.entityLogicalName,
+            entitySetName: resolution.resolved.entitySetName,
+            selectedCandidateFieldName: resolution.resolved.matchedField,
+            selectedCandidateType: "related",
+            selectedCandidateConfidence: resolution.resolved.confidence === "high" ? 0.95 : 0.75,
+            selectedCandidateReason: `Resolved via ${resolution.resolved.entityLogicalName}.${resolution.resolved.matchedField}`
+          };
+        }
+      } else {
+        vscode.window.showErrorMessage(INVESTIGATION_INPUT_HELP);
+        return;
+      }
     }
 
     let activeInput: InvestigationInput = { ...input };
@@ -193,6 +274,52 @@ export async function investigateRecordAction(
     console.error("[InvestigateRecord] Failed:", error);
     vscode.window.showErrorMessage(`Investigate Record failed: ${toErrorMessage(error)}`);
   }
+}
+
+
+interface IdentifierResolutionInputOverride {
+  __dvqrIdentifierResolution?: true;
+  value?: string;
+  entityLogicalName?: string;
+  entitySetName?: string;
+  fieldLogicalName?: string;
+  fieldAttributeType?: string;
+  primaryIdField?: string;
+}
+
+function tryParseIdentifierResolutionRequest(text: string): IdentifierResolutionInputOverride | undefined {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{")) {
+    return undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as IdentifierResolutionInputOverride;
+    if (!parsed || parsed.__dvqrIdentifierResolution !== true || !parsed.value) {
+      return undefined;
+    }
+
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
+
+function looksLikeIdentifierValue(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length < 6) {
+    return false;
+  }
+
+  if (/\s{2,}/.test(trimmed)) {
+    return false;
+  }
+
+  if (/^[\[{]/.test(trimmed)) {
+    return false;
+  }
+
+  return true;
 }
 
 function getSelectedTextOrCurrentLine(editor: vscode.TextEditor): string {
@@ -372,4 +499,266 @@ function joinDataverseUrl(baseUrl: string, rawQuery: string): string {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const normalizedQuery = rawQuery.replace(/^\/+/, "");
   return `${normalizedBaseUrl}/${normalizedQuery}`;
+}
+
+
+type EditorGuidResolutionResult = {
+  handled: boolean;
+  input?: InvestigationInput;
+};
+
+async function tryResolveEditorGuidWithoutQuickPick(
+  ctx: CommandContext,
+  input: InvestigationInput,
+  identifierRequest?: IdentifierResolutionInputOverride
+): Promise<EditorGuidResolutionResult | undefined> {
+  const recordId = String(input.recordId ?? "").trim();
+  if (!recordId) {
+    return undefined;
+  }
+
+  if (identifierRequest || (input.type === "recordPath" && input.entitySetName)) {
+    return undefined;
+  }
+
+  const client = ctx.getClient();
+  const token = await ctx.getToken(ctx.getScope());
+  const entityDef = input.entityLogicalName
+    ? await loadEntityDefByLogicalName(ctx, client, token, input.entityLogicalName)
+    : input.entitySetName
+      ? await loadEntityDefByEntitySetName(ctx, client, token, input.entitySetName)
+      : undefined;
+
+  const entityLogicalName = input.entityLogicalName ?? entityDef?.logicalName;
+  const entitySetName = input.entitySetName ?? entityDef?.entitySetName;
+  const primaryIdField = entityDef?.primaryIdAttribute;
+  const fieldLogicalName = input.selectedCandidateFieldName;
+  const fieldAttributeType = looksLikeGuid(recordId) ? "Uniqueidentifier" : "String";
+
+  if (entityLogicalName && entitySetName && fieldLogicalName) {
+    const classification = await classifyInvestigationField(ctx, {
+      entityLogicalName,
+      fieldLogicalName,
+      primaryIdField
+    });
+
+    if (classification.kind === "primaryKey") {
+      return {
+        handled: true,
+        input: {
+          ...input,
+          entityLogicalName,
+          entitySetName,
+          selectedCandidateFieldName: fieldLogicalName,
+          selectedCandidateType: "primary",
+          selectedCandidateConfidence: 0.98,
+          selectedCandidateReason: `Resolved from ${entityLogicalName}.${fieldLogicalName}`
+        }
+      };
+    }
+
+    if (classification.kind === "referenceKey" && classification.targetEntityLogicalName && classification.targetEntitySetName) {
+      return {
+        handled: true,
+        input: {
+          type: "recordPath",
+          rawText: input.rawText,
+          recordId,
+          entityLogicalName: classification.targetEntityLogicalName,
+          entitySetName: classification.targetEntitySetName,
+          selectedCandidateFieldName: fieldLogicalName,
+          selectedCandidateType: "related",
+          selectedCandidateConfidence: 0.98,
+          selectedCandidateReason: `Referenced via ${entityLogicalName}.${fieldLogicalName}`
+        }
+      };
+    }
+
+    const contextualResolution = await resolveIdentifierOwnership(ctx, {
+      value: recordId,
+      currentEntityLogicalName: entityLogicalName,
+      currentEntitySetName: entitySetName,
+      currentFieldLogicalName: fieldLogicalName,
+      currentFieldAttributeType: fieldAttributeType,
+      primaryIdField
+    });
+
+    if (contextualResolution.outcome === "resolved" && contextualResolution.resolved) {
+      return {
+        handled: true,
+        input: {
+          type: "recordPath",
+          rawText: input.rawText,
+          recordId: contextualResolution.resolved.recordId,
+          entityLogicalName: contextualResolution.resolved.entityLogicalName,
+          entitySetName: contextualResolution.resolved.entitySetName,
+          selectedCandidateFieldName: contextualResolution.resolved.matchedField,
+          selectedCandidateType: "related",
+          selectedCandidateConfidence: contextualResolution.resolved.confidence === "high" ? 0.95 : 0.75,
+          selectedCandidateReason: `Resolved via ${contextualResolution.resolved.entityLogicalName}.${contextualResolution.resolved.matchedField}`
+        }
+      };
+    }
+
+    if (contextualResolution.outcome !== "unresolved") {
+      await reportIdentifierResolutionOutcome(contextualResolution);
+      return { handled: true };
+    }
+  }
+
+  const directPrimaryMatch = await resolvePrimaryIdAcrossAllowedTables(ctx, recordId);
+  if (directPrimaryMatch) {
+    return {
+      handled: true,
+      input: {
+        type: "recordPath",
+        rawText: input.rawText,
+        recordId: directPrimaryMatch.recordId,
+        entityLogicalName: directPrimaryMatch.entityLogicalName,
+        entitySetName: directPrimaryMatch.entitySetName,
+        selectedCandidateFieldName: directPrimaryMatch.primaryIdField,
+        selectedCandidateType: "primary",
+        selectedCandidateConfidence: 0.99,
+        selectedCandidateReason: `Matched ${directPrimaryMatch.entityLogicalName}.${directPrimaryMatch.primaryIdField}`
+      }
+    };
+  }
+
+  const broadResolution = await resolveIdentifierOwnership(ctx, {
+    value: recordId,
+    currentEntityLogicalName: entityLogicalName,
+    currentEntitySetName: entitySetName,
+    currentFieldLogicalName: fieldLogicalName,
+    currentFieldAttributeType: fieldAttributeType,
+    primaryIdField
+  });
+
+  if (broadResolution.outcome === "resolved" && broadResolution.resolved) {
+    return {
+      handled: true,
+      input: {
+        type: "recordPath",
+        rawText: input.rawText,
+        recordId: broadResolution.resolved.recordId,
+        entityLogicalName: broadResolution.resolved.entityLogicalName,
+        entitySetName: broadResolution.resolved.entitySetName,
+        selectedCandidateFieldName: broadResolution.resolved.matchedField,
+        selectedCandidateType: "related",
+        selectedCandidateConfidence: broadResolution.resolved.confidence === "high" ? 0.95 : 0.75,
+        selectedCandidateReason: `Resolved via ${broadResolution.resolved.entityLogicalName}.${broadResolution.resolved.matchedField}`
+      }
+    };
+  }
+
+  await reportIdentifierResolutionOutcome(broadResolution);
+  return { handled: true };
+}
+
+async function resolvePrimaryIdAcrossAllowedTables(
+  ctx: CommandContext,
+  recordId: string
+): Promise<{ entityLogicalName: string; entitySetName: string; primaryIdField: string; recordId: string } | undefined> {
+  if (!looksLikeGuid(recordId)) {
+    return undefined;
+  }
+
+  const client = ctx.getClient();
+  const token = await ctx.getToken(ctx.getScope());
+  const entityDefs = await loadEntityDefs(ctx, client, token, { silent: true });
+  const traversalScope = loadTraversalScopeSettings(ctx);
+  const allowedPatterns = [...traversalScope.allowedTables];
+  const matches: Array<{ entityLogicalName: string; entitySetName: string; primaryIdField: string; recordId: string }> = [];
+
+  const targetEntities = entityDefs.filter((entity) => {
+    const logicalName = String(entity.logicalName ?? "").trim().toLowerCase();
+    if (!logicalName || !entity.entitySetName || !entity.primaryIdAttribute) {
+      return false;
+    }
+
+    if (allowedPatterns.length === 0) {
+      return false;
+    }
+
+    return allowedPatterns.some((pattern) => matchesEntityPattern(logicalName, pattern));
+  }).slice(0, 10);
+
+  for (const entity of targetEntities) {
+    const primaryIdField = entity.primaryIdAttribute?.trim();
+    const entitySetName = entity.entitySetName?.trim();
+    const entityLogicalName = entity.logicalName?.trim();
+
+    if (!primaryIdField || !entitySetName || !entityLogicalName) {
+      continue;
+    }
+
+    try {
+      const query = `/${entitySetName}?$select=${primaryIdField}${entity.primaryNameAttribute ? `,${entity.primaryNameAttribute}` : ""}&$filter=${primaryIdField} eq ${recordId}&$top=2`;
+      const response = await client.get(query, token) as { value?: Array<Record<string, unknown>> };
+      const rows = Array.isArray(response.value) ? response.value : [];
+      for (const row of rows) {
+        const matchedId = String(row[primaryIdField] ?? "").trim();
+        if (!matchedId) {
+          continue;
+        }
+
+        matches.push({
+          entityLogicalName,
+          entitySetName,
+          primaryIdField,
+          recordId: matchedId
+        });
+      }
+    } catch {
+      // best effort
+    }
+  }
+
+  const unique = dedupePrimaryMatches(matches);
+  if (unique.length === 1) {
+    return unique[0];
+  }
+
+  if (unique.length > 1) {
+    const picked = await vscode.window.showQuickPick(unique.map((match) => ({
+      label: match.entityLogicalName,
+      description: match.primaryIdField,
+      detail: match.recordId,
+      match
+    })), {
+      placeHolder: "Multiple matching primary-key records found. Select which record to investigate"
+    });
+
+    return picked?.match;
+  }
+
+  return undefined;
+}
+
+function dedupePrimaryMatches(matches: Array<{ entityLogicalName: string; entitySetName: string; primaryIdField: string; recordId: string }>) {
+  const byKey = new Map<string, { entityLogicalName: string; entitySetName: string; primaryIdField: string; recordId: string }>();
+  for (const match of matches) {
+    const key = `${match.entityLogicalName}|${match.primaryIdField}|${match.recordId}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, match);
+    }
+  }
+
+  return [...byKey.values()].sort((a, b) => a.entityLogicalName.localeCompare(b.entityLogicalName) || a.recordId.localeCompare(b.recordId));
+}
+
+function matchesEntityPattern(entity: string, pattern: string): boolean {
+  if (!pattern) {
+    return false;
+  }
+
+  if (!pattern.includes("*")) {
+    return entity === pattern;
+  }
+
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^${escaped.replace(/\*/g, ".*")}$`, "i").test(entity);
+}
+
+function looksLikeGuid(value: string): boolean {
+  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value.trim());
 }

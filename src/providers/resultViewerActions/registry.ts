@@ -120,7 +120,7 @@ export function resolveResultViewerActions(
         payload
       }
     );
-  } else if (analysis.isBusinessGuid) {
+  } else if (analysis.isBusinessGuid || analysis.isBusinessIdentifier) {
     actions.push({
       id: "investigate-record",
       title: "Investigate related record",
@@ -129,7 +129,7 @@ export function resolveResultViewerActions(
       group: "inspection",
       payload: {
         ...payload,
-        guid: rawValue
+        guid: analysis.isBusinessGuid ? rawValue : undefined
       }
     });
   }
@@ -175,6 +175,8 @@ export async function executeResultViewerAction(
   actionId: string,
   payload: ResultViewerActionPayload
 ): Promise<void> {
+    console.log("[DVQR][registry] executeResultViewerAction", { actionId, payload });
+
     const guid = String(payload.guid ?? "").trim();
     const entitySetName = payload.entitySetName?.trim();
     const columnName = String(payload.columnName ?? "").trim();
@@ -183,14 +185,18 @@ export async function executeResultViewerAction(
     switch (actionId) {
 
         case "investigate-record": {
-            if (!guid) {
-                return;
-            }
-
-            const canUseEntitySet = !!entitySetName && columnName === String(payload.primaryIdField ?? "").trim();
+            const canUseEntitySet = !!guid && !!entitySetName && columnName === String(payload.primaryIdField ?? "").trim();
             const input = canUseEntitySet
                 ? `${entitySetName}(${guid})`
-                : guid;
+                : JSON.stringify({
+                    __dvqrIdentifierResolution: true,
+                    value: rawValue,
+                    entityLogicalName: payload.entityLogicalName,
+                    entitySetName: payload.entitySetName,
+                    fieldLogicalName: payload.fieldLogicalName ?? columnName,
+                    fieldAttributeType: payload.fieldAttributeType,
+                    primaryIdField: payload.primaryIdField
+                });
 
             await vscode.commands.executeCommand("dvQuickRun.investigateRecord", input);
             return;

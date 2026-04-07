@@ -24,6 +24,74 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
+## 🆕 What's New in v0.8.3 (Context-Aware Identifier Resolution)
+
+> Enables GUID-first investigation — resolve unknown identifiers safely using context when available, or bounded search when not.
+
+---
+
+### 🔎 Editor-first Investigate Record
+
+- **Run Investigate directly from a selected GUID in the editor**
+  - No Quick Pick or entity selection required
+  - Fast workflow:
+    - copy GUID → run → resolve
+
+- Works for:
+  - primary keys (e.g. `contactid`)
+  - surfaced business/reference GUID fields
+
+---
+
+### 🧠 Context-Aware Resolution
+
+- Automatically resolves identifiers using:
+  - **Result Viewer context** (deterministic)
+  - **Metadata-driven lookup** when no context exists
+
+- Improves ability to answer:
+  - *“what record is this GUID?”* without schema knowledge
+
+---
+
+### ⚙️ Bounded Identifier Search
+
+- Resolution is limited to:
+  - `dvQuickRun.traversal.allowedTables`
+
+- Prevents:
+  - brute-force scanning across large environments
+  - unpredictable performance
+
+- Keeps behaviour:
+  - fast
+  - safe
+  - user-controlled
+
+---
+
+### 🧾 Resolution Behaviour
+
+- Uses metadata (`primaryIdAttribute`) instead of heuristics
+- Supports:
+  - standard primary IDs
+  - non-obvious identifier fields across entities
+
+---
+
+### 🧠 Notes
+
+- Resolution is **bounded by allowedTables**
+  - add tables to expand coverage
+
+- Editor-based investigation is **best-effort without context**
+  - Result Viewer context remains most accurate
+
+- If not resolved:
+  - DV Quick Run shows searched scope instead of guessing
+
+---
+
 ## 🆕 What's New in v0.8.2 (Result-Driven Insights & Investigation Clarity)
 
 > Introduces result-driven Query Doctor insights and improves investigation clarity — helping you understand both your results and your records faster.

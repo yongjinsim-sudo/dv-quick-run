@@ -1,6 +1,6 @@
 import { isLookupLikeAttributeType } from "../../metadata/metadataModel.js";
 
-export type ResultViewerColumnKind = "system" | "primaryId" | "lookupGuid" | "businessGuid" | "guid" | "value";
+export type ResultViewerColumnKind = "system" | "primaryId" | "lookupGuid" | "businessGuid" | "businessIdentifier" | "guid" | "value";
 
 export interface ResultViewerColumnAnalysis {
     kind: ResultViewerColumnKind;
@@ -8,6 +8,7 @@ export interface ResultViewerColumnAnalysis {
     isPrimaryId: boolean;
     isLookupGuid: boolean;
     isBusinessGuid: boolean;
+    isBusinessIdentifier: boolean;
     isGuidLike: boolean;
     hasUsableValue: boolean;
 }
@@ -41,6 +42,16 @@ export function analyzeResultViewerColumn(input: {
             fieldLogicalName: input.fieldLogicalName,
             fieldAttributeType: input.fieldAttributeType
         });
+    const isBusinessIdentifier = hasUsableValue
+        && !isGuidLike
+        && !isPrimaryId
+        && !isLookupGuid
+        && isBusinessIdentifierColumn({
+            columnName,
+            rawValue,
+            fieldLogicalName: input.fieldLogicalName,
+            fieldAttributeType: input.fieldAttributeType
+        });
 
     let kind: ResultViewerColumnKind = "value";
 
@@ -52,6 +63,8 @@ export function analyzeResultViewerColumn(input: {
         kind = "lookupGuid";
     } else if (isBusinessGuid) {
         kind = "businessGuid";
+    } else if (isBusinessIdentifier) {
+        kind = "businessIdentifier";
     } else if (isGuidLike) {
         kind = "guid";
     }
@@ -62,6 +75,7 @@ export function analyzeResultViewerColumn(input: {
         isPrimaryId,
         isLookupGuid,
         isBusinessGuid,
+        isBusinessIdentifier,
         isGuidLike,
         hasUsableValue
     };
@@ -96,10 +110,10 @@ function isBusinessGuidColumn(input: {
         return true;
     }
 
-    return candidateNames.some((name) => looksBusinessLikeGuidName(name));
+    return candidateNames.some((name) => looksBusinessLikeIdentifierName(name));
 }
 
-function looksBusinessLikeGuidName(name: string): boolean {
+function looksBusinessLikeIdentifierName(name: string): boolean {
     if (!name || name.includes("@") || name.includes(".")) {
         return false;
     }
@@ -120,5 +134,39 @@ function looksBusinessLikeGuidName(name: string): boolean {
 
     return normalized.endsWith("id")
         || normalized.includes("_id")
+        || normalized.includes("identifier")
+        || normalized.includes("reference")
+        || normalized.includes("external")
+        || normalized.includes("source")
+        || normalized.includes("legacy")
+        || normalized.includes("unique")
+        || normalized.includes("token")
+        || normalized.includes("code")
+        || normalized.includes("key")
+        || normalized.includes("number")
         || normalized.includes("azurefhirid");
+}
+
+
+function isBusinessIdentifierColumn(input: {
+    columnName: string;
+    rawValue: string;
+    fieldLogicalName?: string;
+    fieldAttributeType?: string;
+}): boolean {
+    const attributeType = String(input.fieldAttributeType ?? "").trim().toLowerCase();
+    if (attributeType && attributeType !== "string" && attributeType !== "memo") {
+        return false;
+    }
+
+    const rawValue = input.rawValue.trim();
+    if (rawValue.length < 6 || /\s{2,}/.test(rawValue)) {
+        return false;
+    }
+
+    const candidateNames = [input.fieldLogicalName, input.columnName]
+        .map((value) => String(value ?? "").trim().toLowerCase())
+        .filter((value) => !!value);
+
+    return candidateNames.some((name) => looksBusinessLikeIdentifierName(name));
 }

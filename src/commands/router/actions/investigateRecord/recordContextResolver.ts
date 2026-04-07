@@ -81,6 +81,11 @@ async function promptForEntity(
     return undefined;
   }
 
+  console.log("[DVQR][investigate] opening generic table quick pick", {
+    reason: "resolveRecordContext:fallback",
+    entityCount: entities.length
+  });
+
   const picked = await vscode.window.showQuickPick(
     entities.map((entity) => ({
       label: entity.logicalName,

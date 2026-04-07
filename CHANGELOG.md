@@ -6,6 +6,40 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.8.3] - Improved Investigate Record without Schema Context
+
+### New
+
+- 🔎 **Editor-first Investigate Record (GUID-only support)**
+  - Investigate Record can now be triggered directly from a **selected GUID in the editor**
+  - No Quick Pick or entity selection required
+  - Enables fast workflow: copy GUID → run → resolve
+
+- 🧠 **Context-aware identifier resolution**
+  - Automatically resolves identifiers using:
+    - Result Viewer context (when available)
+    - Metadata-driven lookup across allowed tables (when no context)
+  - Supports both:
+    - standard primary IDs (e.g. `contactid`)
+    - surfaced identifier-like fields
+
+- ⚙️ **Bounded identifier search via `allowedTables`**
+  - Resolution scope is limited to:
+    - `dvQuickRun.traversal.allowedTables`
+  - Prevents brute-force scanning in large environments
+  - Keeps performance predictable and safe
+
+- ⚡ **Investigate Record resolution accuracy**
+  - Improved handling of primary ID fields using metadata instead of heuristics
+  - Better support for non-obvious identifiers across entities
+
+- 🧾 **Clear unresolved feedback**
+  - When identifier cannot be resolved:
+    - Displays searched scope
+    - Avoids misleading or partial matches
+
+---
+
 ## [0.8.2] — Result-Driven Query Doctor & Investigate Interpretation
 
 ### New
