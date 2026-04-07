@@ -65,7 +65,7 @@ export function buildOperatorHover(token: string): vscode.Hover | undefined {
   }
 
   if (normalized === "endswith") {
-    md.appendMarkdown("\nExample: `endswith(emailaddress1,'@bupa.com')`");
+    md.appendMarkdown("\nExample: `endswith(emailaddress1,'@email.com')`");
   }
 
   return new vscode.Hover(md);

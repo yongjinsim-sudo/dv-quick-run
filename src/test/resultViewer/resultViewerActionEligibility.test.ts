@@ -22,7 +22,7 @@ suite("resultViewerActionEligibility", () => {
     ]);
   });
 
-  test("non-primary guid field does not expose record-level actions", () => {
+  test("lookup backing guid field does not expose record-level actions", () => {
     const actions = resolveResultViewerActions({
       guid: "",
       entitySetName: "contacts",
@@ -34,6 +34,25 @@ suite("resultViewerActionEligibility", () => {
     });
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
+      "preview-odata-filter"
+    ]);
+  });
+
+  test("business guid field exposes investigate action", () => {
+    const actions = resolveResultViewerActions({
+      guid: "",
+      entitySetName: "contacts",
+      entityLogicalName: "contact",
+      primaryIdField: "contactid",
+      fieldLogicalName: "msemr_azurefhirid",
+      fieldAttributeType: "String",
+      queryMode: "odata",
+      columnName: "msemr_azurefhirid",
+      rawValue: "8129eec7-4414-4f11-8341-6045bdc42f8b"
+    });
+
+    assert.deepStrictEqual(actions.map((action) => action.id), [
+      "investigate-record",
       "preview-odata-filter"
     ]);
   });

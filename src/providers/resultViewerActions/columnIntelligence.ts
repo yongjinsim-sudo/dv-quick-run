@@ -1,10 +1,13 @@
-export type ResultViewerColumnKind = "system" | "primaryId" | "lookupGuid" | "guid" | "value";
+import { isLookupLikeAttributeType } from "../../metadata/metadataModel.js";
+
+export type ResultViewerColumnKind = "system" | "primaryId" | "lookupGuid" | "businessGuid" | "guid" | "value";
 
 export interface ResultViewerColumnAnalysis {
     kind: ResultViewerColumnKind;
     isSystem: boolean;
     isPrimaryId: boolean;
     isLookupGuid: boolean;
+    isBusinessGuid: boolean;
     isGuidLike: boolean;
     hasUsableValue: boolean;
 }
@@ -16,6 +19,8 @@ export function analyzeResultViewerColumn(input: {
     rawValue?: string;
     primaryIdField?: string;
     guid?: string;
+    fieldLogicalName?: string;
+    fieldAttributeType?: string;
 }): ResultViewerColumnAnalysis {
     const columnName = String(input.columnName ?? "").trim();
     const rawValue = String(input.rawValue ?? "").trim();
@@ -27,6 +32,15 @@ export function analyzeResultViewerColumn(input: {
     const isGuidLike = isGuidValue(rawValue);
     const isPrimaryId = hasUsableValue && !!primaryIdField && columnName === primaryIdField && !!guid;
     const isLookupGuid = hasUsableValue && isLookupColumn(columnName) && isGuidLike;
+    const isBusinessGuid = hasUsableValue
+        && isGuidLike
+        && !isPrimaryId
+        && !isLookupGuid
+        && isBusinessGuidColumn({
+            columnName,
+            fieldLogicalName: input.fieldLogicalName,
+            fieldAttributeType: input.fieldAttributeType
+        });
 
     let kind: ResultViewerColumnKind = "value";
 
@@ -36,6 +50,8 @@ export function analyzeResultViewerColumn(input: {
         kind = "primaryId";
     } else if (isLookupGuid) {
         kind = "lookupGuid";
+    } else if (isBusinessGuid) {
+        kind = "businessGuid";
     } else if (isGuidLike) {
         kind = "guid";
     }
@@ -45,6 +61,7 @@ export function analyzeResultViewerColumn(input: {
         isSystem,
         isPrimaryId,
         isLookupGuid,
+        isBusinessGuid,
         isGuidLike,
         hasUsableValue
     };
@@ -60,4 +77,48 @@ export function isLookupColumn(columnName: string): boolean {
 
 export function isGuidValue(rawValue: string): boolean {
     return GUID_PATTERN.test(rawValue.trim());
+}
+
+function isBusinessGuidColumn(input: {
+    columnName: string;
+    fieldLogicalName?: string;
+    fieldAttributeType?: string;
+}): boolean {
+    const candidateNames = [input.fieldLogicalName, input.columnName]
+        .map((value) => String(value ?? "").trim().toLowerCase())
+        .filter((value) => !!value);
+
+    if (!candidateNames.length) {
+        return false;
+    }
+
+    if (input.fieldAttributeType && isLookupLikeAttributeType(input.fieldAttributeType)) {
+        return true;
+    }
+
+    return candidateNames.some((name) => looksBusinessLikeGuidName(name));
+}
+
+function looksBusinessLikeGuidName(name: string): boolean {
+    if (!name || name.includes("@") || name.includes(".")) {
+        return false;
+    }
+
+    if (isLookupColumn(name)) {
+        return false;
+    }
+
+    const normalized = name.replace(/[^a-z0-9_]/g, "");
+
+    if (!normalized || normalized === "activityid" || normalized === "versionnumber") {
+        return false;
+    }
+
+    if (normalized.endsWith("name") || normalized.endsWith("type") || normalized.endsWith("typename")) {
+        return false;
+    }
+
+    return normalized.endsWith("id")
+        || normalized.includes("_id")
+        || normalized.includes("azurefhirid");
 }

@@ -304,6 +304,20 @@ function buildFieldMap(fields?: FieldDef[]): Map<string, FieldDef> {
         .map((field) => [field.logicalName.toLowerCase(), field]));
 }
 
+function resolveFieldForColumn(column: string, fieldMap: Map<string, FieldDef>): FieldDef | undefined {
+    const direct = fieldMap.get(column.toLowerCase());
+    if (direct) {
+        return direct;
+    }
+
+    if (isLookupColumn(column)) {
+        const baseFieldName = column.slice(1, -"_value".length).toLowerCase();
+        return fieldMap.get(baseFieldName);
+    }
+
+    return undefined;
+}
+
 function resolveDisplayValue(
     row: Record<string, unknown> | undefined,
     rowValue: unknown,
@@ -498,12 +512,16 @@ function buildCell(
             ? toDisplayCell(rowValue)
             : "";
 
+    const field = resolveFieldForColumn(column, fieldMap);
+
     const actions = shouldResolveActions
         ? resolveResultViewerActions({
             guid: actionGuid,
             entitySetName: options.entitySetName,
             entityLogicalName: options.entityLogicalName,
             primaryIdField: options.primaryIdField,
+            fieldLogicalName: field?.logicalName,
+            fieldAttributeType: field?.attributeType,
             queryMode: detectResultViewerQueryMode(queryPath),
             columnName: column,
             rawValue: actionRawValue,
@@ -550,7 +568,7 @@ function buildCell(
     };
 }
 
-function buildRowActions(row: Record<string, ResultViewerCell>): ResultViewerResolvedAction[] {
+function buildRowActions(row: Record<string, ResultViewerCell>, primaryIdField?: string): ResultViewerResolvedAction[] {
     const priority = [
         "continue-traversal",
         "investigate-record",
@@ -563,6 +581,14 @@ function buildRowActions(row: Record<string, ResultViewerCell>): ResultViewerRes
 
     Object.values(row).forEach((cell) => {
         (cell.actions ?? []).forEach((action) => {
+            const isPrimaryInspectionAction = action.group === "inspection"
+                ? action.payload.columnName === primaryIdField
+                : true;
+
+            if (!isPrimaryInspectionAction) {
+                return;
+            }
+
             if (!byId.has(action.id)) {
                 byId.set(action.id, action);
             }
@@ -686,7 +712,7 @@ export function buildResultViewerModel(
         });
 
         const rowActions = mappedRows
-            .map((row, rowIndex) => ({ rowIndex, actions: buildRowActions(row) }))
+            .map((row, rowIndex) => ({ rowIndex, actions: buildRowActions(row, primaryIdField) }))
             .filter((item) => item.actions.length > 0);
 
         return {
@@ -730,7 +756,7 @@ export function buildResultViewerModel(
             }, fieldMap, choiceMetadata);
         });
 
-        const recordRowActions = [{ rowIndex: 0, actions: buildRowActions(mapped) }].filter((item) => item.actions.length > 0);
+        const recordRowActions = [{ rowIndex: 0, actions: buildRowActions(mapped, primaryIdField) }].filter((item) => item.actions.length > 0);
 
         return {
             title: "Record Result",

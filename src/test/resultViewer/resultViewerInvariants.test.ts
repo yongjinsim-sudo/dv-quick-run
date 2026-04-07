@@ -102,22 +102,28 @@ suite("resultViewerInvariants", () => {
     assert.strictEqual(model.rows[0]["contact_customer_accounts"]?.actions, undefined);
   });
 
-  test("primary id actions remain isolated and raw lookup id columns do not receive extra actions", () => {
+  test("primary id actions remain isolated and business guid investigate does not replace row-level primary actions", () => {
     const model = buildResultViewerModel({
       value: [
         {
           contactid: "8129eec7-4414-4f11-8341-6045bdc42f8b",
-          _ownerid_value: "9229eec7-4414-4f11-8341-6045bdc42f8c"
+          _ownerid_value: "9229eec7-4414-4f11-8341-6045bdc42f8c",
+          msemr_azurefhirid: "a229eec7-4414-4f11-8341-6045bdc42f8d"
         }
       ]
-    }, "contacts?$select=contactid,_ownerid_value", {
+    }, "contacts?$select=contactid,_ownerid_value,msemr_azurefhirid", {
       entitySetName: "contacts",
       entityLogicalName: "contact",
-      primaryIdField: "contactid"
+      primaryIdField: "contactid",
+      fields: [
+        { logicalName: "contactid", displayName: "Contact", attributeType: "Uniqueidentifier" } as never,
+        { logicalName: "msemr_azurefhirid", displayName: "Azure FHIR Id", attributeType: "String" } as never
+      ]
     });
 
     const primaryIds = model.rows[0]["contactid"]?.actions?.map((action) => action.id) ?? [];
     const lookupIds = model.rows[0]["_ownerid_value"]?.actions?.map((action) => action.id) ?? [];
+    const businessIds = model.rows[0]["msemr_azurefhirid"]?.actions?.map((action) => action.id) ?? [];
 
     assert.deepStrictEqual(primaryIds, [
       "investigate-record",
@@ -126,6 +132,16 @@ suite("resultViewerInvariants", () => {
       "preview-odata-filter"
     ]);
     assert.deepStrictEqual(lookupIds, []);
+    assert.deepStrictEqual(businessIds, [
+      "investigate-record",
+      "preview-odata-filter"
+    ]);
+    assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
+      "investigate-record",
+      "open-in-dataverse-ui",
+      "copy-record-url"
+    ]);
+    assert.strictEqual(model.rowActions?.[0]?.actions[0]?.payload.columnName, "contactid");
   });
 
 

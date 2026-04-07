@@ -17,6 +17,7 @@ suite("investigationDocumentBuilder", () => {
         { logicalName: "contactid", label: "Contact", value: "8129eec7-4414-f111-8341-6045bdc42f8b", category: "identity" },
         { logicalName: "modifiedon", label: "Modified On", value: "2026-03-16T00:00:00Z", category: "lifecycle" },
         { logicalName: "_ownerid_value", label: "Owner", value: "System Administrator", category: "ownership" },
+        { logicalName: "processtriggerscope", label: "Scope", value: "Form", category: "business" },
         { logicalName: "emailaddress1", label: "Email", value: "alice@example.com", category: "business" }
       ],
       relatedRecords: [
@@ -45,7 +46,9 @@ suite("investigationDocumentBuilder", () => {
         "contacts(8129eec7-4414-f111-8341-6045bdc42f8b)",
         "accounts(6d29eec7-4414-f111-8341-6045bdc42f8b)"
       ],
-      inferenceNotes: ["Entity resolved from JSON context."]
+      inferenceNotes: ["Entity resolved from JSON context."],
+      selectedCandidateFieldName: "processtriggerformid",
+      selectedCandidateConfidence: 72
     };
   }
 
@@ -76,5 +79,14 @@ suite("investigationDocumentBuilder", () => {
     assert.match(document, /These are suggestions, not evidence that related rows currently exist\./);
     assert.match(document, /Suggested next queries only\. These are convenience starting points, not verified findings\./);
     assert.match(document, /Resolution Notes/);
+  });
+  test("adds an interpretation section with record meaning hints", () => {
+    const document = buildInvestigationDocument(createModel());
+
+    assert.match(document, /INTERPRETATION/);
+    assert.match(document, /Fast, heuristic meaning layer/);
+    assert.match(document, /opened from the `processtriggerformid` field/);
+    assert.match(document, /related to contact/);
+    assert.match(document, /Context cue: Scope = Form\./);
   });
 });

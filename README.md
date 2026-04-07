@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query, investigation, and reasoning workbench for VS Code — with guided traversal, preview-first query refinement, interactive filter refinement, enrichment, and intelligent Query Doctor diagnostics.
+A metadata-aware Dataverse query and investigation workbench for VS Code — with guided traversal, preview-first query refinement, and intelligent Query Doctor diagnostics.
 
 **Run, understand, explore, and refine Dataverse queries — now with Query-by-Canvas and interactive inline refinement — without leaving your editor.**
 
@@ -21,6 +21,75 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Enrich results without rewriting queries
 
 All inside VS Code — with a preview-first, user-controlled workflow.
+
+---
+
+## 🆕 What's New in v0.8.2 (Result-Driven Insights & Investigation Clarity)
+
+> Introduces result-driven Query Doctor insights and improves investigation clarity — helping you understand both your results and your records faster.
+
+---
+
+### 🧠 Result-Driven Query Doctor
+
+- **Result-driven narrowing insights**
+  - Surfaces narrowing opportunities based on **observed result patterns**
+  - Supports:
+    - repeated categorical values (e.g. status, type)
+    - null vs non-null splits
+  - Keeps suggestions **page-aware** (scoped to current results)
+
+- **More actionable insights**
+  - Easier to see *where to narrow* and *why*
+  - Reduces noise from low-signal technical fields
+
+---
+
+### 🔎 Investigate from Business GUID Columns
+
+- **Inline investigate on surfaced GUID fields**
+  - 🔎 now appears on eligible **non-primary-key GUID columns**
+  - Works for:
+    - business/reference identifiers
+    - related record IDs surfaced in results
+
+- **Low-noise behaviour preserved**
+  - Hidden lookup backing fields (`_..._value`) are not promoted
+  - Avoids overwhelming the UI with technical noise
+
+---
+
+### 🧠 Investigation Interpretation
+
+- Added **Interpretation section** to Investigate Record
+
+- Provides:
+  - quick explanation of what the record likely represents
+  - contextual cues when available
+  - guidance when records are technical or relationship-driven
+
+- Helps answer:
+  - *“What am I looking at?”* immediately
+
+---
+
+### 🔧 Behaviour Changes
+
+- Query Doctor now includes **result-driven insights** when meaningful patterns are detected
+- Investigate actions may appear on **non-PK GUID columns**
+- Investigate output now includes an **INTERPRETATION section**
+
+---
+
+### 🧠 Notes
+
+- Insights are **current-page scoped**
+  - they do not imply full dataset behaviour when paging
+
+- Investigate from GUID columns is **best-effort**
+  - some fields may still require correct entity resolution
+
+- Lookup fields without surfaced GUID values may not show investigate actions in this release
 
 ---
 
@@ -90,7 +159,7 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ### 🧠 Notes
 
-- Designed for real enterprise datasets (e.g. Bupa-scale Dataverse)
+- Designed for real enterprise datasets
 - Improves:
   - perceived performance
   - usability under large data loads
@@ -245,7 +314,14 @@ All directly inside VS Code.
 ### 🔍 Investigate Record
 
 * Select a GUID → investigate instantly
-* See relationships, summary, and suggested queries
+* Works on:
+  - primary keys
+  - surfaced business GUID fields in results
+* See:
+  - relationships
+  - structured summary
+  - **interpretation (what this record likely represents)**
+  - suggested queries
 
 ---
 

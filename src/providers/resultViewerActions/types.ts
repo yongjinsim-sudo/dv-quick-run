@@ -6,6 +6,9 @@ export interface ResultViewerActionPayload {
   guid?: string;
   entitySetName?: string;
   entityLogicalName?: string;
+  primaryIdField?: string;
+  fieldLogicalName?: string;
+  fieldAttributeType?: string;
   columnName?: string;
   rawValue?: string;
   traversalSessionId?: string;
@@ -39,6 +42,8 @@ export interface ResultViewerActionContext {
   entitySetName?: string;
   entityLogicalName?: string;
   primaryIdField?: string;
+  fieldLogicalName?: string;
+  fieldAttributeType?: string;
   queryMode?: ResultViewerQueryMode;
   columnName: string;
   rawValue: string;

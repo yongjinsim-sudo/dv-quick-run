@@ -6,6 +6,97 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## [0.8.2] — Result-Driven Query Doctor & Investigate Interpretation
+
+### New
+
+- Added **result-driven narrowing insights** to Query Doctor
+  - Surfaces narrowing suggestions from **observed result patterns**
+  - Supports:
+    - repeated categorical values on the current page
+    - meaningful null vs non-null splits
+  - Keeps suggestions **page-aware** and scoped to the currently returned page
+  - Continues to prioritise **business-meaningful fields** over low-signal technical fields
+
+- Added **investigate support for surfaced business-like GUID columns** in the Result Viewer
+  - Inline 🔎 investigate action now appears for eligible **non-primary-key GUID fields**
+  - Supports surfaced business/reference-style fields such as:
+    - address / related-record identifiers
+    - other visible GUID columns that look like meaningful record references
+  - Avoids promoting hidden lookup-backing noise such as `_..._value` columns
+
+- Added **Interpretation** section to Investigate Record
+  - Provides a fast heuristic meaning layer near the top of the investigation output
+  - Highlights:
+    - what the record likely represents
+    - contextual cues when available
+    - when a record may be easier to recognise by technical role or relationship than by display name
+
+---
+
+### Improved
+
+- Improved **Query Doctor usefulness**
+  - Moves from evidence-only pattern detection toward more readable **result-driven guidance**
+  - Makes narrowing suggestions easier to notice and act on
+
+- Improved **record investigation readability**
+  - Investigation output now gives quicker “what am I looking at?” guidance
+  - Helps make technical or system-linked records easier to understand at a glance
+
+- Improved **Result Viewer actionability**
+  - More surfaced GUID columns can now be investigated directly from the table
+  - Maintains low-noise behaviour by avoiding obvious technical backing fields
+
+---
+
+### 🔧 Behaviour Changes
+
+- Query Doctor now includes **result-driven narrowing hints** when current-page evidence is meaningful
+- Investigate actions may now appear on **eligible surfaced non-PK GUID columns**, not just primary key columns
+- Investigate Record output now includes an **INTERPRETATION** section before the detailed field summary
+
+---
+
+### 🧱 Architecture
+
+- Introduced a lightweight **Result Insight Engine v1** inside the Query Doctor analysis flow
+- Preserved separation between:
+  - Query Doctor analysis
+  - Result Viewer presentation
+  - Investigate Record document generation
+
+- Added a heuristic **interpretation builder** for investigation output
+  - intentionally lightweight
+  - advisory-only
+  - non-authoritative
+
+---
+
+### 🧪 Testing
+
+- Added coverage for:
+  - result insight detection and rendering
+  - surfaced business GUID investigate eligibility
+  - investigation interpretation section generation
+
+---
+
+### ⚠️ Notes
+
+- Result-driven insights are intentionally **current-page scoped**
+  - they do not imply full dataset truth when paging is involved
+
+- Investigate from business-like GUID columns is **best-effort**
+  - some surfaced GUID fields may still require the correct target table choice to resolve successfully
+
+- Lookup fields that do not expose a surfaced GUID value in the table may not show investigate actions in this release
+
+- Interpretation output is heuristic guidance
+  - it is designed to improve fast understanding, not to act as a source of truth
+
+---
+
 ## [0.8.1] — Result Viewer Enhancements & Large Dataset Handling
 
 ### New
