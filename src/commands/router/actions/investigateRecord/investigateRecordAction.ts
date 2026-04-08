@@ -29,7 +29,8 @@ import {
   loadEntityDefByLogicalName,
   loadEntityDefs
 } from "../shared/metadataAccess.js";
-import { loadTraversalScopeSettings } from "../traversal/traversalScope.js";
+import { loadInvestigateScopeSettings, matchesInvestigatePattern } from "./investigateScope.js";
+import { logInfo } from "../../../../utils/logger.js";
 
 export async function investigateRecordAction(
     ctx: CommandContext,
@@ -606,6 +607,13 @@ async function tryResolveEditorGuidWithoutQuickPick(
     }
   }
 
+  const investigateScope = loadInvestigateScopeSettings(ctx);
+  const investigateScopeTables = Array.from(investigateScope.searchScopeTables);
+  logInfo(
+    ctx.output,
+    `[Investigate] Search scope applied: ${investigateScopeTables.join(", ") || "(none)"}`
+  );
+
   const directPrimaryMatch = await resolvePrimaryIdAcrossAllowedTables(ctx, recordId);
   if (directPrimaryMatch) {
     return {
@@ -665,8 +673,8 @@ async function resolvePrimaryIdAcrossAllowedTables(
   const client = ctx.getClient();
   const token = await ctx.getToken(ctx.getScope());
   const entityDefs = await loadEntityDefs(ctx, client, token, { silent: true });
-  const traversalScope = loadTraversalScopeSettings(ctx);
-  const allowedPatterns = [...traversalScope.allowedTables];
+  const investigateScope = loadInvestigateScopeSettings(ctx, { log: false });
+  const allowedPatterns = [...investigateScope.searchScopeTables];
   const matches: Array<{ entityLogicalName: string; entitySetName: string; primaryIdField: string; recordId: string }> = [];
 
   const targetEntities = entityDefs.filter((entity) => {
@@ -679,35 +687,36 @@ async function resolvePrimaryIdAcrossAllowedTables(
       return false;
     }
 
-    return allowedPatterns.some((pattern) => matchesEntityPattern(logicalName, pattern));
-  }).slice(0, 10);
+    return allowedPatterns.some((pattern) => matchesInvestigatePattern(logicalName, pattern));
+  }).slice(0, investigateScope.maxSearchTables);
 
-  for (const entity of targetEntities) {
-    const primaryIdField = entity.primaryIdAttribute?.trim();
-    const entitySetName = entity.entitySetName?.trim();
-    const entityLogicalName = entity.logicalName?.trim();
+for (const entity of targetEntities) {
+  const primaryIdField = entity.primaryIdAttribute?.trim();
+  const entitySetName = entity.entitySetName?.trim();
+  const entityLogicalName = entity.logicalName?.trim();
 
-    if (!primaryIdField || !entitySetName || !entityLogicalName) {
-      continue;
-    }
+  if (!primaryIdField || !entitySetName || !entityLogicalName) {
+    continue;
+  }
 
-    try {
-      const query = `/${entitySetName}?$select=${primaryIdField}${entity.primaryNameAttribute ? `,${entity.primaryNameAttribute}` : ""}&$filter=${primaryIdField} eq ${recordId}&$top=2`;
-      const response = await client.get(query, token) as { value?: Array<Record<string, unknown>> };
-      const rows = Array.isArray(response.value) ? response.value : [];
-      for (const row of rows) {
-        const matchedId = String(row[primaryIdField] ?? "").trim();
-        if (!matchedId) {
-          continue;
-        }
+  try {
+    const query = `/${entitySetName}?$select=${primaryIdField}${entity.primaryNameAttribute ? `,${entity.primaryNameAttribute}` : ""}&$filter=${primaryIdField} eq ${recordId}&$top=2`;
+    const response = await client.get(query, token) as { value?: Array<Record<string, unknown>> };
+    const rows = Array.isArray(response.value) ? response.value : [];
 
-        matches.push({
-          entityLogicalName,
-          entitySetName,
-          primaryIdField,
-          recordId: matchedId
-        });
+    for (const row of rows) {
+      const matchedId = String(row[primaryIdField] ?? "").trim();
+      if (!matchedId) {
+        continue;
       }
+
+      matches.push({
+        entityLogicalName,
+        entitySetName,
+        primaryIdField,
+        recordId: matchedId
+      });
+    }
     } catch {
       // best effort
     }
@@ -715,7 +724,7 @@ async function resolvePrimaryIdAcrossAllowedTables(
 
   const unique = dedupePrimaryMatches(matches);
   if (unique.length === 1) {
-    return unique[0];
+    return unique[0]!;
   }
 
   if (unique.length > 1) {
@@ -744,19 +753,6 @@ function dedupePrimaryMatches(matches: Array<{ entityLogicalName: string; entity
   }
 
   return [...byKey.values()].sort((a, b) => a.entityLogicalName.localeCompare(b.entityLogicalName) || a.recordId.localeCompare(b.recordId));
-}
-
-function matchesEntityPattern(entity: string, pattern: string): boolean {
-  if (!pattern) {
-    return false;
-  }
-
-  if (!pattern.includes("*")) {
-    return entity === pattern;
-  }
-
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`^${escaped.replace(/\*/g, ".*")}$`, "i").test(entity);
 }
 
 function looksLikeGuid(value: string): boolean {

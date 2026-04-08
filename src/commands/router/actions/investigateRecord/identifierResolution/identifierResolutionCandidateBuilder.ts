@@ -1,12 +1,10 @@
 import type { CommandContext } from "../../../../context/commandContext.js";
 import { loadEntityDefs, loadEntityRelationships, loadFields } from "../../shared/metadataAccess.js";
-import { loadTraversalScopeSettings } from "../../traversal/traversalScope.js";
+import { loadInvestigateScopeSettings, matchesInvestigatePattern } from "../investigateScope.js";
 import type { IdentifierResolutionCandidateField, IdentifierResolutionRequest } from "./identifierResolutionTypes.js";
 import { looksIdentifierLike, scoreIdentifierField } from "./identifierResolutionFieldScorer.js";
 
 const SUPPORTED_ATTRIBUTE_TYPES = new Set(["uniqueidentifier", "string", "memo"]);
-const MAX_TABLES = 10;
-const MAX_FIELDS = 20;
 
 export async function buildIdentifierResolutionCandidates(
   ctx: CommandContext,
@@ -28,8 +26,8 @@ export async function buildIdentifierResolutionCandidates(
       ? entityBySetName.get(request.currentEntitySetName.trim().toLowerCase())
       : undefined;
 
-  const traversalScope = loadTraversalScopeSettings(ctx);
-  const allowedPatterns = [...traversalScope.allowedTables];
+  const investigateScope = loadInvestigateScopeSettings(ctx, { log: false });
+  const allowedPatterns = [...investigateScope.searchScopeTables];
 
   const targetEntities = new Map<string, { logicalName: string; entitySetName: string; primaryIdAttribute?: string }>();
 
@@ -46,7 +44,7 @@ export async function buildIdentifierResolutionCandidates(
   }
 
   for (const entity of entityDefs) {
-    if (targetEntities.size >= MAX_TABLES) {
+    if (targetEntities.size >= investigateScope.maxSearchTables) {
       break;
     }
 
@@ -55,7 +53,7 @@ export async function buildIdentifierResolutionCandidates(
       continue;
     }
 
-    if (allowedPatterns.some((pattern) => matchesPattern(logicalName, pattern))) {
+    if (allowedPatterns.some((pattern) => matchesInvestigatePattern(logicalName, pattern))) {
       targetEntities.set(logicalName, entity);
     }
   }
@@ -123,21 +121,9 @@ export async function buildIdentifierResolutionCandidates(
   candidates.sort((a, b) => b.score - a.score || a.entityLogicalName.localeCompare(b.entityLogicalName) || a.fieldLogicalName.localeCompare(b.fieldLogicalName));
 
   return {
-    candidates: candidates.slice(0, MAX_FIELDS),
+    candidates: candidates.slice(0, investigateScope.maxSearchColumns),
     searchedEntityLogicalNames,
     missingAllowedTables: false
   };
 }
 
-function matchesPattern(entity: string, pattern: string): boolean {
-  if (!pattern) {
-    return false;
-  }
-
-  if (!pattern.includes("*")) {
-    return entity === pattern;
-  }
-
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`^${escaped.replace(/\*/g, ".*")}$`, "i").test(entity);
-}

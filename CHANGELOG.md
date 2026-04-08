@@ -6,6 +6,115 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## 🚀 v0.8.4 — Intelligence Foundation Refactor (Stabilisation Release)
+
+This release focuses on **internal architecture stabilisation** and **intelligence layer consolidation** across Investigate Record and Query Doctor.
+
+No major UX changes, but this is a **foundational release** that enables deeper intelligence features moving forward.
+
+---
+
+### 🧠 Shared Intelligence Layer (NEW)
+
+- Introduced shared primitives for:
+  - identifier detection (e.g. `id`, `_id`, `fhirid`, etc.)
+  - field semantics classification
+  - candidate scoring and ranking
+- Eliminates duplicated heuristics across:
+  - Investigate Record
+  - Query Doctor
+- Establishes a reusable foundation for future intelligence features
+
+---
+
+### 🔍 Investigate Record — Decoupled from Traversal
+
+- Investigate Record now operates independently from traversal
+- Introduced dedicated configuration:
+  - `dvQuickRun.investigate.searchScopeTables`
+  - `dvQuickRun.investigate.maxSearchTables`
+  - `dvQuickRun.investigate.maxSearchColumns`
+- Default search scope now includes:
+  - `account`
+  - `contact`
+- Removes reliance on traversal `allowedTables`
+
+---
+
+### ⚙️ Configurable Search Scope (NEW)
+
+- Search scope is now:
+  - explicit
+  - bounded
+  - user-configurable
+- Improves transparency and avoids hidden behaviour limits
+
+---
+
+### 📊 Result Insight Pipeline (INTERNAL)
+
+- Introduced structured pipeline:
+  - Extract → Classify → Score → Rank → Suggest
+- Enables:
+  - better candidate prioritisation
+  - cleaner extensibility for Query Doctor and Investigate
+- Lays groundwork for future result-aware diagnostics
+
+---
+
+### 🧹 Logging & Output Cleanup
+
+- Removed traversal-branded logging from Investigate flows
+- Introduced concise investigate-specific logging:
+[Investigate] Search scope applied: account, contact
+
+- Eliminated noisy duplicate scope logs within a single run
+
+---
+
+### 🧱 Internal Refactor
+
+- Reduced “God file” complexity across:
+- Investigate Record
+- Query Doctor (partial)
+- Improved separation of concerns:
+- detection vs scoring vs execution
+- Prepared codebase for future modular rule expansion
+
+---
+
+### ⚡ Behaviour Improvements
+
+- Improved weak-context identifier resolution (e.g. GUID pasted without entity context)
+- Better handling of fields like:
+- `msemr_azurefhirid`
+- custom identifier-style columns
+- More consistent ranking of candidate matches
+
+---
+
+### 🧪 Stability
+
+- All unit tests passing
+- No regression in:
+- Query execution
+- Explain
+- Investigate Record flows
+- Manual validation completed across common workflows
+
+---
+
+## 🧭 Notes
+
+This is a **stabilisation and foundation release**.
+
+The changes in v0.8.4 enable:
+- deeper Query Doctor intelligence
+- improved Investigate Record capabilities
+- future result-aware diagnostics and suggestions
+
+---
+
 ## [0.8.3] - Improved Investigate Record without Schema Context
 
 ### New
