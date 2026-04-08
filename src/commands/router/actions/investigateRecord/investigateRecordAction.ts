@@ -682,32 +682,33 @@ async function resolvePrimaryIdAcrossAllowedTables(
     return allowedPatterns.some((pattern) => matchesEntityPattern(logicalName, pattern));
   }).slice(0, 10);
 
-  for (const entity of targetEntities) {
-    const primaryIdField = entity.primaryIdAttribute?.trim();
-    const entitySetName = entity.entitySetName?.trim();
-    const entityLogicalName = entity.logicalName?.trim();
+for (const entity of targetEntities) {
+  const primaryIdField = entity.primaryIdAttribute?.trim();
+  const entitySetName = entity.entitySetName?.trim();
+  const entityLogicalName = entity.logicalName?.trim();
 
-    if (!primaryIdField || !entitySetName || !entityLogicalName) {
-      continue;
-    }
+  if (!primaryIdField || !entitySetName || !entityLogicalName) {
+    continue;
+  }
 
-    try {
-      const query = `/${entitySetName}?$select=${primaryIdField}${entity.primaryNameAttribute ? `,${entity.primaryNameAttribute}` : ""}&$filter=${primaryIdField} eq ${recordId}&$top=2`;
-      const response = await client.get(query, token) as { value?: Array<Record<string, unknown>> };
-      const rows = Array.isArray(response.value) ? response.value : [];
-      for (const row of rows) {
-        const matchedId = String(row[primaryIdField] ?? "").trim();
-        if (!matchedId) {
-          continue;
-        }
+  try {
+    const query = `/${entitySetName}?$select=${primaryIdField}${entity.primaryNameAttribute ? `,${entity.primaryNameAttribute}` : ""}&$filter=${primaryIdField} eq ${recordId}&$top=2`;
+    const response = await client.get(query, token) as { value?: Array<Record<string, unknown>> };
+    const rows = Array.isArray(response.value) ? response.value : [];
 
-        matches.push({
-          entityLogicalName,
-          entitySetName,
-          primaryIdField,
-          recordId: matchedId
-        });
+    for (const row of rows) {
+      const matchedId = String(row[primaryIdField] ?? "").trim();
+      if (!matchedId) {
+        continue;
       }
+
+      matches.push({
+        entityLogicalName,
+        entitySetName,
+        primaryIdField,
+        recordId: matchedId
+      });
+    }
     } catch {
       // best effort
     }
@@ -715,7 +716,7 @@ async function resolvePrimaryIdAcrossAllowedTables(
 
   const unique = dedupePrimaryMatches(matches);
   if (unique.length === 1) {
-    return unique[0];
+    return unique[0]!;
   }
 
   if (unique.length > 1) {
