@@ -24,6 +24,95 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
+## 🆕 What's New in v0.8.4 (Intelligence Foundation & Investigate Improvements)
+
+> Stabilises and consolidates DV Quick Run’s intelligence layer — enabling stronger Investigate Record and future Query Doctor capabilities.
+
+---
+
+### 🧠 Shared Intelligence Layer
+
+- Introduced shared primitives for:
+  - identifier detection (e.g. `id`, `_id`, `fhirid`)
+  - field semantics classification
+  - candidate scoring and ranking
+- Removes duplicated heuristics across:
+  - Investigate Record
+  - Query Doctor
+- Establishes a reusable foundation for future intelligence features
+
+---
+
+### 🔍 Investigate Record — Improved & Decoupled
+
+- Investigate Record now operates independently from traversal
+- Supports **weak-context GUID investigation**:
+  - copy GUID → run → resolve
+- Improved identifier handling:
+  - supports fields like `msemr_azurefhirid`
+  - recognises broader identifier-style columns
+
+---
+
+### ⚙️ Configurable Investigate Search Scope
+
+- New configuration:
+  - `dvQuickRun.investigate.searchScopeTables`
+  - `dvQuickRun.investigate.maxSearchTables`
+  - `dvQuickRun.investigate.maxSearchColumns`
+
+- Default search scope:
+  - `account`
+  - `contact`
+
+- Behaviour is now:
+  - bounded
+  - transparent
+  - user-controlled
+
+---
+
+### 🧾 Clear Search Scope Feedback
+
+- Investigate now shows:
+[Investigate] Search scope applied: account, contact
+
+- Helps users understand:
+- where the system searched
+- how to expand coverage via configuration
+
+---
+
+### 📊 Result Insight Pipeline (Internal)
+
+- Introduced structured reasoning pipeline:
+- Extract → Classify → Score → Rank → Suggest
+- Enables:
+- better prioritisation of meaningful fields
+- cleaner future extensibility for Query Doctor and Investigate
+
+---
+
+### 🧹 Logging Improvements
+
+- Removed traversal-based logging from Investigate flows
+- Reduced noisy repeated logs
+- Clear separation between:
+- traversal behaviour
+- investigate behaviour
+
+---
+
+### 🧠 Notes
+
+- Investigate is now **independent from traversal**
+- Weak-context investigation is **bounded by searchScopeTables**
+- Result Viewer context still provides the most accurate resolution
+- If unresolved:
+- DV Quick Run reports searched scope instead of guessing
+
+---
+
 ## 🆕 What's New in v0.8.3 (Context-Aware Identifier Resolution)
 
 > Enables GUID-first investigation — resolve unknown identifiers safely using context when available, or bounded search when not.
