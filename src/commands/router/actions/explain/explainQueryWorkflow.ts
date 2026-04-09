@@ -12,11 +12,14 @@ import { loadChoiceMetadata, loadFields } from "../shared/metadataAccess.js";
 import { parseDataverseQuery } from "./explainQueryParser.js";
 import { toExplainMarkdown } from "./explainQueryMarkdown.js";
 import { openMarkdownPreview } from "./explainQueryRuntime.js";
+import { setExplainDocumentState } from "./explainDocState.js";
+import { getLogicalEditorQueryTarget } from "../shared/queryMutation/editorQueryTarget.js";
 import { analyseExplainQuery } from "./explainQueryAnalysis.js";
 import type { ParsedDataverseQuery } from "./explainQueryTypes.js";
 import { hasExpandClause } from "../shared/diagnostics/expandDetection.js";
 import { buildExpandNotFullySupportedDiagnostic } from "../shared/diagnostics/diagnosticSuggestionBuilder.js";
 import { getExecutionEvidenceForQuery } from "../shared/diagnostics/executionEvidence.js";
+import type { EditorQueryTarget } from "../shared/queryMutation/editorQueryTarget.js";
 
 type ExplainAnalysis = Awaited<ReturnType<typeof analyseExplainQuery>>;
 
@@ -38,10 +41,11 @@ type ExplainWorkflowDeps = {
   loadFieldsForEntity: (ctx: CommandContext, logicalName: string) => Promise<FieldDef[]>;
   loadChoiceMetadataForEntity: (ctx: CommandContext, logicalName: string) => Promise<ChoiceMetadataDef[]>;
   buildFetchXmlMarkdown: (ctx: CommandContext, text: string) => Promise<string>;
-  openPreview: (markdown: string) => Promise<void>;
+  openPreview: (markdown: string) => Promise<vscode.TextDocument>;
   logDebugMessage: (output: CommandContext["output"], message: string) => void;
   logInfoMessage: (output: CommandContext["output"], message: string) => void;
   showInformationMessage: (message: string) => Thenable<string | undefined>;
+  resolveSourceTarget: () => EditorQueryTarget;
 };
 
 const defaultDeps: ExplainWorkflowDeps = {
@@ -63,6 +67,7 @@ const defaultDeps: ExplainWorkflowDeps = {
     return await loadChoiceMetadata(ctx, client, token, logicalName, { silent: true });
   },
   openPreview: openMarkdownPreview,
+  resolveSourceTarget: getLogicalEditorQueryTarget,
   logDebugMessage: logDebug,
   logInfoMessage: logInfo,
   showInformationMessage: vscode.window.showInformationMessage
@@ -129,7 +134,12 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
     choiceMetadata
   );
 
-  await deps.openPreview(markdown);
+  const sourceTarget = deps.resolveSourceTarget();
+  const explainDoc = await deps.openPreview(markdown);
+  setExplainDocumentState(explainDoc.uri, {
+    source: { uri: sourceTarget.editor.document.uri, range: sourceTarget.range },
+    diagnostics
+  });
 
   deps.logInfoMessage(ctx.output, `Explain Query success for entity set: ${parsed.entitySetName}`);
   await deps.showInformationMessage("DV Quick Run: Query explained.");

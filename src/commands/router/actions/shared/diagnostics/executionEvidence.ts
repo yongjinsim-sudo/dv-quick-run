@@ -4,6 +4,7 @@ export type ComparisonKind = "filterImpact" | "expandImpact" | "narrowerSelect";
 
 export interface ExecutionFieldObservationValueCount {
   value: string;
+  rawValue?: string | number | boolean | null;
   count: number;
 }
 
@@ -149,15 +150,20 @@ function extractFieldObservations(result: unknown): ExecutionFieldObservation[] 
       continue;
     }
 
-    const counts = new Map<string, number>();
+    const counts = new Map<string, { count: number; rawValue?: string | number | boolean | null }>();
     for (const item of nonNullIndexes) {
       const key = normalizeObservedValue(item.value, formattedValues[item.index]);
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(key, { count: 1, rawValue: normalizeObservedRawValue(item.value) });
+      }
     }
 
     const sortedCounts = Array.from(counts.entries())
-      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
-      .map(([value, count]) => ({ value, count }));
+      .sort((left, right) => right[1].count - left[1].count || left[0].localeCompare(right[0]))
+      .map(([value, entry]) => ({ value, rawValue: entry.rawValue, count: entry.count }));
 
     observations.push({
       field,
@@ -185,6 +191,22 @@ function isObservableField(field: string, value: unknown): boolean {
   return true;
 }
 
+function normalizeObservedRawValue(value: unknown): string | number | boolean | null | undefined {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+
+  return undefined;
+}
+
 function normalizeObservedValue(value: unknown, formattedValue?: string): string {
   if (formattedValue && formattedValue.trim()) {
     return formattedValue.trim();
@@ -210,7 +232,7 @@ function classifyObservedField(field: string, values: unknown[], formattedValues
   const sample = nonNullValues[0];
 
   if (typeof sample === "boolean") {
-    return "ignore";
+    return "categorical";
   }
 
   if (typeof sample === "number") {

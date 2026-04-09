@@ -31,7 +31,8 @@ export interface DiagnosticNarrowingSuggestion {
   reasons: string[];
   tier?: DiagnosticNarrowingSuggestionTier;
   suggestedOperator?: "eq" | "ne";
-  suggestedValue?: string | null;
+  suggestedValue?: string | number | boolean | null;
+  suggestedValueLabel?: string;
 }
 
 export interface DiagnosticFinding {

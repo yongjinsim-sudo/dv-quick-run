@@ -5,12 +5,12 @@ import type { DvQuickRunAction } from "./router/dataverseRouter.js";
 export function registerCommand(
   context: vscode.ExtensionContext,
   commandId: string,
-  handler: (ctx: CommandContext) => Promise<void> | void,
+  handler: (ctx: CommandContext, ...args: any[]) => Promise<void> | void,
   ctx: CommandContext
 ) {
   context.subscriptions.push(
-    vscode.commands.registerCommand(commandId, async () => {
-      await handler(ctx);
+    vscode.commands.registerCommand(commandId, async (...args: any[]) => {
+      await handler(ctx, ...args);
     })
   );
 }

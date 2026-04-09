@@ -53,4 +53,60 @@ suite("diagnosticOutputBuilder", () => {
     assert.ok(lines.includes("### Root Cause: Invalid date/datetime literal"));
   });
 
+  test("renders recommended next step with star, action, and preview query", () => {
+    const lines = buildDiagnosticMarkdownLines({
+      findings: [{
+        message: "Observed repeated values on this result page.",
+        severity: "info",
+        suggestion: "Narrow on `Marital Status (familystatuscode)` using eq Married.",
+        suggestedQuery: {
+          query: "?$filter=familystatuscode eq 2"
+        },
+        narrowingSuggestions: [{
+          field: "familystatuscode",
+          kind: "categorical",
+          rationale: "narrow on `Marital Status (familystatuscode)` using eq Married.",
+          reasons: [
+            "Based on 13 returned rows, this is the clearest first server-side filter.",
+            "`Marital Status` shows repeated values: Married × 5, Single × 5, Divorced × 3"
+          ],
+          tier: "recommended"
+        }, {
+          field: "gendercode",
+          kind: "categorical",
+          rationale: "secondary repeated value pattern observed on the current result page",
+          reasons: ["value Male appears 7 times"],
+          tier: "secondary"
+        }],
+        confidence: 0.82
+      }]
+    });
+
+    assert.ok(lines.includes("### ⭐ Recommended next step"));
+    assert.ok(lines.includes("- Action: Narrow on `Marital Status (familystatuscode)` using eq Married."));
+    assert.ok(lines.includes("- Preview query: ?$filter=familystatuscode eq 2"));
+    assert.ok(lines.includes("    - Why this field:"));
+    assert.ok(!lines.some((line) => line.includes("Suggestion: Recommended next step")));
+  });
+
+  test("uses action label and preview query for advisory groups without duplicating suggestion text", () => {
+    const lines = buildDiagnosticMarkdownLines({
+      findings: [{
+        message: "Query does not specify $select.",
+        severity: "warning",
+        suggestion: "Add $select to reduce payload size and improve result clarity.",
+        suggestedFix: {
+          label: "Add a focused $select clause",
+          detail: "Limit the response to the fields you actually need so the query is easier to inspect and cheaper to run.",
+          example: "contacts?$select=fullname,contactid"
+        },
+        confidence: 0.95
+      }]
+    });
+
+    assert.ok(lines.includes("### Advisory: Query shape missing $select"));
+    assert.ok(lines.includes("- Action: Add $select to reduce payload size and improve result clarity."));
+    assert.ok(lines.includes("- Preview query: contacts?$select=fullname,contactid"));
+    assert.ok(!lines.some((line) => line.includes("Suggestion: Add $select to reduce payload size and improve result clarity.")));
+  });
 });

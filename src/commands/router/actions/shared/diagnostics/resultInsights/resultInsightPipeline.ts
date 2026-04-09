@@ -5,8 +5,7 @@ import { buildFieldMetadataMap, findFieldMetadata } from "./resultInsightFieldMe
 import { isMeaningfulResultInsightCandidate, scoreResultInsightCandidate } from "./resultInsightScoring.js";
 import type { RankedResultInsightCandidate, ResultInsightContext } from "./resultInsightTypes.js";
 
-const MAX_CANDIDATES = 6;
-const MAX_RECOMMENDED = 3;
+const MAX_CANDIDATES = 3;
 
 export function buildRankedResultInsightCandidates(input: {
   evidence: ExecutionEvidence;
@@ -33,9 +32,13 @@ export function buildRankedResultInsightCandidates(input: {
       };
     });
 
-  const rankedCandidates = rankCandidatesByScore(scoredCandidates);
-  const recommended = rankedCandidates.filter((item) => item.item.tier === "recommended").slice(0, MAX_RECOMMENDED);
-  const secondary = rankedCandidates.filter((item) => item.item.tier === "secondary").slice(0, MAX_CANDIDATES - recommended.length);
+  const rankedCandidates = rankCandidatesByScore(scoredCandidates).slice(0, MAX_CANDIDATES);
 
-  return [...recommended, ...secondary].slice(0, MAX_CANDIDATES);
+  return rankedCandidates.map((candidate, index) => ({
+    ...candidate,
+    item: {
+      ...candidate.item,
+      tier: index === 0 ? "recommended" : "secondary"
+    }
+  }));
 }

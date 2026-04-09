@@ -18,12 +18,17 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
   for (const group of groups) {
     lines.push(`### ${group.title}`);
 
-    if (typeof group.confidence === "number") {
-      lines.push(`- Confidence: ${group.confidence.toFixed(2)}`);
-    }
+    const isRecommendedNextStepGroup = group.title === "⭐ Recommended next step";
+    const isAdvisoryGroup = group.title.startsWith("Advisory:");
+    const usesActionLabel = isRecommendedNextStepGroup || isAdvisoryGroup;
 
     if (group.recommendation) {
-      lines.push(`- Recommendation: ${group.recommendation}`);
+      lines.push(`- ${usesActionLabel ? "Action" : "Recommendation"}: ${group.recommendation}`);
+    }
+
+    const groupPreviewQuery = resolveGroupPreviewQuery(group);
+    if (groupPreviewQuery && usesActionLabel) {
+      lines.push(`- Preview query: ${groupPreviewQuery}`);
     }
 
     lines.push("- Evidence:");
@@ -37,7 +42,9 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
 
       lines.push(`${prefix} ${finding.message}`);
 
-      if (finding.suggestion) {
+      const duplicateSuggestion = finding.suggestion && group.recommendation && finding.suggestion === group.recommendation;
+
+      if (finding.suggestion && !isRecommendedNextStepGroup && !duplicateSuggestion) {
         lines.push(`    - Suggestion: ${finding.suggestion}`);
       }
 
@@ -49,10 +56,12 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
         }
       }
 
-      if (finding.suggestedQuery?.query) {
-        lines.push(`    - Suggested query: ${finding.suggestedQuery.query}`);
-      } else if (finding.suggestedFix?.example) {
-        lines.push(`    - Suggested query: ${finding.suggestedFix.example}`);
+      const queryLabel = (isRecommendedNextStepGroup || isAdvisoryGroup) ? "Preview query" : "Suggested query";
+      const findingPreviewQuery = finding.suggestedQuery?.query ?? finding.suggestedFix?.example;
+      const previewAlreadyShownAtGroupLevel = usesActionLabel && findingPreviewQuery === groupPreviewQuery;
+
+      if (findingPreviewQuery && !previewAlreadyShownAtGroupLevel) {
+        lines.push(`    - ${queryLabel}: ${findingPreviewQuery}`);
       }
 
       if (finding.observedDetails?.length) {
@@ -67,20 +76,21 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
         const secondary = finding.narrowingSuggestions.filter((item) => item.tier === "secondary");
 
         if (recommended.length) {
-          lines.push("    - Recommended narrowing dimensions:");
-          for (const narrowingSuggestion of recommended) {
-            lines.push(`      - \`${narrowingSuggestion.field}\` — ${narrowingSuggestion.rationale}`);
-            for (const reason of narrowingSuggestion.reasons) {
-              lines.push(`        - ${reason}`);
+          const [primarySuggestion] = recommended;
+          if (primarySuggestion) {
+            lines.push("    - Why this field:");
+            lines.push(`      - ${toSentenceCase(primarySuggestion.rationale)}`);
+            for (const reason of primarySuggestion.reasons.slice(0, 2)) {
+              lines.push(`      - ${reason}`);
             }
           }
         }
 
         if (secondary.length) {
           lines.push("    - Other possible dimensions:");
-          for (const narrowingSuggestion of secondary) {
+          for (const narrowingSuggestion of secondary.slice(0, 2)) {
             lines.push(`      - \`${narrowingSuggestion.field}\` — ${narrowingSuggestion.rationale}`);
-            for (const reason of narrowingSuggestion.reasons) {
+            for (const reason of narrowingSuggestion.reasons.slice(0, 2)) {
               lines.push(`        - ${reason}`);
             }
           }
@@ -92,6 +102,17 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
   }
 
   return lines;
+}
+
+function resolveGroupPreviewQuery(group: DiagnosticGroup): string | undefined {
+  for (const finding of group.findings) {
+    const previewQuery = finding.suggestedQuery?.query ?? finding.suggestedFix?.example;
+    if (previewQuery) {
+      return previewQuery;
+    }
+  }
+
+  return undefined;
 }
 
 function groupFindings(findings: DiagnosticFinding[]): DiagnosticGroup[] {
@@ -195,7 +216,7 @@ function getGroupingKey(finding: DiagnosticFinding): string {
 function buildGroupTitle(key: string, finding: DiagnosticFinding): string {
   switch (key) {
     case "narrowing-suggestions":
-      return "Use the observed patterns below to decide which field might be a good narrowing dimension for this result page.";
+      return "⭐ Recommended next step";
 
     case "operator-guid-lookup":
       return "Root Cause: Invalid operator for GUID / lookup field";
@@ -239,9 +260,6 @@ function buildGroupTitle(key: string, finding: DiagnosticFinding): string {
     case "shape-top":
       return "Advisory: Query shape missing $top";
 
-    case "narrowing-suggestions":
-      return "Suggested narrowing options";
-
     default:
       return `Issue: ${finding.message}`;
   }
@@ -255,7 +273,7 @@ function buildGroupRecommendation(key: string, findings: DiagnosticFinding[]): s
 
   switch (key) {
     case "narrowing-suggestions":
-      return "Use the observed patterns below to decide which field might be a good narrowing dimension for this result page.";
+      return undefined;
 
     case "operator-guid-lookup":
     case "operator-boolean":
@@ -291,4 +309,12 @@ function buildGroupRecommendation(key: string, findings: DiagnosticFinding[]): s
     default:
       return undefined;
   }
+}
+
+function toSentenceCase(value: string): string {
+  if (!value) {
+    return value;
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

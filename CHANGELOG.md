@@ -6,6 +6,141 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## 🚀 v0.8.5 — Explain UX Refinement & Actionable Execution Loop
+
+This release focuses on **clarifying Explain output** and introducing a **tight action → preview → apply workflow**.
+
+It transforms Query Doctor from **advisory-only** into a **directly actionable experience**, while keeping the interface minimal and noise-free.
+
+---
+
+### ✨ Explain Output Simplification
+
+- Removed redundant phrasing:
+  - eliminated `"Recommended next step:"` duplication
+- Promoted **section title as the primary signal**
+  - `### ⭐ Recommended next step` is now sufficient
+- Tightened wording across:
+  - actions
+  - evidence
+  - rationale
+
+👉 Results in:
+- cleaner scan
+- faster comprehension
+- stronger confidence in suggestions
+
+---
+
+### ⚡ Apply Preview (Pro)
+
+- Introduced **`Apply preview` CodeLens inside Explain output**
+- Appears directly within diagnostic sections:
+  - Recommended next step
+  - Advisory sections (e.g. `$select`, `$top`)
+
+- Positioned:
+  - **just above “Preview query”**
+  - close to execution context (not header)
+
+- Enables:
+  - one-step transition from insight → execution
+  - preview-first safe mutation workflow
+
+---
+
+### 🔓 Free vs Pro Behaviour
+
+- **Free**
+  - Shows:
+    - Action
+    - Evidence
+    - Reasoning
+    - Preview query
+  - No execution shortcut
+
+- **Pro**
+  - Adds:
+    - `Apply preview` inline action
+  - Enables:
+    - direct mutation workflow
+    - faster iteration loop
+
+👉 Maintains:
+- full learning experience for free users
+- execution acceleration for Pro users
+
+---
+
+### 🔁 Consistent Execution Pattern
+
+- Standardised across Explain:
+Action
+Apply preview (Pro)
+Preview query
+Evidence
+
+
+- Applied to:
+- narrowing suggestions
+- `$select` advisory
+- `$top` advisory
+
+👉 Establishes a consistent **Explain → Act → Iterate loop**
+
+---
+
+### 🧠 Query Doctor UX Evolution
+
+- Shifts Query Doctor from:
+- “analysis + suggestion”
+
+- To:
+- **analysis → recommendation → executable action**
+
+- Aligns with:
+- Query-by-Canvas principles
+- preview-first mutation pipeline
+
+---
+
+### 🧹 UX Improvements
+
+- Reduced visual clutter in Explain output
+- Improved proximity between:
+- suggestion
+- execution action
+- Removed unnecessary repetition and verbose phrasing
+
+---
+
+### 🧪 Stability
+
+- All unit tests passing
+- Verified:
+- Explain rendering
+- CodeLens injection
+- Preview workflow integration
+- No regression in:
+- Run Query
+- Investigate Record
+- Query execution pipeline
+
+---
+
+## 🧭 Notes
+
+This release marks the transition from:
+
+- **advisory diagnostics**
+→ **actionable diagnostics**
+
+It lays the groundwork for:
+
+- multi-option recommendations
+- ranked suggestions
+- deeper Query Doctor intelligence (v0.9+)
+
 ## 🚀 v0.8.4 — Intelligence Foundation Refactor (Stabilisation Release)
 
 This release focuses on **internal architecture stabilisation** and **intelligence layer consolidation** across Investigate Record and Query Doctor.

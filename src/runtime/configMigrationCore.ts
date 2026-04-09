@@ -1,4 +1,4 @@
-export type TraversalConfigInspection = {
+export type ConfigInspection = {
   section: string;
   defaultValue?: unknown;
   globalValue?: unknown;
@@ -11,12 +11,12 @@ export type ConfigMigrationWrite = {
   value: unknown;
 };
 
-export type TraversalConfigMigrationPlan = {
+export type ConfigMigrationPlan = {
   writes: ConfigMigrationWrite[];
   skipped: string[];
 };
 
-function hasExplicitValue(inspection: TraversalConfigInspection): boolean {
+function hasExplicitValue(inspection: ConfigInspection): boolean {
   return typeof inspection.globalValue !== "undefined"
     || typeof inspection.workspaceValue !== "undefined"
     || typeof inspection.workspaceFolderValue !== "undefined";
@@ -27,6 +27,10 @@ function cloneSupportedDefaultValue(value: unknown): unknown {
     return value;
   }
 
+  if (typeof value === "number") {
+    return value;
+  }
+
   if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
     return [...value];
   }
@@ -34,9 +38,9 @@ function cloneSupportedDefaultValue(value: unknown): unknown {
   return undefined;
 }
 
-export function buildTraversalConfigMigrationPlan(
-  inspections: TraversalConfigInspection[]
-): TraversalConfigMigrationPlan {
+export function buildConfigMigrationPlan(
+  inspections: ConfigInspection[]
+): ConfigMigrationPlan {
   const writes: ConfigMigrationWrite[] = [];
   const skipped: string[] = [];
 

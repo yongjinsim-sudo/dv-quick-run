@@ -24,21 +24,44 @@ suite("explainQueryWorkflow", () => {
     const messages: string[] = [];
     let previewMarkdown = "";
 
-    await runExplainQueryWorkflowWithDeps({ output: {} } as any, {
-      resolveText: () => "contacts?$select=fullname",
-      detectKind: () => "odata",
-      parseQuery: () => parsed,
-      analyse: async () => ({ entity: { logicalName: "contact" } as any, validationIssues: [{ severity: "warning", message: "ok" }] as any }),
-      buildMarkdown: (_parsed, entity, issues, _notes, diagnostics) => `entity=${entity?.logicalName};issues=${issues.length};diagnostics=${diagnostics.findings.length}`,
-      getQueryDoctorCapabilities: () => ({ insightLevel: 1, canApplyFix: false }),
-      buildFetchXmlMarkdown: async () => "",
-      loadFieldsForEntity: async () => [],
-      loadChoiceMetadataForEntity: async () => [],
-      openPreview: async (markdown: string) => { previewMarkdown = markdown; },
-      logDebugMessage: (_output: any, message: string) => { debug.push(message); },
-      logInfoMessage: (_output: any, message: string) => { info.push(message); },
-      showInformationMessage: async (message: string) => { messages.push(message); return undefined; }
-    });
+    const fakePreviewDocument = () =>
+      ({
+        uri: {
+          toString: () => "test://explain-preview"
+        }
+      } as any);
+
+    const fakeSourceTarget = () =>
+      ({
+        editor: {
+          document: {
+            uri: {
+              toString: () => "test://source-query"
+            }
+          }
+        } as any,
+        range: {} as any
+      } as any);
+
+      await runExplainQueryWorkflowWithDeps({ output: {} } as any, {
+        resolveText: () => "contacts?$select=fullname",
+        detectKind: () => "odata",
+        parseQuery: () => parsed,
+        analyse: async () => ({ entity: { logicalName: "contact" } as any, validationIssues: [{ severity: "warning", message: "ok" }] as any }),
+        buildMarkdown: (_parsed, entity, issues, _notes, diagnostics) => `entity=${entity?.logicalName};issues=${issues.length};diagnostics=${diagnostics.findings.length}`,
+        getQueryDoctorCapabilities: () => ({ insightLevel: 1, canApplyFix: false }),
+        buildFetchXmlMarkdown: async () => "",
+        loadFieldsForEntity: async () => [],
+        loadChoiceMetadataForEntity: async () => [],
+        openPreview: async (markdown: string) => {
+          previewMarkdown = markdown;
+          return fakePreviewDocument();
+        },
+        resolveSourceTarget: fakeSourceTarget,
+        logDebugMessage: (_output: any, message: string) => { debug.push(message); },
+        logInfoMessage: (_output: any, message: string) => { info.push(message); },
+        showInformationMessage: async (message: string) => { messages.push(message); return undefined; }
+      });
 
     assert.ok(debug[0].includes("entitySet=contacts"));
     assert.ok(info.some((message) => message.includes("contacts")));
@@ -57,8 +80,16 @@ suite("explainQueryWorkflow", () => {
         getQueryDoctorCapabilities: () => ({ insightLevel: 1, canApplyFix: false }),
         buildFetchXmlMarkdown: async () => "",
         loadFieldsForEntity: async () => [],
-      loadChoiceMetadataForEntity: async () => [],
-        openPreview: async () => undefined,
+        loadChoiceMetadataForEntity: async () => [],
+        openPreview: async () => ({} as any),
+        resolveSourceTarget: () => ({
+        editor: {
+            document: {
+              uri: {} as any
+            }
+          } as any,
+          range: {} as any
+        } as any),
         logDebugMessage: () => undefined,
         logInfoMessage: () => undefined,
         showInformationMessage: async () => undefined
@@ -78,8 +109,16 @@ suite("explainQueryWorkflow", () => {
         getQueryDoctorCapabilities: () => ({ insightLevel: 1, canApplyFix: false }),
         buildFetchXmlMarkdown: async () => "",
         loadFieldsForEntity: async () => [],
-      loadChoiceMetadataForEntity: async () => [],
-        openPreview: async () => undefined,
+        loadChoiceMetadataForEntity: async () => [],
+        openPreview: async () => ({} as any),
+        resolveSourceTarget: () => ({
+          editor: {
+            document: {
+              uri: {} as any
+            }
+          } as any,
+          range: {} as any
+        } as any),
         logDebugMessage: () => undefined,
         logInfoMessage: () => undefined,
         showInformationMessage: async () => undefined
@@ -100,7 +139,20 @@ suite("explainQueryWorkflow", () => {
       buildFetchXmlMarkdown: async () => "fetchxml-markdown",
       loadFieldsForEntity: async () => [],
       loadChoiceMetadataForEntity: async () => [],
-      openPreview: async (markdown: string) => { previewMarkdown = markdown; },
+      openPreview: async (markdown: string) => {
+        previewMarkdown = markdown;
+        return {
+          uri: { toString: () => "test://explain-preview" }
+        } as any;
+      },
+      resolveSourceTarget: () => ({
+        editor: {
+          document: {
+            uri: {} as any
+          }
+        } as any,
+        range: {} as any
+      } as any),
       logDebugMessage: () => undefined,
       logInfoMessage: () => undefined,
       showInformationMessage: async () => undefined

@@ -24,6 +24,115 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
+## 🆕 What's New in v0.8.5 (Explain UX & Actionable Diagnostics)
+
+> Refines Explain output and introduces a tighter action → preview → apply workflow — making Query Doctor insights clearer and more actionable.
+
+---
+
+### ✨ Explain Output Simplification
+
+- Removed redundant phrasing:
+  - eliminated repeated “Recommended next step” wording
+- Promoted section title as the primary signal:
+  - `### ⭐ Recommended next step` is now sufficient
+- Tightened wording across:
+  - actions
+  - evidence
+  - rationale
+
+- Results in:
+  - cleaner output
+  - faster scanning
+  - improved readability
+
+---
+
+### ⚡ Apply Preview (Inline Execution)
+
+- Introduced **`Apply preview` inline action within Explain output**
+
+- Appears:
+  - directly inside diagnostic sections
+  - positioned **just above “Preview query”**
+
+- Available for:
+  - narrowing suggestions
+  - `$select` advisory
+  - `$top` advisory
+
+- Enables:
+  - direct transition from insight → execution
+  - preview-first refinement workflow
+
+---
+
+### 🔁 Consistent Execution Pattern
+
+- Standardised Explain structure:
+Action
+Apply preview
+Preview query
+Evidence
+
+- Applied consistently across:
+- Query Doctor suggestions
+
+- advisory diagnostics
+- Creates a predictable:
+- understand → act → iterate loop
+
+---
+
+### 🧠 Query Doctor Evolution
+
+- Moves from:
+- “analysis + suggestion”
+
+- To:
+- **analysis → recommendation → executable action**
+
+- Aligns with:
+- Query-by-Canvas workflow
+- preview-first design principles
+
+---
+
+### 🧹 UX Improvements
+
+- Reduced visual clutter in Explain output
+- Improved proximity between:
+- suggestion
+- execution action
+- Removed unnecessary repetition
+
+---
+
+### 🧪 Stability
+
+- All unit tests passing
+- Verified:
+- Explain rendering
+- inline action placement
+- preview workflow integration
+- No regression in:
+- Run Query
+- Investigate Record
+- Query execution pipeline
+
+---
+
+### 🧠 Notes
+
+- Explain now focuses on:
+- clarity
+- actionability
+- minimal noise
+
+- Establishes foundation for:
+- richer Query Doctor capabilities
+- deeper interactive refinement (future releases)
+
 ## 🆕 What's New in v0.8.4 (Intelligence Foundation & Investigate Improvements)
 
 > Stabilises and consolidates DV Quick Run’s intelligence layer — enabling stronger Investigate Record and future Query Doctor capabilities.

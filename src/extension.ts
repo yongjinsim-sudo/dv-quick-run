@@ -10,7 +10,7 @@ import { registerEnvironmentLifecycle } from "./runtime/environmentLifecycle.js"
 import { registerEditorIntelligence } from "./runtime/editorIntelligence.js";
 import { registerInternalSupportCommands } from "./runtime/internalSupportCommands.js";
 import { registerSelectionContext } from "./runtime/selectionContext.js";
-import { ensureTraversalSettingsExist } from "./runtime/configMigration.js";
+import { ensureDvQuickRunSettingsExist } from "./runtime/configMigration.js";
 import { maybeOpenQuickStartOnFirstRun } from "./runtime/quickStartLifecycle.js";
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -19,7 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const envContext = new EnvironmentContext(context);
   const ctx = createCommandContext(context, envContext);
 
-  await ensureTraversalSettingsExist(ctx.output);
+  await ensureDvQuickRunSettingsExist(ctx.output);
   await envContext.initialize();
 
   logInfo(ctx.output, `DV Quick Run: Active environment: ${envContext.getEnvironmentName()}`);

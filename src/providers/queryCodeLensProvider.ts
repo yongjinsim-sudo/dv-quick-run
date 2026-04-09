@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { canApplyQueryDoctorFix } from "../product/capabilities/capabilityResolver.js";
+import { getExplainDocumentState } from "../commands/router/actions/explain/explainDocState.js";
 import { looksLikeDataverseQuery , detectQueryKind } from "../shared/editorIntelligence/queryDetection.js";
 
 function isCodeLensEnabled(): boolean {
@@ -24,6 +26,46 @@ export class QueryCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     const lenses: vscode.CodeLens[] = [];
+
+    if (document.languageId === "markdown") {
+      if (!canApplyQueryDoctorFix()) {
+        return [];
+      }
+
+      const explainState = getExplainDocumentState(document.uri);
+      if (!explainState) {
+        return [];
+      }
+
+      let inActionableGroup = false;
+
+      for (let lineNumber = 0; lineNumber < document.lineCount; lineNumber++) {
+        const line = document.lineAt(lineNumber);
+        const trimmed = line.text.trim();
+
+        if (trimmed.startsWith("### ")) {
+          inActionableGroup = trimmed === "### ⭐ Recommended next step" || trimmed.startsWith("### Advisory:");
+          continue;
+        }
+
+        if (!inActionableGroup) {
+          continue;
+        }
+
+        if (trimmed.startsWith("- Preview query:")) {
+          lenses.push(
+            new vscode.CodeLens(line.range, {
+              title: "Apply preview",
+              tooltip: "Preview and apply this suggested change to the source query",
+              command: "dvQuickRun.applyRecommendedNextStepFromExplain",
+              arguments: [document.uri, lineNumber]
+            })
+          );
+        }
+      }
+
+      return lenses;
+    }
 
     for (let lineNumber = 0; lineNumber < document.lineCount; lineNumber++) {
       const line = document.lineAt(lineNumber);
