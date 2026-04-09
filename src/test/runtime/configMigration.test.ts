@@ -1,9 +1,9 @@
 import * as assert from "assert";
-import { buildTraversalConfigMigrationPlan } from "../../runtime/configMigrationCore.js";
+import { buildConfigMigrationPlan } from "../../runtime/configMigrationCore.js";
 
 suite("configMigration", () => {
   test("adds product plan and traversal settings when none are configured", () => {
-    const result = buildTraversalConfigMigrationPlan([
+    const result = buildConfigMigrationPlan([
       {
         section: "productPlan",
         defaultValue: "free"
@@ -19,6 +19,18 @@ suite("configMigration", () => {
       {
         section: "traversal.explainVerbosity",
         defaultValue: "verbose"
+      },
+      {
+        section: "investigate.searchScopeTables",
+        defaultValue: ["account", "contact"]
+      },
+      {
+        section: "investigate.maxSearchTables",
+        defaultValue: 10
+      },
+      {
+        section: "investigate.maxSearchColumns",
+        defaultValue: 50
       }
     ]);
 
@@ -38,12 +50,24 @@ suite("configMigration", () => {
       {
         section: "traversal.explainVerbosity",
         value: "verbose"
+      },
+      {
+        section: "investigate.searchScopeTables",
+        value: ["account", "contact"]
+      },
+      {
+        section: "investigate.maxSearchTables",
+        value: 10
+      },
+      {
+        section: "investigate.maxSearchColumns",
+        value: 50
       }
     ]);
   });
 
   test("does not overwrite explicit global settings", () => {
-    const result = buildTraversalConfigMigrationPlan([
+    const result = buildConfigMigrationPlan([
       {
         section: "traversal.allowedTables",
         defaultValue: ["account", "contact"],
@@ -64,7 +88,7 @@ suite("configMigration", () => {
   });
 
   test("does not overwrite explicit workspace settings", () => {
-    const result = buildTraversalConfigMigrationPlan([
+    const result = buildConfigMigrationPlan([
       {
         section: "traversal.allowedTables",
         defaultValue: ["account", "contact"],
@@ -77,7 +101,7 @@ suite("configMigration", () => {
   });
 
   test("does not overwrite existing product plan", () => {
-    const result = buildTraversalConfigMigrationPlan([
+    const result = buildConfigMigrationPlan([
       {
         section: "productPlan",
         defaultValue: "free",
@@ -90,7 +114,7 @@ suite("configMigration", () => {
   });
 
   test("skips unsupported defaults", () => {
-    const result = buildTraversalConfigMigrationPlan([
+    const result = buildConfigMigrationPlan([
       {
         section: "traversal.allowedTables",
         defaultValue: ["account", 123]
@@ -107,4 +131,29 @@ suite("configMigration", () => {
       "traversal.excludedTables",
     ]);
   });
+
+  test("adds investigate numeric defaults when none are configured", () => {
+    const result = buildConfigMigrationPlan([
+      {
+        section: "investigate.maxSearchTables",
+        defaultValue: 10
+      },
+      {
+        section: "investigate.maxSearchColumns",
+        defaultValue: 50
+      }
+    ]);
+
+    assert.deepStrictEqual(result.writes, [
+      {
+        section: "investigate.maxSearchTables",
+        value: 10
+      },
+      {
+        section: "investigate.maxSearchColumns",
+        value: 50
+      }
+    ]);
+  });
+
 });

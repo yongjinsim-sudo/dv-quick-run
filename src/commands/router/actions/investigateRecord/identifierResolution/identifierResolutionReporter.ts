@@ -7,7 +7,7 @@ export async function reportIdentifierResolutionOutcome(
   switch (result.outcome) {
     case "missingAllowedTables": {
       const choice = await vscode.window.showWarningMessage(
-        "DV Quick Run: Identifier resolution needs dvQuickRun.traversal.allowedTables to be configured for bounded search.",
+        "DV Quick Run: Identifier resolution needs dvQuickRun.investigate.searchScopeTables to be configured for bounded search.",
         "Open Settings (JSON)"
       );
 

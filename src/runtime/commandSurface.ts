@@ -32,6 +32,7 @@ import { registerFindPathToTableCommand } from "../commands/findPathToTable.js";
 import { registerContinueTraversalCommand } from "../commands/continueTraversal.js";
 import { registerClearTraversalCacheCommand } from '../commands/clearTraversalCache';
 import { registerOpenQuickStartCommand } from "../commands/openQuickStart.js";
+import { registerApplyRecommendedNextStepFromExplainCommand } from "../commands/applyRecommendedNextStepFromExplain.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -63,7 +64,8 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerFindPathToTableCommand,
   registerContinueTraversalCommand,
   registerClearTraversalCacheCommand,
-  registerOpenQuickStartCommand
+  registerOpenQuickStartCommand,
+  registerApplyRecommendedNextStepFromExplainCommand
 ];
 
 const diagnosticsRegistrations = (

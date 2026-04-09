@@ -26,7 +26,7 @@ export async function tryResolveEntity(
   }
 }
 
-export async function openMarkdownPreview(markdown: string): Promise<void> {
+export async function openMarkdownPreview(markdown: string): Promise<vscode.TextDocument> {
   const doc = await vscode.workspace.openTextDocument({
     language: "markdown",
     content: markdown
@@ -36,4 +36,6 @@ export async function openMarkdownPreview(markdown: string): Promise<void> {
     preview: true,
     viewColumn: vscode.ViewColumn.Beside
   });
+
+  return doc;
 }
