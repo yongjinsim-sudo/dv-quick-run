@@ -12,6 +12,7 @@ export function getResultViewerMarkup(iconUri: string): string {
                 <button id="previousPageBtn" title="Load previous page" hidden>⬅️</button>
                 <button id="nextPageBtn" title="Load next page" hidden>➡️</button>
                 <button id="siblingExpandBtn" title="Sibling expand current traversal leg" hidden>✨</button>
+                <button id="runTraversalBatchBtn" title="Run completed traversal as $batch" hidden>⚡</button>
             </div>
             <div class="toolbar-right">
                 <img src="${iconUri}" class="viewer-icon" />
@@ -29,10 +30,14 @@ export function getResultViewerMarkup(iconUri: string): string {
             <div id="jsonPanel" hidden>
                 <div id="jsonTools" class="json-tools" hidden>
                     <div id="batchResponseBar" class="batch-response-bar" hidden></div>
-                    <input id="jsonSearchInput" class="json-search-input" type="text" placeholder="Search JSON keys and values..." title="Enter = next, Shift+Enter = previous, Esc = clear" />
-                    <button id="jsonPrevMatchBtn" type="button" title="Previous match (Shift+Enter)">↑</button>
-                    <button id="jsonNextMatchBtn" type="button" title="Next match (Enter)">↓</button>
-                    <button id="jsonClearSearchBtn" type="button" title="Clear JSON search (Esc)">✕</button>
+                    <div class="json-search-cluster">
+                        <input id="jsonSearchInput" class="json-search-input" type="text" placeholder="Search JSON keys and values..." title="Enter = next, Shift+Enter = previous, Esc = clear" />
+                        <div class="json-search-actions">
+                            <button id="jsonPrevMatchBtn" type="button" title="Previous match (Shift+Enter)">↑</button>
+                            <button id="jsonNextMatchBtn" type="button" title="Next match (Enter)">↓</button>
+                            <button id="jsonClearSearchBtn" type="button" title="Clear JSON search (Esc)">✕</button>
+                        </div>
+                    </div>
                     <span id="jsonMatchStatus" class="json-match-status"></span>
                 </div>
                 <pre id="jsonView"></pre>

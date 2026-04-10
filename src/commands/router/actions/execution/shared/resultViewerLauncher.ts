@@ -102,7 +102,8 @@ function extractNextLink(result: unknown): string | undefined {
 
 export async function showBatchResultViewer(
     ctx: CommandContext,
-    parts: BatchExecutionPart[]
+    parts: BatchExecutionPart[],
+    options?: { traversalSessionId?: string; canRunOptimizedBatch?: boolean }
 ): Promise<void> {
     const client = ctx.getClient();
     const token = await ctx.getToken(ctx.getScope());
@@ -181,6 +182,12 @@ export async function showBatchResultViewer(
             ? {
                 name: activeEnvironment.name,
                 colorHint: activeEnvironment.statusBarColor ?? "white"
+            }
+            : undefined,
+        batchTraversal: options?.traversalSessionId
+            ? {
+                traversalSessionId: options.traversalSessionId,
+                canRunOptimizedBatch: !!options?.canRunOptimizedBatch
             }
             : undefined
     };

@@ -25,6 +25,8 @@ export interface ResultViewerTraversalStatus {
     subtitle?: string;
     traversalSessionId?: string;
     canSiblingExpand?: boolean;
+    canRunBatch?: boolean;
+    canRunOptimizedBatch?: boolean;
     requiredCarryField?: string;
 }
 
@@ -41,6 +43,8 @@ export interface ResultViewerTraversalContext extends ResultViewerTraversalActio
     showBanner?: boolean;
     bannerTitle?: string;
     bannerSubtitle?: string;
+    canRunBatch?: boolean;
+    canRunOptimizedBatch?: boolean;
 }
 
 export type ResultViewerCellValueType = "scalar" | "object" | "array" | "empty";
@@ -130,6 +134,11 @@ export interface BatchResultViewerSummary {
     failureCount: number;
 }
 
+export interface BatchTraversalContext {
+    traversalSessionId: string;
+    canRunOptimizedBatch: boolean;
+}
+
 export interface BatchResultViewerModel {
     type: "batch";
     title: string;
@@ -137,6 +146,7 @@ export interface BatchResultViewerModel {
     items: BatchResultViewerItem[];
     selectedKey: string;
     environment?: ResultViewerEnvironmentInfo;
+    batchTraversal?: BatchTraversalContext;
 }
 
 export type ResultViewerDisplayModel = ResultViewerModel | BatchResultViewerModel;
@@ -659,6 +669,8 @@ export function buildResultViewerModel(
                             : "Select a row to continue"),
                 traversalSessionId: traversalContext.traversalSessionId,
                 canSiblingExpand: traversalContext.canSiblingExpand,
+                canRunBatch: traversalContext.canRunBatch,
+                canRunOptimizedBatch: traversalContext.canRunOptimizedBatch,
                 requiredCarryField: traversalContext.requiredCarryField
             }
             : undefined;

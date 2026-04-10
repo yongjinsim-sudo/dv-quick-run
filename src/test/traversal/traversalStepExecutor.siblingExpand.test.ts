@@ -122,4 +122,85 @@ suite("traversalStepExecutor sibling expand", () => {
       "accounts?$select=accountid,name&$expand=primarycontactid($select=contactid,fullname;$expand=createdby($select=systemuserid,fullname;$expand=owningbusinessunit($select=name)))"
     );
   });
+  test("applies continuation filter for nested routes when replaying from a selected landed row", () => {
+    const step: TraversalExecutionStep = {
+      stepNumber: 1,
+      fromEntity: "contact",
+      toEntity: "systemuser",
+      entities: ["contact", "systemuser"],
+      edges: [
+        {
+          fromEntity: "contact",
+          toEntity: "systemuser",
+          navigationPropertyName: "createdby",
+          relationshipType: "ManyToOne",
+          direction: "manyToOne",
+          referencingAttribute: "createdby"
+        }
+      ],
+      hopCount: 1,
+      stageLabel: "contact → systemuser"
+    };
+
+    const plan = buildStepExecutionPlan(
+      buildGraph(),
+      buildItinerary(step),
+      step,
+      { entityName: "contact", ids: ["contact-1"] },
+      1
+    );
+
+    assert.strictEqual(plan.mode, "direct");
+    assert.strictEqual(
+      plan.queries[0]?.queryPath,
+      "contacts?$select=contactid,fullname&$filter=contactid eq 'contact-1'&$expand=createdby($select=systemuserid,fullname)"
+    );
+  });
+
+  test("applies continuation filter for nested expand routes when replaying from a selected landed row", () => {
+    const step: TraversalExecutionStep = {
+      stepNumber: 1,
+      fromEntity: "contact",
+      toEntity: "systemuser",
+      entities: ["contact", "systemuser", "account"],
+      edges: [
+        {
+          fromEntity: "contact",
+          toEntity: "systemuser",
+          navigationPropertyName: "createdby",
+          relationshipType: "ManyToOne",
+          direction: "manyToOne",
+          referencingAttribute: "createdby"
+        },
+        {
+          fromEntity: "systemuser",
+          toEntity: "account",
+          navigationPropertyName: "owningbusinessunit",
+          relationshipType: "ManyToOne",
+          direction: "manyToOne",
+          referencingAttribute: "owningbusinessunit"
+        }
+      ],
+      hopCount: 2,
+      stageLabel: "contact → systemuser → account"
+    };
+
+    const graph = buildGraph();
+    graph.entities.account.fieldLogicalNames = ["accountid", "name"];
+
+    const plan = buildStepExecutionPlan(
+      graph,
+      buildItinerary(step),
+      step,
+      { entityName: "contact", ids: ["contact-1"] },
+      1
+    );
+
+    assert.strictEqual(plan.mode, "nested_expand");
+    assert.strictEqual(
+      plan.queries[0]?.queryPath,
+      "contacts?$select=contactid,fullname&$filter=contactid eq 'contact-1'&$expand=createdby($select=systemuserid,fullname;$expand=owningbusinessunit($select=accountid,name))"
+    );
+  });
+
 });

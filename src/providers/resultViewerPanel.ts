@@ -4,6 +4,7 @@ import {
     executeResultViewerAction
 } from "./resultViewerActions/registry.js";
 import { runApplySiblingExpandAction } from "../commands/router/actions/traversal/applySiblingExpandAction.js";
+import { runTraversalAsBatchAction } from "../commands/router/actions/traversal/runTraversalAsBatchAction.js";
 import { ResultViewerDisplayModel, ResultViewerModel } from "../services/resultViewModelBuilder.js";
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
@@ -54,6 +55,18 @@ type ResultViewerMessage =
     }
     | {
         type: "applySiblingExpand";
+        payload: {
+            traversalSessionId?: string;
+        };
+    }
+    | {
+        type: "runTraversalBatch";
+        payload: {
+            traversalSessionId?: string;
+        };
+    }
+    | {
+        type: "runTraversalOptimizedBatch";
         payload: {
             traversalSessionId?: string;
         };
@@ -185,6 +198,19 @@ export class ResultViewerPanel {
             case "applySiblingExpand":
                 await runApplySiblingExpandAction(ctx, {
                     traversalSessionId: message.payload.traversalSessionId
+                });
+                return;
+
+            case "runTraversalBatch":
+                await runTraversalAsBatchAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId
+                });
+                return;
+
+            case "runTraversalOptimizedBatch":
+                await runTraversalAsBatchAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId,
+                    optimizeSelectedPath: true
                 });
                 return;
         }

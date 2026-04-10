@@ -1,5 +1,6 @@
 import type { CommandContext } from "../../../context/commandContext.js";
 import { logInfo } from "../../../../utils/logger.js";
+import { canRunTraversalBatch, canRunTraversalOptimizedBatch } from "../../../../product/capabilities/capabilityResolver.js";
 import { getTraversalExplainVerbosity } from "./traversalExplainConfig.js";
 import {
   buildExecutionStrategyHintLines,
@@ -86,7 +87,9 @@ export async function executeFirstStepDefault(
         currentStepIndex: 0,
         currentEntityName: firstStep.toEntity,
         requiredCarryField: landedNodeForViewer?.primaryIdAttribute,
-        canSiblingExpand: firstStep.toEntity !== route.targetEntity ? true : true,
+        canSiblingExpand: true,
+        canRunBatch: canRunTraversalBatch() && itinerary.steps.length <= 1,
+          canRunOptimizedBatch: canRunTraversalOptimizedBatch() && itinerary.steps.length <= 1,
         verbosity: explainVerbosity
       })
     }
@@ -154,9 +157,19 @@ export async function executeFirstStepDefault(
     graph,
     lastLanding: execution.landing,
     currentStepInput: undefined,
+    selectedInputsByStep: {
+      0: undefined
+    },
+    selectedCarryValuesByStep: {
+      0: undefined
+    },
     currentStepSiblingExpandClause: undefined,
     currentStepInsightActions: insightActions,
     nextQuerySequenceNumber: 1 + execution.executedQueryCount,
+    executedQueries: execution.executedQueries,
+    executedQueriesByStep: {
+      0: execution.executedQueries
+    },
     isCompleted: itinerary.steps.length <= 1
   };
 

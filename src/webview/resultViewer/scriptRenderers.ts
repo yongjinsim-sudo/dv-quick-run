@@ -4,6 +4,13 @@ function renderSiblingExpandButton(currentModel) {
             siblingExpandBtn.hidden = !canShow;
         }
 
+        function renderTraversalBatchButton(currentModel) {
+            const canShow = !!currentModel.traversal && !!currentModel.traversal.canRunBatch && !!currentModel.traversal.traversalSessionId;
+            if (runTraversalBatchBtn instanceof HTMLButtonElement) {
+                runTraversalBatchBtn.hidden = !canShow;
+            }
+        }
+
         function renderEnvironmentBadge(environment) {
             if (!environment || !environment.name) {
                 environmentBadge.innerHTML = "";

@@ -29,6 +29,7 @@ export type ExecutionResult = {
   executionPlan: TraversalStepExecutionPlan;
   landing: TraversalLandingContext;
   executedQueryCount: number;
+  executedQueries: TraversalStepQuery[];
 };
 
 export function buildStepExecutionPlan(
@@ -110,22 +111,16 @@ export async function executeTraversalStep(
     Array.isArray(landingContext.ids) &&
     landingContext.ids.length > MAX_CONTINUATION_SCOPE_IDS
   ) {
-    if (executionPlan.mode === "nested_expand") {
-      logInfo(
-        ctx.output,
-        `  - Continuation scope would be limited to ${MAX_CONTINUATION_SCOPE_IDS} ${step.fromEntity} rows for safety, but restriction is skipped for nested expands to preserve valid query shape.`
-      );
-    } else {
-      logInfo(
-        ctx.output,
-        `  - Continuation scope intentionally limited to the first ${MAX_CONTINUATION_SCOPE_IDS} landed ${step.fromEntity} rows for safety.`
-      );
-    }
+    logInfo(
+      ctx.output,
+      `  - Continuation scope intentionally limited to the first ${MAX_CONTINUATION_SCOPE_IDS} landed ${step.fromEntity} rows for safety.`
+    );
   }
 
   let rawFinalResult: unknown = { value: [] };
   let finalResult: unknown = { value: [] };
   let finalQueryPath = executionPlan.queries[executionPlan.queries.length - 1]!.queryPath;
+  const executedQueries: TraversalStepQuery[] = [];
 
   for (const query of executionPlan.queries) {
     const concreteQueryPath = normalizeTraversalQueryPath(query.queryPath);
@@ -136,6 +131,10 @@ export async function executeTraversalStep(
     const result = await client.get(concreteQueryPath, token);
     rawFinalResult = result;
     finalQueryPath = concreteQueryPath;
+    executedQueries.push({
+      ...query,
+      queryPath: concreteQueryPath
+    });
   }
 
   if (executionPlan.mode === "direct" || executionPlan.mode === "nested_expand") {
@@ -188,7 +187,8 @@ export async function executeTraversalStep(
       entityName: step.toEntity,
       ids: landedIds
     },
-    executedQueryCount: executionPlan.queries.length
+    executedQueryCount: executionPlan.queries.length,
+    executedQueries
   };
 }
 
@@ -221,7 +221,7 @@ function tryBuildExpandExecutionPlan(
 
   const restrictedIds = getRestrictedContinuationIds(landingContext, step);
 
-  if (restrictedIds && step.hopCount === 1) {
+  if (restrictedIds) {
     const filter = buildPrimaryIdFilter(rootNode.primaryIdAttribute, restrictedIds);
     if (filter) {
       parts.push(filter);

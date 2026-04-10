@@ -42,7 +42,18 @@ function showCopyStatus(message) {
                 return "<button class=\\"batch-response-tab" + activeClass + statusClass + "\\" type=\\"button\\" data-batch-response-key=\\"" + escapeAttribute(item.key) + "\\" title=\\"" + escapeAttribute(title) + "\\">" + escapeHtml(item.label) + "</button>";
             }).join("");
 
-            return "<div class=\\"batch-response-tabs\\">" + summaryButton + itemButtons + "</div>";
+            const batchTraversal = rootModel.batchTraversal;
+            const canShowKebab = !!(batchTraversal && batchTraversal.canRunOptimizedBatch && batchTraversal.traversalSessionId);
+            const kebabHtml = canShowKebab
+            ? "<div class=\\"batch-kebab-container\\">" +
+                "<button class=\\"batch-kebab-btn\\" type=\\"button\\" title=\\"Advanced options\\" data-batch-kebab-toggle=\\"true\\">⋮</button>" +
+                "<div class=\\"batch-kebab-menu\\" data-batch-kebab-menu=\\"true\\" hidden>" +
+                    "<button class=\\"batch-kebab-item\\" type=\\"button\\" data-batch-kebab-action=\\"tighten\\" data-traversal-session-id=\\"" + escapeAttribute(batchTraversal.traversalSessionId || "") + "\\">Tighten with chosen contactid</button>" +
+                "</div>" +
+                "</div>"
+            : "";
+
+            return "<div class=\\"batch-response-tabs\\">" + summaryButton + itemButtons + kebabHtml + "</div>";
         }
 
         function buildBatchSummaryHtml() {

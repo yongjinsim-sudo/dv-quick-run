@@ -190,6 +190,27 @@ export const RESULT_VIEWER_STYLES = `
             outline-offset: 0;
         }
 
+        .json-search-cluster {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .json-search-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .json-search-actions button {
+            min-width: 28px;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+        }
+
         .json-match-status {
             min-width: 60px;
             text-align: right;
@@ -247,6 +268,58 @@ export const RESULT_VIEWER_STYLES = `
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
+        }
+
+
+        .batch-kebab-container {
+            margin-left: auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .batch-kebab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            line-height: 1.2;
+        }
+
+        .batch-kebab-btn:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+            border-color: var(--vscode-toolbar-hoverBackground);
+        }
+
+        .batch-kebab-menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 4px);
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            background: var(--vscode-editorWidget-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            padding: 4px;
+            z-index: 12;
+        }
+
+        .batch-kebab-item {
+            background: transparent;
+            color: var(--vscode-foreground);
+            border: none;
+            text-align: left;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .batch-kebab-item:hover {
+            background: var(--vscode-list-hoverBackground);
         }
 
         .batch-response-bar {
@@ -843,7 +916,7 @@ export const RESULT_VIEWER_STYLES = `
             margin-right: 8px;
         }
 
-        .traversal-status-pill {global
+        .traversal-status-pill {
             display: inline-flex;
             align-items: center;
             gap: 10px;

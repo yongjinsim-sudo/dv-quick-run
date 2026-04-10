@@ -20,6 +20,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const previousPageBtn = document.getElementById("previousPageBtn");
         const nextPageBtn = document.getElementById("nextPageBtn");
         const siblingExpandBtn = document.getElementById("siblingExpandBtn");
+        const runTraversalBatchBtn = document.getElementById("runTraversalBatchBtn");
         const pageIndicator = document.getElementById("pageIndicator");
         const rowCount = document.getElementById("rowCount");
         const copyStatus = document.getElementById("copyStatus");
@@ -231,6 +232,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             renderEnvironmentBadge(model.environment || rootModel.environment);
             renderTraversalStatus(model.traversal);
             renderSiblingExpandButton(model);
+            renderTraversalBatchButton(model);
             renderPagingState(model);
 
             const hasEntityContext = !isBatchSummarySelected() && !!model.entitySetName;
@@ -501,6 +503,16 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             });
         });
 
+        runTraversalBatchBtn.addEventListener("click", () => {
+            vscodeApi.postMessage({
+                type: "runTraversalBatch",
+                payload: {
+                    traversalSessionId: model.traversal?.traversalSessionId || ""
+                }
+            });
+        });
+
+
         arrayDrawerTableTab.addEventListener("click", () => {
             arrayDrawerView = "table";
             renderActiveArrayDrawer();
@@ -515,11 +527,87 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             closeArrayDrawer();
         });
 
-        document.addEventListener("click", () => {
-            closeAllOverflowMenus();
+        function closeAllBatchKebabMenus() {
+            document
+                .querySelectorAll("[data-batch-kebab-menu]")
+                .forEach((menu) => {
+                    if (menu instanceof HTMLElement) {
+                        menu.setAttribute("hidden", "true");
+                    }
+                });
+        }
+
+        function wireBatchKebabEvents() {
+            document.addEventListener("click", (event) => {
+                const target = event.target instanceof HTMLElement ? event.target : null;
+                if (!target) {
+                    closeAllBatchKebabMenus();
+                    return;
+                }
+
+                const toggle = target.closest("[data-batch-kebab-toggle]");
+                if (toggle instanceof HTMLElement) {
+                    event.preventDefault();
+
+                    const container = toggle.closest(".batch-kebab-container");
+                    const menu = container?.querySelector("[data-batch-kebab-menu]");
+
+                    if (menu instanceof HTMLElement) {
+                        const wasHidden = menu.hasAttribute("hidden");
+                        closeAllBatchKebabMenus();
+
+                        if (wasHidden) {
+                            menu.removeAttribute("hidden");
+                        }
+                    }
+
+                    return;
+                }
+
+                const action = target.closest("[data-batch-kebab-action]");
+                if (action instanceof HTMLElement) {
+                    event.preventDefault();
+
+                    const actionName = action.getAttribute("data-batch-kebab-action") || "";
+                    const traversalSessionId = action.getAttribute("data-traversal-session-id") || "";
+
+                    vscodeApi.postMessage({
+                        type: "runTraversalOptimizedBatch",
+                        payload: {
+                            action: actionName,
+                            traversalSessionId
+                        }
+                    });
+
+                    closeAllBatchKebabMenus();
+                    return;
+                }
+
+                const insideMenu = target.closest(".batch-kebab-container");
+                if (insideMenu) {
+                    return;
+                }
+
+                closeAllBatchKebabMenus();
+            });
+        }
+
+        document.addEventListener("click", (event) => {
+            const target = event.target instanceof HTMLElement ? event.target : null;
+            const insideContextActions = !!target?.closest(".context-action-cell, .row-action-cell, .overflow-menu, .overflow-menu-overlay");
+            const insideBatchKebab = !!target?.closest(".batch-kebab-container");
+
+            if (!insideContextActions) {
+                closeAllOverflowMenus();
+            }
+
+            if (!insideBatchKebab) {
+                closeAllBatchKebabMenus();
+            }
         });
 
         bindTableEventsOnce();
+        wireBatchKebabEvents();
         renderCurrentModel();
 
 

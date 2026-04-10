@@ -25,6 +25,8 @@ export function buildTraversalViewerContext(args: {
   currentEntityName?: string;
   requiredCarryField?: string;
   canSiblingExpand?: boolean;
+  canRunBatch?: boolean;
+  canRunOptimizedBatch?: boolean;
   verbosity: TraversalExplainVerbosity;
 }): TraversalViewerContext {
   const nextStep = args.itinerary.steps[args.currentStepIndex + 1];
@@ -50,6 +52,8 @@ export function buildTraversalViewerContext(args: {
     currentEntityName: args.currentEntityName,
     isFinalLeg: !nextStep,
     canSiblingExpand: args.canSiblingExpand,
+    canRunBatch: args.canRunBatch,
+    canRunOptimizedBatch: args.canRunOptimizedBatch,
     showBanner: banner.showBanner,
     bannerTitle: banner.bannerTitle,
     bannerSubtitle: banner.bannerSubtitle

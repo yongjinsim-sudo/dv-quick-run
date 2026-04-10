@@ -1,5 +1,6 @@
 import type { CommandContext } from "../../../context/commandContext.js";
 import { logInfo, logWarn } from "../../../../utils/logger.js";
+import { canRunTraversalBatch, canRunTraversalOptimizedBatch } from "../../../../product/capabilities/capabilityResolver.js";
 import { runAction } from "../shared/actionRunner.js";
 import { executeTraversalStep } from "../shared/traversal/traversalStepExecutor.js";
 import { appendTraversalInsightActions } from "../shared/traversal/traversalInsightActions.js";
@@ -85,6 +86,8 @@ export async function runContinueTraversalAction(
           currentEntityName: nextStep.toEntity,
           requiredCarryField: landedNode?.primaryIdAttribute,
           canSiblingExpand: true,
+          canRunBatch: canRunTraversalBatch() && nextStepIndex >= progress.itinerary.steps.length - 1,
+          canRunOptimizedBatch: canRunTraversalOptimizedBatch() && nextStepIndex >= progress.itinerary.steps.length - 1,
           verbosity: explainVerbosity
         }),
         siblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex]
@@ -141,10 +144,23 @@ export async function runContinueTraversalAction(
       currentStepIndex: nextStepIndex,
       lastLanding: execution.landing,
       currentStepInput: effectiveLanding,
+      selectedInputsByStep: {
+        ...(progress.selectedInputsByStep ?? {}),
+        [nextStepIndex]: effectiveLanding
+      },
+      selectedCarryValuesByStep: {
+        ...(progress.selectedCarryValuesByStep ?? {}),
+        [nextStepIndex]: request?.carryValue ? String(request.carryValue).trim() : undefined
+      },
       currentStepSiblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex],
       currentStepInsightActions: insightActions,
       nextQuerySequenceNumber:
-        (progress.nextQuerySequenceNumber ?? 1) + execution.executedQueryCount
+        (progress.nextQuerySequenceNumber ?? 1) + execution.executedQueryCount,
+      executedQueries: [...(progress.executedQueries ?? []), ...execution.executedQueries],
+      executedQueriesByStep: {
+        ...(progress.executedQueriesByStep ?? {}),
+        [nextStepIndex]: execution.executedQueries
+      }
     };
 
     if (nextStepIndex >= progress.itinerary.steps.length - 1) {
@@ -159,6 +175,9 @@ export async function runContinueTraversalAction(
       logInfo(ctx.output, "Guided Traversal complete.");
       logInfo(ctx.output, `Reached: ${nextStep.toEntity}`);
       logInfo(ctx.output, "Sibling expand remains available on this landed result.");
+      if (canRunTraversalBatch() && (updatedProgress.executedQueries?.length ?? 0) >= 2) {
+        logInfo(ctx.output, "Run completed traversal as $batch from the Result Viewer toolbar.");
+      }
       return;
     }
 
