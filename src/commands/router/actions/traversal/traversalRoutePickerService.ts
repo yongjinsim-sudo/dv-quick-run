@@ -328,7 +328,7 @@ async function pickVariantForGroup(
   );
 
   if (!firstSelection || firstSelection !== "show_more") {
-    return firstSelection;
+    return firstSelection as TraversalRoute | undefined;
   }
 
   const fullSelection = await chooseVariantFromQuickPick(

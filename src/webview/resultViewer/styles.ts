@@ -162,9 +162,10 @@ export const RESULT_VIEWER_STYLES = `
 
         .json-tools {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
             padding: 8px;
             border-bottom: 1px solid var(--vscode-panel-border);
             background: var(--vscode-editorWidget-background);
@@ -226,9 +227,10 @@ export const RESULT_VIEWER_STYLES = `
 
         .table-tools {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
             padding: 8px;
             border-bottom: 1px solid var(--vscode-panel-border);
             background: var(--vscode-editorWidget-background);
@@ -237,6 +239,91 @@ export const RESULT_VIEWER_STYLES = `
             z-index: 3;
         }
 
+
+
+        .table-tools-left,
+        .table-tools-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .batch-response-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .batch-response-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .batch-response-tab {
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            color: var(--vscode-editor-foreground);
+        }
+
+        .batch-response-tab.active {
+            outline: 1px solid var(--vscode-focusBorder);
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 82%, var(--vscode-button-background) 18%);
+        }
+
+        .batch-response-tab.success {
+            border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 45%, var(--vscode-panel-border) 55%);
+        }
+
+        .batch-response-tab.error {
+            border-color: color-mix(in srgb, var(--vscode-errorForeground) 45%, var(--vscode-panel-border) 55%);
+        }
+
+        .batch-summary-card {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .batch-summary-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .batch-summary-meta {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .batch-summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .batch-summary-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editor-background);
+        }
+
+        .batch-summary-item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .batch-summary-item-meta {
+            font-size: 12px;
+            opacity: 0.88;
+        }
         .large-result-banner {
             display: flex;
             align-items: center;
@@ -815,5 +902,50 @@ export const RESULT_VIEWER_STYLES = `
 
         #jsonSaveBtn {
             margin-left: 6px;
+        }
+
+        .batch-summary-item-meta.error {
+            color: var(--vscode-errorForeground);
+        }
+
+        .batch-error-card {
+            margin: 12px;
+            padding: 16px;
+            border: 1px solid color-mix(in srgb, var(--vscode-errorForeground) 35%, var(--vscode-panel-border) 65%);
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 88%, transparent 12%);
+        }
+
+        .batch-error-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--vscode-errorForeground);
+            margin-bottom: 12px;
+        }
+
+        .batch-error-meta {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+
+        .batch-error-message {
+            margin-top: 10px;
+            margin-bottom: 12px;
+            color: var(--vscode-errorForeground);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .batch-error-raw {
+            margin: 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editor-background);
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 320px;
+            overflow: auto;
         }
 `;

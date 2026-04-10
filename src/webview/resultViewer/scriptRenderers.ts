@@ -56,6 +56,7 @@ function renderSiblingExpandButton(currentModel) {
 
 
         function renderJson(currentModel) {
+            renderBatchResponseBar();
             const searchText = String(jsonState.searchText ?? "");
 
             if (jsonSearchInput instanceof HTMLInputElement && jsonSearchInput.value !== searchText) {
@@ -130,18 +131,60 @@ function renderSiblingExpandButton(currentModel) {
             }).join("");
         }
 
+
+        function buildBatchErrorHtml(currentModel) {
+            const batchError = currentModel.batchError || {};
+            const rawBody = typeof batchError.rawBody === "string" && batchError.rawBody.trim()
+                ? batchError.rawBody
+                : (typeof currentModel.rawJson === "string" ? currentModel.rawJson : "");
+
+            return "<div class=\\"batch-error-card\\">" +
+                "<div class=\\"batch-error-title\\">Request failed</div>" +
+                "<div class=\\"batch-error-meta\\">Query: " + escapeHtml(batchError.queryText || currentModel.queryPath || "") + "</div>" +
+                "<div class=\\"batch-error-meta\\">Status: " + escapeHtml(String(batchError.statusCode || 0) + " " + String(batchError.statusText || "").trim()) + "</div>" +
+                "<div class=\\"batch-error-message\\">" + escapeHtml(batchError.message || "Batch request failed") + "</div>" +
+                (rawBody
+                    ? "<pre class=\\"batch-error-raw\\">" + escapeHtml(rawBody) + "</pre>"
+                    : "") +
+                "</div>";
+        }
+
 function renderTable(currentModel) {
-            if (!currentModel.columns || currentModel.columns.length === 0) {
+            const batchTabsHtml = isBatchRoot ? buildBatchResponseTabsHtml() : "";
+
+            if (isBatchSummarySelected()) {
                 tableView.innerHTML =
-                    "<div class=\\"empty-state\\">" +
-                    "<div class=\\"empty-title\\">No results found</div>" +
-                    "<div class=\\"empty-hint\\">Try:</div>" +
-                    "<ul class=\\"empty-list\\">" +
-                    "<li>Removing filters</li>" +
-                    "<li>Increasing $top</li>" +
-                    "<li>Running without $filter</li>" +
-                    "</ul>" +
-                    "</div>";
+                    "<div class=\\"table-tools\\">" +
+                    "<div class=\\"table-tools-left\\">" +
+                    (batchTabsHtml ? "<div class=\\"batch-response-bar\\">" + batchTabsHtml + "</div>" : "") +
+                    "</div>" +
+                    "<div class=\\"table-tools-right\\"></div>" +
+                    "</div>" +
+                    buildBatchSummaryHtml();
+                return;
+            }
+
+            if (!currentModel.columns || currentModel.columns.length === 0) {
+                const emptyOrErrorHtml = currentModel.batchError
+                    ? buildBatchErrorHtml(currentModel)
+                    : "<div class=\\"empty-state\\">" +
+                        "<div class=\\"empty-title\\">No results found</div>" +
+                        "<div class=\\"empty-hint\\">Try:</div>" +
+                        "<ul class=\\"empty-list\\">" +
+                        "<li>Removing filters</li>" +
+                        "<li>Increasing $top</li>" +
+                        "<li>Running without $filter</li>" +
+                        "</ul>" +
+                        "</div>";
+
+                tableView.innerHTML =
+                    "<div class=\\"table-tools\\">" +
+                    "<div class=\\"table-tools-left\\">" +
+                    (batchTabsHtml ? "<div class=\\"batch-response-bar\\">" + batchTabsHtml + "</div>" : "") +
+                    "</div>" +
+                    "<div class=\\"table-tools-right\\"></div>" +
+                    "</div>" +
+                    emptyOrErrorHtml;
                 return;
             }
 
@@ -164,9 +207,14 @@ function renderTable(currentModel) {
                     : totalRowCount + " rows");
 
             let html = "<div class=\\"table-tools\\">" +
+                "<div class=\\"table-tools-left\\">" +
+                (batchTabsHtml ? "<div class=\\"batch-response-bar\\">" + batchTabsHtml + "</div>" : "") +
+                "</div>" +
+                "<div class=\\"table-tools-right\\">" +
                 "<input id=\\"tableFilterInput\\" class=\\"table-filter-input\\" type=\\"text\\" placeholder=\\"Filter visible rows...\\" value=\\"" + escapeAttribute(tableState.filterText) + "\\" />" +
                 "<button id=\\"tableFilterClearBtn\\" class=\\"table-filter-clear-btn\\" type=\\"button\\" title=\\"Clear table filter\\">Clear</button>" +
                 "<span id=\\"tableFilterStatus\\" class=\\"table-filter-status\\">" + escapeHtml(tableStatusText) + "</span>" +
+                "</div>" +
                 "</div>";
 
             if (progressiveRender.useLargeResultMode) {

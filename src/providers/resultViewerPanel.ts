@@ -4,7 +4,7 @@ import {
     executeResultViewerAction
 } from "./resultViewerActions/registry.js";
 import { runApplySiblingExpandAction } from "../commands/router/actions/traversal/applySiblingExpandAction.js";
-import { ResultViewerModel } from "../services/resultViewModelBuilder.js";
+import { ResultViewerDisplayModel, ResultViewerModel } from "../services/resultViewModelBuilder.js";
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 
@@ -73,6 +73,12 @@ type ResultViewerPagingState = {
     history: ResultViewerPageSnapshot[];
 };
 
+function isBatchResultViewerModel(
+    model: ResultViewerDisplayModel
+): model is import("../services/resultViewModelBuilder.js").BatchResultViewerModel {
+    return (model as { type?: string }).type === "batch";
+}
+
 export class ResultViewerPanel {
 
     private static currentPanel: vscode.WebviewPanel | undefined;
@@ -81,17 +87,22 @@ export class ResultViewerPanel {
 
     public static show(
         ctx: CommandContext,
-        model: ResultViewerModel
+        model: ResultViewerDisplayModel
     ): void {
         ResultViewerPanel.currentContext = ctx;
-        ResultViewerPanel.currentPagingState = {
-            sourcePath: model.queryPath,
-            pageNumber: model.paging?.pageNumber ?? 1,
-            nextLink: model.paging?.hasNextPage
-                ? ResultViewerPanel.extractNextLinkFromRawJson(model.rawJson)
-                : undefined,
-            history: model.paging?.history ?? []
-        };
+
+        if (isBatchResultViewerModel(model)) {
+            ResultViewerPanel.currentPagingState = undefined;
+        } else {
+            ResultViewerPanel.currentPagingState = {
+                sourcePath: model.queryPath,
+                pageNumber: model.paging?.pageNumber ?? 1,
+                nextLink: model.paging?.hasNextPage
+                    ? ResultViewerPanel.extractNextLinkFromRawJson(model.rawJson)
+                    : undefined,
+                history: model.paging?.history ?? []
+            };
+        }
 
         if (!ResultViewerPanel.currentPanel) {
             ResultViewerPanel.currentPanel = vscode.window.createWebviewPanel(

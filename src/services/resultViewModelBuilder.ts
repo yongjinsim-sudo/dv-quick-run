@@ -111,6 +111,36 @@ export interface ResultViewerBuildOptions {
     paging?: ResultViewerPagingInfo;
 }
 
+
+export interface BatchResultViewerItem {
+    key: string;
+    label: string;
+    queryText: string;
+    statusCode: number;
+    statusText: string;
+    rowCount?: number;
+    model?: ResultViewerModel;
+    error?: string;
+    rawBody?: string;
+}
+
+export interface BatchResultViewerSummary {
+    totalRequests: number;
+    successCount: number;
+    failureCount: number;
+}
+
+export interface BatchResultViewerModel {
+    type: "batch";
+    title: string;
+    summary: BatchResultViewerSummary;
+    items: BatchResultViewerItem[];
+    selectedKey: string;
+    environment?: ResultViewerEnvironmentInfo;
+}
+
+export type ResultViewerDisplayModel = ResultViewerModel | BatchResultViewerModel;
+
 export interface ResultViewerLegendItem {
     alias: string;
     fullName: string;

@@ -28,6 +28,7 @@ export function getResultViewerMarkup(iconUri: string): string {
             <div id="tableView"></div>
             <div id="jsonPanel" hidden>
                 <div id="jsonTools" class="json-tools" hidden>
+                    <div id="batchResponseBar" class="batch-response-bar" hidden></div>
                     <input id="jsonSearchInput" class="json-search-input" type="text" placeholder="Search JSON keys and values..." title="Enter = next, Shift+Enter = previous, Esc = clear" />
                     <button id="jsonPrevMatchBtn" type="button" title="Previous match (Shift+Enter)">↑</button>
                     <button id="jsonNextMatchBtn" type="button" title="Next match (Enter)">↓</button>

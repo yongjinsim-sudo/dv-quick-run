@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ResultViewerModel } from "../services/resultViewModelBuilder.js";
+import { ResultViewerDisplayModel } from "../services/resultViewModelBuilder.js";
 import { getResultViewerMarkup } from "./resultViewer/markup.js";
 import { getResultViewerScript } from "./resultViewer/script.js";
 import { RESULT_VIEWER_STYLES } from "./resultViewer/styles.js";
@@ -14,7 +14,7 @@ function escapeForScript(value: string): string {
 export function getResultViewerHtml(
     webview: vscode.Webview,
     extensionUri: vscode.Uri,
-    model: ResultViewerModel
+    model: ResultViewerDisplayModel
 ): string {
     const iconUri = webview.asWebviewUri(
         vscode.Uri.joinPath(extensionUri, "images", "icon16.png")

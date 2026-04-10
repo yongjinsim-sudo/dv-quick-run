@@ -130,7 +130,7 @@ async function promptScalarValue(field: FilterableField, operator: FilterBuilder
 
   const validation = validateFilterRawValue(field, raw);
   if (!validation.ok) {
-    vscode.window.showErrorMessage(validation.message);
+    vscode.window.showErrorMessage((validation as any).message);
     return undefined;
   }
 

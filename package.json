@@ -192,6 +192,10 @@
       {
         "command": "dvQuickRun.openQuickStart",
         "title": "DV Quick Run: Open Quickstart"
+      },
+      {
+        "command": "dvQuickRun.runBatchQueries",
+        "title": "DV Quick Run: Run Queries as $batch"
       }
     ],
     "menus": {
@@ -271,6 +275,11 @@
           "command": "dvQuickRun.generateQueryFromJson",
           "when": "editorTextFocus && !editorReadonly && editorLangId == json",
           "group": "dvQuickRun_json@1"
+        },
+        {
+          "command": "dvQuickRun.runBatchQueries",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_diagnostics@22"
         }
       ]
     },

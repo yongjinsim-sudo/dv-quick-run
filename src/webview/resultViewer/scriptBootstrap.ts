@@ -10,6 +10,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const jsonNextMatchBtn = document.getElementById("jsonNextMatchBtn");
         const jsonClearSearchBtn = document.getElementById("jsonClearSearchBtn");
         const jsonMatchStatus = document.getElementById("jsonMatchStatus");
+        const batchResponseBar = document.getElementById("batchResponseBar");
         const showTableBtn = document.getElementById("showTableBtn");
         const showJsonBtn = document.getElementById("showJsonBtn");
         const showRelationshipsBtn = document.getElementById("showRelationshipsBtn");
@@ -33,7 +34,135 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const arrayDrawerJsonView = document.getElementById("arrayDrawerJsonView");
         const traversalStatus = document.getElementById("traversalStatus");
 
-        const model = JSON.parse(__INITIAL_MODEL_JSON__);
+        const rootModel = JSON.parse(__INITIAL_MODEL_JSON__);
+        const isBatchRoot = !!rootModel && rootModel.type === "batch";
+        const BATCH_SUMMARY_KEY = "summary";
+        let activeBatchKey = isBatchRoot && typeof rootModel.selectedKey === "string" ? rootModel.selectedKey : BATCH_SUMMARY_KEY;
+        const batchViewStateByKey = {};
+
+        function createDefaultViewState() {
+            return {
+                sortColumn: null,
+                sortDirection: "asc",
+                filterText: "",
+                columnWidths: {},
+                jsonSearchText: "",
+                jsonCurrentMatchIndex: -1
+            };
+        }
+
+        function getCurrentViewState() {
+            return {
+                sortColumn: tableState.sortColumn,
+                sortDirection: tableState.sortDirection,
+                filterText: tableState.filterText,
+                columnWidths: Object.assign({}, tableState.columnWidths),
+                jsonSearchText: jsonState.searchText,
+                jsonCurrentMatchIndex: jsonState.currentMatchIndex
+            };
+        }
+
+        function applyViewState(nextState) {
+            const safeState = nextState || createDefaultViewState();
+            tableState.sortColumn = safeState.sortColumn ?? null;
+            tableState.sortDirection = safeState.sortDirection ?? "asc";
+            tableState.filterText = safeState.filterText ?? "";
+            tableState.columnWidths = Object.assign({}, safeState.columnWidths || {});
+            jsonState.searchText = safeState.jsonSearchText ?? "";
+            jsonState.currentMatchIndex = typeof safeState.jsonCurrentMatchIndex === "number"
+                ? safeState.jsonCurrentMatchIndex
+                : -1;
+        }
+
+        function getBatchItems() {
+            return isBatchRoot && Array.isArray(rootModel.items) ? rootModel.items : [];
+        }
+
+        function getActiveBatchItem() {
+            if (!isBatchRoot || activeBatchKey === BATCH_SUMMARY_KEY) {
+                return null;
+            }
+
+            return getBatchItems().find((item) => item.key === activeBatchKey) || null;
+        }
+
+        function buildBatchSummaryModel() {
+            const items = getBatchItems();
+            const summary = rootModel.summary || {};
+            return {
+                title: rootModel.title || "DV Quick Run Batch Results",
+                mode: "raw",
+                columns: [],
+                rows: [],
+                rawJson: JSON.stringify({
+                    summary: {
+                        totalRequests: summary.totalRequests ?? items.length,
+                        successCount: summary.successCount ?? 0,
+                        failureCount: summary.failureCount ?? 0
+                    },
+                    requests: items.map((item) => ({
+                        key: item.key,
+                        label: item.label,
+                        queryText: item.queryText,
+                        statusCode: item.statusCode,
+                        statusText: item.statusText,
+                        rowCount: item.rowCount ?? 0,
+                        error: item.error || undefined
+                    }))
+                }, null, 2),
+                rowCount: 0,
+                queryPath: "$batch",
+                environment: rootModel.environment
+            };
+        }
+
+        function buildBatchErrorModel(item) {
+            return {
+                title: item && item.label ? item.label : "Batch Request Error",
+                mode: "raw",
+                columns: [],
+                rows: [],
+                rawJson: item && item.rawBody ? item.rawBody : JSON.stringify({
+                    error: item && item.error ? item.error : "Batch request failed",
+                    statusCode: item && typeof item.statusCode === "number" ? item.statusCode : 0,
+                    statusText: item && item.statusText ? item.statusText : "Unknown",
+                    queryText: item && item.queryText ? item.queryText : ""
+                }, null, 2),
+                rowCount: 0,
+                queryPath: item && item.queryText ? item.queryText : "$batch",
+                environment: rootModel.environment,
+                batchError: {
+                    queryText: item && item.queryText ? item.queryText : "",
+                    statusCode: item && typeof item.statusCode === "number" ? item.statusCode : 0,
+                    statusText: item && item.statusText ? item.statusText : "Unknown",
+                    message: item && item.error ? item.error : "Batch request failed",
+                    rawBody: item && item.rawBody ? item.rawBody : ""
+                }
+            };
+        }
+
+        function resolveActiveModel() {
+            if (!isBatchRoot) {
+                return rootModel;
+            }
+
+            if (activeBatchKey === BATCH_SUMMARY_KEY) {
+                return buildBatchSummaryModel();
+            }
+
+            const activeItem = getActiveBatchItem();
+            if (!activeItem) {
+                return buildBatchSummaryModel();
+            }
+
+            if (activeItem.model) {
+                return activeItem.model;
+            }
+
+            return buildBatchErrorModel(activeItem);
+        }
+
+        let model = resolveActiveModel();
 
         const tableState = {
             sortColumn: null,
@@ -69,6 +198,93 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         let activeArrayDrawerKey = null;
         let arrayDrawerView = "table";
         let nestedDrawerCounter = 0;
+
+        function isBatchSummarySelected() {
+            return isBatchRoot && activeBatchKey === BATCH_SUMMARY_KEY;
+        }
+
+        function saveActiveBatchViewState() {
+            if (!isBatchRoot) {
+                return;
+            }
+
+            batchViewStateByKey[activeBatchKey] = getCurrentViewState();
+        }
+
+        function restoreActiveBatchViewState() {
+            if (!isBatchRoot) {
+                return;
+            }
+
+            applyViewState(batchViewStateByKey[activeBatchKey] || createDefaultViewState());
+        }
+
+        function closeTransientUi() {
+            closeAllOverflowMenus();
+            removeResultViewerContextMenu();
+            closeArrayDrawer();
+            clearProgressiveRenderTimer();
+        }
+
+        function renderCurrentModel() {
+            model = resolveActiveModel();
+            renderEnvironmentBadge(model.environment || rootModel.environment);
+            renderTraversalStatus(model.traversal);
+            renderSiblingExpandButton(model);
+            renderPagingState(model);
+
+            const hasEntityContext = !isBatchSummarySelected() && !!model.entitySetName;
+            if (showRelationshipsBtn instanceof HTMLButtonElement) {
+                showRelationshipsBtn.disabled = !hasEntityContext;
+            }
+            if (showMetadataBtn instanceof HTMLButtonElement) {
+                showMetadataBtn.disabled = !hasEntityContext;
+            }
+            if (exportCsvBtn instanceof HTMLButtonElement) {
+                exportCsvBtn.disabled = isBatchSummarySelected();
+            }
+
+            rowCount.textContent = isBatchSummarySelected() ? "" : (model.rowCount + " rows returned");
+
+            if (showJsonBtn.classList.contains("active")) {
+                renderJson(model);
+            } else {
+                renderTable(model);
+            }
+        }
+
+        function switchBatchResponse(nextKey) {
+            if (!isBatchRoot || !nextKey || nextKey === activeBatchKey) {
+                return;
+            }
+
+            saveActiveBatchViewState();
+            activeBatchKey = nextKey;
+            restoreActiveBatchViewState();
+            closeTransientUi();
+            renderCurrentModel();
+        }
+
+        document.addEventListener("click", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) {
+                return;
+            }
+
+            const batchTab = target.closest("[data-batch-response-key]");
+            if (!(batchTab instanceof HTMLElement)) {
+                return;
+            }
+
+            const nextKey = batchTab.getAttribute("data-batch-response-key") || "";
+            if (!nextKey) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            switchBatchResponse(nextKey);
+        });
 
         showTableBtn.addEventListener("click", () => {
             showTable();
@@ -304,13 +520,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         });
 
         bindTableEventsOnce();
-        renderEnvironmentBadge(model.environment);
-        renderTraversalStatus(model.traversal);
-        renderSiblingExpandButton(model);
-        renderPagingState(model);
-        renderTable(model);
-        renderJson(model);
-        rowCount.textContent = model.rowCount + " rows returned";
+        renderCurrentModel();
 
 
         function clearProgressiveRenderTimer() {
@@ -397,6 +607,22 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         }
 
         function renderPagingState(model) {
+            if (isBatchRoot) {
+                if (pageIndicator instanceof HTMLElement) {
+                    pageIndicator.hidden = true;
+                    pageIndicator.textContent = "";
+                }
+                if (previousPageBtn instanceof HTMLButtonElement) {
+                    previousPageBtn.hidden = true;
+                    previousPageBtn.disabled = true;
+                }
+                if (nextPageBtn instanceof HTMLButtonElement) {
+                    nextPageBtn.hidden = true;
+                    nextPageBtn.disabled = true;
+                }
+                return;
+            }
+
             const pageNumber = Number(model?.paging?.pageNumber ?? 1);
             const hasNextPage = !!model?.paging?.hasNextPage;
             const hasPreviousPage = Array.isArray(model?.paging?.history) && model.paging.history.length > 0;
