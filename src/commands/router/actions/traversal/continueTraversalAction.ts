@@ -66,9 +66,8 @@ export async function runContinueTraversalAction(
       ctx.output,
       `Executing Step ${nextStepIndex + 1}/${progress.itinerary.steps.length}: ${nextStep.stageLabel}`
     );
-    logInfo(ctx.output, `Main mission target: ${nextStep.toEntity}`);
-    logInfo(ctx.output, "Queries executed:");
-
+    logInfo(ctx.output, `Landing target: ${nextStep.toEntity}`);
+  
     const landedNode = progress.graph.entities[nextStep.toEntity];
 
     const execution = await executeTraversalStep(
@@ -127,16 +126,12 @@ export async function runContinueTraversalAction(
     });
 
     if (insightActions.length) {
-      logInfo(ctx.output, "Enhance results (optional):");
+      logInfo(ctx.output, "Optional enrichments:");
 
       for (const action of insightActions) {
         logInfo(ctx.output, `  - ${action.title} — ${action.description}`);
       }
 
-      logInfo(
-        ctx.output,
-        "These actions apply to the current leg only. Continue Traversal carries only traversal continuation state."
-      );
     }
 
     const updatedProgress = {
@@ -172,12 +167,13 @@ export async function runContinueTraversalAction(
         ...updatedProgress,
         isCompleted: true
       });
-      logInfo(ctx.output, "Guided Traversal complete.");
+      
       logInfo(ctx.output, `Reached: ${nextStep.toEntity}`);
       logInfo(ctx.output, "Sibling expand remains available on this landed result.");
       if (canRunTraversalBatch() && (updatedProgress.executedQueries?.length ?? 0) >= 2) {
         logInfo(ctx.output, "Run completed traversal as $batch from the Result Viewer toolbar.");
       }
+      logInfo(ctx.output, "- Guided Traversal complete -");
       return;
     }
 
@@ -185,7 +181,7 @@ export async function runContinueTraversalAction(
 
     const followingStep = progress.itinerary.steps[nextStepIndex + 1];
     if (followingStep) {
-      logInfo(ctx.output, `Next step available: ${followingStep.stageLabel}`);
+      logInfo(ctx.output, `Next: ${followingStep.stageLabel}`);
     }
   });
 }

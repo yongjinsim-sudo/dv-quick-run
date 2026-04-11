@@ -87,9 +87,8 @@ suite("traversalInsightActions", () => {
       }
     });
 
-    assert.ok(actions.length >= 2);
+    assert.strictEqual(actions.length, 1);
     assert.strictEqual(actions.every((action) => action.appliesToCurrentLegOnly), true);
     assert.strictEqual(actions[0]?.title, "Enhance with task");
-    assert.ok(actions.some((action) => action.actionId === "traversal.insight.manual-merge-preview"));
   });
 });

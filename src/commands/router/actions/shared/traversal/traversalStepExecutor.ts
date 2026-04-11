@@ -99,22 +99,12 @@ export async function executeTraversalStep(
     throw new Error("No execution queries were generated for the selected step.");
   }
 
-  logInfo(ctx.output, `Execution strategy: ${executionPlan.mode}`);
-
-  for (const reason of executionPlan.rationale) {
-    logInfo(ctx.output, `  - ${reason}`);
-  }
-
   if (
     landingContext &&
     landingContext.entityName === step.fromEntity &&
     Array.isArray(landingContext.ids) &&
     landingContext.ids.length > MAX_CONTINUATION_SCOPE_IDS
   ) {
-    logInfo(
-      ctx.output,
-      `  - Continuation scope intentionally limited to the first ${MAX_CONTINUATION_SCOPE_IDS} landed ${step.fromEntity} rows for safety.`
-    );
   }
 
   let rawFinalResult: unknown = { value: [] };

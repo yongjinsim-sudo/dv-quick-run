@@ -12,7 +12,8 @@ suite("capabilityResolver", () => {
         canApplyFix: false
       },
       traversal: {
-        canRunBatch: false
+        canRunBatch: true,
+        canRunOptimizedBatch: false
       }
     });
   });
@@ -26,7 +27,8 @@ suite("capabilityResolver", () => {
         canApplyFix: true
       },
       traversal: {
-        canRunBatch: true
+        canRunBatch: true,
+        canRunOptimizedBatch: true
       }
     });
   });
@@ -38,7 +40,7 @@ suite("capabilityResolver", () => {
     assert.strictEqual(getQueryDoctorInsightLevel("pro"), 3);
     assert.strictEqual(canApplyQueryDoctorFix("free"), false);
     assert.strictEqual(canApplyQueryDoctorFix("pro"), true);
-    assert.strictEqual(canRunTraversalBatch("free"), false);
+    assert.strictEqual(canRunTraversalBatch("free"), true);
     assert.strictEqual(canRunTraversalBatch("pro"), true);
   });
 

@@ -25,10 +25,6 @@ import {
   buildTraversalSessionId,
   buildTraversalViewerContext
 } from "./traversalSessionHelpers.js";
-import {
-  buildReadableTraversalRouteLabel,
-  buildTraversalRouteDescription
-} from "../shared/traversal/traversalSelection.js";
 
 export async function executeFirstStepDefault(
   ctx: CommandContext,
@@ -46,19 +42,15 @@ export async function executeFirstStepDefault(
 
   clearActiveTraversalProgress();
 
-  logInfo(ctx.output, "Find Path to Table");
-  logInfo(
-    ctx.output,
-    `Selected route: ${buildReadableTraversalRouteLabel(route)} (${buildTraversalRouteDescription(route)})`
-  );
-  logInfo(ctx.output, `Selected itinerary: ${itinerary.label}`);
+  logInfo(ctx.output, "Guided Traversal");
+  logInfo(ctx.output, `Route: ${route.entities.join(" → ")}`);
+  logInfo(ctx.output, `Variant: ${itinerary.label}`);
 
   for (const line of buildRouteExplanationLines(route, explainVerbosity)) {
     logInfo(ctx.output, line);
   }
   logInfo(ctx.output, `Executing Step 1/${itinerary.steps.length}: ${firstStep.stageLabel}`);
-  logInfo(ctx.output, `Main mission target: ${firstStep.toEntity}`);
-  logInfo(ctx.output, "Queries executed:");
+  logInfo(ctx.output, `Landing target: ${firstStep.toEntity}`);
 
   progress?.report(`Running step 1 of ${itinerary.steps.length}: ${firstStep.stageLabel}`, 70);
 
@@ -120,7 +112,7 @@ export async function executeFirstStepDefault(
     logInfo(ctx.output, line);
   }
 
-  logInfo(ctx.output, `Step 1/${itinerary.steps.length} complete: landed on ${execution.landing.entityName}`);
+  logInfo(ctx.output, `Step 1 complete → ${execution.landing.entityName}`);
 
   const landedNode = graph.entities[execution.landing.entityName];
   if (landedNode?.primaryIdAttribute) {
@@ -136,16 +128,12 @@ export async function executeFirstStepDefault(
   });
 
   if (insightActions.length) {
-    logInfo(ctx.output, "Enhance results (optional):");
+    logInfo(ctx.output, "Optional enrichments:");
 
     for (const action of insightActions) {
       logInfo(ctx.output, `  - ${action.title} — ${action.description}`);
     }
 
-    logInfo(
-      ctx.output,
-      "These actions apply to the current leg only. Continue Traversal carries only traversal continuation state."
-    );
   }
 
   const traversalProgress = {
@@ -180,8 +168,8 @@ export async function executeFirstStepDefault(
   if (itinerary.steps.length > 1) {
     const nextStep = itinerary.steps[1];
     if (nextStep) {
-      logInfo(ctx.output, `Next step available: ${nextStep.stageLabel}`);
-      logInfo(ctx.output, "👉 Run: DV Quick Run: Continue Traversal");
+      logInfo(ctx.output, `Next: ${nextStep.stageLabel}`);
+      logInfo(ctx.output, "👉 Continue Traversal");
     }
     return;
   }

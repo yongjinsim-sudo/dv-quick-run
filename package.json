@@ -142,7 +142,7 @@
       },
       {
         "command": "dvQuickRun.findPathToTable",
-        "title": "DV Quick Run: Find Path to Table"
+        "title": "DV Quick Run: Guided Traversal"
       },
       {
         "command": "dvQuickRun.relationshipGraphView",
@@ -240,6 +240,11 @@
           "command": "dvQuickRun.explainQuery",
           "when": "editorTextFocus && !editorReadonly",
           "group": "dvQuickRun_diagnostics@21"
+        },
+        {
+          "command": "dvQuickRun.findPathToTable",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_diagnostics@23"
         },
         {
           "command": "dvQuickRun.addFieldsSelect",
@@ -377,7 +382,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Optional allow-list for Find Path to Table traversal. When populated, traversal only expands through these tables, while always still allowing the selected source and target tables."
+          "description": "Optional allow-list for Guided Traversal.  When populated, traversal only expands through these tables, while always still allowing the selected source and target tables."
         },
         "dvQuickRun.traversal.excludedTables": {
           "type": "array",
@@ -397,7 +402,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Optional block-list for Find Path to Table traversal. Excluded tables are skipped during expansion, except when they are the selected source or target table."
+          "description": "Optional block-list for Guided Traversal.  Excluded tables are skipped during expansion, except when they are the selected source or target table."
         },
         "dvQuickRun.traversal.explainVerbosity": {
           "type": "string",

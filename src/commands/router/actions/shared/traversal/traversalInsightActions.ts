@@ -21,22 +21,13 @@ export function appendTraversalInsightActions(
   context: TraversalInsightActionContext,
   existingActions: TraversalInsightAction[] = []
 ): TraversalInsightAction[] {
+  void context.itinerary;
+
   const actions = [...existingActions];
 
   for (const [index, candidate] of context.executionPlan.enrichmentCandidates.entries()) {
     actions.push(buildEnrichmentAction(candidate, index));
   }
-
-  actions.push({
-    actionId: "traversal.insight.manual-merge-preview",
-    title: "Preview mergeable path insight",
-    description:
-      context.itinerary.steps.length >= 2
-        ? "Future actionable insight model (current leg only)."
-        : "Future actionable insight model.",
-    kind: "manual_test_hook",
-    appliesToCurrentLegOnly: true
-  });
 
   return actions;
 }

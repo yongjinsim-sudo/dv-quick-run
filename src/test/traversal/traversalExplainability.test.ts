@@ -87,12 +87,13 @@ function buildPlan(): TraversalExecutionPlan {
 }
 
 suite("traversalExplainability", () => {
-  test("builds verbose route explanation with sql hints", () => {
+  test("builds verbose route explanation without sql hints", () => {
     const lines = buildRouteExplanationLines(buildRoute(), "verbose");
 
-    assert.ok(lines.some((line) => line.includes("Traversal route selected")));
-    assert.ok(lines.some((line) => line.includes("SQL mental model")));
-    assert.ok(lines.some((line) => line.includes("account.createdby = systemuser.systemuserid")));
+    assert.ok(lines.every((line) => !line.includes("Traversal route selected")));
+    assert.ok(lines.some((line) => line.includes("Route meaning:")));
+    assert.ok(lines.some((line) => line.includes("This path will follow createdby from account to systemuser, then follow primarycontactid from systemuser to contact.")));
+    assert.ok(lines.every((line) => !line.includes("SQL mental model")));
   });
 
   test("builds minimal leg explanation", () => {
@@ -104,9 +105,9 @@ suite("traversalExplainability", () => {
       verbosity: "minimal"
     });
 
-    assert.ok(lines[0]?.includes("Traversal leg summary: 1/2 account → systemuser via createdby."));
-    assert.ok(lines.some((line) => line.includes("Rows returned: 11.")));
-    assert.ok(lines.some((line) => line.includes("Next step: systemuser → contact.")));
+    assert.ok(lines[0]?.includes("Step 1/2: account → systemuser"));
+    assert.ok(lines.some((line) => line.includes("Rows: 11")));
+    assert.ok(lines.some((line) => line.includes("Next: systemuser → contact")));
   });
 
   test("turns banner off when verbosity is off", () => {

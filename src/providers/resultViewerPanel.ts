@@ -249,6 +249,10 @@ export class ResultViewerPanel {
             entityLogicalName: payload.entityLogicalName,
             columnName: payload.columnName,
             rawValue: payload.rawValue,
+            traversalSessionId: (payload as any).traversalSessionId,
+            traversalLegIndex: (payload as any).traversalLegIndex,
+            carryField: (payload as any).carryField,
+            carryValue: (payload as any).carryValue,
             primaryIdField: (payload as any).primaryIdField,
             fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
             fieldAttributeType: (payload as any).fieldAttributeType
