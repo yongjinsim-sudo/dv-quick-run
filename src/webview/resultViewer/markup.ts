@@ -18,6 +18,7 @@ export function getResultViewerMarkup(iconUri: string): string {
                 <img src="${iconUri}" class="viewer-icon" />
                 <span class="viewer-title">DV Quick Run Result Viewer</span>
                 <span id="traversalStatus" class="traversal-status"></span>
+                <button id="binderSuggestionBtn" class="binder-suggestion-btn" type="button" hidden></button>
                 <span id="pageIndicator" class="page-indicator" hidden></span>
                 <span id="rowCount" class="row-count"></span>
                 <span id="copyStatus" class="copy-status"></span>

@@ -6,6 +6,139 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## 🚀 v0.9.0 — Guided Traversal, $batch Execution & Binder Suggestions
+
+This release introduces **Guided Traversal**, **$batch execution workflows**, and a new **Binder suggestion system**, transforming DV Quick Run into a more complete **Dataverse query and workflow workbench**.
+
+It focuses on:
+- navigating relationships step-by-step
+- executing multi-query workflows efficiently
+- surfacing high-confidence next steps without adding noise
+
+---
+
+### 🧭 Guided Traversal (Renamed & Refined)
+
+- Renamed **Find Path to Table** → **Guided Traversal**
+- Improved discoverability:
+  - available via Command Palette
+  - available via editor right-click
+- Simplified traversal output:
+  - reduced noise and removed redundant metadata
+  - clearer step-by-step progression
+- Improved completion flow:
+  - clearer indication when traversal is complete
+  - better alignment with follow-up actions (e.g. $batch)
+
+👉 Results in:
+- faster understanding of relationships
+- cleaner traversal experience
+- more intuitive workflow progression
+
+---
+
+### ⚡ $batch Execution (NEW)
+
+- Added support for running **multiple queries as `$batch`**
+- Enables:
+  - executing multiple queries in a single request
+  - validating multiple endpoints together
+  - more efficient query execution workflows
+
+- Supports:
+  - manual multi-query selection → run as `$batch`
+  - traversal replay → run full traversal as `$batch`
+
+- Result Viewer improvements:
+  - displays per-query results
+  - shows combined execution summary
+
+👉 Establishes `$batch` as:
+- both a **general execution tool**
+- and a **natural continuation of Guided Traversal**
+
+---
+
+### 🧠 Binder Suggestions (NEW)
+
+- Introduced **Binder** — a lightweight, context-aware suggestion system
+- Surfaces **single, high-confidence recommendations** as a light-bulb hint
+
+Examples:
+- Continue traversal
+- Run traversal as `$batch`
+- Refine `$batch` execution
+- Add `$top` / `$select` for broad queries
+
+Key behaviour:
+- only one suggestion shown at a time
+- appears only when confidence is strong
+- suggestion text is directly clickable
+- suggestion is **consumed after click** (no stale hints)
+
+👉 Results in:
+- guided workflows without UI clutter
+- faster iteration
+- minimal, non-intrusive assistance
+
+---
+
+### 🧹 Traversal Denoising & UX Improvements
+
+- Removed low-value output elements:
+  - SQL-style mental notes
+  - redundant relationship explanations
+- Focused output on:
+  - steps
+  - entities
+  - execution flow
+- Improved readability of traversal logs and results
+
+---
+
+### ⚙️ Behaviour Improvements
+
+- Binder now:
+  - prioritises traversal and `$batch` workflows over generic suggestions
+  - avoids suggesting `$top` when already present
+  - handles no-active-editor scenarios safely
+  - resolves queries using execution context instead of cursor position
+
+- Improved consistency between:
+  - traversal output
+  - Result Viewer
+  - Binder suggestions
+
+---
+
+### 🧪 Stability
+
+- All unit tests passing
+- Verified:
+  - traversal workflows (start → continue → complete)
+  - `$batch` execution (manual + traversal)
+  - Binder suggestion lifecycle (show → click → consume)
+- No regression in:
+  - query execution
+  - Result Viewer
+  - Query-by-Canvas workflows
+
+---
+
+## 🧭 Notes
+
+This release marks a shift from:
+
+- **query execution tools**
+→ **guided query + workflow execution experience**
+
+It establishes the foundation for:
+- smarter recommendation ranking
+- deeper Query Doctor integration
+- result-driven workflow suggestions
+
+---
+
 ## 🚀 v0.8.5 — Explain UX Refinement & Actionable Execution Loop
 
 This release focuses on **clarifying Explain output** and introducing a **tight action → preview → apply workflow**.

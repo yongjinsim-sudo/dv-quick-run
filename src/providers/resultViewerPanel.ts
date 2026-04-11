@@ -5,7 +5,10 @@ import {
 } from "./resultViewerActions/registry.js";
 import { runApplySiblingExpandAction } from "../commands/router/actions/traversal/applySiblingExpandAction.js";
 import { runTraversalAsBatchAction } from "../commands/router/actions/traversal/runTraversalAsBatchAction.js";
+import { runContinueTraversalAction } from "../commands/router/actions/traversal/continueTraversalAction.js";
 import { ResultViewerDisplayModel, ResultViewerModel } from "../services/resultViewModelBuilder.js";
+import { previewAndApplyAddTopForQueryInEditor, previewAndApplyAddTopInActiveEditor } from "../refinement/addTopPreview.js";
+import { previewAndApplyAddSelectForQueryInEditor, previewAndApplyAddSelectInActiveEditor } from "../refinement/addSelectPreview.js";
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 
@@ -13,6 +16,17 @@ type ResultViewerMessage =
     | {
         type: "copyToClipboard";
         payload: string;
+    }
+    | {
+        type: "executeBinderSuggestion";
+        payload: {
+            actionId?: string;
+            payload?: {
+                traversalSessionId?: string;
+                queryPath?: string;
+                value?: number;
+            };
+        };
     }
     | {
         type: "executeResultViewerAction";
@@ -156,6 +170,10 @@ export class ResultViewerPanel {
                 await ResultViewerPanel.copyToClipboard(message.payload);
                 return;
 
+            case "executeBinderSuggestion":
+                await ResultViewerPanel.handleExecuteBinderSuggestion(ctx, message.payload);
+                return;
+
             case "executeResultViewerAction":
                 await ResultViewerPanel.handleExecuteResultViewerAction(ctx, message.payload);
                 return;
@@ -213,6 +231,62 @@ export class ResultViewerPanel {
                     optimizeSelectedPath: true
                 });
                 return;
+        }
+    }
+
+
+    private static async handleExecuteBinderSuggestion(
+        ctx: CommandContext,
+        payload: {
+            actionId?: string;
+            payload?: {
+                traversalSessionId?: string;
+                queryPath?: string;
+                value?: number;
+            };
+        }
+    ): Promise<void> {
+        const actionId = payload.actionId ?? "";
+
+        try {
+            switch (actionId) {
+                case "continueTraversal":
+                    await runContinueTraversalAction(ctx);
+                    return;
+
+                case "runTraversalBatch":
+                    await runTraversalAsBatchAction(ctx, {
+                        traversalSessionId: payload.payload?.traversalSessionId
+                    });
+                    return;
+
+                case "runTraversalOptimizedBatch":
+                    await runTraversalAsBatchAction(ctx, {
+                        traversalSessionId: payload.payload?.traversalSessionId,
+                        optimizeSelectedPath: true
+                    });
+                    return;
+
+                case "previewAddTop":
+                    if (typeof payload.payload?.queryPath === "string" && payload.payload.queryPath.trim()) {
+                        await previewAndApplyAddTopForQueryInEditor(payload.payload.queryPath, payload.payload?.value ?? 50);
+                        return;
+                    }
+                    await previewAndApplyAddTopInActiveEditor(payload.payload?.value ?? 50);
+                    return;
+
+                case "previewAddSelect":
+                    if (typeof payload.payload?.queryPath === "string" && payload.payload.queryPath.trim()) {
+                        await previewAndApplyAddSelectForQueryInEditor(ctx, payload.payload.queryPath);
+                        return;
+                    }
+                    await previewAndApplyAddSelectInActiveEditor(ctx);
+                    return;
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            void vscode.window.showWarningMessage(`DV Quick Run: ${message}`);
+            ctx.output.appendLine(`[Binder] ${message}`);
         }
     }
 

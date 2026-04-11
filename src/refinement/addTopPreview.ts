@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { buildEditorQuery, parseEditorQuery } from "../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
+import { findLogicalEditorQueryTargetByText } from "../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
 import type { EditorQueryTarget } from "../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
 
 import { previewAndApplyMutationResult, type MutationResult } from "./queryPreview.js";
@@ -69,4 +70,18 @@ export function buildAddTopPreviewFromTarget(
   parsed.queryOptions = updated;
 
   return buildEditorQuery(parsed);
+}
+
+export async function previewAndApplyAddTopForQueryInEditor(queryText: string, value: number): Promise<void> {
+  const target = findLogicalEditorQueryTargetByText(queryText);
+  const previewQuery = buildAddTopPreviewFromTarget(target, value);
+  const result: MutationResult = {
+    originalQuery: target.text,
+    updatedQuery: previewQuery,
+    summary: `Add $top=${value}`
+  };
+
+  await previewAndApplyMutationResult(target, result, {
+    heading: `Add $top=${value}`
+  });
 }

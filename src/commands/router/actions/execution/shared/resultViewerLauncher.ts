@@ -1,5 +1,6 @@
 import type { CommandContext } from "../../../../context/commandContext.js";
 import { ResultViewerPanel } from "../../../../../providers/resultViewerPanel.js";
+import { buildBatchResultViewerBinderSuggestion } from "../../../../../product/binder/buildBinderSuggestion.js";
 import {
     buildResultViewerModel,
     type BatchResultViewerItem,
@@ -189,7 +190,11 @@ export async function showBatchResultViewer(
                 traversalSessionId: options.traversalSessionId,
                 canRunOptimizedBatch: !!options?.canRunOptimizedBatch
             }
-            : undefined
+            : undefined,
+        binderSuggestion: buildBatchResultViewerBinderSuggestion({
+            traversalSessionId: options?.traversalSessionId,
+            canRunOptimizedBatch: options?.canRunOptimizedBatch
+        })
     };
 
     ResultViewerPanel.show(ctx, batchModel);

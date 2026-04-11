@@ -56,6 +56,27 @@ export const RESULT_VIEWER_STYLES = `
             min-width: 36px;
         }
 
+
+        .binder-suggestion-btn {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--vscode-focusBorder);
+            background: transparent;
+            color: var(--vscode-textLink-foreground);
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1.2;
+            max-width: 420px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .binder-suggestion-btn:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+            color: var(--vscode-textLink-activeForeground);
+        }
+
         .viewer-title {
             font-size: 13px;
             font-weight: 600;

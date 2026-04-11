@@ -207,6 +207,27 @@ function showCopyStatus(message) {
             updateJsonNavigationButtons(matches.length);
         }
 
+
+        function renderBinderSuggestion(suggestion) {
+            if (!(binderSuggestionBtn instanceof HTMLButtonElement)) {
+                return;
+            }
+
+            if (!suggestion || !suggestion.text || !suggestion.actionId) {
+                binderSuggestionBtn.hidden = true;
+                binderSuggestionBtn.textContent = "";
+                binderSuggestionBtn.removeAttribute("data-binder-action-id");
+                binderSuggestionBtn.removeAttribute("data-binder-payload");
+                return;
+            }
+
+            binderSuggestionBtn.hidden = false;
+            binderSuggestionBtn.textContent = suggestion.text;
+            binderSuggestionBtn.setAttribute("title", suggestion.text);
+            binderSuggestionBtn.setAttribute("data-binder-action-id", suggestion.actionId);
+            binderSuggestionBtn.setAttribute("data-binder-payload", JSON.stringify(suggestion.payload || {}));
+        }
+
         function renderTraversalStatus(traversal) {
             if (!traversalStatus) {
                 return;

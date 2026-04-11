@@ -34,6 +34,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const arrayDrawerTableView = document.getElementById("arrayDrawerTableView");
         const arrayDrawerJsonView = document.getElementById("arrayDrawerJsonView");
         const traversalStatus = document.getElementById("traversalStatus");
+        const binderSuggestionBtn = document.getElementById("binderSuggestionBtn");
 
         const rootModel = JSON.parse(__INITIAL_MODEL_JSON__);
         const isBatchRoot = !!rootModel && rootModel.type === "batch";
@@ -231,6 +232,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             model = resolveActiveModel();
             renderEnvironmentBadge(model.environment || rootModel.environment);
             renderTraversalStatus(model.traversal);
+            renderBinderSuggestion(isBatchRoot ? (rootModel.binderSuggestion || null) : model.binderSuggestion);
             renderSiblingExpandButton(model);
             renderTraversalBatchButton(model);
             renderPagingState(model);
@@ -512,6 +514,32 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             });
         });
 
+        binderSuggestionBtn.addEventListener("click", () => {
+            const actionId = binderSuggestionBtn.getAttribute("data-binder-action-id") || "";
+            if (!actionId) {
+                return;
+            }
+
+            let payload = {};
+            try {
+                payload = JSON.parse(binderSuggestionBtn.getAttribute("data-binder-payload") || "{}");
+            } catch {
+                payload = {};
+            }
+
+            binderSuggestionBtn.hidden = true;
+            binderSuggestionBtn.textContent = "";
+            binderSuggestionBtn.removeAttribute("data-binder-action-id");
+            binderSuggestionBtn.removeAttribute("data-binder-payload");
+
+            vscodeApi.postMessage({
+                type: "executeBinderSuggestion",
+                payload: {
+                    actionId,
+                    payload
+                }
+            });
+        });
 
         arrayDrawerTableTab.addEventListener("click", () => {
             arrayDrawerView = "table";

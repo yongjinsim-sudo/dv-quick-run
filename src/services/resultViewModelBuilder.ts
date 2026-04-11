@@ -14,6 +14,8 @@ import {
     isSystemColumn
 } from "../providers/resultViewerActions/columnIntelligence.js";
 import { resolveChoiceValueFromMetadata } from "../commands/router/actions/shared/valueAwareness.js";
+import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion } from "../product/binder/buildBinderSuggestion.js";
+import type { BinderSuggestion } from "../product/binder/binderTypes.js";
 
 export interface ResultViewerEnvironmentInfo {
     name: string;
@@ -86,6 +88,7 @@ export interface ResultViewerPagingInfo {
 }
 
 export interface ResultViewerModel {
+    binderSuggestion?: BinderSuggestion;
     title: string;
     mode: "collection" | "record" | "raw";
     columns: string[];
@@ -140,6 +143,7 @@ export interface BatchTraversalContext {
 }
 
 export interface BatchResultViewerModel {
+    binderSuggestion?: BinderSuggestion;
     type: "batch";
     title: string;
     summary: BatchResultViewerSummary;
@@ -773,6 +777,12 @@ export function buildResultViewerModel(
             entityLogicalName,
             primaryIdField,
             traversal,
+            binderSuggestion: buildResultViewerBinderSuggestion({
+                queryPath: query,
+                rowCount: mappedRows.length,
+                columnCount: displayColumns.length,
+                traversalContext
+            }),
             environment,
             emptyState,
             rowActions: rowActions.length ? rowActions : undefined,
@@ -812,6 +822,12 @@ export function buildResultViewerModel(
             entityLogicalName,
             primaryIdField,
             traversal,
+            binderSuggestion: buildResultViewerBinderSuggestion({
+                queryPath: query,
+                rowCount: 1,
+                columnCount: columns.length,
+                traversalContext
+            }),
             environment,
             emptyState,
             rowActions: recordRowActions.length ? recordRowActions : undefined,
@@ -831,6 +847,12 @@ export function buildResultViewerModel(
         entityLogicalName,
         primaryIdField,
         traversal,
+        binderSuggestion: buildResultViewerBinderSuggestion({
+            queryPath: query,
+            rowCount: 0,
+            columnCount: 0,
+            traversalContext
+        }),
         environment,
         paging: options?.paging
     };
