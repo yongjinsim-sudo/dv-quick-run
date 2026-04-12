@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "A metadata-aware Dataverse workbench for VS Code — run, explore, investigate, and refine OData & FetchXML queries with Query-by-Canvas, guided traversal, enrichment, and intelligent Query Doctor diagnostics.",
-  "version": "0.8.5",
+  "description": "A metadata-aware Dataverse query and workflow workbench for VS Code — run, explore, and refine OData & FetchXML queries with Query-by-Canvas, Guided Traversal, $batch execution, and intelligent suggestions.",
+  "version": "0.9.0",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -42,7 +42,11 @@
     "fetchxml",
     "vscode dataverse",
     "dataverse developer",
-    "dataverse tooling"
+    "dataverse tooling",
+    "dataverse batch",
+    "odata batch",
+    "query workflow",
+    "dataverse tooling vscode"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -142,7 +146,7 @@
       },
       {
         "command": "dvQuickRun.findPathToTable",
-        "title": "DV Quick Run: Find Path to Table"
+        "title": "DV Quick Run: Guided Traversal"
       },
       {
         "command": "dvQuickRun.relationshipGraphView",
@@ -192,6 +196,10 @@
       {
         "command": "dvQuickRun.openQuickStart",
         "title": "DV Quick Run: Open Quickstart"
+      },
+      {
+        "command": "dvQuickRun.runBatchQueries",
+        "title": "DV Quick Run: Run Queries as $batch"
       }
     ],
     "menus": {
@@ -238,6 +246,11 @@
           "group": "dvQuickRun_diagnostics@21"
         },
         {
+          "command": "dvQuickRun.findPathToTable",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_diagnostics@23"
+        },
+        {
           "command": "dvQuickRun.addFieldsSelect",
           "when": "editorTextFocus && !editorReadonly",
           "group": "dvQuickRun_queryBuilder@31"
@@ -271,6 +284,11 @@
           "command": "dvQuickRun.generateQueryFromJson",
           "when": "editorTextFocus && !editorReadonly && editorLangId == json",
           "group": "dvQuickRun_json@1"
+        },
+        {
+          "command": "dvQuickRun.runBatchQueries",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_diagnostics@22"
         }
       ]
     },
@@ -368,7 +386,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Optional allow-list for Find Path to Table traversal. When populated, traversal only expands through these tables, while always still allowing the selected source and target tables."
+          "description": "Optional allow-list for Guided Traversal.  When populated, traversal only expands through these tables, while always still allowing the selected source and target tables."
         },
         "dvQuickRun.traversal.excludedTables": {
           "type": "array",
@@ -388,7 +406,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Optional block-list for Find Path to Table traversal. Excluded tables are skipped during expansion, except when they are the selected source or target table."
+          "description": "Optional block-list for Guided Traversal.  Excluded tables are skipped during expansion, except when they are the selected source or target table."
         },
         "dvQuickRun.traversal.explainVerbosity": {
           "type": "string",

@@ -14,6 +14,8 @@ import {
     isSystemColumn
 } from "../providers/resultViewerActions/columnIntelligence.js";
 import { resolveChoiceValueFromMetadata } from "../commands/router/actions/shared/valueAwareness.js";
+import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion } from "../product/binder/buildBinderSuggestion.js";
+import type { BinderSuggestion } from "../product/binder/binderTypes.js";
 
 export interface ResultViewerEnvironmentInfo {
     name: string;
@@ -25,6 +27,8 @@ export interface ResultViewerTraversalStatus {
     subtitle?: string;
     traversalSessionId?: string;
     canSiblingExpand?: boolean;
+    canRunBatch?: boolean;
+    canRunOptimizedBatch?: boolean;
     requiredCarryField?: string;
 }
 
@@ -41,6 +45,8 @@ export interface ResultViewerTraversalContext extends ResultViewerTraversalActio
     showBanner?: boolean;
     bannerTitle?: string;
     bannerSubtitle?: string;
+    canRunBatch?: boolean;
+    canRunOptimizedBatch?: boolean;
 }
 
 export type ResultViewerCellValueType = "scalar" | "object" | "array" | "empty";
@@ -82,6 +88,7 @@ export interface ResultViewerPagingInfo {
 }
 
 export interface ResultViewerModel {
+    binderSuggestion?: BinderSuggestion;
     title: string;
     mode: "collection" | "record" | "raw";
     columns: string[];
@@ -110,6 +117,43 @@ export interface ResultViewerBuildOptions {
     traversalContext?: ResultViewerTraversalContext;
     paging?: ResultViewerPagingInfo;
 }
+
+
+export interface BatchResultViewerItem {
+    key: string;
+    label: string;
+    queryText: string;
+    statusCode: number;
+    statusText: string;
+    rowCount?: number;
+    model?: ResultViewerModel;
+    error?: string;
+    rawBody?: string;
+}
+
+export interface BatchResultViewerSummary {
+    totalRequests: number;
+    successCount: number;
+    failureCount: number;
+}
+
+export interface BatchTraversalContext {
+    traversalSessionId: string;
+    canRunOptimizedBatch: boolean;
+}
+
+export interface BatchResultViewerModel {
+    binderSuggestion?: BinderSuggestion;
+    type: "batch";
+    title: string;
+    summary: BatchResultViewerSummary;
+    items: BatchResultViewerItem[];
+    selectedKey: string;
+    environment?: ResultViewerEnvironmentInfo;
+    batchTraversal?: BatchTraversalContext;
+}
+
+export type ResultViewerDisplayModel = ResultViewerModel | BatchResultViewerModel;
 
 export interface ResultViewerLegendItem {
     alias: string;
@@ -629,6 +673,8 @@ export function buildResultViewerModel(
                             : "Select a row to continue"),
                 traversalSessionId: traversalContext.traversalSessionId,
                 canSiblingExpand: traversalContext.canSiblingExpand,
+                canRunBatch: traversalContext.canRunBatch,
+                canRunOptimizedBatch: traversalContext.canRunOptimizedBatch,
                 requiredCarryField: traversalContext.requiredCarryField
             }
             : undefined;
@@ -731,6 +777,12 @@ export function buildResultViewerModel(
             entityLogicalName,
             primaryIdField,
             traversal,
+            binderSuggestion: buildResultViewerBinderSuggestion({
+                queryPath: query,
+                rowCount: mappedRows.length,
+                columnCount: displayColumns.length,
+                traversalContext
+            }),
             environment,
             emptyState,
             rowActions: rowActions.length ? rowActions : undefined,
@@ -770,6 +822,12 @@ export function buildResultViewerModel(
             entityLogicalName,
             primaryIdField,
             traversal,
+            binderSuggestion: buildResultViewerBinderSuggestion({
+                queryPath: query,
+                rowCount: 1,
+                columnCount: columns.length,
+                traversalContext
+            }),
             environment,
             emptyState,
             rowActions: recordRowActions.length ? recordRowActions : undefined,
@@ -789,6 +847,12 @@ export function buildResultViewerModel(
         entityLogicalName,
         primaryIdField,
         traversal,
+        binderSuggestion: buildResultViewerBinderSuggestion({
+            queryPath: query,
+            rowCount: 0,
+            columnCount: 0,
+            traversalContext
+        }),
         environment,
         paging: options?.paging
     };

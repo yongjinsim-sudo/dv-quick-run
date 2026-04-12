@@ -1,5 +1,5 @@
 import { resolveEntitlement } from "./entitlementResolver.js";
-import type { CapabilityProfile, QueryDoctorCapabilityProfile } from "./capabilityTypes.js";
+import type { CapabilityProfile, QueryDoctorCapabilityProfile, TraversalCapabilityProfile } from "./capabilityTypes.js";
 import { defaultCapabilityProfiles } from "./defaultCapabilityProfiles.js";
 import type { EntitlementPlan } from "./entitlementTypes.js";
 
@@ -23,4 +23,16 @@ export function getQueryDoctorInsightLevel(plan?: ProductPlan): QueryDoctorCapab
 
 export function canApplyQueryDoctorFix(plan?: ProductPlan): boolean {
   return getQueryDoctorCapabilities(plan).canApplyFix;
+}
+
+export function getTraversalCapabilities(plan?: ProductPlan): TraversalCapabilityProfile {
+  return getCapabilityProfile(plan).traversal;
+}
+
+export function canRunTraversalBatch(plan?: ProductPlan): boolean {
+  return getTraversalCapabilities(plan).canRunBatch;
+}
+
+export function canRunTraversalOptimizedBatch(plan?: ProductPlan): boolean {
+  return getTraversalCapabilities(plan).canRunOptimizedBatch;
 }

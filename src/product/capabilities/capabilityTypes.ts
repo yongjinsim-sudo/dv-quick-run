@@ -5,6 +5,12 @@ export interface QueryDoctorCapabilityProfile {
   canApplyFix: boolean;
 }
 
+export interface TraversalCapabilityProfile {
+  canRunBatch: boolean;
+  canRunOptimizedBatch: boolean;
+}
+
 export interface CapabilityProfile {
   queryDoctor: QueryDoctorCapabilityProfile;
+  traversal: TraversalCapabilityProfile;
 }

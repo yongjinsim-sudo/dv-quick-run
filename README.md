@@ -1,8 +1,8 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query and investigation workbench for VS Code — with guided traversal, preview-first query refinement, and intelligent Query Doctor diagnostics.
+A metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, and intelligent suggestions.
 
-**Run, understand, explore, and refine Dataverse queries — now with Query-by-Canvas and interactive inline refinement — without leaving your editor.**
+**Run, understand, explore, and refine Dataverse queries — with Query-by-Canvas, Guided Traversal, and `$batch` workflows — without leaving your editor.**
 
 ---
 
@@ -17,94 +17,75 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Explore results in a table
 * Investigate records
 * Refine queries safely using Query-by-Canvas (preview-first)
-* Navigate relationships step-by-step
+* Navigate relationships step-by-step (Guided Traversal)
 * Enrich results without rewriting queries
 
 All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.8.5 (Explain UX & Actionable Diagnostics)
+## 🆕 What's New in v0.9.0 (Guided Traversal, $batch & Binder)
 
-> Refines Explain output and introduces a tighter action → preview → apply workflow — making Query Doctor insights clearer and more actionable.
-
----
-
-### ✨ Explain Output Simplification
-
-- Removed redundant phrasing:
-  - eliminated repeated “Recommended next step” wording
-- Promoted section title as the primary signal:
-  - `### ⭐ Recommended next step` is now sufficient
-- Tightened wording across:
-  - actions
-  - evidence
-  - rationale
-
-- Results in:
-  - cleaner output
-  - faster scanning
-  - improved readability
+> Introduces Guided Traversal, `$batch` execution workflows, and Binder suggestions — transforming DV Quick Run into a more complete Dataverse query and workflow workbench.
 
 ---
 
-### ⚡ Apply Preview (Inline Execution)
+### 🧭 Guided Traversal (Improved)
 
-- Introduced **`Apply preview` inline action within Explain output**
+- Renamed **Find Path to Table** → **Guided Traversal**
+- Available via:
+  - Command Palette
+  - editor right-click
+- Cleaner traversal output:
+  - reduced noise
+  - clearer step-by-step flow
+- Improved completion experience
 
-- Appears:
-  - directly inside diagnostic sections
-  - positioned **just above “Preview query”**
-
-- Available for:
-  - narrowing suggestions
-  - `$select` advisory
-  - `$top` advisory
-
-- Enables:
-  - direct transition from insight → execution
-  - preview-first refinement workflow
+👉 Navigate relationships without writing complex queries.
 
 ---
 
-### 🔁 Consistent Execution Pattern
+### ⚡ $batch Execution (NEW)
 
-- Standardised Explain structure:
-Action
-Apply preview
-Preview query
-Evidence
+- Run **multiple queries together** using `$batch`
+- Supports:
+  - manual multi-query execution
+  - Guided Traversal replay as `$batch`
 
-- Applied consistently across:
-- Query Doctor suggestions
-
-- advisory diagnostics
-- Creates a predictable:
-- understand → act → iterate loop
+👉 Enables:
+- efficient execution
+- multi-endpoint validation
+- workflow-based querying
 
 ---
 
-### 🧠 Query Doctor Evolution
+### 🧠 Binder Suggestions (NEW)
 
-- Moves from:
-- “analysis + suggestion”
+- Lightweight, context-aware suggestions (💡)
+- Shows **one strong recommendation at a time**
 
-- To:
-- **analysis → recommendation → executable action**
+Examples:
+- continue traversal
+- run traversal as `$batch`
+- refine `$batch`
+- add `$top` / `$select`
 
-- Aligns with:
-- Query-by-Canvas workflow
-- preview-first design principles
+Behaviour:
+- only appears when relevant
+- clickable text (no extra UI)
+
+👉 Guided workflows without noise.
 
 ---
 
 ### 🧹 UX Improvements
 
-- Reduced visual clutter in Explain output
-- Improved proximity between:
-- suggestion
-- execution action
-- Removed unnecessary repetition
+- Simplified traversal output 
+- Removed low-value hints (e.g. SQL mental notes)
+- Improved alignment between:
+  - traversal
+  - Result Viewer
+  - suggestions
 
 ---
 
@@ -112,400 +93,27 @@ Evidence
 
 - All unit tests passing
 - Verified:
-- Explain rendering
-- inline action placement
-- preview workflow integration
+  - traversal workflows
+  - `$batch` execution
+  - Binder lifecycle
 - No regression in:
-- Run Query
-- Investigate Record
-- Query execution pipeline
+  - query execution
+  - Result Viewer
+  - Query-by-Canvas
 
 ---
 
 ### 🧠 Notes
 
-- Explain now focuses on:
-- clarity
-- actionability
-- minimal noise
+This release marks a shift from:
 
-- Establishes foundation for:
-- richer Query Doctor capabilities
-- deeper interactive refinement (future releases)
+**query execution → guided query workflows**
 
-## 🆕 What's New in v0.8.4 (Intelligence Foundation & Investigate Improvements)
-
-> Stabilises and consolidates DV Quick Run’s intelligence layer — enabling stronger Investigate Record and future Query Doctor capabilities.
+Lays the foundation for:
+- smarter recommendations
+- deeper Query Doctor integration
 
 ---
-
-### 🧠 Shared Intelligence Layer
-
-- Introduced shared primitives for:
-  - identifier detection (e.g. `id`, `_id`, `fhirid`)
-  - field semantics classification
-  - candidate scoring and ranking
-- Removes duplicated heuristics across:
-  - Investigate Record
-  - Query Doctor
-- Establishes a reusable foundation for future intelligence features
-
----
-
-### 🔍 Investigate Record — Improved & Decoupled
-
-- Investigate Record now operates independently from traversal
-- Supports **weak-context GUID investigation**:
-  - copy GUID → run → resolve
-- Improved identifier handling:
-  - supports fields like `msemr_azurefhirid`
-  - recognises broader identifier-style columns
-
----
-
-### ⚙️ Configurable Investigate Search Scope
-
-- New configuration:
-  - `dvQuickRun.investigate.searchScopeTables`
-  - `dvQuickRun.investigate.maxSearchTables`
-  - `dvQuickRun.investigate.maxSearchColumns`
-
-- Default search scope:
-  - `account`
-  - `contact`
-
-- Behaviour is now:
-  - bounded
-  - transparent
-  - user-controlled
-
----
-
-### 🧾 Clear Search Scope Feedback
-
-- Investigate now shows:
-[Investigate] Search scope applied: account, contact
-
-- Helps users understand:
-- where the system searched
-- how to expand coverage via configuration
-
----
-
-### 📊 Result Insight Pipeline (Internal)
-
-- Introduced structured reasoning pipeline:
-- Extract → Classify → Score → Rank → Suggest
-- Enables:
-- better prioritisation of meaningful fields
-- cleaner future extensibility for Query Doctor and Investigate
-
----
-
-### 🧹 Logging Improvements
-
-- Removed traversal-based logging from Investigate flows
-- Reduced noisy repeated logs
-- Clear separation between:
-- traversal behaviour
-- investigate behaviour
-
----
-
-### 🧠 Notes
-
-- Investigate is now **independent from traversal**
-- Weak-context investigation is **bounded by searchScopeTables**
-- Result Viewer context still provides the most accurate resolution
-- If unresolved:
-- DV Quick Run reports searched scope instead of guessing
-
----
-
-## 🆕 What's New in v0.8.3 (Context-Aware Identifier Resolution)
-
-> Enables GUID-first investigation — resolve unknown identifiers safely using context when available, or bounded search when not.
-
----
-
-### 🔎 Editor-first Investigate Record
-
-- **Run Investigate directly from a selected GUID in the editor**
-  - No Quick Pick or entity selection required
-  - Fast workflow:
-    - copy GUID → run → resolve
-
-- Works for:
-  - primary keys (e.g. `contactid`)
-  - surfaced business/reference GUID fields
-
----
-
-### 🧠 Context-Aware Resolution
-
-- Automatically resolves identifiers using:
-  - **Result Viewer context** (deterministic)
-  - **Metadata-driven lookup** when no context exists
-
-- Improves ability to answer:
-  - *“what record is this GUID?”* without schema knowledge
-
----
-
-### ⚙️ Bounded Identifier Search
-
-- Resolution is limited to:
-  - `dvQuickRun.traversal.allowedTables`
-
-- Prevents:
-  - brute-force scanning across large environments
-  - unpredictable performance
-
-- Keeps behaviour:
-  - fast
-  - safe
-  - user-controlled
-
----
-
-### 🧾 Resolution Behaviour
-
-- Uses metadata (`primaryIdAttribute`) instead of heuristics
-- Supports:
-  - standard primary IDs
-  - non-obvious identifier fields across entities
-
----
-
-### 🧠 Notes
-
-- Resolution is **bounded by allowedTables**
-  - add tables to expand coverage
-
-- Editor-based investigation is **best-effort without context**
-  - Result Viewer context remains most accurate
-
-- If not resolved:
-  - DV Quick Run shows searched scope instead of guessing
-
----
-
-## 🆕 What's New in v0.8.2 (Result-Driven Insights & Investigation Clarity)
-
-> Introduces result-driven Query Doctor insights and improves investigation clarity — helping you understand both your results and your records faster.
-
----
-
-### 🧠 Result-Driven Query Doctor
-
-- **Result-driven narrowing insights**
-  - Surfaces narrowing opportunities based on **observed result patterns**
-  - Supports:
-    - repeated categorical values (e.g. status, type)
-    - null vs non-null splits
-  - Keeps suggestions **page-aware** (scoped to current results)
-
-- **More actionable insights**
-  - Easier to see *where to narrow* and *why*
-  - Reduces noise from low-signal technical fields
-
----
-
-### 🔎 Investigate from Business GUID Columns
-
-- **Inline investigate on surfaced GUID fields**
-  - 🔎 now appears on eligible **non-primary-key GUID columns**
-  - Works for:
-    - business/reference identifiers
-    - related record IDs surfaced in results
-
-- **Low-noise behaviour preserved**
-  - Hidden lookup backing fields (`_..._value`) are not promoted
-  - Avoids overwhelming the UI with technical noise
-
----
-
-### 🧠 Investigation Interpretation
-
-- Added **Interpretation section** to Investigate Record
-
-- Provides:
-  - quick explanation of what the record likely represents
-  - contextual cues when available
-  - guidance when records are technical or relationship-driven
-
-- Helps answer:
-  - *“What am I looking at?”* immediately
-
----
-
-### 🔧 Behaviour Changes
-
-- Query Doctor now includes **result-driven insights** when meaningful patterns are detected
-- Investigate actions may appear on **non-PK GUID columns**
-- Investigate output now includes an **INTERPRETATION section**
-
----
-
-### 🧠 Notes
-
-- Insights are **current-page scoped**
-  - they do not imply full dataset behaviour when paging
-
-- Investigate from GUID columns is **best-effort**
-  - some fields may still require correct entity resolution
-
-- Lookup fields without surfaced GUID values may not show investigate actions in this release
-
----
-
-## 🆕 What's New in v0.8.1 (Result Viewer + Business-Aware Query Doctor)
-
-> Enhances large dataset handling and improves Query Doctor with business-aware field prioritisation — making insights faster, clearer, and more useful in real-world Dataverse environments.
-
----
-
-### ⚡ Result Viewer Enhancements (Large Dataset Ready)
-
-- **Large Result Mode**
-  - Automatically activates for large datasets (e.g. thousands of rows)
-  - Prevents UI blocking during heavy renders
-
-- **Progressive Rendering**
-  - Results render incrementally instead of all-at-once
-  - Users can see data immediately while remaining rows load
-
-- **Auto Progressive Loading (No Click Required)**
-  - Automatically continues rendering until full dataset is loaded
-  - No need for manual “Load more”
-
-- **Render Progress Indicator**
-  - Displays progress (e.g. `1200 of 5000 rows`)
-  - Provides visibility into loading state
-
-- **Large Dataset Feedback Banner**
-  - Clearly communicates partial rendering and ongoing loading
-
----
-
-### 💾 Save JSON (Export Current Page)
-
-- Export current results directly from Result Viewer
-- Context-aware filename:
-  - `dvqr_<entity>-page-<n>.json`
-- Includes current dataset and paging metadata (`@odata.nextLink`)
-
----
-
-### 🧠 Business-Aware Query Doctor
-
-- **Improved field prioritisation**
-  - Boosts meaningful categorical fields (e.g. status, intent, type)
-  - De-prioritises technical fields (e.g. `_..._value`, GUIDs)
-
-- **More relevant narrowing suggestions**
-  - Focuses on fields users actually care about
-  - Reduces noise from low-signal attributes
-
-- **Better real-world usefulness**
-  - Moves beyond “technically correct” suggestions
-  - Surfaces insights aligned with business context
-
----
-
-### 🔁 Pagination Awareness
-
-- Result Viewer now reflects Dataverse paging behaviour
-- Supports:
-  - large result sets (5000+ records)
-  - navigation across pages
-- Maintains transparency when dataset is partial
-
----
-
-### 🧠 Notes
-
-- Designed for real enterprise datasets
-- Improves:
-  - perceived performance
-  - usability under large data loads
-- Lays foundation for:
-  - future result insights
-  - deeper analysis workflows
-
----
-
-## 🆕 What's New in v0.8.0 (Evidence-Aware Query Doctor)
-
-> Introduces an evidence-driven Query Doctor with structured narrowing insights — helping you understand and refine queries based on actual returned data patterns.
-
-- **Evidence-Aware Query Doctor**
-  - Uses:
-    - query shape
-    - returned row patterns
-    - lightweight execution evidence
-  - Moves beyond static advice into **result-aware guidance**
-
-- **Structured Narrowing Insights**
-  - Detects meaningful patterns in returned rows
-  - Surfaces potential ways to refine queries using:
-    - repeated categorical values (e.g. status, state, priority)
-    - null vs non-null distributions
-  - Helps identify *where* to narrow — not just *that* you should
-
-- **Explainable Suggestions**
-  - Each suggestion includes a clear reason
-  - Examples:
-    - “value X appears 12 times”
-    - “field populated in 18/30 rows”
-  - Builds trust through transparent, evidence-based guidance
-
-- **Suggested Query Guidance**
-  - Clear, direct next steps for refining queries
-
-- **Metadata-Accurate Suggestions**
-  - Suggested queries use valid fields for the current entity
-  - Prevents incorrect or cross-entity recommendations
-
-- **Improved Readability with Formatted Values**
-  - Query Doctor prefers human-readable labels where available
-  - Example:
-    - `statecode = Active` instead of raw numeric values
-
----
-
-### ✨ New Workflow: Evidence-Based Refinement
-
-Instead of guessing how to improve your query:
-
-1. Run a query  
-2. Open **Explain Query**  
-3. See:
-   - observed patterns
-   - narrowing opportunities
-   - suggested queries  
-4. Refine manually with confidence  
-5. Re-run and iterate  
-
-run → observe → understand → refine → repeat
-
----
-
-### 🧠 Notes
-
-- This release focuses on:
-  - insight quality
-  - explainability
-  - trust
-  - correctness
-
-- Establishes the foundation for:
-  - interactive query refinement
-  - deeper analysis workflows
-  - future execution-driven improvements
-
----
-
 
 ## 🎬 Result Viewer
 

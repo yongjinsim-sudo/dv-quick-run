@@ -19,6 +19,7 @@ import { runTrySampleQueryAction } from "./actions/onboarding/trySampleQueryActi
 import { runTryFetchXmlSampleAction } from "./actions/onboarding/tryFetchXmlSampleAction.js";
 import { runFindPathToTableAction } from "./actions/traversal/findPathToTableAction.js";
 import { runContinueTraversalAction } from "./actions/traversal/continueTraversalAction.js";
+import { runBatchQueriesAction } from "./actions/execution/runBatchQueriesAction.js";
 
 export type DvQuickRunAction = "get" 
   | "whoAmI" 
@@ -45,7 +46,8 @@ export type DvQuickRunAction = "get"
   | "trySampleQuery"
   | "tryFetchXmlSample"
   | "findPathToTable"
-  | "continueTraversal";
+  | "continueTraversal"
+  | "runBatchQueries";
 
 export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext): Promise<void> {
   switch (action) {
@@ -126,6 +128,9 @@ export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: Command
     
     case "continueTraversal":
       return await runContinueTraversalAction(ctx);
+
+    case "runBatchQueries":
+      return await runBatchQueriesAction(ctx);
 
     default: {
       const _exhaustive: never = action;

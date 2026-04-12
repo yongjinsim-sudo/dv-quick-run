@@ -56,6 +56,27 @@ export const RESULT_VIEWER_STYLES = `
             min-width: 36px;
         }
 
+
+        .binder-suggestion-btn {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--vscode-focusBorder);
+            background: transparent;
+            color: var(--vscode-textLink-foreground);
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1.2;
+            max-width: 420px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .binder-suggestion-btn:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+            color: var(--vscode-textLink-activeForeground);
+        }
+
         .viewer-title {
             font-size: 13px;
             font-weight: 600;
@@ -162,9 +183,10 @@ export const RESULT_VIEWER_STYLES = `
 
         .json-tools {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
             padding: 8px;
             border-bottom: 1px solid var(--vscode-panel-border);
             background: var(--vscode-editorWidget-background);
@@ -187,6 +209,27 @@ export const RESULT_VIEWER_STYLES = `
         .json-search-input:focus {
             outline: 1px solid var(--vscode-focusBorder);
             outline-offset: 0;
+        }
+
+        .json-search-cluster {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .json-search-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .json-search-actions button {
+            min-width: 28px;
+            width: 28px;
+            height: 28px;
+            padding: 0;
         }
 
         .json-match-status {
@@ -226,9 +269,10 @@ export const RESULT_VIEWER_STYLES = `
 
         .table-tools {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
             padding: 8px;
             border-bottom: 1px solid var(--vscode-panel-border);
             background: var(--vscode-editorWidget-background);
@@ -237,6 +281,143 @@ export const RESULT_VIEWER_STYLES = `
             z-index: 3;
         }
 
+
+
+        .table-tools-left,
+        .table-tools-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+
+        .batch-kebab-container {
+            margin-left: auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .batch-kebab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            line-height: 1.2;
+        }
+
+        .batch-kebab-btn:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+            border-color: var(--vscode-toolbar-hoverBackground);
+        }
+
+        .batch-kebab-menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 4px);
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            background: var(--vscode-editorWidget-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            padding: 4px;
+            z-index: 12;
+        }
+
+        .batch-kebab-item {
+            background: transparent;
+            color: var(--vscode-foreground);
+            border: none;
+            text-align: left;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .batch-kebab-item:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        .batch-response-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .batch-response-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .batch-response-tab {
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            color: var(--vscode-editor-foreground);
+        }
+
+        .batch-response-tab.active {
+            outline: 1px solid var(--vscode-focusBorder);
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 82%, var(--vscode-button-background) 18%);
+        }
+
+        .batch-response-tab.success {
+            border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 45%, var(--vscode-panel-border) 55%);
+        }
+
+        .batch-response-tab.error {
+            border-color: color-mix(in srgb, var(--vscode-errorForeground) 45%, var(--vscode-panel-border) 55%);
+        }
+
+        .batch-summary-card {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .batch-summary-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .batch-summary-meta {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .batch-summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .batch-summary-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editor-background);
+        }
+
+        .batch-summary-item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .batch-summary-item-meta {
+            font-size: 12px;
+            opacity: 0.88;
+        }
         .large-result-banner {
             display: flex;
             align-items: center;
@@ -756,7 +937,7 @@ export const RESULT_VIEWER_STYLES = `
             margin-right: 8px;
         }
 
-        .traversal-status-pill {global
+        .traversal-status-pill {
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -815,5 +996,50 @@ export const RESULT_VIEWER_STYLES = `
 
         #jsonSaveBtn {
             margin-left: 6px;
+        }
+
+        .batch-summary-item-meta.error {
+            color: var(--vscode-errorForeground);
+        }
+
+        .batch-error-card {
+            margin: 12px;
+            padding: 16px;
+            border: 1px solid color-mix(in srgb, var(--vscode-errorForeground) 35%, var(--vscode-panel-border) 65%);
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 88%, transparent 12%);
+        }
+
+        .batch-error-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--vscode-errorForeground);
+            margin-bottom: 12px;
+        }
+
+        .batch-error-meta {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+
+        .batch-error-message {
+            margin-top: 10px;
+            margin-bottom: 12px;
+            color: var(--vscode-errorForeground);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .batch-error-raw {
+            margin: 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-editor-background);
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 320px;
+            overflow: auto;
         }
 `;

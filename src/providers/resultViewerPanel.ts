@@ -4,7 +4,11 @@ import {
     executeResultViewerAction
 } from "./resultViewerActions/registry.js";
 import { runApplySiblingExpandAction } from "../commands/router/actions/traversal/applySiblingExpandAction.js";
-import { ResultViewerModel } from "../services/resultViewModelBuilder.js";
+import { runTraversalAsBatchAction } from "../commands/router/actions/traversal/runTraversalAsBatchAction.js";
+import { runContinueTraversalAction } from "../commands/router/actions/traversal/continueTraversalAction.js";
+import { ResultViewerDisplayModel, ResultViewerModel } from "../services/resultViewModelBuilder.js";
+import { previewAndApplyAddTopForQueryInEditor, previewAndApplyAddTopInActiveEditor } from "../refinement/addTopPreview.js";
+import { previewAndApplyAddSelectForQueryInEditor, previewAndApplyAddSelectInActiveEditor } from "../refinement/addSelectPreview.js";
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 
@@ -12,6 +16,17 @@ type ResultViewerMessage =
     | {
         type: "copyToClipboard";
         payload: string;
+    }
+    | {
+        type: "executeBinderSuggestion";
+        payload: {
+            actionId?: string;
+            payload?: {
+                traversalSessionId?: string;
+                queryPath?: string;
+                value?: number;
+            };
+        };
     }
     | {
         type: "executeResultViewerAction";
@@ -57,6 +72,18 @@ type ResultViewerMessage =
         payload: {
             traversalSessionId?: string;
         };
+    }
+    | {
+        type: "runTraversalBatch";
+        payload: {
+            traversalSessionId?: string;
+        };
+    }
+    | {
+        type: "runTraversalOptimizedBatch";
+        payload: {
+            traversalSessionId?: string;
+        };
     };
 
 type ResultViewerPageSnapshot = {
@@ -73,6 +100,12 @@ type ResultViewerPagingState = {
     history: ResultViewerPageSnapshot[];
 };
 
+function isBatchResultViewerModel(
+    model: ResultViewerDisplayModel
+): model is import("../services/resultViewModelBuilder.js").BatchResultViewerModel {
+    return (model as { type?: string }).type === "batch";
+}
+
 export class ResultViewerPanel {
 
     private static currentPanel: vscode.WebviewPanel | undefined;
@@ -81,17 +114,22 @@ export class ResultViewerPanel {
 
     public static show(
         ctx: CommandContext,
-        model: ResultViewerModel
+        model: ResultViewerDisplayModel
     ): void {
         ResultViewerPanel.currentContext = ctx;
-        ResultViewerPanel.currentPagingState = {
-            sourcePath: model.queryPath,
-            pageNumber: model.paging?.pageNumber ?? 1,
-            nextLink: model.paging?.hasNextPage
-                ? ResultViewerPanel.extractNextLinkFromRawJson(model.rawJson)
-                : undefined,
-            history: model.paging?.history ?? []
-        };
+
+        if (isBatchResultViewerModel(model)) {
+            ResultViewerPanel.currentPagingState = undefined;
+        } else {
+            ResultViewerPanel.currentPagingState = {
+                sourcePath: model.queryPath,
+                pageNumber: model.paging?.pageNumber ?? 1,
+                nextLink: model.paging?.hasNextPage
+                    ? ResultViewerPanel.extractNextLinkFromRawJson(model.rawJson)
+                    : undefined,
+                history: model.paging?.history ?? []
+            };
+        }
 
         if (!ResultViewerPanel.currentPanel) {
             ResultViewerPanel.currentPanel = vscode.window.createWebviewPanel(
@@ -130,6 +168,10 @@ export class ResultViewerPanel {
         switch (message.type) {
             case "copyToClipboard":
                 await ResultViewerPanel.copyToClipboard(message.payload);
+                return;
+
+            case "executeBinderSuggestion":
+                await ResultViewerPanel.handleExecuteBinderSuggestion(ctx, message.payload);
                 return;
 
             case "executeResultViewerAction":
@@ -176,6 +218,75 @@ export class ResultViewerPanel {
                     traversalSessionId: message.payload.traversalSessionId
                 });
                 return;
+
+            case "runTraversalBatch":
+                await runTraversalAsBatchAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId
+                });
+                return;
+
+            case "runTraversalOptimizedBatch":
+                await runTraversalAsBatchAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId,
+                    optimizeSelectedPath: true
+                });
+                return;
+        }
+    }
+
+
+    private static async handleExecuteBinderSuggestion(
+        ctx: CommandContext,
+        payload: {
+            actionId?: string;
+            payload?: {
+                traversalSessionId?: string;
+                queryPath?: string;
+                value?: number;
+            };
+        }
+    ): Promise<void> {
+        const actionId = payload.actionId ?? "";
+
+        try {
+            switch (actionId) {
+                case "continueTraversal":
+                    await runContinueTraversalAction(ctx);
+                    return;
+
+                case "runTraversalBatch":
+                    await runTraversalAsBatchAction(ctx, {
+                        traversalSessionId: payload.payload?.traversalSessionId
+                    });
+                    return;
+
+                case "runTraversalOptimizedBatch":
+                    await runTraversalAsBatchAction(ctx, {
+                        traversalSessionId: payload.payload?.traversalSessionId,
+                        optimizeSelectedPath: true
+                    });
+                    return;
+
+                case "previewAddTop":
+                    if (typeof payload.payload?.queryPath === "string" && payload.payload.queryPath.trim()) {
+                        await previewAndApplyAddTopForQueryInEditor(payload.payload.queryPath, payload.payload?.value ?? 50);
+                        return;
+                    }
+                    await previewAndApplyAddTopInActiveEditor(payload.payload?.value ?? 50);
+                    return;
+
+                case "previewAddSelect":
+                    if (typeof payload.payload?.queryPath === "string" && payload.payload.queryPath.trim()) {
+                        await previewAndApplyAddSelectForQueryInEditor(ctx, payload.payload.queryPath);
+                        return;
+                    }
+                    await previewAndApplyAddSelectInActiveEditor(ctx);
+                    return;
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            void vscode.window.showWarningMessage(`DV Quick Run: ${message}`);
+            ctx.output.appendLine(`[Binder] ${message}`);
         }
     }
 
@@ -212,6 +323,10 @@ export class ResultViewerPanel {
             entityLogicalName: payload.entityLogicalName,
             columnName: payload.columnName,
             rawValue: payload.rawValue,
+            traversalSessionId: (payload as any).traversalSessionId,
+            traversalLegIndex: (payload as any).traversalLegIndex,
+            carryField: (payload as any).carryField,
+            carryValue: (payload as any).carryValue,
             primaryIdField: (payload as any).primaryIdField,
             fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
             fieldAttributeType: (payload as any).fieldAttributeType

@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { canApplyQueryDoctorFix, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel } from "../../product/capabilities/capabilityResolver.js";
+import { canApplyQueryDoctorFix, canRunTraversalBatch, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel } from "../../product/capabilities/capabilityResolver.js";
 import { normalizeEntitlementPlan } from "../../product/capabilities/entitlementTypes.js";
 
 suite("capabilityResolver", () => {
@@ -10,6 +10,10 @@ suite("capabilityResolver", () => {
       queryDoctor: {
         insightLevel: 1,
         canApplyFix: false
+      },
+      traversal: {
+        canRunBatch: true,
+        canRunOptimizedBatch: false
       }
     });
   });
@@ -21,6 +25,10 @@ suite("capabilityResolver", () => {
       queryDoctor: {
         insightLevel: 3,
         canApplyFix: true
+      },
+      traversal: {
+        canRunBatch: true,
+        canRunOptimizedBatch: true
       }
     });
   });
@@ -32,6 +40,8 @@ suite("capabilityResolver", () => {
     assert.strictEqual(getQueryDoctorInsightLevel("pro"), 3);
     assert.strictEqual(canApplyQueryDoctorFix("free"), false);
     assert.strictEqual(canApplyQueryDoctorFix("pro"), true);
+    assert.strictEqual(canRunTraversalBatch("free"), true);
+    assert.strictEqual(canRunTraversalBatch("pro"), true);
   });
 
   test("getCurrentProductPlan uses normalized configuration plan", () => {

@@ -16,14 +16,86 @@ function showCopyStatus(message) {
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
-                .replace(/\"/g, "&quot;")
+                .replace(/\\"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
 
         function escapeAttribute(value) {
             return String(value)
                 .replace(/&/g, "&amp;")
-                .replace(/\"/g, "&quot;");
+                .replace(/\\"/g, "&quot;");
+        }
+
+
+        function buildBatchResponseTabsHtml() {
+            if (!isBatchRoot) {
+                return "";
+            }
+
+            const summaryActiveClass = isBatchSummarySelected() ? " active" : "";
+            const summaryButton = "<button class=\\"batch-response-tab" + summaryActiveClass + "\\" type=\\"button\\" data-batch-response-key=\\"" + BATCH_SUMMARY_KEY + "\\">$batch Summary</button>";
+
+            const itemButtons = getBatchItems().map((item) => {
+                const activeClass = item.key === activeBatchKey ? " active" : "";
+                const statusClass = item.statusCode >= 400 || item.statusCode === 0 ? " error" : " success";
+                const title = item.queryText + " • " + item.statusCode + " " + item.statusText;
+                return "<button class=\\"batch-response-tab" + activeClass + statusClass + "\\" type=\\"button\\" data-batch-response-key=\\"" + escapeAttribute(item.key) + "\\" title=\\"" + escapeAttribute(title) + "\\">" + escapeHtml(item.label) + "</button>";
+            }).join("");
+
+            const batchTraversal = rootModel.batchTraversal;
+            const canShowKebab = !!(batchTraversal && batchTraversal.canRunOptimizedBatch && batchTraversal.traversalSessionId);
+            const kebabHtml = canShowKebab
+            ? "<div class=\\"batch-kebab-container\\">" +
+                "<button class=\\"batch-kebab-btn\\" type=\\"button\\" title=\\"Advanced options\\" data-batch-kebab-toggle=\\"true\\">⋮</button>" +
+                "<div class=\\"batch-kebab-menu\\" data-batch-kebab-menu=\\"true\\" hidden>" +
+                    "<button class=\\"batch-kebab-item\\" type=\\"button\\" data-batch-kebab-action=\\"tighten\\" data-traversal-session-id=\\"" + escapeAttribute(batchTraversal.traversalSessionId || "") + "\\">Tighten with chosen contactid</button>" +
+                "</div>" +
+                "</div>"
+            : "";
+
+            return "<div class=\\"batch-response-tabs\\">" + summaryButton + itemButtons + kebabHtml + "</div>";
+        }
+
+        function buildBatchSummaryHtml() {
+            if (!isBatchRoot) {
+                return "";
+            }
+
+            const summary = rootModel.summary || {};
+            const itemsHtml = getBatchItems().map((item, index) => {
+                const status = (item.statusCode || 0) + " " + (item.statusText || "");
+                const rowCount = typeof item.rowCount === "number"
+                    ? item.rowCount + (item.rowCount === 1 ? " row" : " rows")
+                    : (item.error ? item.error : "No payload");
+                return "<div class=\\"batch-summary-item\\">" +
+                    "<div class=\\"batch-summary-item-title\\">Request " + escapeHtml(String(index + 1)) + ": " + escapeHtml(item.queryText) + "</div>" +
+                    "<div class=\\"batch-summary-item-meta\\">Status: " + escapeHtml(status.trim()) + "</div>" +
+                    "<div class=\\"batch-summary-item-meta\\">Result: " + escapeHtml(rowCount) + "</div>" +
+                    "</div>";
+            }).join("");
+
+            return "<div class=\\"batch-summary-card\\">" +
+                "<div class=\\"batch-summary-title\\">$batch Summary</div>" +
+                "<div class=\\"batch-summary-meta\\">Requests: " + escapeHtml(String(summary.totalRequests ?? getBatchItems().length)) + "</div>" +
+                "<div class=\\"batch-summary-meta\\">Succeeded: " + escapeHtml(String(summary.successCount ?? 0)) + "</div>" +
+                "<div class=\\"batch-summary-meta\\">Failed: " + escapeHtml(String(summary.failureCount ?? 0)) + "</div>" +
+                "<div class=\\"batch-summary-list\\">" + itemsHtml + "</div>" +
+                "</div>";
+        }
+
+        function renderBatchResponseBar() {
+            if (!(batchResponseBar instanceof HTMLElement)) {
+                return;
+            }
+
+            if (!isBatchRoot) {
+                batchResponseBar.hidden = true;
+                batchResponseBar.innerHTML = "";
+                return;
+            }
+
+            batchResponseBar.hidden = false;
+            batchResponseBar.innerHTML = buildBatchResponseTabsHtml();
         }
 
 
@@ -133,6 +205,27 @@ function showCopyStatus(message) {
             activateJsonMatch(matches, jsonState.currentMatchIndex);
             updateJsonMatchStatus(jsonState.currentMatchIndex + 1, matches.length);
             updateJsonNavigationButtons(matches.length);
+        }
+
+
+        function renderBinderSuggestion(suggestion) {
+            if (!(binderSuggestionBtn instanceof HTMLButtonElement)) {
+                return;
+            }
+
+            if (!suggestion || !suggestion.text || !suggestion.actionId) {
+                binderSuggestionBtn.hidden = true;
+                binderSuggestionBtn.textContent = "";
+                binderSuggestionBtn.removeAttribute("data-binder-action-id");
+                binderSuggestionBtn.removeAttribute("data-binder-payload");
+                return;
+            }
+
+            binderSuggestionBtn.hidden = false;
+            binderSuggestionBtn.textContent = suggestion.text;
+            binderSuggestionBtn.setAttribute("title", suggestion.text);
+            binderSuggestionBtn.setAttribute("data-binder-action-id", suggestion.actionId);
+            binderSuggestionBtn.setAttribute("data-binder-payload", JSON.stringify(suggestion.payload || {}));
         }
 
         function renderTraversalStatus(traversal) {

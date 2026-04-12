@@ -18,14 +18,6 @@ function safeRelationshipName(step: TraversalExecutionStep): string {
   return step.edges[0]?.navigationPropertyName?.trim() || "unknown relationship";
 }
 
-function buildSqlMentalModel(route: TraversalRoute): string[] {
-  return route.edges.map((edge) => {
-    const leftField = edge.referencingAttribute?.trim() || edge.navigationPropertyName;
-    const rightField = `${edge.toEntity}id`;
-    return `${edge.fromEntity}.${leftField} = ${edge.toEntity}.${rightField}`;
-  });
-}
-
 export function buildRouteExplanationLines(
   route: TraversalRoute,
   verbosity: TraversalExplainVerbosity
@@ -34,9 +26,7 @@ export function buildRouteExplanationLines(
     return [];
   }
 
-  const lines: string[] = [
-    `Traversal route selected: ${route.entities.join(" → ")}`
-  ];
+  const lines: string[] = [];
 
   route.edges.forEach((edge, index) => {
     lines.push(
@@ -55,14 +45,8 @@ export function buildRouteExplanationLines(
       : `then follow ${relationship} from ${edge.fromEntity} to ${edge.toEntity}`;
   });
 
-  lines.push("Meaning:");
+  lines.push("Route meaning:");
   lines.push(`This path will ${meaningParts.join(", ")}.`);
-
-  const sqlLines = buildSqlMentalModel(route);
-  if (sqlLines.length) {
-    lines.push("SQL mental model:");
-    sqlLines.forEach((line) => lines.push(line));
-  }
 
   return lines;
 }
@@ -78,21 +62,14 @@ export function buildLegExplanationLines(args: {
     return [];
   }
 
-  const relationship = safeRelationshipName(args.step);
   const lines = [
-    `Traversal leg summary: ${args.stepIndex + 1}/${args.itinerary.steps.length} ${args.step.fromEntity} → ${args.step.toEntity} via ${relationship}.`,
-    `Rows returned: ${args.rowCount}.`
+    `Step ${args.stepIndex + 1}/${args.itinerary.steps.length}: ${args.step.fromEntity} → ${args.step.toEntity}`,
+    `Rows: ${args.rowCount}`
   ];
 
   const nextStep = args.itinerary.steps[args.stepIndex + 1];
   if (nextStep) {
-    lines.push(`Next step: ${nextStep.stageLabel}.`);
-  }
-
-  if (args.verbosity === "verbose") {
-    lines.push(
-      `Meaning: this leg follows ${humanize(relationship)} from ${args.step.fromEntity} to ${args.step.toEntity}.`
-    );
+    lines.push(`Next: ${nextStep.stageLabel}`);
   }
 
   return lines;
@@ -102,24 +79,13 @@ export function buildExecutionStrategyHintLines(args: {
   executionPlan: TraversalStepExecutionPlan;
   verbosity: TraversalExplainVerbosity;
 }): string[] {
+  void args.executionPlan;
+
   if (args.verbosity === "off") {
     return [];
   }
 
-  const modeLabel = args.executionPlan.mode.replace(/_/g, " ");
-  const lines = [`Traversal strategy hint: ${modeLabel}.`];
-
-  if (args.verbosity === "verbose") {
-    if (args.executionPlan.mode === "direct") {
-      lines.push("This leg is being executed as a direct expand-first traversal.");
-    } else if (args.executionPlan.mode === "nested_expand") {
-      lines.push("This leg is being executed using nested expand shape while keeping traversal explicit.");
-    } else {
-      lines.push("Traversal remains step-based and explicit even when fallback planning is used.");
-    }
-  }
-
-  return lines;
+  return [];
 }
 
 export function buildNoResultGuidanceLines(args: {
