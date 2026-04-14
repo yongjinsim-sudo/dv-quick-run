@@ -20,6 +20,7 @@ export function buildTraversalDebugLabel(
 
 export function buildTraversalViewerContext(args: {
   sessionId: string;
+  isBestMatchRoute?: boolean;
   itinerary: TraversalExecutionPlan;
   currentStepIndex: number;
   currentEntityName?: string;
@@ -43,6 +44,7 @@ export function buildTraversalViewerContext(args: {
   return {
     openedFrom: "guidedTraversal",
     traversalSessionId: args.sessionId,
+    isBestMatchRoute: args.isBestMatchRoute,
     legIndex: args.currentStepIndex,
     legCount: args.itinerary.steps.length,
     hasNextLeg: !!nextStep,

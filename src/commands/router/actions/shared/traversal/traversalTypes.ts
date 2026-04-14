@@ -211,6 +211,7 @@ export type TraversalInsightActionContext = {
 export type TraversalViewerContext = {
   openedFrom: "guidedTraversal";
   traversalSessionId: string;
+  isBestMatchRoute?: boolean;
   legIndex: number;
   legCount: number;
   hasNextLeg: boolean;
@@ -237,6 +238,7 @@ export type ContinueTraversalRequest = {
 export type ActiveTraversalProgress = {
   sessionId: string;
   debugLabel: string;
+  isBestMatchRoute?: boolean;
   route: TraversalRoute;
   itinerary: TraversalExecutionPlan;
   currentStepIndex: number;

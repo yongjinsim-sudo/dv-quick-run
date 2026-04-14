@@ -80,6 +80,7 @@ export async function runContinueTraversalAction(
       {
         traversalContext: buildTraversalViewerContext({
           sessionId: progress.sessionId,
+          isBestMatchRoute: progress.isBestMatchRoute,
           itinerary: progress.itinerary,
           currentStepIndex: nextStepIndex,
           currentEntityName: nextStep.toEntity,

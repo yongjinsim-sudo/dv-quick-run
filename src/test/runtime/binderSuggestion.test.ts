@@ -9,6 +9,7 @@ suite("binderSuggestion", () => {
       columnCount: 1,
       traversalContext: {
         traversalSessionId: "trv_123",
+        isBestMatchRoute: true,
         legIndex: 0,
         legCount: 2,
         hasNextLeg: true,
@@ -31,6 +32,7 @@ suite("binderSuggestion", () => {
       columnCount: 1,
       traversalContext: {
         traversalSessionId: "trv_123",
+        isBestMatchRoute: true,
         legIndex: 1,
         legCount: 2,
         hasNextLeg: false,
@@ -42,6 +44,29 @@ suite("binderSuggestion", () => {
 
     assert.ok(suggestion);
     assert.strictEqual(suggestion?.actionId, "runTraversalBatch");
+  });
+
+  test("falls back to non-traversal binder suggestions for non-best-match routes", () => {
+    const suggestion = buildResultViewerBinderSuggestion({
+      queryPath: "tasks?$select=subject",
+      rowCount: 34,
+      columnCount: 1,
+      traversalContext: {
+        traversalSessionId: "trv_123",
+        isBestMatchRoute: false,
+        legIndex: 1,
+        legCount: 2,
+        hasNextLeg: false,
+        currentEntityName: "task",
+        isFinalLeg: true,
+        canRunBatch: true
+      }
+    });
+
+    assert.ok(suggestion);
+    assert.notStrictEqual(suggestion?.actionId, "continueTraversal");
+    assert.notStrictEqual(suggestion?.actionId, "runTraversalBatch");
+    assert.strictEqual(suggestion?.actionId, "previewAddTop");
   });
 
   test("suggests add top for broad queries without top", () => {

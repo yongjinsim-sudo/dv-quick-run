@@ -175,6 +175,7 @@ export async function runApplySiblingExpandAction(
       {
         traversalContext: buildTraversalViewerContext({
           sessionId: progress.sessionId,
+          isBestMatchRoute: progress.isBestMatchRoute,
           itinerary: progress.itinerary,
           currentStepIndex: progress.currentStepIndex,
           currentEntityName: currentStep.toEntity,

@@ -52,6 +52,46 @@ const NOISY_ENTITY_HINTS = [
   "systemuser"
 ];
 
+const SYSTEM_ENTITY_PREFIXES = [
+  "_",
+  "adx_",
+  "msdyn_",
+  "mspp_",
+  "msfp_",
+  "msfsi_",
+  "mserp_",
+  "msdyncrm_",
+  "solution",
+  "workflow",
+  "async",
+  "bulk",
+  "queue",
+  "system"
+];
+
+const SYSTEM_ENTITY_HINTS = [
+  "activitypointer",
+  "activitymimeattachment",
+  "annotation",
+  "asyncoperation",
+  "bulkdelete",
+  "bulkoperation",
+  "duplicaterecord",
+  "pluginassembly",
+  "plugintype",
+  "queueitem",
+  "ribbon",
+  "savedquery",
+  "systemform",
+  "systemuser",
+  "teamtemplate",
+  "workflow",
+  "workflowlog"
+];
+
+const BEST_MATCH_MAX_COUNT = 2;
+const BEST_MATCH_SCORE_GAP = 12;
+
 function countNoisyIntermediates(route: TraversalRoute): number {
   return getIntermediateEntities(route).filter((entity) => {
     const normalized = normalizeReasoningName(entity);
@@ -125,6 +165,25 @@ function looksLikeBridgeEntity(logicalName: string): boolean {
   return BRIDGE_HINTS.some((hint) => normalized.includes(hint));
 }
 
+function looksLikeSystemEntity(logicalName: string): boolean {
+  const trimmed = logicalName.trim();
+  const normalized = normalizeReasoningName(logicalName);
+
+  if (!trimmed || !normalized) {
+    return true;
+  }
+
+  if (trimmed.startsWith("_")) {
+    return true;
+  }
+
+  if (SYSTEM_ENTITY_PREFIXES.some((prefix) => normalized.startsWith(prefix))) {
+    return true;
+  }
+
+  return SYSTEM_ENTITY_HINTS.some((hint) => normalized.includes(hint));
+}
+
 function getIntermediateEntities(route: TraversalRoute): string[] {
   if (route.entities.length <= 2) {
     return [];
@@ -158,6 +217,21 @@ function hasPracticalRelationshipHint(route: TraversalRoute): boolean {
 
 function isCleanDirectRoute(route: TraversalRoute): boolean {
   return route.hopCount === 1 && getIntermediateEntities(route).length === 0;
+}
+
+function scoreTraversalRouteBusinessRelevance(route: TraversalRoute): number {
+  let score = 0;
+
+  for (const entity of route.entities) {
+    if (looksLikeSystemEntity(entity)) {
+      score -= route.sourceEntity === entity || route.targetEntity === entity ? 25 : 60;
+      continue;
+    }
+
+    score += route.sourceEntity === entity || route.targetEntity === entity ? 5 : 15;
+  }
+
+  return score;
 }
 
 export function scoreTraversalRouteForSelection(route: TraversalRoute): number {
@@ -194,6 +268,8 @@ export function scoreTraversalRouteForSelection(route: TraversalRoute): number {
   if (route.hopCount <= 2 && !intermediates.some((entity) => looksLikeBridgeEntity(entity))) {
     score += 20;
   }
+
+  score += scoreTraversalRouteBusinessRelevance(route);
 
   return score;
 }
@@ -292,15 +368,45 @@ export function buildRankedTraversalRoutes(routes: TraversalRoute[]): RankedTrav
       );
     });
 
-  const threshold = ranked[0] ? ranked[0].score - 30 : Number.NEGATIVE_INFINITY;
+  const bestMatchRouteIds = new Set(
+    collectBestMatchRouteIds(ranked).map((item) => item.route.routeId)
+  );
 
   return ranked.map((item, index) => ({
     ...item,
-    isBestMatch:
-      index < 4 &&
-      item.score >= threshold &&
-      item.score >= 0
+    isBestMatch: bestMatchRouteIds.has(item.route.routeId)
   }));
+}
+
+function collectBestMatchRouteIds(
+  ranked: Array<Pick<RankedTraversalRoute, "route" | "score">>
+): Array<Pick<RankedTraversalRoute, "route" | "score">> {
+  const top = ranked[0];
+
+  if (!top || top.score < 0) {
+    return [];
+  }
+
+  const bestMatches = [top];
+
+  for (const item of ranked.slice(1)) {
+    if (bestMatches.length >= BEST_MATCH_MAX_COUNT) {
+      break;
+    }
+
+    const scoreGap = top.score - item.score;
+    if (scoreGap > BEST_MATCH_SCORE_GAP) {
+      break;
+    }
+
+    if (item.route.hopCount > top.route.hopCount + 1) {
+      continue;
+    }
+
+    bestMatches.push(item);
+  }
+
+  return bestMatches;
 }
 
 export function getBestMatchRoutes(routes: TraversalRoute[]): TraversalRoute[] {

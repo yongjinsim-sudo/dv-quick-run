@@ -20,6 +20,7 @@ import type {
   TraversalRoute
 } from "../shared/traversal/traversalTypes.js";
 import type { TraversalProgressReporter } from "./traversalActionTypes.js";
+import type { TraversalStartOptions } from "./traversalActionTypes.js";
 import {
   buildTraversalDebugLabel,
   buildTraversalSessionId,
@@ -31,7 +32,8 @@ export async function executeFirstStepDefault(
   graph: TraversalGraph,
   route: TraversalRoute,
   itinerary: TraversalExecutionPlan,
-  progress?: TraversalProgressReporter
+  progress?: TraversalProgressReporter,
+  options?: TraversalStartOptions
 ): Promise<void> {
   const firstStep = itinerary.steps[0];
   const explainVerbosity = getTraversalExplainVerbosity();
@@ -75,6 +77,7 @@ export async function executeFirstStepDefault(
     {
       traversalContext: buildTraversalViewerContext({
         sessionId,
+        isBestMatchRoute: options?.isBestMatchRoute,
         itinerary,
         currentStepIndex: 0,
         currentEntityName: firstStep.toEntity,
@@ -139,6 +142,7 @@ export async function executeFirstStepDefault(
   const traversalProgress = {
     sessionId,
     debugLabel,
+    isBestMatchRoute: options?.isBestMatchRoute,
     route,
     itinerary,
     currentStepIndex: 0,

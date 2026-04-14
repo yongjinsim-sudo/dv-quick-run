@@ -44,8 +44,9 @@ export function buildResultViewerBinderSuggestion(args: {
   traversalContext?: ResultViewerTraversalContext;
 }): BinderSuggestion | undefined {
   const traversal = args.traversalContext;
+  const shouldPreferTraversalSuggestion = traversal?.isBestMatchRoute !== false;
 
-  if (traversal?.hasNextLeg && traversal.traversalSessionId) {
+  if (shouldPreferTraversalSuggestion && traversal?.hasNextLeg && traversal.traversalSessionId) {
     return {
       text: traversal.nextLegEntityName
         ? `💡 Want to continue this traversal to ${traversal.nextLegEntityName}?`
@@ -57,7 +58,7 @@ export function buildResultViewerBinderSuggestion(args: {
     };
   }
 
-  if (traversal?.isFinalLeg && traversal.canRunBatch && traversal.traversalSessionId) {
+  if (shouldPreferTraversalSuggestion && traversal?.isFinalLeg && traversal.canRunBatch && traversal.traversalSessionId) {
     return {
       text: "💡 This traversal is ready to run as $batch.",
       actionId: "runTraversalBatch",
