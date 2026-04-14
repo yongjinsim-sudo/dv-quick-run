@@ -65,6 +65,25 @@ suite("traversalSelection", () => {
     );
   });
 
+  test("penalizes loop-back routes below equivalent clean routes", () => {
+    const cleanRoute = buildRoute({
+      entities: ["account", "contact", "task"],
+      edgeNames: ["primarycontactid", "regardingobjectid_task"]
+    });
+    const loopBackRoute = buildRoute({
+      entities: ["account", "contact", "account", "task"],
+      edgeNames: ["primarycontactid", "parentcustomerid_account", "regardingobjectid_task"]
+    });
+
+    const ranked = buildRankedTraversalRoutes([loopBackRoute, cleanRoute]);
+
+    assert.strictEqual(ranked[0]?.route.routeId, cleanRoute.routeId);
+    assert.ok(
+      scoreTraversalRouteForSelection(cleanRoute) >
+      scoreTraversalRouteForSelection(loopBackRoute)
+    );
+  });
+
   test("marks only the strongest route as best match when no runner-up is close enough", () => {
     const topRoute = buildRoute({
       entities: ["account", "contact"],

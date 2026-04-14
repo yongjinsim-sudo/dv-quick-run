@@ -91,6 +91,7 @@ const SYSTEM_ENTITY_HINTS = [
 
 const BEST_MATCH_MAX_COUNT = 2;
 const BEST_MATCH_SCORE_GAP = 12;
+const REPEATED_ENTITY_PENALTY = 15;
 
 function countNoisyIntermediates(route: TraversalRoute): number {
   return getIntermediateEntities(route).filter((entity) => {
@@ -192,6 +193,27 @@ function getIntermediateEntities(route: TraversalRoute): string[] {
   return route.entities.slice(1, -1);
 }
 
+function countRepeatedEntities(route: TraversalRoute): number {
+  const seen = new Set<string>();
+  let repeats = 0;
+
+  for (const entity of route.entities) {
+    const normalized = normalizeReasoningName(entity);
+    if (!normalized) {
+      continue;
+    }
+
+    if (seen.has(normalized)) {
+      repeats += 1;
+      continue;
+    }
+
+    seen.add(normalized);
+  }
+
+  return repeats;
+}
+
 function humanizeName(value: string): string {
   return value
     .replace(/_/g, " ")
@@ -269,6 +291,7 @@ export function scoreTraversalRouteForSelection(route: TraversalRoute): number {
     score += 20;
   }
 
+  score -= countRepeatedEntities(route) * REPEATED_ENTITY_PENALTY;
   score += scoreTraversalRouteBusinessRelevance(route);
 
   return score;
