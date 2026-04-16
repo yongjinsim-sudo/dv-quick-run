@@ -36,6 +36,7 @@ function renderSiblingExpandButton(currentModel) {
             showTableBtn.classList.add("active");
             showJsonBtn.classList.remove("active");
             assertExclusiveViewMode();
+
             renderTable(model);
         }
 
@@ -50,6 +51,7 @@ function renderSiblingExpandButton(currentModel) {
             showJsonBtn.classList.add("active");
             showTableBtn.classList.remove("active");
             assertExclusiveViewMode();
+
             renderJson(model);
 
             const activeJsonSearchInput = document.getElementById("jsonSearchInput");

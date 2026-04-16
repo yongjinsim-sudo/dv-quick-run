@@ -24,6 +24,87 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
+## 🆕 What's New in v0.9.1 (Guided Traversal Graph & Stability)
+
+> Adds a visual traversal layer and fixes Result Viewer rendering issues — making Guided Traversal more intuitive and reliable.
+
+---
+
+### 🧭 Guided Traversal Graph (NEW)
+
+- Added **Guided Traversal Graph** as a visual companion to traversal
+  - Opens a dedicated graph panel for route exploration
+  - Displays:
+    - grouped traversal paths
+    - selected route details
+    - relationship chain (via fields)
+
+- Graph behaviour:
+  - focused **path-only rendering** (not full schema)
+  - highlights selected traversal route
+  - reduces noisy/system relationships
+  - supports multi-hop paths
+
+👉 Understand relationships visually instead of guessing paths.
+
+---
+
+### ⚡ Graph → Traversal Execution (NEW)
+
+- Added **Use this route** action
+- Selecting a route now:
+  - triggers actual Guided Traversal execution
+  - passes relationship chain into traversal engine
+  - closes graph panel automatically
+
+👉 Enables:
+- visual selection → immediate execution
+- no manual reconstruction of paths
+
+---
+
+### 🧱 Result Viewer Stability Fix (Critical)
+
+- Fixed **blank Result Viewer issue** (VS Code webview lifecycle)
+
+Changes:
+- switched to **fresh panel creation** instead of reuse
+- ensured HTML assignment always executes
+- stabilised script bootstrap
+
+👉 Results in:
+- consistent rendering
+- no more intermittent blank screens
+
+---
+
+### 🧪 Stability
+
+- Verified:
+  - graph rendering across route selections
+  - graph → traversal execution flow
+  - Result Viewer reliability across runs
+- No regression in:
+  - Guided Traversal
+  - `$batch`
+  - Binder suggestions
+  - Query-by-Canvas
+
+---
+
+### 🧠 Notes
+
+This release extends DV Quick Run from:
+
+**guided traversal → visual traversal + execution**
+
+Laying the foundation for:
+- smarter route ranking
+- deeper graph-assisted reasoning
+- tighter integration with Query Doctor
+
+---
+
 ## 🆕 What's New in v0.9.0 (Guided Traversal, $batch & Binder)
 
 > Introduces Guided Traversal, `$batch` execution workflows, and Binder suggestions — transforming DV Quick Run into a more complete Dataverse query and workflow workbench.

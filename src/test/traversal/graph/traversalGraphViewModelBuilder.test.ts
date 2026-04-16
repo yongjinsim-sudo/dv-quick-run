@@ -83,6 +83,11 @@ suite("traversalGraphViewModelBuilder", () => {
     assert.strictEqual(model.selectedRouteId, "route-a");
     assert.strictEqual(model.sidePanel.selectedRouteId, "route-a");
     assert.strictEqual(model.sidePanel.title, "account -> contact -> task");
+    assert.strictEqual(model.routeGroups.length, 2);
+    assert.deepStrictEqual(model.routeGroups.map((group) => [group.rank, group.variantCount]), [
+      [1, 1],
+      [2, 1]
+    ]);
     assert.deepStrictEqual(model.sidePanel.positiveReasons, [
       "best match",
       "clean path",

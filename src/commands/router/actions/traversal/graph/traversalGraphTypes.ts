@@ -88,6 +88,29 @@ export type TraversalGraphRouteReasoning = {
   warnings: string[];
 };
 
+
+export type TraversalGraphRouteVariantViewModel = {
+  routeId: string;
+  rank: number;
+  label: string;
+  subtitle?: string;
+  confidence: "high" | "medium";
+  isSelected: boolean;
+};
+
+export type TraversalGraphRouteGroupViewModel = {
+  groupId: string;
+  rank: number;
+  label: string;
+  entities: string[];
+  variantCount: number;
+  selectedVariantRouteId?: string;
+  bestVariantRouteId: string;
+  isSelected: boolean;
+  isBestMatch: boolean;
+  variants: TraversalGraphRouteVariantViewModel[];
+};
+
 export type TraversalGraphRouteViewModel = {
   routeId: string;
   rank: number;
@@ -109,6 +132,7 @@ export type TraversalGraphPanelAction = {
 
 export type TraversalGraphSidePanelModel = {
   selectedRouteId?: string;
+  selectedGroupId?: string;
   title?: string;
   subtitle?: string;
   rank?: number;
@@ -116,6 +140,7 @@ export type TraversalGraphSidePanelModel = {
   confidence?: "high" | "medium";
   positiveReasons: string[];
   warningReasons: string[];
+  variants: TraversalGraphRouteVariantViewModel[];
   action: TraversalGraphPanelAction;
 };
 
@@ -139,6 +164,7 @@ export type TraversalGraphViewModel = {
   nodes: TraversalGraphNodeViewModel[];
   edges: TraversalGraphEdgeViewModel[];
   routes: TraversalGraphRouteViewModel[];
+  routeGroups: TraversalGraphRouteGroupViewModel[];
   sidePanel: TraversalGraphSidePanelModel;
 };
 

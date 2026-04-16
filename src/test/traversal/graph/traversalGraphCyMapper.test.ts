@@ -27,6 +27,7 @@ function buildGraphViewModel(): TraversalGraphViewModel {
       normalizedKeyword: "contact"
     },
     selectedRouteId: "route-a",
+    routeGroups: [],
     nodes: [
       {
         id: "task",
@@ -134,9 +135,10 @@ function buildGraphViewModel(): TraversalGraphViewModel {
     routes: [],
     sidePanel: {
       selectedRouteId: "route-a",
-      title: "account -> contact -> task",
+      title: "account -> task",
       positiveReasons: ["best match"],
       warningReasons: [],
+      variants: [],
       action: {
         label: "Use this route",
         routeId: "route-a",

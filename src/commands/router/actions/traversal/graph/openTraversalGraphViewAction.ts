@@ -2,11 +2,17 @@ import * as vscode from "vscode";
 import type { CommandContext } from "../../../../context/commandContext.js";
 import { runAction } from "../../shared/actionRunner.js";
 import type { RankedTraversalRoute } from "../../shared/traversal/traversalSelection.js";
-import { buildInitialTraversalGraphRouteWindow } from "./traversalGraphRouteWindow.js";
+import { buildPlannedTraversalRoute } from "../../shared/traversal/traversalPlanGenerator.js";
+import type { TraversalGraph } from "../../shared/traversal/traversalTypes.js";
+import { executeFirstStepDefault } from "../traversalStartExecution.js";
+import { getTraversalGraphHtml } from "../../../../../webview/traversalGraphHtml.js";
+import { buildInitialTraversalGraphRouteWindow, expandTraversalGraphRouteWindowToMax } from "./traversalGraphRouteWindow.js";
 import { buildTraversalGraphViewModel } from "./traversalGraphViewModelBuilder.js";
 import { mapTraversalGraphViewModelToCy, type TraversalGraphCyElement } from "./traversalGraphCyMapper.js";
+import { resolveTraversalGraphRouteSelectionFromClick } from "./traversalGraphSelection.js";
 import type {
   BuildTraversalGraphViewModelArgs,
+  TraversalGraphSelectableRoute,
   TraversalGraphSessionLayoutState,
   TraversalGraphViewModel
 } from "./traversalGraphTypes.js";
@@ -15,6 +21,7 @@ const TRAVERSAL_GRAPH_PANEL_VIEW_TYPE = "dvQuickRunTraversalGraph";
 const TRAVERSAL_GRAPH_PANEL_TITLE = "DV Quick Run Guided Traversal Graph";
 
 let currentTraversalGraphPanel: vscode.WebviewPanel | undefined;
+let currentTraversalGraphSession: TraversalGraphSurfaceSession | undefined;
 
 export type TraversalGraphState = {
   sourceEntity: string;
@@ -36,11 +43,35 @@ export type TraversalGraphUiModelMessage = {
   cyElements: TraversalGraphCyElement[];
 };
 
+export type TraversalGraphUiEvent =
+  | { type: "graphReady" }
+  | { type: "routeClicked"; routeId?: string }
+  | { type: "edgeClicked"; edgeId?: string; routeIds?: string[] }
+  | { type: "useRouteRequested"; routeId?: string }
+  | { type: "showMoreRequested" }
+  | { type: "closeRequested" }
+  | { type: "nodePositionsChanged"; positionsByNodeId?: Record<string, { x: number; y: number }> };
+
 export type OpenTraversalGraphViewRequest = {
   sourceEntity: string;
   targetEntity: string;
+  graph: TraversalGraph;
   rankedRoutes: RankedTraversalRoute[];
   selectedRouteId?: string;
+};
+
+type TraversalGraphSurfaceSession = {
+  ctx: CommandContext;
+  graph: TraversalGraph;
+  rankedRoutes: RankedTraversalRoute[];
+  graphState: TraversalGraphState;
+  onUseRouteRequested: (args: {
+    ctx: CommandContext;
+    graph: TraversalGraph;
+    rankedRoutes: RankedTraversalRoute[];
+    routeId: string;
+    graphState: TraversalGraphState;
+  }) => Promise<void>;
 };
 
 type OpenTraversalGraphViewDeps = {
@@ -56,8 +87,24 @@ type OpenTraversalGraphViewDeps = {
   }) => { elements: TraversalGraphCyElement[] };
   openGraphSurface: (args: {
     ctx: CommandContext;
+    graph: TraversalGraph;
     graphState: TraversalGraphState;
     renderMessage: TraversalGraphUiModelMessage;
+    rankedRoutes: RankedTraversalRoute[];
+    onUseRouteRequested: (args: {
+      ctx: CommandContext;
+      graph: TraversalGraph;
+      rankedRoutes: RankedTraversalRoute[];
+      routeId: string;
+      graphState: TraversalGraphState;
+    }) => Promise<void>;
+  }) => Promise<void>;
+  onUseRouteRequested: (args: {
+    ctx: CommandContext;
+    graph: TraversalGraph;
+    rankedRoutes: RankedTraversalRoute[];
+    routeId: string;
+    graphState: TraversalGraphState;
   }) => Promise<void>;
   showInfoMessage: (message: string) => Thenable<unknown> | void;
 };
@@ -80,31 +127,20 @@ export async function runOpenTraversalGraphViewAction(
       selectedRouteId: request.selectedRouteId
     });
 
-    const graphViewModel = deps.buildGraphViewModel({
-      sourceEntity: graphState.sourceEntity,
-      targetEntity: graphState.targetEntity,
+    const renderMessage = buildTraversalGraphRenderMessage({
+      graphState,
       rankedRoutes: request.rankedRoutes,
-      routeWindow: {
-        startIndex: graphState.routeWindow.startIndex,
-        visibleCount: graphState.routeWindow.visibleCount,
-        maxVisibleCount: graphState.routeWindow.maxVisibleCount
-      },
-      selectedRouteId: graphState.selectedRouteId,
-      focusedKeyword: graphState.focusedKeyword,
-      layoutState: graphState.layoutState
-    });
-    const cy = deps.mapTraversalGraphViewModelToCy({
-      graph: graphViewModel
+      buildGraphViewModel: deps.buildGraphViewModel,
+      mapTraversalGraphViewModelToCy: deps.mapTraversalGraphViewModelToCy
     });
 
     await deps.openGraphSurface({
       ctx,
+      graph: request.graph,
       graphState,
-      renderMessage: {
-        type: "renderGraph",
-        graphViewModel,
-        cyElements: cy.elements
-      }
+      renderMessage,
+      rankedRoutes: request.rankedRoutes,
+      onUseRouteRequested: deps.onUseRouteRequested
     });
   });
 }
@@ -127,105 +163,85 @@ export function buildInitialTraversalGraphState(args: {
   };
 }
 
+export function buildTraversalGraphRenderMessage(args: {
+  graphState: TraversalGraphState;
+  rankedRoutes: RankedTraversalRoute[];
+  buildGraphViewModel: (args: BuildTraversalGraphViewModelArgs) => TraversalGraphViewModel;
+  mapTraversalGraphViewModelToCy: (args: {
+    graph: TraversalGraphViewModel;
+  }) => { elements: TraversalGraphCyElement[] };
+}): TraversalGraphUiModelMessage {
+  const graphViewModel = args.buildGraphViewModel({
+    sourceEntity: args.graphState.sourceEntity,
+    targetEntity: args.graphState.targetEntity,
+    rankedRoutes: args.rankedRoutes,
+    routeWindow: {
+      startIndex: args.graphState.routeWindow.startIndex,
+      visibleCount: args.graphState.routeWindow.visibleCount,
+      maxVisibleCount: args.graphState.routeWindow.maxVisibleCount
+    },
+    selectedRouteId: args.graphState.selectedRouteId,
+    focusedKeyword: args.graphState.focusedKeyword,
+    layoutState: args.graphState.layoutState
+  });
+
+  const cy = args.mapTraversalGraphViewModelToCy({
+    graph: graphViewModel
+  });
+
+  return {
+    type: "renderGraph",
+    graphViewModel,
+    cyElements: cy.elements
+  };
+}
+
 export function buildTraversalGraphWebviewHtml(args: {
   panelTitle: string;
   renderMessage: TraversalGraphUiModelMessage;
 }): string {
-  const escapedTitle = escapeHtml(args.panelTitle);
-  const serializedMessage = JSON.stringify(JSON.stringify(args.renderMessage));
+  return getTraversalGraphHtml({
+    panelTitle: args.panelTitle,
+    initialRenderMessage: args.renderMessage
+  });
+}
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapedTitle}</title>
-  <style>
-    :root {
-      color-scheme: light;
-      font-family: Consolas, "Courier New", monospace;
-      background: #f7f5ef;
-      color: #1f2328;
-    }
-    body {
-      margin: 0;
-      padding: 16px;
-      background:
-        radial-gradient(circle at top left, rgba(190, 214, 199, 0.35), transparent 35%),
-        linear-gradient(180deg, #f8f7f1 0%, #f2eee3 100%);
-    }
-    .shell {
-      max-width: 960px;
-      margin: 0 auto;
-      display: grid;
-      gap: 12px;
-    }
-    .panel {
-      border: 1px solid rgba(31, 35, 40, 0.15);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.84);
-      box-shadow: 0 10px 24px rgba(31, 35, 40, 0.08);
-      padding: 14px 16px;
-    }
-    h1, h2, p {
-      margin: 0;
-    }
-    .meta {
-      display: grid;
-      gap: 6px;
-      font-size: 12px;
-      color: #57606a;
-    }
-    .counts {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .count {
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: #f1ede2;
-    }
-    pre {
-      margin: 0;
-      max-height: 340px;
-      overflow: auto;
-      font-size: 12px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-  </style>
-</head>
-<body>
-  <div class="shell">
-    <section class="panel">
-      <h1>${escapedTitle}</h1>
-      <div id="graph-meta" class="meta"></div>
-    </section>
-    <section class="panel counts" id="graph-counts"></section>
-    <section class="panel">
-      <h2>Hydration Payload</h2>
-      <pre id="graph-payload"></pre>
-    </section>
-  </div>
-  <script>
-    const renderMessage = JSON.parse(${serializedMessage});
-    const graph = renderMessage.graphViewModel;
-    const meta = document.getElementById("graph-meta");
-    const counts = document.getElementById("graph-counts");
-    const payload = document.getElementById("graph-payload");
+export function resolveTraversalGraphStateFromUiEvent(args: {
+  event: TraversalGraphUiEvent;
+  graphState: TraversalGraphState;
+  graphViewModel: TraversalGraphViewModel;
+}): TraversalGraphState {
+  switch (args.event.type) {
+    case "routeClicked": {
+      const clickedRouteId = args.event.routeId;
+      const selectedRouteId = getVisibleSelectableRoutes(args.graphViewModel).some(
+        (route) => route.routeId === clickedRouteId
+      )
+        ? clickedRouteId
+        : args.graphState.selectedRouteId;
 
-    meta.textContent = graph.sourceEntity + " -> " + graph.targetEntity + " | selected: " + (graph.selectedRouteId || "none");
-    counts.innerHTML = [
-      ["Visible routes", String(graph.routes.length)],
-      ["Nodes", String(graph.nodes.length)],
-      ["Cy elements", String(renderMessage.cyElements.length)]
-    ].map(([label, value]) => '<div class="count"><strong>' + label + '</strong><div>' + value + '</div></div>').join("");
-    payload.textContent = JSON.stringify(renderMessage, null, 2);
-  </script>
-</body>
-</html>`;
+      return {
+        ...args.graphState,
+        selectedRouteId
+      };
+    }
+
+    case "edgeClicked": {
+      const selectedRouteId = resolveTraversalGraphRouteSelectionFromClick({
+        clickedEdgeRouteIds: args.event.routeIds,
+        currentSelectedRouteId: args.graphState.selectedRouteId,
+        visibleRoutes: getVisibleSelectableRoutes(args.graphViewModel)
+      });
+
+      return {
+        ...args.graphState,
+        selectedRouteId
+      };
+    }
+
+    default:
+      return args.graphState;
+  }
 }
 
 function createDefaultOpenTraversalGraphViewDeps(): OpenTraversalGraphViewDeps {
@@ -234,30 +250,83 @@ function createDefaultOpenTraversalGraphViewDeps(): OpenTraversalGraphViewDeps {
     buildGraphViewModel: buildTraversalGraphViewModel,
     mapTraversalGraphViewModelToCy,
     openGraphSurface: openTraversalGraphSurface,
+    onUseRouteRequested: async ({ ctx, graph, rankedRoutes, routeId, graphState }) => {
+      const rankedRoute = rankedRoutes.find((item) => item.route.routeId === routeId);
+      const route = rankedRoute?.route;
+
+      if (!route) {
+        await vscode.window.showWarningMessage(
+          `DV Quick Run: Could not resolve selected graph route ${routeId}.`
+        );
+        return;
+      }
+
+      const plannedRoute = buildPlannedTraversalRoute(route);
+      const recommendedPlan = plannedRoute.candidatePlans.find((plan) => plan.planId === plannedRoute.recommendedPlanId)
+        ?? plannedRoute.candidatePlans[0];
+
+      if (!recommendedPlan) {
+        await vscode.window.showWarningMessage(
+          `DV Quick Run: No runnable execution plan was available for ${graphState.sourceEntity} → ${graphState.targetEntity}.`
+        );
+        return;
+      }
+
+      await executeFirstStepDefault(
+        ctx,
+        graph,
+        route,
+        recommendedPlan,
+        undefined,
+        { isBestMatchRoute: rankedRoute?.isBestMatch }
+      );
+
+      ctx.output.show(true);
+      currentTraversalGraphPanel?.dispose();
+    },
     showInfoMessage: (message) => vscode.window.showInformationMessage(message)
   };
 }
 
 async function openTraversalGraphSurface(args: {
   ctx: CommandContext;
+  graph: TraversalGraph;
   graphState: TraversalGraphState;
   renderMessage: TraversalGraphUiModelMessage;
+  rankedRoutes: RankedTraversalRoute[];
+  onUseRouteRequested: (args: {
+    ctx: CommandContext;
+    graph: TraversalGraph;
+    rankedRoutes: RankedTraversalRoute[];
+    routeId: string;
+    graphState: TraversalGraphState;
+  }) => Promise<void>;
 }): Promise<void> {
-  const panel = getOrCreateTraversalGraphPanel();
+  currentTraversalGraphSession = {
+    ctx: args.ctx,
+    graph: args.graph,
+    rankedRoutes: args.rankedRoutes,
+    graphState: args.graphState,
+    onUseRouteRequested: args.onUseRouteRequested
+  };
+
+  if (currentTraversalGraphPanel) {
+    currentTraversalGraphPanel.dispose();
+    currentTraversalGraphPanel = undefined;
+  }
+
+  const panel = createTraversalGraphPanel();
+  currentTraversalGraphPanel = panel;
+
   panel.title = `${TRAVERSAL_GRAPH_PANEL_TITLE}: ${args.graphState.sourceEntity} -> ${args.graphState.targetEntity}`;
   panel.webview.html = buildTraversalGraphWebviewHtml({
     panelTitle: TRAVERSAL_GRAPH_PANEL_TITLE,
     renderMessage: args.renderMessage
   });
-  panel.reveal(vscode.ViewColumn.Beside);
 }
 
-function getOrCreateTraversalGraphPanel(): vscode.WebviewPanel {
-  if (currentTraversalGraphPanel) {
-    return currentTraversalGraphPanel;
-  }
-
-  currentTraversalGraphPanel = vscode.window.createWebviewPanel(
+function createTraversalGraphPanel(): vscode.WebviewPanel {
+  const panel = vscode.window.createWebviewPanel(
     TRAVERSAL_GRAPH_PANEL_VIEW_TYPE,
     TRAVERSAL_GRAPH_PANEL_TITLE,
     vscode.ViewColumn.Beside,
@@ -266,18 +335,119 @@ function getOrCreateTraversalGraphPanel(): vscode.WebviewPanel {
     }
   );
 
-  currentTraversalGraphPanel.onDidDispose(() => {
-    currentTraversalGraphPanel = undefined;
+  panel.webview.onDidReceiveMessage(async (message: TraversalGraphUiEvent) => {
+    await handleTraversalGraphUiEvent(message);
   });
 
-  return currentTraversalGraphPanel;
+  panel.onDidDispose(() => {
+    currentTraversalGraphPanel = undefined;
+    currentTraversalGraphSession = undefined;
+  });
+
+  return panel;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#39;");
+async function handleTraversalGraphUiEvent(message: TraversalGraphUiEvent): Promise<void> {
+  const panel = currentTraversalGraphPanel;
+  const session = currentTraversalGraphSession;
+
+  if (!panel || !session) {
+    return;
+  }
+
+  switch (message.type) {
+    case "graphReady": {
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "routeClicked":
+    case "edgeClicked": {
+      const currentRender = buildTraversalGraphRenderMessage({
+        graphState: session.graphState,
+        rankedRoutes: session.rankedRoutes,
+        buildGraphViewModel: buildTraversalGraphViewModel,
+        mapTraversalGraphViewModelToCy
+      });
+
+      session.graphState = resolveTraversalGraphStateFromUiEvent({
+        event: message,
+        graphState: session.graphState,
+        graphViewModel: currentRender.graphViewModel
+      });
+
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "showMoreRequested": {
+      session.graphState = {
+        ...session.graphState,
+        routeWindow: expandTraversalGraphRouteWindowToMax(session.graphState.routeWindow)
+      };
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "nodePositionsChanged": {
+      session.graphState = {
+        ...session.graphState,
+        layoutState: {
+          positionsByNodeId: {
+            ...session.graphState.layoutState.positionsByNodeId,
+            ...(message.positionsByNodeId || {})
+          }
+        }
+      };
+      return;
+    }
+
+    case "useRouteRequested": {
+      if (!message.routeId) {
+        return;
+      }
+
+      session.graphState = {
+        ...session.graphState,
+        selectedRouteId: message.routeId
+      };
+      await session.onUseRouteRequested({
+        ctx: session.ctx,
+        graph: session.graph,
+        rankedRoutes: session.rankedRoutes,
+        routeId: message.routeId,
+        graphState: session.graphState
+      });
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "closeRequested": {
+      panel.dispose();
+      return;
+    }
+  }
+}
+
+async function rerenderTraversalGraphSurface(
+  panel: vscode.WebviewPanel,
+  session: TraversalGraphSurfaceSession
+): Promise<void> {
+  const renderMessage = buildTraversalGraphRenderMessage({
+    graphState: session.graphState,
+    rankedRoutes: session.rankedRoutes,
+    buildGraphViewModel: buildTraversalGraphViewModel,
+    mapTraversalGraphViewModelToCy
+  });
+
+  await panel.webview.postMessage(renderMessage);
+}
+
+function getVisibleSelectableRoutes(graphViewModel: TraversalGraphViewModel): TraversalGraphSelectableRoute[] {
+  return graphViewModel.routes.map((route) => ({
+    routeId: route.routeId,
+    rank: route.rank,
+    isBestMatch: route.semantics.isBestMatch,
+    isFocusedByKeyword: route.semantics.isFocusedByKeyword
+  }));
 }

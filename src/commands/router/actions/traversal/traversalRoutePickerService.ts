@@ -38,6 +38,7 @@ import {
   buildVariantChainLabel,
   getVariantDisplaySection
 } from "./traversalRoutePickerTypes.js";
+import { runOpenTraversalGraphViewAction } from "./graph/openTraversalGraphViewAction.js";
 import type {
   CompactRankedRouteGroup,
   RankedRouteWithFeasibility,
@@ -66,13 +67,30 @@ type RoutePickerChoice =
     }
   | {
       choiceKind: "show_all";
+    }
+  | {
+      choiceKind: "open_graph";
     };
 
 type RouteQuickPickItem = vscode.QuickPickItem & {
-  choiceKind: "route" | "route_group" | "show_all";
+  choiceKind: "route" | "route_group" | "show_all" | "open_graph";
   route?: TraversalRoute;
   groupKey?: string;
   feasibility?: RouteFeasibility;
+};
+
+type TraversalRoutePickerDeps = {
+  showRouteGroupQuickPick: (
+    picks: RouteQuickPickItem[],
+    title: string,
+    placeHolder: string
+  ) => Promise<RouteQuickPickItem | undefined>;
+  openGraphView: (args: {
+    ctx: CommandContext;
+    graph: TraversalGraph;
+    orderedRoutes: TraversalRoute[];
+    selectedRouteId?: string;
+  }) => Promise<void>;
 };
 
 type VariantQuickPickItem = vscode.QuickPickItem & {
@@ -154,6 +172,13 @@ function buildRouteGroupPicks(
 ): RouteQuickPickItem[] {
   const picks = items.map((item) => buildRouteGroupPick(item, successMap));
 
+  picks.push({
+    choiceKind: "open_graph",
+    label: "Open graph view",
+    description: "Visualize these ranked routes",
+    detail: "Open the Guided Traversal graph companion surface."
+  });
+
   if (!includeShowAll) {
     return picks;
   }
@@ -184,17 +209,21 @@ async function showRouteGroupQuickPick(
 }
 
 async function pickFromRouteGroupList(
+  ctx: CommandContext,
+  graph: TraversalGraph,
+  orderedRoutes: TraversalRoute[],
   prepared: PreparedPickerModel,
   successMap: Map<string, TraversalHistoryEntry>,
   title: string,
   placeHolder: string,
   items: CompactRankedRouteGroup[],
-  includeShowAll: boolean
+  includeShowAll: boolean,
+  deps: TraversalRoutePickerDeps
 ): Promise<RoutePickerChoice | undefined> {
   const picks = buildRouteGroupPicks(items, successMap, prepared.hiddenGroupCount, includeShowAll);
 
   while (true) {
-    const selected = await showRouteGroupQuickPick(picks, title, placeHolder);
+    const selected = await deps.showRouteGroupQuickPick(picks, title, placeHolder);
 
     if (!selected) {
       return undefined;
@@ -219,6 +248,17 @@ async function pickFromRouteGroupList(
         choiceKind: "route_group",
         groupKey: selected.groupKey
       };
+    }
+
+    if (selected.choiceKind === "open_graph") {
+      const selectedRouteId = buildRankedTraversalRoutes(orderedRoutes)[0]?.route.routeId;
+      await deps.openGraphView({
+        ctx,
+        graph,
+        orderedRoutes,
+        selectedRouteId
+      });
+      return undefined;
     }
 
     return {
@@ -376,7 +416,8 @@ function buildSuccessMap(
 export async function pickTraversalRouteFromQuickPick(
   ctx: CommandContext,
   graph: TraversalGraph,
-  routes: TraversalRoute[]
+  routes: TraversalRoute[],
+  deps: TraversalRoutePickerDeps = createDefaultTraversalRoutePickerDeps()
 ): Promise<TraversalRoute | undefined> {
   const successMap = buildSuccessMap(ctx, routes);
   const orderedRoutes = sortRoutesByHistoricalSuccess(routes, successMap);
@@ -386,12 +427,16 @@ export async function pickTraversalRouteFromQuickPick(
     ? prepared.bestMatches
     : prepared.defaultVisibleGroups;
   const firstPick = await pickFromRouteGroupList(
+    ctx,
+    graph,
+    orderedRoutes,
     prepared,
     successMap,
     "DV Quick Run: Best Match",
     showingBestMatchOnly ? "Here's what I think you want" : "Choose a route",
     initialGroups,
-    showingBestMatchOnly
+    showingBestMatchOnly,
+    deps
   );
 
   if (!firstPick) {
@@ -408,12 +453,16 @@ export async function pickTraversalRouteFromQuickPick(
   }
 
   const fullPick = await pickFromRouteGroupList(
+    ctx,
+    graph,
+    orderedRoutes,
     prepared,
     successMap,
     "DV Quick Run: All Routes",
     "Choose from all discovered routes",
     prepared.expandedGroups,
-    false
+    false,
+    deps
   );
 
   if (!fullPick) {
@@ -430,6 +479,29 @@ export async function pickTraversalRouteFromQuickPick(
   }
 
   return undefined;
+}
+
+function createDefaultTraversalRoutePickerDeps(): TraversalRoutePickerDeps {
+  return {
+    showRouteGroupQuickPick,
+    openGraphView: async ({ ctx, graph, orderedRoutes, selectedRouteId }) => {
+      const rankedRoutes = buildRankedTraversalRoutes(orderedRoutes);
+      const sourceEntity = rankedRoutes[0]?.route.sourceEntity;
+      const targetEntity = rankedRoutes[0]?.route.targetEntity;
+
+      if (!sourceEntity || !targetEntity) {
+        return;
+      }
+
+      await runOpenTraversalGraphViewAction(ctx, {
+        sourceEntity,
+        targetEntity,
+        graph,
+        rankedRoutes,
+        selectedRouteId
+      });
+    }
+  };
 }
 
 export async function pickExecutionPlanFromQuickPick(

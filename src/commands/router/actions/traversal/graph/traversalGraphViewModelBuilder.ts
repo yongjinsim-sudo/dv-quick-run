@@ -10,6 +10,8 @@ import type {
   TraversalGraphFocusState,
   TraversalGraphNodeRole,
   TraversalGraphNodeViewModel,
+  TraversalGraphRouteGroupViewModel,
+  TraversalGraphRouteVariantViewModel,
   TraversalGraphRouteViewModel,
   TraversalGraphSelectableRoute,
   TraversalGraphSidePanelModel,
@@ -19,23 +21,26 @@ import type {
 export function buildTraversalGraphViewModel(
   args: BuildTraversalGraphViewModelArgs
 ): TraversalGraphViewModel {
+  const allRouteModels = args.rankedRoutes.map((item, index) =>
+    buildRouteViewModel(item, index + 1, args.selectedRouteId, buildTraversalGraphFocusState(args.focusedKeyword))
+  );
+  const allRouteGroups = buildRouteGroups(allRouteModels);
   const routeWindow = {
     startIndex: args.routeWindow.startIndex,
-    visibleCount: args.routeWindow.visibleCount,
-    totalRoutes: args.rankedRoutes.length,
+    visibleCount: Math.min(args.routeWindow.visibleCount, args.routeWindow.maxVisibleCount, Math.max(0, allRouteGroups.length - args.routeWindow.startIndex) || 0),
+    totalRoutes: allRouteGroups.length,
     maxVisibleCount: args.routeWindow.maxVisibleCount
   };
-  const visibleRankedRoutes = sliceTraversalGraphVisibleRoutes(args.rankedRoutes, routeWindow);
   const focusState = buildTraversalGraphFocusState(args.focusedKeyword);
-  const selectableVisibleRoutes = visibleRankedRoutes.map((item, index) =>
-    buildSelectableVisibleRoute(
-      item.route.routeId,
-      routeWindow.startIndex + index + 1,
-      item.isBestMatch,
-      item.route.entities,
-      focusState
-    )
-  );
+  const visibleRouteGroups = sliceTraversalGraphVisibleRoutes(allRouteGroups, routeWindow);
+  const visibleRouteIds = new Set(visibleRouteGroups.flatMap((group) => group.variants.map((variant) => variant.routeId)));
+  const visibleRouteModels = allRouteModels.filter((route) => visibleRouteIds.has(route.routeId));
+  const selectableVisibleRoutes = visibleRouteModels.map((route) => ({
+    routeId: route.routeId,
+    rank: route.rank,
+    isBestMatch: route.semantics.isBestMatch,
+    isFocusedByKeyword: route.semantics.isFocusedByKeyword
+  }));
   const selection = resolveTraversalGraphSelectedRouteId({
     visibleRoutes: selectableVisibleRoutes,
     currentSelectedRouteId: args.selectedRouteId,
@@ -43,10 +48,16 @@ export function buildTraversalGraphViewModel(
   });
 
   const selectedRouteId = selection.selectedRouteId;
-  const bestVisibleRouteId = visibleRankedRoutes[0]?.route.routeId;
-  const routeModels = visibleRankedRoutes.map((item, index) =>
-    buildRouteViewModel(item, routeWindow.startIndex + index + 1, selectedRouteId, focusState)
-  );
+  const bestVisibleRouteId = visibleRouteModels[0]?.routeId;
+  const routeModels = visibleRouteModels.map((route) => ({
+    ...route,
+    semantics: {
+      ...route.semantics,
+      isSelected: route.routeId === selectedRouteId
+    }
+  }));
+  const routeGroups = buildRouteGroups(routeModels)
+    .filter((group) => visibleRouteGroups.some((visible) => visible.groupId === group.groupId));
   const nodeModels = buildVisibleNodeModels(
     routeModels,
     args.sourceEntity,
@@ -56,7 +67,7 @@ export function buildTraversalGraphViewModel(
     args.layoutState?.positionsByNodeId
   );
   const edgeModels = buildVisibleEdgeModels(routeModels, focusState);
-  const sidePanel = buildTraversalGraphSidePanelModel(routeModels, selectedRouteId);
+  const sidePanel = buildTraversalGraphSidePanelModel(routeModels, routeGroups, selectedRouteId);
 
   return {
     sourceEntity: args.sourceEntity,
@@ -68,6 +79,7 @@ export function buildTraversalGraphViewModel(
     nodes: nodeModels,
     edges: edgeModels,
     routes: routeModels,
+    routeGroups,
     sidePanel
   };
 }
@@ -267,15 +279,19 @@ function buildVisibleEdgeModels(
 
 function buildTraversalGraphSidePanelModel(
   routeModels: TraversalGraphRouteViewModel[],
+  routeGroups: TraversalGraphRouteGroupViewModel[],
   selectedRouteId: string | undefined
 ): TraversalGraphSidePanelModel {
   const selectedRoute = routeModels.find((route) => route.routeId === selectedRouteId);
+  const selectedGroup = routeGroups.find((group) => group.variants.some((variant) => variant.routeId === selectedRouteId));
 
-  if (!selectedRoute) {
+  if (!selectedRoute || !selectedGroup) {
     return {
       selectedRouteId: undefined,
+      selectedGroupId: undefined,
       positiveReasons: [],
       warningReasons: [],
+      variants: [],
       action: {
         label: "Use this route",
         enabled: false
@@ -285,6 +301,7 @@ function buildTraversalGraphSidePanelModel(
 
   return {
     selectedRouteId: selectedRoute.routeId,
+    selectedGroupId: selectedGroup.groupId,
     title: selectedRoute.label,
     subtitle: buildTraversalRouteDescription({
       routeId: selectedRoute.routeId,
@@ -304,12 +321,84 @@ function buildTraversalGraphSidePanelModel(
     confidence: selectedRoute.confidence,
     positiveReasons: [...selectedRoute.reasoning.positive],
     warningReasons: [...selectedRoute.reasoning.warnings],
+    variants: selectedGroup.variants,
     action: {
       label: "Use this route",
       routeId: selectedRoute.routeId,
       enabled: true
     }
   };
+}
+
+function buildRouteGroups(
+  routeModels: TraversalGraphRouteViewModel[]
+): TraversalGraphRouteGroupViewModel[] {
+  const groups = new Map<string, TraversalGraphRouteGroupViewModel>();
+
+  for (const route of routeModels) {
+    const groupId = buildRouteGroupId(route.entities);
+    const subtitle = buildRouteVariantSubtitle(route);
+    const variant: TraversalGraphRouteVariantViewModel = {
+      routeId: route.routeId,
+      rank: route.rank,
+      label: route.label,
+      subtitle,
+      confidence: route.confidence,
+      isSelected: route.semantics.isSelected
+    };
+
+    const existing = groups.get(groupId);
+    if (!existing) {
+      groups.set(groupId, {
+        groupId,
+        rank: route.rank,
+        label: route.label,
+        entities: [...route.entities],
+        variantCount: 1,
+        selectedVariantRouteId: route.semantics.isSelected ? route.routeId : undefined,
+        bestVariantRouteId: route.routeId,
+        isSelected: route.semantics.isSelected,
+        isBestMatch: route.semantics.isBestMatch,
+        variants: [variant]
+      });
+      continue;
+    }
+
+    existing.variants.push(variant);
+    existing.variantCount += 1;
+    existing.rank = Math.min(existing.rank, route.rank);
+    existing.isBestMatch = existing.isBestMatch || route.semantics.isBestMatch;
+    existing.isSelected = existing.isSelected || route.semantics.isSelected;
+    if (route.semantics.isSelected) {
+      existing.selectedVariantRouteId = route.routeId;
+    }
+    if (route.rank < existing.variants.find((item) => item.routeId === existing.bestVariantRouteId)!.rank) {
+      existing.bestVariantRouteId = route.routeId;
+    }
+  }
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      variants: [...group.variants].sort((left, right) => left.rank - right.rank || left.routeId.localeCompare(right.routeId)),
+      selectedVariantRouteId: group.selectedVariantRouteId ?? group.bestVariantRouteId
+    }))
+    .sort((left, right) => left.rank - right.rank || left.groupId.localeCompare(right.groupId));
+}
+
+function buildRouteGroupId(entities: string[]): string {
+  return entities.join('::');
+}
+
+function buildRouteVariantSubtitle(route: TraversalGraphRouteViewModel): string | undefined {
+  if (route.edgeIds.length === 0) {
+    return undefined;
+  }
+
+  return route.edgeIds
+    .map((edgeId) => parseEdgeId(edgeId).navigationPropertyName)
+    .filter((value) => value.trim().length > 0)
+    .join(' → ');
 }
 
 function getNodeRole(
