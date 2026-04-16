@@ -4,11 +4,15 @@ import { getResultViewerMarkup } from "./resultViewer/markup.js";
 import { getResultViewerScript } from "./resultViewer/script.js";
 import { RESULT_VIEWER_STYLES } from "./resultViewer/styles.js";
 
-function escapeForScript(value: string): string {
-    return value
-        .replace(/\\/g, "\\\\")
-        .replace(/`/g, "\\`")
-        .replace(/\$\{/g, "\\${");
+function getNonce(): string {
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let value = "";
+
+    for (let i = 0; i < 32; i++) {
+        value += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+
+    return value;
 }
 
 export function getResultViewerHtml(
@@ -22,13 +26,20 @@ export function getResultViewerHtml(
 
     const initialModelJson = JSON.stringify(JSON.stringify(model));
     const script = getResultViewerScript(initialModelJson);
+    const nonce = getNonce();
 
-    return `
-<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'none';
+        img-src ${webview.cspSource} https: data:;
+        script-src 'nonce-${nonce}';
+        style-src ${webview.cspSource} 'unsafe-inline';
+        font-src ${webview.cspSource};
+    " />
     <title>DV Quick Run Result Viewer</title>
     <style>
 ${RESULT_VIEWER_STYLES}
@@ -37,7 +48,7 @@ ${RESULT_VIEWER_STYLES}
 <body>
 ${getResultViewerMarkup(String(iconUri))}
 
-    <script>
+    <script nonce="${nonce}">
 ${script}
     </script>
 </body>

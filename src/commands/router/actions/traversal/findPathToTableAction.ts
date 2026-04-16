@@ -5,6 +5,7 @@ import { runAction } from "../shared/actionRunner.js";
 import { buildPlannedTraversalRoute } from "../shared/traversal/traversalPlanGenerator.js";
 import { buildTraversalRoutes } from "../shared/traversal/traversalRouteExplorer.js";
 import {
+  buildRankedTraversalRoutes,
   buildReadableTraversalRouteLabel,
   buildTraversalRouteDescription,
   getPracticalTraversalRoutes
@@ -19,7 +20,8 @@ import type {
 } from "../shared/traversal/traversalTypes.js";
 import type {
   TraversalEntityOption,
-  TraversalProgressReporter
+  TraversalProgressReporter,
+  TraversalStartOptions
 } from "./traversalActionTypes.js";
 import {
   applyTraversalScopeToGraph,
@@ -62,7 +64,8 @@ type FindPathToTableDeps = {
     graph: TraversalGraph,
     route: TraversalRoute,
     itinerary: TraversalExecutionPlan,
-    progress?: TraversalProgressReporter
+    progress?: TraversalProgressReporter,
+    options?: TraversalStartOptions
   ) => Promise<void>;
   showInfoMessage: (message: string) => Thenable<unknown> | void;
 };
@@ -263,6 +266,9 @@ export async function runFindPathToTableWorkflow(
     return;
   }
 
+  const isBestMatchRoute = buildRankedTraversalRoutes(routes)
+    .some((item) => item.route.routeId === selectedRoute.routeId && item.isBestMatch);
+
   progress?.report(`Planning execution for ${selectedRoute.sourceEntity} -> ${selectedRoute.targetEntity}...`, 10);
   const plannedRoute = buildPlannedTraversalRoute(selectedRoute);
   const selectedPlan = await deps.pickExecutionPlan(graph, plannedRoute);
@@ -271,7 +277,9 @@ export async function runFindPathToTableWorkflow(
     return;
   }
 
-  await deps.executeFirstStep(ctx, graph, selectedRoute, selectedPlan, progress);
+  await deps.executeFirstStep(ctx, graph, selectedRoute, selectedPlan, progress, {
+    isBestMatchRoute
+  });
 }
 
 async function confirmTraversalReplacement(ctx: CommandContext): Promise<boolean> {

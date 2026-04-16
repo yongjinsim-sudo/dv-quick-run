@@ -113,8 +113,8 @@ export class ResultViewerPanel {
     private static currentPagingState: ResultViewerPagingState | undefined;
 
     public static show(
-        ctx: CommandContext,
-        model: ResultViewerDisplayModel
+    ctx: CommandContext,
+    model: ResultViewerDisplayModel
     ): void {
         ResultViewerPanel.currentContext = ctx;
 
@@ -131,30 +131,31 @@ export class ResultViewerPanel {
             };
         }
 
-        if (!ResultViewerPanel.currentPanel) {
-            ResultViewerPanel.currentPanel = vscode.window.createWebviewPanel(
-                "dvQuickRunResultViewer",
-                "DV Quick Run Result Viewer",
-                vscode.ViewColumn.Beside,
-                {
-                    enableScripts: true
-                }
-            );
-
-            ResultViewerPanel.currentPanel.webview.onDidReceiveMessage(async (message: ResultViewerMessage) => {
-                await ResultViewerPanel.handleMessage(message);
-            });
-
-            ResultViewerPanel.currentPanel.onDidDispose(() => {
-                ResultViewerPanel.currentPanel = undefined;
-            });
+        if (ResultViewerPanel.currentPanel) {
+            ResultViewerPanel.currentPanel.dispose();
+            ResultViewerPanel.currentPanel = undefined;
         }
 
-        const panel = ResultViewerPanel.currentPanel;
+        const panel = vscode.window.createWebviewPanel(
+            "dvQuickRunResultViewer",
+            model.title,
+            vscode.ViewColumn.Beside,
+            {
+                enableScripts: true
+            }
+        );
 
-        panel.title = model.title;
+        ResultViewerPanel.currentPanel = panel;
+
+        panel.webview.onDidReceiveMessage(async (message: ResultViewerMessage) => {
+            await ResultViewerPanel.handleMessage(message);
+        });
+
+        panel.onDidDispose(() => {
+            ResultViewerPanel.currentPanel = undefined;
+        });
+
         panel.webview.html = getResultViewerHtml(panel.webview, ctx.ext.extensionUri, model);
-        panel.reveal(vscode.ViewColumn.Beside);
     }
 
     private static async handleMessage(message: ResultViewerMessage): Promise<void> {

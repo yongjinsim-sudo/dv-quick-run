@@ -1,5 +1,10 @@
+.agents/skills
+docs/codex
+docs/architecture/graph
 out
 dist
 node_modules
 .vscode-test/
 *.vsix
+AGENTS.md
+GLOBAL-AGENTS.template.md

@@ -38,6 +38,7 @@ export interface ResultViewerEmptyState {
 }
 
 export interface ResultViewerTraversalContext extends ResultViewerTraversalActionContext {
+    isBestMatchRoute?: boolean;
     legCount: number;
     nextLegLabel?: string;
     nextLegEntityName?: string;

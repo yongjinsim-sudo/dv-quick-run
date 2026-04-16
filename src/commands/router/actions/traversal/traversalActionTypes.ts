@@ -10,6 +10,10 @@ export type TraversalProgressReporter = {
   report: (message: string, increment?: number) => void;
 };
 
+export type TraversalStartOptions = {
+  isBestMatchRoute?: boolean;
+};
+
 export type TraversalScopeSettings = {
   allowedTables: Set<string>;
   excludedTables: Set<string>;

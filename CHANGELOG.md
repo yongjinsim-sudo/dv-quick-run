@@ -6,6 +6,109 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## 🚀 v0.9.1 — Guided Traversal Graph & Result Viewer Stability
+
+This release focuses on **visual traversal selection** and **webview stability fixes**, building on top of the Guided Traversal foundation introduced in v0.9.0.
+
+It introduces a **graph-assisted reasoning surface** and resolves a critical **Result Viewer rendering issue** observed in newer VS Code environments.
+
+---
+
+### 🧭 Guided Traversal Graph (NEW)
+
+- Added **Guided Traversal Graph** as a visual companion to traversal
+  - Opens a dedicated graph panel for route exploration
+  - Displays:
+    - grouped traversal paths
+    - selected route details
+    - relationship chain (via fields)
+
+- Graph behaviour:
+  - focused **path-only rendering** (not full schema)
+  - highlights only the selected traversal route
+  - avoids noisy system relationships
+  - supports multi-hop paths (e.g. account → contact → team → task)
+
+- Route selection UX:
+  - route chips act as primary selectors
+  - selecting a route updates:
+    - graph view
+    - selected route panel
+  - variants displayed with confidence indicators
+
+👉 Results in:
+- clearer mental model of relationships
+- faster route comparison
+- reduced traversal guesswork
+
+---
+
+### ⚡ Graph → Traversal Execution (NEW)
+
+- Added **Use this route** action in graph panel
+- Selecting a route now:
+  - triggers actual Guided Traversal execution
+  - passes selected relationship chain to traversal engine
+  - closes graph panel after selection
+
+- Enables:
+  - visual selection → immediate execution
+  - seamless transition from reasoning → action
+
+👉 Establishes graph as:
+- a **decision surface**, not just visualization
+- tightly integrated with traversal workflow
+
+---
+
+### 🧱 Result Viewer Stability Fix (Critical)
+
+- Fixed **blank Result Viewer rendering issue**
+  - caused by webview lifecycle changes in newer VS Code versions (1.116.0)
+
+- Changes:
+  - switched from panel reuse → **fresh webview panel creation**
+  - ensured reliable HTML assignment and script execution
+  - removed inconsistent render states
+
+👉 Results in:
+- consistent Result Viewer rendering
+- no more intermittent blank screens
+- improved reliability across environments
+
+---
+
+### 🧪 Stability
+
+- Verified:
+  - graph rendering across route selections
+  - graph → traversal execution handoff
+  - Result Viewer rendering across repeated runs
+- No regression in:
+  - Guided Traversal workflows
+  - `$batch` execution
+  - Binder suggestions
+  - Query-by-Canvas interactions
+
+---
+
+## 🧭 Notes
+
+This release extends Guided Traversal with a **visual reasoning layer**:
+
+- traversal is no longer just step-based
+- users can now:
+  - see candidate routes
+  - compare options visually
+  - execute directly from selection
+
+It establishes the foundation for:
+- future graph-assisted traversal enhancements
+- smarter route ranking and filtering
+- deeper integration with Query Doctor and result insights
+
+---
+
 ## 🚀 v0.9.0 — Guided Traversal, $batch Execution & Binder Suggestions
 
 This release introduces **Guided Traversal**, **$batch execution workflows**, and a new **Binder suggestion system**, transforming DV Quick Run into a more complete **Dataverse query and workflow workbench**.
