@@ -1,3 +1,5 @@
+import * as fs from "fs";
+
 import type { TraversalGraphUiModelMessage } from "../commands/router/actions/traversal/graph/openTraversalGraphViewAction.js";
 
 function getNonce(): string {
@@ -11,12 +13,27 @@ function getNonce(): string {
   return value;
 }
 
+function getCytoscapeScript(): string {
+  const resolvedMainPath = require.resolve("cytoscape");
+  const preferredPath = resolvedMainPath.replace(
+    /cytoscape\.cjs\.js$/,
+    "cytoscape.min.js"
+  );
+
+  if (fs.existsSync(preferredPath)) {
+    return fs.readFileSync(preferredPath, "utf8");
+  }
+
+  return fs.readFileSync(resolvedMainPath, "utf8");
+}
+
 export function getTraversalGraphHtml(args: {
   panelTitle: string;
   initialRenderMessage: TraversalGraphUiModelMessage;
 }): string {
-  const script = getTraversalGraphScript(args.initialRenderMessage);
   const nonce = getNonce();
+  const script = getTraversalGraphScript(args.initialRenderMessage);
+  const cytoscapeScript = getCytoscapeScript();
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -31,17 +48,19 @@ ${TRAVERSAL_GRAPH_STYLES}
 </head>
 <body>
   <div class="graph-shell">
-    <header class="toolbar">
+    <header class="toolbar card">
       <div>
         <div class="eyebrow">Guided Traversal</div>
         <h1>${args.panelTitle}</h1>
       </div>
       <div class="toolbar-actions">
+        <input id="focusInput" type="text" placeholder="Focus by table" />
+        <button id="resetLayoutBtn" type="button">Reset layout</button>
         <button id="closeGraphBtn" type="button">Close</button>
       </div>
     </header>
 
-    <section class="status-row">
+    <section class="status-row card">
       <div id="rangeBadge" class="badge"></div>
       <div id="selectionBadge" class="badge"></div>
       <div id="metaSummary" class="meta-summary"></div>
@@ -53,7 +72,14 @@ ${TRAVERSAL_GRAPH_STYLES}
           <h2>Graph view</h2>
           <span id="countsText" class="muted"></span>
         </div>
-        <div class="route-strip"><div id="routeChips" class="route-chips"></div><button id="fetchMoreBtn" class="fetch-more-btn" type="button" hidden>Fetch more</button></div>
+        <div class="route-strip">
+          <div id="routeChips" class="route-chips"></div>
+        </div>
+        <div class="graph-controls">
+          <button id="showMoreBtn" type="button">Show more</button>
+          <button id="previousWindowBtn" type="button">Previous</button>
+          <button id="nextWindowBtn" type="button">Next</button>
+        </div>
         <div id="graphCanvas" class="graph-canvas"></div>
       </div>
 
@@ -71,8 +97,16 @@ ${TRAVERSAL_GRAPH_STYLES}
             <div><dt>Confidence</dt><dd id="routeConfidence"></dd></div>
           </dl>
           <div class="reason-section">
+            <h4>Confidence explained</h4>
+            <ul id="confidenceExplanation"></ul>
+          </div>
+          <div class="reason-section">
             <h4>Why this route</h4>
             <ul id="positiveReasons"></ul>
+          </div>
+          <div class="reason-section">
+            <h4>Why this over others</h4>
+            <ul id="comparisonReasons"></ul>
           </div>
           <div class="reason-section">
             <h4>Warnings</h4>
@@ -80,6 +114,7 @@ ${TRAVERSAL_GRAPH_STYLES}
           </div>
           <div class="reason-section">
             <h4>Variants</h4>
+            <div id="variantsFamily" class="muted variant-family"></div>
             <div id="variantList" class="variant-list"></div>
           </div>
           <button id="useRouteBtn" type="button">Use this route</button>
@@ -88,6 +123,9 @@ ${TRAVERSAL_GRAPH_STYLES}
     </section>
   </div>
 
+  <script nonce="${nonce}">
+${cytoscapeScript}
+  </script>
   <script nonce="${nonce}">
 ${script}
   </script>
@@ -128,13 +166,13 @@ body {
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: none;
 }
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
+  gap: 12px;
 }
 .toolbar h1 {
   margin: 4px 0 0;
@@ -146,15 +184,33 @@ body {
   letter-spacing: 0.08em;
   color: var(--muted);
 }
-.toolbar-actions button, #useRouteBtn, .route-chip {
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.toolbar-actions input {
+  min-width: 180px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+}
+button, #useRouteBtn, .route-chip, .variant-chip {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--vscode-button-secondaryBackground, var(--surface-alt));
   color: var(--vscode-button-secondaryForeground, var(--text));
 }
-.toolbar-actions button, #useRouteBtn {
+button, #useRouteBtn {
   padding: 8px 12px;
   cursor: pointer;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 #useRouteBtn {
   margin-top: 14px;
@@ -202,22 +258,73 @@ body {
   gap: 10px;
   margin-bottom: 12px;
 }
-.route-chips {
+.route-chips, .variant-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+.variant-list {
+  flex-direction: column;
+  align-items: stretch;
+}
+.variant-group {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.variant-group-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.variant-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.variant-chip {
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+}
+.variant-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
   flex: 1;
 }
-.fetch-more-btn {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--vscode-button-secondaryBackground, var(--surface-alt));
-  color: var(--vscode-button-secondaryForeground, var(--text));
-  padding: 8px 12px;
-  cursor: pointer;
+.variant-key {
+  word-break: break-word;
+}
+.variant-meta {
+  font-size: 12px;
+  color: var(--muted);
   white-space: nowrap;
 }
-.route-chip {
+.confidence-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.confidence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+.confidence-high { background: #22c55e; }
+.confidence-medium { background: #f59e0b; }
+.confidence-low { background: #ef4444; }
+.graph-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.route-chip, .variant-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -225,741 +332,565 @@ body {
   font-size: 12px;
   cursor: pointer;
 }
-.route-chip.selected {
+.route-chip.selected, .variant-chip.selected {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
 .route-chip.best {
   border-color: rgba(26, 127, 55, 0.3);
 }
-
 .graph-canvas {
-  min-height: 460px;
+  min-height: 520px;
   border-radius: 12px;
   border: 1px solid rgba(31,35,40,0.08);
   background: var(--surface);
   overflow: hidden;
   position: relative;
 }
-.graph-svg {
-  width: 100%;
-  height: 100%;
-  min-height: 460px;
-}
-.edge-group { cursor: pointer; }
-.edge-line {
-  stroke: #3aa0ff;   
-  stroke-width: 2;
-}
-.edge-group.best-route .edge-line {
-  stroke: #3aa0ff;
-  stroke-width: 2.5;
-}
-.edge-group.selected-route .edge-line {
-  stroke: #60a5fa; 
-  stroke-width: 3;
-}
-.edge-group.focused .edge-line { stroke: #7c4dff; stroke-width: 3; }
-.edge-group.loop-warning .edge-line {
-  stroke: #3aa0ff;
-}
-.edge-group.blocked .edge-line { stroke: var(--blocked); stroke-dasharray: 7 5; }
-.edge-group.dimmed .edge-line {
-  opacity: 0.22;
-}
-.edge-label {
-  font-size: 11px;
-  fill: var(--muted);
-  user-select: none;
-}
-.node-group { cursor: grab; }
-.node-group:active { cursor: grabbing; }
-.node-group:hover .node-shape {
-  stroke: var(--vscode-focusBorder);
-  stroke-width: 2;
-}
-.node-shape {
-  fill: #1f2a33;        
-  stroke: #3aa0ff;      
-  stroke-width: 2;
-  rx: 14;
-  ry: 14;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.45));
-}
-.node-group.role-source .node-shape,
-.node-group.role-target .node-shape {
-  stroke-width: 2.5;
-}
-.node-group.best-route .node-shape {
-  stroke: #3aa0ff;
-  stroke-width: 2.5;
-}
-.node-group.selected-route .node-shape {
-  stroke: #60a5fa;      
-  stroke-width: 3;
-  fill: #1e3a5f;       
-}
-.node-group.focused .node-shape {
-  stroke: #7c4dff;
-  stroke-width: 2.5;
-}
-.node-group.loop-warning .node-shape { 
-  stroke: #3aa0ff; 
-}
-.node-group.system-heavy .node-shape {
-  fill: color-mix(in srgb, var(--vscode-editorWidget-background) 82%, var(--warning) 18%);
-  stroke: color-mix(in srgb, var(--warning) 55%, white 45%);
-}
-.node-group.dimmed {
-  opacity: 0.62;
-}
-.node-group.dimmed .node-label {
-  fill: var(--muted);
-}
-.node-label {
-  font-size: 12px;
-  font-weight: 600;
-  fill: color-mix(in srgb, var(--text) 88%, white 12%);
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
+.side-panel h3 {
+  margin: 0 0 6px;
 }
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin: 12px 0 14px;
-}
-.metrics div {
-  padding: 10px;
-  border-radius: 12px;
-  background: rgba(9,105,218,0.06);
+  margin: 0 0 14px;
 }
 .metrics dt {
   font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--muted);
+  text-transform: uppercase;
 }
 .metrics dd {
-  margin: 4px 0 0;
-  font-weight: 700;
+  margin: 6px 0 0;
+  font-weight: 600;
+}
+.reason-section {
+  margin-top: 14px;
 }
 .reason-section ul {
   margin: 8px 0 0;
   padding-left: 18px;
 }
-.reason-section li {
-  margin-bottom: 6px;
-}
-.variant-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 8px;
-}
-.variant-btn {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--vscode-button-secondaryBackground, var(--surface-alt));
-  color: var(--vscode-button-secondaryForeground, var(--text));
-  cursor: pointer;
-}
-.variant-btn.selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.variant-title {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.variant-subtitle {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 11px;
-}
 .empty-state {
+  padding: 20px 0;
   color: var(--muted);
-  padding: 12px 0;
+}
+@media (max-width: 1000px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
 }
 `;
 
 function getTraversalGraphScript(initialRenderMessage: TraversalGraphUiModelMessage): string {
-  const initialRenderMessageJson = JSON.stringify(initialRenderMessage);
+  const serialized = JSON.stringify(initialRenderMessage)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+
   return `
 const vscode = acquireVsCodeApi();
-const initialRenderMessage = ${initialRenderMessageJson};
+let renderState = ${serialized};
+let cy;
+const expandedConfidenceGroups = new Set(["high"]);
 
-const state = {
-  renderMessage: initialRenderMessage,
-  localNodePositions: {},
-  dragState: null,
-  suppressNextNodeClick: false
-};
+const ids = [
+  "rangeBadge",
+  "selectionBadge",
+  "metaSummary",
+  "countsText",
+  "routeChips",
+  "showMoreBtn",
+  "previousWindowBtn",
+  "nextWindowBtn",
+  "graphCanvas",
+  "sidePanelEmpty",
+  "sidePanelContent",
+  "routeTitle",
+  "routeSubtitle",
+  "routeRank",
+  "routeHops",
+  "routeConfidence",
+  "confidenceExplanation",
+  "positiveReasons",
+  "comparisonReasons",
+  "warningReasons",
+  "variantList",
+  "variantsFamily",
+  "useRouteBtn",
+  "focusInput",
+  "closeGraphBtn",
+  "resetLayoutBtn"
+];
+const el = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 
-const graphCanvas = document.getElementById("graphCanvas");
-const routeChips = document.getElementById("routeChips");
-const fetchMoreBtn = document.getElementById("fetchMoreBtn");
-const rangeBadge = document.getElementById("rangeBadge");
-const selectionBadge = document.getElementById("selectionBadge");
-const metaSummary = document.getElementById("metaSummary");
-const countsText = document.getElementById("countsText");
-const sidePanelEmpty = document.getElementById("sidePanelEmpty");
-const sidePanelContent = document.getElementById("sidePanelContent");
-const routeTitle = document.getElementById("routeTitle");
-const routeSubtitle = document.getElementById("routeSubtitle");
-const routeRank = document.getElementById("routeRank");
-const routeHops = document.getElementById("routeHops");
-const routeConfidence = document.getElementById("routeConfidence");
-const positiveReasons = document.getElementById("positiveReasons");
-const warningReasons = document.getElementById("warningReasons");
-const variantList = document.getElementById("variantList");
-const useRouteBtn = document.getElementById("useRouteBtn");
-const closeGraphBtn = document.getElementById("closeGraphBtn");
-
-window.addEventListener("message", (event) => {
-  const message = event.data;
-  if (!message || message.type !== "renderGraph") {
-    return;
-  }
-
-  state.renderMessage = message;
-  state.localNodePositions = Object.fromEntries(
-    (message.graphViewModel?.nodes || [])
-      .filter((node) => node.layout && typeof node.layout.x === 'number' && typeof node.layout.y === 'number')
-      .map((node) => [node.id, { x: node.layout.x, y: node.layout.y }])
-  );
-  renderGraphSurface();
-});
-
-closeGraphBtn?.addEventListener("click", () => {
-  vscode.postMessage({ type: "closeRequested" });
-});
-
-useRouteBtn?.addEventListener("click", () => {
-  const routeId = state.renderMessage?.graphViewModel?.sidePanel?.action?.routeId;
-  if (!routeId) {
-    return;
-  }
-
-  vscode.postMessage({ type: "useRouteRequested", routeId });
-});
-
-fetchMoreBtn?.addEventListener("click", () => {
-  vscode.postMessage({ type: "showMoreRequested" });
-});
-
-function renderGraphSurface() {
-  const renderMessage = state.renderMessage;
-  const graph = renderMessage.graphViewModel;
-  const cyElements = renderMessage.cyElements;
-
-  renderHeader(graph, cyElements);
-  renderRouteChips(graph);
-  renderSvgGraph(graph, cyElements);
-  renderSidePanel(graph);
+function toCyElements(message) {
+  return (message.cyElements || []).map((element) => {
+    const classes = Array.isArray(element?.data?.classes) ? element.data.classes.join(" ") : "";
+    return {
+      group: element.group,
+      data: { ...element.data },
+      position: element.position,
+      classes
+    };
+  });
 }
 
-function renderHeader(graph, cyElements) {
-  const startOrdinal = graph.routeWindow.totalRoutes > 0 ? graph.routeWindow.startIndex + 1 : 0;
-  const endOrdinal = Math.min(graph.routeWindow.startIndex + graph.routeWindow.visibleCount, graph.routeWindow.totalRoutes);
-  rangeBadge.textContent = 'Showing paths ' + startOrdinal + '–' + endOrdinal;
-  const selectedVariant = graph.sidePanel?.variants?.find((item) => item.isSelected);
-  const selectedBadgeText = selectedVariant?.subtitle || graph.selectedRouteId;
-  selectionBadge.textContent = selectedBadgeText ? 'Selected: ' + selectedBadgeText : 'Selected: none';
-  metaSummary.textContent = graph.sourceEntity + ' → ' + graph.targetEntity;
-  const selectedContext = getSelectedRouteContext(graph, state.renderMessage?.cyElements || []);
-  const visibleNodeCount = selectedContext.selectedRoute ? selectedContext.selectedNodeIds.size : graph.nodes.length;
-  const visibleEdgeCount = selectedContext.selectedRoute ? selectedContext.selectedEdgeIds.size : graph.edges.length;
-  countsText.textContent = visibleNodeCount + ' nodes • ' + visibleEdgeCount + ' edges • ' + graph.routeGroups.length + ' grouped paths';
-}
-
-function renderRouteChips(graph) {
-  routeChips.innerHTML = '';
-
-  for (const group of graph.routeGroups || []) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'route-chip' + (group.isSelected ? ' selected' : '') + (group.isBestMatch ? ' best' : '');
-    const suffix = group.variantCount > 1 ? ' (' + group.variantCount + ' variants)' : '';
-    button.innerHTML = '<span>' + escapeHtml(group.label + suffix) + '</span>';
-    button.addEventListener('click', () => {
-      vscode.postMessage({ type: 'routeClicked', routeId: group.selectedVariantRouteId || group.bestVariantRouteId });
-    });
-    routeChips.appendChild(button);
+function getLayout(message) {
+  const hasPresetPositions = (message.graphViewModel?.nodes || []).some((node) => node.layout && node.layout.x !== undefined && node.layout.y !== undefined);
+  if (hasPresetPositions) {
+    return { name: "preset", fit: true, padding: 40 };
   }
-
-  const canFetchMore = !!graph.controls?.canExpandToMax;
-  fetchMoreBtn.hidden = !canFetchMore;
-  fetchMoreBtn.disabled = !canFetchMore;
-}
-
-function getSelectedRouteContext(graph, cyElements) {
-  const selectedRouteId = graph?.selectedRouteId;
-  const selectedRoute = graph?.routes?.find(
-    (route) => route.routeId === selectedRouteId
-  );
-
-  const selectedEdgeIds = new Set(selectedRoute?.edgeIds || []);
-  const selectedNodeIds = new Set();
-
-  for (const item of cyElements || []) {
-    if (item.group !== 'edges') {
-      continue;
-    }
-
-    const edgeId = item?.data?.id;
-    if (!selectedEdgeIds.has(edgeId)) {
-      continue;
-    }
-
-    if (item?.data?.source) {
-      selectedNodeIds.add(item.data.source);
-    }
-    if (item?.data?.target) {
-      selectedNodeIds.add(item.data.target);
-    }
-  }
-
-  for (const entityId of selectedRoute?.entities || []) {
-    selectedNodeIds.add(entityId);
-  }
-
   return {
-    selectedRoute,
-    selectedEdgeIds,
-    selectedNodeIds
+    name: "breadthfirst",
+    directed: true,
+    fit: true,
+    padding: 56,
+    spacingFactor: 2.2,
+    avoidOverlap: true,
+    animate: true,
+    animationDuration: 250,
+    roots: [message.graphViewModel?.sourceEntity].filter(Boolean)
   };
 }
 
-function renderSvgGraph(graph, cyElements) {
-  const allNodes = cyElements.filter((item) => item.group === 'nodes');
-  const allEdges = cyElements.filter((item) => item.group === 'edges');
-  const selectedContext = getSelectedRouteContext(graph, cyElements);
-  const nodes = selectedContext.selectedRoute
-    ? allNodes.filter((node) => selectedContext.selectedNodeIds.has(node.data.id))
-    : allNodes;
-  const edges = selectedContext.selectedRoute
-    ? allEdges.filter((edge) => selectedContext.selectedEdgeIds.has(edge.data.id))
-    : allEdges;
-  const layoutGraph = {
-    ...graph,
-    nodes: (graph.nodes || []).filter((node) => !selectedContext.selectedRoute || selectedContext.selectedNodeIds.has(node.id)),
-    routeGroups: selectedContext.selectedRoute
-      ? (graph.routeGroups || []).filter((group) => group.bestVariantRouteId === selectedContext.selectedRoute.routeId || group.selectedVariantRouteId === selectedContext.selectedRoute.routeId || (group.variants || []).some((variant) => variant.routeId === selectedContext.selectedRoute.routeId))
-      : graph.routeGroups,
-    routes: selectedContext.selectedRoute ? [selectedContext.selectedRoute] : graph.routes
-  };
-  const layout = buildLayoutPositions(layoutGraph, state.localNodePositions);
-  const positions = layout.positions;
-  const width = 920;
-  const height = layout.height;
-
-  const edgeMarkup = edges.map((edge) => buildEdgeMarkup(edge, positions, selectedContext)).join('');
-  const nodeMarkup = nodes.map((node) => buildNodeMarkup(node, positions, selectedContext)).join('');
-
-  graphCanvas.innerHTML =
-    '<svg class="graph-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Guided traversal graph">'
-    + edgeMarkup
-    + nodeMarkup
-    + '</svg>';
-
-  for (const edgeElement of graphCanvas.querySelectorAll('[data-edge-id]')) {
-    edgeElement.addEventListener('click', () => {
-      try {
-        const routeIds = JSON.parse(edgeElement.getAttribute('data-route-ids') || '[]');
-        vscode.postMessage({
-          type: 'edgeClicked',
-          edgeId: edgeElement.getAttribute('data-edge-id'),
-          routeIds
-        });
-      } catch {
-        // ignore malformed payload
-      }
-    });
+function bindCyEvents() {
+  if (!cy) {
+    return;
   }
 
-  for (const nodeElement of graphCanvas.querySelectorAll('[data-node-id]')) {
-    const nodeId = nodeElement.getAttribute('data-node-id');
-    if (!nodeId) {
-      continue;
+  cy.removeAllListeners();
+
+  cy.on("tap", "edge", (event) => {
+    const data = event.target.data();
+    vscode.postMessage({
+      type: "edgeClicked",
+      edgeId: data.id,
+      routeIds: Array.isArray(data.routeIds) ? data.routeIds : []
+    });
+  });
+
+  cy.on("tap", "node", (event) => {
+    const nodeId = event.target.id();
+    const selectedRouteId = pickRouteIdForNode(nodeId, renderState.graphViewModel);
+    if (selectedRouteId) {
+      vscode.postMessage({ type: "routeClicked", routeId: selectedRouteId });
     }
+  });
 
-    nodeElement.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (state.suppressNextNodeClick) {
-        state.suppressNextNodeClick = false;
-        return;
-      }
-
-      const routeId = resolveRouteIdForNodeClick(graph, nodeId);
-      if (routeId) {
-        vscode.postMessage({ type: 'routeClicked', routeId });
-      }
+  cy.on("dragfree", "node", () => {
+    const positionsByNodeId = {};
+    cy.nodes().forEach((node) => {
+      const pos = node.position();
+      positionsByNodeId[node.id()] = { x: pos.x, y: pos.y };
     });
-
-    nodeElement.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      beginNodeDrag(event, graph, nodeId);
-    });
-  }
+    vscode.postMessage({ type: "nodePositionsChanged", positionsByNodeId });
+  });
 }
 
-function buildLayoutPositions(graph, localNodePositions = {}) {
-  const visibleGroups = Array.isArray(graph.routeGroups) && graph.routeGroups.length > 0
-    ? graph.routeGroups
-    : (graph.routes || []).map((route) => ({ entities: route.entities }));
-  const maxColumn = Math.max(1, ...visibleGroups.map((group) => Math.max(0, (group.entities?.length || 1) - 1)));
-  const leftPadding = 120;
-  const rightPadding = 800;
-  const topPadding = 120;
-  const bottomPadding = 110;
-  const rowSpacing = 112;
-  const positions = {};
-  const preferredColumns = new Map();
-  const nodesById = new Map((graph.nodes || []).map((node) => [node.id, node]));
-
-  for (const node of graph.nodes) {
-    const localPosition = localNodePositions[node.id];
-    if (localPosition && typeof localPosition.x === 'number' && typeof localPosition.y === 'number') {
-      positions[node.id] = { x: localPosition.x, y: localPosition.y };
-      continue;
-    }
-    if (node.layout && typeof node.layout.x === 'number' && typeof node.layout.y === 'number') {
-      positions[node.id] = { x: node.layout.x, y: node.layout.y };
-      continue;
-    }
-
-    const occurrences = [];
-    for (const group of visibleGroups) {
-      const entities = Array.isArray(group.entities) ? group.entities : [];
-      entities.forEach((entity, entityIndex) => {
-        if (entity === node.id) {
-          occurrences.push(entityIndex);
-        }
-      });
-    }
-
-    let column = 0;
-    if (node.role === 'source') {
-      column = 0;
-    } else if (node.role === 'target') {
-      column = maxColumn;
-    } else if (occurrences.length > 0) {
-      const averageIndex = occurrences.reduce((sum, value) => sum + value, 0) / occurrences.length;
-      column = Math.max(1, Math.min(maxColumn - 1, Math.round(averageIndex)));
-    } else {
-      column = Math.max(1, Math.floor(maxColumn / 2));
-    }
-
-    preferredColumns.set(node.id, column);
-  }
-
-  const buckets = new Map();
-  for (const node of graph.nodes) {
-    if (positions[node.id]) {
-      continue;
-    }
-    const column = preferredColumns.get(node.id) ?? 0;
-    const bucket = buckets.get(column) || [];
-    bucket.push(node);
-    buckets.set(column, bucket);
-  }
-
-  let maxBucketSize = 1;
-  for (const bucket of buckets.values()) {
-    maxBucketSize = Math.max(maxBucketSize, bucket.length);
-    bucket.sort((left, right) => {
-      const leftPriority = nodePriority(left);
-      const rightPriority = nodePriority(right);
-      if (leftPriority !== rightPriority) {
-        return leftPriority - rightPriority;
-      }
-      const rightCount = right.metrics?.visibleRouteCount || 0;
-      const leftCount = left.metrics?.visibleRouteCount || 0;
-      if (rightCount !== leftCount) {
-        return rightCount - leftCount;
-      }
-      return String(left.label || left.id).localeCompare(String(right.label || right.id));
-    });
-  }
-
-  const height = Math.max(520, topPadding + bottomPadding + ((maxBucketSize - 1) * rowSpacing));
-  const usableHeight = height - topPadding - bottomPadding;
-
-  for (const [column, bucket] of buckets.entries()) {
-    const x = leftPadding + ((Number(column) / Math.max(1, maxColumn)) * (rightPadding - leftPadding));
-    const groupHeight = (bucket.length - 1) * rowSpacing;
-    const startY = topPadding + Math.max(0, (usableHeight - groupHeight) / 2);
-    bucket.forEach((node, index) => {
-      positions[node.id] = {
-        x,
-        y: startY + (index * rowSpacing)
-      };
-    });
-  }
-
-  return { positions, height };
-}
-
-function nodePriority(node) {
-  if (node.styling?.isOnSelectedRoute) {
-    return 0;
-  }
-  if (node.styling?.isOnBestRoute) {
-    return 1;
-  }
-  if (node.role === 'source') {
-    return -1;
-  }
-  if (node.role === 'target') {
-    return 2;
-  }
-  return 3;
-}
-
-function buildEdgeMarkup(edge, positions, selectedContext) {
-  const source = positions[edge.data.source];
-  const target = positions[edge.data.target];
-  if (!source || !target) {
-    return '';
-  }
-
-  const routeIds = edge.data.routeIds || [];
-  const isSelectedEdge = selectedContext.selectedEdgeIds.has(edge.data.id);
-
-  const midX = (source.x + target.x) / 2;
-  const midY = (source.y + target.y) / 2 - 10;
-
-  const preservedClasses = (edge.data.classes || []).filter(
-    (className) => className !== 'selected-route' && className !== 'best-route' && className !== 'dimmed'
+function pickRouteIdForNode(nodeId, graph) {
+  const matchingRoutes = (graph?.routes || []).filter(
+    (route) => Array.isArray(route.entities) && route.entities.includes(nodeId)
   );
-
-  const classes = [
-    'edge-group',
-    ...preservedClasses,
-    isSelectedEdge ? 'selected-route' : 'dimmed'
-  ].join(' ');
-
-  return '<g class="' + classes + '" data-edge-id="' + escapeHtml(edge.data.id) + '" data-route-ids="' + escapeHtml(JSON.stringify(routeIds)) + '">'
-    + '<line class="edge-line" x1="' + source.x + '" y1="' + source.y + '" x2="' + target.x + '" y2="' + target.y + '"></line>'
-    + (isSelectedEdge
-      ? '<text class="edge-label" x="' + midX + '" y="' + midY + '">' + escapeHtml(edge.data.label || '') + '</text>'
-      : '')
-    + '</g>';
-}
-
-function buildNodeMarkup(node, positions, selectedContext) {
-  const position = positions[node.data.id];
-  if (!position) {
-    return '';
-  }
-
-  const isSelectedNode = selectedContext.selectedNodeIds.has(node.data.id);
-
-  const width = 132;
-  const height = 42;
-  const x = position.x - (width / 2);
-  const y = position.y - (height / 2);
-
-  const preservedClasses = (node.data.classes || []).filter(
-    (className) => className !== 'selected-route' && className !== 'best-route' && className !== 'dimmed'
-  );
-
-  const classes = [
-    'node-group',
-    ...preservedClasses,
-    isSelectedNode ? 'selected-route' : 'dimmed'
-  ].join(' ');
-
-  return '<g class="' + classes + '" data-node-id="' + escapeHtml(node.data.id) + '">'
-    + '<rect class="node-shape" x="' + x + '" y="' + y + '" width="' + width + '" height="' + height + '"></rect>'
-    + '<text class="node-label" x="' + position.x + '" y="' + position.y + '">' + escapeHtml(node.data.label || node.data.id) + '</text>'
-    + '</g>';
-}
-
-
-function resolveRouteIdForNodeClick(graph, nodeId) {
-  const matchingGroups = (graph.routeGroups || []).filter((group) => Array.isArray(group.entities) && group.entities.includes(nodeId));
-  if (matchingGroups.length === 0) {
+  if (matchingRoutes.length === 0) {
     return undefined;
   }
 
-  const sortedGroups = [...matchingGroups].sort((left, right) => {
-    const leftSelected = left.isSelected ? 1 : 0;
-    const rightSelected = right.isSelected ? 1 : 0;
-    if (leftSelected !== rightSelected) {
-      return rightSelected - leftSelected;
+  const selectedMatch = matchingRoutes.find(
+    (route) => route.routeId === graph?.selectedRouteId
+  );
+  if (selectedMatch) {
+    return selectedMatch.routeId;
+  }
+
+  if (matchingRoutes.length === 1) {
+    return matchingRoutes[0]?.routeId;
+  }
+
+  return undefined;
+}
+
+function renderRouteChips(message) {
+  el.routeChips.innerHTML = "";
+  const groups = message.graphViewModel?.routeGroups || [];
+  for (const group of groups) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "route-chip" + (group.isSelected ? " selected" : "") + (group.isBestMatch ? " best" : "");
+    button.textContent = group.label + " (" + group.variantCount + ")";
+    button.addEventListener("click", () => {
+      const routeId = group.selectedVariantRouteId || group.bestVariantRouteId;
+      vscode.postMessage({ type: "routeClicked", routeId });
+    });
+    el.routeChips.appendChild(button);
+  }
+}
+
+
+function getConfidenceClass(confidence) {
+  switch (confidence) {
+    case "high": return "confidence-high";
+    case "medium": return "confidence-medium";
+    case "low": return "confidence-low";
+    default: return "confidence-medium";
+  }
+}
+
+function getConfidenceLabel(confidence) {
+  switch (confidence) {
+    case "high": return "High";
+    case "medium": return "Medium";
+    case "low": return "Low";
+    default: return "—";
+  }
+}
+
+function renderConfidenceValue(target, confidence) {
+  target.innerHTML = "";
+  if (!confidence) {
+    target.textContent = "—";
+    return;
+  }
+  const wrap = document.createElement("span");
+  wrap.className = "confidence-pill";
+  const dot = document.createElement("span");
+  dot.className = "confidence-dot " + getConfidenceClass(confidence);
+  const label = document.createElement("span");
+  label.textContent = getConfidenceLabel(confidence);
+  wrap.appendChild(dot);
+  wrap.appendChild(label);
+  target.appendChild(wrap);
+}
+
+function buildVariantConfidenceGroups(panel, graph) {
+  const routesById = new Map((graph?.routes || []).map((route) => [route.routeId, route]));
+  const groups = new Map();
+  for (const variant of panel.variants || []) {
+    const confidence = variant.confidence || "medium";
+    const route = routesById.get(variant.routeId);
+    const bucket = groups.get(confidence) || [];
+    bucket.push({ variant, route });
+    groups.set(confidence, bucket);
+  }
+
+  const order = { high: 0, medium: 1, low: 2 };
+  const result = [];
+  for (const [confidence, items] of groups.entries()) {
+    items.sort((left, right) => {
+      const selectedDelta = Number(right.variant.isSelected) - Number(left.variant.isSelected);
+      if (selectedDelta !== 0) return selectedDelta;
+      const rankDelta = left.variant.rank - right.variant.rank;
+      if (rankDelta !== 0) return rankDelta;
+      const leftChain = left.variant.navigationChain?.length || 0;
+      const rightChain = right.variant.navigationChain?.length || 0;
+      if (leftChain !== rightChain) return leftChain - rightChain;
+      const leftPenalty = Number(Boolean(left.route?.semantics?.isLoopBack)) + Number(Boolean(left.route?.semantics?.isSystemHeavy));
+      const rightPenalty = Number(Boolean(right.route?.semantics?.isLoopBack)) + Number(Boolean(right.route?.semantics?.isSystemHeavy));
+      if (leftPenalty !== rightPenalty) return leftPenalty - rightPenalty;
+      return left.variant.routeId.localeCompare(right.variant.routeId);
+    });
+    result.push({ confidence, items });
+  }
+  result.sort((a, b) => (order[a.confidence] ?? 99) - (order[b.confidence] ?? 99));
+  return result;
+}
+
+function createVariantChip(variant) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "variant-chip" + (variant.isSelected ? " selected" : "");
+
+  const main = document.createElement("div");
+  main.className = "variant-main";
+
+  const key = document.createElement("div");
+  key.className = "variant-key";
+  key.textContent = variant.variantKey || variant.subtitle || variant.label;
+  main.appendChild(key);
+
+  const meta = document.createElement("div");
+  meta.className = "variant-meta";
+  const wrap = document.createElement("span");
+  wrap.className = "confidence-pill";
+  const dot = document.createElement("span");
+  dot.className = "confidence-dot " + getConfidenceClass(variant.confidence);
+  const rank = document.createElement("span");
+  rank.textContent = "#" + variant.rank;
+  wrap.appendChild(dot);
+  wrap.appendChild(rank);
+  meta.appendChild(wrap);
+  main.appendChild(meta);
+
+  button.appendChild(main);
+  button.addEventListener("click", () => {
+    vscode.postMessage({ type: "routeClicked", routeId: variant.routeId });
+  });
+  return button;
+}
+
+function renderReasonList(target, values) {
+  target.innerHTML = "";
+  for (const reason of values || []) {
+    const item = document.createElement("li");
+    item.textContent = reason;
+    target.appendChild(item);
+  }
+}
+
+function renderSidePanel(message) {
+  const panel = message.graphViewModel?.sidePanel;
+  const hasSelection = !!panel?.selectedRouteId;
+  el.sidePanelEmpty.hidden = hasSelection;
+  el.sidePanelContent.hidden = !hasSelection;
+  if (!hasSelection) {
+    return;
+  }
+
+  el.routeTitle.textContent = panel.title || "";
+  el.routeSubtitle.textContent = panel.subtitle || "";
+  el.routeRank.textContent = panel.rank ? "#" + panel.rank : "—";
+  el.routeHops.textContent = panel.hopCount !== undefined ? String(panel.hopCount) : "—";
+  renderConfidenceValue(el.routeConfidence, panel.confidence);
+  el.useRouteBtn.disabled = !panel.action?.enabled;
+
+  renderReasonList(
+    el.confidenceExplanation,
+    panel.confidenceExplanation || [
+      "Confidence is based on the current route ranking and path quality."
+    ]
+  );
+  renderReasonList(el.positiveReasons, panel.positiveReasons || []);
+  renderReasonList(
+    el.comparisonReasons,
+    panel.comparisonReasons || ["No comparison guidance is available for this route."]
+  );
+  renderReasonList(
+    el.warningReasons,
+    panel.warningReasons?.length
+      ? panel.warningReasons
+      : ["No warnings for this route."]
+  );
+
+  el.variantsFamily.textContent = panel.variantsTitle
+    ? "Route family: " + panel.variantsTitle
+    : "";
+  el.variantList.innerHTML = "";
+
+  const groupedVariants = buildVariantConfidenceGroups(panel, message.graphViewModel);
+  for (const group of groupedVariants) {
+    const heading = document.createElement("div");
+    heading.className = "variant-group-header";
+    heading.textContent = getConfidenceLabel(group.confidence) + " confidence";
+
+    const container = document.createElement("div");
+    container.className = "variant-group";
+    container.appendChild(heading);
+
+    const shouldShow = expandedConfidenceGroups.has(group.confidence);
+    if (shouldShow) {
+      for (const item of group.items) {
+        container.appendChild(createVariantChip(item.variant));
+      }
+    } else {
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "variant-toggle";
+      toggle.textContent = "Show " + group.confidence + " confidence variants (" + group.items.length + ")";
+      toggle.addEventListener("click", () => {
+        expandedConfidenceGroups.add(group.confidence);
+        renderSidePanel(renderState);
+      });
+      container.appendChild(toggle);
     }
 
-    const leftHops = Math.max(0, (left.entities?.length || 1) - 1);
-    const rightHops = Math.max(0, (right.entities?.length || 1) - 1);
-    if (leftHops !== rightHops) {
-      return leftHops - rightHops;
-    }
+    el.variantList.appendChild(container);
+  }
+}
 
-    if (left.rank !== right.rank) {
-      return left.rank - right.rank;
-    }
+function renderMeta(message) {
+  const graph = message.graphViewModel;
+  const range = graph?.routeWindow;
+  const controls = graph?.controls || {};
+  const startOrdinal = range?.visibleCount ? range.startIndex + 1 : 0;
+  const endOrdinal = range?.visibleCount ? Math.min(range.startIndex + range.visibleCount, range.totalRoutes) : 0;
+  el.rangeBadge.textContent = range ? "Showing routes " + startOrdinal + "–" + endOrdinal : "No routes";
+  el.selectionBadge.textContent = graph?.selectedRouteId ? "Selected: " + graph.selectedRouteId : "No route selected";
+  el.metaSummary.textContent = (graph?.nodes?.length || 0) + " nodes · " + (graph?.edges?.length || 0) + " edges · " + (graph?.routes?.length || 0) + " visible routes";
+  el.countsText.textContent = (graph?.routeGroups?.length || 0) + " route groups";
+  el.showMoreBtn.disabled = !controls.canExpandToMax;
+  el.previousWindowBtn.disabled = !controls.canShiftPrevious;
+  el.nextWindowBtn.disabled = !controls.canShiftNext;
+  el.focusInput.value = graph?.focus?.keyword || "";
+}
 
-    return String(left.label || left.groupId).localeCompare(String(right.label || right.groupId));
+function renderGraph(message) {
+  renderState = message;
+  renderMeta(message);
+  renderRouteChips(message);
+  renderSidePanel(message);
+
+  if (cy) {
+    cy.destroy();
+    cy = undefined;
+  }
+
+  cy = cytoscape({
+    container: el.graphCanvas,
+    elements: toCyElements(message),
+    layout: getLayout(message),
+    wheelSensitivity: 0.2,
+    style: [
+      {
+        selector: "node",
+        style: {
+          label: "data(label)",
+          width: 96,
+          height: 46,
+          shape: "round-rectangle",
+          backgroundColor: "#142033",
+          borderColor: "#f59e0b",
+          borderWidth: 3,
+          color: "#e6edf3",
+          textValign: "center",
+          textHalign: "center",
+          fontSize: 12,
+          textWrap: "wrap",
+          textMaxWidth: 120,
+          overlayOpacity: 0,
+          transitionProperty: "opacity, line-color, border-color, background-color, width",
+          transitionDuration: "120ms"
+        }
+      },
+      {
+        selector: "node.role-source, node.role-target",
+        style: {
+          borderWidth: 4,
+          width: 104,
+          height: 50,
+          fontSize: 13
+        }
+      },
+      {
+        selector: "node.selected-route",
+        style: {
+          borderColor: "#60a5fa",
+          borderWidth: 6,
+          backgroundColor: "#1e3a5f",
+          zIndex: 24
+        }
+      },
+      {
+        selector: "node.best-route",
+        style: {
+          borderColor: "#22c55e",
+          borderWidth: 4,
+          backgroundColor: "#183329",
+          zIndex: 18
+        }
+      },
+      { selector: "node.focused", style: { borderColor: "#a78bfa", borderWidth: 4 } },
+      { selector: "node.system-heavy", style: { backgroundColor: "#46391c", borderColor: "#cca700" } },
+      { selector: "node.loop-warning", style: { borderStyle: "dashed" } },
+      { selector: "node.dimmed", style: { opacity: 0.16 } },
+      {
+        selector: "edge",
+        style: {
+          width: 1.2,
+          lineColor: "#4b5563",
+          targetArrowColor: "#4b5563",
+          targetArrowShape: "triangle",
+          arrowScale: 0.8,
+          curveStyle: "bezier",
+          label: "",
+          fontSize: 9,
+          textBackgroundOpacity: 1,
+          textBackgroundColor: "#0f172a",
+          textBackgroundPadding: 2,
+          color: "#cbd5e1",
+          textRotation: "autorotate",
+          textOpacity: 0,
+          opacity: 0.14,
+          overlayOpacity: 0,
+          zIndex: 1
+        }
+      },
+      {
+        selector: "edge.selected-route",
+        style: {
+          lineColor: "#60a5fa",
+          targetArrowColor: "#60a5fa",
+          width: 5,
+          lineStyle: "solid",
+          opacity: 1,
+          label: "data(label)",
+          textOpacity: 1,
+          zIndex: 28
+        }
+      },
+      {
+        selector: "edge.best-route",
+        style: {
+          lineColor: "#22c55e",
+          targetArrowColor: "#22c55e",
+          width: 3,
+          lineStyle: "solid",
+          opacity: 0.8,
+          label: "",
+          textOpacity: 0,
+          zIndex: 18
+        }
+      },
+      {
+        selector: "edge.focused",
+        style: {
+          lineColor: "#a78bfa",
+          targetArrowColor: "#a78bfa",
+          width: 3.2,
+          opacity: 0.92,
+          label: "",
+          textOpacity: 0,
+          zIndex: 22
+        }
+      },
+      { selector: "edge.system-heavy", style: { lineColor: "#cca700", targetArrowColor: "#cca700" } },
+      { selector: "edge.loop-warning", style: { lineStyle: "dashed" } },
+      {
+        selector: "edge.blocked",
+        style: {
+          lineColor: "#f14c4c",
+          targetArrowColor: "#f14c4c",
+          lineStyle: "dashed",
+          textOpacity: 1
+        }
+      },
+      { selector: "edge.dimmed", style: { opacity: 0.08, textOpacity: 0 } }
+    ]
   });
 
-  const bestGroup = sortedGroups[0];
-  return bestGroup.selectedVariantRouteId || bestGroup.bestVariantRouteId;
+  bindCyEvents();
 }
 
-function beginNodeDrag(event, graph, nodeId) {
-  const layout = buildLayoutPositions(graph, state.localNodePositions);
-  const startPosition = layout.positions[nodeId];
-  if (!startPosition) {
-    return;
-  }
-
-  const svg = graphCanvas.querySelector('.graph-svg');
-  if (!svg) {
-    return;
-  }
-
-  const viewBox = svg.viewBox.baseVal;
-  const rect = svg.getBoundingClientRect();
-  const scaleX = rect.width > 0 ? viewBox.width / rect.width : 1;
-  const scaleY = rect.height > 0 ? viewBox.height / rect.height : 1;
-
-  state.dragState = {
-    draggedNodeId: nodeId,
-    pointerId: event.pointerId,
-    startClientX: event.clientX,
-    startClientY: event.clientY,
-    originX: startPosition.x,
-    originY: startPosition.y,
-    scaleX,
-    scaleY,
-    moved: false
-  };
-
-  if (svg.setPointerCapture) {
-    try { svg.setPointerCapture(event.pointerId); } catch {}
-  }
-}
-
-function handleGlobalPointerMove(event) {
-  const dragState = state.dragState;
-  if (!dragState || dragState.pointerId !== event.pointerId) {
-    return;
-  }
-
-  const deltaX = (event.clientX - dragState.startClientX) * dragState.scaleX;
-  const deltaY = (event.clientY - dragState.startClientY) * dragState.scaleY;
-  const nextPosition = {
-    x: dragState.originX + deltaX,
-    y: dragState.originY + deltaY
-  };
-
-  state.localNodePositions[dragState.draggedNodeId] = nextPosition;
-  dragState.moved = dragState.moved || Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3;
-  renderGraphSurface();
-}
-
-function handleGlobalPointerUp(event) {
-  const dragState = state.dragState;
-  if (!dragState || dragState.pointerId !== event.pointerId) {
-    return;
-  }
-
-  state.dragState = null;
-  state.suppressNextNodeClick = !!dragState.moved;
-
-  if (dragState.moved) {
-    vscode.postMessage({
-      type: 'nodePositionsChanged',
-      positionsByNodeId: state.localNodePositions
-    });
-  }
-}
-
-window.addEventListener('pointermove', handleGlobalPointerMove);
-window.addEventListener('pointerup', handleGlobalPointerUp);
-window.addEventListener('pointercancel', handleGlobalPointerUp);
-
-function renderSidePanel(graph) {
-  const panel = graph.sidePanel;
-  const hasSelection = !!panel.selectedRouteId;
-  sidePanelEmpty.hidden = hasSelection;
-  sidePanelContent.hidden = !hasSelection;
-
-  if (!hasSelection) {
-    positiveReasons.innerHTML = '';
-    warningReasons.innerHTML = '';
-    useRouteBtn.disabled = true;
-    return;
-  }
-
-  routeTitle.textContent = panel.title || panel.selectedRouteId || 'Selected route';
-  routeSubtitle.textContent = panel.subtitle || '';
-  routeRank.textContent = panel.rank ? '#' + panel.rank : '—';
-  routeHops.textContent = typeof panel.hopCount === 'number' ? String(panel.hopCount) : '—';
-  routeConfidence.textContent = panel.confidence || '—';
-  positiveReasons.innerHTML = renderReasonList(panel.positiveReasons, 'No explicit positive reasons yet.');
-  warningReasons.innerHTML = renderReasonList(panel.warningReasons, 'No warnings.');
-  renderVariants(panel.variants || []);
-  useRouteBtn.disabled = panel.action.enabled !== true || !panel.action.routeId;
-}
-
-function renderVariants(variants) {
-  variantList.innerHTML = '';
-
-  if (!variants || variants.length <= 1) {
-    variantList.innerHTML = '<div class="muted">No alternative variants.</div>';
-    return;
-  }
-
-  for (const variant of variants) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'variant-btn' + (variant.isSelected ? ' selected' : '');
-    button.innerHTML = '<div class="variant-title"><span>' + escapeHtml(variant.subtitle || variant.label || variant.routeId) + '</span><span>' + escapeHtml(variant.confidence || '') + '</span></div>';
-        button.addEventListener('click', () => {
-      vscode.postMessage({ type: 'routeClicked', routeId: variant.routeId });
-    });
-    variantList.appendChild(button);
-  }
-}
-
-function renderReasonList(items, fallbackText) {
-  if (!items || items.length === 0) {
-    return '<li>' + escapeHtml(fallbackText) + '</li>';
-  }
-
-  return items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
-}
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-try {
-  renderGraphSurface();
-} catch (error) {
-  console.error('DV Quick Run graph initial render failed.', error);
-}
-
-queueMicrotask(() => {
-  vscode.postMessage({ type: 'graphReady' });
+el.closeGraphBtn.addEventListener("click", () => vscode.postMessage({ type: "closeRequested" }));
+el.resetLayoutBtn.addEventListener("click", () => vscode.postMessage({ type: "resetLayoutRequested" }));
+el.showMoreBtn.addEventListener("click", () => vscode.postMessage({ type: "showMoreRequested" }));
+el.previousWindowBtn.addEventListener("click", () => vscode.postMessage({ type: "previousWindowRequested" }));
+el.nextWindowBtn.addEventListener("click", () => vscode.postMessage({ type: "nextWindowRequested" }));
+el.useRouteBtn.addEventListener("click", () => {
+  const routeId = renderState?.graphViewModel?.sidePanel?.selectedRouteId || renderState?.graphViewModel?.selectedRouteId;
+  vscode.postMessage({ type: "useRouteRequested", routeId });
 });
+el.focusInput.addEventListener("input", (event) => {
+  vscode.postMessage({ type: "focusChanged", focusedKeyword: event.target?.value });
+});
+
+window.addEventListener("message", (event) => {
+  if (event.data?.type === "renderGraph") {
+    renderGraph(event.data);
+  }
+});
+
+renderGraph(renderState);
+vscode.postMessage({ type: "graphReady" });
 `;
 }

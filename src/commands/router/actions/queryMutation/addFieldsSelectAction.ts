@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { CommandContext } from "../../../context/commandContext.js";
 import { loadFields } from "../shared/metadataAccess.js";
+import { getNearestSelectScope, resolveScopeLogicalName, buildAddSelectPreviewForScope } from "../../../../refinement/addSelectPreview.js";
 import { FieldDef } from "../../../../services/entityFieldMetadataService.js";
 import { getSelectableFields } from "../shared/selectableFields.js";
-import { upsertCsvQueryOption } from "../shared/queryMutation/queryOptionMutator.js";
 import { runQueryMutationAction } from "../shared/queryMutation/runQueryMutationAction.js";
 
 async function pickFields(entitySetName: string, fields: FieldDef[]): Promise<string[] | undefined> {
@@ -38,15 +38,38 @@ export async function runAddFieldsSelectAction(ctx: CommandContext): Promise<voi
     ctx,
     "Add Fields ($select)",
     "DV Quick Run: Added fields to $select.",
-    async ({ parsed, token, client, entityDef }) => {
-      const fields = await loadFields(ctx, client, token, entityDef.logicalName);
-      const pickedTokens = await pickFields(entityDef.entitySetName, fields);
+    async ({ target, token, client, entityDef }) => {
+      const scope = getNearestSelectScope(target);
+
+      const targetLogicalName = await resolveScopeLogicalName(
+        ctx,
+        client,
+        token,
+        entityDef.logicalName,
+        scope.relationshipPath
+      );
+
+      const fields = await loadFields(ctx, client, token, targetLogicalName);
+      const pickerEntityLabel = scope.relationshipPath.length
+        ? scope.relationshipPath[scope.relationshipPath.length - 1]
+        : entityDef.entitySetName;
+
+      const pickedTokens = await pickFields(pickerEntityLabel, fields);
       if (!pickedTokens?.length) {
         return false;
       }
 
-      upsertCsvQueryOption(parsed, "$select", pickedTokens, "appendCsv");
-      return true;
+      const updatedQuery = buildAddSelectPreviewForScope(
+        target.text,
+        pickedTokens,
+        scope.relationshipPath
+      );
+
+      await target.editor.edit((editBuilder: vscode.TextEditorEdit) => {
+        editBuilder.replace(target.range, updatedQuery);
+      });
+
+      return false;
     }
   );
 }

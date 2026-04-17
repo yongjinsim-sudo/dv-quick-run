@@ -1,3 +1,4 @@
+import * as vscode from "vscode";
 import { normalizeReasoningName } from "../metadataReasoning/metadataReasoningCommon.js";
 import type {
   TraversalExecutionPlan,
@@ -92,6 +93,107 @@ const SYSTEM_ENTITY_HINTS = [
 const BEST_MATCH_MAX_COUNT = 2;
 const BEST_MATCH_SCORE_GAP = 12;
 const REPEATED_ENTITY_PENALTY = 15;
+
+const SYSTEM_RELATIONSHIP_HINTS = [
+  "createdby",
+  "modifiedby",
+  "createdonbehalfby",
+  "modifiedonbehalfby",
+  "owninguser",
+  "owningteam",
+  "ownerid",
+  "lk_task_createdby",
+  "lk_task_modifiedby",
+  "lk_task_createdonbehalfby",
+  "lk_task_modifiedonbehalfby"
+];
+
+function getTraversalAllowedTablePatterns(): string[] {
+  try {
+    const raw = vscode.workspace
+      .getConfiguration("dvQuickRun")
+      .get<unknown[]>("traversal.allowedTables", []);
+
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => normalizeReasoningName(value))
+      .filter((value, index, array) => value.length > 0 && array.indexOf(value) === index);
+  } catch {
+    return [];
+  }
+}
+
+function matchesTraversalPattern(value: string, pattern: string): boolean {
+  if (!pattern) {
+    return false;
+  }
+
+  if (!pattern.includes("*")) {
+    return value === pattern;
+  }
+
+  const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regexPattern = "^" + escaped.replace(/\*/g, ".*") + "$";
+  return new RegExp(regexPattern, "i").test(value);
+}
+
+function countAllowedTableMatches(route: TraversalRoute): number {
+  const patterns = getTraversalAllowedTablePatterns();
+  if (patterns.length === 0) {
+    return 0;
+  }
+
+  const intermediates = getIntermediateEntities(route).map((entity) => normalizeReasoningName(entity));
+  if (intermediates.length === 0) {
+    return 0;
+  }
+
+  let matches = 0;
+  for (const entity of intermediates) {
+    if (patterns.some((pattern) => matchesTraversalPattern(entity, pattern))) {
+      matches += 1;
+    }
+  }
+
+  return matches;
+}
+
+function scoreAllowedTableAffinity(route: TraversalRoute): number {
+  const intermediates = getIntermediateEntities(route);
+  if (intermediates.length === 0) {
+    return 0;
+  }
+
+  const matches = countAllowedTableMatches(route);
+  if (matches === 0) {
+    return 0;
+  }
+
+  // Mild business-like promotion only. This should not overpower structural quality.
+  return Math.min(18, matches * 8 + (matches === intermediates.length ? 4 : 0));
+}
+
+function countSystemHeavyRelationships(route: TraversalRoute): number {
+  return route.edges.reduce((count, edge) => {
+    const normalized = normalizeReasoningName(edge.navigationPropertyName);
+    return count + (SYSTEM_RELATIONSHIP_HINTS.some((hint) => normalized.includes(hint)) ? 1 : 0);
+  }, 0);
+}
+
+function scoreSystemHeavyRelationshipPenalty(route: TraversalRoute): number {
+  const count = countSystemHeavyRelationships(route);
+  if (count === 0) {
+    return 0;
+  }
+
+  // Slight penalty only, so valid routes remain visible but business-like paths rise first.
+  return Math.min(18, count * 6);
+}
+
 
 function countNoisyIntermediates(route: TraversalRoute): number {
   return getIntermediateEntities(route).filter((entity) => {
@@ -258,6 +360,8 @@ function scoreTraversalRouteBusinessRelevance(route: TraversalRoute): number {
 
 export function scoreTraversalRouteForSelection(route: TraversalRoute): number {
   let score = 0;
+  const allowedTableAffinity = scoreAllowedTableAffinity(route);
+  const systemHeavyRelationshipPenalty = scoreSystemHeavyRelationshipPenalty(route);
 
   score -= route.hopCount * 100;
 
@@ -293,6 +397,8 @@ export function scoreTraversalRouteForSelection(route: TraversalRoute): number {
 
   score -= countRepeatedEntities(route) * REPEATED_ENTITY_PENALTY;
   score += scoreTraversalRouteBusinessRelevance(route);
+  score += allowedTableAffinity;
+  score -= systemHeavyRelationshipPenalty;
 
   return score;
 }
@@ -368,6 +474,16 @@ export function buildRankedTraversalRoutes(routes: TraversalRoute[]): RankedTrav
         !getIntermediateEntities(route).some((entity) => looksLikeBridgeEntity(entity))
       ) {
         reasons.push("clean path");
+      }
+
+      const allowedTableAffinity = scoreAllowedTableAffinity(route);
+      if (allowedTableAffinity > 0) {
+        reasons.push("business-like route scope");
+      }
+
+      const systemHeavyPenalty = scoreSystemHeavyRelationshipPenalty(route);
+      if (systemHeavyPenalty > 0) {
+        reasons.push("system-heavy relationship penalty applied");
       }
 
       return {

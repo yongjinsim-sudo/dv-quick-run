@@ -73,12 +73,12 @@ suite("traversalGraphViewModelBuilder", () => {
     });
 
     assert.deepStrictEqual(model.routes.map((route) => route.routeId), ["route-a", "route-b"]);
-    assert.deepStrictEqual(model.nodes.map((node) => node.id), ["account", "contact", "task", "team"]);
+    assert.deepStrictEqual(model.nodes.map((node) => node.id), ["account", "task", "contact", "team"]);
     assert.deepStrictEqual(model.edges.map((edge) => edge.id), [
-      "account::ownerid::team",
-      "account::primarycontactid::contact",
-      "contact::regardingobjectid_task::task",
-      "team::regardingobjectid_task::task"
+       "account::contact",
+       "contact::task",
+       "account::team",
+       "team::task"
     ]);
     assert.strictEqual(model.selectedRouteId, "route-a");
     assert.strictEqual(model.sidePanel.selectedRouteId, "route-a");
@@ -176,7 +176,7 @@ suite("traversalGraphViewModelBuilder", () => {
     assert.deepStrictEqual(loopBackRoute?.reasoning.warnings, ["repeated entity / loop-back"]);
     assert.strictEqual(focusedRoute?.semantics.isFocusedByKeyword, true);
     assert.strictEqual(accountNode?.styling.isDimmed, false);
-    assert.strictEqual(contactNode?.styling.isDimmed, false);
+    assert.strictEqual(contactNode?.styling.isDimmed, true);
     assert.deepStrictEqual(model.routes.map((route) => route.rank), [2, 3]);
   });
 });

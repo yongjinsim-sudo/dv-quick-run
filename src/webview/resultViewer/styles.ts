@@ -657,6 +657,8 @@ export const RESULT_VIEWER_STYLES = `
             border-radius: 6px;
             box-shadow: 0 6px 14px rgba(0,0,0,0.2);
             padding: 4px;
+            
+            z-index: 10000;
         }
 
         .overflow-menu-overlay button {

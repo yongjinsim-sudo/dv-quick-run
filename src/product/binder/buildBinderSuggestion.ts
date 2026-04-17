@@ -29,7 +29,7 @@ function hasQueryOption(queryPath: string, optionName: string): boolean {
 
   for (const part of queryString.split("&")) {
     const key = part.split("=")[0] ?? "";
-    if (normalizeQueryOptionName(key) == normalizedOption) {
+    if (normalizeQueryOptionName(key) === normalizedOption) {
       return true;
     }
   }

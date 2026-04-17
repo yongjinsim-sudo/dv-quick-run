@@ -136,7 +136,9 @@ function buildGraphViewModel(): TraversalGraphViewModel {
     sidePanel: {
       selectedRouteId: "route-a",
       title: "account -> task",
+      confidenceExplanation: ["top-ranked match for this route family"],
       positiveReasons: ["best match"],
+      comparisonReasons: ["uses fewer joins than alternatives"],
       warningReasons: [],
       variants: [],
       action: {
@@ -155,14 +157,11 @@ suite("traversalGraphCyMapper", () => {
     assert.deepStrictEqual(buildTraversalGraphNodeClasses(graph.nodes[1]!), [
       "role-intermediate",
       "selected-route",
-      "focused",
       "system-heavy",
       "loop-warning"
     ]);
     assert.deepStrictEqual(buildTraversalGraphEdgeClasses(graph.edges[0]!), [
       "selected-route",
-      "best-route",
-      "focused",
       "blocked"
     ]);
   });
@@ -196,7 +195,6 @@ suite("traversalGraphCyMapper", () => {
         classes: [
           "role-intermediate",
           "selected-route",
-          "focused",
           "system-heavy",
           "loop-warning"
         ]
@@ -218,7 +216,7 @@ suite("traversalGraphCyMapper", () => {
         routeIds: ["route-a"],
         visibleRouteCount: 1,
         bestVisibleRank: 1,
-        classes: ["selected-route", "best-route", "focused", "blocked"]
+        classes: ["selected-route", "blocked"]
       }
     });
   });

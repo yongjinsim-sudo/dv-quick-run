@@ -6,6 +6,223 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## 🚀 v0.9.1 — Guided Traversal Graph, Context-Aware Query Mutation & Result Viewer Actions
+
+This release expands **Guided Traversal** with a stronger **graph reasoning surface**, while also introducing **scope-aware query mutation** and enhancing the Result Viewer as an **interactive command surface**.
+
+It focuses on:
+- improving **visual traversal understanding**
+- applying query changes in the **correct scope**
+- enabling **data-driven refinement directly from results**
+- improving **safety and guardrails** for OData operations
+
+---
+
+### 🧭 Guided Traversal Graph (Expanded)
+
+- Significantly improved the **Guided Traversal Graph** experience
+  - graph now acts as a clearer reasoning surface for route selection
+  - focuses on **path-level understanding**, not full-schema noise
+
+- Graph behaviour improvements:
+  - highlights only the **selected traversal path**
+  - dims non-selected nodes and edges to reduce confusion
+  - prevents highlight leakage from unrelated visible routes
+  - improves route focus consistency during graph interaction
+
+- Search and filtering improvements:
+  - graph search now filters to **searched paths**
+  - selected route remains visually coherent after filtering
+  - graph only keeps relevant route context instead of mixing unrelated paths
+
+- Route selection UX improvements:
+  - route chips remain the primary selection mechanism
+  - selected route panel now better explains:
+    - rank
+    - hop count
+    - confidence
+    - warnings
+    - route variants
+
+- Confidence / variant presentation improvements:
+  - route variants are grouped more clearly
+  - confidence is surfaced in a more readable way
+  - selected route remains the primary visual emphasis
+
+👉 Results in:
+- clearer route comparison
+- stronger path reasoning
+- less graph confusion
+- better transition from visual selection → query action
+
+---
+
+### ✨ Context-Aware Query Mutators
+
+- `$select`, `$filter`, and `$orderby` mutators are now **scope-aware**
+  - Detects whether the cursor is inside:
+    - root query
+    - `$expand`
+    - nested `$expand`
+  - Applies mutations to the **correct entity scope**
+
+- Example:
+  - Right-click inside:
+    ```
+    $expand=owninguser(...)
+    ```
+  - `Add Select Fields` now updates:
+    ```
+    owninguser($select=...)
+    ```
+  - Instead of incorrectly modifying root `$select`
+
+👉 Results in:
+- correct query construction
+- reduced manual fixes
+- safer multi-entity queries
+
+---
+
+### 🔍 Scoped Filter 
+
+- Added **scope-aware `$filter` mutation**
+  - Filters can now be applied at:
+    - root level
+    - nested expand level
+
+- Automatically:
+  - detects correct scope
+  - merges with existing filters using `and`
+
+👉 Enables:
+- precise filtering of expanded entities
+- cleaner multi-entity query refinement
+
+---
+
+### 📊 Result Viewer → Filter by Value 
+
+- Added **“Filter by this value”** action in Result Viewer
+  - Available via kebab menu on cell values
+
+- Supports:
+  - OData → `$filter`
+  - FetchXML → `<condition>`
+
+- Workflow:
+  - click value → preview filter → apply
+
+👉 Results in:
+- inspect → refine → rerun loop
+- zero manual typing for common filters
+
+---
+
+### ↕️ Add Order By from Column Header 
+
+- Right-click on **column headers** to add `$orderby`
+  - Default:
+    - ascending order
+
+- Behaviour:
+  - Applies only to **root-level fields**
+  - Prevents invalid nested usage
+
+👉 Results in:
+- fast sorting from Result Viewer context
+- improved discoverability of ordering
+
+---
+
+### ⚠️ Order By Guardrails 
+
+- Added validation for `$orderby` usage inside `$expand`
+
+- Behaviour:
+  - ❌ blocks `$orderby` on **single-valued expands**
+    - e.g. `owninguser`, `primarycontactid`
+  - ⚠️ shows warning with guidance
+
+👉 Prevents:
+- invalid OData queries
+- runtime API errors
+
+---
+
+### 🧠 Result Viewer Interaction Improvements
+
+- Result Viewer evolves further into a **query command surface**
+  - filter from values
+  - order from headers
+  - investigate records
+
+- Improved UX:
+  - consistent action naming:
+    - “Filter by this value (OData)”
+    - “Filter by this value (FetchXML)”
+  - better action grouping under kebab menus
+
+- Fixed:
+  - header right-click positioning (z-index layering)
+  - action menu visibility over table
+  - suppression of default browser-style context menu on table headers
+
+---
+
+### 🧱 Behaviour Improvements
+
+- Query mutation now:
+  - respects entity scope
+  - avoids overwriting unrelated clauses
+  - merges intelligently with existing query options
+
+- Graph rendering now:
+  - keeps selected route visually intact
+  - avoids misleading emphasis on unrelated nodes
+  - better aligns with actual traversal reasoning
+
+- Improved consistency between:
+  - traversal graph
+  - editor mutators
+  - Result Viewer actions
+  - preview pipeline
+
+---
+
+### 🧪 Stability
+
+- Verified:
+  - traversal graph rendering across route selections
+  - searched-path graph filtering
+  - scoped `$select`, `$filter` mutation
+  - Result Viewer filter actions
+  - header-based `$orderby`
+  - guardrail behaviour
+
+- No regression in:
+  - Guided Traversal
+  - `$batch` execution
+  - Query Doctor
+  - Result Viewer rendering
+
+---
+
+## 🧭 Notes
+
+This release strengthens DV Quick Run in two major directions:
+
+- **Guided Traversal** becomes a clearer **visual reasoning tool**
+- **query mutation** becomes **context-aware and result-driven**
+
+DV Quick Run now:
+- helps users understand relationships more clearly through graph-assisted traversal
+- understands **where** a change should be applied
+- enables **data-driven refinement directly from results**
+- prevents invalid query patterns through guardrails
+
+---
+
 ## 🚀 v0.9.1 — Guided Traversal Graph & Result Viewer Stability
 
 This release focuses on **visual traversal selection** and **webview stability fixes**, building on top of the Guided Traversal foundation introduced in v0.9.0.
