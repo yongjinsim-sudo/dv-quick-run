@@ -94,6 +94,8 @@ export type TraversalGraphRouteVariantViewModel = {
   rank: number;
   label: string;
   subtitle?: string;
+  variantKey?: string;
+  navigationChain: string[];
   confidence: "high" | "medium";
   isSelected: boolean;
 };
@@ -138,8 +140,11 @@ export type TraversalGraphSidePanelModel = {
   rank?: number;
   hopCount?: number;
   confidence?: "high" | "medium";
+  confidenceExplanation: string[];
   positiveReasons: string[];
+  comparisonReasons: string[];
   warningReasons: string[];
+  variantsTitle?: string;
   variants: TraversalGraphRouteVariantViewModel[];
   action: TraversalGraphPanelAction;
 };

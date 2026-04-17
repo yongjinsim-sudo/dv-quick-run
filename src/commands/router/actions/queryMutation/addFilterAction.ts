@@ -4,6 +4,7 @@ import { runAction } from "../shared/actionRunner.js";
 import { loadChoiceMetadata, loadEntityDefs, loadSelectableFields, findEntityByEntitySetName } from "../shared/metadataAccess.js";
 import { validateFilterRawValue } from "../shared/queryMutation/filterValueValidation.js";
 import { getLogicalEditorQueryTarget } from "../shared/queryMutation/editorQueryTarget.js";
+import { getNearestSelectScope, resolveScopeLogicalName } from "../../../../refinement/addSelectPreview.js";
 import { getEntitySetNameFromEditorQuery, parseEditorQuery } from "../shared/queryMutation/parsedEditorQuery.js";
 import type { FilterableField } from "../shared/queryMutation/filterExpressionRules.js";
 import { getEligibleFilterBuilderFields } from "../../../../refinement/filterBuilder/fieldEligibility.js";
@@ -14,6 +15,7 @@ import {
 } from "../../../../refinement/filterBuilder/operatorPolicy.js";
 import type { BuildFilterInsight, FilterBuilderFieldType, FilterClauseModel } from "../../../../refinement/filterBuilder/models.js";
 import { previewAndApplyFilterInsight } from "../../../../refinement/filterBuilder/preview.js";
+import { previewAndApplyFilterInsightForScope, readFilterAtScope } from "../../../../refinement/addFilterPreview.js";
 
 function looksLikeJsonLine(input: string): boolean {
   const text = input.trim();
@@ -205,6 +207,7 @@ export async function runAddFilterAction(ctx: CommandContext): Promise<void> {
     }
 
     const parsed = parseEditorQuery(target.text);
+    const scope = getNearestSelectScope(target);
     const entitySetName = getEntitySetNameFromEditorQuery(parsed.entityPath);
     if (!entitySetName) {
       throw new Error(`Current line does not look like a Dataverse Web API path: ${target.text}`);
@@ -218,13 +221,25 @@ export async function runAddFilterAction(ctx: CommandContext): Promise<void> {
       throw new Error(`Could not find metadata for entity set: ${entitySetName}`);
     }
 
-    const fields = await loadSelectableFields(ctx, client, token, entityDef.logicalName);
+    const targetLogicalName = await resolveScopeLogicalName(
+      ctx,
+      client,
+      token,
+      entityDef.logicalName,
+      scope.relationshipPath
+    );
+
+    const fields = await loadSelectableFields(ctx, client, token, targetLogicalName);
     const eligibleFields = getEligibleFilterBuilderFields(fields);
     if (!eligibleFields.length) {
       throw new Error(`No supported filter-builder fields were found for entity set: ${entitySetName}`);
     }
 
-    const pickedField = await pickField(entityDef.entitySetName, eligibleFields);
+    const pickerEntityLabel = scope.relationshipPath.length
+      ? scope.relationshipPath[scope.relationshipPath.length - 1]
+      : entityDef.entitySetName;
+
+    const pickedField = await pickField(pickerEntityLabel, eligibleFields);
     if (!pickedField) {
       return;
     }
@@ -242,7 +257,7 @@ export async function runAddFilterAction(ctx: CommandContext): Promise<void> {
     let value: string | undefined;
     if (operator.requiresValue) {
       if (fieldType === "choice") {
-        value = await pickChoiceValue(ctx, entityDef.logicalName, pickedField);
+        value = await pickChoiceValue(ctx, targetLogicalName, pickedField);
       } else if (fieldType === "boolean") {
         value = await pickBooleanValue();
       } else {
@@ -254,9 +269,13 @@ export async function runAddFilterAction(ctx: CommandContext): Promise<void> {
       }
     }
 
-    const mergeStrategy = await pickMergeStrategy(parsed.queryOptions.get("$filter"));
+    const mergeStrategy = await pickMergeStrategy(readFilterAtScope(target.text, scope.relationshipPath) ?? null);
     const insight = buildInsight(pickedField, fieldType, operator, value, mergeStrategy);
 
-    await previewAndApplyFilterInsight(target, insight);
+    if (scope.relationshipPath.length) {
+      await previewAndApplyFilterInsightForScope(target, insight, scope.relationshipPath);
+    } else {
+      await previewAndApplyFilterInsight(target, insight);
+    }
   });
 }

@@ -6,7 +6,12 @@ import { buildPlannedTraversalRoute } from "../../shared/traversal/traversalPlan
 import type { TraversalGraph } from "../../shared/traversal/traversalTypes.js";
 import { executeFirstStepDefault } from "../traversalStartExecution.js";
 import { getTraversalGraphHtml } from "../../../../../webview/traversalGraphHtml.js";
-import { buildInitialTraversalGraphRouteWindow, expandTraversalGraphRouteWindowToMax } from "./traversalGraphRouteWindow.js";
+import {
+  buildInitialTraversalGraphRouteWindow,
+  expandTraversalGraphRouteWindowToMax,
+  shiftTraversalGraphRouteWindowNext,
+  shiftTraversalGraphRouteWindowPrevious
+} from "./traversalGraphRouteWindow.js";
 import { buildTraversalGraphViewModel } from "./traversalGraphViewModelBuilder.js";
 import { mapTraversalGraphViewModelToCy, type TraversalGraphCyElement } from "./traversalGraphCyMapper.js";
 import { resolveTraversalGraphRouteSelectionFromClick } from "./traversalGraphSelection.js";
@@ -49,6 +54,10 @@ export type TraversalGraphUiEvent =
   | { type: "edgeClicked"; edgeId?: string; routeIds?: string[] }
   | { type: "useRouteRequested"; routeId?: string }
   | { type: "showMoreRequested" }
+  | { type: "nextWindowRequested" }
+  | { type: "previousWindowRequested" }
+  | { type: "focusChanged"; focusedKeyword?: string }
+  | { type: "resetLayoutRequested" }
   | { type: "closeRequested" }
   | { type: "nodePositionsChanged"; positionsByNodeId?: Record<string, { x: number; y: number }> };
 
@@ -384,6 +393,42 @@ async function handleTraversalGraphUiEvent(message: TraversalGraphUiEvent): Prom
       session.graphState = {
         ...session.graphState,
         routeWindow: expandTraversalGraphRouteWindowToMax(session.graphState.routeWindow)
+      };
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "nextWindowRequested": {
+      session.graphState = {
+        ...session.graphState,
+        routeWindow: shiftTraversalGraphRouteWindowNext(session.graphState.routeWindow)
+      };
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "previousWindowRequested": {
+      session.graphState = {
+        ...session.graphState,
+        routeWindow: shiftTraversalGraphRouteWindowPrevious(session.graphState.routeWindow)
+      };
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "focusChanged": {
+      session.graphState = {
+        ...session.graphState,
+        focusedKeyword: message.focusedKeyword?.trim() || undefined
+      };
+      await rerenderTraversalGraphSurface(panel, session);
+      return;
+    }
+
+    case "resetLayoutRequested": {
+      session.graphState = {
+        ...session.graphState,
+        layoutState: { positionsByNodeId: {} }
       };
       await rerenderTraversalGraphSurface(panel, session);
       return;

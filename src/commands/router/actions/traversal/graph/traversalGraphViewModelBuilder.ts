@@ -1,4 +1,3 @@
-import { buildTraversalRouteDescription } from "../../shared/traversal/traversalSelection.js";
 import {
   buildTraversalGraphControlState,
   sliceTraversalGraphVisibleRoutes
@@ -21,8 +20,9 @@ import type {
 export function buildTraversalGraphViewModel(
   args: BuildTraversalGraphViewModelArgs
 ): TraversalGraphViewModel {
+  const focusState = buildTraversalGraphFocusState(args.focusedKeyword);
   const allRouteModels = args.rankedRoutes.map((item, index) =>
-    buildRouteViewModel(item, index + 1, args.selectedRouteId, buildTraversalGraphFocusState(args.focusedKeyword))
+    buildRouteViewModel(item, index + 1, args.selectedRouteId, focusState)
   );
   const allRouteGroups = buildRouteGroups(allRouteModels);
   const routeWindow = {
@@ -31,7 +31,6 @@ export function buildTraversalGraphViewModel(
     totalRoutes: allRouteGroups.length,
     maxVisibleCount: args.routeWindow.maxVisibleCount
   };
-  const focusState = buildTraversalGraphFocusState(args.focusedKeyword);
   const visibleRouteGroups = sliceTraversalGraphVisibleRoutes(allRouteGroups, routeWindow);
   const visibleRouteIds = new Set(visibleRouteGroups.flatMap((group) => group.variants.map((variant) => variant.routeId)));
   const visibleRouteModels = allRouteModels.filter((route) => visibleRouteIds.has(route.routeId));
@@ -64,9 +63,10 @@ export function buildTraversalGraphViewModel(
     args.targetEntity,
     focusState,
     bestVisibleRouteId,
+    selectedRouteId,
     args.layoutState?.positionsByNodeId
   );
-  const edgeModels = buildVisibleEdgeModels(routeModels, focusState);
+  const edgeModels = buildVisibleEdgeModels(routeModels, focusState, selectedRouteId);
   const sidePanel = buildTraversalGraphSidePanelModel(routeModels, routeGroups, selectedRouteId);
 
   return {
@@ -92,21 +92,6 @@ function buildTraversalGraphFocusState(focusedKeyword?: string): TraversalGraphF
     keyword,
     normalizedKeyword,
     hasActiveFocus: normalizedKeyword.length > 0
-  };
-}
-
-function buildSelectableVisibleRoute(
-  routeId: string,
-  rank: number,
-  isBestMatch: boolean,
-  entities: string[],
-  focusState: TraversalGraphFocusState
-): TraversalGraphSelectableRoute {
-  return {
-    routeId,
-    rank,
-    isBestMatch,
-    isFocusedByKeyword: isRouteFocusedByKeyword(entities, focusState.normalizedKeyword)
   };
 }
 
@@ -152,6 +137,7 @@ function buildVisibleNodeModels(
   targetEntity: string,
   focusState: TraversalGraphFocusState,
   bestVisibleRouteId: string | undefined,
+  selectedRouteId: string | undefined,
   positionsByNodeId?: Record<string, { x: number; y: number }>
 ): TraversalGraphNodeViewModel[] {
   const nodeMap = new Map<string, TraversalGraphNodeViewModel>();
@@ -203,20 +189,34 @@ function buildVisibleNodeModels(
   for (const node of nodeMap.values()) {
     node.styling.isDimmed = shouldDimGraphItem(
       focusState.hasActiveFocus,
+      Boolean(selectedRouteId),
       node.styling.isFocusedByKeyword,
       node.styling.isOnSelectedRoute,
       node.styling.isOnBestRoute
     );
   }
 
-  return [...nodeMap.values()].sort((left, right) => left.id.localeCompare(right.id));
+  return [...nodeMap.values()].sort((left, right) => {
+    const roleDelta = rankNodeRole(left.role) - rankNodeRole(right.role);
+    if (roleDelta !== 0) {
+      return roleDelta;
+    }
+
+    const selectedDelta = Number(right.styling.isOnSelectedRoute) - Number(left.styling.isOnSelectedRoute);
+    if (selectedDelta !== 0) {
+      return selectedDelta;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
 }
 
 function buildVisibleEdgeModels(
   routeModels: TraversalGraphRouteViewModel[],
-  focusState: TraversalGraphFocusState
+  focusState: TraversalGraphFocusState,
+  selectedRouteId: string | undefined
 ): TraversalGraphEdgeViewModel[] {
-  const edgeMap = new Map<string, TraversalGraphEdgeViewModel>();
+  const edgeMap = new Map<string, TraversalGraphEdgeViewModel & { navigationNames: Set<string> }>();
   const bestVisibleRouteId = routeModels[0]?.routeId;
 
   for (const route of routeModels) {
@@ -225,11 +225,12 @@ function buildVisibleEdgeModels(
       const fromNodeId = route.entities[index]!;
       const toNodeId = route.entities[index + 1]!;
       const navigationPropertyName = parseEdgeId(edgeId).navigationPropertyName;
-      const existing = edgeMap.get(edgeId);
+      const aggregateEdgeId = buildAggregateEdgeId(fromNodeId, toNodeId);
+      const existing = edgeMap.get(aggregateEdgeId);
 
       if (!existing) {
-        edgeMap.set(edgeId, {
-          id: edgeId,
+        edgeMap.set(aggregateEdgeId, {
+          id: aggregateEdgeId,
           fromNodeId,
           toNodeId,
           navigationPropertyName,
@@ -247,12 +248,16 @@ function buildVisibleEdgeModels(
           metrics: {
             visibleRouteCount: 1,
             bestVisibleRank: route.rank
-          }
+          },
+          navigationNames: new Set([navigationPropertyName])
         });
         continue;
       }
 
-      existing.routeIds.push(route.routeId);
+      if (!existing.routeIds.includes(route.routeId)) {
+        existing.routeIds.push(route.routeId);
+      }
+      existing.navigationNames.add(navigationPropertyName);
       existing.styling.isOnSelectedRoute = existing.styling.isOnSelectedRoute || route.semantics.isSelected;
       existing.styling.isOnBestRoute = existing.styling.isOnBestRoute || route.routeId === bestVisibleRouteId;
       existing.styling.isFocusedByKeyword = existing.styling.isFocusedByKeyword || route.semantics.isFocusedByKeyword;
@@ -261,20 +266,38 @@ function buildVisibleEdgeModels(
       existing.styling.isBlocked = existing.styling.isBlocked || route.semantics.isBlocked;
       existing.metrics.visibleRouteCount += 1;
       existing.metrics.bestVisibleRank = Math.min(existing.metrics.bestVisibleRank ?? route.rank, route.rank);
+
+      if (route.routeId === selectedRouteId) {
+        existing.navigationPropertyName = navigationPropertyName;
+      }
     }
   }
 
-  for (const edge of edgeMap.values()) {
+  const edges = [...edgeMap.values()].map((edge) => {
     edge.routeIds.sort((left, right) => left.localeCompare(right));
+    edge.label = buildAggregateEdgeLabel({
+      navigationPropertyName: edge.navigationPropertyName,
+      navigationNames: [...edge.navigationNames].sort((left, right) => left.localeCompare(right)),
+      isOnSelectedRoute: edge.styling.isOnSelectedRoute
+    });
     edge.styling.isDimmed = shouldDimGraphItem(
       focusState.hasActiveFocus,
+      Boolean(selectedRouteId),
       edge.styling.isFocusedByKeyword,
       edge.styling.isOnSelectedRoute,
       edge.styling.isOnBestRoute
     );
-  }
+    return edge;
+  });
 
-  return [...edgeMap.values()].sort((left, right) => left.id.localeCompare(right.id));
+  return edges.sort((left, right) => {
+    const selectedDelta = Number(right.styling.isOnSelectedRoute) - Number(left.styling.isOnSelectedRoute);
+    if (selectedDelta !== 0) {
+      return selectedDelta;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
 }
 
 function buildTraversalGraphSidePanelModel(
@@ -289,7 +312,9 @@ function buildTraversalGraphSidePanelModel(
     return {
       selectedRouteId: undefined,
       selectedGroupId: undefined,
+      confidenceExplanation: [],
       positiveReasons: [],
+      comparisonReasons: [],
       warningReasons: [],
       variants: [],
       action: {
@@ -299,35 +324,45 @@ function buildTraversalGraphSidePanelModel(
     };
   }
 
+  const allRanksInGroup = selectedGroup.variants.map((variant) => variant.rank).sort((left, right) => left - right);
+
   return {
     selectedRouteId: selectedRoute.routeId,
     selectedGroupId: selectedGroup.groupId,
     title: selectedRoute.label,
-    subtitle: buildTraversalRouteDescription({
-      routeId: selectedRoute.routeId,
-      sourceEntity: selectedRoute.entities[0] ?? "",
-      targetEntity: selectedRoute.entities[selectedRoute.entities.length - 1] ?? "",
-      entities: selectedRoute.entities,
-      edges: selectedRoute.edgeIds.map((edgeId) => ({
-        ...parseEdgeId(edgeId),
-        relationshipType: "ManyToOne",
-        direction: "manyToOne"
-      })),
-      hopCount: selectedRoute.hopCount,
-      confidence: selectedRoute.confidence
-    }),
+    subtitle: buildRouteExecutionSubtitle(selectedRoute),
     rank: selectedRoute.rank,
     hopCount: selectedRoute.hopCount,
     confidence: selectedRoute.confidence,
+    confidenceExplanation: buildConfidenceExplanation(selectedRoute),
     positiveReasons: [...selectedRoute.reasoning.positive],
+    comparisonReasons: buildComparisonReasons({
+      selectedRoute,
+      selectedGroup,
+      allRanksInGroup
+    }),
     warningReasons: [...selectedRoute.reasoning.warnings],
-    variants: selectedGroup.variants,
+    variantsTitle: selectedGroup.label,
+    variants: dedupeVariants(selectedGroup.variants),
     action: {
       label: "Use this route",
       routeId: selectedRoute.routeId,
       enabled: true
     }
   };
+}
+
+
+function buildRouteExecutionSubtitle(route: TraversalGraphRouteViewModel): string | undefined {
+  const navigationChain = route.edgeIds
+    .map((edgeId) => parseEdgeId(edgeId).navigationPropertyName)
+    .filter((value) => value.trim().length > 0);
+
+  if (navigationChain.length === 0) {
+    return undefined;
+  }
+
+  return `via ${navigationChain.join(" → ")}`;
 }
 
 function buildRouteGroups(
@@ -343,6 +378,10 @@ function buildRouteGroups(
       rank: route.rank,
       label: route.label,
       subtitle,
+      variantKey: subtitle,
+      navigationChain: route.edgeIds
+        .map((edgeId) => parseEdgeId(edgeId).navigationPropertyName)
+        .filter((value) => value.trim().length > 0),
       confidence: route.confidence,
       isSelected: route.semantics.isSelected
     };
@@ -380,7 +419,21 @@ function buildRouteGroups(
   return [...groups.values()]
     .map((group) => ({
       ...group,
-      variants: [...group.variants].sort((left, right) => left.rank - right.rank || left.routeId.localeCompare(right.routeId)),
+      variants: [...group.variants].sort((left, right) => {
+        const selectedDelta = Number(right.isSelected) - Number(left.isSelected);
+        if (selectedDelta !== 0) {
+          return selectedDelta;
+        }
+        const rankDelta = left.rank - right.rank;
+        if (rankDelta !== 0) {
+          return rankDelta;
+        }
+        const chainDelta = (left.navigationChain?.length ?? 0) - (right.navigationChain?.length ?? 0);
+        if (chainDelta !== 0) {
+          return chainDelta;
+        }
+        return left.routeId.localeCompare(right.routeId);
+      }),
       selectedVariantRouteId: group.selectedVariantRouteId ?? group.bestVariantRouteId
     }))
     .sort((left, right) => left.rank - right.rank || left.groupId.localeCompare(right.groupId));
@@ -475,15 +528,127 @@ function countRepeatedEntities(entities: string[]): number {
 
 function shouldDimGraphItem(
   hasActiveFocus: boolean,
+  hasActiveSelectionContext: boolean,
   isFocusedByKeyword: boolean,
   isOnSelectedRoute: boolean,
   isOnBestRoute: boolean
 ): boolean {
-  if (!hasActiveFocus) {
+  void hasActiveFocus;
+  void isFocusedByKeyword;
+  void isOnBestRoute;
+
+  if (!hasActiveSelectionContext) {
     return false;
   }
 
-  return !isFocusedByKeyword && !isOnSelectedRoute && !isOnBestRoute;
+  return !isOnSelectedRoute;
+}
+
+
+function buildAggregateEdgeId(fromNodeId: string, toNodeId: string): string {
+  return `${fromNodeId}::${toNodeId}`;
+}
+
+function buildAggregateEdgeLabel(args: {
+  navigationPropertyName: string;
+  navigationNames: string[];
+  isOnSelectedRoute: boolean;
+}): string {
+  if (args.isOnSelectedRoute && args.navigationPropertyName.trim()) {
+    return args.navigationPropertyName;
+  }
+
+  if (args.navigationNames.length <= 1) {
+    return args.navigationNames[0] ?? args.navigationPropertyName;
+  }
+
+  return `${args.navigationNames.length} relationships`;
+}
+
+function buildConfidenceExplanation(route: TraversalGraphRouteViewModel): string[] {
+  const explanation: string[] = [];
+
+  if (route.semantics.isBestMatch) {
+    explanation.push("top-ranked match for this route family");
+  }
+
+  if (route.hopCount <= 1) {
+    explanation.push("direct relationship with minimal traversal cost");
+  } else if (route.hopCount === 2) {
+    explanation.push("short multi-hop route with low complexity");
+  } else {
+    explanation.push("longer route, so confidence depends more on relationship quality");
+  }
+
+  if (route.semantics.isLoopBack) {
+    explanation.push("loop-back semantics reduce confidence versus cleaner alternatives");
+  } else {
+    explanation.push("clean path without repeated entities");
+  }
+
+  return dedupeStrings(explanation);
+}
+
+function buildComparisonReasons(args: {
+  selectedRoute: TraversalGraphRouteViewModel;
+  selectedGroup: TraversalGraphRouteGroupViewModel;
+  allRanksInGroup: number[];
+}): string[] {
+  const reasons: string[] = [];
+  const selectedRoute = args.selectedRoute;
+  const selectedGroup = args.selectedGroup;
+
+  if (selectedRoute.rank === 1) {
+    reasons.push("beats all visible alternatives on current ranking");
+  } else if (selectedRoute.rank <= 3) {
+    reasons.push("remains near the top of the visible route ranking");
+  } else {
+    reasons.push("chosen for route semantics rather than absolute rank");
+  }
+
+  if (selectedRoute.hopCount <= 1) {
+    reasons.push("uses fewer joins than longer alternatives");
+  } else if (selectedRoute.hopCount === 2) {
+    reasons.push("balances reach with a relatively small number of joins");
+  }
+
+  if (selectedGroup.variantCount > 1) {
+    reasons.push(`selected from ${selectedGroup.variantCount} variants in this route group`);
+  }
+
+  if (!selectedRoute.semantics.isLoopBack) {
+    reasons.push("avoids repeated-entity loop-back patterns where available");
+  }
+
+  return dedupeStrings(reasons);
+}
+
+function dedupeVariants(variants: TraversalGraphRouteVariantViewModel[]): TraversalGraphRouteVariantViewModel[] {
+  const seen = new Set<string>();
+  const result: TraversalGraphRouteVariantViewModel[] = [];
+
+  for (const variant of variants) {
+    const key = `${variant.variantKey ?? variant.label}::${(variant.navigationChain ?? []).join("->")}::${variant.confidence}`.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(variant);
+  }
+
+  return result;
+}
+
+function rankNodeRole(role: TraversalGraphNodeRole): number {
+  switch (role) {
+    case "source":
+      return 0;
+    case "target":
+      return 1;
+    default:
+      return 2;
+  }
 }
 
 function isRouteFocusedByKeyword(entities: string[], normalizedKeyword?: string): boolean {

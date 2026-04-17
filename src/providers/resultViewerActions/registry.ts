@@ -16,6 +16,7 @@ import {
 } from "./columnIntelligence.js";
 import { runContinueTraversalAction } from "../../commands/router/actions/traversal/continueTraversalAction.js";
 import { buildODataFilter, previewAndApplyODataFilter } from "./previewODataFilter.js";
+import { previewAndApplyRootODataOrderBy } from "./previewODataOrderBy.js";
 import {
   buildFetchXmlCondition as buildPreviewFetchXmlCondition,
   previewAndApplyFetchXmlCondition
@@ -140,7 +141,7 @@ export function resolveResultViewerActions(
     if (queryMode === "fetchxml") {
       actions.push({
         id: "preview-fetchxml-condition",
-        title: "Preview FetchXML condition",
+        title: "Filter by this value (FetchXML)",
         icon: "⟪⟫",
         placement: "overflow",
         group: "query",
@@ -149,7 +150,7 @@ export function resolveResultViewerActions(
     } else {
       actions.push({
         id: "preview-odata-filter",
-        title: "Preview OData filter",
+        title: "Filter by this value (OData)",
         icon: "ƒ",
         placement: "overflow",
         group: "query",
@@ -256,6 +257,21 @@ export async function executeResultViewerAction(
             }
             return;
         }
+
+
+case "preview-root-odata-orderby": {
+    if (!columnName) {
+        return;
+    }
+
+    try {
+        await previewAndApplyRootODataOrderBy(columnName, "asc");
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        void vscode.window.showWarningMessage(`DV Quick Run: ${message}`);
+    }
+    return;
+}
 
         case "preview-fetchxml-condition": {
             if (!columnName || !rawValue) {

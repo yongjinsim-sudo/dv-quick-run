@@ -231,8 +231,9 @@ function createGraphViewModel(): TraversalGraphViewModel {
           {
             routeId: "route-a",
             rank: 1,
-            label: "account -> contact -> task",
-            subtitle: "primarycontactid → regardingobjectid_task",
+            label: "account -> task - high",
+            subtitle: "direct path",
+            navigationChain: ["Account_Tasks"],
             confidence: "high",
             isSelected: true
           }
@@ -252,8 +253,9 @@ function createGraphViewModel(): TraversalGraphViewModel {
           {
             routeId: "route-b",
             rank: 2,
-            label: "account -> team -> task",
-            subtitle: "ownerid → regardingobjectid_task",
+            label: "account -> contact -> task - high",
+            subtitle: "via primarycontactid -> Contact_Tasks",
+            navigationChain: ["primarycontactid", "Contact_Tasks"],
             confidence: "high",
             isSelected: false
           }
@@ -264,16 +266,19 @@ function createGraphViewModel(): TraversalGraphViewModel {
       selectedRouteId: "route-a",
       selectedGroupId: "account::contact::task",
       title: "account -> contact -> task",
+      confidenceExplanation: ["top-ranked match for this route family"],
       positiveReasons: ["best match", "clean path"],
+      comparisonReasons: ["uses fewer joins than alternatives"],
       warningReasons: [],
       variants: [
         {
-          routeId: "route-a",
-          rank: 1,
-          label: "account -> contact -> task",
-          subtitle: "primarycontactid → regardingobjectid_task",
-          confidence: "high",
-          isSelected: true
+            routeId: "route-a",
+            rank: 1,
+            label: "account -> task - high",
+            subtitle: "direct path",
+            navigationChain: ["Account_Tasks"],
+            confidence: "high",
+            isSelected: true
         }
       ],
       action: {

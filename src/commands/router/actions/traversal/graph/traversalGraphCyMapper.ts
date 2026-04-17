@@ -49,13 +49,6 @@ export function buildTraversalGraphNodeClasses(
     classes.push("selected-route");
   }
 
-  if (node.styling.isOnBestRoute) {
-    classes.push("best-route");
-  }
-
-  if (node.styling.isFocusedByKeyword) {
-    classes.push("focused");
-  }
 
   if (node.styling.isSystemHeavy) {
     classes.push("system-heavy");
@@ -81,13 +74,6 @@ export function buildTraversalGraphEdgeClasses(
     classes.push("selected-route");
   }
 
-  if (edge.styling.isOnBestRoute) {
-    classes.push("best-route");
-  }
-
-  if (edge.styling.isFocusedByKeyword) {
-    classes.push("focused");
-  }
 
   if (edge.styling.isSystemHeavy) {
     classes.push("system-heavy");

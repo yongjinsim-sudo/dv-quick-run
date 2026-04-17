@@ -174,33 +174,55 @@ function bindTableEventsOnce() {
             });
 
             tableView.addEventListener("contextmenu", (event) => {
-                const target = event.target;
-                if (!(target instanceof HTMLElement)) {
-                    return;
-                }
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+        return;
+    }
 
-                const investigateAction = findRowInvestigateAction(target);
-                if (investigateAction instanceof HTMLElement) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    showInvestigateContextMenu(event.clientX, event.clientY, investigateAction);
-                    return;
-                }
+    const investigateAction = findRowInvestigateAction(target);
+    if (investigateAction instanceof HTMLElement) {
+        event.preventDefault();
+        event.stopPropagation();
+        showInvestigateContextMenu(event.clientX, event.clientY, investigateAction);
+        return;
+    }
 
-                const cell = target.closest(".context-action-cell");
-                if (!(cell instanceof HTMLElement)) {
-                    return;
-                }
+    const header = target.closest("th[data-column]");
+    if (header instanceof HTMLElement) {
+        event.preventDefault();
+        event.stopPropagation();
 
-                const menu = cell.querySelector(".overflow-menu");
-                if (!(menu instanceof HTMLElement)) {
-                    return;
-                }
+        const columnName = header.getAttribute("data-column") ?? "";
+        const isRootColumn = !!columnName && !columnName.includes(".");
 
-                event.preventDefault();
-                event.stopPropagation();
-                openOverflowMenuAtPosition(event.clientX, event.clientY, menu);
-            });
+        removeResultViewerContextMenu();
+        closeAllOverflowMenus();
+
+        if (isRootColumn) {
+            showHeaderContextMenu(event.clientX, event.clientY, columnName);
+        }
+
+        return;
+    }
+
+    const cell = target.closest(".context-action-cell");
+    if (!(cell instanceof HTMLElement)) {
+        return;
+    }
+
+    const menu = cell.querySelector(".overflow-menu");
+    if (!(menu instanceof HTMLElement)) {
+        event.preventDefault();
+        event.stopPropagation();
+        removeResultViewerContextMenu();
+        closeAllOverflowMenus();
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    openOverflowMenuAtPosition(event.clientX, event.clientY, menu);
+});
 
             arrayDrawerTableView.addEventListener("click", (event) => {
                 const target = event.target;
@@ -247,6 +269,53 @@ function bindTableEventsOnce() {
 
             activeResultViewerContextMenu = null;
         }
+
+
+function showHeaderContextMenu(clientX, clientY, columnName) {
+    removeResultViewerContextMenu();
+    closeAllOverflowMenus();
+
+    const menu = document.createElement("div");
+    menu.className = "overflow-menu-overlay";
+    menu.style.left = clientX + "px";
+    menu.style.top = clientY + "px";
+    menu.setAttribute("role", "menu");
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "overflow-action-button";
+    button.textContent = "Preview root $orderby asc";
+    button.setAttribute("data-action-id", "preview-root-odata-orderby");
+    button.setAttribute("data-column-name", columnName);
+
+    button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        executeAction(button);
+        removeResultViewerContextMenu();
+    });
+
+    menu.appendChild(button);
+
+    document.body.appendChild(menu);
+    activeResultViewerContextMenu = menu;
+
+    const viewportPadding = 8;
+    const rect = menu.getBoundingClientRect();
+    let left = clientX;
+    let top = clientY;
+
+    if (left + rect.width > window.innerWidth - viewportPadding) {
+        left = Math.max(viewportPadding, window.innerWidth - rect.width - viewportPadding);
+    }
+
+    if (top + rect.height > window.innerHeight - viewportPadding) {
+        top = Math.max(viewportPadding, window.innerHeight - rect.height - viewportPadding);
+    }
+
+    menu.style.left = Math.round(left) + "px";
+    menu.style.top = Math.round(top) + "px";
+}
 
         function showInvestigateContextMenu(clientX, clientY, actionElement) {
             removeResultViewerContextMenu();
