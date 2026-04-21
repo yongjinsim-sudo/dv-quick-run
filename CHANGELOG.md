@@ -6,7 +6,7 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
-## 🚀 v0.9.1 — Guided Traversal Graph, Context-Aware Query Mutation & Result Viewer Actions
+## 🚀 v0.9.2 — Guided Traversal Graph, Context-Aware Query Mutation & Result Viewer Actions
 
 This release expands **Guided Traversal** with a stronger **graph reasoning surface**, while also introducing **scope-aware query mutation** and enhancing the Result Viewer as an **interactive command surface**.
 

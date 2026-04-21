@@ -13,6 +13,7 @@ export type TraversalGraphCyNodeElement = {
     role: "source" | "target" | "intermediate";
     routeCount: number;
     bestVisibleRank?: number;
+    preferredRouteId?: string;
     classes: string[];
   };
   position?: {
@@ -32,6 +33,7 @@ export type TraversalGraphCyEdgeElement = {
     routeIds: string[];
     visibleRouteCount: number;
     bestVisibleRank?: number;
+    preferredRouteId?: string;
     classes: string[];
   };
 };
@@ -97,17 +99,23 @@ export function buildTraversalGraphEdgeClasses(
 export function mapTraversalGraphNodeToCyElement(
   node: TraversalGraphNodeViewModel
 ): TraversalGraphCyNodeElement {
+  const data: TraversalGraphCyNodeElement["data"] = {
+    id: node.id,
+    label: node.label,
+    logicalName: node.logicalName,
+    role: node.role,
+    routeCount: node.metrics.visibleRouteCount,
+    bestVisibleRank: node.metrics.bestVisibleRank,
+    classes: buildTraversalGraphNodeClasses(node)
+  };
+
+  if (node.preferredRouteId !== undefined) {
+    data.preferredRouteId = node.preferredRouteId;
+  }
+
   return {
     group: "nodes",
-    data: {
-      id: node.id,
-      label: node.label,
-      logicalName: node.logicalName,
-      role: node.role,
-      routeCount: node.metrics.visibleRouteCount,
-      bestVisibleRank: node.metrics.bestVisibleRank,
-      classes: buildTraversalGraphNodeClasses(node)
-    },
+    data,
     position:
       node.layout?.x !== undefined && node.layout?.y !== undefined
         ? {

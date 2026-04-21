@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type { EditorQueryTarget } from "../../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
-import { applyEditorQueryUpdate } from "../../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
+import { previewAndApplyMutationResult, type MutationResult } from "../../refinement/queryPreview.js";
 import { buildEditorQuery, parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { isGuidValue } from "./columnIntelligence.js";
 
@@ -11,8 +11,6 @@ export interface ODataFilterPreviewResult {
     target: EditorQueryTarget;
 }
 
-const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.txt");
-
 export async function previewAndApplyODataFilter(columnName: string, rawValue: string): Promise<void> {
     const resolved = resolveBestODataEditorTarget();
     if (!resolved) {
@@ -21,31 +19,20 @@ export async function previewAndApplyODataFilter(columnName: string, rawValue: s
     }
 
     const preview = buildODataFilterPreviewFromTarget(resolved.target, columnName, rawValue);
+    const result: MutationResult = {
+        originalQuery: preview.originalQuery,
+        updatedQuery: preview.previewQuery
+    };
 
-    await openOrReuseQueryPreviewDocument(buildPreviewDocumentContent(preview));
-
-    const choice = await vscode.window.showWarningMessage(
-        "DV Quick Run: Preview is ready. Apply it to the detected query?",
-        { modal: true },
-        "Apply Preview"
-    );
-
-    if (choice !== "Apply Preview") {
-        void vscode.window.showInformationMessage(
-            "DV Quick Run: Preview cancelled. The detected query was not changed."
-        );
-        return;
-    }
-
-    await applyEditorQueryUpdate(preview.target, preview.previewQuery);
-
-    await vscode.window.showTextDocument(preview.target.editor.document, {
-        viewColumn: preview.target.editor.viewColumn,
-        preserveFocus: false,
-        preview: false
+    await previewAndApplyMutationResult(preview.target, result, {
+        heading: "Preview OData Filter",
+        sections: [
+            {
+                label: "Proposed clause",
+                value: preview.proposedClause
+            }
+        ]
     });
-
-    void vscode.window.showInformationMessage("DV Quick Run: Preview applied to query.");
 }
 
 export function buildODataFilterPreview(columnName: string, rawValue: string): ODataFilterPreviewResult {
@@ -167,32 +154,6 @@ function resolveBestODataEditorTarget() {
     return undefined;
 }
 
-async function openOrReuseQueryPreviewDocument(content: string): Promise<vscode.TextEditor> {
-    const document = await vscode.workspace.openTextDocument(QUERY_PREVIEW_URI);
-
-    const editor = await vscode.window.showTextDocument(document, {
-        preview: false,
-        preserveFocus: false,
-        viewColumn: vscode.ViewColumn.Beside
-    });
-
-    const fullText = document.getText();
-    const fullRange = new vscode.Range(
-        document.positionAt(0),
-        document.positionAt(fullText.length)
-    );
-
-    await editor.edit((editBuilder) => {
-        if (fullText.length === 0) {
-            editBuilder.insert(new vscode.Position(0, 0), content);
-        } else {
-            editBuilder.replace(fullRange, content);
-        }
-    });
-
-    return editor;
-}
-
 async function fallbackToCopiedODataFilter(columnName: string, rawValue: string): Promise<void> {
     const filter = buildODataFilter(columnName, rawValue);
     await vscode.env.clipboard.writeText(filter);
@@ -200,29 +161,6 @@ async function fallbackToCopiedODataFilter(columnName: string, rawValue: string)
     void vscode.window.showWarningMessage(
         "DV Quick Run: No visible OData query editor was detected. Falling back to copied OData filter."
     );
-}
-
-function buildPreviewDocumentContent(preview: ODataFilterPreviewResult): string {
-    return [
-        "DV Quick Run – Query Preview",
-        "============================",
-        "",
-        "Preview OData Filter",
-        "",
-        "This preview document is reused by DV Quick Run and will be overwritten by the next preview action.",
-        "",
-        "Original query:",
-        preview.originalQuery,
-        "",
-        "Proposed clause:",
-        preview.proposedClause,
-        "",
-        "Preview query:",
-        preview.previewQuery,
-        "",
-        "Use the confirmation dialog to apply this preview.",
-        "Dismissing the dialog leaves the detected query unchanged."
-    ].join("\n");
 }
 
 function extractODataQueryText(rawText: string): string {

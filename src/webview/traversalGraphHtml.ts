@@ -472,10 +472,9 @@ function bindCyEvents() {
   });
 
   cy.on("tap", "node", (event) => {
-    const nodeId = event.target.id();
-    const selectedRouteId = pickRouteIdForNode(nodeId, renderState.graphViewModel);
-    if (selectedRouteId) {
-      vscode.postMessage({ type: "routeClicked", routeId: selectedRouteId });
+    const preferredRouteId = event.target.data("preferredRouteId");
+    if (preferredRouteId) {
+      vscode.postMessage({ type: "routeClicked", routeId: preferredRouteId });
     }
   });
 
@@ -489,27 +488,6 @@ function bindCyEvents() {
   });
 }
 
-function pickRouteIdForNode(nodeId, graph) {
-  const matchingRoutes = (graph?.routes || []).filter(
-    (route) => Array.isArray(route.entities) && route.entities.includes(nodeId)
-  );
-  if (matchingRoutes.length === 0) {
-    return undefined;
-  }
-
-  const selectedMatch = matchingRoutes.find(
-    (route) => route.routeId === graph?.selectedRouteId
-  );
-  if (selectedMatch) {
-    return selectedMatch.routeId;
-  }
-
-  if (matchingRoutes.length === 1) {
-    return matchingRoutes[0]?.routeId;
-  }
-
-  return undefined;
-}
 
 function renderRouteChips(message) {
   el.routeChips.innerHTML = "";
@@ -563,38 +541,6 @@ function renderConfidenceValue(target, confidence) {
   target.appendChild(wrap);
 }
 
-function buildVariantConfidenceGroups(panel, graph) {
-  const routesById = new Map((graph?.routes || []).map((route) => [route.routeId, route]));
-  const groups = new Map();
-  for (const variant of panel.variants || []) {
-    const confidence = variant.confidence || "medium";
-    const route = routesById.get(variant.routeId);
-    const bucket = groups.get(confidence) || [];
-    bucket.push({ variant, route });
-    groups.set(confidence, bucket);
-  }
-
-  const order = { high: 0, medium: 1, low: 2 };
-  const result = [];
-  for (const [confidence, items] of groups.entries()) {
-    items.sort((left, right) => {
-      const selectedDelta = Number(right.variant.isSelected) - Number(left.variant.isSelected);
-      if (selectedDelta !== 0) return selectedDelta;
-      const rankDelta = left.variant.rank - right.variant.rank;
-      if (rankDelta !== 0) return rankDelta;
-      const leftChain = left.variant.navigationChain?.length || 0;
-      const rightChain = right.variant.navigationChain?.length || 0;
-      if (leftChain !== rightChain) return leftChain - rightChain;
-      const leftPenalty = Number(Boolean(left.route?.semantics?.isLoopBack)) + Number(Boolean(left.route?.semantics?.isSystemHeavy));
-      const rightPenalty = Number(Boolean(right.route?.semantics?.isLoopBack)) + Number(Boolean(right.route?.semantics?.isSystemHeavy));
-      if (leftPenalty !== rightPenalty) return leftPenalty - rightPenalty;
-      return left.variant.routeId.localeCompare(right.variant.routeId);
-    });
-    result.push({ confidence, items });
-  }
-  result.sort((a, b) => (order[a.confidence] ?? 99) - (order[b.confidence] ?? 99));
-  return result;
-}
 
 function createVariantChip(variant) {
   const button = document.createElement("button");
@@ -677,7 +623,7 @@ function renderSidePanel(message) {
     : "";
   el.variantList.innerHTML = "";
 
-  const groupedVariants = buildVariantConfidenceGroups(panel, message.graphViewModel);
+  const groupedVariants = panel.variantGroups || [];
   for (const group of groupedVariants) {
     const heading = document.createElement("div");
     heading.className = "variant-group-header";
@@ -689,8 +635,8 @@ function renderSidePanel(message) {
 
     const shouldShow = expandedConfidenceGroups.has(group.confidence);
     if (shouldShow) {
-      for (const item of group.items) {
-        container.appendChild(createVariantChip(item.variant));
+      for (const variant of group.items) {
+        container.appendChild(createVariantChip(variant));
       }
     } else {
       const toggle = document.createElement("button");

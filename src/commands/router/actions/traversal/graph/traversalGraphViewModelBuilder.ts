@@ -14,6 +14,7 @@ import type {
   TraversalGraphRouteViewModel,
   TraversalGraphSelectableRoute,
   TraversalGraphSidePanelModel,
+  TraversalGraphVariantConfidenceGroupViewModel,
   TraversalGraphViewModel
 } from "./traversalGraphTypes.js";
 
@@ -149,6 +150,7 @@ function buildVisibleNodeModels(
       const isFocusedByKeyword =
         isEntityFocusedByKeyword(entity, focusState.normalizedKeyword) ||
         route.semantics.isFocusedByKeyword;
+      const preferredRouteId = buildPreferredRouteIdForNode(routeModels, entity, selectedRouteId);
 
       if (!existing) {
         nodeMap.set(entity, {
@@ -168,6 +170,7 @@ function buildVisibleNodeModels(
             visibleRouteCount: 1,
             bestVisibleRank: route.rank
           },
+          preferredRouteId,
           layout: layoutPosition ? { x: layoutPosition.x, y: layoutPosition.y } : undefined
         });
         continue;
@@ -180,6 +183,7 @@ function buildVisibleNodeModels(
       existing.styling.isLoopWarning = existing.styling.isLoopWarning || route.semantics.isLoopBack;
       existing.metrics.visibleRouteCount += 1;
       existing.metrics.bestVisibleRank = Math.min(existing.metrics.bestVisibleRank ?? route.rank, route.rank);
+      existing.preferredRouteId = preferredRouteId;
       if (layoutPosition) {
         existing.layout = { x: layoutPosition.x, y: layoutPosition.y };
       }
@@ -317,6 +321,7 @@ function buildTraversalGraphSidePanelModel(
       comparisonReasons: [],
       warningReasons: [],
       variants: [],
+      variantGroups: [],
       action: {
         label: "Use this route",
         enabled: false
@@ -344,6 +349,7 @@ function buildTraversalGraphSidePanelModel(
     warningReasons: [...selectedRoute.reasoning.warnings],
     variantsTitle: selectedGroup.label,
     variants: dedupeVariants(selectedGroup.variants),
+    variantGroups: buildVariantConfidenceGroups(dedupeVariants(selectedGroup.variants)),
     action: {
       label: "Use this route",
       routeId: selectedRoute.routeId,
@@ -352,6 +358,73 @@ function buildTraversalGraphSidePanelModel(
   };
 }
 
+
+
+function buildPreferredRouteIdForNode(
+  routeModels: TraversalGraphRouteViewModel[],
+  nodeId: string,
+  selectedRouteId: string | undefined
+): string | undefined {
+  const matchingRoutes = routeModels.filter((route) => route.entities.includes(nodeId));
+  if (matchingRoutes.length === 0) {
+    return undefined;
+  }
+
+  const selectedMatch = selectedRouteId
+    ? matchingRoutes.find((route) => route.routeId === selectedRouteId)
+    : undefined;
+  if (selectedMatch) {
+    return selectedMatch.routeId;
+  }
+
+  const [firstMatch] = matchingRoutes;
+  return firstMatch?.routeId;
+}
+
+function buildVariantConfidenceGroups(
+  variants: TraversalGraphRouteVariantViewModel[]
+): TraversalGraphVariantConfidenceGroupViewModel[] {
+  const groups = new Map<string, TraversalGraphRouteVariantViewModel[]>();
+
+  for (const variant of variants) {
+    const confidence = variant.confidence || "medium";
+    const bucket = groups.get(confidence) || [];
+    bucket.push(variant);
+    groups.set(confidence, bucket);
+  }
+
+  const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+  return [...groups.entries()]
+    .map(([confidence, items]) => ({
+      confidence: confidence as "high" | "medium",
+      items: [...items].sort((left, right) => {
+        const selectedDelta = Number(right.isSelected) - Number(left.isSelected);
+        if (selectedDelta !== 0) {
+          return selectedDelta;
+        }
+
+        const rankDelta = left.rank - right.rank;
+        if (rankDelta !== 0) {
+          return rankDelta;
+        }
+
+        const chainDelta = (left.navigationChain?.length ?? 0) - (right.navigationChain?.length ?? 0);
+        if (chainDelta !== 0) {
+          return chainDelta;
+        }
+
+        const leftLoopPenalty = left.loopPenalty ?? 0;
+        const rightLoopPenalty = right.loopPenalty ?? 0;
+        if (leftLoopPenalty !== rightLoopPenalty) {
+          return leftLoopPenalty - rightLoopPenalty;
+        }
+
+        return left.routeId.localeCompare(right.routeId);
+      })
+    }))
+    .sort((left, right) => (order[left.confidence] ?? 99) - (order[right.confidence] ?? 99));
+}
 
 function buildRouteExecutionSubtitle(route: TraversalGraphRouteViewModel): string | undefined {
   const navigationChain = route.edgeIds
@@ -383,7 +456,8 @@ function buildRouteGroups(
         .map((edgeId) => parseEdgeId(edgeId).navigationPropertyName)
         .filter((value) => value.trim().length > 0),
       confidence: route.confidence,
-      isSelected: route.semantics.isSelected
+      isSelected: route.semantics.isSelected,
+      loopPenalty: Number(route.semantics.isLoopBack) + Number(route.semantics.isSystemHeavy)
     };
 
     const existing = groups.get(groupId);

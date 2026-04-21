@@ -1,9 +1,7 @@
 import * as vscode from "vscode";
 import type { EditorQueryTarget } from "../../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
-import { applyEditorQueryUpdate } from "../../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
+import { previewAndApplyMutationResult, type MutationResult } from "../../refinement/queryPreview.js";
 import { buildEditorQuery, parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
-
-const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.txt");
 
 export interface ODataOrderByPreviewResult {
   originalQuery: string;
@@ -15,33 +13,24 @@ export interface ODataOrderByPreviewResult {
 export async function previewAndApplyRootODataOrderBy(columnName: string, direction: "asc" | "desc" = "asc"): Promise<void> {
   const resolved = resolveBestODataEditorTarget();
   if (!resolved) {
-    throw new Error("Filter by this value requires a visible OData query in the editor.");
+    throw new Error("Root OData order by requires a visible OData query in the editor.");
   }
 
   const preview = buildODataOrderByPreviewFromTarget(resolved.target, columnName, direction);
+  const result: MutationResult = {
+    originalQuery: preview.originalQuery,
+    updatedQuery: preview.previewQuery
+  };
 
-  await openOrReuseQueryPreviewDocument(buildPreviewDocumentContent(preview));
-
-  const choice = await vscode.window.showWarningMessage(
-    "DV Quick Run: Preview is ready. Apply it to the detected query?",
-    { modal: true },
-    "Apply Preview"
-  );
-
-  if (choice !== "Apply Preview") {
-    void vscode.window.showInformationMessage("DV Quick Run: Preview cancelled. The detected query was not changed.");
-    return;
-  }
-
-  await applyEditorQueryUpdate(preview.target, preview.previewQuery);
-
-  await vscode.window.showTextDocument(preview.target.editor.document, {
-    viewColumn: preview.target.editor.viewColumn,
-    preserveFocus: false,
-    preview: false
+  await previewAndApplyMutationResult(preview.target, result, {
+    heading: "Preview Root OData Order By",
+    sections: [
+      {
+        label: "Proposed clause",
+        value: preview.proposedClause
+      }
+    ]
   });
-
-  void vscode.window.showInformationMessage("DV Quick Run: Preview applied to query.");
 }
 
 export function buildODataOrderByPreviewFromTarget(
@@ -129,45 +118,4 @@ function extractODataQueryText(text: string): string {
     return "";
   }
   return trimmed.replace(/^Run Query\s*\|\s*Explain\s*/i, "").trim();
-}
-
-async function openOrReuseQueryPreviewDocument(content: string): Promise<void> {
-  const existing = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === QUERY_PREVIEW_URI.toString());
-  const document = existing ?? await vscode.workspace.openTextDocument(QUERY_PREVIEW_URI);
-  const editor = await vscode.window.showTextDocument(document, {
-    viewColumn: vscode.ViewColumn.Beside,
-    preserveFocus: true,
-    preview: false
-  });
-
-  await editor.edit((editBuilder) => {
-    const fullRange = new vscode.Range(
-      document.positionAt(0),
-      document.positionAt(document.getText().length)
-    );
-    editBuilder.replace(fullRange, content);
-  });
-}
-
-function buildPreviewDocumentContent(preview: ODataOrderByPreviewResult): string {
-  return [
-    "DV Quick Run - Query Preview",
-    "============================",
-    "",
-    "Preview Root OData Order By",
-    "",
-    "This preview document is reused by DV Quick Run and will be overwritten by the next preview action.",
-    "",
-    "Original query:",
-    preview.originalQuery,
-    "",
-    "Proposed clause:",
-    preview.proposedClause,
-    "",
-    "Preview query:",
-    preview.previewQuery,
-    "",
-    "Use the confirmation dialog to apply this preview.",
-    "Dismissing the dialog leaves the detected query unchanged."
-  ].join("\n");
 }
