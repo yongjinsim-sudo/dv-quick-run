@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "A metadata-aware Dataverse query and workflow workbench for VS Code — run, explore, and refine OData & FetchXML queries with Query-by-Canvas, Guided Traversal, $batch execution, and intelligent suggestions.",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",

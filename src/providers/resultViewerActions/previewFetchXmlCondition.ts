@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type { EditorQueryTarget } from "../../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
-import { applyEditorQueryUpdate } from "../../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
+import { previewAndApplyMutationResult, type MutationResult } from "../../refinement/queryPreview.js";
 
 export interface FetchXmlConditionPreviewResult {
     originalQuery: string;
@@ -8,8 +8,6 @@ export interface FetchXmlConditionPreviewResult {
     previewQuery: string;
     target: EditorQueryTarget;
 }
-
-const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.txt");
 
 export async function previewAndApplyFetchXmlCondition(columnName: string, rawValue: string): Promise<void> {
     const resolved = resolveBestFetchXmlEditorTarget();
@@ -19,31 +17,20 @@ export async function previewAndApplyFetchXmlCondition(columnName: string, rawVa
     }
 
     const preview = buildFetchXmlConditionPreviewFromTarget(resolved.target, columnName, rawValue);
+    const result: MutationResult = {
+        originalQuery: preview.originalQuery,
+        updatedQuery: preview.previewQuery
+    };
 
-    await openOrReuseQueryPreviewDocument(buildPreviewDocumentContent(preview));
-
-    const choice = await vscode.window.showWarningMessage(
-        "DV Quick Run: Preview is ready. Apply it to the detected FetchXML query?",
-        { modal: true },
-        "Apply Preview"
-    );
-
-    if (choice !== "Apply Preview") {
-        void vscode.window.showInformationMessage(
-            "DV Quick Run: Preview cancelled. The detected FetchXML query was not changed."
-        );
-        return;
-    }
-
-    await applyEditorQueryUpdate(preview.target, preview.previewQuery);
-
-    await vscode.window.showTextDocument(preview.target.editor.document, {
-        viewColumn: preview.target.editor.viewColumn,
-        preserveFocus: false,
-        preview: false
+    await previewAndApplyMutationResult(preview.target, result, {
+        heading: "Preview FetchXML Condition",
+        sections: [
+            {
+                label: "Proposed condition",
+                value: preview.proposedCondition
+            }
+        ]
     });
-
-    void vscode.window.showInformationMessage("DV Quick Run: Preview applied to FetchXML query.");
 }
 
 export function buildFetchXmlConditionPreview(columnName: string, rawValue: string): FetchXmlConditionPreviewResult {
@@ -181,29 +168,6 @@ function resolveFetchXmlBlock(document: vscode.TextDocument, activeLine: number)
     };
 }
 
-async function openOrReuseQueryPreviewDocument(content: string): Promise<vscode.TextEditor> {
-    const document = await vscode.workspace.openTextDocument(QUERY_PREVIEW_URI);
-
-    const editor = await vscode.window.showTextDocument(document, {
-        preview: false,
-        preserveFocus: false,
-        viewColumn: vscode.ViewColumn.Beside
-    });
-
-    const fullText = document.getText();
-    const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(fullText.length));
-
-    await editor.edit((editBuilder) => {
-        if (fullText.length === 0) {
-            editBuilder.insert(new vscode.Position(0, 0), content);
-        } else {
-            editBuilder.replace(fullRange, content);
-        }
-    });
-
-    return editor;
-}
-
 async function fallbackToCopiedFetchXmlCondition(columnName: string, rawValue: string): Promise<void> {
     const condition = buildFetchXmlCondition(columnName, rawValue);
     await vscode.env.clipboard.writeText(condition);
@@ -211,29 +175,6 @@ async function fallbackToCopiedFetchXmlCondition(columnName: string, rawValue: s
     void vscode.window.showWarningMessage(
         "DV Quick Run: No visible FetchXML query editor was detected. Falling back to copied FetchXML condition."
     );
-}
-
-function buildPreviewDocumentContent(preview: FetchXmlConditionPreviewResult): string {
-    return [
-        "DV Quick Run – Query Preview",
-        "============================",
-        "",
-        "Preview FetchXML Condition",
-        "",
-        "This preview document is reused by DV Quick Run and will be overwritten by the next preview action.",
-        "",
-        "Original query:",
-        preview.originalQuery,
-        "",
-        "Proposed condition:",
-        preview.proposedCondition,
-        "",
-        "Preview query:",
-        preview.previewQuery,
-        "",
-        "Use the confirmation dialog to apply this preview.",
-        "Dismissing the dialog leaves the detected query unchanged."
-    ].join("\n");
 }
 
 function extractFetchXmlText(rawText: string): string {

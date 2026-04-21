@@ -44,6 +44,7 @@ export type TraversalGraphNodeViewModel = {
   role: TraversalGraphNodeRole;
   styling: TraversalGraphNodeStyling;
   metrics: TraversalGraphNodeMetrics;
+  preferredRouteId?: string;
   layout?: TraversalGraphNodeLayout;
 };
 
@@ -98,6 +99,12 @@ export type TraversalGraphRouteVariantViewModel = {
   navigationChain: string[];
   confidence: "high" | "medium";
   isSelected: boolean;
+  loopPenalty?: number;
+};
+
+export type TraversalGraphVariantConfidenceGroupViewModel = {
+  confidence: "high" | "medium";
+  items: TraversalGraphRouteVariantViewModel[];
 };
 
 export type TraversalGraphRouteGroupViewModel = {
@@ -146,6 +153,7 @@ export type TraversalGraphSidePanelModel = {
   warningReasons: string[];
   variantsTitle?: string;
   variants: TraversalGraphRouteVariantViewModel[];
+  variantGroups?: TraversalGraphVariantConfidenceGroupViewModel[];
   action: TraversalGraphPanelAction;
 };
 

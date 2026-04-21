@@ -17,8 +17,10 @@ suite("resultViewerActionEligibility", () => {
     assert.deepStrictEqual(actions.map((action) => action.id), [
       "investigate-record",
       "open-in-dataverse-ui",
-      "copy-record-url",
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby",
+      "copy-record-url"
     ]);
   });
 
@@ -34,7 +36,9 @@ suite("resultViewerActionEligibility", () => {
     });
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby"
     ]);
   });
 
@@ -53,7 +57,9 @@ suite("resultViewerActionEligibility", () => {
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
       "investigate-record",
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby"
     ]);
   });
 
@@ -69,7 +75,9 @@ suite("resultViewerActionEligibility", () => {
     });
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby"
     ]);
   });
 
@@ -172,7 +180,12 @@ suite("resultViewerActionEligibility", () => {
     const actions = model.rows[0]["pa.accountnumber"]?.actions ?? [];
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
+      "preview-add-select",
+      "preview-root-odata-orderby"
     ]);
+
+    assert.strictEqual(actions[0]?.isEnabled, true);
+    assert.strictEqual(actions[1]?.isEnabled, false);
 
     actions.forEach((action) => {
       assert.strictEqual(action.payload.columnName, "parentcustomerid_account.accountnumber");

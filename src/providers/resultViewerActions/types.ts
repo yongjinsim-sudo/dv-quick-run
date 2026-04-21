@@ -1,5 +1,5 @@
 export type ResultViewerActionPlacement = "primary" | "overflow";
-export type ResultViewerActionGroup = "navigation" | "inspection" | "query";
+export type ResultViewerActionGroup = "refine" | "investigate" | "traversal" | "copy" | "metadata";
 export type ResultViewerQueryMode = "odata" | "fetchxml";
 
 export interface ResultViewerActionPayload {
@@ -24,6 +24,9 @@ export interface ResultViewerResolvedAction {
   placement: ResultViewerActionPlacement;
   group: ResultViewerActionGroup;
   payload: ResultViewerActionPayload;
+  isEnabled?: boolean;
+  disabledReason?: string;
+  kind?: "preview" | "execute" | "copy" | "open";
 }
 
 export interface ResultViewerTraversalActionContext {
