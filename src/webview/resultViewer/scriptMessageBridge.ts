@@ -270,6 +270,10 @@ async function copyValueToClipboard(value) {
 
         function executeAction(element) {
 
+            if (element.hasAttribute("disabled") || element.getAttribute("aria-disabled") === "true") {
+                return;
+            }
+
             const actionId = element.getAttribute("data-action-id") ?? "";
             const guid = element.getAttribute("data-guid") ?? "";
             const entitySetName = element.getAttribute("data-entity-set-name") ?? "";

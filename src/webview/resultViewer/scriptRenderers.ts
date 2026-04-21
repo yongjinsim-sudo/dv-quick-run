@@ -102,15 +102,22 @@ function renderSiblingExpandButton(currentModel) {
         }
 
         function groupActionsByGroup(actions) {
-            const order = ["navigation", "inspection", "query"];
-            const labels = { navigation: "Navigation", inspection: "Inspection", query: "Query" };
+            const order = ["refine", "investigate", "traversal", "copy", "metadata"];
+            const labels = { refine: "Refine", investigate: "Investigate", traversal: "Traversal", copy: "Copy", metadata: "Metadata" };
             return order
                 .map((group) => ({ group, label: labels[group], actions: actions.filter((action) => action.group === group) }))
                 .filter((entry) => entry.actions.length > 0);
         }
 
         function buildActionButtonHtml(action, includeLabel) {
-            return "<button class=\\"inline-action inline-action-labeled\\"" +
+            const isEnabled = action.isEnabled !== false;
+            const title = isEnabled
+                ? action.title
+                : (action.disabledReason
+                    ? action.title + " — " + action.disabledReason
+                    : action.title + " — Unavailable in this context");
+            return "<button class=\\"inline-action inline-action-labeled" + (isEnabled ? "" : " is-disabled") + "\\"" +
+                (isEnabled ? "" : " disabled aria-disabled=\\"true\\"") +
                 " title=\\"" + escapeAttribute(action.title) + "\\"" +
                 " data-action-id=\\"" + escapeAttribute(action.id) + "\\"" +
                 " data-guid=\\"" + escapeAttribute(action.payload?.guid ?? "") + "\\"" +

@@ -24,6 +24,169 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
+## 🆕 What's New in v0.9.3 (Result Viewer Command Surface & Preview-First Refinement)
+
+> Evolves the Result Viewer into a **true interactive query workspace**, unifying actions, enforcing preview-first workflows, and making query refinement **data-driven and predictable**.
+
+---
+
+### 📊 Result Viewer as Command Surface (Expanded)
+
+- Result Viewer now acts as the **primary interaction surface**
+  - refine queries directly from returned data
+  - reduces reliance on manual query editing
+
+- Supported actions:
+  - add `$select` from column
+  - filter by value
+  - sort from column
+  - investigate records
+
+👉 Results in:
+- tighter **inspect → refine → rerun** loop  
+- faster query iteration  
+- more intuitive workflows  
+
+---
+
+### ✨ Add to `$select` from Column (NEW)
+
+- Added **“Add this column to $select”** action
+
+- Available via:
+  - cell context menu
+  - column-level interaction
+
+- Behaviour:
+  - detects correct scope:
+    - root query
+    - `$expand`
+    - nested `$expand`
+  - updates `$select` accordingly
+
+- Uses **preview-first workflow**
+
+👉 Results in:
+- faster field selection  
+- safer query mutation  
+- reduced manual editing  
+
+---
+
+### 👁️ Preview-First Refinement (Standardised)
+
+- All Result Viewer actions now follow a **consistent preview-first pattern**
+
+Workflow:
+- trigger action → preview → confirm → apply  
+
+- No silent mutations  
+- No hidden behaviour  
+
+👉 Ensures:
+- full user control  
+- predictable query changes  
+- safe experimentation  
+
+---
+
+### 🚫 Disabled Actions with Clear UX (NEW)
+
+- Invalid actions are now:
+  - visibly **disabled**
+  - styled consistently across menus
+
+- Examples:
+  - `$orderby` on unsupported scopes  
+  - OData-only actions in FetchXML context  
+
+- Disabled actions:
+  - do not execute  
+  - do not trigger preview  
+  - clearly communicate limitations  
+
+👉 Results in:
+- reduced confusion  
+- clearer feature boundaries  
+- improved usability  
+
+---
+
+### ⚠️ Guardrails & Scope Validation Improvements
+
+- Strengthened query mutation validation:
+  - prevents invalid `$orderby` usage  
+  - ensures correct scope application  
+  - avoids malformed queries  
+
+- Mutation behaviour now:
+  - respects entity boundaries  
+  - merges safely with existing clauses  
+  - avoids unintended overwrites  
+
+👉 Prevents:
+- runtime Dataverse errors  
+- incorrect query construction  
+
+---
+
+### 🧠 Result Viewer Interaction Consistency
+
+- All actions now:
+  - use a unified action system  
+  - align with preview pipeline  
+  - behave consistently across contexts  
+
+- Improved alignment between:
+  - Result Viewer  
+  - editor mutations  
+  - traversal outputs  
+  - preview system  
+
+👉 Results in:
+- predictable behaviour  
+- cleaner mental model  
+- no mixed interaction patterns  
+
+---
+
+### 🧪 Stability
+
+- Verified:
+  - `$select` mutation across scopes  
+  - preview → apply workflows  
+  - disabled action behaviour  
+  - Result Viewer interactions  
+
+- No regression in:
+  - Guided Traversal  
+  - Traversal Graph  
+  - `$batch` execution  
+  - Query Doctor  
+
+---
+
+### 🧠 Notes
+
+This release marks a key evolution:
+
+- Result Viewer shifts from:
+  - **data display**
+→ to:
+  - **interactive query workspace**
+
+DV Quick Run now:
+- enables **data-driven query refinement**
+- enforces **preview-first safety**
+- provides **clear action boundaries**
+
+This lays the foundation for:
+- deeper Query-by-Canvas workflows  
+- result-aware Query Doctor enhancements  
+- richer table-driven analysis  
+
+---
+
 ## 🆕 What's New in v0.9.2 (Graph UX Completion, Context-Aware Mutation & Result-Driven Actions)
 
 > Completes the Guided Traversal Graph experience, introduces fully **context-aware query mutation**, and evolves the Result Viewer into a **true interactive command surface**.

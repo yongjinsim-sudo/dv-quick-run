@@ -27,6 +27,8 @@ suite("resultViewerInvariants", () => {
 
     assert.strictEqual(filterAction, undefined);
     assert.strictEqual(fetchXmlAction, undefined);
+    assert.ok(nameCell?.actions?.some((action) => action.id === "preview-add-select"));
+    assert.ok(nameCell?.actions?.some((action) => action.id === "preview-root-odata-orderby" && action.isEnabled === false));
   });
 
   test("depth guardrail stops flattening beyond the configured maximum depth", () => {
@@ -128,13 +130,17 @@ suite("resultViewerInvariants", () => {
     assert.deepStrictEqual(primaryIds, [
       "investigate-record",
       "open-in-dataverse-ui",
-      "copy-record-url",
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby",
+      "copy-record-url"
     ]);
     assert.deepStrictEqual(lookupIds, []);
     assert.deepStrictEqual(businessIds, [
       "investigate-record",
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby"
     ]);
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",
@@ -169,12 +175,14 @@ suite("resultViewerInvariants", () => {
       "open-in-dataverse-ui"
     ]);
     assert.deepStrictEqual(idCell?.primaryActions?.map((action) => action.group), [
-      "inspection",
-      "inspection"
+      "investigate",
+      "metadata"
     ]);
     assert.deepStrictEqual(idCell?.overflowActions?.map((action) => action.id), [
-      "copy-record-url",
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby",
+      "copy-record-url"
     ]);
     assert.deepStrictEqual(
       idCell?.actions?.map((action) => action.id),
@@ -186,7 +194,9 @@ suite("resultViewerInvariants", () => {
 
     assert.strictEqual(nameCell?.primaryActions, undefined);
     assert.deepStrictEqual(nameCell?.overflowActions?.map((action) => action.id), [
-      "preview-odata-filter"
+      "preview-add-select",
+      "preview-odata-filter",
+      "preview-root-odata-orderby"
     ]);
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",

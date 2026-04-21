@@ -615,18 +615,16 @@ function buildCell(
 
 function buildRowActions(row: Record<string, ResultViewerCell>, primaryIdField?: string): ResultViewerResolvedAction[] {
     const priority = [
-        "continue-traversal",
         "investigate-record",
         "open-in-dataverse-ui",
-        "copy-record-url",
-        "preview-fetchxml-condition",
-        "copy-fetchxml-condition"
+        "continue-traversal",
+        "copy-record-url"
         ];
     const byId = new Map<string, ResultViewerResolvedAction>();
 
     Object.values(row).forEach((cell) => {
         (cell.actions ?? []).forEach((action) => {
-            const isPrimaryInspectionAction = action.group === "inspection"
+            const isPrimaryInspectionAction = action.group === "investigate" || action.group === "metadata"
                 ? action.payload.columnName === primaryIdField
                 : true;
 

@@ -986,6 +986,19 @@ export const RESULT_VIEWER_STYLES = `
             transform: translateX(2px); /* subtle forward motion */
         }
 
+        .inline-action.is-disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none; /* prevents click entirely */
+        }
+
+        .inline-action.is-disabled:hover {
+            background: transparent; /* remove hover highlight */
+        }
+            
+        .inline-action.is-disabled .inline-action-icon {
+            opacity: 0.6;
+        }
         .empty-state-title {
             font-weight: 600;
             margin-bottom: 6px;

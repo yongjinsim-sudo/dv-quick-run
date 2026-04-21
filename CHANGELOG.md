@@ -5,6 +5,176 @@ All notable changes to the **DV Quick Run** extension will be documented in this
 This project follows the principles of [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## v0.9.3 — Result Viewer Command Surface & Preview-First Refinement
+
+This release completes the transition of the **Result Viewer into a primary interaction surface**, enabling **preview-first, context-aware query refinement directly from data**.
+
+It focuses on:
+- unifying **Result Viewer actions** into a consistent system
+- strengthening **preview-first mutation workflows**
+- improving **UX clarity through disabled states and guardrails**
+- reinforcing a predictable **inspect → preview → apply loop**
+
+---
+
+### 📊 Result Viewer as Command Surface (Expanded)
+
+- Result Viewer now acts as the **primary query interaction surface**
+  - users can refine queries directly from returned data
+  - reduces reliance on manual query editing
+
+- Supported interactions:
+  - add `$select` from column
+  - filter by value
+  - order by column
+  - investigate records
+
+👉 Results in:
+- tighter feedback loop between data and query
+- more intuitive refinement workflow
+- reduced cognitive load when building queries
+
+---
+
+### ✨ Add to `$select` from Column (NEW)
+
+- Added **“Add this column to $select”** action
+  - available from column/cell context menu
+
+- Behaviour:
+  - detects correct scope:
+    - root query
+    - `$expand`
+    - nested `$expand`
+  - updates `$select` accordingly
+
+- Uses **preview-first workflow**:
+  - generates preview query
+  - allows confirmation before applying
+
+👉 Results in:
+- faster field selection
+- safer query mutation
+- consistent with Query-by-Canvas philosophy
+
+---
+
+### 👁️ Preview-First Mutation (Standardised)
+
+- All Result Viewer actions now follow a **consistent preview-first pattern**
+
+Workflow:
+1. user triggers action
+2. preview document opens
+3. confirmation dialog shown
+4. query updated only on explicit confirmation
+
+- No silent mutations
+- No hidden side effects
+
+👉 Ensures:
+- full user control
+- predictable behaviour
+- safe experimentation
+
+---
+
+### 🚫 Disabled Actions with Clear UX (NEW)
+
+- Actions that are not valid are now:
+  - visibly **disabled**
+  - styled consistently across menus
+
+- Examples:
+  - `$orderby` on invalid scopes (e.g. single-valued expand)
+  - unsupported mutation scenarios
+
+- Disabled actions:
+  - do not execute
+  - do not trigger preview
+  - communicate limitation clearly via UI
+
+👉 Results in:
+- reduced confusion
+- better discoverability of supported operations
+- stronger UX consistency
+
+---
+
+### ⚠️ Guardrail & Scope Validation Improvements
+
+- Strengthened validation for query mutations:
+  - prevents invalid `$orderby` usage
+  - ensures correct scope application
+  - avoids malformed queries
+
+- Query mutation now:
+  - respects entity boundaries
+  - avoids incorrect nesting
+  - merges safely with existing clauses
+
+👉 Prevents:
+- runtime Dataverse errors
+- incorrect query generation
+- unintended query side effects
+
+---
+
+### 🧠 Behaviour Improvements
+
+- Result Viewer actions now:
+  - use unified mutation pipeline
+  - align with preview system
+  - respect scope-awareness consistently
+
+- Improved consistency across:
+  - Result Viewer
+  - editor mutations
+  - preview pipeline
+  - traversal outputs
+
+- Cleaner interaction model:
+  - no mixed behaviours between actions
+  - no partial or silent updates
+
+---
+
+### 🧪 Stability
+
+- All unit tests passing
+- Verified:
+  - `$select` mutation across scopes
+  - preview → apply workflow
+  - disabled action behaviour
+  - Result Viewer interactions
+- No regression in:
+  - Guided Traversal
+  - Graph rendering
+  - `$batch` execution
+  - Query Doctor
+
+---
+
+## 🧭 Notes
+
+This release marks an important shift:
+
+- Result Viewer evolves from:
+  - **data display**
+→ to:
+  - **interactive query workspace**
+
+DV Quick Run now:
+- enables **data-driven query refinement**
+- enforces **preview-first safety**
+- provides **clear action boundaries via UI**
+
+This establishes the foundation for:
+- deeper Query-by-Canvas workflows
+- result-aware Query Doctor actions
+- richer table-driven analysis capabilities
+
+---
 
 ## 🚀 v0.9.2 — Guided Traversal Graph, Context-Aware Query Mutation & Result Viewer Actions
 
