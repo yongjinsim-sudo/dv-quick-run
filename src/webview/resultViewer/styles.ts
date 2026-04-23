@@ -578,7 +578,7 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         .guid-cell {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 8px;
             width: 100%;
@@ -590,20 +590,41 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         .guid-value {
+            flex: 1 1 auto;
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .cell-actions {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             margin-left: auto;
             position: relative;
             flex: 0 0 auto;
+            z-index: 2;
             opacity: 0;
             transition: opacity 0.15s ease;
+        }
+
+        .primary-actions,
+        .overflow-actions {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            flex: 0 0 auto;
+        }
+
+        .primary-actions {
+            gap: 4px;
+            z-index: 2;
+        }
+
+        .overflow-actions {
+            margin-left: 2px;
+            z-index: 4;
         }
 
         .inline-action {
@@ -621,6 +642,17 @@ export const RESULT_VIEWER_STYLES = `
         .inline-action:hover {
             background: transparent;
             opacity: 1;
+        }
+
+        .overflow-trigger {
+            position: relative;
+            z-index: 4;
+            pointer-events: auto;
+            min-width: 18px;
+            min-height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .overflow-menu {

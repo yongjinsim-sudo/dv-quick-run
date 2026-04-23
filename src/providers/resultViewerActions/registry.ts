@@ -19,6 +19,13 @@ import {
   previewAndApplyFetchXmlCondition
 } from "./previewFetchXmlCondition.js";
 import { previewAndApplyAddSelectFromColumn } from "./previewAddSelectFromColumn.js";
+import { previewAndApplyExpandRelationship } from "./previewExpandRelationship.js";
+import {
+  getSupportedSliceDefinitions,
+  previewAndApplyFetchXmlSlice,
+  previewAndApplyODataSlice,
+  type ResultViewerSliceOperation
+} from "./previewResultViewerSlice.js";
 
 export function resolveResultViewerActions(
   context: ResultViewerActionContext
@@ -51,12 +58,26 @@ export function resolveResultViewerActions(
     fieldLogicalName: context.fieldLogicalName,
     fieldAttributeType: context.fieldAttributeType,
     columnName,
-    rawValue
+    rawValue,
+    sourceDocumentUri: context.sourceDocumentUri,
+    sourceRangeStartLine: context.sourceRangeStartLine,
+    sourceRangeStartCharacter: context.sourceRangeStartCharacter,
+    sourceRangeEndLine: context.sourceRangeEndLine,
+    sourceRangeEndCharacter: context.sourceRangeEndCharacter
   };
 
   const actions: ResultViewerResolvedAction[] = [];
   const queryMode = context.queryMode ?? "odata";
   const isRootColumn = !columnName.includes(".");
+  const shouldExposeSliceActions =
+    isRootColumn &&
+    !analysis.isPrimaryId &&
+    !analysis.isBusinessGuid &&
+    !analysis.isBusinessIdentifier;
+
+  const sliceDefinitions = shouldExposeSliceActions
+    ? getSupportedSliceDefinitions(context.fieldAttributeType, rawValue)
+    : [];
 
   if (analysis.isPrimaryId) {
     actions.push(
@@ -130,7 +151,21 @@ export function resolveResultViewerActions(
           group: "refine",
           kind: "preview",
           payload
-        })
+        }),
+        ...sliceDefinitions.map((definition) =>
+          createAction({
+            id: "preview-fetchxml-slice",
+            title: definition.title,
+            icon: "◫",
+            placement: "overflow",
+            group: "slice",
+            kind: "preview",
+            payload: {
+              ...payload,
+              sliceOperation: definition.operation
+            }
+          })
+        )
       );
     } else {
       actions.push(
@@ -196,7 +231,21 @@ export function resolveResultViewerActions(
         group: "refine",
         kind: "preview",
         payload
-      })
+      }),
+      ...sliceDefinitions.map((definition) =>
+        createAction({
+          id: "preview-odata-slice",
+          title: definition.title,
+          icon: "◫",
+          placement: "overflow",
+          group: "slice",
+          kind: "preview",
+          payload: {
+            ...payload,
+            sliceOperation: definition.operation
+          }
+        })
+      )
     );
   }
 
@@ -303,6 +352,34 @@ export async function executeResultViewerAction(
       return;
     }
 
+    case "preview-odata-slice": {
+      const hasRawValue = rawValue !== undefined && rawValue !== null;
+      if (!columnName || !hasRawValue || !payload.sliceOperation) {
+        return;
+      }
+      try {
+        await previewAndApplyODataSlice(columnName, String(rawValue), payload.sliceOperation as ResultViewerSliceOperation);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        void vscode.window.showWarningMessage(`DV Quick Run: ${message}`);
+      }
+      return;
+    }
+
+    case "preview-fetchxml-slice": {
+      const hasRawValue = rawValue !== undefined && rawValue !== null;
+      if (!columnName || !hasRawValue || !payload.sliceOperation) {
+        return;
+      }
+      try {
+        await previewAndApplyFetchXmlSlice(columnName, String(rawValue), payload.sliceOperation as ResultViewerSliceOperation);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        void vscode.window.showWarningMessage(`DV Quick Run: ${message}`);
+      }
+      return;
+    }
+
     case "preview-root-odata-orderby": {
       if (!columnName) {
         return;
@@ -341,6 +418,30 @@ export async function executeResultViewerAction(
       const condition = buildPreviewFetchXmlCondition(columnName, rawValue);
       await vscode.env.clipboard.writeText(condition);
       void vscode.window.showInformationMessage("DV Quick Run: FetchXML condition copied.");
+      return;
+    }
+
+    case "preview-expand-relationship": {
+      const relationshipFieldLogicalName = String(payload.fieldLogicalName ?? "").trim();
+      if (!relationshipFieldLogicalName) {
+        return;
+      }
+
+      try {
+        await previewAndApplyExpandRelationship(ctx, {
+          entitySetName: payload.entitySetName,
+          entityLogicalName: payload.entityLogicalName,
+          relationshipFieldLogicalName,
+          sourceDocumentUri: payload.sourceDocumentUri,
+          sourceRangeStartLine: payload.sourceRangeStartLine,
+          sourceRangeStartCharacter: payload.sourceRangeStartCharacter,
+          sourceRangeEndLine: payload.sourceRangeEndLine,
+          sourceRangeEndCharacter: payload.sourceRangeEndCharacter
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        void vscode.window.showWarningMessage(`DV Quick Run: ${message}`);
+      }
       return;
     }
 
@@ -405,10 +506,12 @@ function createAction(action: ResultViewerResolvedAction): ResultViewerResolvedA
 function sortActions(actions: ResultViewerResolvedAction[]): ResultViewerResolvedAction[] {
   const groupOrder: Record<ResultViewerResolvedAction["group"], number> = {
     refine: 0,
-    investigate: 1,
-    traversal: 2,
-    copy: 3,
-    metadata: 4
+    slice: 1,
+    dice: 2,
+    investigate: 3,
+    traversal: 4,
+    copy: 5,
+    metadata: 6
   };
 
   return actions.slice().sort((left, right) => {

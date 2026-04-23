@@ -55,11 +55,19 @@ export async function previewMutationResult(
 
   if (choice === applyButtonLabel) {
     await applyEditorQueryUpdate(target, result.updatedQuery);
-    await vscode.window.showTextDocument(target.editor.document, {
-      viewColumn: target.editor.viewColumn,
-      preserveFocus: false,
-      preview: false
-    });
+
+    const visibleEditor = vscode.window.visibleTextEditors.find(
+      (editor) => editor.document.uri.toString() === target.editor.document.uri.toString()
+    );
+
+    if (visibleEditor) {
+      await vscode.window.showTextDocument(visibleEditor.document, {
+        viewColumn: visibleEditor.viewColumn,
+        preserveFocus: false,
+        preview: false
+      });
+    }
+
     void vscode.window.showInformationMessage("DV Quick Run: Preview applied to query.");
     return { outcome: "applied" };
   }

@@ -319,18 +319,24 @@ export class ResultViewerPanel {
         });
 
         await executeResultViewerAction(ctx, actionId, {
-            guid: payload.guid,
-            entitySetName: payload.entitySetName,
-            entityLogicalName: payload.entityLogicalName,
-            columnName: payload.columnName,
-            rawValue: payload.rawValue,
-            traversalSessionId: (payload as any).traversalSessionId,
-            traversalLegIndex: (payload as any).traversalLegIndex,
-            carryField: (payload as any).carryField,
-            carryValue: (payload as any).carryValue,
-            primaryIdField: (payload as any).primaryIdField,
-            fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
-            fieldAttributeType: (payload as any).fieldAttributeType
+        guid: payload.guid,
+        entitySetName: payload.entitySetName,
+        entityLogicalName: payload.entityLogicalName,
+        columnName: payload.columnName,
+        rawValue: payload.rawValue,
+        sliceOperation: (payload as any).sliceOperation,
+        traversalSessionId: (payload as any).traversalSessionId,
+        traversalLegIndex: (payload as any).traversalLegIndex,
+        carryField: (payload as any).carryField,
+        carryValue: (payload as any).carryValue,
+        sourceDocumentUri: (payload as any).sourceDocumentUri,
+        sourceRangeStartLine: typeof (payload as any).sourceRangeStartLine === "string" && (payload as any).sourceRangeStartLine.trim() ? Number((payload as any).sourceRangeStartLine) : (payload as any).sourceRangeStartLine,
+        sourceRangeStartCharacter: typeof (payload as any).sourceRangeStartCharacter === "string" && (payload as any).sourceRangeStartCharacter.trim() ? Number((payload as any).sourceRangeStartCharacter) : (payload as any).sourceRangeStartCharacter,
+        sourceRangeEndLine: typeof (payload as any).sourceRangeEndLine === "string" && (payload as any).sourceRangeEndLine.trim() ? Number((payload as any).sourceRangeEndLine) : (payload as any).sourceRangeEndLine,
+        sourceRangeEndCharacter: typeof (payload as any).sourceRangeEndCharacter === "string" && (payload as any).sourceRangeEndCharacter.trim() ? Number((payload as any).sourceRangeEndCharacter) : (payload as any).sourceRangeEndCharacter,
+        primaryIdField: (payload as any).primaryIdField,
+        fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
+        fieldAttributeType: (payload as any).fieldAttributeType
         });
     }
 

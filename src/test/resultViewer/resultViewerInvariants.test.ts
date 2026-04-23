@@ -153,6 +153,45 @@ suite("resultViewerInvariants", () => {
 
 
 
+
+  test("hidden lookup backing fields surface expand relationship from primary id overflow", () => {
+    const model = buildResultViewerModel({
+      value: [
+        {
+          contactid: "8129eec7-4414-4f11-8341-6045bdc42f8b",
+          fullname: "Nancy Anderson",
+          _ownerid_value: "9229eec7-4414-4f11-8341-6045bdc42f8c"
+        }
+      ]
+    }, "contacts?$select=fullname,_ownerid_value", {
+      entitySetName: "contacts",
+      entityLogicalName: "contact",
+      primaryIdField: "contactid",
+      fields: [
+        { logicalName: "contactid", displayName: "Contact", attributeType: "Uniqueidentifier" } as never,
+        { logicalName: "ownerid", displayName: "Owner", attributeType: "Owner" } as never
+      ],
+      sourceTarget: {
+        sourceDocumentUri: "file:///tmp/query.txt",
+        sourceRangeStartLine: 0,
+        sourceRangeStartCharacter: 0,
+        sourceRangeEndLine: 0,
+        sourceRangeEndCharacter: 38
+      }
+    });
+
+    assert.ok(!model.columns.includes("_ownerid_value"));
+
+    const idCell = model.rows[0]["contactid"];
+    const expandAction = idCell?.overflowActions?.find((action) => action.id === "preview-expand-relationship");
+
+    assert.ok(expandAction);
+    assert.strictEqual(expandAction?.title, "Expand Owner");
+    assert.strictEqual(expandAction?.group, "dice");
+    assert.strictEqual(expandAction?.payload.fieldLogicalName, "ownerid");
+    assert.strictEqual(expandAction?.payload.sourceDocumentUri, "file:///tmp/query.txt");
+  });
+
   test("model-driven action groups stay aligned with the full action list", () => {
     const model = buildResultViewerModel({
       value: [
@@ -196,7 +235,10 @@ suite("resultViewerInvariants", () => {
     assert.deepStrictEqual(nameCell?.overflowActions?.map((action) => action.id), [
       "preview-add-select",
       "preview-odata-filter",
-      "preview-root-odata-orderby"
+      "preview-root-odata-orderby",
+      "preview-odata-slice",
+      "preview-odata-slice",
+      "preview-odata-slice"
     ]);
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",

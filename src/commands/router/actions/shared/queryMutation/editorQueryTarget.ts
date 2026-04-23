@@ -10,6 +10,14 @@ export interface EditorQueryTarget {
   source: EditorQuerySource;
 }
 
+export interface StoredEditorQuerySourceTarget {
+  sourceDocumentUri: string;
+  sourceRangeStartLine: number;
+  sourceRangeStartCharacter: number;
+  sourceRangeEndLine: number;
+  sourceRangeEndCharacter: number;
+}
+
 function normalizeLine(text: string): string {
   return text.trim();
 }
@@ -298,6 +306,61 @@ export function findLogicalEditorQueryTargetByText(queryText: string): EditorQue
   }
 
   throw new Error("Could not find the executed query in an open editor.");
+}
+
+
+export async function findLogicalEditorQueryTargetBySourceTarget(
+  sourceTarget: StoredEditorQuerySourceTarget,
+  fallbackQueryText?: string
+): Promise<EditorQueryTarget> {
+  const sourceUriText = sourceTarget.sourceDocumentUri?.trim();
+  if (!sourceUriText) {
+    throw new Error("Source document URI is required.");
+  }
+
+  const uri = vscode.Uri.parse(sourceUriText);
+  const document = await vscode.workspace.openTextDocument(uri);
+  const visibleEditor = vscode.window.visibleTextEditors.find((editor) => editor.document.uri.toString() === document.uri.toString());
+  const editor = visibleEditor ?? createDetachedEditorTarget(document);
+  if (!editor) {
+    throw new Error("Could not resolve source document for query target.");
+  }
+
+  const startLine = clamp(sourceTarget.sourceRangeStartLine, 0, Math.max(0, document.lineCount - 1));
+  const endLine = clamp(sourceTarget.sourceRangeEndLine, startLine, Math.max(startLine, document.lineCount - 1));
+  const startLineText = document.lineAt(startLine).text;
+  const endLineText = document.lineAt(endLine).text;
+  const startCharacter = clamp(sourceTarget.sourceRangeStartCharacter, 0, startLineText.length);
+  const endCharacter = clamp(sourceTarget.sourceRangeEndCharacter, 0, endLineText.length);
+
+  const range = new vscode.Range(
+    new vscode.Position(startLine, startCharacter),
+    new vscode.Position(endLine, endCharacter)
+  );
+
+  const text = document.getText(range).trim();
+  if (text && (!fallbackQueryText || queryTextsMatch(text, fallbackQueryText))) {
+    return {
+      editor,
+      range,
+      text,
+      source: "line"
+    };
+  }
+
+  if (fallbackQueryText?.trim()) {
+    return findLogicalEditorQueryTargetByText(fallbackQueryText);
+  }
+
+  throw new Error("Could not resolve the source query target from the stored source range.");
+}
+
+function clamp(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+
+  return Math.min(max, Math.max(min, value));
 }
 
 function buildEditorsToSearch(): vscode.TextEditor[] {

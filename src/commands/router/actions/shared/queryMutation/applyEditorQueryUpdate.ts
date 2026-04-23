@@ -5,13 +5,14 @@ export async function applyEditorQueryUpdate(
   target: EditorQueryTarget,
   updatedText: string
 ): Promise<void> {
-  const success = await target.editor.edit((editBuilder) => {
-    editBuilder.replace(target.range, updatedText);
-  });
+  const workspaceEdit = new vscode.WorkspaceEdit();
+  workspaceEdit.replace(target.editor.document.uri, target.range, updatedText);
 
+  const success = await vscode.workspace.applyEdit(workspaceEdit);
   if (!success) {
     throw new Error("Failed to update editor text.");
   }
+
 }
 
 export async function replaceCurrentEditorQuery(
