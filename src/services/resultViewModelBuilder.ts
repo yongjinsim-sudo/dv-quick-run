@@ -546,6 +546,7 @@ function buildCell(
     row: Record<string, unknown> | undefined,
     rowValue: unknown,
     column: string,
+    rowPrimaryIdValue: unknown,
     queryPath: string,
     options: ResultViewerBuildOptions,
     fieldMap: Map<string, FieldDef>,
@@ -563,10 +564,9 @@ function buildCell(
         typeof rowValue !== "object";
 
     const actionRawValue = shouldResolveActions ? toDisplayCell(rowValue) : "";
-    const actionGuid =
-        shouldResolveActions && options.primaryIdField && column === options.primaryIdField
-            ? toDisplayCell(rowValue)
-            : "";
+    const actionGuid = shouldResolveActions && options.primaryIdField
+        ? toDisplayCell(column === options.primaryIdField ? rowValue : rowPrimaryIdValue)
+        : "";
 
     const field = resolveFieldForColumn(column, fieldMap);
 
@@ -873,7 +873,11 @@ export function buildResultViewerModel(
                         ? row[sourceColumn]
                         : undefined;
 
-                mapped[displayColumn] = buildCell(isPlainObject(row) ? row : undefined, rowValue, sourceColumn, query, {
+                const rowPrimaryIdValue = isPlainObject(row) && primaryIdField
+                    ? row[primaryIdField]
+                    : undefined;
+
+                mapped[displayColumn] = buildCell(isPlainObject(row) ? row : undefined, rowValue, sourceColumn, rowPrimaryIdValue, query, {
                     ...options,
                     entitySetName,
                     entityLogicalName,
@@ -938,7 +942,11 @@ export function buildResultViewerModel(
         const mapped: Record<string, ResultViewerCell> = {};
 
         columns.forEach((column) => {
-            mapped[column] = buildCell(result as Record<string, unknown>, (result as Record<string, unknown>)[column], column, query, {
+            const rowPrimaryIdValue = primaryIdField
+                ? (result as Record<string, unknown>)[primaryIdField]
+                : undefined;
+
+            mapped[column] = buildCell(result as Record<string, unknown>, (result as Record<string, unknown>)[column], column, rowPrimaryIdValue, query, {
                 ...options,
                 entitySetName,
                 entityLogicalName,

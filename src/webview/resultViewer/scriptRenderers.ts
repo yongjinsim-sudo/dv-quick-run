@@ -102,8 +102,8 @@ function renderSiblingExpandButton(currentModel) {
         }
 
         function groupActionsByGroup(actions) {
-            const order = ["refine", "slice", "dice", "investigate", "traversal", "copy", "metadata"];
-            const labels = { refine: "Refine", slice: "Slice", dice: "Dice", investigate: "Investigate", traversal: "Traversal", copy: "Copy", metadata: "Metadata" };
+            const order = ["refine", "slice", "dice", "correct", "investigate", "traversal", "copy", "metadata"];
+            const labels = { refine: "Refine", slice: "Slice", dice: "Dice", correct: "Correct", investigate: "Investigate", traversal: "Traversal", copy: "Copy", metadata: "Metadata" };
             return order
                 .map((group) => ({ group, label: labels[group], actions: actions.filter((action) => action.group === group) }))
                 .filter((entry) => entry.actions.length > 0);

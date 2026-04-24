@@ -114,28 +114,49 @@ export async function promptPatchValues(
   return values.length > 0 ? values : undefined;
 }
 
+function findPreselectedPatchEntity(defs: EntityDef[], pre?: SmartPatchState): EntityDef | undefined {
+  const logicalName = pre?.entityLogicalName?.trim().toLowerCase();
+  const entitySetName = pre?.entitySetName?.trim().toLowerCase();
+
+  if (!logicalName && !entitySetName) {
+    return undefined;
+  }
+
+  return defs.find((def) =>
+    (!!logicalName && def.logicalName.toLowerCase() === logicalName) ||
+    (!!entitySetName && def.entitySetName.toLowerCase() === entitySetName)
+  );
+}
+
 export async function buildInitialSmartPatchState(
   session: SmartMetadataSession,
   pre?: SmartPatchState
 ): Promise<{ state: SmartPatchState; fields: SmartField[] } | undefined> {
   const defs = await session.getEntityDefs();
-  const def = await pickPatchEntity(defs, pre?.entityLogicalName);
+  const def = findPreselectedPatchEntity(defs, pre) ?? await pickPatchEntity(defs, pre?.entityLogicalName);
   if (!def) {
     return undefined;
   }
 
-  const id = await promptPatchRecordId(pre?.id);
+  const id = pre?.id?.trim() || await promptPatchRecordId(pre?.id);
   if (!id) {
     return undefined;
   }
 
   const fields = await getFieldsForPatchEntity(session, def.logicalName);
-  const pickedFields = await pickPatchableFields(
-    def.entitySetName,
-    fields,
-    pre?.fields?.map((x) => x.logicalName)
-  );
-  if (!pickedFields) {
+  const preselectedFieldNames = pre?.fields?.map((x) => x.logicalName) ?? [];
+  const preselectedFieldSet = new Set(preselectedFieldNames.map((name) => name.toLowerCase()));
+
+  const pickedFields = preselectedFieldSet.size > 0
+    ? fields
+        .filter((field) => preselectedFieldSet.has(field.logicalName.toLowerCase()))
+        .filter(isPatchSupportedField)
+    : await pickPatchableFields(
+        def.entitySetName,
+        fields,
+        preselectedFieldNames
+      );
+  if (!pickedFields || pickedFields.length === 0) {
     return undefined;
   }
 
@@ -149,7 +170,8 @@ export async function buildInitialSmartPatchState(
     entitySetName: def.entitySetName,
     id,
     fields: values,
-    ifMatch: pre?.ifMatch ?? "*"
+    ifMatch: pre?.ifMatch ?? "*",
+    refreshSourceTarget: pre?.refreshSourceTarget
   };
 
   return { state, fields };

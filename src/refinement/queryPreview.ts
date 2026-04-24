@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { applyEditorQueryUpdate } from "../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
 import type { EditorQueryTarget } from "../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
 
-const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.txt");
+const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.md");
 
 export interface MutationResult {
   originalQuery: string;
@@ -124,6 +124,33 @@ export async function openOrReuseQueryPreviewDocument(content: string): Promise<
   });
 
   return editor;
+}
+
+export async function openOrReuseRenderedMarkdownPreviewDocument(content: string): Promise<vscode.TextDocument> {
+  const document = await vscode.workspace.openTextDocument(QUERY_PREVIEW_URI);
+
+  if (document.languageId !== "markdown") {
+    await vscode.languages.setTextDocumentLanguage(document, "markdown");
+  }
+
+  const fullText = document.getText();
+  const fullRange = new vscode.Range(document.positionAt(0), document.positionAt(fullText.length));
+  const workspaceEdit = new vscode.WorkspaceEdit();
+
+  if (fullText.length === 0) {
+    workspaceEdit.insert(document.uri, new vscode.Position(0, 0), content);
+  } else {
+    workspaceEdit.replace(document.uri, fullRange, content);
+  }
+
+  const applied = await vscode.workspace.applyEdit(workspaceEdit);
+  if (!applied) {
+    throw new Error("Failed to update preview document.");
+  }
+
+  await vscode.commands.executeCommand("markdown.showPreviewToSide", document.uri);
+
+  return document;
 }
 
 export function buildMutationPreviewDocumentContent(

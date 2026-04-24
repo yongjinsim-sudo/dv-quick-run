@@ -10,6 +10,7 @@ import type {
   ResultViewerActionPayload,
   ResultViewerResolvedAction
 } from "./types.js";
+import type { SmartPatchRefreshSourceTarget } from "../../commands/router/actions/smartPatch/smartPatchTypes.js";
 import { analyzeResultViewerColumn } from "./columnIntelligence.js";
 import { runContinueTraversalAction } from "../../commands/router/actions/traversal/continueTraversalAction.js";
 import { buildODataFilter, previewAndApplyODataFilter } from "./previewODataFilter.js";
@@ -20,12 +21,29 @@ import {
 } from "./previewFetchXmlCondition.js";
 import { previewAndApplyAddSelectFromColumn } from "./previewAddSelectFromColumn.js";
 import { previewAndApplyExpandRelationship } from "./previewExpandRelationship.js";
+import { runSmartPatchPrefilledWorkflow } from "../../commands/router/actions/smartPatch/smartPatchWorkflows.js";
 import {
   getSupportedSliceDefinitions,
   previewAndApplyFetchXmlSlice,
   previewAndApplyODataSlice,
   type ResultViewerSliceOperation
 } from "./previewResultViewerSlice.js";
+
+
+function isResultViewerPatchSupportedField(attributeType?: string): boolean {
+  const type = String(attributeType ?? "").trim().toLowerCase();
+  return type === "string" ||
+    type === "boolean" ||
+    type === "datetime" ||
+    type === "integer" ||
+    type === "bigint" ||
+    type === "decimal" ||
+    type === "double" ||
+    type === "money" ||
+    type === "picklist" ||
+    type === "state" ||
+    type === "status";
+}
 
 export function resolveResultViewerActions(
   context: ResultViewerActionContext
@@ -57,6 +75,7 @@ export function resolveResultViewerActions(
     primaryIdField: context.primaryIdField,
     fieldLogicalName: context.fieldLogicalName,
     fieldAttributeType: context.fieldAttributeType,
+    currentValue: rawValue,
     columnName,
     rawValue,
     sourceDocumentUri: context.sourceDocumentUri,
@@ -107,6 +126,19 @@ export function resolveResultViewerActions(
         group: "copy",
         kind: "copy",
         payload
+      }),
+      createAction({
+        id: "update-record",
+        title: "Update this record",
+        icon: "✎",
+        placement: "overflow",
+        group: "correct",
+        kind: "execute",
+        payload,
+        isEnabled: !!payload.guid && !!payload.entitySetName && !!payload.entityLogicalName,
+        disabledReason: (!!payload.guid && !!payload.entitySetName && !!payload.entityLogicalName)
+          ? undefined
+          : "Update this record requires entity, table, and record id context."
       })
     );
   } else if (analysis.isBusinessGuid || analysis.isBusinessIdentifier) {
@@ -247,6 +279,30 @@ export function resolveResultViewerActions(
         })
       )
     );
+
+    const canUpdateField = !!payload.guid &&
+      !!payload.entitySetName?.trim() &&
+      !!payload.entityLogicalName?.trim() &&
+      !!payload.fieldLogicalName?.trim() &&
+      isResultViewerPatchSupportedField(payload.fieldAttributeType) &&
+      !analysis.isPrimaryId &&
+      !analysis.isLookupGuid &&
+      !analysis.isBusinessGuid &&
+      !analysis.isBusinessIdentifier;
+
+    if (canUpdateField) {
+      actions.push(
+        createAction({
+          id: "update-field",
+          title: "Update this field",
+          icon: "✎",
+          placement: "overflow",
+          group: "correct",
+          kind: "execute",
+          payload
+        })
+      );
+    }
   }
 
   return sortActions(actions);
@@ -319,6 +375,41 @@ export async function executeResultViewerAction(
 
       await vscode.env.clipboard.writeText(url);
       void vscode.window.showInformationMessage("DV Quick Run: Record URL copied.");
+      return;
+    }
+
+    case "update-record": {
+      if (!guid || !payload.entitySetName?.trim() || !payload.entityLogicalName?.trim()) {
+        return;
+      }
+
+      await runSmartPatchPrefilledWorkflow(ctx, {
+        entityLogicalName: payload.entityLogicalName.trim(),
+        entitySetName: payload.entitySetName.trim(),
+        id: guid,
+        refreshSourceTarget: buildSmartPatchRefreshSourceTarget(payload)
+      });
+      return;
+    }
+
+    case "update-field": {
+      const fieldLogicalName = String(payload.fieldLogicalName ?? columnName).trim();
+      const fieldAttributeType = String(payload.fieldAttributeType ?? "").trim();
+      if (!guid || !payload.entitySetName?.trim() || !payload.entityLogicalName?.trim() || !fieldLogicalName || !fieldAttributeType) {
+        return;
+      }
+
+      await runSmartPatchPrefilledWorkflow(ctx, {
+        entityLogicalName: payload.entityLogicalName.trim(),
+        entitySetName: payload.entitySetName.trim(),
+        id: guid,
+        fields: [{
+          logicalName: fieldLogicalName,
+          attributeType: fieldAttributeType,
+          rawValue: ""
+        }],
+        refreshSourceTarget: buildSmartPatchRefreshSourceTarget(payload)
+      });
       return;
     }
 
@@ -508,10 +599,11 @@ function sortActions(actions: ResultViewerResolvedAction[]): ResultViewerResolve
     refine: 0,
     slice: 1,
     dice: 2,
-    investigate: 3,
-    traversal: 4,
-    copy: 5,
-    metadata: 6
+    correct: 3,
+    investigate: 4,
+    traversal: 5,
+    copy: 6,
+    metadata: 7
   };
 
   return actions.slice().sort((left, right) => {
@@ -531,6 +623,26 @@ function sortActions(actions: ResultViewerResolvedAction[]): ResultViewerResolve
 
 function rankPlacement(placement: ResultViewerResolvedAction["placement"]): number {
   return placement === "primary" ? 0 : 1;
+}
+
+function buildSmartPatchRefreshSourceTarget(payload: ResultViewerActionPayload): SmartPatchRefreshSourceTarget | undefined {
+  const hasSourceTarget = !!payload.sourceDocumentUri?.trim() &&
+    payload.sourceRangeStartLine !== undefined &&
+    payload.sourceRangeStartCharacter !== undefined &&
+    payload.sourceRangeEndLine !== undefined &&
+    payload.sourceRangeEndCharacter !== undefined;
+
+  if (!hasSourceTarget) {
+    return undefined;
+  }
+
+  return {
+    sourceDocumentUri: payload.sourceDocumentUri?.trim() ?? "",
+    sourceRangeStartLine: Number(payload.sourceRangeStartLine),
+    sourceRangeStartCharacter: Number(payload.sourceRangeStartCharacter),
+    sourceRangeEndLine: Number(payload.sourceRangeEndLine),
+    sourceRangeEndCharacter: Number(payload.sourceRangeEndCharacter)
+  };
 }
 
 async function buildRecordUiUrl(

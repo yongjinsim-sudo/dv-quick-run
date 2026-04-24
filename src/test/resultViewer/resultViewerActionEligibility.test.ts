@@ -20,6 +20,7 @@ suite("resultViewerActionEligibility", () => {
       "preview-add-select",
       "preview-odata-filter",
       "preview-root-odata-orderby",
+      "update-record",
       "copy-record-url"
     ]);
   });

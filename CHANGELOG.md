@@ -5,6 +5,154 @@ All notable changes to the **DV Quick Run** extension will be documented in this
 This project follows the principles of [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+
+## v0.9.4 — Smart PATCH, Insight Model Alignment & Workflow Completion
+
+This release completes the **end-to-end query → refine → PATCH → refresh workflow**, establishing DV Quick Run as a **true interactive Dataverse workbench**.
+
+It focuses on:
+- introducing **Smart PATCH (preview-first, safe mutation)**
+- aligning all post-execution behaviour with the **Insight Model as source of truth**
+- stabilising **PATCH → Result Viewer refresh loop**
+- tightening UX, logging, and interaction consistency
+
+---
+
+### ✏️ Smart PATCH (Preview → Apply → Refresh)
+
+- Introduced **Smart PATCH workflow**
+  - Update Dataverse records directly from Result Viewer interactions
+
+- Full workflow:
+  1. user triggers update (e.g. from cell)
+  2. PATCH preview document opens
+  3. confirmation dialog shown
+  4. PATCH executed on confirmation
+  5. Result Viewer refreshes using original query context
+
+- Preview includes:
+  - entity + record ID
+  - PATCH path
+  - payload
+  - HTTP representation
+  - cURL example
+
+👉 Results in:
+- safe, transparent data mutation
+- no hidden updates
+- consistent preview-first behaviour across DV Quick Run
+
+---
+
+### 🔁 PATCH → Result Viewer Refresh (Stabilised)
+
+- Result Viewer now refreshes **automatically after PATCH**
+
+- Behaviour:
+  - uses **original query context**
+  - re-runs query to reflect latest data
+
+- Improved resilience:
+  - refresh failures do **not break workflow**
+  - surfaced as warning instead of hard error
+
+👉 Ensures:
+- consistent feedback loop
+- reliable post-update visibility
+- smoother edit → verify experience
+
+---
+
+### 🧠 Insight Model as Source of Truth
+
+- Introduced architectural invariant:
+
+> Insight Model is the **single source of truth** for:
+- query execution
+- PATCH context
+- Result Viewer refresh
+- rerun actions
+
+- Removed reliance on:
+  - editor text reconstruction
+  - ad-hoc query rebuilding
+
+👉 Results in:
+- consistent behaviour across workflows
+- stronger foundation for future features
+
+---
+
+### 📊 Result Viewer Workflow Completion
+
+- DV Quick Run now supports full loop:
+  ```
+  Query → Result → Refine → PATCH → Refresh → Continue
+  ```
+
+- Result Viewer continues to act as:
+  - **command surface**
+  - **mutation entry point**
+  - **verification surface**
+
+👉 Establishes:
+- a complete, iterative data workflow
+- reduced need to leave VS Code for updates
+
+---
+
+### 🧾 Logging & UX Improvements
+
+- Improved execution logs:
+  - clearer success states
+  - reduced noise
+  - consistent formatting
+
+- Error handling improvements:
+- PATCH failures → clear error messaging
+- refresh failures → warning (non-blocking)
+
+👉 Results in:
+- better developer clarity
+- less confusion during workflows
+- improved trust in execution
+
+---
+
+### 🧪 Stability
+
+- Verified:
+- PATCH preview → apply flow
+- Result Viewer refresh using Insight Model
+- query path correctness across environments
+- error handling for failed refresh scenarios
+
+- No regression in:
+- Guided Traversal
+- Result Viewer interactions
+- Query Doctor
+- `$batch` execution
+- preview-first mutation pipeline
+
+---
+
+## 🧭 Notes
+
+This release marks a major milestone:
+
+- DV Quick Run evolves from:
+- **query tool**
+→ to:
+- **interactive Dataverse workflow environment**
+
+Key principles reinforced:
+- preview-first safety
+- insight-driven execution
+- result-driven refinement
+- consistent interaction loop
+
+---
+
 ## v0.9.3 — Result Viewer Command Surface & Preview-First Refinement
 
 This release completes the transition of the **Result Viewer into a primary interaction surface**, enabling **preview-first, context-aware query refinement directly from data**.

@@ -1,5 +1,5 @@
 export type ResultViewerActionPlacement = "primary" | "overflow";
-export type ResultViewerActionGroup = "refine" | "slice" | "dice" | "investigate" | "traversal" | "copy" | "metadata";
+export type ResultViewerActionGroup = "refine" | "slice" | "dice" | "correct" | "investigate" | "traversal" | "copy" | "metadata";
 export type ResultViewerQueryMode = "odata" | "fetchxml";
 
 export interface ResultViewerActionPayload {
@@ -10,6 +10,7 @@ export interface ResultViewerActionPayload {
   primaryIdField?: string;
   fieldLogicalName?: string;
   fieldAttributeType?: string;
+  currentValue?: string;
   columnName?: string;
   rawValue?: string;
   traversalSessionId?: string;

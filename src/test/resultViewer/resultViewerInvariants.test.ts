@@ -133,6 +133,7 @@ suite("resultViewerInvariants", () => {
       "preview-add-select",
       "preview-odata-filter",
       "preview-root-odata-orderby",
+      "update-record",
       "copy-record-url"
     ]);
     assert.deepStrictEqual(lookupIds, []);
@@ -221,6 +222,7 @@ suite("resultViewerInvariants", () => {
       "preview-add-select",
       "preview-odata-filter",
       "preview-root-odata-orderby",
+      "update-record",
       "copy-record-url"
     ]);
     assert.deepStrictEqual(
