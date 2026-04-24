@@ -5,6 +5,7 @@ import {
     buildResultViewerModel,
     type BatchResultViewerItem,
     type BatchResultViewerModel,
+    type ResultViewerSourceTargetInfo,
     type ResultViewerTraversalContext
 } from "../../../../../services/resultViewModelBuilder.js";
 import {
@@ -13,6 +14,7 @@ import {
     loadFields
 } from "../../shared/metadataAccess.js";
 import type { BatchExecutionPart } from "../../../../../services/batchExecution.js";
+import { findLogicalEditorQueryTargetByText } from "../../shared/queryMutation/editorQueryTarget.js";
 
 export type ResultViewerLaunchOptions = {
     traversalContext?: ResultViewerTraversalContext;
@@ -27,6 +29,21 @@ export type ResultViewerLaunchOptions = {
         }>;
     };
 };
+
+function tryCaptureSourceTarget(path: string): ResultViewerSourceTargetInfo | undefined {
+    try {
+        const target = findLogicalEditorQueryTargetByText(path);
+        return {
+            sourceDocumentUri: target.editor.document.uri.toString(),
+            sourceRangeStartLine: target.range.start.line,
+            sourceRangeStartCharacter: target.range.start.character,
+            sourceRangeEndLine: target.range.end.line,
+            sourceRangeEndCharacter: target.range.end.character
+        };
+    } catch {
+        return undefined;
+    }
+}
 
 export async function showResultViewerForQuery(
     ctx: CommandContext,
@@ -53,6 +70,7 @@ export async function showResultViewerForQuery(
 
     const activeEnvironment = ctx.envContext.getActiveEnvironment();
     const nextLink = extractNextLink(result) ?? options?.paging?.nextLink;
+    const sourceTarget = tryCaptureSourceTarget(path);
 
     const model = buildResultViewerModel(result, path, {
         entitySetName: entityDef?.entitySetName ?? entitySetName,
@@ -71,7 +89,8 @@ export async function showResultViewerForQuery(
             pageNumber: options?.paging?.pageNumber ?? 1,
             hasNextPage: !!nextLink,
             history: options?.paging?.history ?? []
-        }
+        },
+        sourceTarget
     });
 
     ResultViewerPanel.show(ctx, model);

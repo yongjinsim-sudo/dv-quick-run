@@ -5,10 +5,11 @@ import { initSmartPatchContext } from "./smartPatchContext.js";
 import { executeSmartPatch } from "./smartPatchExecution.js";
 import { buildInitialSmartPatchState } from "./smartPatchFieldSelection.js";
 import { loadLastState } from "./smartPatchPersistence.js";
+import { previewAndConfirmSmartPatch } from "./smartPatchPreview.js";
 import { runSmartPatchReviewLoop } from "./smartPatchReview.js";
 import type { DataverseClient } from "../../../../services/dataverseClient.js";
 import type { SmartMetadataSession } from "../smart/shared/smartMetadataSession.js";
-import type { SmartField, SmartPatchState } from "./smartPatchTypes.js";
+import type { PatchFieldValue, SmartField, SmartPatchRefreshSourceTarget, SmartPatchState } from "./smartPatchTypes.js";
 
 type InitResult = { token: string; client: DataverseClient; baseUrl: string; session: SmartMetadataSession };
 type BuiltPatch = { state: SmartPatchState; fields: SmartField[] } | undefined;
@@ -27,6 +28,7 @@ type SmartPatchWorkflowDeps = {
     fields: SmartField[]
   ) => Promise<BuiltPatch>;
   executePatch: (ctx: CommandContext, client: DataverseClient, token: string, state: SmartPatchState) => Promise<void>;
+  previewPatch?: (ctx: CommandContext, baseUrl: string, state: SmartPatchState) => Promise<boolean>;
   loadLastState: (ctx: CommandContext) => SmartPatchState | undefined;
   showInformationMessage: (message: string) => Thenable<string | undefined>;
 };
@@ -37,9 +39,19 @@ const defaultDeps: SmartPatchWorkflowDeps = {
   buildInitialState: buildInitialSmartPatchState,
   reviewLoop: runSmartPatchReviewLoop,
   executePatch: executeSmartPatch,
+  previewPatch: previewAndConfirmSmartPatch,
   loadLastState,
   showInformationMessage: vscode.window.showInformationMessage
 };
+
+async function confirmPatchPreview(
+  deps: SmartPatchWorkflowDeps,
+  ctx: CommandContext,
+  baseUrl: string,
+  state: SmartPatchState
+): Promise<boolean> {
+  return deps.previewPatch ? deps.previewPatch(ctx, baseUrl, state) : true;
+}
 
 export async function runSmartPatchWorkflowWithDeps(ctx: CommandContext, deps: SmartPatchWorkflowDeps): Promise<void> {
   await deps.runActionWrapper(ctx, "DV Quick Run: Smart PATCH failed. Check Output.", async () => {
@@ -60,6 +72,11 @@ export async function runSmartPatchWorkflowWithDeps(ctx: CommandContext, deps: S
       built.fields
     );
     if (!reviewed) {
+      return;
+    }
+
+    const confirmed = await confirmPatchPreview(deps, ctx, baseUrl, reviewed.state);
+    if (!confirmed) {
       return;
     }
 
@@ -108,6 +125,11 @@ export async function runSmartPatchEditLastWorkflowWithDeps(ctx: CommandContext,
       return;
     }
 
+    const confirmed = await confirmPatchPreview(deps, ctx, baseUrl, reviewed.state);
+    if (!confirmed) {
+      return;
+    }
+
     await deps.executePatch(ctx, client, token, reviewed.state);
   });
 }
@@ -122,4 +144,45 @@ export async function runSmartPatchRerunLastWorkflow(ctx: CommandContext): Promi
 
 export async function runSmartPatchEditLastWorkflow(ctx: CommandContext): Promise<void> {
   await runSmartPatchEditLastWorkflowWithDeps(ctx, defaultDeps);
+}
+
+export async function runSmartPatchPrefilledWorkflow(
+  ctx: CommandContext,
+  initial: Pick<SmartPatchState, "entityLogicalName" | "entitySetName" | "id"> & { fields?: PatchFieldValue[]; refreshSourceTarget?: SmartPatchRefreshSourceTarget }
+): Promise<void> {
+  await defaultDeps.runActionWrapper(ctx, "DV Quick Run: Smart PATCH failed. Check Output.", async () => {
+    const { token, client, baseUrl, session } = await defaultDeps.initContext(ctx);
+
+    const built = await defaultDeps.buildInitialState(session, {
+      entityLogicalName: initial.entityLogicalName,
+      entitySetName: initial.entitySetName,
+      id: initial.id,
+      fields: initial.fields ?? [],
+      ifMatch: "*",
+      refreshSourceTarget: initial.refreshSourceTarget
+    });
+    if (!built) {
+      return;
+    }
+
+    const reviewed = await defaultDeps.reviewLoop(
+      ctx,
+      client,
+      token,
+      baseUrl,
+      session,
+      built.state,
+      built.fields
+    );
+    if (!reviewed) {
+      return;
+    }
+
+    const confirmed = await confirmPatchPreview(defaultDeps, ctx, baseUrl, reviewed.state);
+    if (!confirmed) {
+      return;
+    }
+
+    await defaultDeps.executePatch(ctx, client, token, reviewed.state);
+  });
 }

@@ -280,10 +280,16 @@ async function copyValueToClipboard(value) {
             const entityLogicalName = element.getAttribute("data-entity-logical-name") ?? "";
             const columnName = element.getAttribute("data-column-name") ?? "";
             const rawValue = element.getAttribute("data-raw-value") ?? "";
+            const sliceOperation = element.getAttribute("data-slice-operation") ?? "";
             const traversalSessionId = element.getAttribute("data-traversal-session-id") ?? "";
             const traversalLegIndex = element.getAttribute("data-traversal-leg-index") ?? "";
             const carryField = element.getAttribute("data-carry-field") ?? "";
             const carryValue = element.getAttribute("data-carry-value") ?? "";
+            const sourceDocumentUri = element.getAttribute("data-source-document-uri") ?? "";
+            const sourceRangeStartLine = element.getAttribute("data-source-range-start-line") ?? "";
+            const sourceRangeStartCharacter = element.getAttribute("data-source-range-start-character") ?? "";
+            const sourceRangeEndLine = element.getAttribute("data-source-range-end-line") ?? "";
+            const sourceRangeEndCharacter = element.getAttribute("data-source-range-end-character") ?? "";
 
             if (!actionId) {
                 return;
@@ -296,10 +302,16 @@ async function copyValueToClipboard(value) {
                 entityLogicalName,
                 columnName,
                 rawValue,
+                sliceOperation,
                 traversalSessionId,
                 traversalLegIndex,
                 carryField,
                 carryValue,
+                sourceDocumentUri,
+                sourceRangeStartLine,
+                sourceRangeStartCharacter,
+                sourceRangeEndLine,
+                sourceRangeEndCharacter,
                 primaryIdField: element.getAttribute("data-primary-id-field") ?? "",
                 fieldLogicalName: element.getAttribute("data-field-logical-name") ?? "",
                 fieldAttributeType: element.getAttribute("data-field-attribute-type") ?? ""

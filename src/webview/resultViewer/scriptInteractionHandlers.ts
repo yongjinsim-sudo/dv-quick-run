@@ -71,14 +71,6 @@ function bindTableEventsOnce() {
                     return;
                 }
 
-                const actionElement = target.closest("[data-action-id]");
-                if (actionElement instanceof HTMLElement) {
-                    event.stopPropagation();
-                    executeAction(actionElement);
-                    closeAllOverflowMenus();
-                    return;
-                }
-
                 const overflowTrigger = target.closest(".overflow-trigger");
                 if (overflowTrigger instanceof HTMLElement) {
                     event.preventDefault();
@@ -100,6 +92,15 @@ function bindTableEventsOnce() {
 
                     return;
                 }
+
+                const actionElement = target.closest("[data-action-id]");
+                if (actionElement instanceof HTMLElement) {
+                    event.stopPropagation();
+                    executeAction(actionElement);
+                    closeAllOverflowMenus();
+                    return;
+                }
+
 
                 const sortButton = target.closest("[data-sort-column]");
                 if (sortButton instanceof HTMLElement) {
@@ -271,9 +272,40 @@ function bindTableEventsOnce() {
         }
 
 
+function getHeaderContextActions(columnName) {
+    if (!model || !Array.isArray(model.rows)) {
+        return [];
+    }
+
+    const allowedSliceOperations = new Set(["isNull", "isNotNull"]);
+
+    for (const row of model.rows) {
+        const cell = row && row[columnName];
+        const actions = Array.isArray(cell?.actions) ? cell.actions : [];
+        if (actions.length === 0) {
+            continue;
+        }
+
+        return actions.filter((action) => {
+            if (action.id === "preview-root-odata-orderby") {
+                return true;
+            }
+
+            return action.id === "preview-odata-slice" && allowedSliceOperations.has(String(action.payload?.sliceOperation ?? ""));
+        });
+    }
+
+    return [];
+}
+
 function showHeaderContextMenu(clientX, clientY, columnName) {
     removeResultViewerContextMenu();
     closeAllOverflowMenus();
+
+    const actions = getHeaderContextActions(columnName);
+    if (!Array.isArray(actions) || actions.length === 0) {
+        return;
+    }
 
     const menu = document.createElement("div");
     menu.className = "overflow-menu-overlay";
@@ -281,21 +313,39 @@ function showHeaderContextMenu(clientX, clientY, columnName) {
     menu.style.top = clientY + "px";
     menu.setAttribute("role", "menu");
 
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "overflow-action-button";
-    button.textContent = "Preview root $orderby asc";
-    button.setAttribute("data-action-id", "preview-root-odata-orderby");
-    button.setAttribute("data-column-name", columnName);
+    actions.forEach((action) => {
+        const button = document.createElement("button");
+        const isEnabled = action.isEnabled !== false;
+        button.type = "button";
+        button.className = "overflow-action-button" + (isEnabled ? "" : " is-disabled");
+        button.textContent = action.title;
+        button.setAttribute("data-action-id", action.id);
+        button.setAttribute("data-column-name", action.payload?.columnName ?? columnName);
+        button.setAttribute("data-guid", action.payload?.guid ?? "");
+        button.setAttribute("data-entity-set-name", action.payload?.entitySetName ?? "");
+        button.setAttribute("data-entity-logical-name", action.payload?.entityLogicalName ?? "");
+        button.setAttribute("data-primary-id-field", action.payload?.primaryIdField ?? "");
+        button.setAttribute("data-field-logical-name", action.payload?.fieldLogicalName ?? action.payload?.columnName ?? columnName);
+        button.setAttribute("data-field-attribute-type", action.payload?.fieldAttributeType ?? "");
+        button.setAttribute("data-raw-value", action.payload?.rawValue ?? "");
+        button.setAttribute("data-slice-operation", action.payload?.sliceOperation ?? "");
+        if (!isEnabled) {
+            button.disabled = true;
+            button.setAttribute("aria-disabled", "true");
+            button.title = action.disabledReason ? action.title + " — " + action.disabledReason : action.title + " — Unavailable in this context";
+        } else {
+            button.title = action.title;
+        }
 
-    button.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        executeAction(button);
-        removeResultViewerContextMenu();
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            executeAction(button);
+            removeResultViewerContextMenu();
+        });
+
+        menu.appendChild(button);
     });
-
-    menu.appendChild(button);
 
     document.body.appendChild(menu);
     activeResultViewerContextMenu = menu;
@@ -346,12 +396,17 @@ function showHeaderContextMenu(clientX, clientY, columnName) {
         }
 
         function findRowInvestigateAction(target) {
-            const row = target.closest("tr[data-row-index]");
-            if (!(row instanceof HTMLElement)) {
+            const cell = target.closest("td.context-action-cell");
+            if (!(cell instanceof HTMLElement)) {
                 return null;
             }
 
-            const investigateAction = row.querySelector('[data-action-id="investigate-record"]');
+            const withinCellActions = target.closest(".cell-actions, .primary-actions, .overflow-actions, .overflow-trigger, .overflow-menu");
+            if (withinCellActions instanceof HTMLElement) {
+                return null;
+            }
+
+            const investigateAction = cell.querySelector('.primary-actions [data-action-id="investigate-record"], [data-action-id="investigate-record"]');
             return investigateAction instanceof HTMLElement ? investigateAction : null;
         }
 

@@ -14,7 +14,7 @@ import {
 import { SmartMetadataSession } from "../smart/shared/smartMetadataSession.js";
 
 type ReviewChoice =
-  | { kind: "run" }
+  | { kind: "preview" }
   | { kind: "editEntity" }
   | { kind: "editId" }
   | { kind: "editFields" }
@@ -76,7 +76,7 @@ export async function runSmartPatchReviewLoopWithDeps(
         : `${current.fields.length} fields`;
 
     const items: Array<{ label: string; description?: string; choice: ReviewChoice }> = [
-      { label: "✅ Run PATCH", description: `${patchPath}`, choice: { kind: "run" } },
+      { label: "👀 Preview PATCH", description: `${patchPath}`, choice: { kind: "preview" } },
       {
         label: "✏️ Edit entity",
         description: `${current.entitySetName} (${current.entityLogicalName})`,
@@ -133,7 +133,7 @@ export async function runSmartPatchReviewLoopWithDeps(
       return undefined;
     }
 
-    if (choice.kind === "run") {
+    if (choice.kind === "preview") {
       return { state: current, fields };
     }
 

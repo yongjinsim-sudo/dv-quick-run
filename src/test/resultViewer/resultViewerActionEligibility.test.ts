@@ -20,6 +20,7 @@ suite("resultViewerActionEligibility", () => {
       "preview-add-select",
       "preview-odata-filter",
       "preview-root-odata-orderby",
+      "update-record",
       "copy-record-url"
     ]);
   });
@@ -38,7 +39,10 @@ suite("resultViewerActionEligibility", () => {
     assert.deepStrictEqual(actions.map((action) => action.id), [
       "preview-add-select",
       "preview-odata-filter",
-      "preview-root-odata-orderby"
+      "preview-root-odata-orderby",
+      "preview-odata-slice",
+      "preview-odata-slice",
+      "preview-odata-slice"
     ]);
   });
 
@@ -77,8 +81,36 @@ suite("resultViewerActionEligibility", () => {
     assert.deepStrictEqual(actions.map((action) => action.id), [
       "preview-add-select",
       "preview-odata-filter",
-      "preview-root-odata-orderby"
+      "preview-root-odata-orderby",
+      "preview-odata-slice",
+      "preview-odata-slice",
+      "preview-odata-slice"
     ]);
+  });
+
+  test("model propagates source target into action payloads", () => {
+    const model = buildResultViewerModel({
+      value: [{
+        contactid: "8129eec7-4414-4f11-8341-6045bdc42f8b",
+        fullname: "Alice"
+      }]
+    }, "contacts?$select=contactid,fullname", {
+      entitySetName: "contacts",
+      entityLogicalName: "contact",
+      primaryIdField: "contactid",
+      sourceTarget: {
+        sourceDocumentUri: "file:///tmp/query.txt",
+        sourceRangeStartLine: 0,
+        sourceRangeStartCharacter: 0,
+        sourceRangeEndLine: 0,
+        sourceRangeEndCharacter: 33
+      }
+    });
+
+    const payload = model.rows[0]?.fullname?.overflowActions?.[0]?.payload;
+    assert.strictEqual(payload?.sourceDocumentUri, "file:///tmp/query.txt");
+    assert.strictEqual(payload?.sourceRangeStartLine, 0);
+    assert.strictEqual(payload?.sourceRangeEndCharacter, 33);
   });
 
   test("empty value returns no actions", () => {
@@ -159,6 +191,50 @@ suite("resultViewerActionEligibility", () => {
     });
 
     assert.strictEqual(model.rows[0]["contact_customer_accounts"]?.actions, undefined);
+  });
+
+  test("boolean root field exposes type-aware slice actions", () => {
+    const actions = resolveResultViewerActions({
+      guid: "",
+      entitySetName: "contacts",
+      entityLogicalName: "contact",
+      primaryIdField: "contactid",
+      fieldLogicalName: "donotemail",
+      fieldAttributeType: "Boolean",
+      queryMode: "odata",
+      columnName: "donotemail",
+      rawValue: "true"
+    });
+
+    assert.deepStrictEqual(
+      actions.filter((action) => action.id === "preview-odata-slice").map((action) => action.title),
+      ["Slice: false", "Slice: field is not null", "Slice: true"]
+    );
+  });
+
+  test("date root field exposes before and after slice actions", () => {
+    const actions = resolveResultViewerActions({
+      guid: "",
+      entitySetName: "contacts",
+      entityLogicalName: "contact",
+      primaryIdField: "contactid",
+      fieldLogicalName: "createdon",
+      fieldAttributeType: "DateTime",
+      queryMode: "odata",
+      columnName: "createdon",
+      rawValue: "2026-04-22"
+    });
+
+    assert.deepStrictEqual(
+      actions.filter((action) => action.id === "preview-odata-slice").map((action) => action.title),
+      [
+        "Slice: after this value",
+        "Slice: before this value",
+        "Slice: equals this value",
+        "Slice: field is not null",
+        "Slice: field is null"
+      ]
+    );
   });
 
   test("aliased flattened columns still resolve helper actions from source column identity", () => {

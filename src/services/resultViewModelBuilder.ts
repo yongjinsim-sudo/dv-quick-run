@@ -8,7 +8,7 @@ import type {
     ResultViewerResolvedAction,
     ResultViewerTraversalActionContext
 } from "../providers/resultViewerActions/types.js";
-import { isChoiceAttributeType } from "../metadata/metadataModel.js";
+import { isChoiceAttributeType, isLookupLikeAttributeType } from "../metadata/metadataModel.js";
 import {
     isLookupColumn,
     isSystemColumn
@@ -88,6 +88,14 @@ export interface ResultViewerPagingInfo {
     history?: ResultViewerPagingHistoryEntry[];
 }
 
+export interface ResultViewerSourceTargetInfo {
+    sourceDocumentUri: string;
+    sourceRangeStartLine: number;
+    sourceRangeStartCharacter: number;
+    sourceRangeEndLine: number;
+    sourceRangeEndCharacter: number;
+}
+
 export interface ResultViewerModel {
     binderSuggestion?: BinderSuggestion;
     title: string;
@@ -106,6 +114,7 @@ export interface ResultViewerModel {
     legend?: ResultViewerLegendItem[];
     rowActions?: ResultViewerRowActionItem[];
     paging?: ResultViewerPagingInfo;
+    sourceTarget?: ResultViewerSourceTargetInfo;
 }
 
 export interface ResultViewerBuildOptions {
@@ -117,6 +126,7 @@ export interface ResultViewerBuildOptions {
     choiceMetadata?: ChoiceMetadataDef[];
     traversalContext?: ResultViewerTraversalContext;
     paging?: ResultViewerPagingInfo;
+    sourceTarget?: ResultViewerSourceTargetInfo;
 }
 
 
@@ -536,6 +546,7 @@ function buildCell(
     row: Record<string, unknown> | undefined,
     rowValue: unknown,
     column: string,
+    rowPrimaryIdValue: unknown,
     queryPath: string,
     options: ResultViewerBuildOptions,
     fieldMap: Map<string, FieldDef>,
@@ -547,15 +558,15 @@ function buildCell(
     const copyValue = toDisplayCell(rowValue);
 
     const shouldResolveActions =
-        !!rawValue &&
+        rawValue !== undefined &&
+        rawValue !== null &&
         !Array.isArray(rowValue) &&
         typeof rowValue !== "object";
 
     const actionRawValue = shouldResolveActions ? toDisplayCell(rowValue) : "";
-    const actionGuid =
-        shouldResolveActions && options.primaryIdField && column === options.primaryIdField
-            ? toDisplayCell(rowValue)
-            : "";
+    const actionGuid = shouldResolveActions && options.primaryIdField
+        ? toDisplayCell(column === options.primaryIdField ? rowValue : rowPrimaryIdValue)
+        : "";
 
     const field = resolveFieldForColumn(column, fieldMap);
 
@@ -570,6 +581,11 @@ function buildCell(
             queryMode: detectResultViewerQueryMode(queryPath),
             columnName: column,
             rawValue: actionRawValue,
+            sourceDocumentUri: options.sourceTarget?.sourceDocumentUri,
+            sourceRangeStartLine: options.sourceTarget?.sourceRangeStartLine,
+            sourceRangeStartCharacter: options.sourceTarget?.sourceRangeStartCharacter,
+            sourceRangeEndLine: options.sourceTarget?.sourceRangeEndLine,
+            sourceRangeEndCharacter: options.sourceTarget?.sourceRangeEndCharacter,
             traversal: options.traversalContext
                 ? {
                     traversalSessionId: options.traversalContext.traversalSessionId,
@@ -611,6 +627,118 @@ function buildCell(
         drawerPayload,
         actions: actions?.length ? actions : undefined
     };
+}
+
+
+function toRelationshipActionTitle(field: FieldDef | undefined, sourceColumn: string): string {
+    const display = String(field?.displayName ?? "").trim();
+    const logical = String(field?.logicalName ?? sourceColumn).trim();
+    const base = display || logical.replace(/^_+|_value$/g, "");
+    const words = base.replace(/_/g, " ").trim();
+    const titled = words.replace(/\b\w/g, (c) => c.toUpperCase());
+    return `Expand ${titled}`;
+}
+
+function buildHiddenRelationshipActions(
+    sourceRow: Record<string, unknown>,
+    options: ResultViewerBuildOptions | undefined,
+    primaryIdField: string | undefined,
+    fieldMap: Map<string, FieldDef>,
+    queryMode: ResultViewerQueryMode
+): ResultViewerResolvedAction[] {
+    if (!primaryIdField || queryMode !== "odata") {
+        return [];
+    }
+
+    const actions: ResultViewerResolvedAction[] = [];
+    const seen = new Set<string>();
+
+    Object.keys(sourceRow).forEach((key) => {
+        if (!(key.startsWith("_") && key.endsWith("_value"))) {
+            return;
+        }
+
+        const raw = sourceRow[key];
+        if (raw === undefined || raw === null || String(raw).trim() === "") {
+            return;
+        }
+
+        const field = resolveFieldForColumn(key, fieldMap);
+        if (!field || !isLookupLikeAttributeType(field.attributeType)) {
+            return;
+        }
+
+        const logicalName = String(field.logicalName ?? "").trim();
+        if (!logicalName || seen.has(logicalName.toLowerCase())) {
+            return;
+        }
+        seen.add(logicalName.toLowerCase());
+
+        actions.push({
+            id: "preview-expand-relationship",
+            title: toRelationshipActionTitle(field, key),
+            icon: "↘",
+            placement: "overflow",
+            group: "dice",
+            kind: "preview",
+            payload: {
+                entitySetName: options?.entitySetName,
+                entityLogicalName: options?.entityLogicalName,
+                primaryIdField,
+                fieldLogicalName: logicalName,
+                fieldAttributeType: field.attributeType,
+                columnName: primaryIdField,
+                rawValue: String(sourceRow[primaryIdField] ?? ""),
+                sourceDocumentUri: options?.sourceTarget?.sourceDocumentUri,
+                sourceRangeStartLine: options?.sourceTarget?.sourceRangeStartLine,
+                sourceRangeStartCharacter: options?.sourceTarget?.sourceRangeStartCharacter,
+                sourceRangeEndLine: options?.sourceTarget?.sourceRangeEndLine,
+                sourceRangeEndCharacter: options?.sourceTarget?.sourceRangeEndCharacter
+            },
+            isEnabled: true
+        });
+    });
+
+    return actions;
+}
+
+function appendHiddenRelationshipActionsToPrimaryCell(
+    rowModel: Record<string, ResultViewerCell>,
+    sourceRow: Record<string, unknown>,
+    options: ResultViewerBuildOptions | undefined,
+    primaryIdField: string | undefined,
+    fieldMap: Map<string, FieldDef>,
+    queryMode: ResultViewerQueryMode
+): void {
+    if (!primaryIdField) {
+        return;
+    }
+
+    const primaryCell = rowModel[primaryIdField];
+    if (!primaryCell) {
+        return;
+    }
+
+    const relationshipActions = buildHiddenRelationshipActions(sourceRow, options, primaryIdField, fieldMap, queryMode);
+    if (!relationshipActions.length) {
+        return;
+    }
+
+    const existingActions = primaryCell.actions ?? [];
+    const dedup = new Set(existingActions.map((action) => `${action.id}:${String(action.payload?.fieldLogicalName ?? "").toLowerCase()}`));
+    const merged = existingActions.slice();
+
+    relationshipActions.forEach((action) => {
+        const key = `${action.id}:${String(action.payload?.fieldLogicalName ?? "").toLowerCase()}`;
+        if (!dedup.has(key)) {
+            merged.push(action);
+            dedup.add(key);
+        }
+    });
+
+    primaryCell.actions = merged;
+    primaryCell.primaryActions = merged.filter((action) => action.placement === "primary");
+    primaryCell.overflowActions = merged.filter((action) => action.placement === "overflow");
 }
 
 function buildRowActions(row: Record<string, ResultViewerCell>, primaryIdField?: string): ResultViewerResolvedAction[] {
@@ -733,6 +861,7 @@ export function buildResultViewerModel(
             displayToSourceColumn.set(displayColumn, columns[index]);
         });
 
+        const queryMode = detectResultViewerQueryMode(query);
         const mappedRows = flattenedRows.map((row): Record<string, ResultViewerCell> => {
             const mapped: Record<string, ResultViewerCell> = {};
 
@@ -744,7 +873,11 @@ export function buildResultViewerModel(
                         ? row[sourceColumn]
                         : undefined;
 
-                mapped[displayColumn] = buildCell(isPlainObject(row) ? row : undefined, rowValue, sourceColumn, query, {
+                const rowPrimaryIdValue = isPlainObject(row) && primaryIdField
+                    ? row[primaryIdField]
+                    : undefined;
+
+                mapped[displayColumn] = buildCell(isPlainObject(row) ? row : undefined, rowValue, sourceColumn, rowPrimaryIdValue, query, {
                     ...options,
                     entitySetName,
                     entityLogicalName,
@@ -752,6 +885,16 @@ export function buildResultViewerModel(
                     environment
                 }, fieldMap, choiceMetadata);
             });
+
+            if (isPlainObject(row)) {
+                appendHiddenRelationshipActionsToPrimaryCell(mapped, row, {
+                    ...options,
+                    entitySetName,
+                    entityLogicalName,
+                    primaryIdField,
+                    environment
+                }, primaryIdField, fieldMap, queryMode);
+            }
 
             return mapped;
         });
@@ -785,7 +928,8 @@ export function buildResultViewerModel(
             environment,
             emptyState,
             rowActions: rowActions.length ? rowActions : undefined,
-            paging: options?.paging
+            paging: options?.paging,
+            sourceTarget: options?.sourceTarget
         };
     }
 
@@ -798,7 +942,11 @@ export function buildResultViewerModel(
         const mapped: Record<string, ResultViewerCell> = {};
 
         columns.forEach((column) => {
-            mapped[column] = buildCell(result as Record<string, unknown>, (result as Record<string, unknown>)[column], column, query, {
+            const rowPrimaryIdValue = primaryIdField
+                ? (result as Record<string, unknown>)[primaryIdField]
+                : undefined;
+
+            mapped[column] = buildCell(result as Record<string, unknown>, (result as Record<string, unknown>)[column], column, rowPrimaryIdValue, query, {
                 ...options,
                 entitySetName,
                 entityLogicalName,
@@ -806,6 +954,14 @@ export function buildResultViewerModel(
                 environment
             }, fieldMap, choiceMetadata);
         });
+
+        appendHiddenRelationshipActionsToPrimaryCell(mapped, result as Record<string, unknown>, {
+            ...options,
+            entitySetName,
+            entityLogicalName,
+            primaryIdField,
+            environment
+        }, primaryIdField, fieldMap, detectResultViewerQueryMode(query));
 
         const recordRowActions = [{ rowIndex: 0, actions: buildRowActions(mapped, primaryIdField) }].filter((item) => item.actions.length > 0);
 
@@ -830,7 +986,8 @@ export function buildResultViewerModel(
             environment,
             emptyState,
             rowActions: recordRowActions.length ? recordRowActions : undefined,
-            paging: options?.paging
+            paging: options?.paging,
+            sourceTarget: options?.sourceTarget
         };
     }
 
@@ -853,6 +1010,7 @@ export function buildResultViewerModel(
             traversalContext
         }),
         environment,
-        paging: options?.paging
+        paging: options?.paging,
+        sourceTarget: options?.sourceTarget
     };
 }

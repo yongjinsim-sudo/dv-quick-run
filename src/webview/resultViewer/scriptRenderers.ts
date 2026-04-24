@@ -102,8 +102,8 @@ function renderSiblingExpandButton(currentModel) {
         }
 
         function groupActionsByGroup(actions) {
-            const order = ["refine", "investigate", "traversal", "copy", "metadata"];
-            const labels = { refine: "Refine", investigate: "Investigate", traversal: "Traversal", copy: "Copy", metadata: "Metadata" };
+            const order = ["refine", "slice", "dice", "correct", "investigate", "traversal", "copy", "metadata"];
+            const labels = { refine: "Refine", slice: "Slice", dice: "Dice", correct: "Correct", investigate: "Investigate", traversal: "Traversal", copy: "Copy", metadata: "Metadata" };
             return order
                 .map((group) => ({ group, label: labels[group], actions: actions.filter((action) => action.group === group) }))
                 .filter((entry) => entry.actions.length > 0);
@@ -128,6 +128,12 @@ function renderSiblingExpandButton(currentModel) {
                 " data-field-attribute-type=\\"" + escapeAttribute(action.payload?.fieldAttributeType ?? "") + "\\"" +
                 " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
                 " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
+                " data-source-document-uri=\\"" + escapeAttribute(action.payload?.sourceDocumentUri ?? "") + "\\"" +
+                " data-source-range-start-line=\\"" + escapeAttribute(String(action.payload?.sourceRangeStartLine ?? "")) + "\\"" +
+                " data-source-range-start-character=\\"" + escapeAttribute(String(action.payload?.sourceRangeStartCharacter ?? "")) + "\\"" +
+                " data-source-range-end-line=\\"" + escapeAttribute(String(action.payload?.sourceRangeEndLine ?? "")) + "\\"" +
+                " data-source-range-end-character=\\"" + escapeAttribute(String(action.payload?.sourceRangeEndCharacter ?? "")) + "\\"" +
+                " data-slice-operation=\\"" + escapeAttribute(action.payload?.sliceOperation ?? "") + "\\"" +
                 " data-traversal-session-id=\\"" + escapeAttribute(action.payload?.traversalSessionId ?? "") + "\\"" +
                 " data-traversal-leg-index=\\"" + escapeAttribute(String(action.payload?.traversalLegIndex ?? "")) + "\\"" +
                 " data-carry-field=\\"" + escapeAttribute(action.payload?.carryField ?? "") + "\\"" +
@@ -284,20 +290,26 @@ function renderTable(currentModel) {
                     const width = getColumnWidth(column);
                     const widthStyle = width ? " style=\\"width:" + width + "px; min-width:" + width + "px; max-width:" + width + "px;\\"" : "";
 
-                    if (actions.length > 0 && value && !Array.isArray(cell && cell.rawValue)) {
-                        html += "<td data-column=\\"" + escapeAttribute(column) + "\\"" + widthStyle + ">";
+                    const hasDisplayValue = value !== undefined && value !== null && String(value).length > 0;
+
+                    if (actions.length > 0 && hasDisplayValue && !Array.isArray(cell && cell.rawValue)) {
+                        html += "<td class=\\"context-action-cell\\" data-column=\\"" + escapeAttribute(column) + "\\"" + widthStyle + ">";
                         html += "<span class=\\"guid-cell\\">";
                         html += "<span class=\\"guid-value copyable\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\">" + escapeHtml(value) + "</span>";
                         html += "<span class=\\"cell-actions\\">";
+                        html += "<span class=\\"primary-actions\\">";
 
                         primaryActions.forEach((action) => {
                             html += buildActionButtonHtml(action, false);
                         });
+                        html += "</span>";
 
                         if (overflowActions.length > 0) {
+                            html += "<span class=\\"overflow-actions\\">";
                             html +=
                                 "<button class=\\"inline-action overflow-trigger\\" type=\\"button\\" title=\\"More actions\\">⋮</button>" +
                                 "<div class=\\"overflow-menu\\" hidden>" + buildGroupedOverflowMenuHtml(overflowActions) + "</div>";
+                            html += "</span>";
                         }
 
                         html += "</span>";

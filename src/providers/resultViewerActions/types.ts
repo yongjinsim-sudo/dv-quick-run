@@ -1,20 +1,27 @@
 export type ResultViewerActionPlacement = "primary" | "overflow";
-export type ResultViewerActionGroup = "refine" | "investigate" | "traversal" | "copy" | "metadata";
+export type ResultViewerActionGroup = "refine" | "slice" | "dice" | "correct" | "investigate" | "traversal" | "copy" | "metadata";
 export type ResultViewerQueryMode = "odata" | "fetchxml";
 
 export interface ResultViewerActionPayload {
+  sliceOperation?: string;
   guid?: string;
   entitySetName?: string;
   entityLogicalName?: string;
   primaryIdField?: string;
   fieldLogicalName?: string;
   fieldAttributeType?: string;
+  currentValue?: string;
   columnName?: string;
   rawValue?: string;
   traversalSessionId?: string;
   traversalLegIndex?: number;
   carryField?: string;
   carryValue?: string;
+  sourceDocumentUri?: string;
+  sourceRangeStartLine?: number;
+  sourceRangeStartCharacter?: number;
+  sourceRangeEndLine?: number;
+  sourceRangeEndCharacter?: number;
 }
 
 export interface ResultViewerResolvedAction {
@@ -50,5 +57,10 @@ export interface ResultViewerActionContext {
   queryMode?: ResultViewerQueryMode;
   columnName: string;
   rawValue: string;
+  sourceDocumentUri?: string;
+  sourceRangeStartLine?: number;
+  sourceRangeStartCharacter?: number;
+  sourceRangeEndLine?: number;
+  sourceRangeEndCharacter?: number;
   traversal?: ResultViewerTraversalActionContext;
 }
