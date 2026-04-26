@@ -30,19 +30,21 @@ suite("diagnosticActionability", () => {
   test("marks suggested fixes as preview only when apply fix is unavailable", async () => {
     const result = await runDiagnostics(createCollectionContext(), { insightLevel: 1, canApplyFix: false });
 
-    const actionable = result.findings.filter((finding) => !!finding.suggestedFix);
+    const actionable = result.findings.filter((finding) => !!finding.suggestedQuery?.query);
     assert.ok(actionable.length > 0);
     assert.ok(actionable.every((finding) => getDiagnosticActionability(finding) === "previewOnly"));
     assert.ok(actionable.every((finding) => isActionableDiagnosticFinding(finding)));
+    assert.ok(result.findings.some((finding) => finding.message.includes("$select") && getDiagnosticActionability(finding) === "none"));
   });
 
   test("marks suggested fixes as preview and apply when apply fix is available", async () => {
     const result = await runDiagnostics(createCollectionContext(), { insightLevel: 1, canApplyFix: true });
 
-    const actionable = result.findings.filter((finding) => !!finding.suggestedFix);
+    const actionable = result.findings.filter((finding) => !!finding.suggestedQuery?.query);
     assert.ok(actionable.length > 0);
     assert.ok(actionable.every((finding) => getDiagnosticActionability(finding) === "previewAndApply"));
     assert.ok(actionable.every((finding) => isActionableDiagnosticFinding(finding)));
+    assert.ok(result.findings.some((finding) => finding.message.includes("$select") && getDiagnosticActionability(finding) === "none"));
   });
 
   test("treats findings without suggested fixes as non-actionable", () => {

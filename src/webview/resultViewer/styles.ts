@@ -577,6 +577,16 @@ export const RESULT_VIEWER_STYLES = `
             background: rgba(255, 255, 255, 0.08);
         }
 
+
+        .null-value-cell {
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+        }
+
+        .copyable.null-value-cell:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
         .guid-cell {
             display: flex;
             align-items: center;

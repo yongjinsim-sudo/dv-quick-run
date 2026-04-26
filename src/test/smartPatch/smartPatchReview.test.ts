@@ -45,7 +45,7 @@ suite("smartPatchReview", () => {
         calls++;
         return calls === 1
           ? ({ choice: { kind: "editValues" } } as any)
-          : ({ choice: { kind: "run" } } as any);
+          : ({ choice: { kind: "preview" } } as any);
       },
       writeClipboard: async () => undefined,
       showInformationMessage: async () => undefined,
@@ -58,7 +58,6 @@ suite("smartPatchReview", () => {
       pickFields: async () => undefined,
       promptValues: async () => [{ logicalName: "firstname", attributeType: "String", rawValue: "Bob" } as any]
     });
-
     assert.ok(result);
     assert.strictEqual(result!.state.fields[0].rawValue, "Bob");
   });

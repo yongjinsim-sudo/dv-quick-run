@@ -1,5 +1,6 @@
 import type { DiagnosticRule } from "../diagnosticRule.js";
 import { buildAddSelectSuggestedFix, buildAddTopSuggestedFix } from "../diagnosticSuggestionBuilder.js";
+import { applyQueryDoctorMutation } from "../../queryMutation/queryDoctorMutation.js";
 
 function hasDuplicateValues(values: string[]): boolean {
   const normalized = values.map((value) => value.trim().toLowerCase()).filter(Boolean);
@@ -16,6 +17,7 @@ export const basicQueryShapeRules: DiagnosticRule[] = [
         severity: "warning" as const,
         suggestion: "Add $select to reduce payload size and improve result clarity.",
         suggestedFix: buildAddSelectSuggestedFix(context.parsed.entitySetName ?? "records"),
+        actionability: "none" as const,
         confidence: 0.95
       });
     }
@@ -26,11 +28,16 @@ export const basicQueryShapeRules: DiagnosticRule[] = [
     const findings = [];
 
     if (context.parsed.isCollection && context.parsed.top === undefined) {
+      const suggestedQuery = applyQueryDoctorMutation(context.parsed.raw, { top: 20 });
       findings.push({
         message: "Collection query does not specify $top.",
         severity: "info" as const,
         suggestion: "Consider adding $top during investigation to keep result sets focused.",
         suggestedFix: buildAddTopSuggestedFix(context.parsed.entitySetName ?? "records"),
+        suggestedQuery: {
+          query: suggestedQuery,
+          label: "Add $top=20"
+        },
         confidence: 0.8
       });
     }

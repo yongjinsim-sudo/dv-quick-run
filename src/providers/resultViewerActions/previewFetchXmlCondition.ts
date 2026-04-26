@@ -9,7 +9,7 @@ export interface FetchXmlConditionPreviewResult {
     target: EditorQueryTarget;
 }
 
-export async function previewAndApplyFetchXmlCondition(columnName: string, rawValue: string): Promise<void> {
+export async function previewAndApplyFetchXmlCondition(columnName: string, rawValue: string | null): Promise<void> {
     const resolved = resolveBestFetchXmlEditorTarget();
     if (!resolved) {
         await fallbackToCopiedFetchXmlCondition(columnName, rawValue);
@@ -33,7 +33,7 @@ export async function previewAndApplyFetchXmlCondition(columnName: string, rawVa
     });
 }
 
-export function buildFetchXmlConditionPreview(columnName: string, rawValue: string): FetchXmlConditionPreviewResult {
+export function buildFetchXmlConditionPreview(columnName: string, rawValue: string | null): FetchXmlConditionPreviewResult {
     const resolved = resolveBestFetchXmlEditorTarget();
     if (!resolved) {
         throw new Error("Preview FetchXML condition requires a visible FetchXML query in the editor.");
@@ -45,7 +45,7 @@ export function buildFetchXmlConditionPreview(columnName: string, rawValue: stri
 export function buildFetchXmlConditionPreviewFromTarget(
     target: EditorQueryTarget,
     columnName: string,
-    rawValue: string
+    rawValue: string | null
 ): FetchXmlConditionPreviewResult {
     const rawText = extractFetchXmlText(target.text);
 
@@ -67,7 +67,11 @@ export function buildFetchXmlConditionPreviewFromTarget(
     };
 }
 
-export function buildFetchXmlCondition(columnName: string, rawValue: string): string {
+export function buildFetchXmlCondition(columnName: string, rawValue: string | null): string {
+    if (rawValue === null) {
+        return `<condition attribute="${escapeXmlAttribute(columnName)}" operator="null" />`;
+    }
+
     return `<condition attribute="${escapeXmlAttribute(columnName)}" operator="eq" value="${escapeXmlAttribute(rawValue)}" />`;
 }
 
@@ -168,7 +172,7 @@ function resolveFetchXmlBlock(document: vscode.TextDocument, activeLine: number)
     };
 }
 
-async function fallbackToCopiedFetchXmlCondition(columnName: string, rawValue: string): Promise<void> {
+async function fallbackToCopiedFetchXmlCondition(columnName: string, rawValue: string | null): Promise<void> {
     const condition = buildFetchXmlCondition(columnName, rawValue);
     await vscode.env.clipboard.writeText(condition);
 

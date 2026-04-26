@@ -3,7 +3,7 @@ import type { CommandContext } from "../../../../context/commandContext.js";
 import { normalizePath } from "../get/getQueryBuilder.js";
 import { logDebug, logInfo, logWarn } from "../../../../../utils/logger.js";
 import { buildBatchRequestBody, type BatchExecutionPart } from "../../../../../services/batchExecution.js";
-import { openBatchPreviewDocument } from "./batchDocument.js";
+import { showBatchPreview } from "./batchDocument.js";
 import { showBatchResultViewer } from "../shared/resultViewerLauncher.js";
 
 type BatchRunOptions = {
@@ -20,15 +20,9 @@ export async function previewAndRunBatchQueries(
   const normalizedQueries = queries.map((query) => normalizePath(query));
   const previewBoundary = "batch_preview";
   const batchPreview = buildBatchRequestBody(await ctx.getBaseUrl(), normalizedQueries, previewBoundary);
-  await openBatchPreviewDocument(normalizedQueries, batchPreview);
+  const previewResult = await showBatchPreview(normalizedQueries, batchPreview);
 
-  const choice = await vscode.window.showWarningMessage(
-    options?.previewTitle ?? `DV Quick Run: Execute ${normalizedQueries.length} read-only GET queries as one $batch call?`,
-    { modal: true },
-    "Run as $batch"
-  );
-
-  if (choice !== "Run as $batch") {
+  if (previewResult.actionKind !== "apply") {
     void vscode.window.showInformationMessage("DV Quick Run: Batch preview cancelled.");
     return;
   }

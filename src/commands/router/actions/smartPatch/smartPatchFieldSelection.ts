@@ -79,6 +79,107 @@ export async function pickPatchableFields(
   return picked.map((p) => p.field);
 }
 
+function isBooleanField(field: SmartField): boolean {
+  return String(field.attributeType ?? "").trim().toLowerCase() === "boolean";
+}
+
+function isChoiceLikeField(field: SmartField): boolean {
+  const type = String(field.attributeType ?? "").trim().toLowerCase();
+  return type === "picklist" || type === "state" || type === "status";
+}
+
+type PromptedPatchValue = {
+  rawValue: string;
+  displayValue?: string;
+};
+
+function formatChoiceDisplay(label: string, value: string | number | boolean): string {
+  return `${label} (${String(value)})`;
+}
+
+function existingRawValue(existing?: PatchFieldValue): string | undefined {
+  return existing?.setNull === true ? undefined : existing?.rawValue;
+}
+
+async function promptBooleanPatchValue(field: SmartField, existing?: PatchFieldValue): Promise<PromptedPatchValue | undefined> {
+  const options = field.choiceOptions?.length
+    ? field.choiceOptions.map((option) => ({
+        label: option.label,
+        description: String(option.value),
+        rawValue: String(option.value),
+        displayValue: formatChoiceDisplay(option.label, option.value)
+      }))
+    : [
+        { label: "true", description: "Boolean true", rawValue: "true", displayValue: "true (true)" },
+        { label: "false", description: "Boolean false", rawValue: "false", displayValue: "false (false)" }
+      ];
+
+  const picked = await vscode.window.showQuickPick(options.map((option) => ({
+    ...option,
+    picked: existingRawValue(existing)?.trim().toLowerCase() === option.rawValue.toLowerCase()
+  })), {
+    title: "DV Quick Run: Smart PATCH — Boolean value",
+    placeHolder: `${field.logicalName} (${field.attributeType}) — choose true or false`,
+    ignoreFocusOut: true
+  });
+
+  return picked ? { rawValue: picked.rawValue, displayValue: picked.displayValue } : undefined;
+}
+
+async function promptChoicePatchValue(field: SmartField, existing?: PatchFieldValue): Promise<PromptedPatchValue | undefined> {
+  if (field.choiceOptions?.length) {
+    const picked = await vscode.window.showQuickPick(field.choiceOptions.map((option) => ({
+      label: option.label,
+      description: String(option.value),
+      rawValue: String(option.value),
+      displayValue: formatChoiceDisplay(option.label, option.value),
+      picked: existingRawValue(existing)?.trim() === String(option.value)
+    })), {
+      title: "DV Quick Run: Smart PATCH — Choice value",
+      placeHolder: `${field.logicalName} (${field.attributeType}) — choose an option`,
+      ignoreFocusOut: true,
+      matchOnDescription: true
+    });
+
+    return picked ? { rawValue: picked.rawValue, displayValue: picked.displayValue } : undefined;
+  }
+
+  const raw = await vscode.window.showInputBox({
+    title: "DV Quick Run: Smart PATCH — Choice value",
+    prompt: `${field.logicalName} (${field.attributeType}) — metadata options are unavailable. Enter the numeric Dataverse option value only. Labels/text are not accepted.`,
+    value: existingRawValue(existing),
+    ignoreFocusOut: true,
+    validateInput: (value) => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return undefined;
+      }
+      return /^-?\d+$/.test(trimmed) ? undefined : "Choice fields require a numeric option value. Labels/text are not accepted.";
+    }
+  });
+
+  const trimmed = raw?.trim();
+  return trimmed ? { rawValue: trimmed, displayValue: `${trimmed} (numeric option)` } : undefined;
+}
+
+async function promptScalarPatchValue(field: SmartField, existing?: PatchFieldValue): Promise<PromptedPatchValue | undefined> {
+  const raw = await vscode.window.showInputBox({
+    title: "DV Quick Run: Smart PATCH — Value",
+    prompt: `${field.logicalName} (${field.attributeType}) — use the separate "Set this field to null" action to clear a field.`,
+    value: existingRawValue(existing),
+    ignoreFocusOut: true,
+    validateInput: (value) => {
+      if (value.trim() === "∅") {
+        return "∅ is only a display symbol for Null. Use 'Set this field to null' to clear a field.";
+      }
+      return undefined;
+    }
+  });
+
+  const trimmed = raw?.trim();
+  return trimmed ? { rawValue: trimmed } : undefined;
+}
+
 export async function promptPatchValues(
   pickedFields: SmartField[],
   pre?: PatchFieldValue[]
@@ -88,26 +189,26 @@ export async function promptPatchValues(
 
   for (const f of pickedFields) {
     const existing = preMap.get(f.logicalName.toLowerCase());
-
-    const raw = await vscode.window.showInputBox({
-      title: "DV Quick Run: Smart PATCH — Value",
-      prompt: `${f.logicalName} (${f.attributeType})`,
-      value: existing?.rawValue,
-      ignoreFocusOut: true
-    });
+    const raw = isBooleanField(f)
+      ? await promptBooleanPatchValue(f, existing)
+      : isChoiceLikeField(f)
+        ? await promptChoicePatchValue(f, existing)
+        : await promptScalarPatchValue(f, existing);
 
     if (raw === undefined) {
       return undefined;
     }
 
-    if (!raw.trim()) {
+    const rawValue = raw.rawValue.trim();
+    if (!rawValue) {
       continue;
     }
 
     values.push({
       logicalName: f.logicalName,
       attributeType: f.attributeType,
-      rawValue: raw.trim()
+      rawValue,
+      displayValue: raw.displayValue
     });
   }
 
@@ -160,7 +261,9 @@ export async function buildInitialSmartPatchState(
     return undefined;
   }
 
-  const values = await promptPatchValues(pickedFields, pre?.fields);
+  const values = pre?.fields?.length && pre.fields.every((field) => field.setNull === true)
+    ? pre.fields
+    : await promptPatchValues(pickedFields, pre?.fields);
   if (!values) {
     return undefined;
   }

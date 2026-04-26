@@ -10,7 +10,9 @@ export function normalizePath(input: string): string {
 export function buildPatchBody(state: SmartPatchState): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   for (const f of state.fields) {
-    body[f.logicalName] = parsePatchValue({ attributeType: f.attributeType }, f.rawValue);
+    body[f.logicalName] = f.setNull === true
+      ? null
+      : parsePatchValue({ attributeType: f.attributeType }, f.rawValue);
   }
   return body;
 }

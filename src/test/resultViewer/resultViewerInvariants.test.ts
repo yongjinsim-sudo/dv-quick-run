@@ -29,6 +29,11 @@ suite("resultViewerInvariants", () => {
     assert.strictEqual(fetchXmlAction, undefined);
     assert.ok(nameCell?.actions?.some((action) => action.id === "preview-add-select"));
     assert.ok(nameCell?.actions?.some((action) => action.id === "preview-root-odata-orderby" && action.isEnabled === false));
+    assert.ok(nameCell?.actions?.some((action) =>
+      action.id === "update-field" &&
+      action.isEnabled === false &&
+      action.title === "Update expanded field unavailable"
+    ));
   });
 
   test("depth guardrail stops flattening beyond the configured maximum depth", () => {
@@ -134,14 +139,19 @@ suite("resultViewerInvariants", () => {
       "preview-odata-filter",
       "preview-root-odata-orderby",
       "update-record",
-      "copy-record-url"
+      "copy-display-value",
+      "copy-raw-value",
+      "copy-record-url",
+      "copy-row-json",
     ]);
     assert.deepStrictEqual(lookupIds, []);
     assert.deepStrictEqual(businessIds, [
       "investigate-record",
       "preview-add-select",
       "preview-odata-filter",
-      "preview-root-odata-orderby"
+      "preview-root-odata-orderby",
+      "copy-display-value",
+      "copy-raw-value",
     ]);
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",
@@ -223,7 +233,10 @@ suite("resultViewerInvariants", () => {
       "preview-odata-filter",
       "preview-root-odata-orderby",
       "update-record",
-      "copy-record-url"
+      "copy-display-value",
+      "copy-raw-value",
+      "copy-record-url",
+      "copy-row-json",
     ]);
     assert.deepStrictEqual(
       idCell?.actions?.map((action) => action.id),
@@ -240,7 +253,8 @@ suite("resultViewerInvariants", () => {
       "preview-root-odata-orderby",
       "preview-odata-slice",
       "preview-odata-slice",
-      "preview-odata-slice"
+      "copy-display-value",
+      "copy-raw-value",
     ]);
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",

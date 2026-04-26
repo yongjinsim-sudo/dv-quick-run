@@ -57,7 +57,7 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
       }
 
       const queryLabel = (isRecommendedNextStepGroup || isAdvisoryGroup) ? "Preview query" : "Suggested query";
-      const findingPreviewQuery = finding.suggestedQuery?.query ?? finding.suggestedFix?.example;
+      const findingPreviewQuery = finding.suggestedQuery?.query;
       const previewAlreadyShownAtGroupLevel = usesActionLabel && findingPreviewQuery === groupPreviewQuery;
 
       if (findingPreviewQuery && !previewAlreadyShownAtGroupLevel) {
@@ -106,7 +106,7 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
 
 function resolveGroupPreviewQuery(group: DiagnosticGroup): string | undefined {
   for (const finding of group.findings) {
-    const previewQuery = finding.suggestedQuery?.query ?? finding.suggestedFix?.example;
+    const previewQuery = finding.suggestedQuery?.query;
     if (previewQuery) {
       return previewQuery;
     }

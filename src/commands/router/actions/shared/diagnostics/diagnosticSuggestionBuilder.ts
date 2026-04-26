@@ -32,7 +32,6 @@ export function buildAddSelectSuggestedFix(entitySetName: string): DiagnosticSug
     "Add a focused $select clause",
     "Limit the response to the fields you actually need so the query is easier to inspect and cheaper to run.",
     {
-      example: `${entitySetName}?$select=fullname,contactid`,
       confidence: 0.95
     }
   );
@@ -43,7 +42,6 @@ export function buildAddTopSuggestedFix(entitySetName: string): DiagnosticSugges
     "Add a bounded $top clause",
     "Keep the result set small while you validate the filter and output shape.",
     {
-      example: `${entitySetName}?$select=fullname,contactid&$top=20`,
       confidence: 0.85
     }
   );

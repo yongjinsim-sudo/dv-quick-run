@@ -11,6 +11,9 @@ export interface ResultViewerActionPayload {
   fieldLogicalName?: string;
   fieldAttributeType?: string;
   currentValue?: string;
+  displayValue?: string;
+  rowJson?: string;
+  isNullValue?: boolean;
   columnName?: string;
   rawValue?: string;
   traversalSessionId?: string;
@@ -57,6 +60,9 @@ export interface ResultViewerActionContext {
   queryMode?: ResultViewerQueryMode;
   columnName: string;
   rawValue: string;
+  displayValue?: string;
+  rowJson?: string;
+  isNullValue?: boolean;
   sourceDocumentUri?: string;
   sourceRangeStartLine?: number;
   sourceRangeStartCharacter?: number;

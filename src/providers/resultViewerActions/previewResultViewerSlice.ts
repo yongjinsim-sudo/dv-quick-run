@@ -3,6 +3,7 @@ import type { EditorQueryTarget } from "../../commands/router/actions/shared/que
 import { buildEditorQuery, parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { previewAndApplyMutationResult, type MutationResult } from "../../refinement/queryPreview.js";
 import { isGuidValue } from "./columnIntelligence.js";
+import { mergeODataFilter } from "./previewODataFilter.js";
 
 export type ResultViewerSliceOperation =
   | "equalsCurrent"
@@ -32,27 +33,29 @@ export function getSupportedSliceDefinitions(
 ): ResultViewerSliceDefinition[] {
   const normalizedRawValue = String(rawValue ?? "").trim();
   if (!normalizedRawValue) {
-    return [];
+    return [
+      { operation: "isNull", title: "Filter: field is null", summary: "Filter rows where this field is null" },
+      { operation: "isNotNull", title: "Filter: field is not null", summary: "Filter rows where this field has a value" }
+    ];
   }
 
   if (isBooleanLike(fieldAttributeType, normalizedRawValue)) {
     return [
-      { operation: "isTrue", title: "Slice: true", summary: "Filter rows where this field is true" },
-      { operation: "isFalse", title: "Slice: false", summary: "Filter rows where this field is false" },
-      { operation: "isNotNull", title: "Slice: field is not null", summary: "Filter rows where this field has a value" }
+      { operation: "isTrue", title: "Filter: true", summary: "Filter rows where this field is true" },
+      { operation: "isFalse", title: "Filter: false", summary: "Filter rows where this field is false" },
+      { operation: "isNotNull", title: "Filter: field is not null", summary: "Filter rows where this field has a value" }
     ];
   }
 
   const definitions: ResultViewerSliceDefinition[] = [
-    { operation: "equalsCurrent", title: "Slice: equals this value", summary: "Filter rows matching this value" },
-    { operation: "isNull", title: "Slice: field is null", summary: "Filter rows where this field is null" },
-    { operation: "isNotNull", title: "Slice: field is not null", summary: "Filter rows where this field has a value" }
+    { operation: "isNull", title: "Filter: field is null", summary: "Filter rows where this field is null" },
+    { operation: "isNotNull", title: "Filter: field is not null", summary: "Filter rows where this field has a value" }
   ];
 
   if (isDateLike(fieldAttributeType, normalizedRawValue)) {
     definitions.push(
-      { operation: "beforeCurrent", title: "Slice: before this value", summary: "Filter rows before this date/time" },
-      { operation: "afterCurrent", title: "Slice: after this value", summary: "Filter rows after this date/time" }
+      { operation: "beforeCurrent", title: "Filter: before this value", summary: "Filter rows before this date/time" },
+      { operation: "afterCurrent", title: "Filter: after this value", summary: "Filter rows after this date/time" }
     );
   }
 
@@ -101,7 +104,9 @@ export function buildODataSlicePreviewFromTarget(
 
   const proposedClause = buildODataSliceClause(columnName, rawValue, operation);
   const existingFilter = (parsed.queryOptions.get("$filter") ?? "").trim();
-  const mergedFilter = existingFilter ? `(${existingFilter}) and (${proposedClause})` : proposedClause;
+  const mergedFilter = mergeODataFilter(existingFilter, proposedClause, {
+    replaceSameColumn: shouldReplaceSameColumnFilter(operation)
+  });
 
   parsed.queryOptions.delete("$filter");
   parsed.queryOptions.set("$filter", mergedFilter);
@@ -208,6 +213,10 @@ export function buildFetchXmlSliceCondition(
     default:
       return `<condition attribute="${escapeXmlAttribute(columnName)}" operator="eq" value="${escapeXmlAttribute(rawValue)}" />`;
   }
+}
+
+function shouldReplaceSameColumnFilter(operation: ResultViewerSliceOperation): boolean {
+  return operation !== "beforeCurrent" && operation !== "afterCurrent";
 }
 
 function isBooleanLike(fieldAttributeType: string | undefined, rawValue: string): boolean {

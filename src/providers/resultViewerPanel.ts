@@ -11,6 +11,7 @@ import { previewAndApplyAddTopForQueryInEditor, previewAndApplyAddTopInActiveEdi
 import { previewAndApplyAddSelectForQueryInEditor, previewAndApplyAddSelectInActiveEditor } from "../refinement/addSelectPreview.js";
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
+import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
 
 type ResultViewerMessage =
     | {
@@ -111,6 +112,7 @@ export class ResultViewerPanel {
     private static currentPanel: vscode.WebviewPanel | undefined;
     private static currentContext: CommandContext | undefined;
     private static currentPagingState: ResultViewerPagingState | undefined;
+    private static lastViewColumn: vscode.ViewColumn | undefined;
 
     public static show(
     ctx: CommandContext,
@@ -131,6 +133,8 @@ export class ResultViewerPanel {
             };
         }
 
+        const targetViewColumn = ResultViewerPanel.resolveViewColumn();
+
         if (ResultViewerPanel.currentPanel) {
             ResultViewerPanel.currentPanel.dispose();
             ResultViewerPanel.currentPanel = undefined;
@@ -139,7 +143,7 @@ export class ResultViewerPanel {
         const panel = vscode.window.createWebviewPanel(
             "dvQuickRunResultViewer",
             model.title,
-            vscode.ViewColumn.Beside,
+            targetViewColumn,
             {
                 enableScripts: true
             }
@@ -151,11 +155,33 @@ export class ResultViewerPanel {
             await ResultViewerPanel.handleMessage(message);
         });
 
+        panel.onDidChangeViewState((event: { webviewPanel: vscode.WebviewPanel }) => {
+            ResultViewerPanel.lastViewColumn = event.webviewPanel.viewColumn;
+        });
+
         panel.onDidDispose(() => {
             ResultViewerPanel.currentPanel = undefined;
         });
 
+        ResultViewerPanel.lastViewColumn = panel.viewColumn;
         panel.webview.html = getResultViewerHtml(panel.webview, ctx.ext.extensionUri, model);
+    }
+
+    private static resolveViewColumn(): vscode.ViewColumn {
+        if (ResultViewerPanel.currentPanel?.viewColumn) {
+            return ResultViewerPanel.currentPanel.viewColumn;
+        }
+
+        if (ResultViewerPanel.lastViewColumn) {
+            return ResultViewerPanel.lastViewColumn;
+        }
+
+        const previewColumn = PreviewSurfacePanel.getCurrentViewColumn();
+        if (typeof previewColumn === "number" && previewColumn > vscode.ViewColumn.One) {
+            return (Number(previewColumn) - 1) as vscode.ViewColumn;
+        }
+
+        return vscode.ViewColumn.Beside;
     }
 
     private static async handleMessage(message: ResultViewerMessage): Promise<void> {
@@ -313,6 +339,8 @@ export class ResultViewerPanel {
             entityLogicalName: payload.entityLogicalName,
             columnName: payload.columnName,
             rawValue: payload.rawValue,
+            displayValue: (payload as any).displayValue,
+            rowJson: (payload as any).rowJson,
             primaryIdField: (payload as any).primaryIdField,
             fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
             fieldAttributeType: (payload as any).fieldAttributeType
@@ -324,6 +352,8 @@ export class ResultViewerPanel {
         entityLogicalName: payload.entityLogicalName,
         columnName: payload.columnName,
         rawValue: payload.rawValue,
+        displayValue: (payload as any).displayValue,
+        rowJson: (payload as any).rowJson,
         sliceOperation: (payload as any).sliceOperation,
         traversalSessionId: (payload as any).traversalSessionId,
         traversalLegIndex: (payload as any).traversalLegIndex,
@@ -336,7 +366,8 @@ export class ResultViewerPanel {
         sourceRangeEndCharacter: typeof (payload as any).sourceRangeEndCharacter === "string" && (payload as any).sourceRangeEndCharacter.trim() ? Number((payload as any).sourceRangeEndCharacter) : (payload as any).sourceRangeEndCharacter,
         primaryIdField: (payload as any).primaryIdField,
         fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
-        fieldAttributeType: (payload as any).fieldAttributeType
+        fieldAttributeType: (payload as any).fieldAttributeType,
+        isNullValue: (payload as any).isNullValue === true || (payload as any).isNullValue === "true"
         });
     }
 

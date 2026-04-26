@@ -2,25 +2,35 @@ import * as assert from "assert";
 import { buildDiagnosticMarkdownLines } from "../../commands/router/actions/shared/diagnostics/diagnosticOutputBuilder.js";
 
 suite("diagnosticOutputBuilder", () => {
-  test("renders suggested fix details, example, and speculative note when present", () => {
-    const lines = buildDiagnosticMarkdownLines({
-      findings: [{
-        message: "Field `msemr_active` is not recognised as a standard attribute on `contact`.",
-        severity: "warning",
-        suggestion: "Verify the schema name, or use the closest known field suggested by Validation.",
-        suggestedFix: {
-          label: "Use true or false without quotes",
-          detail: "Boolean fields should be compared using the literal true or false, not a quoted string.",
-          example: "msemr_active eq true",
-          confidence: 0.6,
-          isSpeculative: true
-        },
-        confidence: 0.9
-      }]
-    });
+    test("renders suggested fix details and speculative note when present", () => {
+      const lines = buildDiagnosticMarkdownLines({
+        findings: [{
+          message: "Field `msemr_active` is not recognised as a standard attribute on `contact`.",
+          severity: "warning",
+          suggestion: "Verify the schema name, or use the closest known field suggested by Validation.",
+          suggestedFix: {
+            label: "Use true or false without quotes",
+            detail: "Boolean fields should be compared using the literal true or false, not a quoted string.",
+            example: "msemr_active eq true",
+            confidence: 0.6,
+            isSpeculative: true
+          },
+          confidence: 0.9
+        }]
+      });
 
-    assert.ok(lines.includes("    - Suggested Fix: Use true or false without quotes — Boolean fields should be compared using the literal true or false, not a quoted string."));
-    assert.ok(lines.includes("    - Suggested query: msemr_active eq true"));
+    assert.ok(lines.some((line) =>
+      line.includes("Suggested Fix: Use true or false without quotes")
+    ));
+
+    assert.ok(lines.some((line) =>
+      line.includes("Boolean fields should be compared using the literal true or false")
+    ));
+
+    assert.ok(!lines.some((line) =>
+      line.includes("Suggested query:")
+    ));
+
     assert.ok(lines.includes("    - Note: This fix is advisory because the field or path could not be resolved confidently."));
   });
 
@@ -89,7 +99,7 @@ suite("diagnosticOutputBuilder", () => {
     assert.ok(!lines.some((line) => line.includes("Suggestion: Recommended next step")));
   });
 
-  test("uses action label and preview query for advisory groups without duplicating suggestion text", () => {
+  test("uses action label for non-apply advisory groups without preview query", () => {
     const lines = buildDiagnosticMarkdownLines({
       findings: [{
         message: "Query does not specify $select.",
@@ -97,8 +107,7 @@ suite("diagnosticOutputBuilder", () => {
         suggestion: "Add $select to reduce payload size and improve result clarity.",
         suggestedFix: {
           label: "Add a focused $select clause",
-          detail: "Limit the response to the fields you actually need so the query is easier to inspect and cheaper to run.",
-          example: "contacts?$select=fullname,contactid"
+          detail: "Limit the response to the fields you actually need so the query is easier to inspect and cheaper to run."
         },
         confidence: 0.95
       }]
@@ -106,7 +115,7 @@ suite("diagnosticOutputBuilder", () => {
 
     assert.ok(lines.includes("### Advisory: Query shape missing $select"));
     assert.ok(lines.includes("- Action: Add $select to reduce payload size and improve result clarity."));
-    assert.ok(lines.includes("- Preview query: contacts?$select=fullname,contactid"));
+    assert.ok(!lines.some((line) => line.startsWith("- Preview query:")));
     assert.ok(!lines.some((line) => line.includes("Suggestion: Add $select to reduce payload size and improve result clarity.")));
   });
 });

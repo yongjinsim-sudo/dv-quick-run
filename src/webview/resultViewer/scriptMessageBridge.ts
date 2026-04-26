@@ -268,6 +268,50 @@ async function copyValueToClipboard(value) {
             });
         }
 
+
+        function getCopyableCellValue(cell) {
+            if (!cell || typeof cell !== "object") {
+                return cell;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(cell, "rawValue")) {
+                return cell.rawValue;
+            }
+
+            if (cell.drawerPayload && Object.prototype.hasOwnProperty.call(cell.drawerPayload, "payload")) {
+                return cell.drawerPayload.payload;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(cell, "copyValue")) {
+                return cell.copyValue;
+            }
+
+            return cell.value ?? null;
+        }
+
+        function buildRowJsonForAction(element) {
+            const rowElement = element.closest("tr[data-source-row-index]");
+            const rowIndexText = rowElement ? rowElement.getAttribute("data-source-row-index") : "";
+            const rowIndex = Number(rowIndexText);
+
+            if (!Number.isInteger(rowIndex) || rowIndex < 0 || !model || !Array.isArray(model.rows)) {
+                return "";
+            }
+
+            const row = model.rows[rowIndex];
+            if (!row || typeof row !== "object") {
+                return "";
+            }
+
+            const copyable = {};
+            const columns = Array.isArray(model.columns) ? model.columns : Object.keys(row);
+            columns.forEach((column) => {
+                copyable[column] = getCopyableCellValue(row[column]);
+            });
+
+            return JSON.stringify(copyable, null, 2);
+        }
+
         function executeAction(element) {
 
             if (element.hasAttribute("disabled") || element.getAttribute("aria-disabled") === "true") {
@@ -280,6 +324,9 @@ async function copyValueToClipboard(value) {
             const entityLogicalName = element.getAttribute("data-entity-logical-name") ?? "";
             const columnName = element.getAttribute("data-column-name") ?? "";
             const rawValue = element.getAttribute("data-raw-value") ?? "";
+            const displayValue = element.getAttribute("data-display-value") ?? "";
+            const isNullValue = element.getAttribute("data-is-null-value") === "true";
+            const rowJson = actionId === "copy-row-json" ? buildRowJsonForAction(element) : "";
             const sliceOperation = element.getAttribute("data-slice-operation") ?? "";
             const traversalSessionId = element.getAttribute("data-traversal-session-id") ?? "";
             const traversalLegIndex = element.getAttribute("data-traversal-leg-index") ?? "";
@@ -302,6 +349,9 @@ async function copyValueToClipboard(value) {
                 entityLogicalName,
                 columnName,
                 rawValue,
+                displayValue,
+                rowJson,
+                isNullValue,
                 sliceOperation,
                 traversalSessionId,
                 traversalLegIndex,

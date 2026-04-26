@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { applyEditorQueryUpdate } from "../commands/router/actions/shared/queryMutation/applyEditorQueryUpdate.js";
 import type { EditorQueryTarget } from "../commands/router/actions/shared/queryMutation/editorQueryTarget.js";
+import { createPreviewAction, showPreviewSurface } from "../services/previewSurfaceService.js";
 
 const QUERY_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-query-preview.md");
 
@@ -36,24 +37,33 @@ export async function previewMutationResult(
   details: MutationPreviewDetails,
   flowOptions?: MutationPreviewFlowOptions
 ): Promise<MutationPreviewOutcome> {
-  await openOrReuseQueryPreviewDocument(buildMutationPreviewDocumentContent(result, details, flowOptions));
-
   const mode = flowOptions?.mode ?? "apply";
   const applyButtonLabel = flowOptions?.applyButtonLabel ?? "Apply Preview";
   const copyButtonLabel = flowOptions?.copyButtonLabel ?? "Copy Preview";
-  const buttons = mode === "apply"
-    ? [applyButtonLabel]
-    : mode === "copy"
-      ? [copyButtonLabel]
-      : [applyButtonLabel, copyButtonLabel];
+  const secondaryActions = mode === "copy"
+    ? [createPreviewAction({ id: "copy", label: copyButtonLabel, kind: "copy" })]
+    : mode === "applyOrCopy"
+      ? [createPreviewAction({ id: "copy", label: copyButtonLabel, kind: "copy" })]
+      : [];
+  const primaryAction = mode === "copy"
+    ? undefined
+    : createPreviewAction({ id: "apply", label: applyButtonLabel, kind: "apply" });
 
-  const choice = await vscode.window.showWarningMessage(
-    buildPreviewPrompt(mode),
-    { modal: true },
-    ...buttons
-  );
+  const previewResult = await showPreviewSurface({
+    kind: "query",
+    title: details.title ?? "DV Quick Run – Query Preview",
+    source: "editor",
+    sourceAction: details.heading,
+    summary: details.summary ?? result.summary,
+    sections: buildMutationPreviewSections(result, details),
+    primaryAction,
+    secondaryActions: [
+      ...secondaryActions,
+      createPreviewAction({ id: "cancel", label: "Cancel", kind: "cancel" })
+    ]
+  });
 
-  if (choice === applyButtonLabel) {
+  if (previewResult.actionKind === "apply") {
     await applyEditorQueryUpdate(target, result.updatedQuery);
 
     const visibleEditor = vscode.window.visibleTextEditors.find(
@@ -72,7 +82,7 @@ export async function previewMutationResult(
     return { outcome: "applied" };
   }
 
-  if (choice === copyButtonLabel) {
+  if (previewResult.actionKind === "copy") {
     await copyMutationResultToClipboard(result);
     void vscode.window.showInformationMessage("DV Quick Run: Preview query copied to clipboard.");
     return { outcome: "copied" };
@@ -203,14 +213,17 @@ export function buildMutationPreviewDocumentContent(
   return lines.join("\n");
 }
 
-function buildPreviewPrompt(mode: MutationPreviewMode): string {
-  if (mode === "copy") {
-    return "DV Quick Run: Preview is ready. Copy the preview query to the clipboard?";
-  }
-
-  if (mode === "applyOrCopy") {
-    return "DV Quick Run: Preview is ready. Apply it to the detected query or copy the preview query?";
-  }
-
-  return "DV Quick Run: Preview is ready. Apply it to the detected query?";
+function buildMutationPreviewSections(
+  result: MutationResult,
+  details: MutationPreviewDetails
+): Array<{ title: string; content: string; language?: "text" }> {
+  return [
+    { title: "Original query", content: result.originalQuery, language: "text" },
+    ...(details.sections ?? []).map((section) => ({
+      title: section.label,
+      content: section.value,
+      language: "text" as const
+    })),
+    { title: "Preview query", content: result.updatedQuery, language: "text" }
+  ];
 }

@@ -1,28 +1,39 @@
 import * as vscode from "vscode";
 import type { BatchExecutionResult } from "../../../../../services/batchExecution.js";
+import { createPreviewAction, showPreviewSurface } from "../../../../../services/previewSurfaceService.js";
+import type { PreviewSurfaceResult } from "../../../../../services/previewSurfaceTypes.js";
 
-const BATCH_PREVIEW_URI = vscode.Uri.parse("untitled:dv-quick-run-batch-preview.txt");
 const BATCH_RESULT_URI = vscode.Uri.parse("untitled:dv-quick-run-batch-result.txt");
 
-export async function openBatchPreviewDocument(queries: string[], batchRequestBody: string): Promise<void> {
-  const content = [
-    "DV Quick Run – Batch Preview",
-    "============================",
-    "",
-    `Queries: ${queries.length}`,
-    "Mode: Read-only GET batch",
-    "",
-    "Included queries:",
-    ...queries.map((query, index) => `${index + 1}. ${query}`),
-    "",
-    "Generated $batch request:",
-    batchRequestBody,
-    "",
-    "Use the confirmation dialog to execute this read-only batch.",
-    "Dismissing the dialog leaves the editor and queries unchanged."
-  ].join("\n");
-
-  await openOrReuseTextDocument(BATCH_PREVIEW_URI, content, "plaintext");
+export async function showBatchPreview(queries: string[], batchRequestBody: string): Promise<PreviewSurfaceResult> {
+  return await showPreviewSurface({
+    kind: "batch",
+    title: "DV Quick Run – Batch Preview",
+    source: "editor",
+    sourceAction: "Run as $batch",
+    summary: "Preview the read-only Dataverse $batch request before execution.",
+    sections: [
+      {
+        title: "Summary",
+        content: [`Queries: ${queries.length}`, "Mode: Read-only GET batch"].join("\n"),
+        language: "text"
+      },
+      {
+        title: "Included queries",
+        content: queries.map((query, index) => `${index + 1}. ${query}`).join("\n"),
+        language: "text"
+      },
+      {
+        title: "Generated $batch request",
+        content: batchRequestBody,
+        language: "http"
+      }
+    ],
+    primaryAction: createPreviewAction({ id: "runBatch", label: "Run as $batch", kind: "apply" }),
+    secondaryActions: [
+      createPreviewAction({ id: "cancel", label: "Cancel", kind: "cancel" })
+    ]
+  });
 }
 
 export async function openBatchResultDocument(result: BatchExecutionResult): Promise<void> {

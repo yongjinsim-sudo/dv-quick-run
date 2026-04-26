@@ -128,6 +128,8 @@ function renderSiblingExpandButton(currentModel) {
                 " data-field-attribute-type=\\"" + escapeAttribute(action.payload?.fieldAttributeType ?? "") + "\\"" +
                 " data-column-name=\\"" + escapeAttribute(action.payload?.columnName ?? "") + "\\"" +
                 " data-raw-value=\\"" + escapeAttribute(action.payload?.rawValue ?? "") + "\\"" +
+                " data-display-value=\\"" + escapeAttribute(action.payload?.displayValue ?? "") + "\\"" +
+                " data-is-null-value=\\"" + escapeAttribute(action.payload?.isNullValue === true ? "true" : "false") + "\\"" +
                 " data-source-document-uri=\\"" + escapeAttribute(action.payload?.sourceDocumentUri ?? "") + "\\"" +
                 " data-source-range-start-line=\\"" + escapeAttribute(String(action.payload?.sourceRangeStartLine ?? "")) + "\\"" +
                 " data-source-range-start-character=\\"" + escapeAttribute(String(action.payload?.sourceRangeStartCharacter ?? "")) + "\\"" +
@@ -276,7 +278,8 @@ function renderTable(currentModel) {
 
             arrayDrawerPayloads.clear();
             renderedRows.forEach((row, rowIndex) => {
-                html += "<tr data-row-index=\\"" + rowIndex + "\\">";
+                const sourceRowIndex = Array.isArray(currentModel.rows) ? currentModel.rows.indexOf(row) : rowIndex;
+                html += "<tr data-row-index=\\"" + rowIndex + "\\" data-source-row-index=\\"" + sourceRowIndex + "\\">";
 
                 currentModel.columns.forEach((column) => {
                     const cell = row[column];
@@ -291,11 +294,15 @@ function renderTable(currentModel) {
                     const widthStyle = width ? " style=\\"width:" + width + "px; min-width:" + width + "px; max-width:" + width + "px;\\"" : "";
 
                     const hasDisplayValue = value !== undefined && value !== null && String(value).length > 0;
+                    const isNullDisplayCell = cell?.valueType === "empty";
+                    const actionDisplayValue = hasDisplayValue ? value : (isNullDisplayCell ? "∅" : value);
+                    const nullClass = isNullDisplayCell ? " null-value-cell" : "";
+                    const nullTitleAttribute = isNullDisplayCell ? " title=\\"Null value\\" aria-label=\\"Null value\\"" : "";
 
-                    if (actions.length > 0 && hasDisplayValue && !Array.isArray(cell && cell.rawValue)) {
-                        html += "<td class=\\"context-action-cell\\" data-column=\\"" + escapeAttribute(column) + "\\"" + widthStyle + ">";
+                    if (actions.length > 0 && (hasDisplayValue || isNullDisplayCell) && !Array.isArray(cell && cell.rawValue)) {
+                        html += "<td class=\\"context-action-cell" + nullClass + "\\" data-column=\\"" + escapeAttribute(column) + "\\"" + nullTitleAttribute + widthStyle + ">";
                         html += "<span class=\\"guid-cell\\">";
-                        html += "<span class=\\"guid-value copyable\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\">" + escapeHtml(value) + "</span>";
+                        html += "<span class=\\"guid-value copyable" + nullClass + "\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\"" + nullTitleAttribute + ">" + escapeHtml(actionDisplayValue) + "</span>";
                         html += "<span class=\\"cell-actions\\">";
                         html += "<span class=\\"primary-actions\\">";
 
@@ -330,10 +337,13 @@ function renderTable(currentModel) {
                                 });
                             }
 
-                            html += "<td class=\\"" + (isDrawerCell ? "array-cell" : "copyable") + "\\" data-column=\\"" + escapeAttribute(column) + "\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\"" + (isDrawerCell ? " data-array-drawer-key=\\"" + escapeAttribute(arrayDrawerKey) + "\\"" : "") + widthStyle + ">" +
+                            const displayCellValue = valueType === "empty" ? "∅" : value;
+                            const cellNullClass = valueType === "empty" ? " null-value-cell" : "";
+                            const cellNullTitleAttribute = valueType === "empty" ? " title=\\"Null value\\" aria-label=\\"Null value\\"" : "";
+                            html += "<td class=\\"" + (isDrawerCell ? "array-cell" : "copyable") + cellNullClass + "\\" data-column=\\"" + escapeAttribute(column) + "\\" data-copy-value=\\"" + escapeAttribute(copyValue) + "\\"" + cellNullTitleAttribute + (isDrawerCell ? " data-array-drawer-key=\\"" + escapeAttribute(arrayDrawerKey) + "\\"" : "") + widthStyle + ">" +
                                 (isDrawerCell
                                     ? "<span class=\\"array-cell-content\\"><span class=\\"array-badge\\">" + escapeHtml(isArrayCell ? "ARRAY" : "OBJECT") + "</span><span class=\\"array-cell-text\\">" + escapeHtml(value) + "</span></span>"
-                                    : escapeHtml(value)) +
+                                    : escapeHtml(displayCellValue)) +
                                 "</td>";
                     }
                 });

@@ -4,6 +4,7 @@ import type { DiagnosticResult } from "../shared/diagnostics/diagnosticTypes.js"
 export interface ExplainSourceTargetSnapshot {
   uri: vscode.Uri;
   range: vscode.Range;
+  text?: string;
 }
 
 export interface ExplainDocumentState {

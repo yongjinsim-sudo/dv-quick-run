@@ -7,9 +7,9 @@ import { evidenceAwareRules } from "./queryDoctorRules/evidenceAwareRules.js";
 
 function normalizeFinding(finding: DiagnosticFinding, capabilities: QueryDoctorCapabilityProfile): DiagnosticFinding {
   const hasSuggestedFix = !!finding.suggestedFix;
-  const hasDeterministicSuggestion = !!finding.suggestedQuery?.query || !!finding.suggestedFix?.example;
+  const hasDeterministicSuggestion = !!finding.suggestedQuery?.query;
   const actionability = finding.actionability ?? (hasDeterministicSuggestion ? (capabilities.canApplyFix ? "previewAndApply" : "previewOnly") : "none");
-  const fixHook = finding.fixHook ?? (hasDeterministicSuggestion ? { kind: "queryDoctor.suggestedFix", label: finding.suggestedFix?.label ?? finding.suggestedQuery?.label ?? "Suggested query" } : undefined);
+  const fixHook = finding.fixHook ?? (hasDeterministicSuggestion ? { kind: "queryDoctor.suggestedFix", label: finding.suggestedQuery?.label ?? finding.suggestedFix?.label ?? "Suggested query" } : undefined);
   return {
     ...finding,
     actionability,
