@@ -3,7 +3,7 @@ import type { DataverseClient } from "../../../../../services/dataverseClient.js
 import { loadEntityDefs } from "../../shared/metadataAccess.js";
 import type { EntityDef } from "../../../../../utils/entitySetCache.js";
 import type { SmartField } from "../../smartGet/smartGetTypes.js";
-import { loadFields } from "../../shared/metadataAccess.js";
+import { loadChoiceMetadata, loadFields } from "../../shared/metadataAccess.js";
 import { toSelectableFields } from "../../shared/selectableFields.js";
 import { buildLookupSelectToken } from "../../../../../metadata/metadataModel.js";
 
@@ -77,12 +77,15 @@ export class SmartMetadataSession {
 
     const promise = (async () => {
       const fields = await loadFields(this.ctx, this.client, this.token, logicalName);
+      const choiceMetadata = await loadChoiceMetadata(this.ctx, this.client, this.token, logicalName, { silent: true });
+      const choicesByField = new Map(choiceMetadata.map((choice) => [choice.fieldLogicalName.toLowerCase(), choice.options]));
 
       return toSelectableFields(fields).map((f) => ({
         logicalName: f.logicalName,
         attributeType: f.attributeType,
         isValidForRead: f.isValidForRead,
-        selectToken: f.selectToken ?? selectTokenForField(f.logicalName, f.attributeType)
+        selectToken: f.selectToken ?? selectTokenForField(f.logicalName, f.attributeType),
+        choiceOptions: choicesByField.get(f.logicalName.toLowerCase())
       }));
     })();
 

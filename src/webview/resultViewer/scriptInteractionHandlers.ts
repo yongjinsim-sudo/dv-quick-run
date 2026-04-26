@@ -286,13 +286,25 @@ function getHeaderContextActions(columnName) {
             continue;
         }
 
-        return actions.filter((action) => {
+        const headerActions = actions.filter((action) => {
             if (action.id === "preview-root-odata-orderby") {
                 return true;
             }
 
             return action.id === "preview-odata-slice" && allowedSliceOperations.has(String(action.payload?.sliceOperation ?? ""));
         });
+
+        headerActions.push({
+            id: "copy-column-name",
+            title: "Copy column name",
+            icon: "📋",
+            placement: "overflow",
+            group: "copy",
+            kind: "copy",
+            payload: { columnName }
+        });
+
+        return headerActions;
     }
 
     return [];
@@ -328,6 +340,8 @@ function showHeaderContextMenu(clientX, clientY, columnName) {
         button.setAttribute("data-field-logical-name", action.payload?.fieldLogicalName ?? action.payload?.columnName ?? columnName);
         button.setAttribute("data-field-attribute-type", action.payload?.fieldAttributeType ?? "");
         button.setAttribute("data-raw-value", action.payload?.rawValue ?? "");
+        button.setAttribute("data-display-value", action.payload?.displayValue ?? "");
+        button.setAttribute("data-is-null-value", action.payload?.isNullValue === true ? "true" : "false");
         button.setAttribute("data-slice-operation", action.payload?.sliceOperation ?? "");
         if (!isEnabled) {
             button.disabled = true;

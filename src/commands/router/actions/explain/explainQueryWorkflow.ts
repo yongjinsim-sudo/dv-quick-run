@@ -137,7 +137,7 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   const sourceTarget = deps.resolveSourceTarget();
   const explainDoc = await deps.openPreview(markdown);
   setExplainDocumentState(explainDoc.uri, {
-    source: { uri: sourceTarget.editor.document.uri, range: sourceTarget.range },
+    source: { uri: sourceTarget.editor.document.uri, range: sourceTarget.range, text: sourceTarget.text },
     diagnostics
   });
 

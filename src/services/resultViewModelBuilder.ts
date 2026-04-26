@@ -555,15 +555,15 @@ function buildCell(
     const rawValue = rowValue;
     const valueType = classifyCellValueType(rowValue);
     const displayValue = resolveDisplayValue(row, rowValue, column, fieldMap, choiceMetadata);
-    const copyValue = toDisplayCell(rowValue);
+    const copyValue = rowValue === null ? "null" : toDisplayCell(rowValue);
 
+    const isNullValue = rowValue === null;
     const shouldResolveActions =
-        rawValue !== undefined &&
-        rawValue !== null &&
+        rowValue !== undefined &&
         !Array.isArray(rowValue) &&
-        typeof rowValue !== "object";
+        (rowValue === null || typeof rowValue !== "object");
 
-    const actionRawValue = shouldResolveActions ? toDisplayCell(rowValue) : "";
+    const actionRawValue = shouldResolveActions && !isNullValue ? toDisplayCell(rowValue) : "";
     const actionGuid = shouldResolveActions && options.primaryIdField
         ? toDisplayCell(column === options.primaryIdField ? rowValue : rowPrimaryIdValue)
         : "";
@@ -581,6 +581,8 @@ function buildCell(
             queryMode: detectResultViewerQueryMode(queryPath),
             columnName: column,
             rawValue: actionRawValue,
+            displayValue,
+            isNullValue,
             sourceDocumentUri: options.sourceTarget?.sourceDocumentUri,
             sourceRangeStartLine: options.sourceTarget?.sourceRangeStartLine,
             sourceRangeStartCharacter: options.sourceTarget?.sourceRangeStartCharacter,

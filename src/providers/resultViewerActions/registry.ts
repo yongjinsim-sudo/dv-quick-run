@@ -50,6 +50,7 @@ export function resolveResultViewerActions(
 ): ResultViewerResolvedAction[] {
   const rawValue = String(context.rawValue ?? "").trim();
   const columnName = String(context.columnName ?? "").trim();
+  const isNullValue = context.isNullValue === true;
 
   if (context.traversal) {
     return resolveTraversalActions(context, columnName, rawValue);
@@ -64,7 +65,7 @@ export function resolveResultViewerActions(
     fieldAttributeType: context.fieldAttributeType
   });
 
-  if (!analysis.hasUsableValue) {
+  if (!analysis.hasUsableValue && !isNullValue) {
     return [];
   }
 
@@ -76,6 +77,8 @@ export function resolveResultViewerActions(
     fieldLogicalName: context.fieldLogicalName,
     fieldAttributeType: context.fieldAttributeType,
     currentValue: rawValue,
+    displayValue: context.displayValue,
+    isNullValue,
     columnName,
     rawValue,
     sourceDocumentUri: context.sourceDocumentUri,
@@ -224,10 +227,37 @@ export function resolveResultViewerActions(
         payload,
         isEnabled: false,
         disabledReason: "Root order by from Result Viewer is currently available for OData queries only."
+      }),
+      createAction({
+        id: "copy-display-value",
+        title: "Copy display value",
+        icon: "📋",
+        placement: "overflow",
+        group: "copy",
+        kind: "copy",
+        payload
+      }),
+      createAction({
+        id: "copy-raw-value",
+        title: "Copy raw value",
+        icon: "📋",
+        placement: "overflow",
+        group: "copy",
+        kind: "copy",
+        payload
+      }),
+      createAction({
+        id: "copy-row-json",
+        title: "Copy row JSON",
+        icon: "{}",
+        placement: "overflow",
+        group: "copy",
+        kind: "copy",
+        payload
       })
     );
 
-    return sortActions(actions);
+    return sortActions(actions.filter((action) => analysis.isPrimaryId || action.id !== "copy-row-json"));
   }
 
   actions.push(
@@ -294,7 +324,7 @@ export function resolveResultViewerActions(
       actions.push(
         createAction({
           id: "update-field",
-          title: "Update this field",
+          title: isNullValue ? "Set field value" : "Update this field",
           icon: "✎",
           placement: "overflow",
           group: "correct",
@@ -302,10 +332,75 @@ export function resolveResultViewerActions(
           payload
         })
       );
+
+      if (!isNullValue) {
+        actions.push(
+          createAction({
+            id: "set-field-null",
+            title: "Set this field to null",
+            icon: "∅",
+            placement: "overflow",
+            group: "correct",
+            kind: "execute",
+            payload: {
+              ...payload,
+              isNullValue: true,
+              rawValue: "",
+              currentValue: ""
+            }
+          })
+        );
+      }
     }
   }
 
-  return sortActions(actions);
+  if (!isRootColumn && !analysis.isPrimaryId) {
+    actions.push(
+      createAction({
+        id: "update-field",
+        title: "Update expanded field unavailable",
+        icon: "✎",
+        placement: "overflow",
+        group: "correct",
+        kind: "execute",
+        payload,
+        isEnabled: false,
+        disabledReason: "Smart PATCH from expanded or flattened columns is not supported yet. Patch the root record or open the related record first."
+      })
+    );
+  }
+
+  actions.push(
+    createAction({
+      id: "copy-display-value",
+      title: "Copy display value",
+      icon: "📋",
+      placement: "overflow",
+      group: "copy",
+      kind: "copy",
+      payload
+    }),
+    createAction({
+      id: "copy-raw-value",
+      title: "Copy raw value",
+      icon: "📋",
+      placement: "overflow",
+      group: "copy",
+      kind: "copy",
+      payload
+    }),
+    createAction({
+      id: "copy-row-json",
+      title: "Copy row JSON",
+      icon: "{}",
+      placement: "overflow",
+      group: "copy",
+      kind: "copy",
+      payload
+    })
+  );
+
+  return sortActions(actions.filter((action) => analysis.isPrimaryId || action.id !== "copy-row-json"));
 }
 
 export async function executeResultViewerAction(
@@ -392,13 +487,15 @@ export async function executeResultViewerAction(
       return;
     }
 
-    case "update-field": {
+    case "update-field":
+    case "set-field-null": {
       const fieldLogicalName = String(payload.fieldLogicalName ?? columnName).trim();
       const fieldAttributeType = String(payload.fieldAttributeType ?? "").trim();
       if (!guid || !payload.entitySetName?.trim() || !payload.entityLogicalName?.trim() || !fieldLogicalName || !fieldAttributeType) {
         return;
       }
 
+      const setNull = actionId === "set-field-null";
       await runSmartPatchPrefilledWorkflow(ctx, {
         entityLogicalName: payload.entityLogicalName.trim(),
         entitySetName: payload.entitySetName.trim(),
@@ -406,10 +503,46 @@ export async function executeResultViewerAction(
         fields: [{
           logicalName: fieldLogicalName,
           attributeType: fieldAttributeType,
-          rawValue: ""
+          rawValue: "",
+          setNull
         }],
         refreshSourceTarget: buildSmartPatchRefreshSourceTarget(payload)
       });
+      return;
+    }
+
+    case "copy-display-value": {
+      const text = payload.isNullValue === true ? "∅" : String(payload.displayValue ?? rawValue ?? "");
+      await vscode.env.clipboard.writeText(text);
+      void vscode.window.showInformationMessage("DV Quick Run: Display value copied.");
+      return;
+    }
+
+    case "copy-raw-value": {
+      const text = payload.isNullValue === true ? "null" : String(rawValue ?? "");
+      await vscode.env.clipboard.writeText(text);
+      void vscode.window.showInformationMessage("DV Quick Run: Raw value copied.");
+      return;
+    }
+
+    case "copy-row-json": {
+      const text = String(payload.rowJson ?? "").trim();
+      if (!text) {
+        return;
+      }
+
+      await vscode.env.clipboard.writeText(text);
+      void vscode.window.showInformationMessage("DV Quick Run: Row JSON copied.");
+      return;
+    }
+
+    case "copy-column-name": {
+      if (!columnName) {
+        return;
+      }
+
+      await vscode.env.clipboard.writeText(columnName);
+      void vscode.window.showInformationMessage("DV Quick Run: Column name copied.");
       return;
     }
 
@@ -428,21 +561,23 @@ export async function executeResultViewerAction(
     }
 
     case "preview-odata-filter": {
-      if (!columnName || !rawValue) {
+      const isNullFilterValue = payload.isNullValue === true;
+      if (!columnName || (!rawValue && !isNullFilterValue)) {
         return;
       }
 
+      const filterValue = isNullFilterValue ? null : rawValue;
+
       try {
-        await previewAndApplyODataFilter(columnName, rawValue);
+        await previewAndApplyODataFilter(columnName, filterValue);
       } catch (error) {
-        const filter = buildODataFilter(columnName, rawValue);
+        const filter = buildODataFilter(columnName, filterValue);
         await vscode.env.clipboard.writeText(filter);
         const message = error instanceof Error ? error.message : String(error);
         void vscode.window.showWarningMessage(`DV Quick Run: ${message} Falling back to copied OData filter.`);
       }
       return;
     }
-
     case "preview-odata-slice": {
       const hasRawValue = rawValue !== undefined && rawValue !== null;
       if (!columnName || !hasRawValue || !payload.sliceOperation) {
@@ -486,21 +621,23 @@ export async function executeResultViewerAction(
     }
 
     case "preview-fetchxml-condition": {
-      if (!columnName || !rawValue) {
+      const isNullFilterValue = payload.isNullValue === true;
+      if (!columnName || (!rawValue && !isNullFilterValue)) {
         return;
       }
 
+      const filterValue = isNullFilterValue ? null : rawValue;
+
       try {
-        await previewAndApplyFetchXmlCondition(columnName, rawValue);
+        await previewAndApplyFetchXmlCondition(columnName, filterValue);
       } catch (error) {
-        const condition = buildPreviewFetchXmlCondition(columnName, rawValue);
+        const condition = buildPreviewFetchXmlCondition(columnName, filterValue);
         await vscode.env.clipboard.writeText(condition);
         const message = error instanceof Error ? error.message : String(error);
         void vscode.window.showWarningMessage(`DV Quick Run: ${message} Falling back to copied FetchXML condition.`);
       }
       return;
     }
-
     case "copy-fetchxml-condition": {
       if (!columnName || !rawValue) {
         return;

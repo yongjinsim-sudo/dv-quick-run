@@ -16,6 +16,8 @@ import { resolveFilterField } from "../fieldResolution/filterFieldResolution.js"
 // - null semantic diagnostics are present
 // This rule acts as a refinement layer, not the primary validator.
 
+const ODATA_GUID_LITERAL_PATTERN = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
 type SimpleFilterComparison = {
   fieldLogicalName: string;
   operator: string;
@@ -28,7 +30,7 @@ function parseSimpleFilterComparisons(filter: string | undefined): SimpleFilterC
   }
 
   const regex = new RegExp(
-    "\\b([A-Za-z_][A-Za-z0-9_./]*)\\s+(eq|ne|gt|ge|lt|le|contains|like)\\s+((?:true|false|null|-?\\d+(?:\\.\\d+)?)|'(?:[^']|'')*')",
+    `\\b([A-Za-z_][A-Za-z0-9_./]*)\\s+(eq|ne|gt|ge|lt|le|contains|like)\\s+((?:true|false|null|${ODATA_GUID_LITERAL_PATTERN}|-?\\d+(?:\\.\\d+)?|'(?:[^']|'')*'))(?=$|\\s|\\))`,
     "gi"
   );
   const comparisons: SimpleFilterComparison[] = [];
@@ -91,7 +93,7 @@ function isNumericLiteral(rawValue: string): boolean {
 
 function isGuidLiteral(rawValue: string): boolean {
   const unquoted = unquoteSingleQuotedLiteral(rawValue);
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(unquoted);
+  return new RegExp(`^${ODATA_GUID_LITERAL_PATTERN}$`, "i").test(unquoted);
 }
 
 function isDateLikeLiteral(rawValue: string): boolean {

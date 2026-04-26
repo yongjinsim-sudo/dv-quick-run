@@ -590,9 +590,10 @@ suite("queryDoctorEngine", () => {
     const topFinding = result.findings.find((finding) => finding.message.includes("$top"));
 
     assert.ok(selectFinding?.suggestedFix);
-    assert.ok(selectFinding?.suggestedFix?.example?.includes("?$select="));
+    assert.strictEqual(selectFinding?.actionability, "none");
+    assert.strictEqual(selectFinding?.suggestedQuery, undefined);
     assert.ok(topFinding?.suggestedFix);
-    assert.ok(topFinding?.suggestedFix?.example?.includes("&$top="));
+    assert.strictEqual(topFinding?.suggestedQuery?.query, "contacts?$top=20&$filter=fullname eq 'A'");
   });
 
   test("surfaces speculative boolean suggested fix when field cannot be resolved", async () => {

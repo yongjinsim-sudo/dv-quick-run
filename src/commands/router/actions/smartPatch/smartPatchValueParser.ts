@@ -32,10 +32,14 @@ export function parsePatchValue(field: { attributeType: string }, raw: string): 
   const t = (field.attributeType || "").toLowerCase();
   const v = raw.trim();
 
+  if (v === "∅") {
+    throw new Error("∅ is only a display symbol for Null. Use 'Set this field to null' to clear a field.");
+  }
+
   if (t === "boolean") {
     if (v.toLowerCase() === "true" || v === "1") {return true;}
     if (v.toLowerCase() === "false" || v === "0") {return false;}
-    return v as any;
+    throw new Error("Boolean PATCH fields require true or false. Use the Smart PATCH Boolean picker.");
   }
 
   if (
@@ -49,7 +53,11 @@ export function parsePatchValue(field: { attributeType: string }, raw: string): 
     t === "status"
   ) {
     const n = Number(v);
-    return Number.isFinite(n) ? n : (v as any);
+    if (Number.isFinite(n)) {return n;}
+    if (t === "picklist" || t === "state" || t === "status") {
+      throw new Error("Choice PATCH fields require a numeric Dataverse option value. Use the Smart PATCH Choice picker.");
+    }
+    return v as any;
   }
 
   if (t === "datetime") {

@@ -21,7 +21,10 @@ suite("resultViewerActionEligibility", () => {
       "preview-odata-filter",
       "preview-root-odata-orderby",
       "update-record",
-      "copy-record-url"
+      "copy-display-value",
+      "copy-raw-value",
+      "copy-record-url",
+      "copy-row-json",
     ]);
   });
 
@@ -42,7 +45,8 @@ suite("resultViewerActionEligibility", () => {
       "preview-root-odata-orderby",
       "preview-odata-slice",
       "preview-odata-slice",
-      "preview-odata-slice"
+      "copy-display-value",
+      "copy-raw-value",
     ]);
   });
 
@@ -63,7 +67,9 @@ suite("resultViewerActionEligibility", () => {
       "investigate-record",
       "preview-add-select",
       "preview-odata-filter",
-      "preview-root-odata-orderby"
+      "preview-root-odata-orderby",
+      "copy-display-value",
+      "copy-raw-value",
     ]);
   });
 
@@ -84,7 +90,8 @@ suite("resultViewerActionEligibility", () => {
       "preview-root-odata-orderby",
       "preview-odata-slice",
       "preview-odata-slice",
-      "preview-odata-slice"
+      "copy-display-value",
+      "copy-raw-value",
     ]);
   });
 
@@ -208,7 +215,7 @@ suite("resultViewerActionEligibility", () => {
 
     assert.deepStrictEqual(
       actions.filter((action) => action.id === "preview-odata-slice").map((action) => action.title),
-      ["Slice: false", "Slice: field is not null", "Slice: true"]
+      ["Filter: false", "Filter: field is not null", "Filter: true"]
     );
   });
 
@@ -228,11 +235,10 @@ suite("resultViewerActionEligibility", () => {
     assert.deepStrictEqual(
       actions.filter((action) => action.id === "preview-odata-slice").map((action) => action.title),
       [
-        "Slice: after this value",
-        "Slice: before this value",
-        "Slice: equals this value",
-        "Slice: field is not null",
-        "Slice: field is null"
+        "Filter: after this value",
+        "Filter: before this value",
+        "Filter: field is not null",
+        "Filter: field is null"
       ]
     );
   });
@@ -257,11 +263,16 @@ suite("resultViewerActionEligibility", () => {
 
     assert.deepStrictEqual(actions.map((action) => action.id), [
       "preview-add-select",
-      "preview-root-odata-orderby"
+      "preview-root-odata-orderby",
+      "update-field",
+      "copy-display-value",
+      "copy-raw-value",
     ]);
 
     assert.strictEqual(actions[0]?.isEnabled, true);
     assert.strictEqual(actions[1]?.isEnabled, false);
+    assert.strictEqual(actions[2]?.isEnabled, false);
+    assert.strictEqual(actions[2]?.title, "Update expanded field unavailable");
 
     actions.forEach((action) => {
       assert.strictEqual(action.payload.columnName, "parentcustomerid_account.accountnumber");

@@ -15,6 +15,13 @@ function buildTarget(text: string): EditorQueryTarget {
 }
 
 suite("previewFetchXmlCondition", () => {
+    test("builds FetchXML null condition", () => {
+        assert.strictEqual(
+            buildFetchXmlCondition("accountrolecode", null),
+            "<condition attribute=\"accountrolecode\" operator=\"null\" />"
+        );
+    });
+
     test("builds FetchXML condition with escaped attributes", () => {
         assert.strictEqual(
             buildFetchXmlCondition("fullname", `John "O'Reilly" & Co`),

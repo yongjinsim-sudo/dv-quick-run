@@ -12,6 +12,10 @@ function buildTarget(text: string): EditorQueryTarget {
 }
 
 suite("previewODataFilter", () => {
+    test("builds OData null filter", () => {
+        assert.strictEqual(buildODataFilter("accountrolecode", null), "accountrolecode eq null");
+    });
+
     test("builds OData filter with quoted string", () => {
         assert.strictEqual(buildODataFilter("fullname", "John O'Reilly"), "fullname eq 'John O''Reilly'");
     });
@@ -37,6 +41,26 @@ suite("previewODataFilter", () => {
         assert.strictEqual(preview.previewQuery, "contacts?$select=fullname&$filter=(statecode eq 0) and (fullname eq 'John')");
     });
 
+    test("does not duplicate an existing identical null filter", () => {
+        const preview = buildODataFilterPreviewFromTarget(
+            buildTarget("contacts?$filter=address1_addresstypecode eq null"),
+            "address1_addresstypecode",
+            null
+        );
+
+        assert.strictEqual(preview.previewQuery, "contacts?$filter=address1_addresstypecode eq null");
+    });
+
+    test("deduplicates repeated identical null filter clauses", () => {
+        const preview = buildODataFilterPreviewFromTarget(
+            buildTarget("contacts?$filter=(address1_addresstypecode eq null) and (address1_addresstypecode eq null)"),
+            "address1_addresstypecode",
+            null
+        );
+
+        assert.strictEqual(preview.previewQuery, "contacts?$filter=address1_addresstypecode eq null");
+    });
+
     test("extracts only the OData query line from noisy editor text", () => {
         const preview = buildODataFilterPreviewFromTarget(
             buildTarget("Run Query|Explain\ncontacts?$top=5"),
@@ -47,4 +71,24 @@ suite("previewODataFilter", () => {
         assert.strictEqual(preview.originalQuery, "contacts?$top=5");
         assert.strictEqual(preview.previewQuery, "contacts?$top=5&$filter=contactid eq '7d29eec7-4414-f111-8341-6045bdc42f8b'");
     });
+  test("replaces existing same-column OData filter", () => {
+    const preview = buildODataFilterPreviewFromTarget(
+      buildTarget("contacts?$filter=address1_city eq 'Seattle'"),
+      "address1_city",
+      "Issaquah"
+    );
+
+    assert.strictEqual(preview.previewQuery, "contacts?$filter=address1_city eq 'Issaquah'");
+  });
+
+  test("replaces null same-column OData filter", () => {
+    const preview = buildODataFilterPreviewFromTarget(
+      buildTarget("contacts?$filter=address1_addresstypecode ne null"),
+      "address1_addresstypecode",
+      null
+    );
+
+    assert.strictEqual(preview.previewQuery, "contacts?$filter=address1_addresstypecode eq null");
+  });
+
 });

@@ -72,7 +72,7 @@ export async function runSmartPatchReviewLoopWithDeps(
 
     const fieldSummary =
       current.fields.length <= 5
-        ? current.fields.map((x) => `${x.logicalName}=${x.rawValue}`).join(", ")
+        ? current.fields.map((x) => `${x.logicalName}=${x.setNull === true ? "<null>" : (x.displayValue ?? x.rawValue)}`).join(", ")
         : `${current.fields.length} fields`;
 
     const items: Array<{ label: string; description?: string; choice: ReviewChoice }> = [

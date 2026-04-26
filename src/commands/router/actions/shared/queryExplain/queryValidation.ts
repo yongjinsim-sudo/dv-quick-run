@@ -92,9 +92,14 @@ function isChoiceLikeAttributeType(attributeType?: string): boolean {
     || normalized === "multiselectpicklist";
 }
 
+const ODATA_GUID_LITERAL_PATTERN = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
 function parseSimpleFilterComparisons(filter: string): SimpleComparison[] {
   const results: SimpleComparison[] = [];
-  const regex = /\b([A-Za-z_][A-Za-z0-9_]*)\s+(eq|ne|gt|ge|lt|le)\s+((?:true|false|null|-?\d+(?:\.\d+)?)|'(?:[^']|'')*')/gi;
+  const regex = new RegExp(
+    `\\b([A-Za-z_][A-Za-z0-9_]*)\\s+(eq|ne|gt|ge|lt|le)\\s+((?:true|false|null|${ODATA_GUID_LITERAL_PATTERN}|-?\\d+(?:\\.\\d+)?|'(?:[^']|'')*'))(?=$|\\s|\\))`,
+    "gi"
+  );
 
   for (const match of filter.matchAll(regex)) {
     const [, fieldLogicalName, operator, rawValue] = match;

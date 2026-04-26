@@ -1,10 +1,16 @@
 import * as vscode from "vscode";
 
+export type SmartChoiceOption = {
+  value: number | boolean;
+  label: string;
+};
+
 export type SmartField = {
   logicalName: string;
   attributeType: string;
   isValidForRead?: boolean;
   selectToken?: string; // undefined => not selectable
+  choiceOptions?: SmartChoiceOption[];
 };
 
 export type SmartGetOrderByState = {
