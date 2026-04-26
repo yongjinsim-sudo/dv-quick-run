@@ -6,6 +6,259 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.4 — Smart PATCH, Result Viewer Refinement & Workflow Completion
+
+This release completes the **end-to-end query → refine → PATCH → refresh workflow**, establishing DV Quick Run as a **true interactive Dataverse workbench**.
+
+It focuses on:
+- introducing **Smart PATCH (preview-first, safe mutation)**
+- refining **Result Viewer as a command surface**
+- stabilising **PATCH → Result Viewer refresh loop**
+- tightening **UX consistency, guardrails, and interaction behaviour**
+
+---
+
+### ✏️ Smart PATCH (Preview → Apply → Refresh)
+
+- Introduced **Smart PATCH workflow**
+  - Update Dataverse records directly from Result Viewer interactions
+
+- Full workflow:
+  1. user triggers update (cell / row action)
+  2. PATCH preview document opens
+  3. confirmation dialog shown
+  4. PATCH executed on confirmation
+  5. Result Viewer refreshes using original query context
+
+- Preview includes:
+  - entity + record ID
+  - PATCH path
+  - payload (typed correctly)
+  - HTTP representation
+  - cURL example
+
+- Supports:
+  - **boolean fields (true/false QuickPick)**
+  - **choice / OptionSet fields (label + value selection)**
+
+👉 Results in:
+- safe, transparent data mutation
+- no malformed payloads (no free-text errors)
+- consistent preview-first mutation behaviour
+
+---
+
+### 🧠 Typed PATCH Input (NEW)
+
+- Replaced free-text PATCH input with **metadata-aware selection**
+
+- Behaviour:
+  - Boolean → QuickPick (true / false)
+  - Choice → QuickPick (label + numeric value)
+  - Prevents invalid payload formats
+
+👉 Eliminates:
+- incorrect string payloads (e.g. `"e"`)
+- Dataverse 400 errors due to type mismatch
+
+---
+
+### 🔁 PATCH → Result Viewer Refresh (Stabilised)
+
+- Result Viewer now refreshes **automatically after PATCH**
+
+- Behaviour:
+  - uses **Insight Model (original query context)**
+  - re-runs query to reflect updated data
+
+- Improved resilience:
+  - refresh failures → **warning (non-blocking)**
+  - PATCH success not lost due to UI issues
+
+👉 Ensures:
+- reliable edit → verify loop
+- consistent post-update visibility
+
+---
+
+### 🧠 Insight Model as Source of Truth
+
+- Enforced architectural invariant:
+
+> Insight Model is the **single source of truth** for:
+- query execution
+- PATCH context
+- Result Viewer refresh
+- rerun actions
+
+- Removed reliance on:
+  - editor reconstruction
+  - ad-hoc query rebuilding
+
+👉 Results in:
+- consistent workflow behaviour
+- strong foundation for future features
+
+---
+
+### 📊 Result Viewer UX Refinement (Major)
+
+#### Null Handling Improvements
+
+- Null values now rendered as:
+  - `∅` (visual indicator)
+  - tooltip: **"Null value"**
+
+- Behaviour safeguards:
+  - copy actions → return `null` (not `∅`)
+  - prevents accidental PATCH corruption
+
+#### Filter / Slice Consistency Fix
+
+- Enforced **single-condition-per-column rule (non-date fields)**
+
+- Behaviour:
+  - applying new filter/slice replaces existing condition for same field
+  - prevents:
+    - duplicate `eq null`
+    - conflicting `eq null` + `ne null`
+
+👉 Fixes:
+- broken query states
+- invalid logical combinations
+
+---
+
+### 🔍 Result Viewer Actions (Improved)
+
+- **Filter by this value**
+  - now fully wired and functional
+  - supports null values correctly (`eq null`)
+
+- **Slice behaviour refinement**
+  - `is null` / `is not null` now mutually exclusive
+  - behaves predictably across repeated actions
+
+- **Column header actions**
+  - moved sorting + filter actions to header-level where appropriate
+
+---
+
+### 📦 Copy Actions (Optimised)
+
+- Added:
+  - Copy display value
+  - Copy raw value
+  - Copy row JSON
+
+- Performance optimisation:
+  - **row JSON no longer precomputed for all rows**
+  - generated **on-demand only**
+
+- UX refinement:
+  - **Copy row JSON only available on primary key column**
+
+👉 Results in:
+- faster table rendering
+- reduced memory overhead
+- cleaner action surface
+
+---
+
+### ⚡ Result Viewer Performance Improvements
+
+- Removed eager row JSON construction
+- Reduced per-cell payload overhead
+- Deferred heavy operations to interaction time
+
+👉 Results in:
+- faster initial render
+- smoother scrolling
+- improved responsiveness on large datasets
+
+---
+
+### 🧩 Expand Field Guardrails
+
+- Prevented invalid PATCH on expanded fields
+
+- Behaviour:
+  - expanded fields show:
+    - **“Update expanded field unavailable”**
+  - avoids invalid mutation paths
+
+👉 Ensures:
+- safe mutation boundaries
+- clearer UX expectations
+
+---
+
+### 📊 Result Viewer Workflow Completion
+
+DV Quick Run now supports full loop:
+```
+Query → Result → Refine → PATCH → Refresh → Continue
+```
+
+- Result Viewer acts as:
+  - command surface
+  - mutation entry point
+  - verification layer
+
+👉 Establishes:
+- full interactive Dataverse workflow inside VS Code
+- reduced need for external tools
+
+---
+
+### 🧾 Logging & UX Improvements
+
+- Improved execution logs:
+  - clearer success/failure states
+  - reduced noise
+  - consistent formatting
+
+- Error handling:
+  - PATCH failures → clear diagnostic output
+  - refresh failures → warning only
+
+👉 Results in:
+- better clarity
+- improved trust in system behaviour
+
+---
+
+### 🧪 Stability
+
+- Verified:
+  - Smart PATCH (boolean + choice)
+  - PATCH preview → apply flow
+  - Result Viewer refresh via Insight Model
+  - filter/slice deduplication logic
+  - null handling + copy safety
+  - performance improvements (row JSON deferral)
+
+- No regression in:
+  - Guided Traversal
+  - Query Doctor
+  - Result Viewer interactions
+  - `$batch` execution
+  - preview-first mutation pipeline
+
+---
+
+## 🧭 Notes
+
+This release marks a major milestone:
+
+Key principles reinforced:
+- preview-first safety
+- metadata-aware mutation
+- insight-driven execution
+- result-driven refinement
+
+--
+
 ## v0.9.4 — Smart PATCH, Insight Model Alignment & Workflow Completion
 
 This release completes the **end-to-end query → refine → PATCH → refresh workflow**, establishing DV Quick Run as a **true interactive Dataverse workbench**.
