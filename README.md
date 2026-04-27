@@ -25,183 +25,103 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.5 (Result Viewer Polish, Safe Mutation UX & Interaction Consistency)
+## 🆕 What's New in v0.9.6 (Enterprise Stability & Large Dataset Handling)
 
-> Refines the **Result Viewer experience and mutation workflow**, focusing on correctness, performance, and interaction clarity — making DV Quick Run safer and more intuitive for real-world data operations.
+> Hardens DV Quick Run for **real-world enterprise usage**, focusing on large datasets, reliability, and predictable behaviour under load.
 
 ---
 
-### 📊 Result Viewer Interaction Refinement
+### 📊 Large Dataset Stability (Major)
 
-- Improved **filter and slice behaviour consistency**
-  - enforcing **single-condition-per-field** (non-date fields)
-  - applying a new filter replaces the previous one
-  - prevents:
-    - duplicate conditions
-    - conflicting `null` / `not null` filters
-    - broken query states
+- Result Viewer now uses a **session-backed model**
+  - full dataset stored once
+  - UI renders controlled windows (default 100 rows)
+
+- Supports safe row windows:
+  - 100 / 200 / 500 / 1000
+  - prevents UI lockups from large renders
+
+- Large datasets (1000–5000+ rows):
+  - handled safely without crashing
+  - progressive rendering ensures responsiveness
 
 👉 Results in:
-- predictable refinement behaviour  
-- cleaner query output  
-- reduced user confusion  
+- stable behaviour in enterprise environments  
+- no more viewer crashes or “dead” states  
+- predictable performance under load  
 
 ---
 
-### 🧩 Null Handling (UX + Safety)
+### 🔍 Full Dataset Search (Correctness Fix)
 
-- Introduced consistent null rendering:
-  - `∅` used as visual indicator
-  - tooltip clarifies value as `null`
-
-- Safeguards:
-  - copy actions return actual `null` (not `∅`)
-  - prevents accidental PATCH of incorrect values
-
-- Action behaviour:
-  - null filtering correctly maps to:
-    - `eq null`
-    - `ne null`
-
-👉 Results in:
-- clearer data interpretation  
-- safer mutation workflows  
-- improved usability in real datasets  
-
----
-
-### ✏️ PATCH UX Improvements (Boolean & Choice Fields)
-
-- Replaced free-text PATCH input with **metadata-aware QuickPick**
+- Search now operates on **entire result set**, not just visible rows
 
 - Behaviour:
-  - Boolean → `true / false` selection
-  - Choice / OptionSet → label + value selection (e.g. `Married (2)`)
-
-- Payload:
-  - always uses correct Dataverse value type
-
-👉 Prevents:
-- invalid PATCH payloads  
-- string-to-int conversion errors  
-- failed API requests  
-
----
-
-### 🚫 Expanded Field Mutation Guardrails
-
-- Prevented PATCH operations on expanded / related fields
-
-- Behaviour:
-  - disabled action:
-    - **“Update expanded field unavailable”**
-  - clear explanation provided
-
-👉 Ensures:
-- correct mutation boundaries  
-- avoids updating the wrong entity  
-- improves user understanding of data scope  
-
----
-
-### 📦 Copy Actions (Optimised & Clarified)
-
-- Added:
-  - Copy display value  
-  - Copy raw value  
-  - Copy row JSON  
-
-- Optimisation:
-  - **Copy row JSON only available on primary key column**
-  - avoids per-cell duplication and unnecessary overhead
-
-- Behaviour:
-  - row JSON generated **on-demand only** (lazy)
+  - finds matches across all rows
+  - displays accurate match count
 
 👉 Results in:
-- improved performance  
-- reduced memory usage  
-- clearer action intent  
+- trustworthy search results  
+- no missing matches due to paging  
 
 ---
 
-### ⚡ Result Viewer Performance Improvements
+### 📄 Paging & Windowing UX
 
-- Removed eager row JSON generation
-- Reduced per-cell action payload size
-- Deferred heavy operations to interaction time
+- Added row window controls:
+  - `Show 100 / 200 / 500 / 1000`
+
+- Smart UI behaviour:
+  - hides unnecessary options for small datasets
+  - hides navigation when not needed
+
+- Clear indicators:
+  - `Rows X–Y of Z`
 
 👉 Results in:
-- faster table rendering  
-- smoother interaction  
-- better performance on large datasets  
+- cleaner UI  
+- better navigation across datasets  
 
 ---
 
-### 🔍 Result Viewer Action Fixes
+### ⚡ Rendering Reliability Improvements
 
-- Fixed **Filter by this value** action:
-  - now correctly applies filter
-  - no longer silently fails
+- Fixed:
+  - blank Result Viewer issue
+  - stuck “Loading rows…” state
+  - large window rendering freezes
 
-- Improved behaviour for:
-  - null filtering
-  - repeated action application
-  - deduplication of conditions
+- Improved:
+  - progressive rendering feedback
+  - consistent render completion
 
 👉 Results in:
-- reliable data-driven refinement  
-- consistent action outcomes  
+- reliable viewer lifecycle  
+- no need to rerun queries due to UI issues  
 
 ---
 
-### 🧠 Interaction Model Alignment
+### 🧠 Result Viewer Architecture Upgrade
 
-- Reinforced **Result Viewer as command surface**
-  - actions behave consistently across:
-    - filter
-    - slice
-    - patch
-    - copy
+- Result Viewer now:
+  - decouples dataset from UI rendering
+  - uses session as source of truth
 
-- Improved alignment with:
-  - preview-first mutation model
-  - Insight Model execution flow
-
-👉 Results in:
-- predictable workflows  
-- stronger mental model for users  
-- cleaner interaction patterns  
-
----
-
-### 🧪 Stability
-
-- Verified:
-  - filter/slice replacement logic
-  - null handling behaviour
-  - PATCH QuickPick workflows
-  - expanded field guardrails
-  - Result Viewer action consistency
-  - performance improvements
-
-- No regression in:
-  - Smart PATCH workflow
-  - Guided Traversal
-  - Query Doctor
-  - `$batch` execution
-  - preview-first mutation pipeline
+👉 Enables future:
+- slice-and-dice workflows  
+- result-driven insights  
+- advanced Query Doctor features  
 
 ---
 
 ## 🧭 Notes
 
-This release focuses on **polish, correctness, and safety**:
+This release focuses on **stability and correctness over new features**.
 
-- strengthens Result Viewer as a **primary interaction surface**
-- improves reliability of **data-driven query refinement**
-- ensures PATCH workflows are **safe and type-correct**
-- reinforces DV Quick Run as a **trusted Dataverse workbench**
+DV Quick Run is now:
+- safe for **large enterprise datasets**
+- reliable under **real-world load**
+- positioned as a **data interaction surface**, not just a viewer
 
 ---
 

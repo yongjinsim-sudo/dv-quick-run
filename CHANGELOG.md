@@ -6,6 +6,177 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.6 — Enterprise Stability: Large Dataset Handling & Result Viewer Reliability
+
+This release focuses on **stability, predictability, and correctness under large datasets**, making DV Quick Run suitable for **real-world enterprise usage**.
+
+It is not a feature-heavy release — instead, it hardens the **Result Viewer architecture**, fixes critical edge cases, and ensures consistent behaviour across large and complex result sets.
+
+---
+
+### 📊 Large Dataset Handling (Major)
+
+- Introduced **session-backed Result Viewer model**
+  - Full dataset stored once per execution
+  - UI renders only a **controlled window** (default 100 rows)
+
+- Added **row window controls**
+  - Users can choose:
+    - 100 / 200 / 500 / 1000 rows
+  - Dynamic options based on dataset size
+  - Prevents unsafe rendering of excessively large windows
+
+- Enforced **safe rendering cap**
+  - Recommended maximum: **1000 rows per window**
+
+👉 Results in:
+- stable rendering even for 5000+ row datasets
+- predictable performance across environments
+
+---
+
+### 🔍 Full Dataset Search (Correctness Fix)
+
+- Reworked search to operate on **entire dataset (not current page)**
+
+- Behaviour:
+  - search scans full result set
+  - result count reflects **true matches across dataset**
+  - UI shows:
+    - “X matching rows across Y total rows”
+
+- Fixed issues:
+  - missing matches on non-visible pages
+  - incorrect match counts due to paging
+  - inconsistent search behaviour
+
+👉 Results in:
+- trustworthy search
+- correct data discovery across large datasets
+
+---
+
+### 📄 Pagination & Navigation Improvements
+
+- Added **sub-page navigation**
+  - `[<] [>]` to move across row windows
+
+- Smart visibility:
+  - hidden when:
+    - total rows < page size
+    - single-page datasets
+
+- Improved row indicators:
+  - `Rows X–Y of Z`
+  - reflects current window accurately
+
+👉 Results in:
+- clearer navigation
+- reduced UI noise for small datasets
+
+---
+
+### ⚡ Progressive Rendering & Stability
+
+- Improved **progressive rendering behaviour**
+  - incremental row rendering for smoother UX
+
+- Fixed rendering issues:
+  - blank screen on execution
+  - stuck “Loading rows...” state for large windows
+  - inconsistent render completion
+
+- Improved resilience:
+  - avoids UI lockups under heavy datasets
+  - ensures viewer always reaches a stable state
+
+👉 Results in:
+- reliable rendering lifecycle
+- no more “dead” viewer states
+
+---
+
+### 📊 UX Clarity & Feedback
+
+- Improved large dataset messaging:
+  - performance warnings for large row windows
+  - clearer “shown vs total” indicators
+
+- Added:
+  - render progress messaging (for large windows)
+  - better loading state feedback
+
+- Removed misleading states:
+  - loading with no feedback
+  - partial rendering without explanation
+
+👉 Results in:
+- better user trust
+- clearer system behaviour under load
+
+---
+
+### 🧠 Architecture (Key Upgrade)
+
+- Introduced **session as source of truth for Result Viewer**
+  - decouples:
+    - data retrieval
+    - rendering
+    - interaction (search, paging)
+
+- Eliminated:
+  - re-computation per page
+  - inconsistent state between UI and dataset
+
+👉 Establishes foundation for:
+- future result analysis features
+- slice-and-dice workflows
+- Query Doctor improvements
+
+---
+
+### 🧪 Stability
+
+- Verified:
+  - large datasets (1000–5000 rows)
+  - wide schemas (many columns)
+  - search across full dataset
+  - paging + navigation behaviour
+  - progressive rendering lifecycle
+
+- No regression in:
+  - Smart PATCH workflow
+  - Result Viewer actions
+  - Guided Traversal
+  - Query Doctor
+  - `$batch` execution
+
+---
+
+## 🧭 Notes
+
+This release marks an important shift:
+
+- Result Viewer evolves from:
+  - **UI rendering layer**
+→ to:
+  - **session-backed data interaction layer**
+
+Key principles reinforced:
+- predictable behaviour under load
+- correctness over convenience
+- clear system feedback
+- safe defaults for enterprise datasets
+
+---
+
+This release is primarily aimed at:
+- **enterprise environments**
+- **large Dataverse tables**
+- **real-world production usage**
+
+---
+
 ## v0.9.5 — Smart PATCH, Result Viewer Refinement & Workflow Completion
 
 This release completes the **end-to-end query → refine → PATCH → refresh workflow**, establishing DV Quick Run as a **true interactive Dataverse workbench**.
