@@ -1,5 +1,6 @@
 import type { CommandContext } from "../../../../context/commandContext.js";
 import { ResultViewerPanel } from "../../../../../providers/resultViewerPanel.js";
+import { ResultViewerSessionStore } from "../../../../../providers/resultViewerSessionStore.js";
 import { buildBatchResultViewerBinderSuggestion } from "../../../../../product/binder/buildBinderSuggestion.js";
 import {
     buildResultViewerModel,
@@ -72,7 +73,7 @@ export async function showResultViewerForQuery(
     const nextLink = extractNextLink(result) ?? options?.paging?.nextLink;
     const sourceTarget = tryCaptureSourceTarget(path);
 
-    const model = buildResultViewerModel(result, path, {
+    const model = ResultViewerSessionStore.createInitialModel(result, path, {
         entitySetName: entityDef?.entitySetName ?? entitySetName,
         entityLogicalName: entityDef?.logicalName,
         primaryIdField: entityDef?.primaryIdAttribute,
@@ -88,6 +89,7 @@ export async function showResultViewerForQuery(
         paging: {
             pageNumber: options?.paging?.pageNumber ?? 1,
             hasNextPage: !!nextLink,
+            nextLink,
             history: options?.paging?.history ?? []
         },
         sourceTarget

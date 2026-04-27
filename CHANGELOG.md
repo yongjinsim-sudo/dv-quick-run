@@ -6,7 +6,7 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
-## v0.9.4 — Smart PATCH, Result Viewer Refinement & Workflow Completion
+## v0.9.5 — Smart PATCH, Result Viewer Refinement & Workflow Completion
 
 This release completes the **end-to-end query → refine → PATCH → refresh workflow**, establishing DV Quick Run as a **true interactive Dataverse workbench**.
 

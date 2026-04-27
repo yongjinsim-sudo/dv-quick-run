@@ -17,6 +17,7 @@ function bindTableEventsOnce() {
                 const selectionEnd = target.selectionEnd ?? nextFilterText.length;
 
                 setUnifiedSearchText(nextFilterText, "table");
+                requestSessionSearch(nextFilterText);
                 renderTable(model);
 
                 const nextFilterInput = document.getElementById("tableFilterInput");
@@ -42,6 +43,7 @@ function bindTableEventsOnce() {
 
                 event.preventDefault();
                 setUnifiedSearchText("", "table");
+                requestSessionSearch("");
                 renderTable(model);
 
                 const nextFilterInput = document.getElementById("tableFilterInput");
@@ -56,11 +58,42 @@ function bindTableEventsOnce() {
                     return;
                 }
 
+                const rowWindowSizeButton = target.closest("[data-row-window-size]");
+                if (rowWindowSizeButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const size = Number(rowWindowSizeButton.getAttribute("data-row-window-size") || "100");
+                    const session = getActiveSession();
+                    if (session) {
+                        const totalRows = Number(session.totalRows || model.rowCount || 0);
+                        requestSessionRows(0, getEffectiveRowWindowLimit(size, totalRows));
+                        renderTable(model);
+                    }
+                    return;
+                }
+
+                const rowWindowNavButton = target.closest("[data-row-window-nav]");
+                if (rowWindowNavButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const session = getActiveSession();
+                    if (session) {
+                        const direction = rowWindowNavButton.getAttribute("data-row-window-nav") === "prev" ? -1 : 1;
+                        const totalRows = Number(session.totalRows || model.rowCount || 0);
+                        const limit = getEffectiveRowWindowLimit(Number(session.chunkSize || 100), totalRows);
+                        const nextOffset = clampRowWindowOffset(Number(session.rowOffset || 0) + direction * limit, limit, totalRows);
+                        requestSessionRows(nextOffset, limit);
+                        renderTable(model);
+                    }
+                    return;
+                }
+
                 const clearFilterButton = target.closest("#tableFilterClearBtn");
                 if (clearFilterButton instanceof HTMLElement) {
                     event.preventDefault();
                     event.stopPropagation();
                     setUnifiedSearchText("", "table");
+                    requestSessionSearch("");
                     renderTable(model);
 
                     const nextFilterInput = document.getElementById("tableFilterInput");

@@ -12,6 +12,7 @@ import { previewAndApplyAddSelectForQueryInEditor, previewAndApplyAddSelectInAct
 import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
+import { ResultViewerSessionStore } from "./resultViewerSessionStore.js";
 
 type ResultViewerMessage =
     | {
@@ -60,6 +61,41 @@ type ResultViewerMessage =
         payload: {
             fileName?: string;
             json?: string;
+        };
+    }
+    | {
+        type: "requestRows";
+        payload: {
+            sessionId?: string;
+            offset?: number;
+            limit?: number;
+        };
+    }
+    | {
+        type: "requestRowJson";
+        payload: {
+            sessionId?: string;
+            rowIndex?: number;
+        };
+    }
+    | {
+        type: "copySessionRowJson";
+        payload: {
+            sessionId?: string;
+            rowIndex?: number;
+        };
+    }
+    | {
+        type: "requestJson";
+        payload: {
+            sessionId?: string;
+        };
+    }
+    | {
+        type: "searchSessionRows";
+        payload: {
+            sessionId?: string;
+            searchText?: string;
         };
     }
     | {
@@ -113,12 +149,14 @@ export class ResultViewerPanel {
     private static currentContext: CommandContext | undefined;
     private static currentPagingState: ResultViewerPagingState | undefined;
     private static lastViewColumn: vscode.ViewColumn | undefined;
+    private static currentSessionId: string | undefined;
 
     public static show(
     ctx: CommandContext,
     model: ResultViewerDisplayModel
     ): void {
         ResultViewerPanel.currentContext = ctx;
+        ResultViewerPanel.currentSessionId = isBatchResultViewerModel(model) ? undefined : model.session?.id;
 
         if (isBatchResultViewerModel(model)) {
             ResultViewerPanel.currentPagingState = undefined;
@@ -127,7 +165,7 @@ export class ResultViewerPanel {
                 sourcePath: model.queryPath,
                 pageNumber: model.paging?.pageNumber ?? 1,
                 nextLink: model.paging?.hasNextPage
-                    ? ResultViewerPanel.extractNextLinkFromRawJson(model.rawJson)
+                    ? (model.paging.nextLink ?? ResultViewerPanel.extractNextLinkFromRawJson(model.rawJson))
                     : undefined,
                 history: model.paging?.history ?? []
             };
@@ -160,7 +198,11 @@ export class ResultViewerPanel {
         });
 
         panel.onDidDispose(() => {
+            if (ResultViewerPanel.currentSessionId) {
+                ResultViewerSessionStore.dispose(ResultViewerPanel.currentSessionId);
+            }
             ResultViewerPanel.currentPanel = undefined;
+            ResultViewerPanel.currentSessionId = undefined;
         });
 
         ResultViewerPanel.lastViewColumn = panel.viewColumn;
@@ -232,6 +274,26 @@ export class ResultViewerPanel {
                 );
                 return;
 
+            case "requestRows":
+                await ResultViewerPanel.handleRequestRows(message.payload);
+                return;
+
+            case "requestRowJson":
+                await ResultViewerPanel.handleRequestRowJson(message.payload);
+                return;
+
+            case "copySessionRowJson":
+                await ResultViewerPanel.handleCopySessionRowJson(message.payload);
+                return;
+
+            case "requestJson":
+                await ResultViewerPanel.handleRequestJson(message.payload);
+                return;
+
+            case "searchSessionRows":
+                await ResultViewerPanel.handleSearchSessionRows(message.payload);
+                return;
+
             case "previousPage":
                 await ResultViewerPanel.previousPage();
                 return;
@@ -261,6 +323,117 @@ export class ResultViewerPanel {
         }
     }
 
+
+    private static async handleRequestRows(payload: { sessionId?: string; offset?: number; limit?: number }): Promise<void> {
+        const sessionId = String(payload.sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
+        const panel = ResultViewerPanel.currentPanel;
+        if (!sessionId || !panel) {
+            return;
+        }
+
+        const chunk = ResultViewerSessionStore.getRows(
+            sessionId,
+            Number(payload.offset ?? 0),
+            Number(payload.limit ?? 200)
+        );
+
+        if (!chunk) {
+            await panel.webview.postMessage({
+                type: "rowsChunkError",
+                payload: { sessionId, message: "Result Viewer session is no longer available." }
+            });
+            return;
+        }
+
+        await panel.webview.postMessage({
+            type: "rowsChunk",
+            payload: chunk
+        });
+    }
+
+    private static async handleRequestRowJson(payload: { sessionId?: string; rowIndex?: number }): Promise<void> {
+        const sessionId = String(payload.sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
+        const panel = ResultViewerPanel.currentPanel;
+        if (!sessionId || !panel) {
+            return;
+        }
+
+        const rowJson = ResultViewerSessionStore.getRowJson(sessionId, Number(payload.rowIndex ?? -1));
+        if (!rowJson) {
+            return;
+        }
+
+        await panel.webview.postMessage({
+            type: "rowJson",
+            payload: {
+                sessionId,
+                rowIndex: Number(payload.rowIndex ?? -1),
+                rowJson
+            }
+        });
+    }
+
+
+    private static async handleCopySessionRowJson(payload: { sessionId?: string; rowIndex?: number }): Promise<void> {
+        const sessionId = String(payload.sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
+        if (!sessionId) {
+            return;
+        }
+
+        const rowIndex = Number(payload.rowIndex ?? -1);
+        const rowJson = ResultViewerSessionStore.getRowJson(sessionId, rowIndex);
+        if (!rowJson) {
+            void vscode.window.showWarningMessage("DV Quick Run: Row JSON is no longer available.");
+            return;
+        }
+
+        await vscode.env.clipboard.writeText(rowJson);
+        void vscode.window.showInformationMessage("DV Quick Run: Row JSON copied.");
+    }
+
+    private static async handleRequestJson(payload: { sessionId?: string }): Promise<void> {
+        const sessionId = String(payload.sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
+        const panel = ResultViewerPanel.currentPanel;
+        if (!sessionId || !panel) {
+            return;
+        }
+
+        const rawJson = ResultViewerSessionStore.getRawJson(sessionId);
+        if (!rawJson) {
+            await panel.webview.postMessage({
+                type: "jsonDataError",
+                payload: { sessionId, message: "Result Viewer JSON payload is no longer available." }
+            });
+            return;
+        }
+
+        await panel.webview.postMessage({
+            type: "jsonData",
+            payload: { sessionId, rawJson }
+        });
+    }
+
+    private static async handleSearchSessionRows(payload: { sessionId?: string; searchText?: string }): Promise<void> {
+        const sessionId = String(payload.sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
+        const panel = ResultViewerPanel.currentPanel;
+        if (!sessionId || !panel) {
+            return;
+        }
+
+        const result = ResultViewerSessionStore.searchRows(sessionId, String(payload.searchText ?? ""));
+        if (!result) {
+            await panel.webview.postMessage({
+                type: "sessionSearchError",
+                payload: { sessionId, message: "Result Viewer session is no longer available." }
+            });
+            return;
+        }
+
+        await panel.webview.postMessage({
+            type: "sessionSearchResult",
+            payload: result
+        });
+    }
 
     private static async handleExecuteBinderSuggestion(
         ctx: CommandContext,
@@ -417,9 +590,11 @@ export class ResultViewerPanel {
 
         const token = await ctx.getToken(ctx.getScope());
         const client = ctx.getClient();
-        const currentRawJson = ResultViewerPanel.currentPanel
-            ? ResultViewerPanel.extractRawJsonFromCurrentPanel(ResultViewerPanel.currentPanel.webview.html)
-            : undefined;
+        const currentRawJson = ResultViewerPanel.currentSessionId
+            ? ResultViewerSessionStore.getRawJson(ResultViewerPanel.currentSessionId)
+            : (ResultViewerPanel.currentPanel
+                ? ResultViewerPanel.extractRawJsonFromCurrentPanel(ResultViewerPanel.currentPanel.webview.html)
+                : undefined);
         const history = [...(paging.history ?? [])];
 
         if (currentRawJson) {
@@ -521,7 +696,10 @@ export class ResultViewerPanel {
         fileName?: string,
         json?: string
     ): Promise<void> {
-        const jsonText = String(json ?? "").trim();
+        const sessionJson = ResultViewerPanel.currentSessionId
+            ? ResultViewerSessionStore.getRawJson(ResultViewerPanel.currentSessionId)
+            : undefined;
+        const jsonText = String(sessionJson ?? json ?? "").trim();
         if (!jsonText) {
             void vscode.window.showWarningMessage("DV Quick Run: No JSON payload is available to save.");
             return;
@@ -552,7 +730,10 @@ export class ResultViewerPanel {
         fileName?: string,
         csv?: string
     ): Promise<void> {
-        const csvText = String(csv ?? "");
+        const sessionCsv = ResultViewerPanel.currentSessionId
+            ? ResultViewerSessionStore.buildCsv(ResultViewerPanel.currentSessionId)
+            : undefined;
+        const csvText = String(sessionCsv ?? csv ?? "");
         if (!csvText) {
             void vscode.window.showWarningMessage("DV Quick Run: Nothing to export.");
             return;

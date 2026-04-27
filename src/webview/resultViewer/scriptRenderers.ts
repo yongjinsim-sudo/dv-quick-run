@@ -72,16 +72,29 @@ function renderSiblingExpandButton(currentModel) {
                 jsonSearchInput.value = searchText;
             }
 
-            const normalizedSearchText = searchText.trim();
-            if (!normalizedSearchText) {
+            const rawJson = typeof currentModel.rawJson === "string" ? currentModel.rawJson : "";
+            if (!rawJson) {
+                const requested = requestSessionJsonIfNeeded(currentModel);
                 jsonState.currentMatchIndex = -1;
-                jsonView.innerHTML = escapeHtml(currentModel.rawJson);
+                jsonView.innerHTML = "<div class=\\"empty-state\\">" +
+                    "<div class=\\"empty-title\\">" + escapeHtml(sessionJsonState.error || (requested ? "Loading JSON…" : "No JSON payload available")) + "</div>" +
+                    "<div class=\\"empty-hint\\">" + escapeHtml(requested ? "The full JSON payload is being loaded from the Result Viewer session." : "Try Save JSON if the session has expired.") + "</div>" +
+                    "</div>";
                 updateJsonMatchStatus(0, 0);
                 updateJsonNavigationButtons(0);
                 return;
             }
 
-            const highlightedHtml = buildHighlightedJsonHtml(currentModel.rawJson, normalizedSearchText);
+            const normalizedSearchText = searchText.trim();
+            if (!normalizedSearchText) {
+                jsonState.currentMatchIndex = -1;
+                jsonView.innerHTML = escapeHtml(rawJson);
+                updateJsonMatchStatus(0, 0);
+                updateJsonNavigationButtons(0);
+                return;
+            }
+
+            const highlightedHtml = buildHighlightedJsonHtml(rawJson, normalizedSearchText);
             jsonView.innerHTML = highlightedHtml;
 
             const matches = Array.from(jsonView.querySelectorAll(".json-match"));
@@ -212,40 +225,99 @@ function renderTable(currentModel) {
                 return;
             }
 
-            const visibleRows = applySorting(
-                applyFilter(currentModel.rows, currentModel.columns),
-                currentModel.columns
-            );
+            const hasSession = !!currentModel.session;
+            const sessionOffset = hasSession ? Number(currentModel.session.rowOffset || 0) : 0;
+            const loadedRowCount = Array.isArray(currentModel.rows) ? currentModel.rows.length : 0;
+            const totalRowCount = currentModel.session && typeof currentModel.session.totalRows === "number"
+                ? currentModel.session.totalRows
+                : loadedRowCount;
+            const windowLimit = hasSession ? Number(currentModel.session.chunkSize || loadedRowCount || 100) : loadedRowCount;
+            const windowStart = totalRowCount === 0 ? 0 : sessionOffset + 1;
+            const windowEnd = Math.min(sessionOffset + loadedRowCount, totalRowCount);
+            const searchText = String(tableState.filterText ?? "").trim();
+            const searchResultMode = searchText.length > 0 && Array.isArray(sessionSearchState.matchingRowIndexes) && sessionSearchState.matchingRowIndexes.length > 0;
+            const visibleRows = searchResultMode
+                ? applySorting(currentModel.rows, currentModel.columns)
+                : applySorting(
+                    applyFilter(currentModel.rows, currentModel.columns),
+                    currentModel.columns
+                );
 
-            const totalRowCount = Array.isArray(currentModel.rows) ? currentModel.rows.length : 0;
             const visibleRowCount = visibleRows.length;
             const hasFilter = String(tableState.filterText ?? "").trim().length > 0;
+            const progressiveRenderStart = Date.now();
             const progressiveRender = syncProgressiveRenderState(currentModel, visibleRowCount, hasFilter);
             const renderedRows = progressiveRender.useLargeResultMode
                 ? visibleRows.slice(0, progressiveRender.renderedCount)
                 : visibleRows;
-            const tableStatusText = hasFilter
-                ? visibleRowCount + " of " + totalRowCount + " rows visible"
-                : (progressiveRender.useLargeResultMode
-                    ? progressiveRender.renderedCount + " of " + visibleRowCount + " rows rendered"
-                    : totalRowCount + " rows");
+            const renderDurationMs = Date.now() - progressiveRenderStart;
+            sessionChunkState.lastRenderDurationMs = renderDurationMs;
 
-            let html = "<div class=\\"table-tools\\">" +
-                "<div class=\\"table-tools-left\\">" +
-                (batchTabsHtml ? "<div class=\\"batch-response-bar\\">" + batchTabsHtml + "</div>" : "") +
+            const searchStatusText = sessionSearchState.loading && searchText
+                ? "Searching " + totalRowCount + " rows…"
+                : (searchText
+                    ? (sessionSearchState.error
+                        ? sessionSearchState.error
+                        : sessionSearchState.matchCount + " matching rows across " + (sessionSearchState.totalRows || totalRowCount) + " rows")
+                    : "");
+            const tableStatusText = hasFilter
+                ? (searchStatusText || (visibleRowCount + " of " + totalRowCount + " rows visible"))
+                : (progressiveRender.useLargeResultMode
+                    ? progressiveRender.renderedCount + " of " + visibleRowCount + " shown rows rendered"
+                    : (hasSession ? "Rows " + windowStart + "–" + windowEnd + " of " + totalRowCount + " shown" : totalRowCount + " rows"));
+            const showWarning = hasSession && (windowLimit >= LARGE_ROW_WINDOW_WARNING_THRESHOLD || sessionChunkState.warning || renderDurationMs > SLOW_RENDER_WARNING_MS);
+            const warningText = renderDurationMs > SLOW_RENDER_WARNING_MS
+                ? "Viewer is taking longer than expected. Try showing fewer rows or adding $select."
+                : (sessionChunkState.warning || "Showing up to 1000 rows per view for responsiveness. Search and export still use the full current page.");
+
+            let windowControlsHtml = "";
+            if (hasSession) {
+                const rowWindowOptions = getRowWindowSizeOptions(totalRowCount);
+                const maxVisibleOption = rowWindowOptions[rowWindowOptions.length - 1] || 100;
+                const activeWindowLimit = rowWindowOptions.includes(windowLimit) ? windowLimit : maxVisibleOption;
+                const hasMultipleWindows = totalRowCount > activeWindowLimit;
+                const canPrevWindow = hasMultipleWindows && sessionOffset > 0 && !sessionChunkState.loading;
+                const canNextWindow = hasMultipleWindows && sessionOffset + activeWindowLimit < totalRowCount && !sessionChunkState.loading;
+                const navControlsHtml = hasMultipleWindows
+                    ? "<button class='row-window-nav-btn' type='button' data-row-window-nav='prev'" + (canPrevWindow ? "" : " disabled") + ">‹</button>" +
+                        "<button class='row-window-nav-btn' type='button' data-row-window-nav='next'" + (canNextWindow ? "" : " disabled") + ">›</button>"
+                    : "";
+
+                windowControlsHtml = "<div class='row-window-controls'>" +
+                    "<span class='row-window-label'>Show</span>" +
+                    rowWindowOptions.map((size) => {
+                        const active = activeWindowLimit === size ? " active" : "";
+                        return "<button class='row-window-size-btn" + active + "' type='button' data-row-window-size='" + size + "'>" + size + "</button>";
+                    }).join("") +
+                    navControlsHtml +
+                    "<span id='rowWindowStatus' class='row-window-status'>" + escapeHtml(sessionChunkState.loading ? "Loading rows…" : ("Rows " + windowStart + "–" + windowEnd + " of " + totalRowCount)) + "</span>" +
+                    "</div>";
+            }
+
+            let html = "<div class='table-tools'>" +
+                "<div class='table-tools-left'>" +
+                (batchTabsHtml ? "<div class='batch-response-bar'>" + batchTabsHtml + "</div>" : "") +
+                windowControlsHtml +
                 "</div>" +
-                "<div class=\\"table-tools-right\\">" +
-                "<input id=\\"tableFilterInput\\" class=\\"table-filter-input\\" type=\\"text\\" placeholder=\\"Filter visible rows...\\" value=\\"" + escapeAttribute(tableState.filterText) + "\\" />" +
-                "<button id=\\"tableFilterClearBtn\\" class=\\"table-filter-clear-btn\\" type=\\"button\\" title=\\"Clear table filter\\">Clear</button>" +
-                "<span id=\\"tableFilterStatus\\" class=\\"table-filter-status\\">" + escapeHtml(tableStatusText) + "</span>" +
+                "<div class='table-tools-right'>" +
+                "<input id='tableFilterInput' class='table-filter-input' type='text' placeholder='Search all rows on this page...' value='" + escapeAttribute(tableState.filterText) + "' />" +
+                "<button id='tableFilterClearBtn' class='table-filter-clear-btn' type='button' title='Clear table search'>Clear</button>" +
+                "<span id='tableFilterStatus' class='table-filter-status'>" + escapeHtml(tableStatusText) + "</span>" +
                 "</div>" +
                 "</div>";
+
+            if (showWarning) {
+                html += "<div class='large-result-banner warning'>" +
+                    "<span class='large-result-title'>Performance note</span>" +
+                    "<span class='large-result-text'>" + escapeHtml(warningText) + "</span>" +
+                    "</div>";
+            }
 
             if (progressiveRender.useLargeResultMode) {
                 const isComplete = progressiveRender.renderedCount >= visibleRowCount;
                 html += "<div class=\\"large-result-banner\\">" +
                     "<span class=\\"large-result-title\\">Large result mode</span>" +
-                    "<span class=\\"large-result-text\\">Showing " + progressiveRender.renderedCount + " of " + visibleRowCount + " visible rows on this page for faster initial rendering" + (isComplete ? "." : " — continuing automatically…") + "</span>" +
+                    "<span class=\\"large-result-text\\">Showing " + progressiveRender.renderedCount + " of " + visibleRowCount + " rows in the current window for faster rendering" + (isComplete ? "." : " — continuing automatically…") + "</span>" +
                     "</div>";
             }
 
@@ -278,7 +350,15 @@ function renderTable(currentModel) {
 
             arrayDrawerPayloads.clear();
             renderedRows.forEach((row, rowIndex) => {
-                const sourceRowIndex = Array.isArray(currentModel.rows) ? currentModel.rows.indexOf(row) : rowIndex;
+                const rowPosition = Array.isArray(currentModel.rows) ? currentModel.rows.indexOf(row) : rowIndex;
+                const sessionSourceIndexes = currentModel.session && Array.isArray(currentModel.session.sourceRowIndexes)
+                    ? currentModel.session.sourceRowIndexes
+                    : undefined;
+                const sourceRowIndex = sessionSourceIndexes && typeof sessionSourceIndexes[rowPosition] === "number"
+                    ? sessionSourceIndexes[rowPosition]
+                    : ((currentModel.session && typeof currentModel.session.rowOffset === "number")
+                        ? currentModel.session.rowOffset + rowPosition
+                        : rowPosition);
                 html += "<tr data-row-index=\\"" + rowIndex + "\\" data-source-row-index=\\"" + sourceRowIndex + "\\">";
 
                 currentModel.columns.forEach((column) => {
