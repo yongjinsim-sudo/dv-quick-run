@@ -60,6 +60,8 @@ export interface ResultViewerDrawerPayload {
 export interface ResultViewerCell {
     value: string;
     rawValue: unknown;
+    isTruncated?: boolean;
+    largeValueHint?: string;
     copyValue?: string;
     exportValue?: string;
     valueType?: ResultViewerCellValueType;
@@ -85,6 +87,7 @@ export interface ResultViewerPagingHistoryEntry {
 export interface ResultViewerPagingInfo {
     pageNumber: number;
     hasNextPage: boolean;
+    nextLink?: string;
     history?: ResultViewerPagingHistoryEntry[];
 }
 
@@ -94,6 +97,21 @@ export interface ResultViewerSourceTargetInfo {
     sourceRangeStartCharacter: number;
     sourceRangeEndLine: number;
     sourceRangeEndCharacter: number;
+}
+
+export interface ResultViewerSessionInfo {
+    id: string;
+    rowOffset: number;
+    chunkSize: number;
+    totalRows: number;
+    hasMoreRows: boolean;
+    /**
+     * Maps each rendered row back to its original source row index within
+     * the session payload. This is used by full-session search results,
+     * where the displayed rows may be non-contiguous and therefore cannot
+     * be addressed with rowOffset + renderedIndex.
+     */
+    sourceRowIndexes?: number[];
 }
 
 export interface ResultViewerModel {
@@ -115,6 +133,7 @@ export interface ResultViewerModel {
     rowActions?: ResultViewerRowActionItem[];
     paging?: ResultViewerPagingInfo;
     sourceTarget?: ResultViewerSourceTargetInfo;
+    session?: ResultViewerSessionInfo;
 }
 
 export interface ResultViewerBuildOptions {
@@ -127,6 +146,12 @@ export interface ResultViewerBuildOptions {
     traversalContext?: ResultViewerTraversalContext;
     paging?: ResultViewerPagingInfo;
     sourceTarget?: ResultViewerSourceTargetInfo;
+    rowWindow?: {
+        offset: number;
+        limit: number;
+    };
+    suppressRawJson?: boolean;
+    sessionId?: string;
 }
 
 
@@ -175,6 +200,30 @@ export interface ResultViewerLegendItem {
 // keep flattening depth intentionally capped so the builder remains the
 // single place that defines how nested payloads are interpreted.
 export const RESULT_VIEWER_MAX_FLATTEN_DEPTH = 2;
+const RESULT_VIEWER_MAX_CELL_TEXT_LENGTH = 240;
+const RESULT_VIEWER_MAX_ACTION_VALUE_LENGTH = 200;
+const RESULT_VIEWER_MAX_DRAWER_PAYLOAD_CHARS = 12000;
+
+function truncateResultViewerText(value: string, maxLength = RESULT_VIEWER_MAX_CELL_TEXT_LENGTH): string {
+    if (value.length <= maxLength) {
+        return value;
+    }
+
+    return `${value.slice(0, maxLength)}…`;
+}
+
+function estimateJsonLength(value: unknown, maxLength: number): number {
+    try {
+        const json = JSON.stringify(value);
+        return json.length > maxLength ? maxLength + 1 : json.length;
+    } catch {
+        return maxLength + 1;
+    }
+}
+
+function shouldInlineDrawerPayload(value: unknown): boolean {
+    return estimateJsonLength(value, RESULT_VIEWER_MAX_DRAWER_PAYLOAD_CHARS) <= RESULT_VIEWER_MAX_DRAWER_PAYLOAD_CHARS;
+}
 
 function toDisplayCell(value: unknown): string {
     if (value === null || value === undefined) {
@@ -189,7 +238,30 @@ function toDisplayCell(value: unknown): string {
         return "[Object]";
     }
 
-    return String(value);
+    return truncateResultViewerText(String(value));
+}
+
+function toCopyCell(value: unknown): string {
+    if (value === null) {
+        return "null";
+    }
+
+    if (value === undefined) {
+        return "";
+    }
+
+    if (typeof value === "object") {
+        return Array.isArray(value) ? summariseArray(value) : "[Object]";
+    }
+
+    const text = String(value);
+    return text.length > RESULT_VIEWER_MAX_CELL_TEXT_LENGTH
+        ? `${text.slice(0, RESULT_VIEWER_MAX_CELL_TEXT_LENGTH)}… (truncated in viewer; use Save JSON for full value)`
+        : text;
+}
+
+function isLargeScalarValue(value: unknown): boolean {
+    return typeof value === "string" && value.length > RESULT_VIEWER_MAX_CELL_TEXT_LENGTH;
 }
 
 function isPrimitiveArray(value: unknown[]): boolean {
@@ -478,6 +550,36 @@ function applyColumnAliases(columns: string[], aliasMap: Map<string, string>): s
     });
 }
 
+function collectFlattenedColumnsFromRow(
+    row: Record<string, unknown>,
+    columnSet: Set<string>,
+    depth = 0,
+    maxDepth = RESULT_VIEWER_MAX_FLATTEN_DEPTH,
+    prefix = ""
+): void {
+    Object.entries(row).forEach(([key, value]) => {
+        if (key.includes("@odata.")) {
+            return;
+        }
+
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+
+        if (shouldFlattenExpandedArray(value) && depth < maxDepth) {
+            collectFlattenedColumnsFromRow(value[0], columnSet, depth + 1, maxDepth, fullKey);
+            return;
+        }
+
+        if (shouldFlattenExpandedObject(value) && depth < maxDepth) {
+            collectFlattenedColumnsFromRow(value, columnSet, depth + 1, maxDepth, fullKey);
+            return;
+        }
+
+        if (shouldKeepFlattenedChildField(fullKey)) {
+            columnSet.add(fullKey);
+        }
+    });
+}
+
 function flattenExpandedRow(
     row: Record<string, unknown>,
     depth = 0,
@@ -555,15 +657,17 @@ function buildCell(
     const rawValue = rowValue;
     const valueType = classifyCellValueType(rowValue);
     const displayValue = resolveDisplayValue(row, rowValue, column, fieldMap, choiceMetadata);
-    const copyValue = rowValue === null ? "null" : toDisplayCell(rowValue);
+    const copyValue = toCopyCell(rowValue);
+    const isTruncated = isLargeScalarValue(rowValue);
 
     const isNullValue = rowValue === null;
     const shouldResolveActions =
         rowValue !== undefined &&
+        !isTruncated &&
         !Array.isArray(rowValue) &&
         (rowValue === null || typeof rowValue !== "object");
 
-    const actionRawValue = shouldResolveActions && !isNullValue ? toDisplayCell(rowValue) : "";
+    const actionRawValue = shouldResolveActions && !isNullValue ? truncateResultViewerText(String(rowValue), RESULT_VIEWER_MAX_ACTION_VALUE_LENGTH) : "";
     const actionGuid = shouldResolveActions && options.primaryIdField
         ? toDisplayCell(column === options.primaryIdField ? rowValue : rowPrimaryIdValue)
         : "";
@@ -606,6 +710,10 @@ function buildCell(
     const primaryActions = actions?.filter((action) => action.placement === "primary");
     const overflowActions = actions?.filter((action) => action.placement === "overflow");
 
+    // Keep rawValue and drawerPayload exact. Several Result Viewer invariants depend on
+    // object/array cells remaining drawer-routed and export-faithful. Large-result
+    // stability is handled by session-backed chunk transport, not by replacing raw
+    // payloads with display summaries inside the view-model builder.
     const exportValue = Array.isArray(rawValue) || (typeof rawValue === "object" && rawValue !== null)
         ? JSON.stringify(rawValue)
         : copyValue;
@@ -620,6 +728,8 @@ function buildCell(
     return {
         value: displayValue,
         rawValue,
+        isTruncated: isTruncated || undefined,
+        largeValueHint: isTruncated ? "Value truncated in Result Viewer. Use Save JSON for the full payload." : undefined,
         copyValue,
         exportValue,
         valueType,
@@ -778,7 +888,7 @@ export function buildResultViewerModel(
     query: string,
     options?: ResultViewerBuildOptions
 ): ResultViewerModel {
-    const rawJson = JSON.stringify(result, null, 2);
+    const rawJson = options?.suppressRawJson ? "" : JSON.stringify(result, null, 2);
     const entitySetName = options?.entitySetName ?? deriveEntitySetName(query);
     const entityLogicalName = options?.entityLogicalName;
     const primaryIdField = options?.primaryIdField;
@@ -832,21 +942,12 @@ export function buildResultViewerModel(
         Array.isArray((result as { value?: unknown[] }).value)
     ) {
         const rows = (result as { value: unknown[] }).value;
-        const flattenedRows = rows.map((row) =>
-            isPlainObject(row) ? flattenExpandedRow(row) : row
-        );
 
         const columnSet = new Set<string>();
 
-        flattenedRows.forEach((row) => {
+        rows.forEach((row) => {
             if (isPlainObject(row)) {
-                Object.keys(row).forEach((key) => {
-                    if (key.includes("@odata.")) {
-                        return;
-                    }
-
-                    columnSet.add(key);
-                });
+                collectFlattenedColumnsFromRow(row, columnSet);
             }
         });
 
@@ -864,7 +965,13 @@ export function buildResultViewerModel(
         });
 
         const queryMode = detectResultViewerQueryMode(query);
-        const mappedRows = flattenedRows.map((row): Record<string, ResultViewerCell> => {
+        const rowWindowOffset = Math.max(0, options?.rowWindow?.offset ?? 0);
+        const rowWindowLimit = Math.max(1, options?.rowWindow?.limit ?? rows.length);
+        const windowedRows = rows
+            .slice(rowWindowOffset, rowWindowOffset + rowWindowLimit)
+            .map((row) => isPlainObject(row) ? flattenExpandedRow(row) : row);
+
+        const mappedRows = windowedRows.map((row): Record<string, ResultViewerCell> => {
             const mapped: Record<string, ResultViewerCell> = {};
 
             displayColumns.forEach((displayColumn) => {
@@ -906,7 +1013,7 @@ export function buildResultViewerModel(
             .filter((item) => item.actions.length > 0);
 
         return {
-            title: `Query Result (${mappedRows.length} rows)`,
+            title: `Query Result (${rows.length} rows)`,
             mode: "collection",
             columns: displayColumns,
             rows: mappedRows,
@@ -915,7 +1022,7 @@ export function buildResultViewerModel(
                 fullName
             })),
             rawJson,
-            rowCount: mappedRows.length,
+            rowCount: rows.length,
             queryPath: query,
             entitySetName,
             entityLogicalName,
@@ -923,7 +1030,7 @@ export function buildResultViewerModel(
             traversal,
             binderSuggestion: buildResultViewerBinderSuggestion({
                 queryPath: query,
-                rowCount: mappedRows.length,
+                rowCount: rows.length,
                 columnCount: displayColumns.length,
                 traversalContext
             }),
@@ -931,7 +1038,16 @@ export function buildResultViewerModel(
             emptyState,
             rowActions: rowActions.length ? rowActions : undefined,
             paging: options?.paging,
-            sourceTarget: options?.sourceTarget
+            sourceTarget: options?.sourceTarget,
+            session: options?.sessionId
+                ? {
+                    id: options.sessionId,
+                    rowOffset: rowWindowOffset,
+                    chunkSize: rowWindowLimit,
+                    totalRows: rows.length,
+                    hasMoreRows: rowWindowOffset + mappedRows.length < rows.length
+                }
+                : undefined
         };
     }
 

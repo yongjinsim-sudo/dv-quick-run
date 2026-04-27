@@ -326,7 +326,6 @@ async function copyValueToClipboard(value) {
             const rawValue = element.getAttribute("data-raw-value") ?? "";
             const displayValue = element.getAttribute("data-display-value") ?? "";
             const isNullValue = element.getAttribute("data-is-null-value") === "true";
-            const rowJson = actionId === "copy-row-json" ? buildRowJsonForAction(element) : "";
             const sliceOperation = element.getAttribute("data-slice-operation") ?? "";
             const traversalSessionId = element.getAttribute("data-traversal-session-id") ?? "";
             const traversalLegIndex = element.getAttribute("data-traversal-leg-index") ?? "";
@@ -341,6 +340,24 @@ async function copyValueToClipboard(value) {
             if (!actionId) {
                 return;
             }
+
+            if (actionId === "copy-row-json" && model && model.session && model.session.id) {
+                const row = element.closest("tr");
+                const sourceRowIndex = row ? Number(row.getAttribute("data-source-row-index") ?? "-1") : -1;
+                if (Number.isFinite(sourceRowIndex) && sourceRowIndex >= 0) {
+                    vscodeApi.postMessage({
+                        type: "copySessionRowJson",
+                        payload: {
+                            sessionId: model.session.id,
+                            rowIndex: sourceRowIndex
+                        }
+                    });
+                    showCopyStatus("Copied");
+                    return;
+                }
+            }
+
+            const rowJson = actionId === "copy-row-json" ? buildRowJsonForAction(element) : "";
 
             const payload = {
                 actionId,

@@ -195,6 +195,277 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             renderedCount: 0,
             timerId: null
         };
+        const ROW_WINDOW_SIZE_OPTIONS = [100, 200, 500, 1000];
+        const LARGE_ROW_WINDOW_WARNING_THRESHOLD = 1000;
+        const MAX_ROW_WINDOW_SIZE = 1000;
+        const SLOW_RENDER_WARNING_MS = 1500;
+        const sessionChunkState = {
+            requestId: 0,
+            loading: false,
+            lastRenderDurationMs: 0,
+            warning: ""
+        };
+        const sessionSearchState = {
+            requestId: 0,
+            loading: false,
+            searchText: "",
+            matchCount: 0,
+            totalRows: 0,
+            firstMatchIndex: -1,
+            matchingRowIndexes: [],
+            restoreOffset: 0,
+            restoreChunkSize: 100,
+            error: ""
+        };
+        let sessionSearchTimerId = null;
+        const sessionJsonState = {
+            requestedSessionId: "",
+            loading: false,
+            error: ""
+        };
+
+        function getActiveSession() {
+            return model && model.session && model.session.id ? model.session : null;
+        }
+
+        function getRowWindowSizeOptions(totalRows) {
+            const safeTotal = Math.max(0, Math.floor(Number(totalRows) || 0));
+            const maxOption = ROW_WINDOW_SIZE_OPTIONS.find((size) => size >= safeTotal) || ROW_WINDOW_SIZE_OPTIONS[ROW_WINDOW_SIZE_OPTIONS.length - 1];
+            return ROW_WINDOW_SIZE_OPTIONS.filter((size) => size <= maxOption);
+        }
+
+        function getEffectiveRowWindowLimit(limit, totalRows) {
+            const options = getRowWindowSizeOptions(totalRows);
+            const requested = Math.max(1, Math.floor(Number(limit) || 100));
+            if (options.includes(requested)) {
+                return requested;
+            }
+
+            const largerOption = options.find((size) => size >= requested);
+            return largerOption || options[options.length - 1] || 100;
+        }
+
+        function clampRowWindowOffset(offset, limit, totalRows) {
+            const safeLimit = Math.max(1, Math.floor(Number(limit) || 100));
+            const safeTotal = Math.max(0, Math.floor(Number(totalRows) || 0));
+            if (safeTotal <= safeLimit) {
+                return 0;
+            }
+
+            const safeOffset = Math.max(0, Math.floor(Number(offset) || 0));
+            return Math.min(safeOffset, Math.max(0, safeTotal - safeLimit));
+        }
+
+        function requestSessionRows(offset, limit) {
+            const session = getActiveSession();
+            if (!session) {
+                return;
+            }
+
+            const totalRows = Number(session.totalRows || model.rowCount || 0);
+            const safeLimit = Math.min(MAX_ROW_WINDOW_SIZE, Math.max(1, Math.floor(Number(limit) || session.chunkSize || 100)));
+            const safeOffset = clampRowWindowOffset(offset, safeLimit, totalRows);
+            sessionChunkState.requestId += 1;
+            sessionChunkState.loading = true;
+            sessionChunkState.warning = safeLimit >= LARGE_ROW_WINDOW_WARNING_THRESHOLD
+                ? "Showing up to 1000 rows per view for responsiveness. Search and export still use the full current page."
+                : "";
+            const requestId = sessionChunkState.requestId;
+            updateWindowControlsStatus("Loading rows " + (safeOffset + 1) + "–" + Math.min(safeOffset + safeLimit, totalRows) + "…");
+            vscodeApi.postMessage({
+                type: "requestRows",
+                payload: {
+                    sessionId: session.id,
+                    offset: safeOffset,
+                    limit: safeLimit,
+                    requestId
+                }
+            });
+        }
+
+        function requestSessionSearch(searchText) {
+            const session = getActiveSession();
+            if (!session) {
+                return;
+            }
+
+            const normalized = String(searchText ?? "").trim();
+            sessionSearchState.searchText = normalized;
+            sessionSearchState.error = "";
+
+            if (sessionSearchTimerId) {
+                clearTimeout(sessionSearchTimerId);
+            }
+
+            if (!normalized) {
+                sessionSearchState.loading = false;
+                sessionSearchState.matchCount = 0;
+                sessionSearchState.totalRows = Number(session.totalRows || model.rowCount || 0);
+                sessionSearchState.firstMatchIndex = -1;
+                sessionSearchState.matchingRowIndexes = [];
+                requestSessionRows(
+                    Number(sessionSearchState.restoreOffset || 0),
+                    Number(sessionSearchState.restoreChunkSize || session.chunkSize || 100)
+                );
+                return;
+            }
+
+            if (model.session && (!sessionSearchState.matchingRowIndexes || sessionSearchState.matchingRowIndexes.length === 0)) {
+                sessionSearchState.restoreOffset = Number(model.session.rowOffset || 0);
+                sessionSearchState.restoreChunkSize = Number(model.session.chunkSize || session.chunkSize || 100);
+            }
+
+            sessionSearchState.loading = true;
+            sessionSearchTimerId = setTimeout(() => {
+                sessionSearchState.requestId += 1;
+                vscodeApi.postMessage({
+                    type: "searchSessionRows",
+                    payload: {
+                        sessionId: session.id,
+                        searchText: normalized,
+                        requestId: sessionSearchState.requestId
+                    }
+                });
+                renderTable(model);
+            }, 180);
+        }
+
+        function updateWindowControlsStatus(text) {
+            const status = document.getElementById("rowWindowStatus");
+            if (status instanceof HTMLElement) {
+                status.textContent = text || "";
+            }
+        }
+
+        function requestSessionJsonIfNeeded(currentModel) {
+            const session = currentModel && currentModel.session && currentModel.session.id ? currentModel.session : null;
+            if (!session || typeof currentModel.rawJson === "string" && currentModel.rawJson.length > 0) {
+                return false;
+            }
+
+            if (sessionJsonState.loading && sessionJsonState.requestedSessionId === session.id) {
+                return true;
+            }
+
+            sessionJsonState.requestedSessionId = session.id;
+            sessionJsonState.loading = true;
+            sessionJsonState.error = "";
+            vscodeApi.postMessage({
+                type: "requestJson",
+                payload: {
+                    sessionId: session.id
+                }
+            });
+            return true;
+        }
+
+        window.addEventListener("message", (event) => {
+            const message = event.data || {};
+
+            if (message.type === "jsonData") {
+                const payload = message.payload || {};
+                const session = getActiveSession();
+                if (!session || payload.sessionId !== session.id || typeof payload.rawJson !== "string") {
+                    return;
+                }
+
+                model.rawJson = payload.rawJson;
+                sessionJsonState.loading = false;
+                sessionJsonState.error = "";
+                if (showJsonBtn.classList.contains("active")) {
+                    renderJson(model);
+                }
+                return;
+            }
+
+            if (message.type === "jsonDataError") {
+                const payload = message.payload || {};
+                const session = getActiveSession();
+                if (!session || payload.sessionId !== session.id) {
+                    return;
+                }
+
+                sessionJsonState.loading = false;
+                sessionJsonState.error = String(payload.message || "JSON payload is unavailable.");
+                if (showJsonBtn.classList.contains("active")) {
+                    renderJson(model);
+                }
+                return;
+            }
+
+            if (message.type === "sessionSearchResult") {
+                const payload = message.payload || {};
+                const session = getActiveSession();
+                if (!session || payload.sessionId !== session.id) {
+                    return;
+                }
+
+                sessionSearchState.loading = false;
+                sessionSearchState.error = "";
+                sessionSearchState.searchText = String(payload.searchText || "");
+                sessionSearchState.matchCount = Number(payload.matchCount || 0);
+                sessionSearchState.totalRows = Number(payload.totalRows || session.totalRows || model.rowCount || 0);
+                sessionSearchState.firstMatchIndex = typeof payload.firstMatchIndex === "number" ? payload.firstMatchIndex : -1;
+                sessionSearchState.matchingRowIndexes = Array.isArray(payload.matchingRowIndexes) ? payload.matchingRowIndexes : [];
+
+                if (Array.isArray(payload.rows)) {
+                    model.rows = payload.rows;
+                    model.rowActions = payload.rowActions || [];
+                    model.session = {
+                        id: session.id,
+                        rowOffset: 0,
+                        chunkSize: Math.max(1, payload.rows.length || session.chunkSize || 100),
+                        totalRows: Number(payload.totalRows || session.totalRows || model.rowCount || 0),
+                        hasMoreRows: false,
+                        sourceRowIndexes: Array.isArray(payload.sourceRowIndexes) ? payload.sourceRowIndexes : []
+                    };
+                    model.rowCount = model.session.totalRows;
+                    sessionChunkState.loading = false;
+                    renderTable(model);
+                } else if (sessionSearchState.firstMatchIndex >= 0) {
+                    requestSessionRows(sessionSearchState.firstMatchIndex, session.chunkSize || 100);
+                } else {
+                    renderTable(model);
+                }
+                return;
+            }
+
+            if (message.type === "sessionSearchError") {
+                const payload = message.payload || {};
+                const session = getActiveSession();
+                if (!session || payload.sessionId !== session.id) {
+                    return;
+                }
+
+                sessionSearchState.loading = false;
+                sessionSearchState.error = String(payload.message || "Search is unavailable for this session.");
+                renderTable(model);
+                return;
+            }
+
+            if (message.type !== "rowsChunk") {
+                return;
+            }
+
+            const chunk = message.payload || {};
+            const session = getActiveSession();
+            if (!session || chunk.sessionId !== session.id || !Array.isArray(chunk.rows)) {
+                return;
+            }
+
+            model.rows = chunk.rows;
+            model.rowActions = chunk.rowActions || [];
+            model.session = {
+                id: session.id,
+                rowOffset: Number(chunk.offset || 0),
+                chunkSize: Number(chunk.limit || session.chunkSize || model.rows.length || 100),
+                totalRows: Number(chunk.totalRows || session.totalRows || model.rowCount || model.rows.length),
+                hasMoreRows: !!chunk.hasMoreRows
+            };
+            model.rowCount = model.session.totalRows;
+            sessionChunkState.loading = false;
+            renderCurrentModel();
+        });
         const arrayDrawerPayloads = new Map();
         const nestedDrawerPayloads = new Map();
         let activeArrayDrawerKey = null;
@@ -248,7 +519,15 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 exportCsvBtn.disabled = isBatchSummarySelected();
             }
 
-            rowCount.textContent = isBatchSummarySelected() ? "" : (model.rowCount + " rows returned");
+            if (isBatchSummarySelected()) {
+                rowCount.textContent = "";
+            } else if (model.session && Array.isArray(model.rows)) {
+                const start = model.rowCount === 0 ? 0 : Number(model.session.rowOffset || 0) + 1;
+                const end = Math.min(Number(model.session.rowOffset || 0) + model.rows.length, model.rowCount);
+                rowCount.textContent = "Rows " + start + "–" + end + " of " + model.rowCount + " shown";
+            } else {
+                rowCount.textContent = model.rowCount + " rows returned";
+            }
 
             if (showJsonBtn.classList.contains("active")) {
                 renderJson(model);
@@ -393,12 +672,9 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         }
 
         exportCsvBtn.addEventListener("click", () => {
-            const exportRows = applySorting(
-                applyFilter(model.rows, model.columns),
-                model.columns
-            );
-
-            const csv = buildCsv(model.columns, exportRows);
+            const csv = model.session
+                ? ""
+                : buildCsv(model.columns, applySorting(applyFilter(model.rows, model.columns), model.columns));
 
             vscodeApi.postMessage({
                 type: "exportCsv",
@@ -469,7 +745,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         }
 
         function postSaveJson() {
-            const rawJson = typeof model.rawJson === "string" ? model.rawJson : "";
+            const rawJson = model.session ? "" : (typeof model.rawJson === "string" ? model.rawJson : "");
             vscodeApi.postMessage({
                 type: "saveJson",
                 payload: {

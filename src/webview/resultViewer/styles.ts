@@ -292,6 +292,53 @@ export const RESULT_VIEWER_STYLES = `
         }
 
 
+
+        .row-window-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            font-size: 12px;
+        }
+
+        .row-window-label,
+        .row-window-status {
+            opacity: 0.85;
+        }
+
+        .row-window-size-btn,
+        .row-window-nav-btn {
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1.2;
+        }
+
+        .row-window-size-btn.active {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border-color: var(--vscode-focusBorder);
+        }
+
+        .row-window-size-btn:hover:not(:disabled),
+        .row-window-nav-btn:hover:not(:disabled) {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .row-window-nav-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .large-result-banner.warning {
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 76%, var(--vscode-inputValidation-warningBackground) 24%);
+            border-color: var(--vscode-inputValidation-warningBorder, var(--vscode-panel-border));
+        }
+
         .batch-kebab-container {
             margin-left: auto;
             position: relative;
