@@ -347,12 +347,14 @@ function scoreTraversalRouteBusinessRelevance(route: TraversalRoute): number {
   let score = 0;
 
   for (const entity of route.entities) {
+    const isEndpoint = route.sourceEntity === entity || route.targetEntity === entity;
+
     if (looksLikeSystemEntity(entity)) {
-      score -= route.sourceEntity === entity || route.targetEntity === entity ? 25 : 60;
+      score -= isEndpoint ? 35 : 85;
       continue;
     }
 
-    score += route.sourceEntity === entity || route.targetEntity === entity ? 5 : 15;
+    score += isEndpoint ? 8 : 28;
   }
 
   return score;

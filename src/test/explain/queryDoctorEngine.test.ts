@@ -105,8 +105,8 @@ suite("queryDoctorEngine", () => {
     assert.strictEqual(finding?.narrowingSuggestions?.[0]?.field, "bu_status");
     assert.ok((finding?.narrowingSuggestions?.length ?? 0) <= 3);
     assert.strictEqual(
-      finding?.narrowingSuggestions?.find((suggestion) => suggestion.field === "_bu_taskrequesterpractitioner_value")?.tier,
-      "secondary"
+      finding?.narrowingSuggestions?.some((suggestion) => suggestion.field === "_bu_taskrequesterpractitioner_value"),
+      false
     );
   });
 

@@ -134,14 +134,14 @@ export function buildResultInsightFindingFromCandidates(input: {
 
   const primaryFieldDescriptor = formatFieldDescriptor(primaryCandidate.item.observation, primaryCandidate.item.field);
   const scopeMessage = evidence.returnedFullPage && typeof evidence.requestedTop === "number" && evidence.requestedTop > 0
-    ? `Based on ${evidence.returnedRowCount} returned rows (full page for $top=${evidence.requestedTop}), the clearest next narrowing step is \`${primaryFieldDescriptor}\`.`
+    ? `Recommendation: narrow on \`${primaryFieldDescriptor}\`. Based on ${evidence.returnedRowCount} returned rows (full page for $top=${evidence.requestedTop}), this is the clearest next server-side refinement.`
     : parsedFilter && parsedFilter.trim()
-      ? `Based on ${evidence.returnedRowCount} returned rows, \`${primaryFieldDescriptor}\` is the clearest next narrowing dimension after the current filter.`
-      : `Based on ${evidence.returnedRowCount} returned rows, \`${primaryFieldDescriptor}\` is the clearest first server-side filter for this result page.`;
+      ? `Recommendation: narrow on \`${primaryFieldDescriptor}\`. Based on ${evidence.returnedRowCount} returned rows, this is the strongest follow-up dimension after the current filter.`
+      : `Recommendation: narrow on \`${primaryFieldDescriptor}\`. Based on ${evidence.returnedRowCount} returned rows, this is the strongest first server-side filter for this result page.`;
 
   const suggestion = primaryRationale.suggestedOperator
-    ? `Narrow on \`${primaryFieldDescriptor}\`${primaryRationale.suggestedValue === null ? " with a null/presence split" : ` using ${primaryRationale.suggestedOperator} ${String(primaryRationale.suggestedValueLabel ?? primaryRationale.suggestedValue)}`}.`
-    : `Use \`${primaryFieldDescriptor}\` as the next narrowing dimension.`;
+    ? `Why: \`${primaryFieldDescriptor}\` has the strongest observed narrowing signal. Impact: preview a ${primaryRationale.suggestedValue === null ? "null/presence split" : `${primaryRationale.suggestedOperator} ${String(primaryRationale.suggestedValueLabel ?? primaryRationale.suggestedValue)}`} refinement before applying it.`
+    : `Why: \`${primaryFieldDescriptor}\` has the strongest observed narrowing signal. Impact: use it as the next preview-first narrowing dimension.`;
 
   const suggestedQuery = buildSuggestedQuery(
     primaryCandidate.item.observation.field,

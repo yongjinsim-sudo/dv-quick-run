@@ -14,7 +14,7 @@ import {
     isSystemColumn
 } from "../providers/resultViewerActions/columnIntelligence.js";
 import { resolveChoiceValueFromMetadata } from "../commands/router/actions/shared/valueAwareness.js";
-import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion } from "../product/binder/buildBinderSuggestion.js";
+import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion, buildResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
 import type { BinderSuggestion } from "../product/binder/binderTypes.js";
 
 export interface ResultViewerEnvironmentInfo {
@@ -116,6 +116,7 @@ export interface ResultViewerSessionInfo {
 
 export interface ResultViewerModel {
     binderSuggestion?: BinderSuggestion;
+    insightSuggestions?: BinderSuggestion[];
     title: string;
     mode: "collection" | "record" | "raw";
     columns: string[];
@@ -1034,6 +1035,14 @@ export function buildResultViewerModel(
                 columnCount: displayColumns.length,
                 traversalContext
             }),
+            insightSuggestions: buildResultViewerInsightSuggestions({
+                queryPath: query,
+                rowCount: rows.length,
+                columnCount: displayColumns.length,
+                result,
+                fields: options?.fields,
+                traversalContext
+            }),
             environment,
             emptyState,
             rowActions: rowActions.length ? rowActions : undefined,
@@ -1101,6 +1110,14 @@ export function buildResultViewerModel(
                 columnCount: columns.length,
                 traversalContext
             }),
+            insightSuggestions: buildResultViewerInsightSuggestions({
+                queryPath: query,
+                rowCount: 1,
+                columnCount: columns.length,
+                result,
+                fields: options?.fields,
+                traversalContext
+            }),
             environment,
             emptyState,
             rowActions: recordRowActions.length ? recordRowActions : undefined,
@@ -1125,6 +1142,14 @@ export function buildResultViewerModel(
             queryPath: query,
             rowCount: 0,
             columnCount: 0,
+            traversalContext
+        }),
+        insightSuggestions: buildResultViewerInsightSuggestions({
+            queryPath: query,
+            rowCount: 0,
+            columnCount: 0,
+            result,
+            fields: options?.fields,
             traversalContext
         }),
         environment,

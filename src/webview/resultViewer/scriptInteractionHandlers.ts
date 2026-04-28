@@ -208,55 +208,68 @@ function bindTableEventsOnce() {
             });
 
             tableView.addEventListener("contextmenu", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) {
-        return;
-    }
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
 
-    const investigateAction = findRowInvestigateAction(target);
-    if (investigateAction instanceof HTMLElement) {
-        event.preventDefault();
-        event.stopPropagation();
-        showInvestigateContextMenu(event.clientX, event.clientY, investigateAction);
-        return;
-    }
+                const isEditableTarget =
+                    target instanceof HTMLInputElement ||
+                    target instanceof HTMLTextAreaElement ||
+                    target.isContentEditable;
 
-    const header = target.closest("th[data-column]");
-    if (header instanceof HTMLElement) {
-        event.preventDefault();
-        event.stopPropagation();
+                if (isEditableTarget) {
+                    return;
+                }
 
-        const columnName = header.getAttribute("data-column") ?? "";
-        const isRootColumn = !!columnName && !columnName.includes(".");
+                const investigateAction = findRowInvestigateAction(target);
+                if (investigateAction instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    showInvestigateContextMenu(event.clientX, event.clientY, investigateAction);
+                    return;
+                }
 
-        removeResultViewerContextMenu();
-        closeAllOverflowMenus();
+                const header = target.closest("th[data-column]");
+                if (header instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
 
-        if (isRootColumn) {
-            showHeaderContextMenu(event.clientX, event.clientY, columnName);
-        }
+                    const columnName = header.getAttribute("data-column") ?? "";
+                    const isRootColumn = !!columnName && !columnName.includes(".");
 
-        return;
-    }
+                    removeResultViewerContextMenu();
+                    closeAllOverflowMenus();
 
-    const cell = target.closest(".context-action-cell");
-    if (!(cell instanceof HTMLElement)) {
-        return;
-    }
+                    if (isRootColumn) {
+                        showHeaderContextMenu(event.clientX, event.clientY, columnName);
+                    }
 
-    const menu = cell.querySelector(".overflow-menu");
-    if (!(menu instanceof HTMLElement)) {
-        event.preventDefault();
-        event.stopPropagation();
-        removeResultViewerContextMenu();
-        closeAllOverflowMenus();
-        return;
-    }
+                    return;
+                }
 
-    event.preventDefault();
-    event.stopPropagation();
-    openOverflowMenuAtPosition(event.clientX, event.clientY, menu);
-});
+                const cell = target.closest(".context-action-cell");
+                if (!(cell instanceof HTMLElement)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    removeResultViewerContextMenu();
+                    closeAllOverflowMenus();
+                    return;
+                }
+
+                const menu = cell.querySelector(".overflow-menu");
+                if (!(menu instanceof HTMLElement)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    removeResultViewerContextMenu();
+                    closeAllOverflowMenus();
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                openOverflowMenuAtPosition(event.clientX, event.clientY, menu);
+            });
 
             arrayDrawerTableView.addEventListener("click", (event) => {
                 const target = event.target;

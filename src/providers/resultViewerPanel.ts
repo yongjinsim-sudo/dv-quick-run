@@ -23,11 +23,7 @@ type ResultViewerMessage =
         type: "executeBinderSuggestion";
         payload: {
             actionId?: string;
-            payload?: {
-                traversalSessionId?: string;
-                queryPath?: string;
-                value?: number;
-            };
+            payload?: Record<string, unknown>;
         };
     }
     | {
@@ -439,11 +435,7 @@ export class ResultViewerPanel {
         ctx: CommandContext,
         payload: {
             actionId?: string;
-            payload?: {
-                traversalSessionId?: string;
-                queryPath?: string;
-                value?: number;
-            };
+            payload?: Record<string, unknown>;
         }
     ): Promise<void> {
         const actionId = payload.actionId ?? "";
@@ -456,23 +448,23 @@ export class ResultViewerPanel {
 
                 case "runTraversalBatch":
                     await runTraversalAsBatchAction(ctx, {
-                        traversalSessionId: payload.payload?.traversalSessionId
+                        traversalSessionId: typeof payload.payload?.traversalSessionId === "string" ? payload.payload.traversalSessionId : undefined
                     });
                     return;
 
                 case "runTraversalOptimizedBatch":
                     await runTraversalAsBatchAction(ctx, {
-                        traversalSessionId: payload.payload?.traversalSessionId,
+                        traversalSessionId: typeof payload.payload?.traversalSessionId === "string" ? payload.payload.traversalSessionId : undefined,
                         optimizeSelectedPath: true
                     });
                     return;
 
                 case "previewAddTop":
                     if (typeof payload.payload?.queryPath === "string" && payload.payload.queryPath.trim()) {
-                        await previewAndApplyAddTopForQueryInEditor(payload.payload.queryPath, payload.payload?.value ?? 50);
+                        await previewAndApplyAddTopForQueryInEditor(payload.payload.queryPath, typeof payload.payload?.value === "number" ? payload.payload.value : 50);
                         return;
                     }
-                    await previewAndApplyAddTopInActiveEditor(payload.payload?.value ?? 50);
+                    await previewAndApplyAddTopInActiveEditor(typeof payload.payload?.value === "number" ? payload.payload.value : 50);
                     return;
 
                 case "previewAddSelect":
@@ -481,6 +473,18 @@ export class ResultViewerPanel {
                         return;
                     }
                     await previewAndApplyAddSelectInActiveEditor(ctx);
+                    return;
+
+                case "previewODataFilter":
+                    await executeResultViewerAction(ctx, "preview-odata-filter", {
+                        columnName: typeof payload.payload?.columnName === "string" ? payload.payload.columnName : "",
+                        rawValue: typeof payload.payload?.rawValue === "string" || typeof payload.payload?.rawValue === "number" || typeof payload.payload?.rawValue === "boolean"
+                            ? String(payload.payload.rawValue)
+                            : "",
+                        displayValue: typeof payload.payload?.displayValue === "string" ? payload.payload.displayValue : undefined,
+                        fieldLogicalName: typeof payload.payload?.fieldLogicalName === "string" ? payload.payload.fieldLogicalName : undefined,
+                        isNullValue: payload.payload?.isNullValue === true
+                    });
                     return;
             }
         } catch (error) {
