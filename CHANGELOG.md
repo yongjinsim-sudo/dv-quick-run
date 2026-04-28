@@ -6,6 +6,220 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.7 — Insight Drawer, Multi-Insight Query Doctor & Command Surface Foundation
+
+This release introduces the first **result-aware insight system inside the Result Viewer**, evolving DV Quick Run from a query tool into a **guided, insight-driven Dataverse workbench**.
+
+It focuses on:
+- surfacing **multiple, evidence-based insights from Query Doctor**
+- introducing a **dedicated Insight Drawer with actionable recommendations**
+- establishing **Pro vs Free capability boundaries**
+- reinforcing the Result Viewer as a **command surface for intelligent workflows**
+
+---
+
+### 💡 Insight Drawer (NEW)
+
+- Introduced **Insight Drawer**
+  - Accessible via lightbulb / Insights button
+  - Displays **context-aware recommendations** for the current result
+
+- Each insight includes:
+  - recommendation text
+  - reasoning (when available)
+  - source (Query Doctor / Binder)
+  - confidence level
+  - optional action (Apply for Pro)
+
+- Clear capability boundary:
+  - **Free** → “Suggestion only”
+  - **Pro** → “Actionable insight” with Apply
+
+👉 Establishes:
+- a dedicated surface for understanding and acting on insights
+- a clean separation between explanation and execution
+
+---
+
+### 🧠 Multi-Insight Query Doctor (Major)
+
+- Result Viewer now supports **multiple concurrent insights**
+
+Examples:
+- missing `$top`
+- missing `$select`
+- result-driven suggestions:
+  - e.g. `statecode = Active` when distribution is uneven
+
+- Insights are:
+  - **deduplicated**
+  - **ranked**
+  - **rotatable via navigation**
+
+👉 Results in:
+- richer, result-aware guidance
+- more realistic “next best action” workflows
+
+---
+
+### 🔄 Insight Navigation & Rotation
+
+- Added manual navigation:
+
+`[‹] Insight X of Y [›]`
+
+
+- Behaviour:
+- no auto-rotation (avoids noise)
+- user-controlled exploration
+- Binder still surfaces the **primary recommendation**
+
+👉 Ensures:
+- clarity over automation
+- predictable interaction model
+
+---
+
+### ⏱️ Insight Snoozing (NEW)
+
+- Applied insights are **temporarily snoozed (60s)**
+
+Behaviour:
+- Apply → insight disappears temporarily
+- next eligible insight is shown
+- prevents stale or repetitive suggestions
+
+👉 Solves:
+- stale Result Viewer vs editor state mismatch
+- repeated “add $top” or similar guidance
+
+---
+
+### ⚡ Actionable Insights (Pro)
+
+- Insights can now expose **Apply action**
+
+- Behaviour:
+- uses existing **preview-first Binder execution path**
+- no direct mutation
+- respects safe execution model
+
+- After Apply:
+- insight is snoozed
+- drawer updates to next suggestion
+- maintains preview-first invariant
+
+👉 Establishes:
+- execution from insight surface
+- without breaking safety guarantees
+
+---
+
+### 🧩 Result Viewer → Command Surface (Expanded)
+
+- Further reinforces Result Viewer as:
+- analysis surface
+- action surface
+- refinement surface
+
+- Insights now integrate with:
+- Binder suggestions
+- Query Doctor outputs
+- preview-first mutation pipeline
+
+👉 Moves DV Quick Run toward:
+```
+Query → Result → Insight → Action → Refine
+```
+
+---
+
+### 🖱️ Context Menu Control (Foundation)
+
+- Suppressed default browser context menu across:
+  - table area
+  - toolbar area
+  - blank/result areas
+  - Insight Drawer
+
+- Preserved for:
+  - input / textarea / editable fields
+
+👉 Establishes foundation for:
+- table-driven actions
+- right-click command surface
+- future slice-and-dice workflows
+
+---
+
+### 🧭 Traversal UX Fix
+
+- Removed hardcoded schema reference:
+  - ❌ “Tighten with chosen contactid”
+  - ✅ replaced with schema-neutral wording
+
+👉 Ensures:
+- traversal UI remains metadata-driven
+- no entity-specific leakage into UI
+
+---
+
+### 🧪 Guardrails & Stability
+
+- Added guardrails for:
+  - multi-insight rendering
+  - snoozed insight behaviour
+  - `$top` duplication prevention
+  - preview-first Apply invariants
+  - context menu suppression boundaries
+
+- Verified:
+  - Insight Drawer lifecycle
+  - Free vs Pro behaviour
+  - multi-insight navigation
+  - Apply → snooze → next insight flow
+
+- No regression in:
+  - Result Viewer rendering
+  - Guided Traversal
+  - Query Doctor
+  - `$batch` execution
+  - Smart PATCH workflows
+
+---
+
+## 🧭 Notes
+
+This release marks a major evolution:
+
+- DV Quick Run moves from:
+  - **query + result tool**
+→ to:
+  - **insight-driven workflow assistant**
+
+Key principles reinforced:
+- insight-first guidance
+- preview-first execution
+- result-aware reasoning
+- minimal, high-confidence recommendations
+
+---
+
+## 🎯 Summary
+
+This is the first version where DV Quick Run begins to:
+
+- understand results
+- suggest meaningful next steps
+- allow controlled execution from those insights
+
+👉 Establishes the foundation for:
+- deeper Query Doctor intelligence
+- slice-and-dice result analysis
+- fully interactive data workflows
+
+--
+
 ## v0.9.6 — Enterprise Stability: Large Dataset Handling & Result Viewer Reliability
 
 This release focuses on **stability, predictability, and correctness under large datasets**, making DV Quick Run suitable for **real-world enterprise usage**.
