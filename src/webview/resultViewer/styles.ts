@@ -77,6 +77,174 @@ export const RESULT_VIEWER_STYLES = `
             color: var(--vscode-textLink-activeForeground);
         }
 
+
+        #showInsightsBtn {
+            margin-left: 6px;
+            cursor: pointer;
+        }
+
+        #showInsightsBtn.active {
+            background: var(--vscode-button-hoverBackground);
+            color: var(--vscode-button-foreground);
+        }
+
+        .insights-drawer {
+            display: none;
+            position: fixed;
+            top: 72px;
+            right: 24px;
+            width: 420px;
+            max-width: calc(100vw - 48px);
+            max-height: calc(100vh - 96px);
+            overflow: auto;
+            z-index: 10000;
+            border: 1px solid var(--vscode-focusBorder);
+            border-radius: 10px;
+            background: var(--vscode-editorWidget-background);
+            color: var(--vscode-editorWidget-foreground, var(--vscode-editor-foreground));
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+        }
+
+        .insights-drawer.open {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        .insights-drawer-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        .insights-drawer-title {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .insights-drawer-subtitle {
+            margin-top: 3px;
+            font-size: 11px;
+            opacity: 0.75;
+        }
+
+        .insights-drawer-body {
+            padding: 12px;
+        }
+
+        .insights-card,
+        .insights-boundary {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--vscode-editor-background);
+        }
+
+        .insights-card + .insights-boundary {
+            margin-top: 10px;
+        }
+
+        .insights-card-kicker {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            opacity: 0.72;
+            margin-bottom: 6px;
+        }
+
+        .insights-card-title {
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .insights-card-reason {
+            margin: 8px 0 0;
+            font-size: 12px;
+            line-height: 1.45;
+            opacity: 0.9;
+        }
+
+        .insights-meta {
+            margin-top: 10px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .insights-meta-row {
+            display: grid;
+            grid-template-columns: 90px 1fr;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .insights-meta-label {
+            opacity: 0.7;
+        }
+
+        .insights-meta-value {
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+
+        .insights-nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        .insights-nav-btn {
+            min-width: 28px;
+            width: 28px;
+            height: 24px;
+            padding: 0;
+            border-radius: 6px;
+        }
+
+        .insights-nav-status {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .insights-action-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .insights-apply-btn {
+            padding: 5px 12px;
+            min-width: 64px;
+        }
+
+        .insights-action-hint {
+            font-size: 11px;
+            opacity: 0.72;
+            line-height: 1.35;
+        }
+
+        .insights-boundary-title {
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .insights-boundary-text {
+            font-size: 12px;
+            line-height: 1.45;
+            opacity: 0.82;
+        }
+
         .viewer-title {
             font-size: 13px;
             font-weight: 600;

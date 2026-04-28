@@ -5,6 +5,7 @@ export function getResultViewerMarkup(iconUri: string): string {
             <div class="toolbar-left">
                 <button id="showTableBtn" type="button" title="Table view">TABLE</button>
                 <button id="showJsonBtn" type="button" title="JSON view">JSON</button>
+                <button id="showInsightsBtn" type="button" title="View read-only insights" data-result-viewer-action="toggle-insights" aria-expanded="false" hidden>Insights</button>
                 <button id="showRelationshipsBtn" title="View Relationships">🔗</button>
                 <button id="showMetadataBtn" title="View Entity Metadata">📘</button>
                 <button id="exportCsvBtn" title="Export current view to CSV">⬇️</button>
@@ -43,6 +44,17 @@ export function getResultViewerMarkup(iconUri: string): string {
                 </div>
                 <pre id="jsonView"></pre>
             </div>
+        </div>
+
+        <div id="insightsDrawer" class="insights-drawer" aria-hidden="true" hidden>
+            <div class="insights-drawer-header">
+                <div>
+                    <div class="insights-drawer-title">Insights</div>
+                    <div class="insights-drawer-subtitle">Read-only reasoning from the current Result Viewer context</div>
+                </div>
+                <button id="insightsDrawerCloseBtn" type="button">Close</button>
+            </div>
+            <div id="insightsDrawerBody" class="insights-drawer-body"></div>
         </div>
 
         <div id="arrayDrawer" class="drawer">

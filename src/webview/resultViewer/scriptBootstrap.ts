@@ -1,4 +1,5 @@
 export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
+
         const vscodeApi = acquireVsCodeApi();
 
         const tableView = document.getElementById("tableView");
@@ -13,6 +14,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const batchResponseBar = document.getElementById("batchResponseBar");
         const showTableBtn = document.getElementById("showTableBtn");
         const showJsonBtn = document.getElementById("showJsonBtn");
+        const showInsightsBtn = document.getElementById("showInsightsBtn");
         const showRelationshipsBtn = document.getElementById("showRelationshipsBtn");
         const showMetadataBtn = document.getElementById("showMetadataBtn");
         const exportCsvBtn = document.getElementById("exportCsvBtn");
@@ -35,6 +37,9 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const arrayDrawerJsonView = document.getElementById("arrayDrawerJsonView");
         const traversalStatus = document.getElementById("traversalStatus");
         const binderSuggestionBtn = document.getElementById("binderSuggestionBtn");
+        const insightsDrawer = document.getElementById("insightsDrawer");
+        const insightsDrawerBody = document.getElementById("insightsDrawerBody");
+        const insightsDrawerCloseBtn = document.getElementById("insightsDrawerCloseBtn");
 
         const rootModel = JSON.parse(__INITIAL_MODEL_JSON__);
         const isBatchRoot = !!rootModel && rootModel.type === "batch";
@@ -189,6 +194,10 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const drawerColumnWidths = {};
         let activeOverflowMenu = null;
         let activeOverflowAnchor = null;
+        let insightsDrawerOpen = false;
+        let activeInsightIndex = 0;
+        const snoozedInsightUntilByKey = new Map();
+        const INSIGHT_SNOOZE_MS = 60000;
         let tableEventsBound = false;
         const progressiveRenderState = {
             signature: "",
@@ -430,6 +439,16 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 return;
             }
 
+            if (message.type === "executeResultViewerAction") {
+                const actionId = message.payload?.actionId || "";
+
+                if (actionId === "toggle-insights") {
+                    toggleInsightsDrawer();
+                }
+
+                return;
+            }
+
             if (message.type === "sessionSearchError") {
                 const payload = message.payload || {};
                 const session = getActiveSession();
@@ -496,6 +515,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             closeAllOverflowMenus();
             removeResultViewerContextMenu();
             closeArrayDrawer();
+            closeInsightsDrawer();
             clearProgressiveRenderTimer();
         }
 
@@ -504,6 +524,8 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             renderEnvironmentBadge(model.environment || rootModel.environment);
             renderTraversalStatus(model.traversal);
             renderBinderSuggestion(isBatchRoot ? (rootModel.binderSuggestion || null) : model.binderSuggestion);
+            renderInsightsButton(resolveActiveInsightSuggestion());
+            renderInsightsDrawer();
             renderSiblingExpandButton(model);
             renderTraversalBatchButton(model);
             renderPagingState(model);
@@ -576,6 +598,46 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         showJsonBtn.addEventListener("click", () => {
             showJson();
         });
+
+        if (showInsightsBtn instanceof HTMLButtonElement) {
+            showInsightsBtn.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleInsightsDrawer();
+            });
+        }
+
+        if (insightsDrawerCloseBtn instanceof HTMLButtonElement) {
+            insightsDrawerCloseBtn.addEventListener("click", () => {
+                closeInsightsDrawer();
+            });
+        }
+
+        if (insightsDrawer instanceof HTMLElement) {
+            insightsDrawer.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const navButton = target.closest("[data-insights-nav]");
+                if (navButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    moveActiveInsight(navButton.getAttribute("data-insights-nav") === "prev" ? -1 : 1);
+                    return;
+                }
+
+                const applyButton = target.closest("[data-insights-apply-action]");
+                if (!(applyButton instanceof HTMLElement)) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                executeActiveInsightSuggestion();
+            });
+        }
 
         jsonSearchInput.addEventListener("input", (event) => {
             const target = event.target;
@@ -909,6 +971,26 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 closeAllBatchKebabMenus();
             }
         });
+
+        document.addEventListener("contextmenu", (event) => {
+            const target = event.target instanceof HTMLElement ? event.target : null;
+            if (!target) {
+                return;
+            }
+
+            const isEditableTarget =
+                target instanceof HTMLInputElement ||
+                target instanceof HTMLTextAreaElement ||
+                target.isContentEditable;
+
+            if (isEditableTarget) {
+                return;
+            }
+
+            if (target.closest(".page")) {
+                event.preventDefault();
+            }
+        }, true);
 
         bindTableEventsOnce();
         wireBatchKebabEvents();

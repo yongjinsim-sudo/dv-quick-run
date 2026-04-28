@@ -6,6 +6,7 @@ import { isMeaningfulResultInsightCandidate, scoreResultInsightCandidate } from 
 import type { RankedResultInsightCandidate, ResultInsightContext } from "./resultInsightTypes.js";
 
 const MAX_CANDIDATES = 3;
+const MIN_RECOMMENDATION_SCORE = 2.5;
 
 export function buildRankedResultInsightCandidates(input: {
   evidence: ExecutionEvidence;
@@ -32,7 +33,9 @@ export function buildRankedResultInsightCandidates(input: {
       };
     });
 
-  const rankedCandidates = rankCandidatesByScore(scoredCandidates).slice(0, MAX_CANDIDATES);
+  const rankedCandidates = rankCandidatesByScore(scoredCandidates)
+    .filter((candidate) => candidate.score >= MIN_RECOMMENDATION_SCORE)
+    .slice(0, MAX_CANDIDATES);
 
   return rankedCandidates.map((candidate, index) => ({
     ...candidate,

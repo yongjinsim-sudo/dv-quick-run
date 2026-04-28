@@ -25,103 +25,131 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.6 (Enterprise Stability & Large Dataset Handling)
+## 🆕 What's New in v0.9.7 (Insight-Driven Result Viewer & Multi-Insight Query Doctor)
 
-> Hardens DV Quick Run for **real-world enterprise usage**, focusing on large datasets, reliability, and predictable behaviour under load.
+> Introduces the first **result-aware insight system inside the Result Viewer**, evolving DV Quick Run into a **guided, insight-driven Dataverse workbench**.
 
 ---
 
-### 📊 Large Dataset Stability (Major)
+### 💡 Insight Drawer (NEW)
 
-- Result Viewer now uses a **session-backed model**
-  - full dataset stored once
-  - UI renders controlled windows (default 100 rows)
+- Added **Insight Drawer**
+  - Accessible via lightbulb / Insights button
+  - Displays **context-aware recommendations based on query + results**
 
-- Supports safe row windows:
-  - 100 / 200 / 500 / 1000
-  - prevents UI lockups from large renders
-
-- Large datasets (1000–5000+ rows):
-  - handled safely without crashing
-  - progressive rendering ensures responsiveness
+- Each insight includes:
+  - recommendation
+  - reasoning (when available)
+  - source (Query Doctor / Binder)
+  - confidence
+  - optional action (Apply for Pro/dev)
 
 👉 Results in:
-- stable behaviour in enterprise environments  
-- no more viewer crashes or “dead” states  
-- predictable performance under load  
+- clearer understanding of “what to do next”
+- separation between insight and execution
 
 ---
 
-### 🔍 Full Dataset Search (Correctness Fix)
+### 🧠 Multi-Insight Query Doctor (Major)
 
-- Search now operates on **entire result set**, not just visible rows
+- Result Viewer now surfaces **multiple insights at once**
+
+Examples:
+- missing `$top`
+- missing `$select`
+- result-driven suggestions:
+  - e.g. `statecode = Active` when distribution is uneven
+
+- Insights are:
+  - deduplicated
+  - ranked
+  - available for navigation
+
+👉 Results in:
+- richer, result-aware guidance
+- more realistic decision-making flow
+
+---
+
+### 🔄 Insight Navigation
+
+- Navigate insights manually:
+
+`[‹] Insight X of Y [›]`
 
 - Behaviour:
-  - finds matches across all rows
-  - displays accurate match count
-
-👉 Results in:
-- trustworthy search results  
-- no missing matches due to paging  
+  - user-controlled exploration
+  - Binder still shows the primary recommendation
 
 ---
 
-### 📄 Paging & Windowing UX
+### 🧩 Result Viewer as an Insight Surface
 
-- Added row window controls:
-  - `Show 100 / 200 / 500 / 1000`
+- Result Viewer now acts as:
+  - data exploration surface
+  - insight surface
+  - action surface
 
-- Smart UI behaviour:
-  - hides unnecessary options for small datasets
-  - hides navigation when not needed
+- Integrated with:
+  - Query Doctor
+  - Binder suggestions
+  - preview-first mutation pipeline
 
-- Clear indicators:
-  - `Rows X–Y of Z`
-
-👉 Results in:
-- cleaner UI  
-- better navigation across datasets  
-
----
-
-### ⚡ Rendering Reliability Improvements
-
-- Fixed:
-  - blank Result Viewer issue
-  - stuck “Loading rows…” state
-  - large window rendering freezes
-
-- Improved:
-  - progressive rendering feedback
-  - consistent render completion
-
-👉 Results in:
-- reliable viewer lifecycle  
-- no need to rerun queries due to UI issues  
+👉 Enables:
+```
+Query → Result → Insight → Action → Refine
+```
 
 ---
 
-### 🧠 Result Viewer Architecture Upgrade
+### 🖱️ Context Menu Control (Foundation)
 
-- Result Viewer now:
-  - decouples dataset from UI rendering
-  - uses session as source of truth
+- Removed default browser right-click menu across:
+  - table
+  - toolbar
+  - blank areas
+  - Insight Drawer
 
-👉 Enables future:
-- slice-and-dice workflows  
-- result-driven insights  
-- advanced Query Doctor features  
+- Preserved for:
+  - inputs / editable fields
+
+👉 Establishes foundation for:
+- table-driven actions
+- slice-and-dice workflows
+- command-surface UX
 
 ---
 
 ## 🧭 Notes
 
-This release focuses on **stability and correctness over new features**.
+This release marks a major evolution:
 
-DV Quick Run is now:
-- safe for **large enterprise datasets**
-- reliable under **real-world load**
-- positioned as a **data interaction surface**, not just a viewer
+DV Quick Run moves from:
+- **query + result tool**
+
+to:
+- **insight-driven workflow assistant**
+
+Key principles:
+- insight-first guidance
+- preview-first execution
+- result-aware reasoning
+- minimal, high-confidence recommendations
+
+---
+
+## 🎯 Summary
+
+DV Quick Run now:
+
+- understands query results
+- suggests meaningful next steps
+- enables controlled execution from insights
+
+👉 Establishes foundation for:
+- deeper Query Doctor intelligence
+- interactive result analysis
+- fully guided data workflows
 
 ---
 
