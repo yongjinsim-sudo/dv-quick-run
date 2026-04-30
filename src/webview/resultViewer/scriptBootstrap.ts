@@ -439,6 +439,35 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 return;
             }
 
+            if (message.type === "insightsUpdated") {
+                const payload = message.payload || {};
+                if (Array.isArray(payload.suggestions)) {
+                    model.insightSuggestions = payload.suggestions;
+                    activeInsightIndex = 0;
+                    insightsDrawerOpen = true;
+                    renderBinderSuggestion(resolveActiveInsightSuggestion());
+                    renderInsightsButton(resolveActiveInsightSuggestion());
+                    renderInsightsDrawer();
+                }
+                return;
+            }
+
+            if (message.type === "insightsError") {
+                const payload = message.payload || {};
+                model.insightSuggestions = [{
+                    text: "Insights could not be fetched for this result",
+                    actionId: "requestResultInsights",
+                    confidence: 0.5,
+                    reason: String(payload.message || "DV Quick Run could not analyse the current result."),
+                    source: "performance"
+                }];
+                activeInsightIndex = 0;
+                insightsDrawerOpen = true;
+                renderInsightsButton(resolveActiveInsightSuggestion());
+                renderInsightsDrawer();
+                return;
+            }
+
             if (message.type === "executeResultViewerAction") {
                 const actionId = message.payload?.actionId || "";
 

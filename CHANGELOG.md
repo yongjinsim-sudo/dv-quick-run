@@ -6,6 +6,192 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.8 — Fast-First Result Viewer & Safe Insight Execution (Stability Release)
+
+This release focuses on **stability, responsiveness, and trust**, ensuring DV Quick Run remains reliable under **wide and large Dataverse queries**.
+
+It introduces a **fast-first execution model** and refactors the insight system to be **safe, bounded, and user-triggered**, preventing extension host crashes and performance degradation.
+
+---
+
+### ⚡ Fast-First Result Viewer (Major)
+
+- Enforced **fast-first rendering model**
+  - Result Viewer now prioritises immediate display of results
+  - Insight generation no longer blocks or delays rendering
+
+- Eliminated crash scenarios caused by:
+  - wide entities (e.g. `contacts`)
+  - large payloads without `$select`
+  - heavy result-driven analysis during initial load
+
+👉 Results in:
+- consistent responsiveness
+- no extension host crashes under broad queries
+- predictable performance in enterprise environments
+
+---
+
+### 🛡️ Safe Mode for Broad Queries (NEW)
+
+- Introduced **Safe Mode** for potentially unsafe queries
+
+Triggered when:
+- no `$select` present
+- wide payload detected
+- large result sets returned
+
+- Behaviour:
+  - Result Viewer opens immediately
+  - result-driven insights are **paused**
+  - user is prompted to run insights manually
+
+- Messaging:
+  - clearly communicates system behaviour
+  - explains performance protection
+
+👉 Ensures:
+- broad queries are handled safely
+- users understand why insights are limited
+- system feels intentional, not broken
+
+---
+
+### 🧠 Deferred Insights (NEW)
+
+- Result-driven insights are now **user-triggered**
+
+- Introduced:
+  - **Get Insights** action in Insight Drawer
+
+- Behaviour:
+  - insights run only when explicitly requested
+  - initial query execution remains fast
+
+👉 Establishes:
+- explicit control over analysis
+- separation between data retrieval and intelligence
+
+---
+
+### 🔍 Sample-Based Insight Analysis (NEW)
+
+- Insights now operate on a **bounded sample of the current result page**
+
+- Default limits:
+  - max 20 rows
+  - max 40 columns
+
+- Preserves:
+  - formatted values (e.g. Choice labels)
+  - field relationships within sampled rows
+
+- Messaging includes:
+  - sample size
+  - total result context
+
+👉 Results in:
+- fast insight generation
+- representative (but safe) analysis
+- no full-table scanning
+
+---
+
+### ⏱️ Insight Execution Budget (NEW)
+
+- Introduced **soft execution budget for insights**
+
+- Guards:
+  - time budget (~2.5s soft limit)
+  - row/column sampling limits
+
+- Behaviour:
+  - insights stop early if budget exceeded
+  - partial results returned safely
+
+👉 Prevents:
+- runaway computations
+- UI freezes
+- performance degradation
+
+---
+
+### 🧩 Insight Execution Context (Foundation)
+
+- Introduced central **Insight Execution Context**
+
+- Provides:
+  - shared time budget
+  - sampling limits
+  - execution tracking
+
+- Enforces:
+  - all result-based insights operate within safe bounds
+
+---
+
+### 🧪 Stability & Guardrails
+
+- Added safeguards for:
+  - wide dataset handling
+  - sampled insight correctness
+  - formatted value preservation
+  - partial insight scenarios
+
+- Introduced fail-safe behaviour:
+  - insight failures degrade gracefully
+  - Result Viewer never crashes due to insights
+
+- Verified:
+  - large datasets
+  - wide schemas
+  - repeated insight triggering
+  - interaction stability under stress
+
+- No regression in:
+  - Result Viewer rendering
+  - Query Doctor
+  - Guided Traversal
+  - `$batch` execution
+  - Smart PATCH workflows
+
+---
+
+## 🧭 Notes
+
+This is a **stability and trust-focused release**.
+
+Key architectural shift:
+
+- Insights move from:
+  - **implicit + eager**
+→ to:
+  - **explicit + bounded + safe**
+
+Core principles reinforced:
+- fast-first execution
+- user-controlled intelligence
+- safe handling of enterprise-scale data
+- graceful degradation over failure
+
+---
+
+## 🎯 Summary
+
+This release ensures DV Quick Run:
+
+- remains **fast under all query conditions**
+- avoids crashes from wide or large datasets
+- provides insights **only when needed**
+- establishes a **safe foundation for future intelligence features**
+
+👉 Prepares the platform for:
+- deeper result analysis
+
+— without compromising performance or stability
+
+---
+
 ## v0.9.7 — Insight Drawer, Multi-Insight Query Doctor & Command Surface Foundation
 
 This release introduces the first **result-aware insight system inside the Result Viewer**, evolving DV Quick Run from a query tool into a **guided, insight-driven Dataverse workbench**.

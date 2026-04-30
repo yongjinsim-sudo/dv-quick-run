@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, Smart PATCH, and intelligent suggestions.
+A fast, metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, Smart PATCH, and safe, on-demand insights.
 
 **Run, understand, explore, refine, and safely update Dataverse data — with Query-by-Canvas, Guided Traversal, Smart PATCH, and `$batch` workflows — without leaving your editor.**
 
@@ -25,116 +25,137 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.7 (Insight-Driven Result Viewer & Multi-Insight Query Doctor)
+## 🆕 What's New in v0.9.8 (Fast-First Result Viewer & Safe Insights)
 
-> Introduces the first **result-aware insight system inside the Result Viewer**, evolving DV Quick Run into a **guided, insight-driven Dataverse workbench**.
+> A **stability and trust-focused release** — ensuring DV Quick Run remains fast, safe, and reliable under large and wide Dataverse queries.
 
 ---
 
-### 💡 Insight Drawer (NEW)
+### ⚡ Fast-First Result Viewer (Major)
 
-- Added **Insight Drawer**
-  - Accessible via lightbulb / Insights button
-  - Displays **context-aware recommendations based on query + results**
+- Result Viewer now prioritises **instant responsiveness**
+- Insight generation no longer blocks or slows initial render
 
-- Each insight includes:
-  - recommendation
-  - reasoning (when available)
-  - source (Query Doctor / Binder)
-  - confidence
-  - optional action (Apply for Pro/dev)
+- Eliminates crash scenarios caused by:
+  - wide entities (e.g. `contacts`)
+  - large payloads without `$select`
+  - heavy result-driven analysis
 
 👉 Results in:
-- clearer understanding of “what to do next”
-- separation between insight and execution
+- consistent performance across environments
+- no extension host crashes on broad queries
+- predictable behaviour under enterprise datasets
 
 ---
 
-### 🧠 Multi-Insight Query Doctor (Major)
+### 🛡️ Safe Mode for Broad Queries (NEW)
 
-- Result Viewer now surfaces **multiple insights at once**
+- Introduced **Safe Mode** for potentially unsafe queries
 
-Examples:
-- missing `$top`
-- missing `$select`
-- result-driven suggestions:
-  - e.g. `statecode = Active` when distribution is uneven
-
-- Insights are:
-  - deduplicated
-  - ranked
-  - available for navigation
-
-👉 Results in:
-- richer, result-aware guidance
-- more realistic decision-making flow
-
----
-
-### 🔄 Insight Navigation
-
-- Navigate insights manually:
-
-`[‹] Insight X of Y [›]`
+Triggered when:
+- no `$select` present
+- wide or large result sets detected
 
 - Behaviour:
-  - user-controlled exploration
-  - Binder still shows the primary recommendation
+  - Result Viewer opens immediately
+  - result-driven insights are paused
+  - user can trigger insights manually
+
+👉 Ensures:
+- safe handling of large datasets
+- clear, intentional system behaviour
+- no confusion between “slow” vs “protected”
 
 ---
 
-### 🧩 Result Viewer as an Insight Surface
+### 🧠 Deferred Insights (NEW)
 
-- Result Viewer now acts as:
-  - data exploration surface
-  - insight surface
-  - action surface
+- Insights are now **user-triggered**, not automatic
 
-- Integrated with:
-  - Query Doctor
-  - Binder suggestions
-  - preview-first mutation pipeline
+- Added:
+  - **Get Insights** action in Insight Drawer
 
-👉 Enables:
-```
-Query → Result → Insight → Action → Refine
-```
+- Behaviour:
+  - query execution remains fast
+  - insights run only when explicitly requested
+
+👉 Establishes:
+- separation between data retrieval and analysis
+- user control over performance vs insight depth
 
 ---
 
-### 🖱️ Context Menu Control (Foundation)
+### 🔍 Sample-Based Insights (NEW)
 
-- Removed default browser right-click menu across:
-  - table
-  - toolbar
-  - blank areas
-  - Insight Drawer
+- Insights operate on a **safe sample of the current result page**
 
-- Preserved for:
-  - inputs / editable fields
+Default limits:
+- 20 rows
+- 40 columns
 
-👉 Establishes foundation for:
-- table-driven actions
-- slice-and-dice workflows
-- command-surface UX
+- Preserves:
+  - formatted values (e.g. Choice labels)
+  - meaningful field relationships
+
+- Insight messaging includes:
+  - sample size
+  - total result context
+
+👉 Results in:
+- fast insight generation
+- representative (but safe) analysis
+- no full-table scanning
+
+---
+
+### ⏱️ Safe Insight Execution (NEW)
+
+- Introduced **bounded insight execution**
+
+Includes:
+- soft time budget (~2–3 seconds)
+- sampling limits
+- early exit when limits reached
+
+- Behaviour:
+  - insights degrade gracefully
+  - partial results returned when needed
+
+👉 Prevents:
+- UI freezes
+- runaway computations
+- performance degradation
+
+---
+
+### 🧩 Foundation for Future Insights
+
+- Introduced structured insight execution model:
+  - sampling-first
+  - budget-controlled
+  - fail-safe by design
+
+👉 Prepares DV Quick Run for:
+- deeper result analysis
+
+— without compromising performance
 
 ---
 
 ## 🧭 Notes
 
-This release marks a major evolution:
+This release introduces a key architectural shift:
 
-DV Quick Run moves from:
-- **query + result tool**
+- Insights move from:
+  - **automatic and eager**
+→ to:
+  - **explicit, safe, and user-controlled**
 
-to:
-- **insight-driven workflow assistant**
-
-Key principles:
-- insight-first guidance
-- preview-first execution
-- result-aware reasoning
-- minimal, high-confidence recommendations
+Core principles reinforced:
+- fast-first execution
+- safe handling of enterprise-scale data
+- insights as optional intelligence
+- graceful degradation over failure
 
 ---
 
@@ -142,14 +163,15 @@ Key principles:
 
 DV Quick Run now:
 
-- understands query results
-- suggests meaningful next steps
-- enables controlled execution from insights
+- stays fast under all query conditions
+- avoids crashes on wide/large datasets
+- provides insights only when needed
+- establishes a safe foundation for future intelligence features
 
-👉 Establishes foundation for:
-- deeper Query Doctor intelligence
-- interactive result analysis
-- fully guided data workflows
+👉 This ensures DV Quick Run remains:
+- **quick**
+- **reliable**
+- **enterprise-ready**
 
 ---
 
