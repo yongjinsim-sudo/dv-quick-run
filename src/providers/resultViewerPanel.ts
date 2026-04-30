@@ -13,6 +13,7 @@ import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
 import { ResultViewerSessionStore } from "./resultViewerSessionStore.js";
+import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
 
 type ResultViewerMessage =
     | {
@@ -146,12 +147,14 @@ export class ResultViewerPanel {
     private static currentPagingState: ResultViewerPagingState | undefined;
     private static lastViewColumn: vscode.ViewColumn | undefined;
     private static currentSessionId: string | undefined;
+    private static currentModel: ResultViewerDisplayModel | undefined;
 
     public static show(
     ctx: CommandContext,
     model: ResultViewerDisplayModel
     ): void {
         ResultViewerPanel.currentContext = ctx;
+        ResultViewerPanel.currentModel = model;
         ResultViewerPanel.currentSessionId = isBatchResultViewerModel(model) ? undefined : model.session?.id;
 
         if (isBatchResultViewerModel(model)) {
@@ -199,6 +202,7 @@ export class ResultViewerPanel {
             }
             ResultViewerPanel.currentPanel = undefined;
             ResultViewerPanel.currentSessionId = undefined;
+            ResultViewerPanel.currentModel = undefined;
         });
 
         ResultViewerPanel.lastViewColumn = panel.viewColumn;
@@ -459,6 +463,10 @@ export class ResultViewerPanel {
                     });
                     return;
 
+                case "requestResultInsights":
+                    await ResultViewerPanel.handleRequestResultInsights();
+                    return;
+
                 case "previewAddTop":
                     if (typeof payload.payload?.queryPath === "string" && payload.payload.queryPath.trim()) {
                         await previewAndApplyAddTopForQueryInEditor(payload.payload.queryPath, typeof payload.payload?.value === "number" ? payload.payload.value : 50);
@@ -491,6 +499,49 @@ export class ResultViewerPanel {
             const message = error instanceof Error ? error.message : String(error);
             void vscode.window.showWarningMessage(`DV Quick Run: ${message}`);
             ctx.output.appendLine(`[Binder] ${message}`);
+        }
+    }
+
+    private static async handleRequestResultInsights(): Promise<void> {
+        const panel = ResultViewerPanel.currentPanel;
+        const currentModel = ResultViewerPanel.currentModel;
+        if (!panel || !currentModel || isBatchResultViewerModel(currentModel)) {
+            return;
+        }
+
+        const rawJson = currentModel.session?.id
+            ? ResultViewerSessionStore.getRawJson(currentModel.session.id)
+            : currentModel.rawJson;
+
+        if (!rawJson?.trim()) {
+            await panel.webview.postMessage({
+                type: "insightsError",
+                payload: { message: "Current result payload is unavailable for insight analysis." }
+            });
+            return;
+        }
+
+        try {
+            const result = JSON.parse(rawJson);
+            const manualInsights = buildManualResultViewerInsightSuggestions({
+                queryPath: currentModel.queryPath,
+                result
+            });
+            currentModel.insightSuggestions = [
+                ...(currentModel.insightSuggestions ?? []).filter((suggestion) => suggestion.actionId !== "requestResultInsights"),
+                ...manualInsights
+            ];
+
+            await panel.webview.postMessage({
+                type: "insightsUpdated",
+                payload: { suggestions: currentModel.insightSuggestions }
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            await panel.webview.postMessage({
+                type: "insightsError",
+                payload: { message: "Could not analyse the current result: " + message }
+            });
         }
     }
 

@@ -14,7 +14,7 @@ import {
     isSystemColumn
 } from "../providers/resultViewerActions/columnIntelligence.js";
 import { resolveChoiceValueFromMetadata } from "../commands/router/actions/shared/valueAwareness.js";
-import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion, buildResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
+import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion, buildResultViewerInsightSuggestions, getParsedQueryShape } from "../product/binder/buildBinderSuggestion.js";
 import type { BinderSuggestion } from "../product/binder/binderTypes.js";
 
 export interface ResultViewerEnvironmentInfo {
@@ -204,6 +204,7 @@ export const RESULT_VIEWER_MAX_FLATTEN_DEPTH = 2;
 const RESULT_VIEWER_MAX_CELL_TEXT_LENGTH = 240;
 const RESULT_VIEWER_MAX_ACTION_VALUE_LENGTH = 200;
 const RESULT_VIEWER_MAX_DRAWER_PAYLOAD_CHARS = 12000;
+const RESULT_VIEWER_SAFE_MODE_COLUMN_LIMIT = 60;
 
 function truncateResultViewerText(value: string, maxLength = RESULT_VIEWER_MAX_CELL_TEXT_LENGTH): string {
     if (value.length <= maxLength) {
@@ -952,10 +953,15 @@ export function buildResultViewerModel(
             }
         });
 
-        const columns = prioritizePrimaryIdField(
+        const sourceColumns = prioritizePrimaryIdField(
             sortColumns(Array.from(columnSet).filter((column) => shouldKeepFlattenedChildField(column))),
             primaryIdField
         );
+        const queryShape = getParsedQueryShape(query);
+        const shouldUseSafeDisplayColumns = !queryShape.hasSelect && sourceColumns.length > RESULT_VIEWER_SAFE_MODE_COLUMN_LIMIT;
+        const columns = shouldUseSafeDisplayColumns
+            ? sourceColumns.slice(0, RESULT_VIEWER_SAFE_MODE_COLUMN_LIMIT)
+            : sourceColumns;
 
         const relationshipAliasMap = buildRelationshipAliasMap(columns);
         const displayColumns = applyColumnAliases(columns, relationshipAliasMap);
@@ -1032,13 +1038,13 @@ export function buildResultViewerModel(
             binderSuggestion: buildResultViewerBinderSuggestion({
                 queryPath: query,
                 rowCount: rows.length,
-                columnCount: displayColumns.length,
+                columnCount: sourceColumns.length,
                 traversalContext
             }),
             insightSuggestions: buildResultViewerInsightSuggestions({
                 queryPath: query,
                 rowCount: rows.length,
-                columnCount: displayColumns.length,
+                columnCount: sourceColumns.length,
                 result,
                 fields: options?.fields,
                 traversalContext
