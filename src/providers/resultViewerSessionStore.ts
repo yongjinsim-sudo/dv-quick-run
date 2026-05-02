@@ -61,6 +61,54 @@ function toJsonText(value: unknown): string {
     return JSON.stringify(value, null, 2);
 }
 
+function getCollectionResult(result: unknown): Record<string, unknown> | undefined {
+    if (typeof result === "object" && result !== null && !Array.isArray(result)) {
+        return result as Record<string, unknown>;
+    }
+
+    return undefined;
+}
+
+function isFormattedValueColumn(columnName: string): boolean {
+    return columnName.includes("@OData.Community.Display.V1.FormattedValue");
+}
+
+function collectRawCsvColumns(rows: unknown[]): string[] {
+    const columns: string[] = [];
+    const seen = new Set<string>();
+
+    rows.forEach((row) => {
+        if (typeof row !== "object" || row === null || Array.isArray(row)) {
+            return;
+        }
+
+        Object.keys(row as Record<string, unknown>).forEach((column) => {
+            if (isFormattedValueColumn(column) || seen.has(column)) {
+                return;
+            }
+
+            seen.add(column);
+            columns.push(column);
+        });
+    });
+
+    return columns;
+}
+
+function getCsvCellValue(row: unknown, column: string): unknown {
+    if (typeof row !== "object" || row === null || Array.isArray(row)) {
+        return "";
+    }
+
+    const record = row as Record<string, unknown>;
+    const formattedColumn = `${column}@OData.Community.Display.V1.FormattedValue`;
+    if (formattedColumn in record) {
+        return record[formattedColumn];
+    }
+
+    return record[column] ?? "";
+}
+
 function valueContainsText(value: unknown, searchText: string): boolean {
     if (value === null || value === undefined) {
         return false;
@@ -238,16 +286,27 @@ export class ResultViewerSessionStore {
             return undefined;
         }
 
-        const fullModel = buildResultViewerModel(session.result, session.query, {
-            ...session.options,
-            suppressRawJson: true
-        });
+        // Export is intentionally session-backed and raw-row driven.
+        // Do not rebuild the full Result Viewer model here: model building can trigger
+        // table/action work that is unnecessary and fragile for very large or wide payloads
+        // such as plugintracelogs.
+        const rows = getCollectionRows(session.result);
+        const columns = collectRawCsvColumns(rows);
 
-        const columns = fullModel.columns;
+        if (columns.length === 0) {
+            const result = getCollectionResult(session.result);
+            if (!result) {
+                return undefined;
+            }
+
+            return Object.entries(result)
+                .map(([key, value]) => `${csvEscape(key)},${csvEscape(value)}`)
+                .join("\n");
+        }
+
         const lines = [columns.map(csvEscape).join(",")];
-
-        fullModel.rows.forEach((row) => {
-            lines.push(columns.map((column) => csvEscape(row[column]?.exportValue ?? row[column]?.copyValue ?? row[column]?.value ?? "")).join(","));
+        rows.forEach((row) => {
+            lines.push(columns.map((column) => csvEscape(getCsvCellValue(row, column))).join(","));
         });
 
         return lines.join("\n");

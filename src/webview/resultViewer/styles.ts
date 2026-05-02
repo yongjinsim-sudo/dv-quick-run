@@ -142,6 +142,9 @@ export const RESULT_VIEWER_STYLES = `
             border-radius: 8px;
             padding: 12px;
             background: var(--vscode-editor-background);
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .insights-card + .insights-boundary {
@@ -159,6 +162,8 @@ export const RESULT_VIEWER_STYLES = `
         .insights-card-title {
             font-weight: 700;
             line-height: 1.35;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .insights-card-reason {
@@ -166,6 +171,90 @@ export const RESULT_VIEWER_STYLES = `
             font-size: 12px;
             line-height: 1.45;
             opacity: 0.9;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .insights-plugin-name {
+            margin-top: 8px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .insights-plugin-full-name {
+            margin-top: 3px;
+            font-size: 11px;
+            line-height: 1.35;
+            opacity: 0.72;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .insights-section {
+            margin-top: 10px;
+        }
+
+        .insights-section-title {
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .insights-section-list {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .insights-section-text {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.45;
+            opacity: 0.9;
+        }
+
+        .insights-raw-details {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--vscode-panel-border);
+            font-size: 12px;
+        }
+
+        .insights-raw-details summary {
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--vscode-textLink-foreground);
+        }
+
+        .insights-raw-list {
+            margin: 8px 0 0;
+            padding-left: 18px;
+            line-height: 1.45;
+            opacity: 0.9;
+        }
+
+        .insights-raw-actions {
+            margin-top: 8px;
+        }
+
+        .insights-copy-raw-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+        }
+
+        .insights-raw-json {
+            max-height: 220px;
+            overflow: auto;
+            margin: 8px 0 0;
+            padding: 8px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            background: var(--vscode-textCodeBlock-background, var(--vscode-editor-background));
+            font-size: 11px;
+            line-height: 1.35;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .insights-meta {
@@ -187,6 +276,7 @@ export const RESULT_VIEWER_STYLES = `
 
         .insights-meta-value {
             font-weight: 600;
+            overflow-wrap: anywhere;
             word-break: break-word;
         }
 

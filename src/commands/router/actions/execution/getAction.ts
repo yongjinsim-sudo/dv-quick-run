@@ -193,10 +193,11 @@ export async function runGetAction(ctx: CommandContext): Promise<void> {
     logDebug(ctx.output, `GET ${path}`);
 
     const startedAt = Date.now();
-    const result = await client.get(path, token);
+    const response = await client.getWithMetadata(path, token);
+    const result = response.data;
     const durationMs = Date.now() - startedAt;
     recordExecutionEvidence(extractExecutionEvidence(path, result, durationMs));
 
-    await showResultViewerForQuery(ctx, result, path);
+    await showResultViewerForQuery(ctx, result, path, { executionContext: response.executionContext });
   });
 }

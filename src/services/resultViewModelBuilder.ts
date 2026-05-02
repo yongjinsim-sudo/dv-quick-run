@@ -1,5 +1,6 @@
 import type { ChoiceMetadataDef } from "../services/entityChoiceMetadataService.js";
 import type { FieldDef } from "../services/entityFieldMetadataService.js";
+import type { DataverseExecutionContext } from "./dataverseClient.js";
 import {
     resolveResultViewerActions
 } from "../providers/resultViewerActions/registry.js";
@@ -99,6 +100,8 @@ export interface ResultViewerSourceTargetInfo {
     sourceRangeEndCharacter: number;
 }
 
+export type ResultViewerExecutionContext = DataverseExecutionContext;
+
 export interface ResultViewerSessionInfo {
     id: string;
     rowOffset: number;
@@ -135,6 +138,7 @@ export interface ResultViewerModel {
     paging?: ResultViewerPagingInfo;
     sourceTarget?: ResultViewerSourceTargetInfo;
     session?: ResultViewerSessionInfo;
+    executionContext?: ResultViewerExecutionContext;
 }
 
 export interface ResultViewerBuildOptions {
@@ -153,6 +157,7 @@ export interface ResultViewerBuildOptions {
     };
     suppressRawJson?: boolean;
     sessionId?: string;
+    executionContext?: ResultViewerExecutionContext;
 }
 
 
@@ -1039,7 +1044,8 @@ export function buildResultViewerModel(
                 queryPath: query,
                 rowCount: rows.length,
                 columnCount: sourceColumns.length,
-                traversalContext
+                traversalContext,
+                executionContext: options?.executionContext
             }),
             insightSuggestions: buildResultViewerInsightSuggestions({
                 queryPath: query,
@@ -1047,7 +1053,8 @@ export function buildResultViewerModel(
                 columnCount: sourceColumns.length,
                 result,
                 fields: options?.fields,
-                traversalContext
+                traversalContext,
+                executionContext: options?.executionContext
             }),
             environment,
             emptyState,
@@ -1062,7 +1069,8 @@ export function buildResultViewerModel(
                     totalRows: rows.length,
                     hasMoreRows: rowWindowOffset + mappedRows.length < rows.length
                 }
-                : undefined
+                : undefined,
+            executionContext: options?.executionContext
         };
     }
 
@@ -1114,7 +1122,8 @@ export function buildResultViewerModel(
                 queryPath: query,
                 rowCount: 1,
                 columnCount: columns.length,
-                traversalContext
+                traversalContext,
+                executionContext: options?.executionContext
             }),
             insightSuggestions: buildResultViewerInsightSuggestions({
                 queryPath: query,
@@ -1122,13 +1131,15 @@ export function buildResultViewerModel(
                 columnCount: columns.length,
                 result,
                 fields: options?.fields,
-                traversalContext
+                traversalContext,
+                executionContext: options?.executionContext
             }),
             environment,
             emptyState,
             rowActions: recordRowActions.length ? recordRowActions : undefined,
             paging: options?.paging,
-            sourceTarget: options?.sourceTarget
+            sourceTarget: options?.sourceTarget,
+            executionContext: options?.executionContext
         };
     }
 
@@ -1148,7 +1159,8 @@ export function buildResultViewerModel(
             queryPath: query,
             rowCount: 0,
             columnCount: 0,
-            traversalContext
+            traversalContext,
+            executionContext: options?.executionContext
         }),
         insightSuggestions: buildResultViewerInsightSuggestions({
             queryPath: query,
@@ -1156,10 +1168,12 @@ export function buildResultViewerModel(
             columnCount: 0,
             result,
             fields: options?.fields,
-            traversalContext
+            traversalContext,
+            executionContext: options?.executionContext
         }),
         environment,
         paging: options?.paging,
-        sourceTarget: options?.sourceTarget
+        sourceTarget: options?.sourceTarget,
+        executionContext: options?.executionContext
     };
 }

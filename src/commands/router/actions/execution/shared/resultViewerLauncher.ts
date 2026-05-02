@@ -1,6 +1,7 @@
 import type { CommandContext } from "../../../../context/commandContext.js";
 import { ResultViewerPanel } from "../../../../../providers/resultViewerPanel.js";
 import { ResultViewerSessionStore } from "../../../../../providers/resultViewerSessionStore.js";
+import type { DataverseExecutionContext } from "../../../../../services/dataverseClient.js";
 import { buildBatchResultViewerBinderSuggestion } from "../../../../../product/binder/buildBinderSuggestion.js";
 import {
     buildResultViewerModel,
@@ -19,6 +20,7 @@ import { findLogicalEditorQueryTargetByText } from "../../shared/queryMutation/e
 
 export type ResultViewerLaunchOptions = {
     traversalContext?: ResultViewerTraversalContext;
+    executionContext?: DataverseExecutionContext;
     paging?: {
         pageNumber?: number;
         nextLink?: string;
@@ -92,7 +94,8 @@ export async function showResultViewerForQuery(
             nextLink,
             history: options?.paging?.history ?? []
         },
-        sourceTarget
+        sourceTarget,
+        executionContext: options?.executionContext
     });
 
     ResultViewerPanel.show(ctx, model);

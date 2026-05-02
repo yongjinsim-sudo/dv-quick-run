@@ -14,6 +14,11 @@ import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
 import { ResultViewerSessionStore } from "./resultViewerSessionStore.js";
 import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
+import { analyzePluginTraces } from "../product/executionInsights/pluginTraceAnalyzer.js";
+import { buildPluginTraceInsightSuggestions } from "../product/executionInsights/pluginTraceInsightBuilder.js";
+
+const MAX_INLINE_JSON_WEBVIEW_BYTES = 2_000_000;
+const EXECUTION_INSIGHTS_SUPPRESSION_MS = 10 * 60 * 1000;
 
 type ResultViewerMessage =
     | {
@@ -51,6 +56,7 @@ type ResultViewerMessage =
         payload: {
             fileName?: string;
             csv?: string;
+            sessionId?: string;
         };
     }
     | {
@@ -58,6 +64,7 @@ type ResultViewerMessage =
         payload: {
             fileName?: string;
             json?: string;
+            sessionId?: string;
         };
     }
     | {
@@ -148,12 +155,25 @@ export class ResultViewerPanel {
     private static lastViewColumn: vscode.ViewColumn | undefined;
     private static currentSessionId: string | undefined;
     private static currentModel: ResultViewerDisplayModel | undefined;
+    private static executionInsightsSuppressedUntilByEnvironment = new Map<string, number>();
 
     public static show(
     ctx: CommandContext,
     model: ResultViewerDisplayModel
     ): void {
+        const targetViewColumn = ResultViewerPanel.resolveViewColumn();
+
+        // Dispose the previous panel before registering the new session. The dispose
+        // handler cleans up the session attached to that panel; doing this after
+        // currentSessionId is switched would delete the new session and break
+        // session-backed JSON/CSV export for large payloads.
+        if (ResultViewerPanel.currentPanel) {
+            ResultViewerPanel.currentPanel.dispose();
+            ResultViewerPanel.currentPanel = undefined;
+        }
+
         ResultViewerPanel.currentContext = ctx;
+        ResultViewerPanel.applyExecutionInsightsSuppression(model);
         ResultViewerPanel.currentModel = model;
         ResultViewerPanel.currentSessionId = isBatchResultViewerModel(model) ? undefined : model.session?.id;
 
@@ -168,13 +188,6 @@ export class ResultViewerPanel {
                     : undefined,
                 history: model.paging?.history ?? []
             };
-        }
-
-        const targetViewColumn = ResultViewerPanel.resolveViewColumn();
-
-        if (ResultViewerPanel.currentPanel) {
-            ResultViewerPanel.currentPanel.dispose();
-            ResultViewerPanel.currentPanel = undefined;
         }
 
         const panel = vscode.window.createWebviewPanel(
@@ -196,17 +209,65 @@ export class ResultViewerPanel {
             ResultViewerPanel.lastViewColumn = event.webviewPanel.viewColumn;
         });
 
+        const panelSessionId = isBatchResultViewerModel(model) ? undefined : model.session?.id;
         panel.onDidDispose(() => {
-            if (ResultViewerPanel.currentSessionId) {
-                ResultViewerSessionStore.dispose(ResultViewerPanel.currentSessionId);
+            if (panelSessionId) {
+                ResultViewerSessionStore.dispose(panelSessionId);
             }
-            ResultViewerPanel.currentPanel = undefined;
-            ResultViewerPanel.currentSessionId = undefined;
-            ResultViewerPanel.currentModel = undefined;
+
+            if (ResultViewerPanel.currentPanel === panel) {
+                ResultViewerPanel.currentPanel = undefined;
+                ResultViewerPanel.currentSessionId = undefined;
+                ResultViewerPanel.currentModel = undefined;
+            }
         });
 
         ResultViewerPanel.lastViewColumn = panel.viewColumn;
         panel.webview.html = getResultViewerHtml(panel.webview, ctx.ext.extensionUri, model);
+    }
+
+
+    private static getExecutionInsightsSuppressionKey(model: ResultViewerDisplayModel | undefined): string {
+        if (!model || isBatchResultViewerModel(model)) {
+            return "default";
+        }
+
+        return model.environment?.name?.trim() || "default";
+    }
+
+    private static shouldSuppressExecutionInsights(model: ResultViewerDisplayModel | undefined): boolean {
+        const key = ResultViewerPanel.getExecutionInsightsSuppressionKey(model);
+        const suppressedUntil = ResultViewerPanel.executionInsightsSuppressedUntilByEnvironment.get(key) ?? 0;
+        if (Date.now() < suppressedUntil) {
+            return true;
+        }
+
+        if (suppressedUntil > 0) {
+            ResultViewerPanel.executionInsightsSuppressedUntilByEnvironment.delete(key);
+        }
+
+        return false;
+    }
+
+    private static suppressExecutionInsightsForCurrentEnvironment(model: ResultViewerDisplayModel | undefined): void {
+        const key = ResultViewerPanel.getExecutionInsightsSuppressionKey(model);
+        ResultViewerPanel.executionInsightsSuppressedUntilByEnvironment.set(
+            key,
+            Date.now() + EXECUTION_INSIGHTS_SUPPRESSION_MS
+        );
+    }
+
+    private static applyExecutionInsightsSuppression(model: ResultViewerDisplayModel): void {
+        if (isBatchResultViewerModel(model) || !ResultViewerPanel.shouldSuppressExecutionInsights(model)) {
+            return;
+        }
+
+        if (model.binderSuggestion?.actionId === "requestExecutionInsights") {
+            model.binderSuggestion = undefined;
+        }
+
+        model.insightSuggestions = (model.insightSuggestions ?? [])
+            .filter((suggestion) => suggestion.actionId !== "requestExecutionInsights");
     }
 
     private static resolveViewColumn(): vscode.ViewColumn {
@@ -263,14 +324,16 @@ export class ResultViewerPanel {
             case "exportCsv":
                 await ResultViewerPanel.exportCsv(
                     message.payload.fileName,
-                    message.payload.csv
+                    message.payload.csv,
+                    message.payload.sessionId
                 );
                 return;
 
             case "saveJson":
                 await ResultViewerPanel.saveJson(
                     message.payload.fileName,
-                    message.payload.json
+                    message.payload.json,
+                    message.payload.sessionId
                 );
                 return;
 
@@ -407,6 +470,18 @@ export class ResultViewerPanel {
             return;
         }
 
+        if (rawJson.length > MAX_INLINE_JSON_WEBVIEW_BYTES) {
+            await panel.webview.postMessage({
+                type: "jsonDataTooLarge",
+                payload: {
+                    sessionId,
+                    byteLength: Buffer.byteLength(rawJson, "utf8"),
+                    message: "The full JSON payload is too large to render interactively. Use Save JSON to export the complete session-backed payload."
+                }
+            });
+            return;
+        }
+
         await panel.webview.postMessage({
             type: "jsonData",
             payload: { sessionId, rawJson }
@@ -465,6 +540,10 @@ export class ResultViewerPanel {
 
                 case "requestResultInsights":
                     await ResultViewerPanel.handleRequestResultInsights();
+                    return;
+
+                case "requestExecutionInsights":
+                    await ResultViewerPanel.handleRequestExecutionInsights(ctx);
                     return;
 
                 case "previewAddTop":
@@ -541,6 +620,76 @@ export class ResultViewerPanel {
             await panel.webview.postMessage({
                 type: "insightsError",
                 payload: { message: "Could not analyse the current result: " + message }
+            });
+        }
+    }
+
+    private static async handleRequestExecutionInsights(ctx: CommandContext): Promise<void> {
+        const panel = ResultViewerPanel.currentPanel;
+        const currentModel = ResultViewerPanel.currentModel;
+        if (!panel || !currentModel || isBatchResultViewerModel(currentModel)) {
+            return;
+        }
+
+        const rawJson = currentModel.session?.id
+            ? ResultViewerSessionStore.getRawJson(currentModel.session.id)
+            : currentModel.rawJson;
+
+        let currentResult: unknown;
+        if (rawJson?.trim()) {
+            try {
+                currentResult = JSON.parse(rawJson);
+            } catch {
+                currentResult = undefined;
+            }
+        }
+
+        await panel.webview.postMessage({
+            type: "insightsLoading",
+            payload: { message: "Getting bounded Execution Insights..." }
+        });
+
+        try {
+            const token = await ctx.getToken(ctx.getScope());
+            const analysis = await analyzePluginTraces({
+                client: ctx.getClient(),
+                token,
+                currentResult,
+                queryPath: currentModel.queryPath,
+                correlationId: currentModel.executionContext?.correlationId ?? currentModel.executionContext?.requestId ?? currentModel.executionContext?.operationId
+            });
+            const executionInsights = buildPluginTraceInsightSuggestions(analysis);
+            const shouldSuppressExecutionInsights = analysis.status === "accessDenied" || analysis.status === "unavailable";
+            // Once the user explicitly runs Execution Insights, remove the trigger chip/card for
+            // this Result Viewer session regardless of outcome. Successful runs replace it with
+            // generated execution insights; empty/error/timeout runs replace it with bounded
+            // feedback. Keeping the trigger after a successful run makes the drawer ask the user
+            // to run Execution Insights again even though the insights are already loaded.
+            if (shouldSuppressExecutionInsights) {
+                ResultViewerPanel.suppressExecutionInsightsForCurrentEnvironment(currentModel);
+            }
+
+            if (currentModel.binderSuggestion?.actionId === "requestExecutionInsights") {
+                currentModel.binderSuggestion = undefined;
+            }
+
+            currentModel.insightSuggestions = [
+                ...(currentModel.insightSuggestions ?? []).filter((suggestion) => suggestion.actionId !== "requestExecutionInsights"),
+                ...executionInsights
+            ];
+
+            await panel.webview.postMessage({
+                type: "insightsUpdated",
+                payload: {
+                    suggestions: currentModel.insightSuggestions,
+                    binderSuggestion: currentModel.binderSuggestion ?? null
+                }
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            await panel.webview.postMessage({
+                type: "insightsError",
+                payload: { message: "Could not get Execution Insights: " + message }
             });
         }
     }
@@ -661,7 +810,8 @@ export class ResultViewerPanel {
             });
         }
 
-        const result = await client.get(paging.nextLink, token);
+        const response = await client.getWithMetadata(paging.nextLink, token);
+        const result = response.data;
         const nextLink = ResultViewerPanel.extractNextLink(result);
 
         const { showResultViewerForQuery } = await import("../commands/router/actions/execution/shared/resultViewerLauncher.js");
@@ -670,7 +820,8 @@ export class ResultViewerPanel {
                 pageNumber: paging.pageNumber + 1,
                 nextLink,
                 history
-            }
+            },
+            executionContext: response.executionContext
         });
     }
 
@@ -749,10 +900,12 @@ export class ResultViewerPanel {
 
     private static async saveJson(
         fileName?: string,
-        json?: string
+        json?: string,
+        sessionId?: string
     ): Promise<void> {
-        const sessionJson = ResultViewerPanel.currentSessionId
-            ? ResultViewerSessionStore.getRawJson(ResultViewerPanel.currentSessionId)
+        const effectiveSessionId = String(sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
+        const sessionJson = effectiveSessionId
+            ? ResultViewerSessionStore.getRawJson(effectiveSessionId)
             : undefined;
         const jsonText = String(sessionJson ?? json ?? "").trim();
         if (!jsonText) {
@@ -783,10 +936,12 @@ export class ResultViewerPanel {
     }
     private static async exportCsv(
         fileName?: string,
-        csv?: string
+        csv?: string,
+        sessionId?: string
     ): Promise<void> {
-        const sessionCsv = ResultViewerPanel.currentSessionId
-            ? ResultViewerSessionStore.buildCsv(ResultViewerPanel.currentSessionId)
+        const effectiveSessionId = String(sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
+        const sessionCsv = effectiveSessionId
+            ? ResultViewerSessionStore.buildCsv(effectiveSessionId)
             : undefined;
         const csvText = String(sessionCsv ?? csv ?? "");
         if (!csvText) {

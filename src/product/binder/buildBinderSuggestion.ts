@@ -2,7 +2,7 @@ import { canApplyQueryDoctorFix } from "../capabilities/capabilityResolver.js";
 import { parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { extractExecutionEvidence } from "../../commands/router/actions/shared/diagnostics/executionEvidence.js";
 import { buildRankedResultInsightCandidates } from "../../commands/router/actions/shared/diagnostics/resultInsights/resultInsightPipeline.js";
-import type { ResultViewerTraversalContext } from "../../services/resultViewModelBuilder.js";
+import type { ResultViewerExecutionContext, ResultViewerTraversalContext } from "../../services/resultViewModelBuilder.js";
 import type { FieldDef } from "../../services/entityFieldMetadataService.js";
 import type { BinderSuggestion } from "./binderTypes.js";
 import {
@@ -39,7 +39,8 @@ function isPreviewApplyAction(actionId: BinderSuggestion["actionId"]): boolean {
   return actionId === "previewAddTop" ||
     actionId === "previewAddSelect" ||
     actionId === "previewODataFilter" ||
-    actionId === "requestResultInsights";
+    actionId === "requestResultInsights" ||
+    actionId === "requestExecutionInsights";
 }
 
 function buildSuggestion(suggestion: BinderSuggestion): BinderSuggestion | undefined {
@@ -53,14 +54,66 @@ function buildSuggestion(suggestion: BinderSuggestion): BinderSuggestion | undef
 
   return {
     ...suggestion,
-    canApply: suggestion.actionId === "requestResultInsights" ? true : canApplyQueryDoctorFix(),
-    applyLabel: suggestion.actionId === "requestResultInsights" ? "Get Insights" : "Apply"
+    canApply: suggestion.actionId === "requestResultInsights" || suggestion.actionId === "requestExecutionInsights" ? true : canApplyQueryDoctorFix(),
+    applyLabel: suggestion.actionId === "requestResultInsights"
+      ? "Get Insights"
+      : suggestion.actionId === "requestExecutionInsights"
+        ? "Get Execution Insights"
+        : "Apply"
   };
 }
 
 function isLikelyFetchXml(queryPath: string): boolean {
   return queryPath.trim().startsWith("<fetch");
 }
+
+function isPluginTraceLogQuery(queryPath: string): boolean {
+  const trimmed = queryPath.trim().toLowerCase();
+  if (!trimmed || isLikelyFetchXml(queryPath)) {
+    return false;
+  }
+
+  const withoutLeadingSlash = trimmed.replace(/^\/+/, "");
+  return withoutLeadingSlash.startsWith("plugintracelogs") ||
+    withoutLeadingSlash.includes("/plugintracelogs") ||
+    withoutLeadingSlash.includes("api/data/") && withoutLeadingSlash.includes("/plugintracelogs");
+}
+
+function getExecutionContextTraceId(executionContext?: ResultViewerExecutionContext): string | undefined {
+  return executionContext?.correlationId ?? executionContext?.requestId ?? executionContext?.operationId;
+}
+
+function buildExecutionInsightRequestSuggestion(args: {
+  queryPath: string;
+  executionContext?: ResultViewerExecutionContext;
+}): BinderSuggestion | undefined {
+  const traceId = getExecutionContextTraceId(args.executionContext);
+  const isTraceQuery = isPluginTraceLogQuery(args.queryPath);
+  if (!isTraceQuery && !traceId) {
+    return undefined;
+  }
+
+  return buildSuggestion({
+    text: isTraceQuery
+      ? "💡 Execution Insights: inspect plugin trace signals"
+      : "💡 Execution Insights: inspect traces for this request",
+    actionId: "requestExecutionInsights",
+    confidence: isTraceQuery ? 0.94 : 0.9,
+    reason: isTraceQuery
+      ? "This result comes from plugintracelogs. DV Quick Run can use a bounded, explicit Execution Insights pass to inspect server-side trace signals without blocking the Result Viewer."
+      : "DV Quick Run captured request metadata for this Dataverse response. Use an explicit Execution Insights pass to inspect matching server-side plugin traces by correlation/request id.",
+    source: "execution",
+    tier: "external",
+    payload: {
+      queryPath: args.queryPath,
+      correlationId: args.executionContext?.correlationId,
+      requestId: args.executionContext?.requestId,
+      operationId: args.executionContext?.operationId,
+      basis: isTraceQuery ? "plugintracelogs" : "capturedExecutionContext"
+    }
+  });
+}
+
 
 function normalizeQueryOptionName(name: string): string {
   return name.trim().toLowerCase();
@@ -378,6 +431,7 @@ export function buildResultViewerInsightSuggestions(args: {
   result: unknown;
   fields?: FieldDef[];
   traversalContext?: ResultViewerTraversalContext;
+  executionContext?: ResultViewerExecutionContext;
 }): BinderSuggestion[] {
   if (!args.queryPath.trim() || isLikelyFetchXml(args.queryPath)) {
     return [];
@@ -386,6 +440,14 @@ export function buildResultViewerInsightSuggestions(args: {
   const ctx = createInsightExecutionContext();
   const shape = getParsedQueryShape(args.queryPath);
   const suggestions: BinderSuggestion[] = [];
+
+  const executionInsightSuggestion = buildExecutionInsightRequestSuggestion({
+    queryPath: args.queryPath,
+    executionContext: args.executionContext
+  });
+  if (executionInsightSuggestion) {
+    suggestions.push(executionInsightSuggestion);
+  }
 
   if (!shape.hasTop) {
     const topSuggestion = buildTopSuggestion({
@@ -457,6 +519,7 @@ export function buildResultViewerBinderSuggestion(args: {
   rowCount: number;
   columnCount: number;
   traversalContext?: ResultViewerTraversalContext;
+  executionContext?: ResultViewerExecutionContext;
 }): BinderSuggestion | undefined {
   const traversal = args.traversalContext;
   const shouldPreferTraversalSuggestion = traversal?.isBestMatchRoute !== false;
@@ -493,6 +556,16 @@ export function buildResultViewerBinderSuggestion(args: {
 
   if (!args.queryPath.trim() || isLikelyFetchXml(args.queryPath)) {
     return undefined;
+  }
+
+  const executionInsightSuggestion = isPluginTraceLogQuery(args.queryPath)
+    ? buildExecutionInsightRequestSuggestion({
+      queryPath: args.queryPath,
+      executionContext: args.executionContext
+    })
+    : undefined;
+  if (executionInsightSuggestion) {
+    return executionInsightSuggestion;
   }
 
   const shape = getParsedQueryShape(args.queryPath);

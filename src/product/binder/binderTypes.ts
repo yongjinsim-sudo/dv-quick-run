@@ -7,7 +7,8 @@ export type BinderActionId =
   | "previewAddTop"
   | "previewAddSelect"
   | "previewODataFilter"
-  | "requestResultInsights";
+  | "requestResultInsights"
+  | "requestExecutionInsights";
 
 export type BinderRecommendationSource =
   | "traversal"
@@ -15,7 +16,8 @@ export type BinderRecommendationSource =
   | "queryShape"
   | "resultShape"
   | "queryDoctor"
-  | "performance";
+  | "performance"
+  | "execution";
 
 export interface BinderSuggestion {
   text: string;
