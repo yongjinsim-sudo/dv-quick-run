@@ -1,26 +1,126 @@
 import { buildBatchRequestBody, parseBatchResponse, type BatchExecutionResult } from "./batchExecution.js";
 
+export interface DataverseGetOptions {
+  timeoutMs?: number;
+}
+
+export interface DataverseExecutionContext {
+  correlationId?: string;
+  requestId?: string;
+  operationId?: string;
+  method: string;
+  path: string;
+  url: string;
+  statusCode?: number;
+  durationMs?: number;
+  timestamp: string;
+}
+
+export interface DataverseGetResult<T = unknown> {
+  data: T;
+  executionContext: DataverseExecutionContext;
+}
+
+function getHeader(headers: Headers, names: string[]): string | undefined {
+  for (const name of names) {
+    const value = headers.get(name);
+    if (value?.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function buildExecutionContext(args: {
+  headers: Headers;
+  method: string;
+  path: string;
+  url: string;
+  statusCode: number;
+  durationMs: number;
+}): DataverseExecutionContext {
+  return {
+    method: args.method,
+    path: args.path,
+    url: args.url,
+    statusCode: args.statusCode,
+    durationMs: args.durationMs,
+    timestamp: new Date().toISOString(),
+    correlationId: getHeader(args.headers, [
+      "x-ms-correlation-request-id",
+      "x-ms-correlation-id",
+      "ms-correlationid",
+      "correlationid"
+    ]),
+    requestId: getHeader(args.headers, [
+      "req_id",
+      "x-ms-service-request-id",
+      "x-ms-request-id",
+      "request-id",
+      "requestid"
+    ]),
+    operationId: getHeader(args.headers, [
+      "x-ms-diagnostics-operation-id",
+      "operation-id",
+      "operationid"
+    ])
+  };
+}
+
 export class DataverseClient {
   constructor(private baseUrl: string) {}
 
-  async get(path: string, token: string) {
-    const url = /^https?:\/\//i.test(path) ? path : `${this.baseUrl}${path}`;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-        Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"',
-        "OData-Version": "4.0",
-        "OData-MaxVersion": "4.0"
-      }
-    });
+  async get(path: string, token: string, options: DataverseGetOptions = {}) {
+    const result = await this.getWithMetadata(path, token, options);
+    return result.data;
+  }
 
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`Dataverse error ${response.status} for GET ${url}: ${text}`);
+  async getWithMetadata<T = unknown>(path: string, token: string, options: DataverseGetOptions = {}): Promise<DataverseGetResult<T>> {
+    const url = /^https?:\/\//i.test(path) ? path : `${this.baseUrl}${path}`;
+    const controller = typeof options.timeoutMs === "number" && options.timeoutMs > 0
+      ? new AbortController()
+      : undefined;
+    const timeout = controller
+      ? setTimeout(() => controller.abort(), options.timeoutMs)
+      : undefined;
+    const startedAt = Date.now();
+
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        signal: controller?.signal,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"',
+          "OData-Version": "4.0",
+          "OData-MaxVersion": "4.0"
+        }
+      });
+
+      const durationMs = Date.now() - startedAt;
+      const executionContext = buildExecutionContext({
+        headers: response.headers,
+        method: "GET",
+        path,
+        url,
+        statusCode: response.status,
+        durationMs
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(`Dataverse error ${response.status} for GET ${url}: ${text}`);
+      }
+      return {
+        data: JSON.parse(text) as T,
+        executionContext
+      };
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
     }
-    return JSON.parse(text);
   }
 
   async batchGet(paths: string[], token: string): Promise<BatchExecutionResult> {

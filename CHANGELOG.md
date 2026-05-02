@@ -6,6 +6,217 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.9 — Execution Insights, Raw Trace Access & Signal-Driven Diagnostics
+
+This release introduces **Execution Insights**, bringing **runtime awareness directly into the Result Viewer**.
+
+DV Quick Run now goes beyond query correctness — it can **detect, surface, and explain real execution issues** such as slow plugins, repeated executions, and nested chains.
+
+This establishes the foundation for **execution-aware debugging and future intelligent diagnostics**.
+
+---
+
+### ⚡ Execution Insights (NEW)
+
+- Introduced **Execution Insights** in the Result Viewer
+
+- Enables detection of:
+  - slow plugin execution
+  - repeated plugin execution
+  - nested execution depth
+  - exception signals
+
+- Works across:
+  - direct `plugintracelogs` queries
+
+👉 Results in:
+- immediate visibility into backend execution behaviour
+- early detection of performance and reliability issues
+- no need to manually query `plugintracelogs`
+
+---
+
+### 🔗 Correlation-Based Trace Detection (NEW)
+
+- DV Quick Run now captures:
+  - `correlationId`
+  - `requestId`
+
+- Uses captured metadata to:
+  - retrieve matching plugin trace logs
+  - analyse execution signals automatically
+
+- Behaviour:
+  - bounded lookup (safe execution)
+  - gracefully handles timeout scenarios
+
+👉 Enables:
+- execution insights from **any query**, not just trace queries
+- foundation for cross-request diagnostics
+
+---
+
+### 🧠 Signal-Based Insight Engine (NEW)
+
+- Introduced structured detection of execution signals:
+
+Detected signals include:
+- slow execution (duration-based)
+- repeated execution patterns
+- nested execution depth
+- exception presence
+
+- Signals are:
+  - grouped by plugin
+  - ranked by impact
+  - converted into a single high-quality insight per plugin
+
+👉 Results in:
+- high-signal, low-noise insights
+- avoids overwhelming users with raw trace spam
+- prioritises actionable findings
+
+---
+
+### 🧾 Structured Insight Cards (Major)
+
+- Refined insight presentation into clear sections:
+
+Each insight now includes:
+- **Detected**
+- **Impact**
+- **Recommended next steps**
+
+- Improved readability:
+  - shortened plugin names
+  - structured bullet points
+  - clearer separation of concerns
+
+👉 Results in:
+- faster comprehension
+- clearer decision-making
+- better alignment with real debugging workflows
+
+---
+
+### 🔍 Raw Trace Details (NEW)
+
+- Added **“View raw trace details”** section per insight
+
+- Provides:
+  - trace summary list
+  - expandable raw JSON payload
+  - **Copy raw JSON** action
+
+- Raw trace includes:
+  - pluginTraceLogId
+  - correlationId / requestId
+  - duration
+  - depth
+  - messageName
+  - entityName
+
+👉 Ensures:
+- no loss of low-level detail
+- supports deep debugging scenarios
+- balances abstraction with transparency
+
+---
+
+### 🧠 Insight Consolidation (NEW)
+
+- Multiple trace signals are now:
+  - grouped per plugin
+  - merged into a single insight card
+
+- Preserves:
+  - strongest signals (e.g. slow + repeated)
+  - raw trace evidence
+
+👉 Results in:
+- reduced noise
+- clearer prioritisation
+- avoids duplicate or fragmented insights
+
+---
+
+### ⏱️ Bounded Execution & Timeout Handling (Improved)
+
+- Execution Insights now operate under:
+  - strict time budget
+  - bounded query scope
+
+- Behaviour:
+  - stops safely when timeout reached
+  - surfaces clear messaging:
+    - “lookup timed out”
+    - “no signals found”
+
+👉 Prevents:
+- UI blocking
+- long-running trace scans
+- unstable behaviour on large datasets
+
+---
+
+### 🧪 Stability & Behaviour
+
+- Verified:
+  - plugintracelogs direct queries
+  - correlation-based insight retrieval
+  - large datasets (e.g. 5000 records)
+  - timeout scenarios
+  - raw trace rendering and copy
+
+- Ensures:
+  - no impact to Result Viewer performance
+  - insights remain optional and controlled
+  - graceful degradation under heavy load
+
+- No regression in:
+  - Query Doctor
+  - Guided Traversal
+  - `$batch` execution
+  - Result Viewer interactions
+  - Smart PATCH workflows
+
+---
+
+## 🧭 Notes
+
+This release marks a major evolution:
+
+DV Quick Run moves from:
+- **query correctness and refinement**
+
+→ to:
+- **execution-aware diagnostics and insight-driven debugging**
+
+Key principles:
+- signal over noise
+- bounded, safe execution
+- insight-first, raw-data-available
+- no hidden or automatic behaviour
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+- detect backend execution issues automatically
+- surface meaningful plugin-level insights
+- provide actionable next steps
+- expose full trace details when needed
+
+👉 Establishes the foundation for:
+- execution timeline reconstruction
+- insight model export
+- re-run and compare workflows
+- MCP-driven debugging capabilities
+
+---
+
 ## v0.9.8 — Fast-First Result Viewer & Safe Insight Execution (Stability Release)
 
 This release focuses on **stability, responsiveness, and trust**, ensuring DV Quick Run remains reliable under **wide and large Dataverse queries**.

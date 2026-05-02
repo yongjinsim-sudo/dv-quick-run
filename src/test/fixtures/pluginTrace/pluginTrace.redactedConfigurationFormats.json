@@ -1,0 +1,26 @@
+{
+  "@odata.context": "https://example.crm.dynamics.com/api/data/v9.2/$metadata#plugintracelogs(configuration)",
+  "@odata.nextLink": "https://example.crm.dynamics.com/api/data/v9.2/plugintracelogs?$select=configuration&$skiptoken=REDACTED",
+  "value": [
+    {
+      "plugintracelogid": "00000000-0000-0000-0000-000000000101",
+      "configuration": null
+    },
+    {
+      "plugintracelogid": "00000000-0000-0000-0000-000000000102",
+      "configuration": "[{\"sample_contact_type\":100000000,\"team_name\":\"REDACTED - Patient Team\"},{\"sample_contact_type\":100000001,\"team_name\":\"REDACTED - Practitioner Team\"}]"
+    },
+    {
+      "plugintracelogid": "00000000-0000-0000-0000-000000000103",
+      "configuration": "[{\n  \"VirtualColumnName\": \"sample_virtual_column\",\n  \"NativeColumnName\": \"sample_native_column\",\n  \"VirtualEntityName\": \"sample_virtual_entity\",\n  \"NativeEntityName\": \"sample_native_entity\"\n}]"
+    },
+    {
+      "plugintracelogid": "00000000-0000-0000-0000-000000000104",
+      "configuration": "{\n  \"sourceEntityLogicalName\": \"sample_source_entity\",\n  \"condition\": {\n    \"field\": \"sample_identifier_system\",\n    \"fieldType\": \"text\",\n    \"expectedValue\": \"https://example.invalid/fhir/source-system/identifier/redacted\",\n    \"lookupEntityLogicalName\": \"null\",\n    \"lookupPrimaryAttribute\": \"null\"\n  },\n  \"action\": {\n    \"targetLookupField\": \"sample_assignee\",\n    \"targetEntityLogicalName\": \"contact\",\n    \"updateField\": \"sample_status\",\n    \"updateValue\": 100000003\n  }\n}"
+    },
+    {
+      "plugintracelogid": "00000000-0000-0000-0000-000000000105",
+      "configuration": "{\"systemusers\":[{\"username\":\"svc-redacted-user-001\",\"userid\":\"00000000-0000-0000-0000-000000001001\"},{\"username\":\"svc-redacted-user-002\",\"userid\":\"00000000-0000-0000-0000-000000001002\"},{\"username\":\"svc-redacted-user-003\",\"userid\":\"00000000-0000-0000-0000-000000001003\"}]}"
+    }
+  ]
+}

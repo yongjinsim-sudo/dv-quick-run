@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion } from "../../product/binder/buildBinderSuggestion.js";
+import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion, buildResultViewerInsightSuggestions } from "../../product/binder/buildBinderSuggestion.js";
 
 suite("binderSuggestion", () => {
   test("prefers continue traversal when next leg is available", () => {
@@ -89,6 +89,30 @@ suite("binderSuggestion", () => {
     });
 
     assert.ok(!suggestion || suggestion.actionId !== "previewAddTop");
+  });
+
+  test("surfaces execution insights for captured Dataverse request metadata", () => {
+    const suggestions = buildResultViewerInsightSuggestions({
+      queryPath: "contacts?$top=10",
+      rowCount: 10,
+      columnCount: 3,
+      result: { value: [] },
+      executionContext: {
+        method: "GET",
+        path: "/contacts?$top=10",
+        url: "https://example.crm.dynamics.com/api/data/v9.2/contacts?$top=10",
+        statusCode: 200,
+        durationMs: 123,
+        timestamp: "2026-05-01T00:00:00.000Z",
+        correlationId: "22222222-2222-2222-2222-222222222222"
+      }
+    });
+
+    const executionSuggestion = suggestions.find((suggestion) => suggestion.actionId === "requestExecutionInsights");
+    assert.ok(executionSuggestion);
+    assert.strictEqual(executionSuggestion?.source, "execution");
+    assert.strictEqual(executionSuggestion?.payload?.basis, "capturedExecutionContext");
+    assert.strictEqual(executionSuggestion?.payload?.correlationId, "22222222-2222-2222-2222-222222222222");
   });
 
   test("suggests optimized batch for traversal-backed batch results", () => {

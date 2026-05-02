@@ -334,6 +334,115 @@ function showCopyStatus(message) {
         }
 
 
+        function buildInsightListHtml(title, items) {
+            if (!Array.isArray(items) || items.length === 0) {
+                return "";
+            }
+
+            return "<div class=\\"insights-section\\">" +
+                "<div class=\\"insights-section-title\\">" + escapeHtml(title) + "</div>" +
+                "<ul class=\\"insights-section-list\\">" +
+                items.map((item) => "<li>" + escapeHtml(item) + "</li>").join("") +
+                "</ul>" +
+                "</div>";
+        }
+
+        function buildRawTraceDetailsHtml(suggestion) {
+            const payload = suggestion?.payload || {};
+            if (payload.kind !== "pluginTraceExecutionSummary") {
+                return "";
+            }
+
+            const rawSignals = Array.isArray(payload.rawSignals) ? payload.rawSignals : [];
+            const rawDetails = Array.isArray(payload.rawDetails) ? payload.rawDetails : [];
+            if (rawSignals.length === 0 && rawDetails.length === 0) {
+                return "";
+            }
+
+            const rawJson = rawSignals.length > 0
+                ? JSON.stringify(rawSignals, null, 2)
+                : JSON.stringify(rawDetails, null, 2);
+            const detailRows = rawDetails.length > 0
+                ? "<ul class=\\"insights-raw-list\\">" + rawDetails.map((detail) => "<li>" + escapeHtml(detail) + "</li>").join("") + "</ul>"
+                : "";
+
+            return "<details class=\\"insights-raw-details\\">" +
+                "<summary>" + escapeHtml(payload.rawTraceActionLabel || "View raw trace details") + "</summary>" +
+                detailRows +
+                "<div class=\\"insights-raw-actions\\">" +
+                "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\\" data-copy-insight-raw-trace=\\"true\\">Copy raw JSON</button>" +
+                "</div>" +
+                "<pre class=\\"insights-raw-json\\">" + escapeHtml(rawJson) + "</pre>" +
+                "</details>";
+        }
+
+        function buildExecutionInsightContentHtml(suggestion) {
+            const payload = suggestion?.payload || {};
+            if (payload.kind !== "pluginTraceExecutionSummary") {
+                return "";
+            }
+
+            const detected = Array.isArray(payload.detectedSignals)
+                ? payload.detectedSignals
+                : (payload.signalSummary ? String(payload.signalSummary).split(" · ").filter(Boolean) : []);
+            const nextSteps = Array.isArray(payload.nextSteps) ? payload.nextSteps : [];
+            const pluginName = payload.displayPluginName || payload.typeName || "Unknown plugin";
+            return "<div class=\\"insights-plugin-name\\">" + escapeHtml(pluginName) + "</div>" +
+                buildInsightListHtml("Detected", detected) +
+                (payload.impact ? "<div class=\\"insights-section\\"><div class=\\"insights-section-title\\">Impact</div><p class=\\"insights-section-text\\">" + escapeHtml(payload.impact) + "</p></div>" : "") +
+                buildInsightListHtml("Recommended next steps", nextSteps) +
+                buildRawTraceDetailsHtml(suggestion);
+        }
+
+        function getInsightKicker(suggestion) {
+            const payload = suggestion?.payload || {};
+            if (payload.kind === "pluginTraceLookupFailed" || payload.kind === "pluginTraceNoSignals" || payload.kind === "pluginTraceSampleInspected") {
+                return "Execution status";
+            }
+
+            if (payload.kind === "pluginTraceUnavailable") {
+                return "Execution Insights availability";
+            }
+
+            return "Recommended next step";
+        }
+
+        function buildInsightsCardHtml(suggestion, confidence) {
+            const executionContent = buildExecutionInsightContentHtml(suggestion);
+            const title = "<div class=\\"insights-card-title\\">" + escapeHtml(suggestion.text) + "</div>";
+            const reason = suggestion.reason ? "<p class=\\"insights-card-reason\\">" + escapeHtml(suggestion.reason) + "</p>" : "";
+
+            return "<section class=\\"insights-card\\">" +
+                "<div class=\\"insights-card-kicker\\">" + escapeHtml(getInsightKicker(suggestion)) + "</div>" +
+                title +
+                (executionContent || reason) +
+                (executionContent ? reason : "") +
+                "<div class=\\"insights-meta\\">" +
+                buildInsightMetaRow("Source", suggestion.source) +
+                buildInsightMetaRow("Confidence", confidence) +
+                buildInsightMetaRow("Action", suggestion.actionId) +
+                "</div>" +
+                buildInsightsApplyHtml(suggestion) +
+                "</section>";
+        }
+
+        function copyActiveInsightRawTrace() {
+            const suggestion = resolveActiveInsightSuggestion();
+            const payload = suggestion?.payload || {};
+            const rawSignals = Array.isArray(payload.rawSignals) ? payload.rawSignals : [];
+            const rawDetails = Array.isArray(payload.rawDetails) ? payload.rawDetails : [];
+            const valueToCopy = rawSignals.length > 0 ? rawSignals : rawDetails;
+
+            if (!valueToCopy || valueToCopy.length === 0) {
+                showCopyStatus("No raw trace details available");
+                return;
+            }
+
+            navigator.clipboard.writeText(JSON.stringify(valueToCopy, null, 2))
+                .then(() => showCopyStatus("Raw trace JSON copied"))
+                .catch(() => showCopyStatus("Copy failed"));
+        }
+
         function buildInsightsApplyHtml(suggestion) {
             if (!suggestion || !suggestion.canApply || !suggestion.actionId) {
                 return "";
@@ -441,17 +550,7 @@ function showCopyStatus(message) {
 
             insightsDrawerBody.innerHTML =
                 buildInsightNavigationHtml(suggestions) +
-                "<section class=\\"insights-card\\">" +
-                "<div class=\\"insights-card-kicker\\">Recommended next step</div>" +
-                "<div class=\\"insights-card-title\\">" + escapeHtml(suggestion.text) + "</div>" +
-                (suggestion.reason ? "<p class=\\"insights-card-reason\\">" + escapeHtml(suggestion.reason) + "</p>" : "") +
-                "<div class=\\"insights-meta\\">" +
-                buildInsightMetaRow("Source", suggestion.source) +
-                buildInsightMetaRow("Confidence", confidence) +
-                buildInsightMetaRow("Action", suggestion.actionId) +
-                "</div>" +
-                buildInsightsApplyHtml(suggestion) +
-                "</section>" +
+                buildInsightsCardHtml(suggestion, confidence) +
                 buildInsightsBoundaryHtml(suggestion);
         }
 
@@ -485,7 +584,7 @@ function showCopyStatus(message) {
                 suggestion = resolveActiveInsightSuggestion();
             }
 
-            if (!suggestion || !suggestion.text || !suggestion.actionId) {
+            if (!suggestion || !suggestion.text || !suggestion.actionId || suggestion.payload?.hideBinderButton === true) {
                 binderSuggestionBtn.hidden = true;
                 binderSuggestionBtn.textContent = "";
                 binderSuggestionBtn.removeAttribute("data-binder-action-id");

@@ -1,8 +1,8 @@
 # DV Quick Run
 
-A fast, metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, Smart PATCH, and safe, on-demand insights.
+A fast, metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, Smart PATCH, and execution-aware insights.
 
-**Run, understand, explore, refine, and safely update Dataverse data — with Query-by-Canvas, Guided Traversal, Smart PATCH, and `$batch` workflows — without leaving your editor.**
+**Run, understand, explore, refine, safely update, and diagnose Dataverse execution behaviour — with Query-by-Canvas, Guided Traversal, Smart PATCH, `$batch` workflows, and Execution Insights — without leaving your editor.**
 
 ---
 
@@ -20,142 +20,150 @@ Instead of switching between Postman, browser tabs, and maker portals, you can:
 * Safely update records with Smart PATCH (preview-first)
 * Navigate relationships step-by-step (Guided Traversal)
 * Enrich results without rewriting queries
+* Inspect execution behaviour using correlation-based Execution Insights
 
 All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.8 (Fast-First Result Viewer & Safe Insights)
+## 🆕 What's New in v0.9.9 (Execution Insights & Runtime Diagnostics)
 
-> A **stability and trust-focused release** — ensuring DV Quick Run remains fast, safe, and reliable under large and wide Dataverse queries.
+> A **runtime diagnostics release** — bringing correlation-based Execution Insights, plugin trace analysis, raw trace access, and safer large-payload handling directly into the Result Viewer.
 
 ---
 
-### ⚡ Fast-First Result Viewer (Major)
+### ⚡ Execution Insights (NEW)
 
-- Result Viewer now prioritises **instant responsiveness**
-- Insight generation no longer blocks or slows initial render
+- Added **Execution Insights** to the Result Viewer
 
-- Eliminates crash scenarios caused by:
-  - wide entities (e.g. `contacts`)
-  - large payloads without `$select`
-  - heavy result-driven analysis
+- Detects runtime execution signals such as:
+  - slow plugin execution
+  - repeated plugin execution
+  - nested execution depth
+  - exception traces
+
+- Works from:
+  - direct `plugintracelogs` queries
+  - normal Dataverse queries when correlation metadata is available
 
 👉 Results in:
-- consistent performance across environments
-- no extension host crashes on broad queries
-- predictable behaviour under enterprise datasets
+- faster diagnosis of backend execution behaviour
+- early visibility into plugin-related latency
+- less manual digging through plugin trace logs
 
 ---
 
-### 🛡️ Safe Mode for Broad Queries (NEW)
+### 🔗 Correlation-Based Trace Lookup (NEW)
 
-- Introduced **Safe Mode** for potentially unsafe queries
+- DV Quick Run now captures execution metadata from Dataverse responses, including:
+  - correlation id
+  - request id
+  - execution path context
 
-Triggered when:
-- no `$select` present
-- wide or large result sets detected
+- When available, Execution Insights can use this metadata to inspect matching plugin traces for the current request.
 
 - Behaviour:
-  - Result Viewer opens immediately
-  - result-driven insights are paused
-  - user can trigger insights manually
+  - explicit user-triggered action
+  - bounded lookup
+  - no broad background scanning
 
-👉 Ensures:
-- safe handling of large datasets
-- clear, intentional system behaviour
-- no confusion between “slow” vs “protected”
-
----
-
-### 🧠 Deferred Insights (NEW)
-
-- Insights are now **user-triggered**, not automatic
-
-- Added:
-  - **Get Insights** action in Insight Drawer
-
-- Behaviour:
-  - query execution remains fast
-  - insights run only when explicitly requested
-
-👉 Establishes:
-- separation between data retrieval and analysis
-- user control over performance vs insight depth
+👉 Enables:
+- runtime insight from ordinary queries such as `contacts?$top=10`
+- safer, targeted plugin trace analysis
+- foundation for future execution timeline and compare workflows
 
 ---
 
-### 🔍 Sample-Based Insights (NEW)
+### 🧠 Plugin Trace Signal Engine (NEW)
 
-- Insights operate on a **safe sample of the current result page**
+- Introduced signal-based plugin trace analysis
 
-Default limits:
-- 20 rows
-- 40 columns
+- Signals are:
+  - grouped by plugin
+  - ranked by impact
+  - consolidated into readable insight cards
 
-- Preserves:
-  - formatted values (e.g. Choice labels)
-  - meaningful field relationships
-
-- Insight messaging includes:
-  - sample size
-  - total result context
+- Insight cards include:
+  - detected signals
+  - impact
+  - recommended next steps
 
 👉 Results in:
-- fast insight generation
-- representative (but safe) analysis
-- no full-table scanning
+- less noise than raw plugin trace rows
+- clearer prioritisation
+- actionable guidance instead of raw diagnostics only
 
 ---
 
-### ⏱️ Safe Insight Execution (NEW)
+### 🔍 Raw Trace Details (NEW)
 
-- Introduced **bounded insight execution**
+- Added **View raw trace details** inside Execution Insights
 
-Includes:
-- soft time budget (~2–3 seconds)
-- sampling limits
-- early exit when limits reached
+- Raw trace details include:
+  - pluginTraceLogId
+  - correlationId / requestId
+  - message name
+  - entity name
+  - duration
+  - depth
+  - raw JSON payload
 
-- Behaviour:
-  - insights degrade gracefully
-  - partial results returned when needed
+- Added **Copy raw JSON** for deeper investigation or sharing.
+
+👉 Preserves full traceability while keeping the main insight card readable.
+
+---
+
+### 📦 Large Plugin Trace Payload Handling (Improved)
+
+- Improved handling of large `plugintracelogs` payloads, especially configuration-heavy trace data
+
+- Result Viewer now:
+  - keeps table rendering responsive
+  - avoids hanging the JSON view on very large payloads
+  - supports session-backed **Save JSON**
+  - supports CSV export for large trace results
+
+👉 Results in:
+- safer inspection of large plugin trace datasets
+- reliable export for offline analysis
+- better behaviour under enterprise-scale trace volumes
+
+---
+
+### ⏱️ Bounded Execution & Graceful Fallbacks
+
+- Execution Insights are still explicit and bounded
+
+- Handles:
+  - no trace signals found
+  - timeout scenarios
+  - unavailable trace access
+  - partial/minimal plugin trace schemas
+
+- Uses safe fallback behaviour where possible.
 
 👉 Prevents:
-- UI freezes
-- runaway computations
-- performance degradation
-
----
-
-### 🧩 Foundation for Future Insights
-
-- Introduced structured insight execution model:
-  - sampling-first
-  - budget-controlled
-  - fail-safe by design
-
-👉 Prepares DV Quick Run for:
-- deeper result analysis
-
-— without compromising performance
+- UI blocking
+- repeated noisy suggestions
+- broad uncontrolled trace scans
 
 ---
 
 ## 🧭 Notes
 
-This release introduces a key architectural shift:
+This release introduces a major new direction:
 
-- Insights move from:
-  - **automatic and eager**
+- DV Quick Run moves from:
+  - **query execution and refinement**
 → to:
-  - **explicit, safe, and user-controlled**
+  - **execution-aware diagnostics**
 
 Core principles reinforced:
-- fast-first execution
-- safe handling of enterprise-scale data
-- insights as optional intelligence
-- graceful degradation over failure
+- signal over noise
+- explicit user control
+- bounded runtime analysis
+- raw data preserved behind clean insight summaries
 
 ---
 
@@ -163,15 +171,17 @@ Core principles reinforced:
 
 DV Quick Run now:
 
-- stays fast under all query conditions
-- avoids crashes on wide/large datasets
-- provides insights only when needed
-- establishes a safe foundation for future intelligence features
+- detects plugin execution issues from query results
+- surfaces slow, repeated, nested, and exception-related signals
+- uses captured request metadata for targeted trace lookup
+- keeps raw trace details available when deeper investigation is needed
+- improves large plugin trace export and JSON handling
 
-👉 This ensures DV Quick Run remains:
-- **quick**
-- **reliable**
-- **enterprise-ready**
+👉 This establishes the foundation for:
+- execution timeline reconstruction
+- Insight Model export
+- re-run and compare workflows
+- MCP-driven debugging capabilities
 
 ---
 
@@ -228,6 +238,48 @@ start simple → run → explore → refine (Query-by-Canvas) → update safely 
 * Continue traversal using real data (row-driven)
 * Enrich results in-place using **Sibling Expand**
 * Build complex multi-entity queries without manual `$expand`
+
+---
+
+### 📊 Execution Insights (Runtime Diagnostics)
+
+Understand what’s happening **behind your Dataverse queries** — without leaving VS Code.
+
+DV Quick Run surfaces **plugin execution behaviour** directly in the Result Viewer:
+
+- Detect slow, repeated, nested, and exception-related plugin behaviour
+- See impact and recommended next steps instantly
+- Drill into raw trace data when deeper debugging is needed
+- Copy trace payloads for sharing or further investigation
+
+Instead of manually querying `plugintracelogs`, correlating requests, and scanning raw traces across multiple tools —
+
+DV Quick Run surfaces the most important execution signals instantly, and lets you drill deeper only when needed.
+
+---
+
+#### 🧠 Insight Summary
+
+![Execution Insights Summary](docs/execution-insights-summary.png)
+
+- Instantly identifies the problematic plugin
+- Explains why it matters (latency, failures, user impact)
+- Tells you exactly what to check next
+
+---
+
+#### 🔬 Raw Trace Details
+
+Execution Insights automatically bridges the gap between your query and Dataverse plugin execution using correlation-aware trace lookup — something that typically requires multiple tools and manual investigation.
+
+👉 Go from high-level insight → exact trace → root cause — in one place.
+![Execution Insights Raw Trace](docs/execution-insights-raw.png)
+
+- Correlation-aware trace inspection
+- Full raw payload available
+- One-click copy for debugging and collaboration
+
+👉 Jump from summary → raw trace → root cause — without leaving VS Code.
 
 ---
 
@@ -296,7 +348,7 @@ All directly inside VS Code.
 
 ## 🛡 Guardrails
 
-DV Quick Run detects risky query and mutation scenarios — such as missing `$top`, unsafe PATCH contexts, or unsupported expanded-field updates — and guides you before execution.
+DV Quick Run detects risky query, mutation, and diagnostic scenarios — such as missing `$top`, unsafe PATCH contexts, unsupported expanded-field updates, broad result analysis, or unavailable plugin trace access — and guides you before execution.
 
 ---
 

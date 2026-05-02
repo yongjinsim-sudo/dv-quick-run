@@ -230,7 +230,8 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const sessionJsonState = {
             requestedSessionId: "",
             loading: false,
-            error: ""
+            error: "",
+            terminal: false
         };
 
         function getActiveSession() {
@@ -352,13 +353,20 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 return false;
             }
 
-            if (sessionJsonState.loading && sessionJsonState.requestedSessionId === session.id) {
-                return true;
+            if (sessionJsonState.requestedSessionId === session.id) {
+                if (sessionJsonState.loading) {
+                    return true;
+                }
+
+                if (sessionJsonState.terminal && sessionJsonState.error) {
+                    return false;
+                }
             }
 
             sessionJsonState.requestedSessionId = session.id;
             sessionJsonState.loading = true;
             sessionJsonState.error = "";
+            sessionJsonState.terminal = false;
             vscodeApi.postMessage({
                 type: "requestJson",
                 payload: {
@@ -381,6 +389,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 model.rawJson = payload.rawJson;
                 sessionJsonState.loading = false;
                 sessionJsonState.error = "";
+                sessionJsonState.terminal = false;
                 if (showJsonBtn.classList.contains("active")) {
                     renderJson(model);
                 }
@@ -396,6 +405,25 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
 
                 sessionJsonState.loading = false;
                 sessionJsonState.error = String(payload.message || "JSON payload is unavailable.");
+                sessionJsonState.terminal = true;
+                if (showJsonBtn.classList.contains("active")) {
+                    renderJson(model);
+                }
+                return;
+            }
+
+            if (message.type === "jsonDataTooLarge") {
+                const payload = message.payload || {};
+                const session = getActiveSession();
+                if (!session || payload.sessionId !== session.id) {
+                    return;
+                }
+
+                const bytes = Number(payload.byteLength || 0);
+                const sizeHint = bytes > 0 ? " (" + Math.ceil(bytes / 1024 / 1024) + " MB)" : "";
+                sessionJsonState.loading = false;
+                sessionJsonState.error = String(payload.message || "JSON payload is too large to render interactively.") + sizeHint;
+                sessionJsonState.terminal = true;
                 if (showJsonBtn.classList.contains("active")) {
                     renderJson(model);
                 }
@@ -439,10 +467,29 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 return;
             }
 
+            if (message.type === "insightsLoading") {
+                const payload = message.payload || {};
+                model.insightSuggestions = [{
+                    text: "⏳ Execution Insights: analysing plugin trace signals",
+                    actionId: "requestExecutionInsights",
+                    confidence: 0.5,
+                    reason: String(payload.message || "DV Quick Run is running a bounded Execution Insights lookup."),
+                    source: "execution"
+                }];
+                activeInsightIndex = 0;
+                insightsDrawerOpen = true;
+                renderInsightsButton(resolveActiveInsightSuggestion());
+                renderInsightsDrawer();
+                return;
+            }
+
             if (message.type === "insightsUpdated") {
                 const payload = message.payload || {};
                 if (Array.isArray(payload.suggestions)) {
                     model.insightSuggestions = payload.suggestions;
+                    if (Object.prototype.hasOwnProperty.call(payload, "binderSuggestion")) {
+                        model.binderSuggestion = payload.binderSuggestion || null;
+                    }
                     activeInsightIndex = 0;
                     insightsDrawerOpen = true;
                     renderBinderSuggestion(resolveActiveInsightSuggestion());
@@ -657,6 +704,14 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                     return;
                 }
 
+                const rawTraceCopyButton = target.closest("[data-copy-insight-raw-trace]");
+                if (rawTraceCopyButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    copyActiveInsightRawTrace();
+                    return;
+                }
+
                 const applyButton = target.closest("[data-insights-apply-action]");
                 if (!(applyButton instanceof HTMLElement)) {
                     return;
@@ -771,7 +826,8 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 type: "exportCsv",
                 payload: {
                     fileName: buildExportFileName(model),
-                    csv
+                    csv,
+                    sessionId: model.session && model.session.id ? model.session.id : undefined
                 }
             });
         });
@@ -841,7 +897,8 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 type: "saveJson",
                 payload: {
                     fileName: buildJsonExportFileName(model),
-                    json: rawJson
+                    json: rawJson,
+                    sessionId: model.session && model.session.id ? model.session.id : undefined
                 }
             });
         }

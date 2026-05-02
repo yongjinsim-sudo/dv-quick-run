@@ -144,6 +144,13 @@ suite("resultViewerInsightGuardrails", () => {
     assert.ok(RESULT_VIEWER_SCRIPT_UTILITIES.includes("buildInsightNavigationHtml"));
   });
 
+  test("webview execution insights preserve raw trace details behind an explicit viewer", () => {
+    assert.ok(RESULT_VIEWER_SCRIPT_UTILITIES.includes("buildRawTraceDetailsHtml"));
+    assert.ok(RESULT_VIEWER_SCRIPT_UTILITIES.includes("View raw trace details"));
+    assert.ok(RESULT_VIEWER_SCRIPT_UTILITIES.includes("data-copy-insight-raw-trace"));
+    assert.ok(RESULT_VIEWER_SCRIPT_UTILITIES.includes("copyActiveInsightRawTrace"));
+  });
+
   test("webview suppresses default context menu outside editable fields", () => {
     assert.ok(RESULT_VIEWER_SCRIPT_BOOTSTRAP.includes('document.addEventListener("contextmenu"'));
     assert.ok(RESULT_VIEWER_SCRIPT_BOOTSTRAP.includes("HTMLInputElement"));
