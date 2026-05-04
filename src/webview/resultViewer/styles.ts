@@ -335,6 +335,23 @@ export const RESULT_VIEWER_STYLES = `
             opacity: 0.82;
         }
 
+        .insights-identifier-group-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .insights-identifier-group-values {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .insights-identifier-actions {
+            display: flex;
+            gap: 6px;
+        }
+
         .viewer-title {
             font-size: 13px;
             font-weight: 600;

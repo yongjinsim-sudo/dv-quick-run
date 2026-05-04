@@ -26,144 +26,148 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.9 (Execution Insights & Runtime Diagnostics)
+## 🆕 What's New in v0.9.10 (Execution Insights: Async + Workflow)
 
-> A **runtime diagnostics release** — bringing correlation-based Execution Insights, plugin trace analysis, raw trace access, and safer large-payload handling directly into the Result Viewer.
+> A **signal clarity and execution awareness release** — expanding Execution Insights beyond plugin traces to include async operations and workflows, with improved signal interpretation, cleaner UX, and stronger noise suppression.
 
 ---
 
-### ⚡ Execution Insights (NEW)
+### ⚡ AsyncOperation Insights (NEW)
 
-- Added **Execution Insights** to the Result Viewer
+DV Quick Run now detects **async execution behaviour directly from your query results**:
 
-- Detects runtime execution signals such as:
-  - slow plugin execution
-  - repeated plugin execution
-  - nested execution depth
-  - exception traces
+- failed / cancelled async operations  
+- waiting / suspended states  
+- long-running executions  
+- repeated execution patterns  
 
-- Works from:
-  - direct `plugintracelogs` queries
-  - normal Dataverse queries when correlation metadata is available
+- Surfaces:
+  - execution duration  
+  - state + status labels  
+  - correlationId / requestId  
+  - execution depth and timing  
 
 👉 Results in:
-- faster diagnosis of backend execution behaviour
-- early visibility into plugin-related latency
-- less manual digging through plugin trace logs
+- immediate visibility into background processing issues  
+- faster diagnosis of delays and failures  
+- no need to manually query `asyncoperations`  
 
 ---
 
-### 🔗 Correlation-Based Trace Lookup (NEW)
+### 🔗 Workflow Context Integration (NEW)
 
-- DV Quick Run now captures execution metadata from Dataverse responses, including:
-  - correlation id
-  - request id
-  - execution path context
+Execution Insights now includes **workflow context when available**:
 
-- When available, Execution Insights can use this metadata to inspect matching plugin traces for the current request.
-
-- Behaviour:
-  - explicit user-triggered action
-  - bounded lookup
-  - no broad background scanning
+- workflow name  
+- primary entity  
+- activation state  
 
 👉 Enables:
-- runtime insight from ordinary queries such as `contacts?$top=10`
-- safer, targeted plugin trace analysis
-- foundation for future execution timeline and compare workflows
+- clearer understanding of what triggered execution  
+- better debugging of background jobs and automation  
 
 ---
 
-### 🧠 Plugin Trace Signal Engine (NEW)
+### 🧠 Smarter Signal Interpretation (Major)
 
-- Introduced signal-based plugin trace analysis
+Execution Insights now distinguishes between:
 
-- Signals are:
-  - grouped by plugin
-  - ranked by impact
-  - consolidated into readable insight cards
+- repeated execution **within a single request** (often normal behaviour)  
+- repeated execution **across requests** (potential pattern or issue)  
 
-- Insight cards include:
-  - detected signals
-  - impact
-  - recommended next steps
+Also suppresses:
+- completed + successful executions  
+- low-signal background noise  
 
 👉 Results in:
-- less noise than raw plugin trace rows
-- clearer prioritisation
-- actionable guidance instead of raw diagnostics only
+- higher signal-to-noise ratio  
+- avoids unnecessary alarm  
+- insights feel intentional and trustworthy  
 
 ---
 
-### 🔍 Raw Trace Details (NEW)
+### 🧾 Refined Insight Cards (Major)
 
-- Added **View raw trace details** inside Execution Insights
+Insight cards are now optimised for **fast understanding**:
 
-- Raw trace details include:
-  - pluginTraceLogId
-  - correlationId / requestId
-  - message name
-  - entity name
-  - duration
-  - depth
-  - raw JSON payload
+Each insight focuses on:
+- **what happened** (clear title)  
+- **what’s happening** (evidence)  
+- **why it matters** (impact)  
 
-- Added **Copy raw JSON** for deeper investigation or sharing.
-
-👉 Preserves full traceability while keeping the main insight card readable.
-
----
-
-### 📦 Large Plugin Trace Payload Handling (Improved)
-
-- Improved handling of large `plugintracelogs` payloads, especially configuration-heavy trace data
-
-- Result Viewer now:
-  - keeps table rendering responsive
-  - avoids hanging the JSON view on very large payloads
-  - supports session-backed **Save JSON**
-  - supports CSV export for large trace results
+Improvements:
+- simplified wording  
+- reduced verbosity  
+- more natural debugging language  
 
 👉 Results in:
-- safer inspection of large plugin trace datasets
-- reliable export for offline analysis
-- better behaviour under enterprise-scale trace volumes
+- faster comprehension (2–3 second scan)  
+- clearer decision-making  
+- more practical debugging experience  
 
 ---
 
-### ⏱️ Bounded Execution & Graceful Fallbacks
+### 🧩 Grouped Identifiers & Actions (NEW)
 
-- Execution Insights are still explicit and bounded
+When multiple related records are detected:
 
-- Handles:
-  - no trace signals found
-  - timeout scenarios
-  - unavailable trace access
-  - partial/minimal plugin trace schemas
+- identifiers are grouped:
+  - e.g. `AsyncOperationId (3)`  
+- displayed compactly with overflow handling  
 
-- Uses safe fallback behaviour where possible.
+Actions:
+- **Copy** (all identifiers)  
+- **Query** (follow-up investigation)  
 
-👉 Prevents:
-- UI blocking
-- repeated noisy suggestions
-- broad uncontrolled trace scans
+Layout improvements:
+- identifiers shown first  
+- actions placed consistently below  
+- avoids wrapping and visual clutter  
+
+👉 Results in:
+- cleaner multi-record presentation  
+- easier follow-up investigation  
+- consistent interaction model  
+
+---
+
+### 🧪 Stability & Behaviour
+
+- Verified across:
+  - asyncoperation queries (direct + derived)  
+  - workflow-linked executions  
+  - failed / slow / repeated scenarios  
+  - large datasets  
+
+- Ensures:
+  - no impact to Result Viewer performance  
+  - insights remain bounded and safe  
+  - graceful behaviour under low-signal conditions  
+
+- No regression in:
+  - Query Doctor  
+  - Guided Traversal  
+  - `$batch` execution  
+  - Result Viewer interactions  
+  - Smart PATCH workflows  
 
 ---
 
 ## 🧭 Notes
 
-This release introduces a major new direction:
+This release extends Execution Insights from:
 
-- DV Quick Run moves from:
-  - **query execution and refinement**
+- **plugin trace diagnostics**
+
 → to:
-  - **execution-aware diagnostics**
+
+- **end-to-end execution awareness (async + workflow)**  
 
 Core principles reinforced:
-- signal over noise
-- explicit user control
-- bounded runtime analysis
-- raw data preserved behind clean insight summaries
+- signal over noise  
+- concrete over abstract  
+- fast understanding over completeness  
+- consistent interaction model  
 
 ---
 
@@ -171,17 +175,14 @@ Core principles reinforced:
 
 DV Quick Run now:
 
-- detects plugin execution issues from query results
-- surfaces slow, repeated, nested, and exception-related signals
-- uses captured request metadata for targeted trace lookup
-- keeps raw trace details available when deeper investigation is needed
-- improves large plugin trace export and JSON handling
+- detects async execution issues automatically  
+- surfaces workflow-backed context  
+- differentiates normal vs concerning behaviour  
+- presents insights in a clean, actionable format  
 
-👉 This establishes the foundation for:
-- execution timeline reconstruction
-- Insight Model export
-- re-run and compare workflows
-- MCP-driven debugging capabilities
+👉 Establishes the foundation for:
+- insight prioritisation  
+- deeper execution intelligence  
 
 ---
 
@@ -245,14 +246,14 @@ start simple → run → explore → refine (Query-by-Canvas) → update safely 
 
 Understand what’s happening **behind your Dataverse queries** — without leaving VS Code.
 
-DV Quick Run surfaces **plugin execution behaviour** directly in the Result Viewer:
+DV Quick Run surfaces **execution behaviour across plugins, async operations, and workflows** directly in the Result Viewer:
 
-- Detect slow, repeated, nested, and exception-related plugin behaviour
-- See impact and recommended next steps instantly
-- Drill into raw trace data when deeper debugging is needed
-- Copy trace payloads for sharing or further investigation
+- Detect slow, failed, waiting, and repeated execution patterns  
+- Distinguish normal behaviour vs potential issues (same request vs cross-request)  
+- See impact and recommended next steps instantly  
+- Drill into raw trace and execution data when deeper debugging is needed  
 
-Instead of manually querying `plugintracelogs`, correlating requests, and scanning raw traces across multiple tools —
+Instead of manually querying `plugintracelogs`, `asyncoperations`, correlating requests, and scanning raw data across multiple tools —
 
 DV Quick Run surfaces the most important execution signals instantly, and lets you drill deeper only when needed.
 
@@ -262,24 +263,25 @@ DV Quick Run surfaces the most important execution signals instantly, and lets y
 
 ![Execution Insights Summary](docs/execution-insights-summary.png)
 
-- Instantly identifies the problematic plugin
-- Explains why it matters (latency, failures, user impact)
+- Instantly identifies the relevant execution (plugin, async operation, or workflow)
+- Explains why it matters (latency, failures, delays, system impact)
 - Tells you exactly what to check next
 
 ---
 
-#### 🔬 Raw Trace Details
+#### 🔬 Raw Trace & Execution Details
 
-Execution Insights automatically bridges the gap between your query and Dataverse plugin execution using correlation-aware trace lookup — something that typically requires multiple tools and manual investigation.
+Execution Insights bridges the gap between your query and Dataverse execution behaviour using correlation-aware lookup — something that typically requires multiple tools and manual investigation.
 
-👉 Go from high-level insight → exact trace → root cause — in one place.
+👉 Go from high-level insight → exact execution detail → root cause — in one place.
+
 ![Execution Insights Raw Trace](docs/execution-insights-raw.png)
 
-- Correlation-aware trace inspection
-- Full raw payload available
-- One-click copy for debugging and collaboration
+- Correlation-aware inspection (plugin + async + workflow context)  
+- Full raw payload available when needed  
+- One-click copy for debugging and collaboration  
 
-👉 Jump from summary → raw trace → root cause — without leaving VS Code.
+👉 Jump from summary → execution detail → root cause — without leaving VS Code.
 
 ---
 

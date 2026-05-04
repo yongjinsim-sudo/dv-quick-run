@@ -470,7 +470,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             if (message.type === "insightsLoading") {
                 const payload = message.payload || {};
                 model.insightSuggestions = [{
-                    text: "⏳ Execution Insights: analysing plugin trace signals",
+                    text: "⏳ Execution Insights: analysing runtime signals",
                     actionId: "requestExecutionInsights",
                     confidence: 0.5,
                     reason: String(payload.message || "DV Quick Run is running a bounded Execution Insights lookup."),
@@ -709,6 +709,27 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                     event.preventDefault();
                     event.stopPropagation();
                     copyActiveInsightRawTrace();
+                    return;
+                }
+
+                const insightValueCopyButton = target.closest("[data-copy-insight-value]");
+                if (insightValueCopyButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    copyValueToClipboard(insightValueCopyButton.getAttribute("data-copy-insight-value") || "");
+                    return;
+                }
+
+                const insightQueryButton = target.closest("[data-run-insight-query]");
+                if (insightQueryButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    vscodeApi.postMessage({
+                        type: "runExecutionInsightQuery",
+                        payload: {
+                            query: insightQueryButton.getAttribute("data-run-insight-query") || ""
+                        }
+                    });
                     return;
                 }
 

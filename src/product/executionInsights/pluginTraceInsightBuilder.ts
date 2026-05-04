@@ -135,6 +135,38 @@ function displayPluginName(typeName: string): string {
   return lastPart || withoutAssembly;
 }
 
+function parseTime(value?: string): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? time : undefined;
+}
+
+function getCreatedOnSpanMs(signals: PluginTraceSignal[]): number | undefined {
+  const times = signals
+    .map((signal) => parseTime(signal.createdOn))
+    .filter((time): time is number => typeof time === "number");
+
+  if (times.length < 2) {
+    return undefined;
+  }
+
+  return Math.max(...times) - Math.min(...times);
+}
+
+function hasHistoricalRepeatedTracePattern(group: PluginGroup): boolean {
+  const spanMs = getCreatedOnSpanMs(group.signals);
+  return group.repeatCount >= 2 && typeof spanMs === "number" && spanMs > 60 * 60 * 1000;
+}
+
+function hasSameCorrelationId(group: PluginGroup): boolean {
+  const correlationIds = Array.from(new Set(group.signals.map((signal) => signal.correlationId).filter(Boolean)));
+  return correlationIds.length === 1;
+}
+
+
 function buildRawDetails(group: PluginGroup): string[] {
   return group.signals.slice(0, 5).map((signal, index) => {
     const parts = [
@@ -172,7 +204,13 @@ function buildNextSteps(group: PluginGroup): string[] {
   }
 
   if (group.repeatCount >= 2) {
-    steps.push("Compare the repeated trace rows by correlation/request id to confirm whether this is expected batching or duplicate execution.");
+    if (hasHistoricalRepeatedTracePattern(group)) {
+      steps.push("Compare createdOn timestamps first. These traces span separate times, so treat them as historical/recurring activity before assuming duplicate execution.");
+    } else if (hasSameCorrelationId(group)) {
+      steps.push("Compare rows with the same correlation/request id to confirm whether this is expected batching/retry behaviour or duplicate execution inside one request.");
+    } else {
+      steps.push("Compare the repeated trace rows by correlation/request id to confirm whether this is expected batching or duplicate execution.");
+    }
   }
 
   return Array.from(new Set(steps)).slice(0, 4);
@@ -209,7 +247,13 @@ function buildExecutionSummary(group: PluginGroup): ExecutionSummary {
     detected.push(`nested execution depth: ${maxDepth}`);
   }
   if (hasRepeated) {
-    detected.push(`repeated execution: ${group.repeatCount} traces in the bounded sample`);
+    if (hasHistoricalRepeatedTracePattern(group)) {
+      detected.push(`historical repeated traces: ${group.repeatCount} traces across separate timestamps`);
+    } else if (hasSameCorrelationId(group)) {
+      detected.push(`same-request repeated traces: ${group.repeatCount} traces share one correlation id`);
+    } else {
+      detected.push(`repeated execution: ${group.repeatCount} traces in the bounded sample`);
+    }
   }
 
   const impact = hasException
@@ -219,7 +263,9 @@ function buildExecutionSummary(group: PluginGroup): ExecutionSummary {
       : hasSlow
         ? "This plugin is adding measurable execution time. It may become a bottleneck under load."
         : hasNested || hasRepeated
-          ? "The execution pattern suggests chained or repeated plugin work. This can increase latency and make failures harder to diagnose."
+          ? hasRepeated && hasHistoricalRepeatedTracePattern(group)
+            ? "These traces occur across separate timestamps. Treat this as historical/recurring plugin activity before assuming duplicate execution inside one request."
+            : "The execution pattern suggests chained or repeated plugin work. This can increase latency and make failures harder to diagnose."
           : "DV Quick Run found runtime trace signals, but none currently indicate a high-impact issue.";
 
   const displayName = displayPluginName(group.plugin);
@@ -228,7 +274,9 @@ function buildExecutionSummary(group: PluginGroup): ExecutionSummary {
     severity,
     title: severity === "high"
       ? `⭐ Execution issue detected: ${displayName}`
-      : `Execution Insights: review ${displayName}`,
+      : hasRepeated && hasHistoricalRepeatedTracePattern(group)
+        ? `Repeated historical traces: ${displayName}`
+        : `Review plugin execution: ${displayName}`,
     displayPluginName: displayName,
     detectedSignals: detected,
     signalSummary: detected.join(" · "),
@@ -252,6 +300,7 @@ function confidenceFor(summary: ExecutionSummary): number {
 function buildConsolidatedPluginInsight(group: PluginGroup): BinderSuggestion {
   const summary = buildExecutionSummary(group);
   const primary = group.exceptionSignal ?? group.slowSignal ?? group.depthSignal ?? group.signals[0];
+  const hasRepeated = group.repeatCount >= 2;
 
   return buildSuggestion({
     text: summary.title,
@@ -271,6 +320,14 @@ function buildConsolidatedPluginInsight(group: PluginGroup): BinderSuggestion {
       durationMs: group.slowSignal?.durationMs,
       depth: group.depthSignal?.depth,
       repeatCount: group.repeatCount,
+      createdOnSpanMs: getCreatedOnSpanMs(group.signals),
+      repeatedTracePattern: hasRepeated && hasHistoricalRepeatedTracePattern(group)
+        ? "historical"
+        : hasRepeated && hasSameCorrelationId(group)
+          ? "sameCorrelation"
+          : hasRepeated
+            ? "sampleRepeated"
+            : undefined,
       hasException: !!group.exceptionSignal,
       detectedSignals: summary.detectedSignals,
       signalSummary: summary.signalSummary,

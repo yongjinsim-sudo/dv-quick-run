@@ -347,9 +347,15 @@ function showCopyStatus(message) {
                 "</div>";
         }
 
+        function isExecutionSummaryPayload(payload) {
+            return payload.kind === "pluginTraceExecutionSummary" ||
+                payload.kind === "asyncOperationExecutionSummary" ||
+                payload.kind === "workflowExecutionMetadata";
+        }
+
         function buildRawTraceDetailsHtml(suggestion) {
             const payload = suggestion?.payload || {};
-            if (payload.kind !== "pluginTraceExecutionSummary") {
+            if (!isExecutionSummaryPayload(payload)) {
                 return "";
             }
 
@@ -376,9 +382,111 @@ function showCopyStatus(message) {
                 "</details>";
         }
 
+        function buildInsightIdentifierGroupHtml(label, identifiers) {
+            const values = identifiers
+                .map((identifier) => String(identifier?.value || "").trim())
+                .filter(Boolean);
+            if (values.length === 0) {
+                return "";
+            }
+
+            const first = identifiers.find((identifier) => typeof identifier?.query === "string" && identifier.query);
+            const query = first?.query || "";
+            const joined = values.join("\\n");
+            const previewValues = values.slice(0, 3);
+            const overflow = values.length - previewValues.length;
+            const valuesHtml = previewValues
+                .map((value) => "<code class=\\"insights-identifier-value\\">" + escapeHtml(value) + "</code>")
+                .join("");
+            const overflowHtml = overflow > 0 ? "<span class=\\"insights-muted\\">+" + overflow + " more</span>" : "";
+
+            return "<li class=\\"insights-identifier-row insights-identifier-group-row\\">" +
+                "<span class=\\"insights-identifier-label\\">" + escapeHtml(label) + " (" + values.length + ")</span>" +
+                "<span class=\\"insights-identifier-group-values\\">" + valuesHtml + overflowHtml + "</span>" +
+                "<div class=\\"insights-identifier-actions\\">" +
+                "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-copy-insight-value=\\"" + escapeAttribute(joined) + "\\">Copy</button>" +
+                (query ? "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-run-insight-query=\\"" + escapeAttribute(query) + "\\">Query first</button>" : "") +
+                 "</div>" +
+                "</li>";
+        }
+
+        function buildInsightIdentifierHtml(identifier) {
+            if (!identifier || !identifier.value) {
+                return "";
+            }
+
+            const label = identifier.label || "Identifier";
+            const value = String(identifier.value);
+            const query = typeof identifier.query === "string" ? identifier.query : "";
+            return "<li class=\\"insights-identifier-row\\">" +
+                "<span class=\\"insights-identifier-label\\">" + escapeHtml(label) + "</span>" +
+                "<code class=\\"insights-identifier-value\\">" + escapeHtml(value) + "</code>" +
+                "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-copy-insight-value=\\"" + escapeAttribute(value) + "\\">Copy</button>" +
+                (query ? "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-run-insight-query=\\"" + escapeAttribute(query) + "\\">Query</button>" : "") +
+                "</li>";
+        }
+
+        function buildInsightIdentifiersHtml(payload) {
+            const identifiers = Array.isArray(payload.keyIdentifiers) ? payload.keyIdentifiers : [];
+            if (identifiers.length === 0) {
+                return "";
+            }
+
+            const groupableLabels = ["CorrelationId", "RequestId", "AsyncOperationId"];
+            const groupedLabels = new Set();
+            const groupedRows = groupableLabels
+                .map((label) => {
+                    const group = identifiers.filter((identifier) => identifier?.label === label);
+                    if (group.length <= 1) {
+                        return "";
+                    }
+
+                    groupedLabels.add(label);
+                    return buildInsightIdentifierGroupHtml(label, group);
+                })
+                .join("");
+            const remainingRows = identifiers
+                .filter((identifier) => !groupedLabels.has(identifier?.label))
+                .map(buildInsightIdentifierHtml)
+                .join("");
+
+            return "<div class=\\"insights-section\\">" +
+                "<div class=\\"insights-section-title\\">Key identifiers</div>" +
+                "<ul class=\\"insights-section-list insights-identifier-list\\">" +
+                groupedRows +
+                remainingRows +
+                "</ul>" +
+                "</div>";
+        }
+
+        function buildInsightFollowUpQueriesHtml(payload) {
+            const queries = Array.isArray(payload.followUpQueries) ? payload.followUpQueries : [];
+            if (queries.length === 0) {
+                return "";
+            }
+
+            return "<div class=\\"insights-section\\">" +
+                "<div class=\\"insights-section-title\\">Follow-up queries</div>" +
+                "<ul class=\\"insights-section-list insights-query-list\\">" +
+                queries.map((item) => {
+                    const query = String(item?.query || "");
+                    const label = String(item?.label || "Run follow-up query");
+                    if (!query) {
+                        return "";
+                    }
+
+                    return "<li class=\\"insights-query-row\\">" +
+                        "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-copy-insight-value=\\"" + escapeAttribute(query) + "\\">Copy query</button>" +
+                        "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-run-insight-query=\\"" + escapeAttribute(query) + "\\">" + escapeHtml(label) + "</button>" +
+                        "</li>";
+                }).join("") +
+                "</ul>" +
+                "</div>";
+        }
+
         function buildExecutionInsightContentHtml(suggestion) {
             const payload = suggestion?.payload || {};
-            if (payload.kind !== "pluginTraceExecutionSummary") {
+            if (!isExecutionSummaryPayload(payload)) {
                 return "";
             }
 
@@ -386,22 +494,33 @@ function showCopyStatus(message) {
                 ? payload.detectedSignals
                 : (payload.signalSummary ? String(payload.signalSummary).split(" · ").filter(Boolean) : []);
             const nextSteps = Array.isArray(payload.nextSteps) ? payload.nextSteps : [];
-            const pluginName = payload.displayPluginName || payload.typeName || "Unknown plugin";
-            return "<div class=\\"insights-plugin-name\\">" + escapeHtml(pluginName) + "</div>" +
-                buildInsightListHtml("Detected", detected) +
+            const displayName = payload.displayPluginName || payload.displayOperationName || payload.displayWorkflowName || payload.typeName || "Execution evidence";
+            return "<div class=\\"insights-plugin-name\\">" + escapeHtml(displayName) + "</div>" +
+                buildInsightListHtml("What\\'s happening", detected) +
+                buildInsightIdentifiersHtml(payload) +
                 (payload.impact ? "<div class=\\"insights-section\\"><div class=\\"insights-section-title\\">Impact</div><p class=\\"insights-section-text\\">" + escapeHtml(payload.impact) + "</p></div>" : "") +
                 buildInsightListHtml("Recommended next steps", nextSteps) +
+                buildInsightFollowUpQueriesHtml(payload) +
                 buildRawTraceDetailsHtml(suggestion);
         }
 
         function getInsightKicker(suggestion) {
             const payload = suggestion?.payload || {};
-            if (payload.kind === "pluginTraceLookupFailed" || payload.kind === "pluginTraceNoSignals" || payload.kind === "pluginTraceSampleInspected") {
+            if (payload.kind === "pluginTraceLookupFailed" || payload.kind === "pluginTraceNoSignals" || payload.kind === "pluginTraceSampleInspected" ||
+                payload.kind === "asyncOperationLookupFailed" || payload.kind === "asyncOperationNoSignals" || payload.kind === "asyncOperationSampleInspected") {
                 return "Execution status";
             }
 
-            if (payload.kind === "pluginTraceUnavailable") {
+            if (payload.kind === "pluginTraceUnavailable" || payload.kind === "asyncOperationUnavailable") {
                 return "Execution Insights availability";
+            }
+
+            if (payload.kind === "asyncOperationExecutionSummary") {
+                return "Async operation insight";
+            }
+
+            if (payload.kind === "workflowExecutionMetadata") {
+                return "Workflow metadata";
             }
 
             return "Recommended next step";
@@ -470,6 +589,10 @@ function showCopyStatus(message) {
         }
 
         function buildInsightsBoundaryHtml(suggestion) {
+            if (suggestion?.source === "execution" || suggestion?.actionId === "requestExecutionInsights") {
+                return "";
+            }
+
             if (suggestion && suggestion.canApply && suggestion.actionId) {
                 return "<section class=\\"insights-boundary actionable\\">" +
                     "<div class=\\"insights-boundary-title\\">Actionable insight<\/div>" +
