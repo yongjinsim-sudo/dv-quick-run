@@ -6,6 +6,169 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.10 — Execution Insights (AsyncOperation + Workflow) 
+
+This release expands Execution Insights beyond plugin traces to include **async operations and workflows**, bringing clearer, more concrete visibility into backend execution behaviour.
+
+It also focuses on **signal clarity, noise suppression, and visual consistency**, making insights faster to understand and act on.
+
+---
+
+### ⚡ AsyncOperation Insights (NEW)
+
+- Introduced detection of **async operation signals** directly from Result Viewer
+
+- Detects:
+  - failed / cancelled async operations
+  - waiting / suspended states
+  - long-running executions
+  - repeated executions (same request / cross-request)
+
+- Surfaces:
+  - execution duration
+  - state + status labels
+  - correlationId / requestId
+  - related workflow context (when available)
+
+👉 Results in:
+- direct visibility into background processing issues
+- faster identification of delays and failures
+- no need to manually query `asyncoperations`
+
+---
+
+### 🔗 Workflow Context Integration (NEW)
+
+- Async operations now surface **related workflow information**
+
+- Provides:
+  - workflow name
+  - primary entity
+  - activation state
+
+👉 Enables:
+- clearer understanding of what triggered execution
+- better context for debugging background jobs
+
+---
+
+### 🧠 Improved Signal Interpretation (Major)
+
+- Refined interpretation of execution signals:
+
+- Differentiates:
+  - repeated execution within a single request (normal retry / behaviour)
+  - repeated execution across requests (potential pattern)
+
+- Suppresses:
+  - low-signal “normal” cases (e.g. completed + successful)
+  - background noise from healthy executions
+
+👉 Results in:
+- higher signal-to-noise ratio
+- avoids alarming users unnecessarily
+- insights feel intentional and trustworthy
+
+---
+
+### 🧾 Insight Card UX Refinement (Major)
+
+- Improved card structure for faster scanning:
+
+Each insight now emphasises:
+- **clear title (what happened)**
+- **what’s happening (evidence)**
+- **impact (why it matters)**
+
+- Improved readability:
+  - simplified wording
+  - reduced verbosity
+  - better alignment with real debugging language
+
+👉 Results in:
+- faster comprehension (2–3 second scan)
+- clearer decision-making
+- more practical debugging experience
+
+---
+
+### 🧩 Identifier Grouping & Actions (NEW)
+
+- Introduced **grouped identifier display**:
+  - e.g. `AsyncOperationId (3)`
+  - shows multiple related IDs compactly
+
+- Added actions:
+  - **Copy** (all identifiers)
+  - **Query** (follow-up investigation)
+
+- Layout improvements:
+  - identifiers displayed first
+  - actions placed consistently below
+  - avoids wrapping and visual clutter
+
+👉 Results in:
+- cleaner presentation of multi-record insights
+- easier follow-up investigation
+- consistent interaction model
+
+---
+
+### 🧪 Stability & Behaviour
+
+- Verified:
+  - asyncoperation queries (direct + derived)
+  - workflow-linked executions
+  - failed / slow / repeated scenarios
+  - large datasets and mixed result sets
+
+- Ensures:
+  - no regression to Result Viewer performance
+  - insights remain bounded and safe
+  - graceful behaviour under low-signal conditions
+
+- No regression in:
+  - Query Doctor
+  - Guided Traversal
+  - `$batch` execution
+  - Result Viewer interactions
+  - Smart PATCH workflows
+
+---
+
+## 🧭 Notes
+
+This release extends Execution Insights from:
+
+- **plugin-level diagnostics**
+
+→ to:
+
+- **end-to-end execution awareness (async + workflow)**
+
+Key principles reinforced:
+- concrete over abstract signals
+- suppress noise, surface only meaningful insights
+- fast comprehension over completeness
+- consistent, predictable interaction model
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+- detect async execution issues automatically
+- surface workflow-backed context
+- differentiate normal vs concerning behaviour
+- present insights in a clean, actionable format
+
+👉 Establishes the foundation for:
+- insight prioritisation
+- deeper execution intelligence
+
+---
+
 ## v0.9.9 — Execution Insights, Raw Trace Access & Signal-Driven Diagnostics
 
 This release introduces **Execution Insights**, bringing **runtime awareness directly into the Result Viewer**.

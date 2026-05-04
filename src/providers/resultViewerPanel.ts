@@ -14,8 +14,7 @@ import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
 import { ResultViewerSessionStore } from "./resultViewerSessionStore.js";
 import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
-import { analyzePluginTraces } from "../product/executionInsights/pluginTraceAnalyzer.js";
-import { buildPluginTraceInsightSuggestions } from "../product/executionInsights/pluginTraceInsightBuilder.js";
+import { buildExecutionInsightSuggestions } from "../product/executionInsights/executionInsightsOrchestrator.js";
 
 const MAX_INLINE_JSON_WEBVIEW_BYTES = 2_000_000;
 const EXECUTION_INSIGHTS_SUPPRESSION_MS = 10 * 60 * 1000;
@@ -30,6 +29,12 @@ type ResultViewerMessage =
         payload: {
             actionId?: string;
             payload?: Record<string, unknown>;
+        };
+    }
+    | {
+        type: "runExecutionInsightQuery";
+        payload: {
+            query?: string;
         };
     }
     | {
@@ -304,6 +309,10 @@ export class ResultViewerPanel {
                 await ResultViewerPanel.handleExecuteBinderSuggestion(ctx, message.payload);
                 return;
 
+            case "runExecutionInsightQuery":
+                await ResultViewerPanel.handleRunExecutionInsightQuery(message.payload);
+                return;
+
             case "executeResultViewerAction":
                 await ResultViewerPanel.handleExecuteResultViewerAction(ctx, message.payload);
                 return;
@@ -384,6 +393,22 @@ export class ResultViewerPanel {
                 });
                 return;
         }
+    }
+
+
+    private static async handleRunExecutionInsightQuery(payload: { query?: string }): Promise<void> {
+        const query = String(payload.query ?? "").trim();
+        if (!query) {
+            return;
+        }
+
+        await ResultViewerPanel.copyToClipboard(query);
+        const document = await vscode.workspace.openTextDocument({
+            content: query,
+            language: "http"
+        });
+        await vscode.window.showTextDocument(document, { preview: false });
+        await vscode.commands.executeCommand("dvQuickRun.runQueryUnderCursor");
     }
 
 
@@ -651,15 +676,17 @@ export class ResultViewerPanel {
 
         try {
             const token = await ctx.getToken(ctx.getScope());
-            const analysis = await analyzePluginTraces({
+            const executionInsightResult = await buildExecutionInsightSuggestions({
                 client: ctx.getClient(),
                 token,
                 currentResult,
                 queryPath: currentModel.queryPath,
-                correlationId: currentModel.executionContext?.correlationId ?? currentModel.executionContext?.requestId ?? currentModel.executionContext?.operationId
+                correlationId: currentModel.executionContext?.correlationId,
+                requestId: currentModel.executionContext?.requestId,
+                operationId: currentModel.executionContext?.operationId
             });
-            const executionInsights = buildPluginTraceInsightSuggestions(analysis);
-            const shouldSuppressExecutionInsights = analysis.status === "accessDenied" || analysis.status === "unavailable";
+            const executionInsights = executionInsightResult.suggestions;
+            const shouldSuppressExecutionInsights = executionInsightResult.shouldSuppressExecutionInsights;
             // Once the user explicitly runs Execution Insights, remove the trigger chip/card for
             // this Result Viewer session regardless of outcome. Successful runs replace it with
             // generated execution insights; empty/error/timeout runs replace it with bounded
