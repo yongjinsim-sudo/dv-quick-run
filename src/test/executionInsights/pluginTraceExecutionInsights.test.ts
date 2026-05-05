@@ -199,6 +199,30 @@ suite("pluginTraceExecutionInsights", () => {
     assert.strictEqual(analysis.signals.length, 2);
   });
 
+
+  test("does not treat asyncoperation rows as current plugin trace signals", async () => {
+    const analysis = await analyzePluginTraces({
+      client: createClient({ value: [] }),
+      token: "token",
+      currentResult: {
+        value: [
+          {
+            asyncoperationid: "fb8f5e2c-001b-4ed7-a4bf-000016764f1b",
+            correlationid: "47a01a42-95c8-4ff4-9ac3-fa5fa5966090",
+            name: "Dataprocessing configuration module execution",
+            depth: 0,
+            createdon: "2024-04-16T14:07:09Z"
+          }
+        ]
+      },
+      queryPath: "asyncoperations?$select=name,correlationid,depth,createdon"
+    });
+
+    assert.notStrictEqual(analysis.source, "currentResult");
+    assert.strictEqual(analysis.status, "empty");
+    assert.strictEqual(analysis.signals.length, 0);
+  });
+
   test("falls back to bounded recent lookup for plugintracelogs results", async () => {
     const analysis = await analyzePluginTraces({
       client: createClient(traceResult),

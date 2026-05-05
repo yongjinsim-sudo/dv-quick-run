@@ -101,7 +101,6 @@ function buildFollowUpQueries(group: AsyncOperationGroup): ExecutionInsightFollo
   const seen = new Set<string>();
   const preferredOrder = ["CorrelationId", "RequestId", "AsyncOperationId", "WorkflowActivationId"];
   const queries: ExecutionInsightFollowUpQuery[] = [];
-
   for (const label of preferredOrder) {
     const identifier = identifiers.find((item) => item.label === label && item.query && !seen.has(item.query));
 

@@ -4,6 +4,8 @@ import { analyzeAsyncOperations } from "./asyncOperationAnalyzer.js";
 import { buildAsyncOperationInsightSuggestions } from "./asyncOperationInsightBuilder.js";
 import { analyzePluginTraces } from "./pluginTraceAnalyzer.js";
 import { buildPluginTraceInsightSuggestions } from "./pluginTraceInsightBuilder.js";
+import { analyzeLinkedFlowSessions } from "./flowSessionAnalyzer.js";
+import { buildFlowSessionInsightSuggestions } from "./flowSessionInsightBuilder.js";
 import { analyzeLinkedWorkflows } from "./workflowAnalyzer.js";
 import { buildWorkflowInsightSuggestions } from "./workflowInsightBuilder.js";
 
@@ -42,19 +44,27 @@ export async function buildExecutionInsightSuggestions(args: ExecutionInsightsOr
     token: args.token,
     asyncSignals: asyncAnalysis.signals
   });
+  const flowSessionAnalysis = await analyzeLinkedFlowSessions({
+    client: args.client,
+    token: args.token,
+    currentResult: args.currentResult,
+    asyncSignals: asyncAnalysis.signals
+  });
 
-  const shouldSuppressExecutionInsights = [pluginAnalysis.status, asyncAnalysis.status, workflowAnalysis.status]
+  const shouldSuppressExecutionInsights = [pluginAnalysis.status, asyncAnalysis.status, workflowAnalysis.status, flowSessionAnalysis.status]
     .some((status) => status === "accessDenied" || status === "unavailable");
 
   const pluginSuggestions = buildPluginTraceInsightSuggestions(pluginAnalysis);
   const asyncSuggestions = buildAsyncOperationInsightSuggestions(asyncAnalysis);
   const workflowSuggestions = buildWorkflowInsightSuggestions(workflowAnalysis);
+  const flowSessionSuggestions = buildFlowSessionInsightSuggestions(flowSessionAnalysis);
 
   return {
     suggestions: [
       ...pluginSuggestions,
       ...asyncSuggestions,
-      ...workflowSuggestions
+      ...workflowSuggestions,
+      ...flowSessionSuggestions
     ].sort((a, b) => b.confidence - a.confidence),
     shouldSuppressExecutionInsights
   };

@@ -186,6 +186,7 @@ export interface BatchTraversalContext {
 
 export interface BatchResultViewerModel {
     binderSuggestion?: BinderSuggestion;
+    insightSuggestions?: BinderSuggestion[];
     type: "batch";
     title: string;
     summary: BatchResultViewerSummary;

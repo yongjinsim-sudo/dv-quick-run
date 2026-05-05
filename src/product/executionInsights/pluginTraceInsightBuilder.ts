@@ -15,6 +15,86 @@ interface PluginGroup {
   score: number;
 }
 
+interface ExecutionInsightIdentifier {
+  label: string;
+  value: string;
+  query?: string;
+}
+
+interface ExecutionInsightFollowUpQuery {
+  label: string;
+  query: string;
+}
+
+function uniqueStrings(values: Array<string | undefined>): string[] {
+  return Array.from(new Set(values.map((value) => value?.trim()).filter((value): value is string => !!value)));
+}
+
+function buildPluginTraceRecordQuery(id: string): string {
+  return `/plugintracelogs(${id})`;
+}
+
+function buildPluginTraceCorrelationQuery(correlationId: string): string {
+  return `/plugintracelogs?$select=plugintracelogid,correlationid,requestid,typename,messagename,primaryentity,depth,mode,performanceexecutionduration,exceptiondetails,createdon&$filter=${encodeURIComponent(`correlationid eq ${correlationId} or requestid eq ${correlationId}`)}&$orderby=createdon desc&$top=10`;
+}
+
+function buildPluginTraceRequestQuery(requestId: string): string {
+  return `/plugintracelogs?$select=plugintracelogid,correlationid,requestid,typename,messagename,primaryentity,depth,mode,performanceexecutionduration,exceptiondetails,createdon&$filter=${encodeURIComponent(`requestid eq ${requestId}`)}&$orderby=createdon desc&$top=10`;
+}
+
+function buildKeyIdentifiers(group: PluginGroup): ExecutionInsightIdentifier[] {
+  const correlationIds = uniqueStrings(group.signals.map((signal) => signal.correlationId));
+  const requestIds = uniqueStrings(group.signals.map((signal) => signal.requestId));
+  const traceIds = uniqueStrings(group.signals.map((signal) => signal.pluginTraceLogId));
+  const identifiers: ExecutionInsightIdentifier[] = [];
+
+  for (const value of correlationIds.slice(0, 3)) {
+    identifiers.push({
+      label: "CorrelationId",
+      value,
+      query: buildPluginTraceCorrelationQuery(value)
+    });
+  }
+
+  for (const value of requestIds.slice(0, 3)) {
+    identifiers.push({
+      label: "RequestId",
+      value,
+      query: buildPluginTraceRequestQuery(value)
+    });
+  }
+
+  for (const value of traceIds.slice(0, 5)) {
+    identifiers.push({
+      label: "PluginTraceLogId",
+      value,
+      query: buildPluginTraceRecordQuery(value)
+    });
+  }
+
+  return identifiers;
+}
+
+function buildFollowUpQueries(group: PluginGroup): ExecutionInsightFollowUpQuery[] {
+  const identifiers = buildKeyIdentifiers(group);
+  const seen = new Set<string>();
+  const queries: ExecutionInsightFollowUpQuery[] = [];
+  for (const label of ["CorrelationId", "RequestId", "PluginTraceLogId"]) {
+    const identifier = identifiers.find((item) => item.label === label && item.query && !seen.has(item.query));
+    if (!identifier?.query) {
+      continue;
+    }
+
+    seen.add(identifier.query);
+    queries.push({
+      label: `Query by ${identifier.label}`,
+      query: identifier.query
+    });
+  }
+
+  return queries.slice(0, 3);
+}
+
 type ExecutionSeverity = "high" | "medium" | "low";
 
 interface ExecutionSummary {
@@ -333,6 +413,8 @@ function buildConsolidatedPluginInsight(group: PluginGroup): BinderSuggestion {
       signalSummary: summary.signalSummary,
       impact: summary.impact,
       nextSteps: summary.nextSteps,
+      keyIdentifiers: buildKeyIdentifiers(group),
+      followUpQueries: buildFollowUpQueries(group),
       rawSignals: group.signals,
       rawDetails: summary.rawDetails,
       rawTraceActionLabel: "View raw trace details"

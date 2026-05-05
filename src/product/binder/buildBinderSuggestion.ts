@@ -79,6 +79,18 @@ function isPluginTraceLogQuery(queryPath: string): boolean {
     withoutLeadingSlash.includes("api/data/") && withoutLeadingSlash.includes("/plugintracelogs");
 }
 
+function isAsyncOperationQuery(queryPath: string): boolean {
+  const trimmed = queryPath.trim().toLowerCase();
+  if (!trimmed || isLikelyFetchXml(queryPath)) {
+    return false;
+  }
+
+  const withoutLeadingSlash = trimmed.replace(/^\/+/, "");
+  return withoutLeadingSlash.startsWith("asyncoperations") ||
+    withoutLeadingSlash.includes("/asyncoperations") ||
+    withoutLeadingSlash.includes("api/data/") && withoutLeadingSlash.includes("/asyncoperations");
+}
+
 function getExecutionContextTraceId(executionContext?: ResultViewerExecutionContext): string | undefined {
   return executionContext?.correlationId ?? executionContext?.requestId ?? executionContext?.operationId;
 }
@@ -89,19 +101,24 @@ function buildExecutionInsightRequestSuggestion(args: {
 }): BinderSuggestion | undefined {
   const traceId = getExecutionContextTraceId(args.executionContext);
   const isTraceQuery = isPluginTraceLogQuery(args.queryPath);
-  if (!isTraceQuery && !traceId) {
+  const isAsyncQuery = isAsyncOperationQuery(args.queryPath);
+  if (!isTraceQuery && !isAsyncQuery && !traceId) {
     return undefined;
   }
 
   return buildSuggestion({
     text: isTraceQuery
       ? "💡 Execution Insights: inspect plugin trace signals"
-      : "💡 Execution Insights: inspect traces for this request",
+      : isAsyncQuery
+        ? "💡 Execution Insights: inspect async operation signals"
+        : "💡 Execution Insights: inspect traces for this request",
     actionId: "requestExecutionInsights",
-    confidence: isTraceQuery ? 0.94 : 0.9,
+    confidence: isTraceQuery || isAsyncQuery ? 0.94 : 0.9,
     reason: isTraceQuery
       ? "This result comes from plugintracelogs. DV Quick Run can use a bounded, explicit Execution Insights pass to inspect server-side trace signals without blocking the Result Viewer."
-      : "DV Quick Run captured request metadata for this Dataverse response. Use an explicit Execution Insights pass to inspect matching server-side plugin traces by correlation/request id.",
+      : isAsyncQuery
+        ? "This result comes from asyncoperations. DV Quick Run can use a bounded, explicit Execution Insights pass to inspect async execution signals without blocking the Result Viewer."
+        : "DV Quick Run captured request metadata for this Dataverse response. Use an explicit Execution Insights pass to inspect matching server-side plugin traces and async operations by correlation/request id.",
     source: "execution",
     tier: "external",
     payload: {
@@ -109,7 +126,7 @@ function buildExecutionInsightRequestSuggestion(args: {
       correlationId: args.executionContext?.correlationId,
       requestId: args.executionContext?.requestId,
       operationId: args.executionContext?.operationId,
-      basis: isTraceQuery ? "plugintracelogs" : "capturedExecutionContext"
+      basis: isTraceQuery ? "plugintracelogs" : isAsyncQuery ? "asyncoperations" : "capturedExecutionContext"
     }
   });
 }
@@ -558,7 +575,7 @@ export function buildResultViewerBinderSuggestion(args: {
     return undefined;
   }
 
-  const executionInsightSuggestion = isPluginTraceLogQuery(args.queryPath)
+  const executionInsightSuggestion = (isPluginTraceLogQuery(args.queryPath) || isAsyncOperationQuery(args.queryPath) || !!getExecutionContextTraceId(args.executionContext))
     ? buildExecutionInsightRequestSuggestion({
       queryPath: args.queryPath,
       executionContext: args.executionContext

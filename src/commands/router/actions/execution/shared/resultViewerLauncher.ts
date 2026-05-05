@@ -3,6 +3,7 @@ import { ResultViewerPanel } from "../../../../../providers/resultViewerPanel.js
 import { ResultViewerSessionStore } from "../../../../../providers/resultViewerSessionStore.js";
 import type { DataverseExecutionContext } from "../../../../../services/dataverseClient.js";
 import { buildBatchResultViewerBinderSuggestion } from "../../../../../product/binder/buildBinderSuggestion.js";
+import type { BinderSuggestion } from "../../../../../product/binder/binderTypes.js";
 import {
     buildResultViewerModel,
     type BatchResultViewerItem,
@@ -202,6 +203,7 @@ export async function showBatchResultViewer(
             failureCount
         },
         items,
+        insightSuggestions: buildBatchSummaryInsightSuggestions(items, successCount, failureCount),
         selectedKey: firstSelectable,
         environment: activeEnvironment
             ? {
@@ -222,6 +224,51 @@ export async function showBatchResultViewer(
     };
 
     ResultViewerPanel.show(ctx, batchModel);
+}
+
+
+function buildBatchSummaryInsightSuggestions(
+    items: BatchResultViewerItem[],
+    successCount: number,
+    failureCount: number
+): BinderSuggestion[] | undefined {
+    if (failureCount > 0) {
+        return [{
+            text: `💡 $batch summary: ${failureCount} of ${items.length} request${items.length === 1 ? "" : "s"} failed`,
+            actionId: "requestExecutionInsights",
+            confidence: 0.82,
+            reason: "This batch completed, but at least one sub-request failed. Open the failed sub-response tab to inspect its error and run any available per-response Execution Insights separately.",
+            source: "batch",
+            tier: "queryShape",
+            payload: {
+                totalRequests: items.length,
+                successCount,
+                failureCount,
+                hideBinderButton: true
+            }
+        }];
+    }
+
+    const emptySuccesses = items.filter((item) => item.statusCode > 0 && item.statusCode < 400 && item.rowCount === 0).length;
+    if (items.length > 1 && emptySuccesses === items.length) {
+        return [{
+            text: "💡 $batch summary: all sub-requests returned zero rows",
+            actionId: "requestExecutionInsights",
+            confidence: 0.78,
+            reason: "The batch succeeded, but every sub-response was empty. Check the generated per-identifier filters before treating this as a data absence signal.",
+            source: "batch",
+            tier: "queryShape",
+            payload: {
+                totalRequests: items.length,
+                successCount,
+                failureCount,
+                emptySuccesses,
+                hideBinderButton: true
+            }
+        }];
+    }
+
+    return undefined;
 }
 
 function buildBatchItemLabel(part: BatchExecutionPart): string {

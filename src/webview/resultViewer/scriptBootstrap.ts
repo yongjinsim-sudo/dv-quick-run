@@ -486,15 +486,25 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             if (message.type === "insightsUpdated") {
                 const payload = message.payload || {};
                 if (Array.isArray(payload.suggestions)) {
-                    model.insightSuggestions = payload.suggestions;
+                    const batchItemKey = typeof payload.batchItemKey === "string" ? payload.batchItemKey : "";
+                    const targetBatchItem = isBatchRoot && batchItemKey
+                        ? getBatchItems().find((item) => item.key === batchItemKey)
+                        : null;
+                    const targetModel = targetBatchItem && targetBatchItem.model ? targetBatchItem.model : model;
+
+                    targetModel.insightSuggestions = payload.suggestions;
                     if (Object.prototype.hasOwnProperty.call(payload, "binderSuggestion")) {
-                        model.binderSuggestion = payload.binderSuggestion || null;
+                        targetModel.binderSuggestion = payload.binderSuggestion || null;
                     }
-                    activeInsightIndex = 0;
-                    insightsDrawerOpen = true;
-                    renderBinderSuggestion(resolveActiveInsightSuggestion());
-                    renderInsightsButton(resolveActiveInsightSuggestion());
-                    renderInsightsDrawer();
+
+                    if (!targetBatchItem || targetBatchItem.key === activeBatchKey) {
+                        model = resolveActiveModel();
+                        activeInsightIndex = 0;
+                        insightsDrawerOpen = true;
+                        renderBinderSuggestion(resolveActiveInsightSuggestion());
+                        renderInsightsButton(resolveActiveInsightSuggestion());
+                        renderInsightsDrawer();
+                    }
                 }
                 return;
             }
@@ -717,6 +727,39 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                     event.preventDefault();
                     event.stopPropagation();
                     copyValueToClipboard(insightValueCopyButton.getAttribute("data-copy-insight-value") || "");
+                    return;
+                }
+
+                const insightBatchQueryButton = target.closest("[data-run-insight-batch-queries]");
+                if (insightBatchQueryButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    let queries = [];
+                    try {
+                        const rawQueries = JSON.parse(insightBatchQueryButton.getAttribute("data-run-insight-batch-queries") || "[]");
+                        queries = Array.isArray(rawQueries) ? rawQueries : [];
+                    } catch {
+                        queries = [];
+                    }
+                    vscodeApi.postMessage({
+                        type: "runExecutionInsightBatchQueries",
+                        payload: {
+                            queries
+                        }
+                    });
+                    return;
+                }
+
+                const insightUrlButton = target.closest("[data-open-insight-url]");
+                if (insightUrlButton instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    vscodeApi.postMessage({
+                        type: "openExecutionInsightUrl",
+                        payload: {
+                            url: insightUrlButton.getAttribute("data-open-insight-url") || ""
+                        }
+                    });
                     return;
                 }
 
