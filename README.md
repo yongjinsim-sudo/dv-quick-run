@@ -1,6 +1,6 @@
 # DV Quick Run
 
-A fast, metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, Smart PATCH, and execution-aware insights.
+A fast, metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, Smart PATCH, and execution-aware insights with grouped investigation.
 
 **Run, understand, explore, refine, safely update, and diagnose Dataverse execution behaviour — with Query-by-Canvas, Guided Traversal, Smart PATCH, `$batch` workflows, and Execution Insights — without leaving your editor.**
 
@@ -26,130 +26,104 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.10 (Execution Insights: Async + Workflow)
+## 🆕 What's New in v0.9.11 (Execution Insights: Batch Investigation + Flow Run Navigation)
 
-> A **signal clarity and execution awareness release** — expanding Execution Insights beyond plugin traces to include async operations and workflows, with improved signal interpretation, cleaner UX, and stronger noise suppression.
+> An **execution investigation release** — making Execution Insights easier to act on through grouped `$batch` investigation, batch-aware insight analysis, and Power Automate run navigation when FlowSession evidence is available.
 
 ---
 
-### ⚡ AsyncOperation Insights (NEW)
+### 🔍 Grouped Identifier Investigation (NEW)
 
-DV Quick Run now detects **async execution behaviour directly from your query results**:
+When Execution Insights detects grouped identifiers such as:
 
-- failed / cancelled async operations  
-- waiting / suspended states  
-- long-running executions  
-- repeated execution patterns  
+- `CorrelationId (3)`
+- `AsyncOperationId (3)`
+- plugin trace identifiers
 
-- Surfaces:
-  - execution duration  
-  - state + status labels  
-  - correlationId / requestId  
-  - execution depth and timing  
+DV Quick Run now provides:
+
+- **Copy all**
+- **Query all**
+
+`Query all` runs a `$batch` request with one sub-request per identifier, then shows each response independently in the Batch Result Viewer.
 
 👉 Results in:
-- immediate visibility into background processing issues  
-- faster diagnosis of delays and failures  
-- no need to manually query `asyncoperations`  
+- faster investigation of repeated executions
+- cleaner follow-up from insight cards
+- no need to manually copy and run each identifier query
 
 ---
 
-### 🔗 Workflow Context Integration (NEW)
+### 📦 Batch-Aware Execution Insights (NEW)
 
-Execution Insights now includes **workflow context when available**:
+Execution Insights now work from selected `$batch` sub-results.
 
-- workflow name  
-- primary entity  
-- activation state  
+Behaviour:
+- each batch sub-result keeps its own insight context
+- insights run against the selected sub-response, not the batch root
+- switching batch sub-results does not leak insight output between responses
+
+👉 Results in:
+- clearer debugging of multi-request workflows
+- safer per-request diagnosis
+- stronger `$batch` investigation loop
+
+---
+
+### 🔗 Power Automate Run Navigation (NEW)
+
+When FlowSession evidence is available, DV Quick Run can surface Power Automate run context.
+
+Provides:
+- **Open Flow Run**
+- **Copy Run URL**
+
+Behaviour:
+- FlowSession evidence is treated as context only
+- no flow internals are parsed
+- no root-cause claim is made
 
 👉 Enables:
-- clearer understanding of what triggered execution  
-- better debugging of background jobs and automation  
+- quicker jump from Dataverse execution context to Power Automate run history
+- easier sharing of run links during troubleshooting
+
+> Note: Availability depends on FlowSession data being present in the target environment.
 
 ---
 
-### 🧠 Smarter Signal Interpretation (Major)
+### 🛠 Execution Insight Fixes & Refinements
 
-Execution Insights now distinguishes between:
-
-- repeated execution **within a single request** (often normal behaviour)  
-- repeated execution **across requests** (potential pattern or issue)  
-
-Also suppresses:
-- completed + successful executions  
-- low-signal background noise  
+- Fixed source mismatch between async operation evidence and plugin trace insights
+- Prevented asyncoperation-shaped rows from producing misleading plugin trace cards
+- Improved grouped identifier action labels:
+  - `Copy all`
+  - `Query all`
+- Preserved separate plugin trace and asyncoperation query behaviour
 
 👉 Results in:
-- higher signal-to-noise ratio  
-- avoids unnecessary alarm  
-- insights feel intentional and trustworthy  
-
----
-
-### 🧾 Refined Insight Cards (Major)
-
-Insight cards are now optimised for **fast understanding**:
-
-Each insight focuses on:
-- **what happened** (clear title)  
-- **what’s happening** (evidence)  
-- **why it matters** (impact)  
-
-Improvements:
-- simplified wording  
-- reduced verbosity  
-- more natural debugging language  
-
-👉 Results in:
-- faster comprehension (2–3 second scan)  
-- clearer decision-making  
-- more practical debugging experience  
-
----
-
-### 🧩 Grouped Identifiers & Actions (NEW)
-
-When multiple related records are detected:
-
-- identifiers are grouped:
-  - e.g. `AsyncOperationId (3)`  
-- displayed compactly with overflow handling  
-
-Actions:
-- **Copy** (all identifiers)  
-- **Query** (follow-up investigation)  
-
-Layout improvements:
-- identifiers shown first  
-- actions placed consistently below  
-- avoids wrapping and visual clutter  
-
-👉 Results in:
-- cleaner multi-record presentation  
-- easier follow-up investigation  
-- consistent interaction model  
+- fewer misleading insights
+- more trustworthy follow-up actions
+- better alignment between insight source and executed query
 
 ---
 
 ### 🧪 Stability & Behaviour
 
 - Verified across:
-  - asyncoperation queries (direct + derived)  
-  - workflow-linked executions  
-  - failed / slow / repeated scenarios  
-  - large datasets  
+  - grouped `$batch` investigation
+  - asyncoperation grouped queries
+  - plugintracelog grouped queries
+  - `$batch` sub-result insights
+  - no-noise behaviour when `flowsessions` has no records
 
-- Ensures:
-  - no impact to Result Viewer performance  
-  - insights remain bounded and safe  
-  - graceful behaviour under low-signal conditions  
+- FlowSession support is fixture-validated where live environments do not expose FlowSession records.
 
 - No regression in:
-  - Query Doctor  
-  - Guided Traversal  
-  - `$batch` execution  
-  - Result Viewer interactions  
-  - Smart PATCH workflows  
+  - Result Viewer
+  - Execution Insights
+  - `$batch` execution
+  - plugin trace insights
+  - asyncoperation insights
 
 ---
 
@@ -157,17 +131,19 @@ Layout improvements:
 
 This release extends Execution Insights from:
 
-- **plugin trace diagnostics**
+- detecting execution signals
 
 → to:
 
-- **end-to-end execution awareness (async + workflow)**  
+- investigating grouped execution paths
+- analysing batch sub-results independently
+- navigating to Power Automate run context when available
 
 Core principles reinforced:
-- signal over noise  
-- concrete over abstract  
-- fast understanding over completeness  
-- consistent interaction model  
+- explicit, user-triggered diagnostics
+- source-aware insight actions
+- batch results remain separated
+- FlowSession is context, not root cause
 
 ---
 
@@ -175,14 +151,15 @@ Core principles reinforced:
 
 DV Quick Run now:
 
-- detects async execution issues automatically  
-- surfaces workflow-backed context  
-- differentiates normal vs concerning behaviour  
-- presents insights in a clean, actionable format  
+- investigates grouped identifiers with `$batch`
+- inspects Execution Insights per batch sub-result
+- navigates to Power Automate runs when FlowSession evidence exists
+- avoids misleading cross-source insight actions
 
-👉 Establishes the foundation for:
-- insight prioritisation  
-- deeper execution intelligence  
+👉 Completes the v0.9.11 execution investigation loop and prepares the platform for:
+- insight prioritisation
+- timeline reconstruction
+- cross-source reasoning
 
 ---
 
@@ -248,7 +225,7 @@ Understand what’s happening **behind your Dataverse queries** — without leav
 
 DV Quick Run surfaces **execution behaviour across plugins, async operations, and workflows** directly in the Result Viewer:
 
-- Detect slow, failed, waiting, and repeated execution patterns  
+- Detect slow, failed, waiting, and repeated execution behaviour  
 - Distinguish normal behaviour vs potential issues (same request vs cross-request)  
 - See impact and recommended next steps instantly  
 - Drill into raw trace and execution data when deeper debugging is needed  

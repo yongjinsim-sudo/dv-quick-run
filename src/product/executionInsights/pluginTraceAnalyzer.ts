@@ -118,7 +118,9 @@ async function fetchPluginTraceLookup(args: {
 export async function analyzePluginTraces(args: PluginTraceAnalyzerArgs): Promise<PluginTraceAnalysisResult> {
   const maxRows = args.options?.maxRows ?? DEFAULT_PLUGIN_TRACE_MAX_ROWS;
   const timeoutMs = args.options?.timeoutMs ?? DEFAULT_PLUGIN_TRACE_TIMEOUT_MS;
-  const currentSignals = buildPluginTraceSignals(args.currentResult, "high").slice(0, maxRows);
+  const currentSignals = isPluginTraceQuery(args.queryPath)
+    ? buildPluginTraceSignals(args.currentResult, "high").slice(0, maxRows)
+    : [];
 
   if (currentSignals.length) {
     return {

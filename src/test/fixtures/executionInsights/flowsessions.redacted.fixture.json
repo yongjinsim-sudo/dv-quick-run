@@ -1,0 +1,56 @@
+{
+  "@odata.context": "https://org.crm.dynamics.com/api/data/v9.2/$metadata#flowsessions",
+  "value": [
+    {
+      "flowsessionid": "11111111-1111-1111-1111-111111111111",
+      "name": "Failed desktop flow session - sample",
+      "workflowid": "22222222-2222-2222-2222-222222222222",
+      "runid": "33333333-3333-3333-3333-333333333333",
+      "environmentid": "Default-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "correlationid": "44444444-4444-4444-4444-444444444444",
+      "requestid": "55555555-5555-5555-5555-555555555555",
+      "statecode": 1,
+      "statecode@OData.Community.Display.V1.FormattedValue": "Inactive",
+      "statuscode": 2,
+      "statuscode@OData.Community.Display.V1.FormattedValue": "Failed",
+      "status": "Failed",
+      "startedon": "2026-05-04T01:10:00Z",
+      "completedon": "2026-05-04T01:12:35Z",
+      "createdon": "2026-05-04T01:09:58Z",
+      "modifiedon": "2026-05-04T01:12:36Z",
+      "errormessage": "Redacted connector action failed in the flow run."
+    },
+    {
+      "flowsessionid": "66666666-6666-6666-6666-666666666666",
+      "name": "Running desktop flow session - sample",
+      "flowid": "77777777-7777-7777-7777-777777777777",
+      "flowrunid": "88888888-8888-8888-8888-888888888888",
+      "environmentid": "Default-bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+      "correlationid": "99999999-9999-9999-9999-999999999999",
+      "statecode": 0,
+      "statecode@OData.Community.Display.V1.FormattedValue": "Active",
+      "statuscode": 1,
+      "statuscode@OData.Community.Display.V1.FormattedValue": "Running",
+      "status": "Running",
+      "startedon": "2026-05-04T02:00:00Z",
+      "createdon": "2026-05-04T01:59:55Z"
+    },
+    {
+      "flowsessionid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "name": "Flow session with JSON payload identifiers - sample",
+      "correlationid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "clientdata": "{\"flowId\":\"cccccccc-cccc-cccc-cccc-cccccccccccc\",\"runId\":\"dddddddd-dddd-dddd-dddd-dddddddddddd\",\"environmentId\":\"Default-cccccccc-dddd-eeee-ffff-aaaaaaaaaaaa\"}",
+      "statecode": 1,
+      "statuscode": 2,
+      "createdon": "2026-05-04T03:00:00Z"
+    },
+    {
+      "flowsessionid": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      "name": "Flow session with insufficient run URL fields - sample",
+      "correlationid": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      "statecode": 1,
+      "statuscode": 2,
+      "createdon": "2026-05-04T04:00:00Z"
+    }
+  ]
+}

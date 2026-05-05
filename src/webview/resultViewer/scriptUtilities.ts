@@ -248,7 +248,7 @@ function showCopyStatus(message) {
         }
 
         function collectActiveInsightSuggestions() {
-            const source = isBatchRoot ? rootModel : model;
+            const source = isBatchRoot && !isBatchSummarySelected() ? model : rootModel;
             const rawSuggestions = [];
 
             if (Array.isArray(source?.insightSuggestions)) {
@@ -350,7 +350,8 @@ function showCopyStatus(message) {
         function isExecutionSummaryPayload(payload) {
             return payload.kind === "pluginTraceExecutionSummary" ||
                 payload.kind === "asyncOperationExecutionSummary" ||
-                payload.kind === "workflowExecutionMetadata";
+                payload.kind === "workflowExecutionMetadata" ||
+                payload.kind === "flowSessionExecutionMetadata";
         }
 
         function buildRawTraceDetailsHtml(suggestion) {
@@ -390,9 +391,11 @@ function showCopyStatus(message) {
                 return "";
             }
 
-            const first = identifiers.find((identifier) => typeof identifier?.query === "string" && identifier.query);
-            const query = first?.query || "";
+            const queries = Array.from(new Set(identifiers
+                .map((identifier) => String(identifier?.query || "").trim())
+                .filter(Boolean)));
             const joined = values.join("\\n");
+            const batchQueries = JSON.stringify(queries);
             const previewValues = values.slice(0, 3);
             const overflow = values.length - previewValues.length;
             const valuesHtml = previewValues
@@ -404,8 +407,8 @@ function showCopyStatus(message) {
                 "<span class=\\"insights-identifier-label\\">" + escapeHtml(label) + " (" + values.length + ")</span>" +
                 "<span class=\\"insights-identifier-group-values\\">" + valuesHtml + overflowHtml + "</span>" +
                 "<div class=\\"insights-identifier-actions\\">" +
-                "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-copy-insight-value=\\"" + escapeAttribute(joined) + "\\">Copy</button>" +
-                (query ? "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-run-insight-query=\\"" + escapeAttribute(query) + "\\">Query first</button>" : "") +
+                "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-copy-insight-value=\\"" + escapeAttribute(joined) + "\\">Copy all</button>" +
+                (queries.length > 0 ? "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-run-insight-batch-queries=\\"" + escapeAttribute(batchQueries) + "\\">Query all</button>" : "") +
                  "</div>" +
                 "</li>";
         }
@@ -432,7 +435,7 @@ function showCopyStatus(message) {
                 return "";
             }
 
-            const groupableLabels = ["CorrelationId", "RequestId", "AsyncOperationId"];
+            const groupableLabels = ["CorrelationId", "RequestId", "AsyncOperationId", "PluginTraceLogId", "WorkflowActivationId", "FlowSessionId", "FlowId", "RunId"];
             const groupedLabels = new Set();
             const groupedRows = groupableLabels
                 .map((label) => {
@@ -484,6 +487,33 @@ function showCopyStatus(message) {
                 "</div>";
         }
 
+
+        function buildInsightExternalActionsHtml(payload) {
+            const actions = Array.isArray(payload.externalActions) ? payload.externalActions : [];
+            if (actions.length === 0) {
+                return "";
+            }
+
+            return "<div class=\\"insights-section\\">" +
+                "<div class=\\"insights-section-title\\">External actions</div>" +
+                "<ul class=\\"insights-section-list insights-query-list\\">" +
+                actions.map((item) => {
+                    const url = String(item?.url || "");
+                    const label = String(item?.label || "Open link");
+                    const copyLabel = String(item?.copyLabel || "Copy link");
+                    if (!url) {
+                        return "";
+                    }
+
+                    return "<li class=\\"insights-query-row\\">" +
+                        "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-copy-insight-value=\\"" + escapeAttribute(url) + "\\">" + escapeHtml(copyLabel) + "</button>" +
+                        "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-open-insight-url=\\"" + escapeAttribute(url) + "\\">" + escapeHtml(label) + "</button>" +
+                        "</li>";
+                }).join("") +
+                "</ul>" +
+                "</div>";
+        }
+
         function buildExecutionInsightContentHtml(suggestion) {
             const payload = suggestion?.payload || {};
             if (!isExecutionSummaryPayload(payload)) {
@@ -494,12 +524,13 @@ function showCopyStatus(message) {
                 ? payload.detectedSignals
                 : (payload.signalSummary ? String(payload.signalSummary).split(" · ").filter(Boolean) : []);
             const nextSteps = Array.isArray(payload.nextSteps) ? payload.nextSteps : [];
-            const displayName = payload.displayPluginName || payload.displayOperationName || payload.displayWorkflowName || payload.typeName || "Execution evidence";
+            const displayName = payload.displayPluginName || payload.displayOperationName || payload.displayWorkflowName || payload.displayFlowSessionName || payload.typeName || "Execution evidence";
             return "<div class=\\"insights-plugin-name\\">" + escapeHtml(displayName) + "</div>" +
                 buildInsightListHtml("What\\'s happening", detected) +
                 buildInsightIdentifiersHtml(payload) +
                 (payload.impact ? "<div class=\\"insights-section\\"><div class=\\"insights-section-title\\">Impact</div><p class=\\"insights-section-text\\">" + escapeHtml(payload.impact) + "</p></div>" : "") +
                 buildInsightListHtml("Recommended next steps", nextSteps) +
+                buildInsightExternalActionsHtml(payload) +
                 buildInsightFollowUpQueriesHtml(payload) +
                 buildRawTraceDetailsHtml(suggestion);
         }
@@ -521,6 +552,10 @@ function showCopyStatus(message) {
 
             if (payload.kind === "workflowExecutionMetadata") {
                 return "Workflow metadata";
+            }
+
+            if (payload.kind === "flowSessionExecutionMetadata") {
+                return "Power Automate run";
             }
 
             return "Recommended next step";
@@ -617,7 +652,7 @@ function showCopyStatus(message) {
                 type: "executeBinderSuggestion",
                 payload: {
                     actionId: suggestion.actionId,
-                    payload: suggestion.payload || {}
+                    payload: Object.assign({}, suggestion.payload || {}, isBatchRoot && !isBatchSummarySelected() ? { batchItemKey: activeBatchKey } : {})
                 }
             });
 

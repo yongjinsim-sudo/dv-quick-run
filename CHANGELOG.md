@@ -6,6 +6,137 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.11 — Execution Insights: Batch Investigation & Flow Run Navigation
+
+This release closes the next part of the Execution Insights loop by making insights easier to act on directly from the Result Viewer.
+
+It adds grouped `$batch` investigation, batch-aware Execution Insights, and Power Automate run navigation when FlowSession evidence is available.
+
+---
+
+### 🔍 Grouped Identifier Investigation (NEW)
+
+- Added **Query all** for grouped execution identifiers:
+  - `CorrelationId (3)`
+  - `AsyncOperationId (3)`
+  - plugin trace identifiers
+
+- Behaviour:
+  - executes one `$batch` request
+  - creates one sub-request per identifier
+  - renders each response independently in the Batch Result Viewer
+
+👉 Results in:
+- faster investigation of repeated executions
+- cleaner follow-up from insight cards
+- no need to manually copy and run each identifier query
+
+---
+
+### 📦 Batch-Aware Execution Insights (NEW)
+
+- Execution Insights now work from selected `$batch` sub-results
+
+- Behaviour:
+  - each batch sub-result keeps its own insight context
+  - insights run against the selected sub-response, not the batch root
+  - switching batch sub-results does not leak insight output between responses
+
+👉 Results in:
+- clearer debugging of multi-request workflows
+- safer per-request diagnosis
+- stronger `$batch` investigation loop
+
+---
+
+### 🔗 Power Automate Run Navigation (NEW)
+
+- Added FlowSession-based Power Automate run navigation when available
+
+- Provides:
+  - **Open Flow Run**
+  - **Copy Run URL**
+
+- Behaviour:
+  - FlowSession evidence is treated as context only
+  - no flow internals are parsed
+  - no root-cause claim is made
+
+👉 Enables:
+- quicker jump from Dataverse execution context to Power Automate run history
+- easier sharing of run links during troubleshooting
+
+---
+
+### 🛠 Execution Insight Fixes & Refinements
+
+- Fixed source mismatch between async operation evidence and plugin trace insights
+- Prevented asyncoperation-shaped rows from producing misleading plugin trace cards
+- Improved grouped identifier action labels:
+  - `Copy all`
+  - `Query all`
+- Preserved separate plugin trace and asyncoperation query behaviour
+
+👉 Results in:
+- fewer misleading insights
+- more trustworthy follow-up actions
+- better alignment between insight source and executed query
+
+---
+
+### 🧪 Stability & Behaviour
+
+- Verified:
+  - grouped `$batch` investigation
+  - asyncoperation grouped queries
+  - plugintracelog grouped queries
+  - `$batch` sub-result insights
+  - no-noise behaviour when `flowsessions` has no records
+
+- FlowSession support is fixture-validated where live environments do not expose FlowSession records.
+
+- No regression in:
+  - Result Viewer
+  - Execution Insights
+  - `$batch` execution
+  - plugin trace insights
+  - asyncoperation insights
+
+---
+
+## 🧭 Notes
+
+This release extends Execution Insights from:
+
+- detecting execution signals
+
+→ to:
+
+- investigating grouped execution paths
+- analysing batch sub-results independently
+- navigating to Power Automate run context when available
+
+Key principles reinforced:
+- explicit, user-triggered diagnostics
+- source-aware insight actions
+- batch results remain separated
+- FlowSession is context, not root cause
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+- investigate grouped identifiers with `$batch`
+- inspect Execution Insights per batch sub-result
+- navigate to Power Automate runs when FlowSession evidence exists
+- avoid misleading cross-source insight actions
+
+👉 Completes the v0.9.11 execution investigation loop and prepares the platform for future insight prioritisation, timeline reconstruction, and cross-source reasoning.
+
+---
+
 ## v0.9.10 — Execution Insights (AsyncOperation + Workflow) 
 
 This release expands Execution Insights beyond plugin traces to include **async operations and workflows**, bringing clearer, more concrete visibility into backend execution behaviour.

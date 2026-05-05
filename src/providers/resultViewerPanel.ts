@@ -15,6 +15,7 @@ import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
 import { ResultViewerSessionStore } from "./resultViewerSessionStore.js";
 import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
 import { buildExecutionInsightSuggestions } from "../product/executionInsights/executionInsightsOrchestrator.js";
+import { previewAndRunBatchQueries } from "../commands/router/actions/execution/batch/runBatchExecutionFlow.js";
 
 const MAX_INLINE_JSON_WEBVIEW_BYTES = 2_000_000;
 const EXECUTION_INSIGHTS_SUPPRESSION_MS = 10 * 60 * 1000;
@@ -35,6 +36,18 @@ type ResultViewerMessage =
         type: "runExecutionInsightQuery";
         payload: {
             query?: string;
+        };
+    }
+    | {
+        type: "runExecutionInsightBatchQueries";
+        payload: {
+            queries?: string[];
+        };
+    }
+    | {
+        type: "openExecutionInsightUrl";
+        payload: {
+            url?: string;
         };
     }
     | {
@@ -313,6 +326,14 @@ export class ResultViewerPanel {
                 await ResultViewerPanel.handleRunExecutionInsightQuery(message.payload);
                 return;
 
+            case "runExecutionInsightBatchQueries":
+                await ResultViewerPanel.handleRunExecutionInsightBatchQueries(ctx, message.payload);
+                return;
+
+            case "openExecutionInsightUrl":
+                await ResultViewerPanel.handleOpenExecutionInsightUrl(message.payload);
+                return;
+
             case "executeResultViewerAction":
                 await ResultViewerPanel.handleExecuteResultViewerAction(ctx, message.payload);
                 return;
@@ -411,6 +432,37 @@ export class ResultViewerPanel {
         await vscode.commands.executeCommand("dvQuickRun.runQueryUnderCursor");
     }
 
+    private static async handleRunExecutionInsightBatchQueries(ctx: CommandContext, payload: { queries?: string[] }): Promise<void> {
+        const queries = Array.from(new Set((payload.queries ?? [])
+            .map((query) => String(query ?? "").trim())
+            .filter(Boolean)));
+
+        if (queries.length === 0) {
+            void vscode.window.showWarningMessage("DV Quick Run: No execution insight queries were available to run as $batch.");
+            return;
+        }
+
+        if (queries.length === 1) {
+            await ResultViewerPanel.handleRunExecutionInsightQuery({ query: queries[0] });
+            return;
+        }
+
+        await previewAndRunBatchQueries(ctx, queries, {
+            previewTitle: "Execution Insight grouped identifier investigation"
+        });
+    }
+
+
+
+    private static async handleOpenExecutionInsightUrl(payload: { url?: string }): Promise<void> {
+        const url = String(payload.url ?? "").trim();
+        if (!/^https:\/\/make\.powerautomate\.com\//i.test(url)) {
+            void vscode.window.showWarningMessage("DV Quick Run: Only Power Automate run links can be opened from Execution Insights.");
+            return;
+        }
+
+        await vscode.env.openExternal(vscode.Uri.parse(url));
+    }
 
     private static async handleRequestRows(payload: { sessionId?: string; offset?: number; limit?: number }): Promise<void> {
         const sessionId = String(payload.sessionId ?? ResultViewerPanel.currentSessionId ?? "").trim();
@@ -568,7 +620,7 @@ export class ResultViewerPanel {
                     return;
 
                 case "requestExecutionInsights":
-                    await ResultViewerPanel.handleRequestExecutionInsights(ctx);
+                    await ResultViewerPanel.handleRequestExecutionInsights(ctx, payload.payload);
                     return;
 
                 case "previewAddTop":
@@ -649,16 +701,25 @@ export class ResultViewerPanel {
         }
     }
 
-    private static async handleRequestExecutionInsights(ctx: CommandContext): Promise<void> {
+    private static async handleRequestExecutionInsights(ctx: CommandContext, payload?: Record<string, unknown>): Promise<void> {
         const panel = ResultViewerPanel.currentPanel;
         const currentModel = ResultViewerPanel.currentModel;
-        if (!panel || !currentModel || isBatchResultViewerModel(currentModel)) {
+        if (!panel || !currentModel) {
             return;
         }
 
-        const rawJson = currentModel.session?.id
-            ? ResultViewerSessionStore.getRawJson(currentModel.session.id)
-            : currentModel.rawJson;
+        const batchTarget = isBatchResultViewerModel(currentModel)
+            ? ResultViewerPanel.resolveBatchExecutionInsightTarget(currentModel, payload)
+            : undefined;
+        const targetModel = batchTarget?.model ?? (!isBatchResultViewerModel(currentModel) ? currentModel : undefined);
+
+        if (!targetModel) {
+            return;
+        }
+
+        const rawJson = !isBatchResultViewerModel(currentModel) && targetModel.session?.id
+            ? ResultViewerSessionStore.getRawJson(targetModel.session.id)
+            : targetModel.rawJson;
 
         let currentResult: unknown;
         if (rawJson?.trim()) {
@@ -680,10 +741,10 @@ export class ResultViewerPanel {
                 client: ctx.getClient(),
                 token,
                 currentResult,
-                queryPath: currentModel.queryPath,
-                correlationId: currentModel.executionContext?.correlationId,
-                requestId: currentModel.executionContext?.requestId,
-                operationId: currentModel.executionContext?.operationId
+                queryPath: targetModel.queryPath,
+                correlationId: targetModel.executionContext?.correlationId,
+                requestId: targetModel.executionContext?.requestId,
+                operationId: targetModel.executionContext?.operationId
             });
             const executionInsights = executionInsightResult.suggestions;
             const shouldSuppressExecutionInsights = executionInsightResult.shouldSuppressExecutionInsights;
@@ -693,23 +754,24 @@ export class ResultViewerPanel {
             // feedback. Keeping the trigger after a successful run makes the drawer ask the user
             // to run Execution Insights again even though the insights are already loaded.
             if (shouldSuppressExecutionInsights) {
-                ResultViewerPanel.suppressExecutionInsightsForCurrentEnvironment(currentModel);
+                ResultViewerPanel.suppressExecutionInsightsForCurrentEnvironment(targetModel);
             }
 
-            if (currentModel.binderSuggestion?.actionId === "requestExecutionInsights") {
-                currentModel.binderSuggestion = undefined;
+            if (targetModel.binderSuggestion?.actionId === "requestExecutionInsights") {
+                targetModel.binderSuggestion = undefined;
             }
 
-            currentModel.insightSuggestions = [
-                ...(currentModel.insightSuggestions ?? []).filter((suggestion) => suggestion.actionId !== "requestExecutionInsights"),
+            targetModel.insightSuggestions = [
+                ...(targetModel.insightSuggestions ?? []).filter((suggestion) => suggestion.actionId !== "requestExecutionInsights"),
                 ...executionInsights
             ];
 
             await panel.webview.postMessage({
                 type: "insightsUpdated",
                 payload: {
-                    suggestions: currentModel.insightSuggestions,
-                    binderSuggestion: currentModel.binderSuggestion ?? null
+                    suggestions: targetModel.insightSuggestions,
+                    binderSuggestion: targetModel.binderSuggestion ?? null,
+                    batchItemKey: batchTarget?.item.key
                 }
             });
         } catch (error) {
@@ -719,6 +781,25 @@ export class ResultViewerPanel {
                 payload: { message: "Could not get Execution Insights: " + message }
             });
         }
+    }
+
+
+    private static resolveBatchExecutionInsightTarget(
+        batchModel: import("../services/resultViewModelBuilder.js").BatchResultViewerModel,
+        payload?: Record<string, unknown>
+    ): { item: import("../services/resultViewModelBuilder.js").BatchResultViewerItem; model: ResultViewerModel } | undefined {
+        const batchItemKey = typeof payload?.batchItemKey === "string" ? payload.batchItemKey : undefined;
+        const queryPath = typeof payload?.queryPath === "string" ? payload.queryPath.trim() : undefined;
+
+        const item = batchModel.items.find((candidate) => batchItemKey && candidate.key === batchItemKey)
+            ?? batchModel.items.find((candidate) => queryPath && candidate.queryText.trim() === queryPath)
+            ?? batchModel.items.find((candidate) => !!candidate.model);
+
+        if (!item?.model) {
+            return undefined;
+        }
+
+        return { item, model: item.model };
     }
 
     private static async copyToClipboard(payload: string): Promise<void> {
