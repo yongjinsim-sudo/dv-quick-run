@@ -6,6 +6,199 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.12 — Guided Execution Investigation & Primary Signal Reasoning
+
+This release evolves Execution Insights from:
+
+- runtime signal detection
+
+→ to:
+
+- guided execution investigation
+
+DV Quick Run now identifies the **primary execution pattern first**, then stitches together supporting evidence from async operations, plugin traces, and workflows into a more coherent investigation flow.
+
+The result is a significantly clearer debugging experience for complex Dataverse and Power Platform execution chains.
+
+---
+
+### 🧠 Primary Execution Signal Prioritisation (NEW)
+
+- Execution Insights now identify and prioritise a **primary execution signal**
+
+- Behaviour:
+  - strongest/highest-confidence execution pattern is surfaced first
+  - supporting signals appear afterward as secondary investigation cards
+  - avoids fragmented or competing diagnostic narratives
+
+- Examples:
+  - repeated async background execution
+  - repeated cross-request execution patterns
+  - nested plugin execution chains
+
+👉 Results in:
+- clearer mental model of execution behaviour
+- easier investigation starting point
+- less cognitive overload during debugging
+
+---
+
+### 🔗 Guided Investigation Flow (NEW)
+
+- Introduced structured investigation guidance directly inside insight cards
+
+- New sections include:
+  - **Primary signal**
+  - **Summary**
+  - **Guided investigation**
+  - **Related signals**
+
+- Behaviour:
+  - explains why DV Quick Run considers a signal important
+  - links related evidence together
+  - provides concrete next investigation steps
+
+👉 Results in:
+- more coherent execution reasoning
+- smoother investigation workflow
+- reduced need to mentally correlate raw signals manually
+
+---
+
+### ⚡ AsyncOperation → Plugin Trace Correlation (Expanded)
+
+- Async operation insights can now surface related plugin trace investigation context
+
+- Provides:
+  - correlation-aware follow-up guidance
+  - related trace investigation suggestions
+  - supporting execution signal linkage
+
+- Behaviour:
+  - async operations remain the primary source
+  - plugin traces act as supporting evidence
+  - avoids source confusion between execution types
+
+👉 Enables:
+- easier debugging of recurring background executions
+- better understanding of execution chains
+- clearer Dataverse ↔ Power Platform runtime visibility
+
+---
+
+### 🧾 Execution Narrative Refinement (Major)
+
+- Refined execution insight wording and structure for readability
+
+- Improved:
+  - titles
+  - summaries
+  - investigation guidance
+  - supporting evidence grouping
+
+- Reduced:
+  - noisy repetitive phrasing
+  - fragmented investigation flow
+  - disconnected signal presentation
+
+👉 Results in:
+- faster comprehension
+- more trustworthy diagnostics
+- better alignment with real troubleshooting workflows
+
+---
+
+### 🔍 Raw Investigation Context Improvements
+
+- Expanded raw asyncoperation detail rendering
+
+- Provides:
+  - concise execution summaries
+  - grouped correlation/request context
+  - expandable raw JSON evidence
+
+- Behaviour:
+  - preserves transparency
+  - maintains bounded execution behaviour
+  - avoids overwhelming the primary investigation narrative
+
+👉 Results in:
+- deeper debugging capability when needed
+- cleaner default insight experience
+- stronger balance between abstraction and evidence
+
+---
+
+### 🛠 Execution Insight Ordering Improvements
+
+- Improved insight ordering behaviour:
+  - primary execution investigation cards now appear first
+  - secondary/plugin-specific investigation cards follow afterward
+
+- Prevents:
+  - primary signal being buried later in the insight sequence
+  - fragmented execution investigation flow
+
+👉 Results in:
+- more natural debugging progression
+- stronger “main issue first” experience
+- clearer investigation hierarchy
+
+---
+
+### 🧪 Stability & Behaviour
+
+- Verified:
+  - asyncoperation primary signal prioritisation
+  - plugin trace correlation guidance
+  - mixed execution insight ordering
+  - raw investigation detail rendering
+  - grouped identifier investigation flows
+
+- No regression in:
+  - Result Viewer
+  - Execution Insights
+  - `$batch` investigation
+  - plugin trace insights
+  - workflow-linked async insights
+
+---
+
+## 🧭 Notes
+
+This release marks an important evolution:
+
+DV Quick Run moves from:
+- detecting execution signals
+
+→ to:
+- guiding execution investigation
+
+Key principles reinforced:
+- prioritise strongest signal first
+- supporting evidence should reinforce, not compete
+- investigation flow should feel coherent
+- execution diagnostics must remain explainable and bounded
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+- prioritise primary execution patterns automatically
+- guide users through execution investigation flows
+- correlate async operations with supporting plugin traces
+- present execution diagnostics as a coherent investigation narrative
+
+👉 Establishes the foundation for:
+- cross-source execution reasoning
+- execution timeline reconstruction
+- future insight prioritisation systems
+- deeper Power Platform execution diagnostics
+
+---
+
 ## v0.9.11 — Execution Insights: Batch Investigation & Flow Run Navigation
 
 This release closes the next part of the Execution Insights loop by making insights easier to act on directly from the Result Viewer.

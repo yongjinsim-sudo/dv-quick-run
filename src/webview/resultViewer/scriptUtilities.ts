@@ -462,6 +462,29 @@ function showCopyStatus(message) {
                 "</div>";
         }
 
+        function buildInsightRelatedSignalsHtml(payload) {
+            const relatedSignals = Array.isArray(payload.relatedSignals) ? payload.relatedSignals : [];
+            if (relatedSignals.length === 0) {
+                return "";
+            }
+
+            return "<div class=\\"insights-section\\">" +
+                "<div class=\\"insights-section-title\\">Related signals</div>" +
+                "<ul class=\\"insights-section-list insights-query-list\\">" +
+                relatedSignals.map((item) => {
+                    const label = String(item?.label || "Related signal");
+                    const description = String(item?.description || "");
+                    const query = String(item?.query || "");
+                    return "<li class=\\"insights-query-row\\">" +
+                        "<span>" + escapeHtml(label) + (description ? "<br><span class=\\"insights-muted\\">" + escapeHtml(description) + "</span>" : "") + "</span>" +
+                        (query ? "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-copy-insight-value=\\"" + escapeAttribute(query) + "\\">Copy query</button>" : "") +
+                        (query ? "<button class=\\"insights-copy-raw-btn\\" type=\\"button\\" data-run-insight-query=\\"" + escapeAttribute(query) + "\\">Query</button>" : "") +
+                        "</li>";
+                }).join("") +
+                "</ul>" +
+                "</div>";
+        }
+
         function buildInsightFollowUpQueriesHtml(payload) {
             const queries = Array.isArray(payload.followUpQueries) ? payload.followUpQueries : [];
             if (queries.length === 0) {
@@ -524,11 +547,18 @@ function showCopyStatus(message) {
                 ? payload.detectedSignals
                 : (payload.signalSummary ? String(payload.signalSummary).split(" · ").filter(Boolean) : []);
             const nextSteps = Array.isArray(payload.nextSteps) ? payload.nextSteps : [];
+            const guidedInvestigationSteps = Array.isArray(payload.guidedInvestigationSteps) ? payload.guidedInvestigationSteps : [];
             const displayName = payload.displayPluginName || payload.displayOperationName || payload.displayWorkflowName || payload.displayFlowSessionName || payload.typeName || "Execution evidence";
+            const primarySignal = payload.isPrimarySignal ? "<div class=\\"insights-section\\"><div class=\\"insights-section-title\\">Primary signal</div><p class=\\"insights-section-text\\">DV Quick Run treats this as the main execution pattern to investigate first.</p></div>" : "";
+            const summary = payload.summary ? "<div class=\\"insights-section\\"><div class=\\"insights-section-title\\">Summary</div><p class=\\"insights-section-text\\">" + escapeHtml(payload.summary) + "</p></div>" : "";
             return "<div class=\\"insights-plugin-name\\">" + escapeHtml(displayName) + "</div>" +
+                primarySignal +
+                summary +
                 buildInsightListHtml("What\\'s happening", detected) +
                 buildInsightIdentifiersHtml(payload) +
                 (payload.impact ? "<div class=\\"insights-section\\"><div class=\\"insights-section-title\\">Impact</div><p class=\\"insights-section-text\\">" + escapeHtml(payload.impact) + "</p></div>" : "") +
+                buildInsightListHtml("Guided investigation", guidedInvestigationSteps) +
+                buildInsightRelatedSignalsHtml(payload) +
                 buildInsightListHtml("Recommended next steps", nextSteps) +
                 buildInsightExternalActionsHtml(payload) +
                 buildInsightFollowUpQueriesHtml(payload) +
@@ -547,7 +577,7 @@ function showCopyStatus(message) {
             }
 
             if (payload.kind === "asyncOperationExecutionSummary") {
-                return "Async operation insight";
+                return payload.isPrimarySignal ? "Primary async operation insight" : "Async operation insight";
             }
 
             if (payload.kind === "workflowExecutionMetadata") {
