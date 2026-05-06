@@ -60,12 +60,25 @@ export async function buildExecutionInsightSuggestions(args: ExecutionInsightsOr
   const flowSessionSuggestions = buildFlowSessionInsightSuggestions(flowSessionAnalysis);
 
   return {
-    suggestions: [
+    suggestions: orderExecutionInsightSuggestions([
       ...pluginSuggestions,
       ...asyncSuggestions,
       ...workflowSuggestions,
       ...flowSessionSuggestions
-    ].sort((a, b) => b.confidence - a.confidence),
+    ]),
     shouldSuppressExecutionInsights
   };
+}
+
+export function orderExecutionInsightSuggestions(suggestions: BinderSuggestion[]): BinderSuggestion[] {
+  return [...suggestions].sort((a, b) => {
+    const aPrimary = a.payload?.isPrimarySignal === true ? 1 : 0;
+    const bPrimary = b.payload?.isPrimarySignal === true ? 1 : 0;
+
+    if (aPrimary !== bPrimary) {
+      return bPrimary - aPrimary;
+    }
+
+    return b.confidence - a.confidence;
+  });
 }

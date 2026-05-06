@@ -4,6 +4,7 @@ import * as path from "path";
 import { buildAsyncOperationCorrelationQuery, buildAsyncOperationRequestQuery } from "../../product/executionInsights/asyncOperationQueryBuilder.js";
 import { buildAsyncOperationSignals } from "../../product/executionInsights/asyncOperationSignalBuilder.js";
 import { buildAsyncOperationInsightSuggestions } from "../../product/executionInsights/asyncOperationInsightBuilder.js";
+import { orderExecutionInsightSuggestions } from "../../product/executionInsights/executionInsightsOrchestrator.js";
 import { buildWorkflowSignals } from "../../product/executionInsights/workflowSignalBuilder.js";
 import { buildWorkflowInsightSuggestions } from "../../product/executionInsights/workflowInsightBuilder.js";
 import type { WorkflowAnalysisResult } from "../../product/executionInsights/workflowTypes.js";
@@ -54,6 +55,50 @@ suite("asyncOperationExecutionInsights", () => {
     assert.ok(suggestions.every((suggestion) => suggestion.actionId === "requestExecutionInsights"));
     assert.ok(suggestions.every((suggestion) => suggestion.canApply === false));
     assert.ok(suggestions.some((suggestion) => suggestion.payload?.kind === "asyncOperationExecutionSummary" || suggestion.payload?.kind === "asyncOperationSampleInspected"));
+  });
+
+  test("marks cross-request asyncoperation repetition as primary model-driven guidance", () => {
+    const fixture = readJsonFixture("asyncoperations.redacted.fixture.json");
+    const signals = buildAsyncOperationSignals(fixture, "high");
+    const suggestions = buildAsyncOperationInsightSuggestions({
+      signals,
+      source: "currentResult",
+      status: "success"
+    });
+    const primary = suggestions.find((suggestion) => suggestion.payload?.kind === "asyncOperationExecutionSummary" && suggestion.payload?.isPrimarySignal === true);
+
+    assert.ok(primary, "cross-request asyncoperation repetition should be marked as primary");
+    assert.strictEqual(primary?.payload?.sourceType, "asyncOperation");
+    assert.ok(typeof primary?.payload?.summary === "string");
+    assert.ok(String(primary?.payload?.summary).includes("separate request contexts"));
+    assert.ok(Array.isArray(primary?.payload?.guidedInvestigationSteps));
+    assert.ok((primary?.payload?.guidedInvestigationSteps as unknown[]).length > 0);
+    assert.ok(Array.isArray(primary?.payload?.relatedSignals));
+    assert.ok((primary?.payload?.relatedSignals as unknown[]).length > 0);
+  });
+
+  test("orders primary execution insights before higher-confidence supporting cards", () => {
+    const ordered = orderExecutionInsightSuggestions([
+      {
+        text: "Supporting plugin trace",
+        actionId: "requestExecutionInsights",
+        confidence: 0.88,
+        reason: "Supporting signal",
+        source: "execution",
+        payload: { kind: "pluginTraceExecutionSummary" }
+      },
+      {
+        text: "Primary async operation",
+        actionId: "requestExecutionInsights",
+        confidence: 0.76,
+        reason: "Primary signal",
+        source: "execution",
+        payload: { kind: "asyncOperationExecutionSummary", isPrimarySignal: true }
+      }
+    ]);
+
+    assert.strictEqual(ordered[0]?.payload?.kind, "asyncOperationExecutionSummary");
+    assert.strictEqual(ordered[0]?.payload?.isPrimarySignal, true);
   });
 
   test("extracts workflow metadata and builds linked workflow insight suggestions", () => {
