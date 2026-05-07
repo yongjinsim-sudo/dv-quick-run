@@ -113,8 +113,8 @@ export function buildFlowSessionSignal(row: Record<string, unknown>, confidence:
   const stateCode = readNumber(row, ["statecode", "stateCode", "StateCode"]);
   const statusCode = readNumber(row, ["statuscode", "statusCode", "StatusCode"]);
 
-  const hasFlowSessionShape = !!flowSessionId || !!flowId || !!runId || !!environmentId || typeof stateCode === "number" || typeof statusCode === "number";
-  if (!hasFlowSessionShape) {
+  const hasConcreteFlowSessionEvidence = !!flowSessionId || !!flowId || !!runId || !!environmentId;
+  if (!hasConcreteFlowSessionEvidence) {
     return undefined;
   }
 

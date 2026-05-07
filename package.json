@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Dataverse query and execution diagnostics for VS Code — run, explore, refine, and investigate execution with Query-by-Canvas, Guided Traversal, $batch workflows, grouped investigation, and Execution Insights.",
-  "version": "0.9.12",
+  "version": "0.9.13",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",

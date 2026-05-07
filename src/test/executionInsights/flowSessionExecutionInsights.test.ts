@@ -65,4 +65,36 @@ suite("flowSessionExecutionInsights", () => {
     assert.ok(suggestions.every((suggestion) => suggestion.payload?.kind === "flowSessionExecutionMetadata"));
     assert.ok(suggestions.some((suggestion) => Array.isArray(suggestion.payload?.externalActions)));
   });
+
+  test("downgrades partial flowsession context when no run URL is available", () => {
+    const fixture = readJsonFixture("flowsessions.redacted.fixture.json");
+    const signals = buildFlowSessionSignals(fixture, "high").filter((signal) => !signal.flowRunUrl);
+    const suggestions = buildFlowSessionInsightSuggestions({
+      signals,
+      source: "currentResult",
+      status: "success"
+    });
+
+    assert.ok(suggestions.length > 0);
+    assert.ok(suggestions.every((suggestion) => suggestion.text.startsWith("Partial FlowSession context detected:")));
+    assert.ok(suggestions.every((suggestion) => suggestion.confidence === 0.62));
+    assert.ok(suggestions.every((suggestion) => suggestion.payload?.investigationPriority === 0));
+    assert.ok(suggestions.every((suggestion) => suggestion.reason?.includes("not proof of a Power Automate run")));
+    assert.ok(suggestions.every((suggestion) => Array.isArray(suggestion.payload?.externalActions) && suggestion.payload.externalActions.length === 0));
+  });
+
+  test("does not create flowsession signals from generic Dataverse status fields", () => {
+    const signals = buildFlowSessionSignals({
+      value: [
+        {
+          contactid: "11111111-1111-1111-1111-111111111111",
+          firstname: "Test",
+          statecode: 0,
+          statuscode: 1
+        }
+      ]
+    }, "high");
+
+    assert.strictEqual(signals.length, 0);
+  });
 });

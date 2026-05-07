@@ -585,7 +585,7 @@ function showCopyStatus(message) {
             }
 
             if (payload.kind === "flowSessionExecutionMetadata") {
-                return "Power Automate run";
+                return payload.flowRunUrl ? "Power Automate run" : "FlowSession context";
             }
 
             return "Recommended next step";

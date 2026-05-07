@@ -26,117 +26,133 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.12 (Guided Execution Investigation & Primary Signal Reasoning)
+## 🆕 What's New in v0.9.13 (Execution Investigation Coherence & FlowSession Evidence Integrity)
 
-> An **execution investigation refinement release** — evolving Execution Insights from signal detection into guided execution investigation with primary signal prioritisation, asyncoperation reasoning, and cross-source execution stitching.
+> A focused **execution investigation coherence release** — refining Execution Insights ordering, evidence truthfulness, supporting-signal behaviour, and architectural reasoning seams without introducing speculative diagnostics or noisy execution analysis.
 
 ---
 
-### 🧠 Primary Execution Signal Prioritisation (NEW)
+### 🧠 Shared Execution Insight Ordering (NEW)
 
-Execution Insights now identifies the **main execution pattern first** instead of surfacing disconnected diagnostic cards in arbitrary order.
+Execution Insights now uses a more deterministic and coherent ordering model.
+
+DV Quick Run now prioritises:
+1. primary investigation signal
+2. investigation priority
+3. confidence
+4. deterministic fallback ordering
+
+Behaviour improvements:
+- strongest execution patterns consistently appear first
+- supporting signals remain visible without competing with the primary investigation signal
+- insight ordering remains stable across reruns
+
+👉 Results in:
+- clearer investigation flow
+- easier “start here” debugging
+- less fragmented execution narratives
+
+---
+
+### 🧩 Reasoning Seam Extraction (NEW)
+
+Execution investigation reasoning has been refactored into lightweight shared reasoning seams.
+
+Extracted responsibilities include:
+- primary signal interpretation
+- investigation summaries
+- guided investigation generation
+- related-signal reasoning
+
+Preserves:
+- thin renderer architecture
+- explicit orchestration boundaries
+- deterministic investigation behaviour
+
+👉 Results in:
+- cleaner architecture
+- safer future execution intelligence expansion
+- reduced architectural drift
+
+---
+
+### 🔗 Supporting Signal Guardrails (Expanded)
+
+Supporting execution signals now behave more clearly as:
+- investigation hints
+- contextual evidence
+- lightweight related evidence
 
 DV Quick Run now:
-- prioritises the strongest/highest-confidence execution pattern
-- surfaces supporting signals afterward
-- keeps the investigation narrative coherent
-
-Examples:
-- repeated background async execution
-- recurring cross-request execution patterns
-- nested plugin execution chains
+- reduces visual competition between weak and strong signals
+- avoids implying unsupported causality
+- keeps supporting evidence clearly subordinate to the primary signal
 
 👉 Results in:
-- clearer mental model of execution behaviour
-- easier investigation starting point
-- less cognitive overload during debugging
-
----
-
-### 🔗 Guided Investigation Flow (NEW)
-
-Execution Insights now includes structured investigation guidance directly inside insight cards.
-
-New investigation sections include:
-- **Primary signal**
-- **Summary**
-- **Guided investigation**
-- **Related signals**
-
-Behaviour:
-- explains why a signal matters
-- links related evidence together
-- provides concrete next investigation steps
-
-👉 Results in:
-- more coherent debugging workflows
-- easier reasoning across Dataverse execution chains
-- reduced need to manually correlate execution data
-
----
-
-### ⚡ AsyncOperation + Plugin Trace Correlation (Expanded)
-
-DV Quick Run now stitches together:
-- async operations
-- plugin traces
-- workflow context
-
-…into a more connected execution investigation experience.
-
-Execution Insights can now:
-- surface related plugin traces from asyncoperation context
-- provide correlation-aware follow-up investigation guidance
-- distinguish primary vs supporting execution evidence
-
-👉 Enables:
-- easier debugging of recurring background activity
-- better visibility into Dataverse ↔ Power Platform execution behaviour
-- clearer investigation of repeated or cascading execution patterns
-
----
-
-### 📊 Guided Execution Insights
-
-Execution Insights now behaves more like a guided runtime investigation surface instead of isolated diagnostic cards.
-
-DV Quick Run now:
-- surfaces the primary execution issue first
-- groups supporting evidence underneath
-- provides investigation-focused summaries instead of raw signal dumps
-
-👉 Results in:
-- faster comprehension
 - more trustworthy diagnostics
-- clearer troubleshooting progression
+- stronger evidence-to-importance alignment
+- cleaner execution investigation hierarchy
 
 ---
 
-### 🔬 Expanded Raw Investigation Details
+### ⚡ FlowSession Evidence Integrity (Major)
 
-Raw execution detail rendering has been refined for readability and investigation flow.
+FlowSession insight generation has been refined to require **real FlowSession evidence**.
 
-Provides:
-- concise execution summaries
-- grouped correlation/request identifiers
-- expandable raw JSON evidence
-- correlation-aware investigation actions
+FlowSession insight cards now require concrete evidence such as:
+- `flowsessionid`
+- `flowid`
+- `runid`
+- `environmentid`
 
-👉 Enables:
-- deep debugging when needed
-- cleaner default insight experience
-- balance between abstraction and low-level evidence
+DV Quick Run now correctly distinguishes between:
+- no FlowSession evidence
+- partial FlowSession context
+- actionable Power Automate run linkage
+
+👉 Results in:
+- no synthetic FlowSession context
+- improved evidence honesty
+- reduced misleading Flow-related investigation cues
+
+---
+
+### 🧾 FlowSession Wording & Investigation Hierarchy Refinement
+
+FlowSession wording and signal prominence have been refined for investigation truthfulness.
+
+Behaviour improvements:
+- weak/non-actionable FlowSession evidence now uses softer wording
+- actionable Flow navigation appears only when runnable evidence exists
+- asyncoperation investigation patterns correctly lead investigation ordering
+
+Reduced:
+- over-prominent weak signals
+- misleading Flow run implications
+- false investigation weight
+
+👉 Results in:
+- stronger operational truthfulness
+- more coherent execution investigations
+- clearer alignment between evidence strength and UI prominence
 
 ---
 
 ### 🧪 Stability & Behaviour
 
 - Verified across:
-  - asyncoperation primary signal prioritisation
-  - plugin trace correlation guidance
-  - grouped execution investigation flows
-  - raw execution detail rendering
-  - mixed execution insight datasets
+  - primary signal ordering stability
+  - asyncoperation-led investigation flow
+  - supporting signal visibility
+  - FlowSession suppression when no evidence exists
+  - partial FlowSession evidence handling
+  - deterministic ordering behaviour
+  - `$batch` sub-result isolation
+
+- Added regression coverage for:
+  - synthetic FlowSession prevention
+  - ordering consistency
+  - partial FlowSession handling
 
 - No regression in:
   - Result Viewer
@@ -144,42 +160,43 @@ Provides:
   - `$batch` investigation
   - plugin trace insights
   - asyncoperation insights
-  - workflow-linked execution analysis
+  - Guided Traversal
+  - Query Doctor
 
 ---
 
 ## 🧭 Notes
 
-This release evolves Execution Insights from:
+This release reinforces DV Quick Run’s direction as:
 
-- detecting execution signals
+- an investigation workbench for Dataverse and Power Platform engineering
 
-→ to:
-
-- guiding execution investigation
+—not a speculative telemetry platform.
 
 Core principles reinforced:
 - strongest signal first
-- supporting evidence should reinforce, not compete
-- investigation flow should feel coherent
-- execution diagnostics must remain explainable and bounded
+- supporting evidence remains contextual
+- investigation must remain explainable
+- renderer surfaces remain thin
+- diagnostics remain bounded and deterministic
+- evidence strength must match UI prominence
 
 ---
 
 ## 🎯 Summary
 
 DV Quick Run now:
+- orders execution investigations more coherently
+- separates reasoning from rendering more cleanly
+- prevents misleading FlowSession evidence
+- presents supporting signals more truthfully
+- improves investigation trust without increasing diagnostic noise
 
-- prioritises primary execution patterns automatically
-- guides users through execution investigation flows
-- correlates async operations with supporting plugin traces
-- presents execution diagnostics as a coherent investigation narrative
-
-👉 Establishes the foundation for:
-- cross-source execution reasoning
-- execution timeline reconstruction
-- deeper Power Platform runtime diagnostics
-- future insight prioritisation systems
+👉 Establishes a stronger foundation for:
+- future execution intelligence layers
+- guided investigation workflows
+- controlled cross-source reasoning
+- deeper Power Platform execution diagnostics
 
 ---
 

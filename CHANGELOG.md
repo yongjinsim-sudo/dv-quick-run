@@ -6,6 +6,193 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.13 — Execution Investigation Coherence & FlowSession Truthfulness
+
+This release focuses on **execution investigation coherence**, **architectural tightening**, and **evidence-backed signal presentation**.
+
+It refines how Execution Insights are ordered, reasoned about, and presented — without expanding feature surface area or introducing speculative diagnostics.
+
+The goal of v0.9.13 is not more telemetry.
+
+It is:
+- clearer investigation flow
+- more truthful supporting evidence
+- stronger reasoning boundaries
+- cleaner long-term architecture
+
+---
+
+### 🧠 Shared Execution Insight Ordering (NEW)
+
+- Centralised Execution Insight ordering semantics into a shared model
+
+- Ordering now consistently prioritises:
+  1. primary investigation signal
+  2. investigation priority
+  3. confidence
+  4. deterministic fallback ordering
+
+- Behaviour improvements:
+  - primary investigation patterns appear first consistently
+  - supporting signals remain visible but subordinate
+  - ordering remains stable across reruns
+
+👉 Results in:
+- more predictable investigation flow
+- clearer “start here” guidance
+- reduced diagnostic fragmentation
+
+---
+
+### 🧩 Reasoning Seam Extraction (NEW)
+
+- Refactored execution investigation reasoning into lightweight shared reasoning seams
+
+- Extracted:
+  - primary signal interpretation
+  - summary generation
+  - guided investigation generation
+  - related-signal reasoning
+
+- Preserves:
+  - thin renderer architecture
+  - explicit orchestration
+  - deterministic investigation behaviour
+
+👉 Results in:
+- cleaner architectural boundaries
+- reduced reasoning drift inside builders
+- safer foundation for future execution intelligence work
+
+---
+
+### 🔗 Related Signal Guardrails (Expanded)
+
+- Refined supporting signal behaviour to reinforce:
+  - investigation hints
+  - supporting evidence
+  - contextual linkage
+
+- Supporting signals:
+  - no longer compete visually with stronger evidence
+  - avoid implied causality
+  - remain clearly secondary to the primary investigation signal
+
+👉 Results in:
+- stronger investigation trust
+- lower risk of misleading execution narratives
+- clearer separation between evidence and interpretation
+
+---
+
+### ⚡ FlowSession Evidence Truthfulness (Major)
+
+- Refined FlowSession insight generation to require **real FlowSession evidence**
+
+- FlowSession insight cards now require concrete FlowSession-identifying evidence such as:
+  - `flowsessionid`
+  - `flowid`
+  - `runid`
+  - `environmentid`
+
+- Behaviour now correctly distinguishes:
+
+  - no FlowSession evidence
+  - partial FlowSession context
+  - actionable Power Automate run linkage
+
+👉 Results in:
+- no more synthetic FlowSession context
+- improved evidence honesty
+- reduced misleading Power Automate implications
+
+---
+
+### 🧾 FlowSession Wording & Investigation Hierarchy Refinement
+
+- Refined FlowSession wording and signal prominence
+
+- Improved behaviour:
+  - weak/non-actionable FlowSession context uses softer wording
+  - actionable Flow navigation only appears when runnable evidence exists
+  - asyncoperation investigation patterns now correctly lead investigation ordering
+
+- Reduced:
+  - over-prominent weak signals
+  - misleading Flow run implications
+  - false investigation weight
+
+👉 Results in:
+- stronger operational truthfulness
+- more coherent investigation hierarchy
+- better alignment between evidence strength and UI prominence
+
+---
+
+### 🧪 Stability & Behaviour
+
+- Verified:
+  - primary signal ordering stability
+  - asyncoperation-led investigation flow
+  - supporting signal visibility
+  - FlowSession suppression when no evidence exists
+  - partial FlowSession context handling
+  - deterministic ordering behaviour
+  - `$batch` sub-result isolation
+
+- Added regression coverage for:
+  - synthetic FlowSession prevention
+  - ordering consistency
+  - partial FlowSession evidence handling
+
+- No regression in:
+  - Result Viewer
+  - Execution Insights
+  - `$batch` investigation
+  - plugin trace insights
+  - asyncoperation insights
+  - Guided Traversal
+  - Query Doctor
+
+---
+
+## 🧭 Notes
+
+This release reinforces DV Quick Run’s direction as:
+
+```text
+an investigation workbench for Dataverse and Power Platform engineering
+```
+
+—not a speculative telemetry platform.
+
+Key principles reinforced:
+- strongest signal first
+- supporting evidence remains contextual
+- investigation must remain explainable
+- renderer surfaces stay thin
+- execution diagnostics remain bounded and deterministic
+- evidence strength must match UI prominence
+
+---
+
+## 🎯 Summary
+
+DV Quick Run now:
+- orders execution investigations more coherently
+- separates reasoning from rendering more cleanly
+- prevents misleading FlowSession evidence
+- presents supporting signals more truthfully
+- improves investigation trust without increasing feature complexity
+
+👉 Establishes a stronger foundation for:
+- future execution intelligence layers
+- guided investigation workflows
+- controlled cross-source reasoning
+- deeper Power Platform investigation capabilities
+
+---
+
 ## v0.9.12 — Guided Execution Investigation & Primary Signal Reasoning
 
 This release evolves Execution Insights from:
