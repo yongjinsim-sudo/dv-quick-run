@@ -101,6 +101,40 @@ suite("asyncOperationExecutionInsights", () => {
     assert.strictEqual(ordered[0]?.payload?.isPrimarySignal, true);
   });
 
+
+  test("orders execution insights by primary, investigation priority, confidence, and stable fallback", () => {
+    const ordered = orderExecutionInsightSuggestions([
+      {
+        text: "Low confidence but high priority",
+        actionId: "requestExecutionInsights",
+        confidence: 0.7,
+        reason: "High investigation priority",
+        source: "execution",
+        payload: { kind: "supportingHigh", investigationPriority: 3 }
+      },
+      {
+        text: "Higher confidence but lower priority",
+        actionId: "requestExecutionInsights",
+        confidence: 0.95,
+        reason: "Lower investigation priority",
+        source: "execution",
+        payload: { kind: "supportingLow", investigationPriority: 1 }
+      },
+      {
+        text: "Primary signal",
+        actionId: "requestExecutionInsights",
+        confidence: 0.6,
+        reason: "Primary signal",
+        source: "execution",
+        payload: { kind: "primary", isPrimarySignal: true, investigationPriority: 1 }
+      }
+    ]);
+
+    assert.strictEqual(ordered[0]?.payload?.kind, "primary");
+    assert.strictEqual(ordered[1]?.payload?.kind, "supportingHigh");
+    assert.strictEqual(ordered[2]?.payload?.kind, "supportingLow");
+  });
+
   test("extracts workflow metadata and builds linked workflow insight suggestions", () => {
     const fixture = readJsonFixture("workflows.redacted.fixture.json");
     const signals = buildWorkflowSignals(fixture, "high");

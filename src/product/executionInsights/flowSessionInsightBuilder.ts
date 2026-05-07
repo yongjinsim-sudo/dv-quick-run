@@ -71,7 +71,19 @@ function buildFollowUpQueries(signal: FlowSessionSignal): Array<{ label: string;
 }
 
 function displayFlowSessionName(signal: FlowSessionSignal): string {
-  return signal.name || signal.flowSessionId || signal.runId || "Linked flow run";
+  return signal.name || signal.flowSessionId || signal.runId || "FlowSession context";
+}
+
+function hasActionableFlowRun(signal: FlowSessionSignal): boolean {
+  return !!signal.flowRunUrl;
+}
+
+function buildFlowSessionTitle(signal: FlowSessionSignal, displayName: string): string {
+  if (hasActionableFlowRun(signal)) {
+    return `Related Power Automate run: ${displayName}`;
+  }
+
+  return `Partial FlowSession context detected: ${displayName}`;
 }
 
 function buildDetectedSignals(signal: FlowSessionSignal): string[] {
@@ -115,13 +127,18 @@ function buildFlowSessionInsight(signal: FlowSessionSignal): BinderSuggestion {
   const displayName = displayFlowSessionName(signal);
   const detectedSignals = buildDetectedSignals(signal);
   const externalActions = buildExternalActions(signal);
+  const actionableFlowRun = hasActionableFlowRun(signal);
+
   return buildSuggestion({
-    text: `Related Power Automate run: ${displayName}`,
-    confidence: signal.flowRunUrl ? 0.88 : 0.78,
-    reason: "FlowSession details are shown only because asyncoperation or flowsession evidence linked to this flow run. Treat this as a navigation bridge, not a root-cause claim.",
+    text: buildFlowSessionTitle(signal, displayName),
+    confidence: actionableFlowRun ? 0.88 : 0.62,
+    reason: actionableFlowRun
+      ? "FlowSession details are shown only because asyncoperation or flowsession evidence linked to this flow run. Treat this as a navigation bridge, not a root-cause claim."
+      : "Partial FlowSession context is shown only because bounded execution evidence referenced flowsession data. Treat this as weak supporting context, not proof of a Power Automate run or root cause.",
     payload: {
       kind: "flowSessionExecutionMetadata",
       severity: signal.errorMessage ? "medium" : "low",
+      investigationPriority: actionableFlowRun ? 1 : 0,
       sourceType: "flowSession",
       displayFlowSessionName: displayName,
       flowSessionId: signal.flowSessionId,
@@ -139,17 +156,17 @@ function buildFlowSessionInsight(signal: FlowSessionSignal): BinderSuggestion {
       keyIdentifiers: buildFlowSessionKeyIdentifiers(signal),
       followUpQueries: buildFollowUpQueries(signal),
       externalActions,
-      impact: signal.flowRunUrl
+      impact: actionableFlowRun
         ? "This flow run may contain the detailed Power Automate failure or run history screen for the linked Dataverse background work."
-        : "This flowsession is linked to execution evidence, but DV Quick Run could not build a Power Automate run URL from the available fields.",
+        : "DV Quick Run found partial FlowSession context, but there is not enough evidence to open a concrete Power Automate run or confirm Power Automate involvement from this card alone.",
       nextSteps: externalActions.length
         ? [
           "Open the Power Automate run to inspect the flow error screen and action-level failure details.",
           "Copy the run URL when sharing the investigation with another developer."
         ]
         : [
-          "Query the flowsession row and confirm whether environment, flow, and run identifiers are available.",
-          "Inspect the linked asyncoperation first when diagnosing Dataverse-side failure or waiting states."
+          "Inspect the linked asyncoperation first when diagnosing Dataverse-side failure, waiting states, or repeated background work.",
+          "Query the flowsession row only if you need to confirm whether environment, flow, and run identifiers are available."
         ],
       evidenceRefs: [signal.evidenceRef],
       rawSignals: [signal],
