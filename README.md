@@ -26,177 +26,210 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.13 (Execution Investigation Coherence & FlowSession Evidence Integrity)
+## 🆕 What's New in v0.9.14 (Operational Profiles & Evidence-Backed Entity Investigation)
 
-> A focused **execution investigation coherence release** — refining Execution Insights ordering, evidence truthfulness, supporting-signal behaviour, and architectural reasoning seams without introducing speculative diagnostics or noisy execution analysis.
+> A focused **operational investigation release** — introducing Operational Profiles, operational density classification, evidence-backed investigation links, and entity-level orchestration visibility without introducing speculative telemetry or root-cause scoring.
 
 ---
 
-### 🧠 Shared Execution Insight Ordering (NEW)
+### 🧭 Operational Profiles (NEW)
 
-Execution Insights now uses a more deterministic and coherent ordering model.
+DV Quick Run now introduces **Operational Profiles** — a new entity-scoped investigation surface designed to help engineers quickly understand the operational complexity surrounding a Dataverse table.
 
-DV Quick Run now prioritises:
-1. primary investigation signal
-2. investigation priority
-3. confidence
-4. deterministic fallback ordering
+Operational Profiles surface:
 
-Behaviour improvements:
-- strongest execution patterns consistently appear first
-- supporting signals remain visible without competing with the primary investigation signal
-- insight ordering remains stable across reruns
+* plugin orchestration density
+* relationship complexity
+* metadata footprint
+* async activity
+* Power Automate participation
+* workflow participation
+* managed-state context
+
+—all directly inside the Result Viewer.
+
+Instead of manually stitching together metadata, plugin registrations, async operations, and workflows across multiple tools —
+
+DV Quick Run now provides a bounded, evidence-backed operational overview in one place.
+
+---
+
+### 📊 Operational Density Classification (NEW)
+
+Operational Profiles now classify entities using bounded operational density signals:
+
+* 🟢 Low Operational Density
+* 🟡 Moderate Operational Density
+* 🔴 High Operational Density
+
+Signals include:
+
+* synchronous plugin registrations
+* relationship counts
+* attribute counts
+* async activity
+* orchestration participation
+
+Thresholds were tuned to avoid over-classifying normal entities as “high complexity.”
 
 👉 Results in:
-- clearer investigation flow
-- easier “start here” debugging
-- less fragmented execution narratives
+
+* more trustworthy operational guidance
+* clearer differentiation between lightweight and orchestration-heavy entities
+* reduced false-positive complexity signals
 
 ---
 
-### 🧩 Reasoning Seam Extraction (NEW)
+### 🔗 Evidence-Backed Investigation Links (NEW)
 
-Execution investigation reasoning has been refactored into lightweight shared reasoning seams.
+Operational Profiles now include direct investigation actions:
 
-Extracted responsibilities include:
-- primary signal interpretation
-- investigation summaries
-- guided investigation generation
-- related-signal reasoning
+* View plugin steps
+* View relationships
+* View columns
+* View async operations
+* View flows
+* View workflows
 
-Preserves:
-- thin renderer architecture
-- explicit orchestration boundaries
-- deterministic investigation behaviour
+Each action launches a concrete investigation query directly inside DV Quick Run.
+
+Examples:
+
+* `sdkmessageprocessingsteps`
+* `asyncoperations`
+* `workflows`
 
 👉 Results in:
-- cleaner architecture
-- safer future execution intelligence expansion
-- reduced architectural drift
+
+* faster investigation flow
+* smoother transition from signal → evidence
+* reduced manual query construction
 
 ---
 
-### 🔗 Supporting Signal Guardrails (Expanded)
+### ⚡ Async Operation Visibility (Expanded)
 
-Supporting execution signals now behave more clearly as:
-- investigation hints
-- contextual evidence
-- lightweight related evidence
+Operational Profiles now surface bounded async-operation participation signals.
 
-DV Quick Run now:
-- reduces visual competition between weak and strong signals
-- avoids implying unsupported causality
-- keeps supporting evidence clearly subordinate to the primary signal
+DV Quick Run can now:
+
+* detect recent async activity
+* distinguish no activity vs operational participation
+* surface recent async investigation paths safely
+
+Async investigation remains:
+
+* bounded
+* entity-scoped
+* advisory-only
 
 👉 Results in:
-- more trustworthy diagnostics
-- stronger evidence-to-importance alignment
-- cleaner execution investigation hierarchy
+
+* clearer execution visibility
+* safer async investigation workflows
+* reduced historical noise
 
 ---
 
-### ⚡ FlowSession Evidence Integrity (Major)
+### 🧠 Managed State Awareness (NEW)
 
-FlowSession insight generation has been refined to require **real FlowSession evidence**.
+Operational Profiles now surface managed-state participation as governance/deployment context.
 
-FlowSession insight cards now require concrete evidence such as:
-- `flowsessionid`
-- `flowid`
-- `runid`
-- `environmentid`
+Behaviour:
 
-DV Quick Run now correctly distinguishes between:
-- no FlowSession evidence
-- partial FlowSession context
-- actionable Power Automate run linkage
+* managed entities → surfaced as “Managed”
+* unmanaged entities → “No evidence observed”
+
+DV Quick Run intentionally avoids implying:
+
+* managed = healthy
+* unmanaged = risky
 
 👉 Results in:
-- no synthetic FlowSession context
-- improved evidence honesty
-- reduced misleading Flow-related investigation cues
+
+* clearer operational semantics
+* reduced interpretation ambiguity
+* safer governance signalling
 
 ---
 
-### 🧾 FlowSession Wording & Investigation Hierarchy Refinement
+### 🧩 Operational Profile UX
 
-FlowSession wording and signal prominence have been refined for investigation truthfulness.
+Operational Profiles were designed to reinforce:
 
-Behaviour improvements:
-- weak/non-actionable FlowSession evidence now uses softer wording
-- actionable Flow navigation appears only when runnable evidence exists
-- asyncoperation investigation patterns correctly lead investigation ordering
+* strongest operational signals first
+* evidence-backed interpretation
+* advisory-only investigation guidance
+* bounded operational reasoning
 
-Reduced:
-- over-prominent weak signals
-- misleading Flow run implications
-- false investigation weight
+The UI emphasises:
 
-👉 Results in:
-- stronger operational truthfulness
-- more coherent execution investigations
-- clearer alignment between evidence strength and UI prominence
+* operational density
+* investigation entry points
+* evidence hierarchy
+* orchestration visibility
+
+…without introducing speculative telemetry scoring or hidden analysis behaviour.
 
 ---
 
-### 🧪 Stability & Behaviour
+### 🧪 Dogfooding & Validation
 
-- Verified across:
-  - primary signal ordering stability
-  - asyncoperation-led investigation flow
-  - supporting signal visibility
-  - FlowSession suppression when no evidence exists
-  - partial FlowSession evidence handling
-  - deterministic ordering behaviour
-  - `$batch` sub-result isolation
+Operational Profiles were validated against:
 
-- Added regression coverage for:
-  - synthetic FlowSession prevention
-  - ordering consistency
-  - partial FlowSession handling
+* lightweight entities
+* orchestration-heavy healthcare entities
+* plugin-heavy custom entities
+* sparse/system entities
+* async-heavy investigation scenarios
 
-- No regression in:
-  - Result Viewer
-  - Execution Insights
-  - `$batch` investigation
-  - plugin trace insights
-  - asyncoperation insights
-  - Guided Traversal
-  - Query Doctor
+Validation focused on:
+
+* operational truthfulness
+* advisory correctness
+* evidence consistency
+* avoiding root-cause implication
+* balanced operational density thresholds
 
 ---
 
 ## 🧭 Notes
 
-This release reinforces DV Quick Run’s direction as:
+This release extends DV Quick Run’s direction from:
 
-- an investigation workbench for Dataverse and Power Platform engineering
+* execution-aware diagnostics
 
-—not a speculative telemetry platform.
+→ to:
 
-Core principles reinforced:
-- strongest signal first
-- supporting evidence remains contextual
-- investigation must remain explainable
-- renderer surfaces remain thin
-- diagnostics remain bounded and deterministic
-- evidence strength must match UI prominence
+* operationally-aware investigation guidance
+
+Key principles reinforced:
+
+* evidence before interpretation
+* strongest operational signals first
+* bounded investigation behaviour
+* no speculative causality
+* advisory-only operational guidance
+* operational density is not root cause
 
 ---
 
 ## 🎯 Summary
 
-DV Quick Run now:
-- orders execution investigations more coherently
-- separates reasoning from rendering more cleanly
-- prevents misleading FlowSession evidence
-- presents supporting signals more truthfully
-- improves investigation trust without increasing diagnostic noise
+DV Quick Run can now:
 
-👉 Establishes a stronger foundation for:
-- future execution intelligence layers
-- guided investigation workflows
-- controlled cross-source reasoning
-- deeper Power Platform execution diagnostics
+* surface operational density for Dataverse entities
+* expose orchestration participation clearly
+* provide evidence-backed investigation entry points
+* distinguish lightweight vs operationally dense entities
+* guide operational investigation without making root-cause claims
+
+👉 Establishes the foundation for:
+
+* future operational reasoning layers
+* execution-aware entity profiling
+* cross-source operational investigation
+* deeper Power Platform operational diagnostics
 
 ---
 
@@ -304,6 +337,91 @@ DV Quick Run helps connect:
 Instead of manually stitching together execution context across multiple tools, you can progressively investigate execution behaviour directly from the insight surface.
 
 ![Guided Investigation 1](docs/execution-insights-next-1.png)
+
+---
+
+### 🧭 Operational Profiles (Entity Investigation)
+
+Understand the **operational footprint** of a Dataverse entity before diving into execution troubleshooting.
+
+DV Quick Run now surfaces **Operational Profiles** directly inside the Result Viewer:
+
+* plugin orchestration density
+* relationship complexity
+* metadata footprint
+* async participation
+* Power Automate involvement
+* workflow participation
+* managed-state context
+
+Instead of manually inspecting metadata, relationships, plugin registrations, workflows, and async operations separately —
+
+DV Quick Run provides a bounded, evidence-backed operational investigation surface in one place.
+
+Operational Profiles help answer questions like:
+
+* “Is this entity operationally dense?”
+* “Is this table heavily orchestrated?”
+* “Should I investigate plugins first?”
+* “Does this entity participate in async execution?”
+* “Is this likely to produce investigation noise?”
+
+All without implying speculative root cause.
+
+![Operational Profile](docs/entity-profile-card.png)
+
+---
+
+#### 🔗 Evidence-Backed Investigation Actions
+
+Operational Profiles include direct investigation links for:
+
+* plugin registrations
+* relationships
+* columns
+* async operations
+* Power Automate flows
+* workflows
+
+Each investigation action launches a real Dataverse query directly inside DV Quick Run.
+
+Examples include:
+
+* `sdkmessageprocessingsteps`
+* `asyncoperations`
+* `workflows`
+
+👉 Results in:
+
+* faster operational investigation
+* reduced manual query construction
+* smoother signal → evidence workflows
+
+---
+
+#### 🧠 Advisory-Only Operational Guidance
+
+Operational Profiles are intentionally:
+
+* entity-scoped
+* user-triggered
+* evidence-backed
+* bounded
+* advisory-only
+
+DV Quick Run intentionally avoids:
+
+* speculative causality
+* hidden scoring systems
+* synthetic operational narratives
+* unsupported root-cause claims
+
+The goal is:
+
+* better investigation starting points
+* clearer operational awareness
+* safer execution reasoning
+* stronger evidence transparency
 
 ---
 

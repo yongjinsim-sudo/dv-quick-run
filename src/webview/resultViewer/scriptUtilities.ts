@@ -753,6 +753,10 @@ function showCopyStatus(message) {
             }
 
             insightsDrawerOpen = !insightsDrawerOpen;
+            if (insightsDrawerOpen) {
+                profileDrawerOpen = false;
+                renderProfileDrawer();
+            }
             renderInsightsButton(suggestion);
             renderInsightsDrawer();
         }
@@ -761,6 +765,283 @@ function showCopyStatus(message) {
             insightsDrawerOpen = false;
             renderInsightsButton(resolveActiveInsightSuggestion());
             renderInsightsDrawer();
+        }
+
+
+
+        function bandCssClass(band) {
+            const safeBand = String(band || "none");
+            if (safeBand === "veryHigh") {
+                return "very-high";
+            }
+
+            return safeBand.replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+        }
+
+        function bandDisplayLabel(profile) {
+            const label = String(profile?.headlineLabel || "Operational profile");
+            return label.replace(/ complexity$/i, " operational density");
+        }
+
+        function profileIconSvg(kind, title) {
+            const safeTitle = escapeHtml(title || "Profile icon");
+            const common = ' class="profile-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"';
+            if (kind === "entity") {
+                return '<svg' + common + '><path d="M12 3 4.5 7.2 12 11.4l7.5-4.2L12 3Z"/><path d="M4.5 11.1 12 15.3l7.5-4.2"/><path d="M4.5 15 12 19.2l7.5-4.2"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "automation") {
+                return '<svg' + common + '><path d="M8.8 3.8h3.1v4.1h3.6l.7 3h-4.3v3.5h3.5v3.2h-3.5v2.6H8.8v-2.6H5.3v-3.2h3.5v-3.5H4.5l.7-3h3.6V3.8Z"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "relationship") {
+                return '<svg' + common + '><path d="M9.5 7.5 11 6a4 4 0 0 1 5.7 5.7l-2.2 2.2a4 4 0 0 1-5.7 0"/><path d="M14.5 16.5 13 18a4 4 0 0 1-5.7-5.7l2.2-2.2a4 4 0 0 1 5.7 0"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "columns") {
+                return '<svg' + common + '><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10h16"/><path d="M4 15h16"/><path d="M9.5 5v14"/><path d="M14.5 5v14"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "async") {
+                return '<svg' + common + '><path d="M13 2 5.5 13h5L9 22l9.5-13h-5L13 2Z"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "managed") {
+                return '<svg' + common + '><path d="M12 3.5 19 6v5.3c0 4.1-2.8 7.2-7 9.2-4.2-2-7-5.1-7-9.2V6l7-2.5Z"/><path d="m9.5 12 1.8 1.8 3.5-4"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "evidence") {
+                return '<svg' + common + '><path d="M9 4h6"/><path d="M9 4a3 3 0 0 0 6 0"/><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M8 11h8"/><path d="M8 15h6"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "flow") {
+                return '<svg' + common + '><path d="M12 5v4"/><path d="M7 15v2"/><path d="M17 15v2"/><path d="M12 9H7v3"/><path d="M12 9h5v3"/><rect x="9" y="3" width="6" height="4" rx="1"/><rect x="4" y="12" width="6" height="4" rx="1"/><rect x="14" y="12" width="6" height="4" rx="1"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "info") {
+                return '<svg' + common + '><circle cx="12" cy="12" r="9"/><path d="M12 10v6"/><path d="M12 7h.01"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "external") {
+                return '<svg class="profile-external-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M10 14 20 4"/><path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4"/></svg>';
+            }
+            if (kind === "target") {
+                return '<svg' + common + '><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "user") {
+                return '<svg' + common + '><circle cx="12" cy="8" r="3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "document") {
+                return '<svg' + common + '><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "blocked") {
+                return '<svg' + common + '><circle cx="12" cy="12" r="9"/><path d="M6.5 6.5 17.5 17.5"/><title>' + safeTitle + '</title></svg>';
+            }
+            return '<svg' + common + '><path d="M12 5 5 9l7 4 7-4-7-4Z"/><path d="M5 15l7 4 7-4"/><title>' + safeTitle + '</title></svg>';
+        }
+
+        function profileDimensionIconKind(dimension) {
+            const id = String(dimension?.id || "").toLowerCase();
+            const label = String(dimension?.label || "").toLowerCase();
+            if (id.includes("plugin") || label.includes("plugin") || label.includes("automation")) {
+                return "automation";
+            }
+            if (id.includes("relationship") || label.includes("relationship")) {
+                return "relationship";
+            }
+            if (id.includes("attribute") || id.includes("column") || label.includes("column")) {
+                return "columns";
+            }
+            if (id.includes("async") || label.includes("async")) {
+                return "async";
+            }
+            if (id.includes("managed") || label.includes("managed")) {
+                return "managed";
+            }
+            return "entity";
+        }
+
+        function profileEvidenceIconKind(item) {
+            const kind = String(item?.kind || "").toLowerCase();
+            const label = String(item?.label || "").toLowerCase();
+            if (kind.includes("plugin") || label.includes("plugin")) {
+                return "automation";
+            }
+            if (kind.includes("relationship") || label.includes("relationship")) {
+                return "relationship";
+            }
+            if (kind.includes("attribute") || kind.includes("column") || label.includes("column")) {
+                return "columns";
+            }
+            if (kind.includes("async") || label.includes("async")) {
+                return "async";
+            }
+            if (kind.includes("flow") || label.includes("flow") || label.includes("workflow")) {
+                return "flow";
+            }
+            if (kind.includes("managed") || label.includes("managed")) {
+                return "managed";
+            }
+            return "evidence";
+        }
+
+        function profileEvidenceActionLabel(item) {
+            const label = String(item?.label || "evidence").toLowerCase();
+            if (label.includes("plugin")) {
+                return "View plugin steps";
+            }
+            if (label.includes("relationship")) {
+                return "View relationships";
+            }
+            if (label.includes("column") || label.includes("attribute")) {
+                return "View columns";
+            }
+            if (label.includes("async")) {
+                return "View async operations";
+            }
+            if (label.includes("workflow")) {
+                return "View workflows";
+            }
+            if (label.includes("flow")) {
+                return "View flows";
+            }
+            if (label.includes("managed")) {
+                return "View managed state";
+            }
+            return "View evidence";
+        }
+
+        function buildProfileMetricRowHtml(profile, dimension) {
+            const band = String(dimension?.band || "none");
+            const bandClass = escapeAttribute(bandCssClass(band));
+            const hasEvidence = Array.isArray(dimension?.evidence) && dimension.evidence.length > 0;
+            const intensity = Math.max(0, Math.min(100, Number(dimension?.intensityPercent || 0)));
+            const evidenceLabel = hasEvidence ? String(dimension.evidenceStateLabel || dimension.valueLabel || "Evidence observed") : "No evidence observed";
+            const rawValueLabel = String(dimension?.valueLabel || evidenceLabel);
+            const valueLabel = String(dimension?.stateKind || "") === "managed" && rawValueLabel === evidenceLabel ? "" : rawValueLabel;
+            const iconKind = profileDimensionIconKind(dimension);
+            return '<div class="profile-metric-row profile-evidence-' + (hasEvidence ? 'present' : 'empty') + '">' +
+                '<div class="profile-metric-name"><span class="profile-metric-icon profile-icon-kind-' + escapeAttribute(iconKind) + '" aria-hidden="true">' + profileIconSvg(iconKind, dimension?.label || "Profile signal") + '</span><span>' + escapeHtml(dimension?.label || "Profile signal") + '</span></div>' +
+                '<div class="profile-metric-bar profile-band-' + bandClass + '" aria-hidden="true"><span style="width: ' + intensity + '%"></span></div>' +
+                '<div class="profile-metric-status profile-band-' + bandClass + '">' + escapeHtml(evidenceLabel) + '</div>' +
+                '<div class="profile-metric-value">' + escapeHtml(valueLabel) + '</div>' +
+                '</div>';
+        }
+
+        function buildProfileEvidenceActionHtml(profile, item) {
+            const actionId = String(item?.actionId || "");
+            if (!actionId) {
+                return "";
+            }
+
+            return '<button class="profile-evidence-action" type="button" data-profile-action="' + escapeAttribute(actionId) + '"' +
+                ' data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '"' +
+                ' data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '">' + escapeHtml(profileEvidenceActionLabel(item)) + ' ' + profileIconSvg("external", "Open evidence") + '</button>';
+        }
+
+        function buildProfileEvidenceRowHtml(profile, item) {
+            const iconKind = profileEvidenceIconKind(item);
+            return '<div class="profile-evidence-row">' +
+                '<span class="profile-evidence-dot profile-evidence-dot-' + escapeAttribute(iconKind) + '"></span>' +
+                '<div class="profile-evidence-label"><span class="profile-evidence-icon profile-icon-kind-' + escapeAttribute(iconKind) + '" aria-hidden="true">' + profileIconSvg(iconKind, item?.label || "Evidence") + '</span><span>' + escapeHtml(item?.label || "Evidence") + '</span></div>' +
+                '<div class="profile-evidence-value">' + escapeHtml(item?.value || "Observed") + (item?.detail ? ' <span class="profile-evidence-detail">' + escapeHtml(item.detail) + '</span>' : "") + '</div>' +
+                buildProfileEvidenceActionHtml(profile, item) +
+                '</div>';
+        }
+
+        function buildProfileEvidenceSectionHtml(profile) {
+            const evidence = Array.isArray(profile?.evidence) ? profile.evidence : [];
+            if (!evidence.length) {
+                return '<div class="profile-evidence-empty">No expandable evidence was available for this profile yet.</div>';
+            }
+
+            return evidence.map((item) => buildProfileEvidenceRowHtml(profile, item)).join("");
+        }
+
+        function buildProfileGuidanceHtml(profile) {
+            const guidance = Array.isArray(profile?.investigationGuidance) ? profile.investigationGuidance : [];
+            if (!guidance.length) {
+                return "";
+            }
+
+            return '<div class="profile-guidance">' +
+                '<div class="profile-guidance-icon">' + profileIconSvg("info", "Investigation guidance") + '</div>' +
+                '<div class="profile-guidance-text">' + guidance.map((item) => '<div>' + escapeHtml(item) + '</div>').join("") + '</div>' +
+                '</div>';
+        }
+
+        function buildProfileCardHtml(profile) {
+            const dimensions = Array.isArray(profile?.dimensions) ? profile.dimensions : [];
+            const band = String(profile?.headlineBand || "none");
+            return '<div class="profile-card">' +
+                '<div class="profile-card-heading">' +
+                '<div class="profile-title-row"><span class="profile-entity-icon">' + profileIconSvg("entity", "Entity") + '</span><span>' + escapeHtml(profile?.entityDisplayName || profile?.entityLogicalName || "Entity") + ' (' + escapeHtml(profile?.entityLogicalName || "") + ') — Operational Profile</span></div>' +
+                '<div class="profile-summary-row">' +
+                '<span class="profile-band-badge profile-band-' + escapeAttribute(bandCssClass(band)) + '">' + escapeHtml(bandDisplayLabel(profile)) + '</span>' +
+                '<div class="profile-summary">' + escapeHtml(profile?.summary || "Operational profile evidence is unavailable.") + '</div>' +
+                '<button class="profile-why-link" type="button" data-profile-action="viewMetadata" data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '" data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '">Why is this?</button>' +
+                '</div>' +
+                '</div>' +
+                '<div class="profile-metrics">' + dimensions.map((dimension) => buildProfileMetricRowHtml(profile, dimension)).join("") + '</div>' +
+                '<details class="profile-evidence" open><summary><span class="profile-evidence-summary-icon">' + profileIconSvg("evidence", "Evidence") + '</span><span>Evidence (click to expand)</span></summary>' + buildProfileEvidenceSectionHtml(profile) + '</details>' +
+                buildProfileGuidanceHtml(profile) +
+                '<div class="profile-guardrails"><span>' + profileIconSvg("target", "Entity scoped") + 'Entity-scoped</span><span>•</span><span>' + profileIconSvg("user", "User triggered") + 'User-triggered</span><span>•</span><span>' + profileIconSvg("managed", "Advisory only") + 'Advisory-only</span><span>•</span><span>' + profileIconSvg("document", "Evidence backed") + 'Evidence-backed</span><span>•</span><span>' + profileIconSvg("blocked", "No root-cause claim") + 'No root-cause claim</span></div>' +
+                '</div>';
+        }
+
+        function renderProfileDrawer() {
+            if (!(profileDrawer instanceof HTMLElement) || !(profileDrawerBody instanceof HTMLElement)) {
+                return;
+            }
+
+            profileDrawer.classList.toggle("open", profileDrawerOpen);
+            profileDrawer.setAttribute("aria-hidden", String(!profileDrawerOpen));
+
+            if (profileDrawerOpen) {
+                insightsDrawerOpen = false;
+                renderInsightsButton(resolveActiveInsightSuggestion());
+                renderInsightsDrawer();
+                profileDrawer.removeAttribute("hidden");
+            } else {
+                profileDrawer.setAttribute("hidden", "true");
+            }
+
+            if (!profileDrawerOpen) {
+                profileDrawerBody.innerHTML = "";
+                return;
+            }
+
+            if (profileDrawerState?.status === "loading") {
+                if (profileDrawerTitle instanceof HTMLElement) {
+                    profileDrawerTitle.textContent = "Operational Profile";
+                }
+                if (profileDrawerSubtitle instanceof HTMLElement) {
+                    profileDrawerSubtitle.textContent = "Building entity-scoped profile evidence…";
+                }
+                profileDrawerBody.innerHTML = '<div class="profile-loading">Building Operational Profile for <code>' + escapeHtml(profileDrawerState.entityLogicalName || "entity") + '</code>…</div>';
+                return;
+            }
+
+            if (profileDrawerState?.status === "error") {
+                if (profileDrawerTitle instanceof HTMLElement) {
+                    profileDrawerTitle.textContent = "Operational Profile";
+                }
+                if (profileDrawerSubtitle instanceof HTMLElement) {
+                    profileDrawerSubtitle.textContent = "Profile evidence unavailable";
+                }
+                profileDrawerBody.innerHTML = '<div class="profile-error"><strong>Profile unavailable</strong><div>' + escapeHtml(profileDrawerState.message || "Operational Profile could not be built.") + '</div></div>';
+                return;
+            }
+
+            const profile = profileDrawerState?.profile;
+            if (!profile) {
+                profileDrawerBody.innerHTML = "";
+                return;
+            }
+
+            if (profileDrawerTitle instanceof HTMLElement) {
+                profileDrawerTitle.textContent = "Operational Profile";
+            }
+            if (profileDrawerSubtitle instanceof HTMLElement) {
+                profileDrawerSubtitle.textContent = "Entity-scoped operational understanding";
+            }
+            profileDrawerBody.innerHTML = buildProfileCardHtml(profile);
+        }
+
+        function closeProfileDrawer() {
+            profileDrawerOpen = false;
+            renderProfileDrawer();
         }
 
         function renderBinderSuggestion(suggestion) {

@@ -6,6 +6,277 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.14 — Operational Profiles, Evidence Density & Entity Investigation Guidance
+
+This release introduces **Operational Profiles** — a new entity-scoped investigation surface designed to help engineers quickly understand the operational complexity surrounding a Dataverse table.
+
+Operational Profiles do not attempt root-cause analysis.
+
+Instead, they surface:
+
+* operational density
+* orchestration participation
+* metadata complexity
+* automation involvement
+* execution investigation starting points
+
+using bounded, evidence-backed signals.
+
+The goal is not telemetry overload.
+
+It is:
+
+* faster operational understanding
+* clearer investigation prioritisation
+* trustworthy evidence presentation
+* safer interpretation boundaries
+
+---
+
+### 🧭 Operational Profiles (NEW)
+
+* Added **Operational Profile** view inside the Result Viewer
+
+* Profiles summarise operational characteristics for an entity using bounded evidence signals:
+
+  * Automation (Plugin Steps)
+  * Relationships
+  * Columns
+  * Async Load
+  * Managed State
+  * Power Automate / Flow
+  * Workflows
+
+* Profiles are:
+
+  * entity-scoped
+  * user-triggered
+  * advisory-only
+  * evidence-backed
+
+👉 Results in:
+
+* faster understanding of operationally dense entities
+* easier identification of likely investigation entry points
+* improved visibility into orchestration-heavy tables
+
+---
+
+### 📊 Operational Density Classification (NEW)
+
+* Introduced bounded density classifications:
+
+  * Low Operational Density
+  * Moderate Operational Density
+  * High Operational Density
+
+* Signal thresholds were tuned to avoid over-classifying normal entities as “high complexity”
+
+Examples:
+
+* `<50` → Low
+
+* `50–70` → Moderate
+
+* `70–120` → High
+
+* `130+` → Very High
+
+* Behaviour:
+
+  * lightweight entities remain green/low-density
+  * orchestration-heavy entities surface more prominently
+  * classification remains advisory, not authoritative
+
+👉 Results in:
+
+* stronger trustworthiness
+* lower false-positive complexity signals
+* clearer differentiation between normal and operationally dense entities
+
+---
+
+### 🔗 Evidence-Backed Investigation Links (NEW)
+
+* Added direct evidence navigation links:
+
+  * View plugin steps
+  * View relationships
+  * View columns
+  * View async operations
+  * View flows
+  * View workflows
+
+* Links launch concrete Dataverse investigation queries directly inside DV Quick Run
+
+Examples:
+
+* `sdkmessageprocessingsteps`
+
+* `asyncoperations`
+
+* `workflows`
+
+* Queries are:
+
+  * metadata-aware
+  * entity-scoped
+  * bounded
+
+👉 Results in:
+
+* smoother investigation flow
+* less manual query construction
+* direct transition from operational signal → evidence inspection
+
+---
+
+### ⚡ Async Load Signal Refinement (NEW)
+
+* Introduced bounded async operation investigation:
+
+  * scoped to recent execution windows
+  * avoids unbounded asyncoperation scans
+
+* Async signals now distinguish:
+
+  * no evidence observed
+  * low async participation
+  * elevated async activity
+
+* Async investigation queries now:
+
+  * use bounded date windows
+  * avoid misleading broad historical scans
+
+👉 Results in:
+
+* safer operational interpretation
+* reduced noise from historical async activity
+* more trustworthy operational signals
+
+---
+
+### 🧠 Managed State Interpretation (NEW)
+
+* Managed state is now surfaced as:
+
+  * governance/deployment context
+  * not operational quality judgement
+
+* Behaviour:
+
+  * managed entities show “Managed”
+  * unmanaged entities show “No evidence observed”
+  * avoids implying managed = good/bad
+
+👉 Results in:
+
+* clearer operational semantics
+* reduced interpretation ambiguity
+* safer governance signalling
+
+---
+
+### 🧩 Operational Profile UX Refinement
+
+* Refined visual hierarchy:
+
+  * strongest signals appear first
+  * supporting evidence remains secondary
+  * guidance remains advisory-only
+
+* Improved:
+
+  * density wording
+  * evidence readability
+  * investigation guidance phrasing
+  * operational terminology consistency
+
+* Removed:
+
+  * misleading implied causality
+  * exaggerated operational language
+  * unnecessary visual noise
+
+👉 Results in:
+
+* stronger user trust
+* faster operational scanning
+* more believable investigation guidance
+
+---
+
+### 🧪 Dogfooding & Validation
+
+Operational Profiles were validated against:
+
+* lightweight entities
+* orchestration-heavy healthcare entities
+* plugin-heavy custom entities
+* sparse/system entities
+* metadata-driven entities
+* async-heavy investigation scenarios
+
+Examples tested:
+
+* `contact`
+* `plugintracelog`
+* `sdkmessageprocessingstep`
+* `msemr_medicalidentifier`
+* `bu_task`
+* lightweight metadata/helper tables
+
+Validation focused on:
+
+* operational truthfulness
+* advisory correctness
+* evidence consistency
+* avoiding false root-cause implication
+* balanced density thresholds
+
+---
+
+## 🧭 Notes
+
+Operational Profiles reinforce DV Quick Run’s direction as:
+
+```text
+an operational investigation workbench for Dataverse and Power Platform engineering
+```
+
+—not a speculative scoring or telemetry platform.
+
+Key principles reinforced:
+
+* evidence before interpretation
+* advisory-only investigation guidance
+* bounded operational reasoning
+* no hidden scanning behaviour
+* strongest operational signals first
+* operational density is not root cause
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* surface operational density for entities
+* expose orchestration participation clearly
+* provide direct evidence-backed investigation links
+* distinguish lightweight vs operationally dense entities
+* guide investigation without making root-cause claims
+
+👉 Establishes the foundation for:
+
+* future operational reasoning layers
+* execution-aware entity profiling
+* cross-source operational investigation
+* deeper Power Platform operational diagnostics
+
+---
+
 ## v0.9.13 — Execution Investigation Coherence & FlowSession Truthfulness
 
 This release focuses on **execution investigation coherence**, **architectural tightening**, and **evidence-backed signal presentation**.

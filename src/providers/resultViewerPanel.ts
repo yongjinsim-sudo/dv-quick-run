@@ -13,12 +13,43 @@ import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
 import { ResultViewerSessionStore } from "./resultViewerSessionStore.js";
+import type { DataverseClient } from "../services/dataverseClient.js";
 import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
 import { buildExecutionInsightSuggestions } from "../product/executionInsights/executionInsightsOrchestrator.js";
+import { buildOperationalProfile } from "../product/operationalProfile/operationalProfileEngine.js";
+import type { OperationalProfileModel } from "../product/operationalProfile/operationalProfileTypes.js";
 import { previewAndRunBatchQueries } from "../commands/router/actions/execution/batch/runBatchExecutionFlow.js";
+import {
+    loadEntityDefByLogicalName,
+    loadFields,
+    loadNavigationProperties
+} from "../commands/router/actions/shared/metadataAccess.js";
 
 const MAX_INLINE_JSON_WEBVIEW_BYTES = 2_000_000;
 const EXECUTION_INSIGHTS_SUPPRESSION_MS = 10 * 60 * 1000;
+
+const OPERATIONAL_PROFILE_LOOKUP_TIMEOUT_MS = 8_000;
+const OPERATIONAL_PROFILE_LOOKUP_TOP = 5000;
+
+type ODataListResponse = {
+    value?: Array<Record<string, unknown>>;
+    "@odata.count"?: number;
+};
+
+type PluginStepProfileEvidence = {
+    synchronousPluginStepCount?: number;
+    totalPluginStepCount?: number;
+};
+
+type WorkflowProfileEvidence = {
+    flowReferenceCount?: number;
+    activeWorkflowCount?: number;
+};
+
+type AsyncProfileEvidence = {
+    asyncOperationCount7d?: number;
+    distinctAsyncOperationCount7d?: number;
+};
 
 type ResultViewerMessage =
     | {
@@ -67,6 +98,20 @@ type ResultViewerMessage =
         payload: {
             entitySetName?: string;
             entityLogicalName?: string;
+        };
+    }
+    | {
+        type: "showOperationalProfile";
+        payload: {
+            entityLogicalName?: string;
+        };
+    }
+    | {
+        type: "profileDrawerAction";
+        payload: {
+            actionId?: string;
+            entityLogicalName?: string;
+            entitySetName?: string;
         };
     }
     | {
@@ -351,6 +396,14 @@ export class ResultViewerPanel {
                 );
                 return;
 
+            case "showOperationalProfile":
+                await ResultViewerPanel.showOperationalProfile(ctx, message.payload.entityLogicalName);
+                return;
+
+            case "profileDrawerAction":
+                await ResultViewerPanel.handleProfileDrawerAction(message.payload);
+                return;
+
             case "exportCsv":
                 await ResultViewerPanel.exportCsv(
                     message.payload.fileName,
@@ -416,6 +469,251 @@ export class ResultViewerPanel {
         }
     }
 
+
+    private static async showOperationalProfile(ctx: CommandContext, entityLogicalName?: string): Promise<void> {
+        const logicalName = String(entityLogicalName ?? "").trim();
+        const panel = ResultViewerPanel.currentPanel;
+        if (!logicalName || !panel) {
+            void vscode.window.showWarningMessage("DV Quick Run: Could not determine entity for Profile.");
+            return;
+        }
+
+        await panel.webview.postMessage({
+            type: "operationalProfileLoading",
+            payload: { entityLogicalName: logicalName }
+        });
+
+        try {
+            const profile = await ResultViewerPanel.buildOperationalProfileForEntity(ctx, logicalName);
+            await panel.webview.postMessage({
+                type: "operationalProfile",
+                payload: profile
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            await panel.webview.postMessage({
+                type: "operationalProfileError",
+                payload: {
+                    entityLogicalName: logicalName,
+                    message: message || "Operational Profile could not be built."
+                }
+            });
+        }
+    }
+
+    private static async buildOperationalProfileForEntity(ctx: CommandContext, entityLogicalName: string): Promise<OperationalProfileModel> {
+        const token = await ctx.getToken(ctx.getScope());
+        const client = ctx.getClient();
+        const entity = await loadEntityDefByLogicalName(ctx, client, token, entityLogicalName);
+        const resolvedLogicalName = entity?.logicalName ?? entityLogicalName;
+
+        const [fields, relationships, pluginEvidence, workflowEvidence, asyncEvidence, managedEvidence] = await Promise.all([
+            loadFields(ctx, client, token, resolvedLogicalName, { silent: true }).catch(() => []),
+            loadNavigationProperties(ctx, client, token, resolvedLogicalName, { silent: true }).catch(() => []),
+            ResultViewerPanel.loadPluginStepProfileEvidence(client, token, resolvedLogicalName),
+            ResultViewerPanel.loadWorkflowProfileEvidence(client, token, resolvedLogicalName),
+            ResultViewerPanel.loadAsyncProfileEvidence(client, token, resolvedLogicalName),
+            ResultViewerPanel.loadManagedProfileEvidence(client, token, resolvedLogicalName)
+        ]);
+
+        return buildOperationalProfile({
+            entityLogicalName: resolvedLogicalName,
+            entityDisplayName: entity?.displayName ?? resolvedLogicalName,
+            attributeCount: fields.length,
+            relationshipCount: relationships.length,
+            synchronousPluginStepCount: pluginEvidence.synchronousPluginStepCount,
+            totalPluginStepCount: pluginEvidence.totalPluginStepCount,
+            asyncOperationCount7d: asyncEvidence.asyncOperationCount7d,
+            distinctAsyncOperationCount7d: asyncEvidence.distinctAsyncOperationCount7d,
+            flowReferenceCount: workflowEvidence.flowReferenceCount,
+            activeWorkflowCount: workflowEvidence.activeWorkflowCount,
+            isManaged: managedEvidence.isManaged,
+            isPartiallyManaged: managedEvidence.isPartiallyManaged,
+            managedDetail: managedEvidence.managedDetail
+        });
+    }
+
+    private static async loadOperationalProfileRows(client: DataverseClient, token: string, query: string): Promise<Array<Record<string, unknown>>> {
+        const result = await client.get(query, token, { timeoutMs: OPERATIONAL_PROFILE_LOOKUP_TIMEOUT_MS }) as ODataListResponse;
+        return Array.isArray(result.value) ? result.value : [];
+    }
+
+    private static async loadPluginStepProfileEvidence(client: DataverseClient, token: string, entityLogicalName: string): Promise<PluginStepProfileEvidence> {
+        try {
+            const filters = await ResultViewerPanel.loadOperationalProfileRows(
+                client,
+                token,
+                `/sdkmessagefilters?$select=sdkmessagefilterid&$filter=${encodeURIComponent(`primaryobjecttypecode eq '${ResultViewerPanel.escapeODataString(entityLogicalName)}'`)}&$top=50`
+            );
+            const filterIds = filters
+                .map((row) => ResultViewerPanel.normalizeGuidLike(row.sdkmessagefilterid))
+                .filter((id): id is string => !!id);
+
+            if (!filterIds.length) {
+                return {};
+            }
+
+            const filter = filterIds
+                .slice(0, 20)
+                .map((id) => `_sdkmessagefilterid_value eq ${id}`)
+                .join(" or ");
+            const steps = await ResultViewerPanel.loadOperationalProfileRows(
+                client,
+                token,
+                `/sdkmessageprocessingsteps?$select=sdkmessageprocessingstepid,mode,statecode&$filter=${encodeURIComponent(`statecode eq 0 and (${filter})`)}&$top=${OPERATIONAL_PROFILE_LOOKUP_TOP}`
+            );
+            const synchronousSteps = steps.filter((row) => ResultViewerPanel.normalizeNumber(row.mode) === 0);
+
+            return {
+                synchronousPluginStepCount: synchronousSteps.length,
+                totalPluginStepCount: steps.length
+            };
+        } catch {
+            return {};
+        }
+    }
+
+    private static async loadWorkflowProfileEvidence(client: DataverseClient, token: string, entityLogicalName: string): Promise<WorkflowProfileEvidence> {
+        try {
+            const rows = await ResultViewerPanel.loadOperationalProfileRows(
+                client,
+                token,
+                `/workflows?$select=workflowid,category,statecode,primaryentity&$filter=${encodeURIComponent(`primaryentity eq '${ResultViewerPanel.escapeODataString(entityLogicalName)}' and statecode eq 1`)}&$top=${OPERATIONAL_PROFILE_LOOKUP_TOP}`
+            );
+            const flowRows = rows.filter((row) => ResultViewerPanel.normalizeNumber(row.category) === 5);
+            const workflowRows = rows.filter((row) => ResultViewerPanel.normalizeNumber(row.category) === 0);
+
+            return {
+                flowReferenceCount: flowRows.length,
+                activeWorkflowCount: workflowRows.length
+            };
+        } catch {
+            return {};
+        }
+    }
+
+    private static async loadAsyncProfileEvidence(client: DataverseClient, token: string, entityLogicalName: string): Promise<AsyncProfileEvidence> {
+        try {
+            const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            const rows = await ResultViewerPanel.loadOperationalProfileRows(
+                client,
+                token,
+                `/asyncoperations?$select=asyncoperationid,operationtype,primaryentitytype,createdon&$filter=${encodeURIComponent(`primaryentitytype eq '${ResultViewerPanel.escapeODataString(entityLogicalName)}' and createdon ge ${since}`)}`
+            );
+            const operationTypes = new Set(rows
+                .map((row) => String(row.operationtype ?? "").trim())
+                .filter(Boolean));
+
+            return {
+                asyncOperationCount7d: rows.length,
+                distinctAsyncOperationCount7d: operationTypes.size || undefined
+            };
+        } catch {
+            return {};
+        }
+    }
+
+    private static async loadManagedProfileEvidence(client: DataverseClient, token: string, entityLogicalName: string): Promise<{ isManaged?: boolean; isPartiallyManaged?: boolean; managedDetail?: string }> {
+        try {
+            const result = await client.get(
+                `/EntityDefinitions(LogicalName='${ResultViewerPanel.escapeODataString(entityLogicalName)}')?$select=IsManaged`,
+                token,
+                { timeoutMs: OPERATIONAL_PROFILE_LOOKUP_TIMEOUT_MS }
+            ) as Record<string, unknown>;
+            const isManaged = ResultViewerPanel.normalizeBoolean(result.IsManaged);
+
+            return typeof isManaged === "boolean"
+                ? { isManaged }
+                : {};
+        } catch {
+            return {};
+        }
+    }
+
+    private static normalizeNumber(value: unknown): number | undefined {
+        if (typeof value === "number" && Number.isFinite(value)) {
+            return value;
+        }
+
+        if (typeof value === "string") {
+            const parsed = Number(value.trim());
+            return Number.isFinite(parsed) ? parsed : undefined;
+        }
+
+        return undefined;
+    }
+
+    private static normalizeBoolean(value: unknown): boolean | undefined {
+        if (typeof value === "boolean") {
+            return value;
+        }
+
+        if (typeof value === "object" && value && "Value" in value) {
+            const wrapped = (value as { Value?: unknown }).Value;
+            return typeof wrapped === "boolean" ? wrapped : undefined;
+        }
+
+        return undefined;
+    }
+
+    private static normalizeGuidLike(value: unknown): string | undefined {
+        const normalized = String(value ?? "").trim().replace(/[{}]/g, "");
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalized)
+            ? normalized
+            : undefined;
+    }
+
+    private static escapeODataString(value: string): string {
+        return value.replace(/'/g, "''");
+    }
+
+    private static buildProfileEvidenceQuery(actionId: string, entityLogicalName: string): string | undefined {
+        const entity = ResultViewerPanel.escapeODataString(entityLogicalName);
+
+        switch (actionId) {
+            case "viewAsyncOperations":
+                {
+                const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+                return `asyncoperations?$select=asyncoperationid,name,operationtype,statuscode,statecode,primaryentitytype,createdon&$filter=${encodeURIComponent(`primaryentitytype eq '${entity}' and createdon ge ${since}`)}&$orderby=createdon desc`;
+            }
+            case "viewFlows":
+                return `workflows?$select=workflowid,name,category,statecode,primaryentity,createdon,modifiedon&$filter=${encodeURIComponent(`primaryentity eq '${entity}' and category eq 5`)}&$orderby=modifiedon desc&$top=50`;
+            case "viewWorkflows":
+                return `workflows?$select=workflowid,name,category,statecode,primaryentity,createdon,modifiedon&$filter=${encodeURIComponent(`primaryentity eq '${entity}' and category eq 0`)}&$orderby=modifiedon desc&$top=50`;
+            case "viewPluginSteps":
+                return `sdkmessageprocessingsteps?$select=sdkmessageprocessingstepid,name,mode,stage,statecode&$expand=sdkmessagefilterid($select=primaryobjecttypecode)&$filter=${encodeURIComponent(`sdkmessagefilterid/primaryobjecttypecode eq '${entity}'`)}&$top=50`;
+            default:
+                return undefined;
+        }
+    }
+
+    private static async handleProfileDrawerAction(payload: { actionId?: string; entityLogicalName?: string; entitySetName?: string }): Promise<void> {
+        const actionId = String(payload.actionId ?? "").trim();
+        const entityLogicalName = String(payload.entityLogicalName ?? "").trim();
+        const entitySetName = String(payload.entitySetName ?? "").trim();
+
+        if (!actionId || !entityLogicalName) {
+            return;
+        }
+
+        if (actionId === "viewRelationships") {
+            await ResultViewerPanel.showRelationships(entitySetName || entityLogicalName);
+            return;
+        }
+
+        if (actionId === "viewColumns" || actionId === "viewMetadata") {
+            await ResultViewerPanel.showMetadata(entitySetName || undefined, entityLogicalName);
+            return;
+        }
+
+        const evidenceQuery = ResultViewerPanel.buildProfileEvidenceQuery(actionId, entityLogicalName);
+        if (evidenceQuery) {
+            await ResultViewerPanel.handleRunExecutionInsightQuery({ query: evidenceQuery });
+            return;
+        }
+
+        void vscode.window.showInformationMessage("DV Quick Run: This Profile evidence action is not wired yet.");
+    }
 
     private static async handleRunExecutionInsightQuery(payload: { query?: string }): Promise<void> {
         const query = String(payload.query ?? "").trim();
