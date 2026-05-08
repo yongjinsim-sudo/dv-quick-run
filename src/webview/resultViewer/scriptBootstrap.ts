@@ -15,6 +15,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const showTableBtn = document.getElementById("showTableBtn");
         const showJsonBtn = document.getElementById("showJsonBtn");
         const showInsightsBtn = document.getElementById("showInsightsBtn");
+        const showProfileBtn = document.getElementById("showProfileBtn");
         const showRelationshipsBtn = document.getElementById("showRelationshipsBtn");
         const showMetadataBtn = document.getElementById("showMetadataBtn");
         const exportCsvBtn = document.getElementById("exportCsvBtn");
@@ -37,6 +38,11 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const arrayDrawerJsonView = document.getElementById("arrayDrawerJsonView");
         const traversalStatus = document.getElementById("traversalStatus");
         const binderSuggestionBtn = document.getElementById("binderSuggestionBtn");
+        const profileDrawer = document.getElementById("profileDrawer");
+        const profileDrawerBody = document.getElementById("profileDrawerBody");
+        const profileDrawerTitle = document.getElementById("profileDrawerTitle");
+        const profileDrawerSubtitle = document.getElementById("profileDrawerSubtitle");
+        const profileDrawerCloseBtn = document.getElementById("profileDrawerCloseBtn");
         const insightsDrawer = document.getElementById("insightsDrawer");
         const insightsDrawerBody = document.getElementById("insightsDrawerBody");
         const insightsDrawerCloseBtn = document.getElementById("insightsDrawerCloseBtn");
@@ -195,6 +201,8 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         let activeOverflowMenu = null;
         let activeOverflowAnchor = null;
         let insightsDrawerOpen = false;
+        let profileDrawerOpen = false;
+        let profileDrawerState = null;
         let activeInsightIndex = 0;
         const snoozedInsightUntilByKey = new Map();
         const INSIGHT_SNOOZE_MS = 60000;
@@ -378,6 +386,40 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
 
         window.addEventListener("message", (event) => {
             const message = event.data || {};
+
+            if (message.type === "operationalProfileLoading") {
+                closeInsightsDrawer();
+                profileDrawerState = {
+                    status: "loading",
+                    entityLogicalName: message.payload?.entityLogicalName || model.entityLogicalName || ""
+                };
+                profileDrawerOpen = true;
+                renderProfileDrawer();
+                return;
+            }
+
+            if (message.type === "operationalProfile") {
+                closeInsightsDrawer();
+                profileDrawerState = {
+                    status: "ready",
+                    profile: message.payload || null
+                };
+                profileDrawerOpen = true;
+                renderProfileDrawer();
+                return;
+            }
+
+            if (message.type === "operationalProfileError") {
+                closeInsightsDrawer();
+                profileDrawerState = {
+                    status: "error",
+                    entityLogicalName: message.payload?.entityLogicalName || model.entityLogicalName || "",
+                    message: message.payload?.message || "Operational Profile could not be built."
+                };
+                profileDrawerOpen = true;
+                renderProfileDrawer();
+                return;
+            }
 
             if (message.type === "jsonData") {
                 const payload = message.payload || {};
@@ -602,6 +644,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             removeResultViewerContextMenu();
             closeArrayDrawer();
             closeInsightsDrawer();
+            closeProfileDrawer();
             clearProgressiveRenderTimer();
         }
 
@@ -622,6 +665,9 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             }
             if (showMetadataBtn instanceof HTMLButtonElement) {
                 showMetadataBtn.disabled = !hasEntityContext;
+            }
+            if (showProfileBtn instanceof HTMLButtonElement) {
+                showProfileBtn.disabled = !hasEntityContext;
             }
             if (exportCsvBtn instanceof HTMLButtonElement) {
                 exportCsvBtn.disabled = isBatchSummarySelected();
@@ -690,6 +736,38 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 event.preventDefault();
                 event.stopPropagation();
                 toggleInsightsDrawer();
+            });
+        }
+
+        if (profileDrawerCloseBtn instanceof HTMLButtonElement) {
+            profileDrawerCloseBtn.addEventListener("click", () => {
+                closeProfileDrawer();
+            });
+        }
+
+        if (profileDrawer instanceof HTMLElement) {
+            profileDrawer.addEventListener("click", (event) => {
+                const target = event.target;
+                if (target === profileDrawer) {
+                    closeProfileDrawer();
+                    return;
+                }
+
+                const action = target instanceof HTMLElement ? target.closest("[data-profile-action]") : null;
+                if (!(action instanceof HTMLElement)) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                vscodeApi.postMessage({
+                    type: "profileDrawerAction",
+                    payload: {
+                        actionId: action.getAttribute("data-profile-action") || "",
+                        entityLogicalName: action.getAttribute("data-entity-logical-name") || model.entityLogicalName || "",
+                        entitySetName: action.getAttribute("data-entity-set-name") || model.entitySetName || ""
+                    }
+                });
             });
         }
 
@@ -851,6 +929,22 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             if (nextJsonSearchInput instanceof HTMLInputElement) {
                 nextJsonSearchInput.focus();
             }
+        });
+
+        showProfileBtn.addEventListener("click", () => {
+            closeInsightsDrawer();
+            profileDrawerState = {
+                status: "loading",
+                entityLogicalName: model.entityLogicalName ?? ""
+            };
+            profileDrawerOpen = true;
+            renderProfileDrawer();
+            vscodeApi.postMessage({
+                type: "showOperationalProfile",
+                payload: {
+                    entityLogicalName: model.entityLogicalName ?? ""
+                }
+            });
         });
 
         showRelationshipsBtn.addEventListener("click", () => {

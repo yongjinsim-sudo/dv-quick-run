@@ -34,6 +34,7 @@ import { registerClearTraversalCacheCommand } from '../commands/clearTraversalCa
 import { registerOpenQuickStartCommand } from "../commands/openQuickStart.js";
 import { registerApplyRecommendedNextStepFromExplainCommand } from "../commands/applyRecommendedNextStepFromExplain.js";
 import { registerRunBatchQueriesCommand } from "../commands/runBatchQueries.js";
+import { registerShowOperationalProfileCommand } from "../commands/showOperationalProfile.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -67,7 +68,8 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerClearTraversalCacheCommand,
   registerOpenQuickStartCommand,
   registerApplyRecommendedNextStepFromExplainCommand,
-  registerRunBatchQueriesCommand
+  registerRunBatchQueriesCommand,
+  registerShowOperationalProfileCommand
 ];
 
 const diagnosticsRegistrations = (

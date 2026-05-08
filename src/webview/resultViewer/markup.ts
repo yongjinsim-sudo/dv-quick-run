@@ -6,6 +6,7 @@ export function getResultViewerMarkup(iconUri: string): string {
                 <button id="showTableBtn" type="button" title="Table view">TABLE</button>
                 <button id="showJsonBtn" type="button" title="JSON view">JSON</button>
                 <button id="showInsightsBtn" type="button" title="View read-only insights" data-result-viewer-action="toggle-insights" aria-expanded="false" hidden>Insights</button>
+                <button id="showProfileBtn" type="button" title="View Operational Profile">Profile</button>
                 <button id="showRelationshipsBtn" title="View Relationships">🔗</button>
                 <button id="showMetadataBtn" title="View Entity Metadata">📘</button>
                 <button id="exportCsvBtn" title="Export current view to CSV">⬇️</button>
@@ -46,6 +47,20 @@ export function getResultViewerMarkup(iconUri: string): string {
             </div>
         </div>
 
+
+
+        <div id="profileDrawer" class="profile-drawer" aria-hidden="true" hidden>
+            <div class="profile-drawer-shell">
+                <div class="profile-drawer-header">
+                    <div>
+                        <div id="profileDrawerTitle" class="profile-drawer-title">Operational Profile</div>
+                        <div id="profileDrawerSubtitle" class="profile-drawer-subtitle">Entity-scoped operational understanding</div>
+                    </div>
+                    <button id="profileDrawerCloseBtn" type="button">Close</button>
+                </div>
+                <div id="profileDrawerBody" class="profile-drawer-body"></div>
+            </div>
+        </div>
         <div id="insightsDrawer" class="insights-drawer" aria-hidden="true" hidden>
             <div class="insights-drawer-header">
                 <div>
