@@ -5,6 +5,7 @@ import type {
   OperationalProfileInput,
   OperationalProfileModel
 } from "./operationalProfileTypes.js";
+import { buildOperationalProfileGuidance } from "./operationalProfileGuidanceBuilder.js";
 
 interface BandThresholds {
   low: number;
@@ -120,6 +121,16 @@ function managedStateLabel(input: OperationalProfileInput): string {
   return "No evidence observed";
 }
 
+function auditStateLabel(input: OperationalProfileInput): string {
+  if (input.auditingEnabled === true) {
+    return "Auditing enabled";
+  }
+  if (input.auditingEnabled === false) {
+    return "Auditing not enabled";
+  }
+  return "No evidence observed";
+}
+
 function createDimension(args: {
   id: string;
   label: string;
@@ -129,7 +140,7 @@ function createDimension(args: {
   whyItMatters: string;
   evidence: OperationalProfileEvidenceItem[];
   evidenceStateLabel?: string;
-  stateKind?: "density" | "managed";
+  stateKind?: "density" | "managed" | "context";
 }): OperationalProfileDimension {
   return {
     ...args,
@@ -139,7 +150,7 @@ function createDimension(args: {
 }
 
 function highestComplexityBand(dimensions: OperationalProfileDimension[]): OperationalProfileBand {
-  const densityDimensions = dimensions.filter((dimension) => dimension.stateKind !== "managed");
+  const densityDimensions = dimensions.filter((dimension) => dimension.stateKind !== "managed" && dimension.stateKind !== "context");
   const countByBand = densityDimensions.reduce(
     (accumulator, dimension) => {
       accumulator[dimension.band] += 1;
@@ -179,32 +190,6 @@ function buildSummary(headlineBand: OperationalProfileBand): string {
   return "No strong operational density signals were observed from the provided evidence.";
 }
 
-function buildGuidance(dimensions: OperationalProfileDimension[]): string[] {
-  const guidance: string[] = [];
-  const hasHighAutomation = dimensions.some((dimension) => dimension.id === "automation" && (dimension.band === "high" || dimension.band === "veryHigh"));
-  const hasHighAsync = dimensions.some((dimension) => dimension.id === "asyncLoad" && (dimension.band === "high" || dimension.band === "veryHigh"));
-  const hasHighRelationships = dimensions.some((dimension) => dimension.id === "relationships" && (dimension.band === "high" || dimension.band === "veryHigh"));
-
-  if (hasHighAutomation) {
-    guidance.push("Review synchronous plugin registrations first when execution timing or write behaviour is under investigation.");
-  }
-
-  if (hasHighAsync) {
-    guidance.push("Inspect asyncoperation evidence when repeated background execution or delayed processing is suspected.");
-  }
-
-  if (hasHighRelationships) {
-    guidance.push("Use relationship evidence to narrow traversal scope before following related records.");
-  }
-
-  if (guidance.length === 0) {
-    guidance.push("Use the evidence sections to decide whether deeper execution investigation is warranted.");
-  }
-
-  guidance.push("Treat this profile as advisory context, not root-cause certainty.");
-  return guidance;
-}
-
 /**
  * Builds an entity-scoped Operational Profile model from already-bounded evidence.
  *
@@ -223,6 +208,8 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
   const asyncDistinct = normaliseCount(input.distinctAsyncOperationCount7d);
   const flowReferences = normaliseCount(input.flowReferenceCount);
   const activeWorkflows = normaliseCount(input.activeWorkflowCount);
+  const businessRules = normaliseCount(input.businessRuleCount);
+  const realTimeWorkflows = normaliseCount(input.realTimeWorkflowCount);
 
   const pluginEvidence = createCountEvidence({
     kind: "pluginRegistration",
@@ -267,6 +254,29 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
     suffix: activeWorkflows === 1 ? "active workflow" : "active workflows",
     actionId: "viewWorkflows"
   });
+  const realTimeWorkflowEvidence = createCountEvidence({
+    kind: "workflow",
+    label: "Real-time Workflows",
+    count: realTimeWorkflows,
+    suffix: realTimeWorkflows === 1 ? "real-time workflow" : "real-time workflows",
+    actionId: "viewRealtimeWorkflows",
+    detail: "synchronous workflow participation"
+  });
+  const businessRuleEvidence = createCountEvidence({
+    kind: "businessRule",
+    label: "Business Rules",
+    count: businessRules,
+    suffix: businessRules === 1 ? "business rule" : "business rules",
+    actionId: "viewBusinessRules"
+  });
+  const auditEvidence = typeof input.auditingEnabled === "boolean"
+    ? {
+        kind: "audit" as const,
+        label: "Auditing",
+        value: input.auditingEnabled ? "Enabled" : "Not enabled",
+        detail: "entity audit setting"
+      }
+    : undefined;
   const managedEvidence = input.isManaged || input.isPartiallyManaged
     ? {
         kind: "managedState" as const,
@@ -283,7 +293,7 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
     createDimension({
       id: "automation",
       label: "Automation (Plugin Steps)",
-      band: bandFromCount(automationCountForBand, { low: 1, moderate: 4, high: 8, veryHigh: 15 }),
+      band: bandFromCount(automationCountForBand, { low: 1, moderate: 11, high: 21, veryHigh: 41 }),
       valueLabel: typeof syncPluginSteps === "number" ? `${formatCount(syncPluginSteps)} synchronous plugin steps` : "No plugin step evidence provided",
       explanation: "Plugin registration density is operational participation evidence, not causality.",
       whyItMatters: "Synchronous plugin steps can add execution touchpoints and make write behaviour harder to reason about.",
@@ -317,6 +327,35 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
       evidence: createEvidence(asyncEvidence)
     }),
     createDimension({
+      id: "businessRules",
+      label: "Business Rules",
+      band: bandFromCount(businessRules, { low: 1, moderate: 3, high: 8, veryHigh: 16 }),
+      valueLabel: typeof businessRules === "number" ? `${formatCount(businessRules)} business rules` : "No business rule evidence provided",
+      explanation: "Business Rules are surfaced as form/table logic participation, not as causality.",
+      whyItMatters: "Business Rules can contribute validation and field-behaviour logic that is useful to inspect during entity investigation.",
+      evidence: createEvidence(businessRuleEvidence)
+    }),
+    createDimension({
+      id: "realTimeWorkflows",
+      label: "Real-time Workflows",
+      band: bandFromCount(realTimeWorkflows, { low: 1, moderate: 1, high: 5, veryHigh: 11 }),
+      valueLabel: typeof realTimeWorkflows === "number" ? `${formatCount(realTimeWorkflows)} real-time workflows` : "No real-time workflow evidence provided",
+      explanation: "Real-time workflows are synchronous workflow participation evidence, not proof of execution impact.",
+      whyItMatters: "Synchronous workflow layers can add execution touchpoints during record operations and may be useful to review with plugin evidence.",
+      evidence: createEvidence(realTimeWorkflowEvidence)
+    }),
+    createDimension({
+      id: "auditing",
+      label: "Auditing",
+      band: input.auditingEnabled === true ? "low" : "none",
+      valueLabel: typeof input.auditingEnabled === "boolean" ? (input.auditingEnabled ? "Auditing enabled" : "Auditing not enabled") : "No auditing evidence provided",
+      explanation: "Auditing is surfaced as operational context and must not be treated as performance or quality judgement.",
+      whyItMatters: "Audit-enabled entities can produce additional operational records that may help investigation when change history is relevant.",
+      evidence: createEvidence(auditEvidence),
+      evidenceStateLabel: auditStateLabel(input),
+      stateKind: "context"
+    }),
+    createDimension({
       id: "managed",
       label: "Managed",
       band: input.isPartiallyManaged ? "partial" : input.isManaged ? "low" : "none",
@@ -329,8 +368,11 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
     })
   ];
 
-  const evidence = dimensions.flatMap((dimension) => dimension.evidence).concat(createEvidence(flowEvidence), createEvidence(workflowEvidence));
+  const evidence = dimensions
+    .flatMap((dimension) => dimension.evidence)
+    .concat(createEvidence(flowEvidence), createEvidence(workflowEvidence));
   const headlineBand = highestComplexityBand(dimensions);
+  const guidance = buildOperationalProfileGuidance(dimensions);
 
   return {
     kind: "entityOperationalProfile",
@@ -341,7 +383,8 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
     summary: buildSummary(headlineBand),
     dimensions,
     evidence,
-    investigationGuidance: buildGuidance(dimensions),
+    guidance,
+    investigationGuidance: guidance.map((item) => item.message),
     invariants: {
       entityScoped: true,
       explicitlyUserTriggered: true,

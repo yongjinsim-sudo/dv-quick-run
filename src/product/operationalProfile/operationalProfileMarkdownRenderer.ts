@@ -1,6 +1,7 @@
 import type {
   OperationalProfileDimension,
   OperationalProfileEvidenceItem,
+  OperationalProfileGuidanceItem,
   OperationalProfileModel
 } from "./operationalProfileTypes.js";
 
@@ -19,6 +20,16 @@ function renderEvidenceList(evidence: readonly OperationalProfileEvidenceItem[])
       return `- **${escapeMarkdown(item.label)}:** ${escapeMarkdown(item.value)}${escapeMarkdown(detail)}`;
     })
     .join("\n");
+}
+
+function renderGuidanceList(guidance: readonly OperationalProfileGuidanceItem[], fallback: readonly string[]): string {
+  if (guidance.length) {
+    return guidance
+      .map((item) => `- **${escapeMarkdown(item.title)}:** ${escapeMarkdown(item.message)}`)
+      .join("\n");
+  }
+
+  return fallback.map((item) => `- ${escapeMarkdown(item)}`).join("\n");
 }
 
 function renderDimension(dimension: OperationalProfileDimension): string {
@@ -51,7 +62,7 @@ export function renderOperationalProfileMarkdown(profile: OperationalProfileMode
     ...profile.dimensions.map(renderDimension).flatMap((section) => [section, ""]),
     "## Investigation Guidance",
     "",
-    ...profile.investigationGuidance.map((item) => `- ${escapeMarkdown(item)}`),
+    renderGuidanceList(profile.guidance ?? [], profile.investigationGuidance ?? []),
     "",
     "## Evidence Summary",
     "",

@@ -2275,4 +2275,260 @@ export const RESULT_VIEWER_STYLES = `
     height: 13px;
 }
 
+/* v0.9.15 Workstream A: keep profile guidance expandable and bounded. */
+.profile-guidance {
+    display: block;
+    margin: 8px 16px 0;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 74%, transparent 26%);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--vscode-editorWidget-background) 78%, var(--vscode-button-background) 8%);
+}
+
+.profile-guidance > summary {
+    display: grid;
+    grid-template-columns: 28px 1fr max-content;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    list-style: none;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.profile-guidance > summary::-webkit-details-marker {
+    display: none;
+}
+
+.profile-guidance[open] > summary {
+    border-bottom: 1px solid color-mix(in srgb, var(--vscode-panel-border) 55%, transparent 45%);
+}
+
+.profile-guidance-count {
+    color: var(--vscode-descriptionForeground);
+    font-weight: 500;
+    opacity: 0.84;
+}
+
+.profile-guidance-scroll {
+    max-height: 176px;
+    overflow: auto;
+    padding: 9px 12px 10px 50px;
+}
+
+.profile-guidance-text {
+    display: grid;
+    gap: 6px;
+    line-height: 1.35;
+}
+
+.profile-guidance-item {
+    font-size: 12px;
+    color: var(--vscode-editorWidget-foreground, var(--vscode-editor-foreground));
+    opacity: 0.88;
+}
+
+.profile-guidance-more {
+    margin-top: 2px;
+}
+
+.profile-guidance-more > summary {
+    cursor: pointer;
+    color: var(--vscode-textLink-foreground);
+    font-size: 12px;
+    font-weight: 600;
+    list-style: none;
+}
+
+.profile-guidance-more > summary::-webkit-details-marker {
+    display: none;
+}
+
+.profile-guidance-extra {
+    margin-top: 6px;
+}
+
+
+
+/* v0.9.15 Workstream B: compact, scrollable Operational Profile body. */
+.profile-card {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 34px);
+    overflow: hidden;
+}
+
+.profile-card-heading,
+.profile-guardrails {
+    flex: 0 0 auto;
+}
+
+.profile-card-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    border-top: 1px solid color-mix(in srgb, var(--vscode-panel-border) 54%, transparent 46%);
+    border-bottom: 1px solid color-mix(in srgb, var(--vscode-panel-border) 54%, transparent 46%);
+}
+
+.profile-card-heading {
+    padding: 10px 16px 8px;
+}
+
+.profile-title-row {
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+.profile-summary-row {
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.profile-band-badge {
+    padding: 5px 9px;
+    font-size: 11px;
+}
+
+.profile-summary {
+    line-height: 1.3;
+}
+
+.profile-metrics {
+    padding: 6px 16px;
+}
+
+.profile-metric-row {
+    grid-template-columns: 204px minmax(120px, 0.9fr) minmax(220px, 1.35fr);
+    gap: 10px;
+    min-height: 28px;
+    padding: 3px 0;
+}
+
+.profile-metric-name {
+    gap: 8px;
+    font-size: 12px;
+}
+
+.profile-metric-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.profile-metric-icon .profile-svg {
+    width: 13px;
+    height: 13px;
+}
+
+.profile-metric-bar {
+    height: 8px;
+}
+
+.profile-metric-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.profile-metric-status {
+    flex: 0 0 auto;
+}
+
+.profile-metric-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-evidence {
+    padding: 7px 16px 6px;
+}
+
+.profile-evidence summary {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.profile-evidence-row {
+    grid-template-columns: 10px minmax(190px, 0.9fr) minmax(210px, 1.25fr) minmax(145px, max-content);
+    gap: 7px;
+    min-height: 26px;
+    padding: 3px 0 3px 24px;
+    margin-left: 10px;
+}
+
+.profile-evidence-label {
+    gap: 7px;
+    font-size: 12px;
+}
+
+.profile-evidence-value {
+    line-height: 1.25;
+}
+
+.profile-evidence-action {
+    padding: 1px 4px;
+}
+
+.profile-guidance {
+    margin: 7px 16px 0;
+}
+
+.profile-guidance > summary {
+    padding: 7px 10px;
+}
+
+.profile-guidance-scroll {
+    max-height: 148px;
+    padding: 7px 10px 8px 44px;
+}
+
+.profile-guidance-text {
+    gap: 4px;
+    line-height: 1.3;
+}
+
+.profile-guidance-item {
+    font-size: 12px;
+}
+
+.profile-guardrails {
+    margin: 6px 16px 8px;
+    gap: 8px;
+}
+
+/* v0.9.15 Workstream B polish: keep evidence columns mechanically aligned. */
+.profile-evidence-row {
+    grid-template-columns: minmax(230px, 300px) minmax(0, 1fr) minmax(145px, 180px) !important;
+    column-gap: 14px !important;
+    align-items: center !important;
+    padding-left: 24px !important;
+}
+
+.profile-evidence-label {
+    display: inline-grid !important;
+    grid-template-columns: 8px 16px minmax(0, 1fr) !important;
+    align-items: center !important;
+    column-gap: 8px !important;
+    min-width: 0 !important;
+}
+
+.profile-evidence-label .profile-evidence-dot {
+    justify-self: center;
+}
+
+.profile-evidence-value {
+    min-width: 0 !important;
+    overflow-wrap: anywhere;
+}
+
+.profile-evidence-action {
+    justify-self: end !important;
+}
+
 `;

@@ -7,7 +7,9 @@ export type OperationalProfileEvidenceKind =
   | "asyncOperation"
   | "flow"
   | "workflow"
-  | "managedState";
+  | "managedState"
+  | "businessRule"
+  | "audit";
 
 export interface OperationalProfileEvidenceItem {
   kind: OperationalProfileEvidenceKind;
@@ -15,6 +17,29 @@ export interface OperationalProfileEvidenceItem {
   value: string;
   detail?: string;
   actionId?: string;
+}
+
+export type OperationalProfileGuidancePriority = "informational" | "moderate" | "high";
+
+export type OperationalProfileGuidanceCategory =
+  | "pluginRegistrationDensity"
+  | "relationshipDensity"
+  | "metadataFootprint"
+  | "asyncOperationActivity"
+  | "workflowParticipation"
+  | "flowParticipation"
+  | "managedStateNuance"
+  | "businessRuleParticipation"
+  | "realtimeWorkflowParticipation"
+  | "auditParticipation"
+  | "generalInvestigation";
+
+export interface OperationalProfileGuidanceItem {
+  category: OperationalProfileGuidanceCategory;
+  priority: OperationalProfileGuidancePriority;
+  title: string;
+  message: string;
+  evidenceDimensionIds: string[];
 }
 
 export interface OperationalProfileDimension {
@@ -26,7 +51,7 @@ export interface OperationalProfileDimension {
   whyItMatters: string;
   evidenceStateLabel: string;
   intensityPercent: number;
-  stateKind?: "density" | "managed";
+  stateKind?: "density" | "managed" | "context";
   evidence: OperationalProfileEvidenceItem[];
 }
 
@@ -39,6 +64,8 @@ export interface OperationalProfileModel {
   summary: string;
   dimensions: OperationalProfileDimension[];
   evidence: OperationalProfileEvidenceItem[];
+  guidance: OperationalProfileGuidanceItem[];
+  /** @deprecated Use guidance for typed model-driven rendering. Kept for existing surfaces. */
   investigationGuidance: string[];
   invariants: {
     entityScoped: true;
@@ -59,6 +86,9 @@ export interface OperationalProfileInput {
   distinctAsyncOperationCount7d?: number;
   flowReferenceCount?: number;
   activeWorkflowCount?: number;
+  businessRuleCount?: number;
+  realTimeWorkflowCount?: number;
+  auditingEnabled?: boolean;
   isManaged?: boolean;
   isPartiallyManaged?: boolean;
   managedDetail?: string;
