@@ -84,7 +84,9 @@ export async function executeFirstStepDefault(
         requiredCarryField: landedNodeForViewer?.primaryIdAttribute,
         canSiblingExpand: true,
         canRunBatch: canRunTraversalBatch() && itinerary.steps.length <= 1,
-          canRunOptimizedBatch: canRunTraversalOptimizedBatch() && itinerary.steps.length <= 1,
+        canRunOptimizedBatch: canRunTraversalOptimizedBatch() && itinerary.steps.length <= 1,
+        canGoBack: false,
+        canChangeRoute: !!options?.routeOptions?.length,
         verbosity: explainVerbosity
       })
     }
@@ -95,12 +97,39 @@ export async function executeFirstStepDefault(
   }
 
   if (execution.landing.ids.length === 0) {
+    setActiveTraversalProgress({
+      sessionId,
+      debugLabel,
+      isBestMatchRoute: options?.isBestMatchRoute,
+      route,
+      routeOptions: options?.routeOptions,
+      itinerary,
+      currentStepIndex: 0,
+      graph,
+      lastLanding: execution.landing,
+      currentStepInput: undefined,
+      selectedInputsByStep: {
+        0: undefined
+      },
+      selectedCarryValuesByStep: {
+        0: undefined
+      },
+      currentStepSiblingExpandClause: undefined,
+      currentStepInsightActions: [],
+      nextQuerySequenceNumber: 1 + execution.executedQueryCount,
+      executedQueries: execution.executedQueries,
+      executedQueriesByStep: {
+        0: execution.executedQueries
+      },
+      isCompleted: false
+    });
+
     for (const line of buildNoResultGuidanceLines({ step: firstStep, verbosity: explainVerbosity })) {
       logInfo(ctx.output, line);
     }
     logInfo(
       ctx.output,
-      `This variant did not produce usable data at ${firstStep.toEntity}. Try another variant.`
+      `This variant did not produce usable data at ${firstStep.toEntity}. Use Change Route to choose another route or variant.`
     );
     return;
   }
@@ -124,6 +153,7 @@ export async function executeFirstStepDefault(
 
   const insightActions = appendTraversalInsightActions({
     route,
+    routeOptions: options?.routeOptions,
     itinerary,
     step: firstStep,
     executionPlan: execution.executionPlan,
@@ -144,6 +174,7 @@ export async function executeFirstStepDefault(
     debugLabel,
     isBestMatchRoute: options?.isBestMatchRoute,
     route,
+    routeOptions: options?.routeOptions,
     itinerary,
     currentStepIndex: 0,
     graph,

@@ -28,6 +28,8 @@ export function getResultViewerMarkup(iconUri: string): string {
             </div>
         </div>
 
+        <div id="investigationPivotBar" class="investigation-pivot-bar" hidden></div>
+
         <div class="view-container">
             <div id="tableView"></div>
             <div id="jsonPanel" hidden>

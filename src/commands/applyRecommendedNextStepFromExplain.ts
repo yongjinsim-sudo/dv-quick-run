@@ -5,7 +5,7 @@ import { getExplainDocumentState } from "./router/actions/explain/explainDocStat
 import { parseEditorQuery, buildEditorQuery } from "./router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { previewMutationResult } from "../refinement/queryPreview.js";
 import type { EditorQueryTarget } from "./router/actions/shared/queryMutation/editorQueryTarget.js";
-import { canApplyQueryDoctorFix } from "../product/capabilities/capabilityResolver.js";
+import { canApplyActionableInsight } from "../product/capabilities/capabilityResolver.js";
 
 async function resolveSourceTarget(sourceUri: vscode.Uri, sourceRange: vscode.Range): Promise<EditorQueryTarget> {
   let editor = vscode.window.visibleTextEditors.find((item) => item.document.uri.toString() === sourceUri.toString());
@@ -34,7 +34,7 @@ async function resolveSourceTarget(sourceUri: vscode.Uri, sourceRange: vscode.Ra
 }
 
 async function applyRecommendedNextStepFromExplain(ctx: CommandContext, documentUri?: vscode.Uri, lineNumber?: number): Promise<void> {
-  if (!canApplyQueryDoctorFix()) {
+  if (!canApplyActionableInsight()) {
     void vscode.window.showInformationMessage("DV Quick Run: Apply is available on Pro only.");
     return;
   }

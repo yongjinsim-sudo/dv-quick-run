@@ -287,7 +287,10 @@ function createDefaultOpenTraversalGraphViewDeps(): OpenTraversalGraphViewDeps {
         route,
         recommendedPlan,
         undefined,
-        { isBestMatchRoute: rankedRoute?.isBestMatch }
+        {
+          isBestMatchRoute: rankedRoute?.isBestMatch,
+          routeOptions: rankedRoutes.map((item) => item.route)
+        }
       );
 
       ctx.output.show(true);

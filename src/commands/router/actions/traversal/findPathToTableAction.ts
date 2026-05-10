@@ -278,7 +278,8 @@ export async function runFindPathToTableWorkflow(
   }
 
   await deps.executeFirstStep(ctx, graph, selectedRoute, selectedPlan, progress, {
-    isBestMatchRoute
+    isBestMatchRoute,
+    routeOptions: routes
   });
 }
 

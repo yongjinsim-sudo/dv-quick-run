@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { canApplyQueryDoctorFix, canRunTraversalBatch, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel } from "../../product/capabilities/capabilityResolver.js";
+import { canApplyActionableInsight, canApplyQueryDoctorFix, canRunTraversalBatch, getActionableInsightCapabilities, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel } from "../../product/capabilities/capabilityResolver.js";
 import { normalizeEntitlementPlan } from "../../product/capabilities/entitlementTypes.js";
 
 suite("capabilityResolver", () => {
@@ -8,8 +8,10 @@ suite("capabilityResolver", () => {
 
     assert.deepStrictEqual(result, {
       queryDoctor: {
-        insightLevel: 1,
-        canApplyFix: false
+        insightLevel: 1
+      },
+      actionableInsights: {
+        canApply: false
       },
       traversal: {
         canRunBatch: true,
@@ -23,8 +25,10 @@ suite("capabilityResolver", () => {
 
     assert.deepStrictEqual(result, {
       queryDoctor: {
-        insightLevel: 3,
-        canApplyFix: true
+        insightLevel: 3
+      },
+      actionableInsights: {
+        canApply: true
       },
       traversal: {
         canRunBatch: true,
@@ -34,10 +38,14 @@ suite("capabilityResolver", () => {
   });
 
   test("resolves query doctor helpers", () => {
-    assert.deepStrictEqual(getQueryDoctorCapabilities("free"), { insightLevel: 1, canApplyFix: false });
-    assert.deepStrictEqual(getQueryDoctorCapabilities("pro"), { insightLevel: 3, canApplyFix: true });
+    assert.deepStrictEqual(getQueryDoctorCapabilities("free"), { insightLevel: 1 });
+    assert.deepStrictEqual(getQueryDoctorCapabilities("pro"), { insightLevel: 3 });
+    assert.deepStrictEqual(getActionableInsightCapabilities("free"), { canApply: false });
+    assert.deepStrictEqual(getActionableInsightCapabilities("pro"), { canApply: true });
     assert.strictEqual(getQueryDoctorInsightLevel("free"), 1);
     assert.strictEqual(getQueryDoctorInsightLevel("pro"), 3);
+    assert.strictEqual(canApplyActionableInsight("free"), false);
+    assert.strictEqual(canApplyActionableInsight("pro"), true);
     assert.strictEqual(canApplyQueryDoctorFix("free"), false);
     assert.strictEqual(canApplyQueryDoctorFix("pro"), true);
     assert.strictEqual(canRunTraversalBatch("free"), true);

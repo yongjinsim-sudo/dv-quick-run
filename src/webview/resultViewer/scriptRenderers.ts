@@ -1,5 +1,15 @@
 export const RESULT_VIEWER_SCRIPT_RENDERERS = `
-function renderSiblingExpandButton(currentModel) {
+function renderBackTraversalButton(currentModel) {
+            // Traversal continuity actions are rendered inside the traversal status pill.
+            // Kept as a no-op for existing render pipeline call sites.
+        }
+
+        function renderChangeTraversalRouteButton(currentModel) {
+            // Traversal continuity actions are rendered inside the traversal status pill.
+            // Kept as a no-op for existing render pipeline call sites.
+        }
+
+        function renderSiblingExpandButton(currentModel) {
             const canShow = !!currentModel.traversal && !!currentModel.traversal.canSiblingExpand && !!currentModel.traversal.traversalSessionId;
             siblingExpandBtn.hidden = !canShow;
         }
@@ -206,12 +216,14 @@ function renderTable(currentModel) {
                     ? buildBatchErrorHtml(currentModel)
                     : "<div class=\\"empty-state\\">" +
                         "<div class=\\"empty-title\\">No results found</div>" +
-                        "<div class=\\"empty-hint\\">Try:</div>" +
-                        "<ul class=\\"empty-list\\">" +
-                        "<li>Removing filters</li>" +
-                        "<li>Increasing $top</li>" +
-                        "<li>Running without $filter</li>" +
-                        "</ul>" +
+                        (currentModel.traversal && (currentModel.traversal.canGoBack || currentModel.traversal.canChangeRoute)
+                            ? "<div class=\\"empty-hint\\">This traversal path did not return rows. Use Back or Route in the Guided Traversal pill above to continue exploring.</div>"
+                            : "<div class=\\"empty-hint\\">Try:</div>" +
+                                "<ul class=\\"empty-list\\">" +
+                                "<li>Removing filters</li>" +
+                                "<li>Increasing $top</li>" +
+                                "<li>Running without $filter</li>" +
+                                "</ul>") +
                         "</div>";
 
                 tableView.innerHTML =

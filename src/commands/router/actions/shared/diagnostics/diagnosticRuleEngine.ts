@@ -1,14 +1,19 @@
-import type { QueryDoctorCapabilityProfile } from "../../../../../product/capabilities/capabilityTypes.js";
+import type { ActionableInsightCapabilityProfile, QueryDoctorCapabilityProfile } from "../../../../../product/capabilities/capabilityTypes.js";
 import type { DiagnosticContext } from "./diagnosticRule.js";
 import type { DiagnosticFinding, DiagnosticResult } from "./diagnosticTypes.js";
 import { basicQueryShapeRules } from "./queryDoctorRules/basicQueryShapeRules.js";
 import { metadataValidationRules } from "./queryDoctorRules/metadataValidationRules.js";
 import { evidenceAwareRules } from "./queryDoctorRules/evidenceAwareRules.js";
 
-function normalizeFinding(finding: DiagnosticFinding, capabilities: QueryDoctorCapabilityProfile): DiagnosticFinding {
+function normalizeFinding(
+  finding: DiagnosticFinding,
+  capabilities: QueryDoctorCapabilityProfile,
+  actionableInsights?: ActionableInsightCapabilityProfile
+): DiagnosticFinding {
   const hasSuggestedFix = !!finding.suggestedFix;
   const hasDeterministicSuggestion = !!finding.suggestedQuery?.query;
-  const actionability = finding.actionability ?? (hasDeterministicSuggestion ? (capabilities.canApplyFix ? "previewAndApply" : "previewOnly") : "none");
+  const canApply = actionableInsights?.canApply ?? capabilities.canApplyFix === true;
+  const actionability = finding.actionability ?? (hasDeterministicSuggestion ? (canApply ? "previewAndApply" : "previewOnly") : "none");
   const fixHook = finding.fixHook ?? (hasDeterministicSuggestion ? { kind: "queryDoctor.suggestedFix", label: finding.suggestedQuery?.label ?? finding.suggestedFix?.label ?? "Suggested query" } : undefined);
   return {
     ...finding,
@@ -77,7 +82,8 @@ function rankFindings(findings: DiagnosticFinding[]): DiagnosticFinding[] {
 
 export async function runDiagnostics(
   context: DiagnosticContext,
-  capabilities: QueryDoctorCapabilityProfile
+  capabilities: QueryDoctorCapabilityProfile,
+  actionableInsights?: ActionableInsightCapabilityProfile
 ): Promise<DiagnosticResult> {
   const findings: DiagnosticFinding[] = [];
 
@@ -97,6 +103,6 @@ export async function runDiagnostics(
     }
   }
 
-  const normalizedFindings = findings.map((finding) => normalizeFinding(finding, capabilities));
+  const normalizedFindings = findings.map((finding) => normalizeFinding(finding, capabilities, actionableInsights));
   return { findings: rankFindings(dedupeFindings(normalizedFindings)) };
 }

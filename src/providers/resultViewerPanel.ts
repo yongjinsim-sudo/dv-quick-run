@@ -3,6 +3,8 @@ import type { CommandContext } from "../commands/context/commandContext.js";
 import {
     executeResultViewerAction
 } from "./resultViewerActions/registry.js";
+import { runBackTraversalAction } from "../commands/router/actions/traversal/backTraversalAction.js";
+import { runChangeTraversalRouteAction } from "../commands/router/actions/traversal/changeTraversalRouteAction.js";
 import { runApplySiblingExpandAction } from "../commands/router/actions/traversal/applySiblingExpandAction.js";
 import { runTraversalAsBatchAction } from "../commands/router/actions/traversal/runTraversalAsBatchAction.js";
 import { runContinueTraversalAction } from "../commands/router/actions/traversal/continueTraversalAction.js";
@@ -180,6 +182,18 @@ type ResultViewerMessage =
     }
     | {
         type: "nextPage";
+    }
+    | {
+        type: "backTraversal";
+        payload: {
+            traversalSessionId?: string;
+        };
+    }
+    | {
+        type: "changeTraversalRoute";
+        payload: {
+            traversalSessionId?: string;
+        };
     }
     | {
         type: "applySiblingExpand";
@@ -459,21 +473,33 @@ export class ResultViewerPanel {
                 await ResultViewerPanel.nextPage();
                 return;
 
+            case "backTraversal":
+                await runBackTraversalAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId ?? ""
+                });
+                return;
+
+            case "changeTraversalRoute":
+                await runChangeTraversalRouteAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId ?? ""
+                });
+                return;
+
             case "applySiblingExpand":
                 await runApplySiblingExpandAction(ctx, {
-                    traversalSessionId: message.payload.traversalSessionId
+                    traversalSessionId: message.payload.traversalSessionId ?? ""
                 });
                 return;
 
             case "runTraversalBatch":
                 await runTraversalAsBatchAction(ctx, {
-                    traversalSessionId: message.payload.traversalSessionId
+                    traversalSessionId: message.payload.traversalSessionId ?? ""
                 });
                 return;
 
             case "runTraversalOptimizedBatch":
                 await runTraversalAsBatchAction(ctx, {
-                    traversalSessionId: message.payload.traversalSessionId,
+                    traversalSessionId: message.payload.traversalSessionId ?? "",
                     optimizeSelectedPath: true
                 });
                 return;
