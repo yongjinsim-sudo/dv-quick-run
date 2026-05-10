@@ -846,6 +846,12 @@ function showCopyStatus(message) {
             if (id.includes("async") || label.includes("async")) {
                 return "async";
             }
+            if (id.includes("businessrule") || label.includes("business rule")) {
+                return "flow";
+            }
+            if (id.includes("audit") || label.includes("audit")) {
+                return "document";
+            }
             if (id.includes("managed") || label.includes("managed")) {
                 return "managed";
             }
@@ -866,6 +872,12 @@ function showCopyStatus(message) {
             }
             if (kind.includes("async") || label.includes("async")) {
                 return "async";
+            }
+            if (kind.includes("businessrule") || label.includes("business rule")) {
+                return "flow";
+            }
+            if (kind.includes("audit") || label.includes("audit")) {
+                return "document";
             }
             if (kind.includes("flow") || label.includes("flow") || label.includes("workflow")) {
                 return "flow";
@@ -890,6 +902,12 @@ function showCopyStatus(message) {
             if (label.includes("async")) {
                 return "View async operations";
             }
+            if (label.includes("business rule")) {
+                return "View business rules";
+            }
+            if (label.includes("real-time")) {
+                return "View real-time workflows";
+            }
             if (label.includes("workflow")) {
                 return "View workflows";
             }
@@ -909,13 +927,13 @@ function showCopyStatus(message) {
             const intensity = Math.max(0, Math.min(100, Number(dimension?.intensityPercent || 0)));
             const evidenceLabel = hasEvidence ? String(dimension.evidenceStateLabel || dimension.valueLabel || "Evidence observed") : "No evidence observed";
             const rawValueLabel = String(dimension?.valueLabel || evidenceLabel);
-            const valueLabel = String(dimension?.stateKind || "") === "managed" && rawValueLabel === evidenceLabel ? "" : rawValueLabel;
+            const valueLabel = rawValueLabel === evidenceLabel ? "" : rawValueLabel;
             const iconKind = profileDimensionIconKind(dimension);
             return '<div class="profile-metric-row profile-evidence-' + (hasEvidence ? 'present' : 'empty') + '">' +
                 '<div class="profile-metric-name"><span class="profile-metric-icon profile-icon-kind-' + escapeAttribute(iconKind) + '" aria-hidden="true">' + profileIconSvg(iconKind, dimension?.label || "Profile signal") + '</span><span>' + escapeHtml(dimension?.label || "Profile signal") + '</span></div>' +
                 '<div class="profile-metric-bar profile-band-' + bandClass + '" aria-hidden="true"><span style="width: ' + intensity + '%"></span></div>' +
-                '<div class="profile-metric-status profile-band-' + bandClass + '">' + escapeHtml(evidenceLabel) + '</div>' +
-                '<div class="profile-metric-value">' + escapeHtml(valueLabel) + '</div>' +
+                '<div class="profile-metric-meta"><span class="profile-metric-status profile-band-' + bandClass + '">' + escapeHtml(evidenceLabel) + '</span>' +
+                (valueLabel ? '<span class="profile-metric-value">' + escapeHtml(valueLabel) + '</span>' : '') + '</div>' +
                 '</div>';
         }
 
@@ -933,8 +951,7 @@ function showCopyStatus(message) {
         function buildProfileEvidenceRowHtml(profile, item) {
             const iconKind = profileEvidenceIconKind(item);
             return '<div class="profile-evidence-row">' +
-                '<span class="profile-evidence-dot profile-evidence-dot-' + escapeAttribute(iconKind) + '"></span>' +
-                '<div class="profile-evidence-label"><span class="profile-evidence-icon profile-icon-kind-' + escapeAttribute(iconKind) + '" aria-hidden="true">' + profileIconSvg(iconKind, item?.label || "Evidence") + '</span><span>' + escapeHtml(item?.label || "Evidence") + '</span></div>' +
+                '<div class="profile-evidence-label"><span class="profile-evidence-dot profile-evidence-dot-' + escapeAttribute(iconKind) + '"></span><span class="profile-evidence-icon profile-icon-kind-' + escapeAttribute(iconKind) + '" aria-hidden="true">' + profileIconSvg(iconKind, item?.label || "Evidence") + '</span><span>' + escapeHtml(item?.label || "Evidence") + '</span></div>' +
                 '<div class="profile-evidence-value">' + escapeHtml(item?.value || "Observed") + (item?.detail ? ' <span class="profile-evidence-detail">' + escapeHtml(item.detail) + '</span>' : "") + '</div>' +
                 buildProfileEvidenceActionHtml(profile, item) +
                 '</div>';
@@ -949,16 +966,89 @@ function showCopyStatus(message) {
             return evidence.map((item) => buildProfileEvidenceRowHtml(profile, item)).join("");
         }
 
+
+        function buildProfileNavigationActionsHtml(profile) {
+            const actions = Array.isArray(profile?.navigationActions) ? profile.navigationActions : [];
+            if (!actions.length) {
+                return "";
+            }
+
+            const renderAction = (action) => {
+                const priority = String(action?.priority || "secondary");
+                return '<button class="profile-navigation-action profile-navigation-action-' + escapeAttribute(priority) + '" type="button" data-profile-action="' + escapeAttribute(action?.actionId || "") + '"' +
+                    ' data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '"' +
+                    ' data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '">' +
+                    '<span class="profile-navigation-action-label">' + escapeHtml(action?.label || "Open evidence") + '</span>' +
+                    '<span class="profile-navigation-action-desc">' + escapeHtml(action?.description || "Open related operational evidence.") + '</span>' +
+                    '</button>';
+            };
+
+            return '<details class="profile-navigation">' +
+                '<summary><span class="profile-navigation-icon">' + profileIconSvg("target", "Suggested investigation actions") + '</span><span>Suggested investigation actions</span><span class="profile-guidance-count">' + escapeHtml(String(actions.length)) + ' items</span></summary>' +
+                '<div class="profile-navigation-actions">' + actions.map(renderAction).join("") + '</div>' +
+                '</details>';
+        }
+
+
+        function buildProfileFutureSurfacesHtml(profile) {
+            const surfaces = Array.isArray(profile?.futureSurfaces) ? profile.futureSurfaces : [];
+            if (!surfaces.length) {
+                return "";
+            }
+
+            const renderSurface = (surface) => {
+                const availability = String(surface?.availability || "freeRoadmap");
+                const isPro = availability === "proRoadmap";
+                const badgeText = isPro ? "Pro roadmap" : "Free roadmap";
+                const tooltip = String(surface?.description || "Future investigation surface.");
+                return '<div class="profile-future-surface profile-future-surface-' + escapeAttribute(availability) + '" title="' + escapeAttribute(tooltip) + '" tabindex="0" aria-label="' + escapeAttribute((surface?.label || "Future investigation surface") + '. ' + tooltip) + '">' +
+                    '<span class="profile-future-lock" aria-hidden="true">' + (isPro ? '🔒' : '⏳') + '</span>' +
+                    '<span class="profile-future-main"><span class="profile-future-label">' + escapeHtml(surface?.label || "Future investigation surface") + '</span>' +
+                    '<span class="profile-future-description">' + escapeHtml(tooltip) + '</span></span>' +
+                    '<span class="profile-future-badge">' + escapeHtml(badgeText) + '</span>' +
+                    '</div>';
+            };
+
+            return '<details class="profile-future-surfaces">' +
+                '<summary><span class="profile-future-icon">' + profileIconSvg("target", "Future investigation surfaces") + '</span><span>Future investigation surfaces</span><span class="profile-guidance-count">' + escapeHtml(String(surfaces.length)) + ' items</span></summary>' +
+                '<div class="profile-future-surface-list">' +
+                '<div class="profile-future-surface-intro">Roadmap directions for deeper operational investigation and faster context switching.</div>' +
+                surfaces.map(renderSurface).join("") + '</div>' +
+                '</details>';
+        }
+
         function buildProfileGuidanceHtml(profile) {
-            const guidance = Array.isArray(profile?.investigationGuidance) ? profile.investigationGuidance : [];
+            const typedGuidance = Array.isArray(profile?.guidance) ? profile.guidance : [];
+            const legacyGuidance = Array.isArray(profile?.investigationGuidance) ? profile.investigationGuidance : [];
+            const guidance = typedGuidance.length
+                ? typedGuidance.map((item) => ({
+                    title: item?.title || "Investigation guidance",
+                    message: item?.message || "Use the available evidence to guide investigation."
+                }))
+                : legacyGuidance.map((item) => ({
+                    title: "Investigation guidance",
+                    message: item
+                }));
+
             if (!guidance.length) {
                 return "";
             }
 
-            return '<div class="profile-guidance">' +
-                '<div class="profile-guidance-icon">' + profileIconSvg("info", "Investigation guidance") + '</div>' +
-                '<div class="profile-guidance-text">' + guidance.map((item) => '<div>' + escapeHtml(item) + '</div>').join("") + '</div>' +
-                '</div>';
+            const previewCount = 3;
+            const visibleGuidance = guidance.slice(0, previewCount);
+            const additionalGuidance = guidance.slice(previewCount);
+            const renderGuidanceItems = (items) => items.map((item) =>
+                '<div class="profile-guidance-item"><strong>' + escapeHtml(item.title) + '</strong><br><span>' + escapeHtml(item.message) + '</span></div>'
+            ).join("");
+
+            return '<details class="profile-guidance">' +
+                '<summary><span class="profile-guidance-icon">' + profileIconSvg("info", "Investigation guidance") + '</span><span>Investigation guidance</span><span class="profile-guidance-count">' + escapeHtml(String(guidance.length)) + ' items</span></summary>' +
+                '<div class="profile-guidance-scroll">' +
+                '<div class="profile-guidance-text">' + renderGuidanceItems(visibleGuidance) +
+                (additionalGuidance.length ? '<details class="profile-guidance-more"><summary>Show ' + escapeHtml(String(additionalGuidance.length)) + ' more</summary><div class="profile-guidance-text profile-guidance-extra">' + renderGuidanceItems(additionalGuidance) + '</div></details>' : "") +
+                '</div>' +
+                '</div>' +
+                '</details>';
         }
 
         function buildProfileCardHtml(profile) {
@@ -973,9 +1063,13 @@ function showCopyStatus(message) {
                 '<button class="profile-why-link" type="button" data-profile-action="viewMetadata" data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '" data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '">Why is this?</button>' +
                 '</div>' +
                 '</div>' +
+                '<div class="profile-card-scroll">' +
                 '<div class="profile-metrics">' + dimensions.map((dimension) => buildProfileMetricRowHtml(profile, dimension)).join("") + '</div>' +
-                '<details class="profile-evidence" open><summary><span class="profile-evidence-summary-icon">' + profileIconSvg("evidence", "Evidence") + '</span><span>Evidence (click to expand)</span></summary>' + buildProfileEvidenceSectionHtml(profile) + '</details>' +
+                '<details class="profile-evidence"><summary><span class="profile-evidence-summary-icon">' + profileIconSvg("evidence", "Evidence") + '</span><span>Evidence (click to expand)</span></summary>' + buildProfileEvidenceSectionHtml(profile) + '</details>' +
+                buildProfileNavigationActionsHtml(profile) +
                 buildProfileGuidanceHtml(profile) +
+                buildProfileFutureSurfacesHtml(profile) +
+                '</div>' +
                 '<div class="profile-guardrails"><span>' + profileIconSvg("target", "Entity scoped") + 'Entity-scoped</span><span>•</span><span>' + profileIconSvg("user", "User triggered") + 'User-triggered</span><span>•</span><span>' + profileIconSvg("managed", "Advisory only") + 'Advisory-only</span><span>•</span><span>' + profileIconSvg("document", "Evidence backed") + 'Evidence-backed</span><span>•</span><span>' + profileIconSvg("blocked", "No root-cause claim") + 'No root-cause claim</span></div>' +
                 '</div>';
         }

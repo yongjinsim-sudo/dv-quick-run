@@ -1,7 +1,10 @@
 import type {
   OperationalProfileDimension,
   OperationalProfileEvidenceItem,
-  OperationalProfileModel
+  OperationalProfileFutureSurface,
+  OperationalProfileGuidanceItem,
+  OperationalProfileModel,
+  OperationalProfileNavigationAction
 } from "./operationalProfileTypes.js";
 
 function escapeMarkdown(value: string): string {
@@ -19,6 +22,40 @@ function renderEvidenceList(evidence: readonly OperationalProfileEvidenceItem[])
       return `- **${escapeMarkdown(item.label)}:** ${escapeMarkdown(item.value)}${escapeMarkdown(detail)}`;
     })
     .join("\n");
+}
+
+function renderNavigationActions(actions: readonly OperationalProfileNavigationAction[]): string {
+  if (!actions.length) {
+    return "_No contextual investigation actions were generated for this Profile._";
+  }
+
+  return actions
+    .map((item) => `- **${escapeMarkdown(item.label)}:** ${escapeMarkdown(item.description)}`)
+    .join("\n");
+}
+
+
+function renderFutureSurfaces(surfaces: readonly OperationalProfileFutureSurface[]): string {
+  if (!surfaces.length) {
+    return "_No future investigation surfaces are currently listed for this Profile._";
+  }
+
+  return surfaces
+    .map((item) => {
+      const availability = item.availability === "proRoadmap" ? "Pro roadmap" : "Free roadmap";
+      return `- **${escapeMarkdown(item.label)}** (${availability}): ${escapeMarkdown(item.description)}`;
+    })
+    .join("\n");
+}
+
+function renderGuidanceList(guidance: readonly OperationalProfileGuidanceItem[], fallback: readonly string[]): string {
+  if (guidance.length) {
+    return guidance
+      .map((item) => `- **${escapeMarkdown(item.title)}:** ${escapeMarkdown(item.message)}`)
+      .join("\n");
+  }
+
+  return fallback.map((item) => `- ${escapeMarkdown(item)}`).join("\n");
 }
 
 function renderDimension(dimension: OperationalProfileDimension): string {
@@ -49,9 +86,17 @@ export function renderOperationalProfileMarkdown(profile: OperationalProfileMode
     "## Operational Density",
     "",
     ...profile.dimensions.map(renderDimension).flatMap((section) => [section, ""]),
+    "## Suggested Investigation Actions",
+    "",
+    renderNavigationActions(profile.navigationActions ?? []),
+    "",
     "## Investigation Guidance",
     "",
-    ...profile.investigationGuidance.map((item) => `- ${escapeMarkdown(item)}`),
+    renderGuidanceList(profile.guidance ?? [], profile.investigationGuidance ?? []),
+    "",
+    "## Future Investigation Surfaces",
+    "",
+    renderFutureSurfaces(profile.futureSurfaces ?? []),
     "",
     "## Evidence Summary",
     "",

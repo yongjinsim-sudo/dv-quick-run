@@ -44,11 +44,21 @@ type PluginStepProfileEvidence = {
 type WorkflowProfileEvidence = {
     flowReferenceCount?: number;
     activeWorkflowCount?: number;
+    businessRuleCount?: number;
+    realTimeWorkflowCount?: number;
 };
 
 type AsyncProfileEvidence = {
     asyncOperationCount7d?: number;
     distinctAsyncOperationCount7d?: number;
+};
+
+type OperationalProfileNavigationContext = {
+    entityLogicalName: string;
+    actionId: string;
+    entitySetName?: string;
+    source: "operationalProfile";
+    timestamp: number;
 };
 
 type ResultViewerMessage =
@@ -219,6 +229,7 @@ export class ResultViewerPanel {
     private static currentSessionId: string | undefined;
     private static currentModel: ResultViewerDisplayModel | undefined;
     private static executionInsightsSuppressedUntilByEnvironment = new Map<string, number>();
+    private static lastOperationalProfileNavigationContext: OperationalProfileNavigationContext | undefined;
 
     public static show(
     ctx: CommandContext,
@@ -527,6 +538,9 @@ export class ResultViewerPanel {
             distinctAsyncOperationCount7d: asyncEvidence.distinctAsyncOperationCount7d,
             flowReferenceCount: workflowEvidence.flowReferenceCount,
             activeWorkflowCount: workflowEvidence.activeWorkflowCount,
+            businessRuleCount: workflowEvidence.businessRuleCount,
+            realTimeWorkflowCount: workflowEvidence.realTimeWorkflowCount,
+            auditingEnabled: managedEvidence.auditingEnabled,
             isManaged: managedEvidence.isManaged,
             isPartiallyManaged: managedEvidence.isPartiallyManaged,
             managedDetail: managedEvidence.managedDetail
@@ -578,14 +592,18 @@ export class ResultViewerPanel {
             const rows = await ResultViewerPanel.loadOperationalProfileRows(
                 client,
                 token,
-                `/workflows?$select=workflowid,category,statecode,primaryentity&$filter=${encodeURIComponent(`primaryentity eq '${ResultViewerPanel.escapeODataString(entityLogicalName)}' and statecode eq 1`)}&$top=${OPERATIONAL_PROFILE_LOOKUP_TOP}`
+                `/workflows?$select=workflowid,category,statecode,mode,primaryentity&$filter=${encodeURIComponent(`primaryentity eq '${ResultViewerPanel.escapeODataString(entityLogicalName)}' and statecode eq 1`)}&$top=${OPERATIONAL_PROFILE_LOOKUP_TOP}`
             );
             const flowRows = rows.filter((row) => ResultViewerPanel.normalizeNumber(row.category) === 5);
             const workflowRows = rows.filter((row) => ResultViewerPanel.normalizeNumber(row.category) === 0);
+            const businessRuleRows = rows.filter((row) => ResultViewerPanel.normalizeNumber(row.category) === 2);
+            const realTimeWorkflowRows = workflowRows.filter((row) => ResultViewerPanel.normalizeNumber(row.mode) === 1);
 
             return {
                 flowReferenceCount: flowRows.length,
-                activeWorkflowCount: workflowRows.length
+                activeWorkflowCount: workflowRows.length,
+                businessRuleCount: businessRuleRows.length,
+                realTimeWorkflowCount: realTimeWorkflowRows.length
             };
         } catch {
             return {};
@@ -613,17 +631,18 @@ export class ResultViewerPanel {
         }
     }
 
-    private static async loadManagedProfileEvidence(client: DataverseClient, token: string, entityLogicalName: string): Promise<{ isManaged?: boolean; isPartiallyManaged?: boolean; managedDetail?: string }> {
+    private static async loadManagedProfileEvidence(client: DataverseClient, token: string, entityLogicalName: string): Promise<{ isManaged?: boolean; isPartiallyManaged?: boolean; managedDetail?: string; auditingEnabled?: boolean }> {
         try {
             const result = await client.get(
-                `/EntityDefinitions(LogicalName='${ResultViewerPanel.escapeODataString(entityLogicalName)}')?$select=IsManaged`,
+                `/EntityDefinitions(LogicalName='${ResultViewerPanel.escapeODataString(entityLogicalName)}')?$select=IsManaged,IsAuditEnabled`,
                 token,
                 { timeoutMs: OPERATIONAL_PROFILE_LOOKUP_TIMEOUT_MS }
             ) as Record<string, unknown>;
             const isManaged = ResultViewerPanel.normalizeBoolean(result.IsManaged);
+            const auditingEnabled = ResultViewerPanel.normalizeBoolean(result.IsAuditEnabled);
 
-            return typeof isManaged === "boolean"
-                ? { isManaged }
+            return typeof isManaged === "boolean" || typeof auditingEnabled === "boolean"
+                ? { isManaged, auditingEnabled }
                 : {};
         } catch {
             return {};
@@ -680,6 +699,10 @@ export class ResultViewerPanel {
                 return `workflows?$select=workflowid,name,category,statecode,primaryentity,createdon,modifiedon&$filter=${encodeURIComponent(`primaryentity eq '${entity}' and category eq 5`)}&$orderby=modifiedon desc&$top=50`;
             case "viewWorkflows":
                 return `workflows?$select=workflowid,name,category,statecode,primaryentity,createdon,modifiedon&$filter=${encodeURIComponent(`primaryentity eq '${entity}' and category eq 0`)}&$orderby=modifiedon desc&$top=50`;
+            case "viewRealtimeWorkflows":
+                return `workflows?$select=workflowid,name,category,mode,statecode,primaryentity,createdon,modifiedon&$filter=${encodeURIComponent(`primaryentity eq '${entity}' and category eq 0 and mode eq 1`)}&$orderby=modifiedon desc&$top=50`;
+            case "viewBusinessRules":
+                return `workflows?$select=workflowid,name,category,statecode,primaryentity,createdon,modifiedon&$filter=${encodeURIComponent(`primaryentity eq '${entity}' and category eq 2`)}&$orderby=modifiedon desc&$top=50`;
             case "viewPluginSteps":
                 return `sdkmessageprocessingsteps?$select=sdkmessageprocessingstepid,name,mode,stage,statecode&$expand=sdkmessagefilterid($select=primaryobjecttypecode)&$filter=${encodeURIComponent(`sdkmessagefilterid/primaryobjecttypecode eq '${entity}'`)}&$top=50`;
             default:
@@ -705,6 +728,14 @@ export class ResultViewerPanel {
             await ResultViewerPanel.showMetadata(entitySetName || undefined, entityLogicalName);
             return;
         }
+
+        ResultViewerPanel.lastOperationalProfileNavigationContext = {
+            entityLogicalName,
+            entitySetName: entitySetName || undefined,
+            actionId,
+            source: "operationalProfile",
+            timestamp: Date.now()
+        };
 
         const evidenceQuery = ResultViewerPanel.buildProfileEvidenceQuery(actionId, entityLogicalName);
         if (evidenceQuery) {

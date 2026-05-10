@@ -17,10 +17,15 @@ suite("operationalProfileMarkdownRenderer", () => {
     assert.ok(markdown.includes("**Entity:** `contact`"));
     assert.ok(markdown.includes("## Operational Density"));
     assert.ok(markdown.includes("## Evidence Summary"));
+    assert.ok(markdown.includes("## Future Investigation Surfaces"));
+    assert.ok(markdown.includes("## Suggested Investigation Actions"));
     assert.ok(markdown.includes("**Why this matters:**"));
     assert.ok(markdown.includes("Relationships</strong> — High"));
     assert.ok(!markdown.includes("High (75%)"));
     assert.ok(markdown.includes("74 relationships"));
+    assert.ok(markdown.includes("Review relationship footprint"));
+    assert.ok(markdown.includes("Custom API Discovery"));
+    assert.ok(markdown.includes("Operational Profile drift comparison"));
     assert.ok(markdown.includes("347 attributes"));
     assert.ok(markdown.includes("advisory-only"));
     assert.ok(!markdown.toLowerCase().includes("root cause:"));

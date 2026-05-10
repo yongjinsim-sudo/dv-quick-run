@@ -7,7 +7,9 @@ export type OperationalProfileEvidenceKind =
   | "asyncOperation"
   | "flow"
   | "workflow"
-  | "managedState";
+  | "managedState"
+  | "businessRule"
+  | "audit";
 
 export interface OperationalProfileEvidenceItem {
   kind: OperationalProfileEvidenceKind;
@@ -15,6 +17,48 @@ export interface OperationalProfileEvidenceItem {
   value: string;
   detail?: string;
   actionId?: string;
+}
+
+export type OperationalProfileGuidancePriority = "informational" | "moderate" | "high";
+
+export type OperationalProfileGuidanceCategory =
+  | "pluginRegistrationDensity"
+  | "relationshipDensity"
+  | "metadataFootprint"
+  | "asyncOperationActivity"
+  | "workflowParticipation"
+  | "flowParticipation"
+  | "managedStateNuance"
+  | "businessRuleParticipation"
+  | "realtimeWorkflowParticipation"
+  | "auditParticipation"
+  | "generalInvestigation";
+
+export interface OperationalProfileGuidanceItem {
+  category: OperationalProfileGuidanceCategory;
+  priority: OperationalProfileGuidancePriority;
+  title: string;
+  message: string;
+  evidenceDimensionIds: string[];
+}
+
+export type OperationalProfileNavigationPriority = "primary" | "secondary";
+
+export interface OperationalProfileNavigationAction {
+  actionId: string;
+  label: string;
+  description: string;
+  priority: OperationalProfileNavigationPriority;
+  evidenceDimensionIds: string[];
+}
+
+export type OperationalProfileFutureSurfaceAvailability = "freeRoadmap" | "proRoadmap";
+
+export interface OperationalProfileFutureSurface {
+  id: string;
+  label: string;
+  description: string;
+  availability: OperationalProfileFutureSurfaceAvailability;
 }
 
 export interface OperationalProfileDimension {
@@ -26,7 +70,7 @@ export interface OperationalProfileDimension {
   whyItMatters: string;
   evidenceStateLabel: string;
   intensityPercent: number;
-  stateKind?: "density" | "managed";
+  stateKind?: "density" | "managed" | "context";
   evidence: OperationalProfileEvidenceItem[];
 }
 
@@ -39,6 +83,10 @@ export interface OperationalProfileModel {
   summary: string;
   dimensions: OperationalProfileDimension[];
   evidence: OperationalProfileEvidenceItem[];
+  guidance: OperationalProfileGuidanceItem[];
+  navigationActions: OperationalProfileNavigationAction[];
+  futureSurfaces: OperationalProfileFutureSurface[];
+  /** @deprecated Use guidance for typed model-driven rendering. Kept for existing surfaces. */
   investigationGuidance: string[];
   invariants: {
     entityScoped: true;
@@ -59,6 +107,9 @@ export interface OperationalProfileInput {
   distinctAsyncOperationCount7d?: number;
   flowReferenceCount?: number;
   activeWorkflowCount?: number;
+  businessRuleCount?: number;
+  realTimeWorkflowCount?: number;
+  auditingEnabled?: boolean;
   isManaged?: boolean;
   isPartiallyManaged?: boolean;
   managedDetail?: string;
