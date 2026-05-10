@@ -178,7 +178,7 @@ export const RESULT_VIEWER_STYLES = `
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 7px 10px;
+            padding: 6px 10px;
             border-radius: 6px;
             border: 1px solid var(--vscode-panel-border);
             font-size: 12px;
@@ -509,7 +509,7 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         .insights-plugin-name {
-            margin-top: 8px;
+            margin-top: 7px;
             font-weight: 700;
             font-size: 12px;
         }
@@ -568,7 +568,7 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         .insights-raw-actions {
-            margin-top: 8px;
+            margin-top: 7px;
         }
 
         .insights-copy-raw-btn {
@@ -806,7 +806,7 @@ export const RESULT_VIEWER_STYLES = `
         .json-search-input {
             min-width: 240px;
             max-width: 360px;
-            padding: 6px 8px;
+            padding: 5px 8px;
             border-radius: 6px;
             border: 1px solid var(--vscode-input-border);
             background: var(--vscode-input-background);
@@ -1065,7 +1065,7 @@ export const RESULT_VIEWER_STYLES = `
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-top: 8px;
+            margin-top: 7px;
         }
 
         .batch-summary-item {
@@ -1106,7 +1106,7 @@ export const RESULT_VIEWER_STYLES = `
         .table-filter-input {
             min-width: 220px;
             max-width: 320px;
-            padding: 6px 8px;
+            padding: 5px 8px;
             border-radius: 6px;
             border: 1px solid var(--vscode-input-border);
             background: var(--vscode-input-background);
@@ -2065,7 +2065,7 @@ export const RESULT_VIEWER_STYLES = `
 
 #profileDrawerCloseBtn {
     padding: 5px 14px;
-    min-height: 28px;
+    min-height: 26px;
     border-radius: 5px;
     font-size: 12px;
     font-weight: 600;
@@ -2373,7 +2373,7 @@ export const RESULT_VIEWER_STYLES = `
 }
 
 .profile-card-heading {
-    padding: 10px 16px 8px;
+    padding: 9px 16px 7px;
 }
 
 .profile-title-row {
@@ -2383,7 +2383,7 @@ export const RESULT_VIEWER_STYLES = `
 
 .profile-summary-row {
     gap: 12px;
-    margin-top: 8px;
+    margin-top: 7px;
 }
 
 .profile-band-badge {
@@ -2396,14 +2396,14 @@ export const RESULT_VIEWER_STYLES = `
 }
 
 .profile-metrics {
-    padding: 6px 16px;
+    padding: 5px 16px;
 }
 
 .profile-metric-row {
     grid-template-columns: 204px minmax(120px, 0.9fr) minmax(220px, 1.35fr);
     gap: 10px;
-    min-height: 28px;
-    padding: 3px 0;
+    min-height: 26px;
+    padding: 2px 0;
 }
 
 .profile-metric-name {
@@ -2457,8 +2457,8 @@ export const RESULT_VIEWER_STYLES = `
 .profile-evidence-row {
     grid-template-columns: 10px minmax(190px, 0.9fr) minmax(210px, 1.25fr) minmax(145px, max-content);
     gap: 7px;
-    min-height: 26px;
-    padding: 3px 0 3px 24px;
+    min-height: 24px;
+    padding: 2px 0 2px 24px;
     margin-left: 10px;
 }
 
@@ -2480,12 +2480,12 @@ export const RESULT_VIEWER_STYLES = `
 }
 
 .profile-guidance > summary {
-    padding: 7px 10px;
+    padding: 6px 10px;
 }
 
 .profile-guidance-scroll {
-    max-height: 148px;
-    padding: 7px 10px 8px 44px;
+    max-height: 142px;
+    padding: 6px 10px 7px 44px;
 }
 
 .profile-guidance-text {
@@ -2529,6 +2529,186 @@ export const RESULT_VIEWER_STYLES = `
 
 .profile-evidence-action {
     justify-self: end !important;
+}
+
+/* v0.9.15 Workstream C: bounded operational navigation actions. */
+.profile-navigation {
+    margin: 6px 16px 0;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 70%, transparent 30%);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--vscode-sideBar-background) 92%, var(--vscode-editor-background) 8%);
+    overflow: hidden;
+}
+
+.profile-navigation > summary {
+    display: grid;
+    grid-template-columns: 28px 1fr max-content;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.profile-navigation > summary::-webkit-details-marker {
+    display: none;
+}
+
+.profile-navigation-icon {
+    display: inline-flex;
+    width: 17px;
+    height: 17px;
+    color: var(--vscode-charts-blue);
+}
+
+.profile-navigation-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 6px;
+    padding: 0 10px 8px 36px;
+}
+
+.profile-navigation-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 1px solid color-mix(in srgb, var(--vscode-button-border, var(--vscode-panel-border)) 62%, transparent 38%);
+    border-radius: 8px;
+    color: var(--vscode-foreground);
+    background: color-mix(in srgb, var(--vscode-button-secondaryBackground, var(--vscode-editor-background)) 72%, transparent 28%);
+    cursor: pointer;
+    text-align: left;
+}
+
+.profile-navigation-action:hover {
+    border-color: color-mix(in srgb, var(--vscode-focusBorder) 70%, transparent 30%);
+    background: color-mix(in srgb, var(--vscode-list-hoverBackground) 78%, transparent 22%);
+}
+
+.profile-navigation-action-primary {
+    border-color: color-mix(in srgb, var(--vscode-charts-blue) 50%, var(--vscode-panel-border) 50%);
+}
+
+.profile-navigation-action-label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.profile-navigation-action-desc {
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    line-height: 1.25;
+}
+
+/* v0.9.15 Workstream E: subtle roadmap capability visibility. */
+.profile-future-surfaces {
+    margin: 6px 16px 0;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 62%, transparent 38%);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--vscode-sideBar-background) 90%, var(--vscode-editor-background) 10%);
+    overflow: hidden;
+}
+
+.profile-future-surfaces > summary {
+    display: grid;
+    grid-template-columns: 28px 1fr max-content;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.profile-future-surfaces > summary::-webkit-details-marker {
+    display: none;
+}
+
+.profile-future-icon {
+    display: inline-flex;
+    width: 17px;
+    height: 17px;
+    color: color-mix(in srgb, var(--vscode-charts-purple, var(--vscode-charts-blue)) 82%, var(--vscode-foreground) 18%);
+}
+
+.profile-future-surface-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 2px 10px 8px 36px;
+}
+
+.profile-future-surface-intro {
+    margin: 0 0 4px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.profile-future-surface {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) max-content;
+    gap: 8px;
+    align-items: start;
+    min-width: 0;
+    padding: 6px 2px;
+    border-top: 1px solid color-mix(in srgb, var(--vscode-panel-border) 58%, transparent 42%);
+    color: var(--vscode-foreground);
+}
+
+.profile-future-surface:first-of-type {
+    border-top-color: color-mix(in srgb, var(--vscode-panel-border) 34%, transparent 66%);
+}
+
+.profile-future-surface:hover,
+.profile-future-surface:focus {
+    background: color-mix(in srgb, var(--vscode-list-hoverBackground) 56%, transparent 44%);
+    outline: none;
+}
+
+.profile-future-surface-proRoadmap .profile-future-lock {
+    color: color-mix(in srgb, var(--vscode-charts-purple, var(--vscode-charts-blue)) 78%, var(--vscode-foreground) 22%);
+}
+
+.profile-future-lock {
+    line-height: 1.25;
+    opacity: 0.9;
+}
+
+.profile-future-main {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-future-label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.profile-future-description {
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    line-height: 1.25;
+}
+
+.profile-future-badge {
+    align-self: start;
+    white-space: nowrap;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 72%, transparent 28%);
+    border-radius: 999px;
+    padding: 1px 6px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    line-height: 1.4;
 }
 
 `;

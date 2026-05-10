@@ -1,3 +1,5 @@
+import * as os from "os";
+import * as path from "path";
 import * as vscode from "vscode";
 import type { CommandContext } from "../../../context/commandContext.js";
 import {
@@ -166,16 +168,30 @@ async function showRelationshipExplorerDocument(
   content: string,
   logicalName: string
 ): Promise<void> {
+  const fileName = `Relationship Explorer - ${logicalName}.txt`;
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  const defaultUri = workspaceFolder
+    ? vscode.Uri.joinPath(workspaceFolder.uri, fileName)
+    : vscode.Uri.file(path.join(os.homedir(), fileName));
 
-  const uri = vscode.Uri.parse(`untitled:Relationship Explorer - ${logicalName}.txt`);
+  const targetUri = await vscode.window.showSaveDialog({
+    defaultUri,
+    filters: {
+      "Text files": ["txt"],
+      "All files": ["*"]
+    },
+    saveLabel: "Save Relationship Explorer",
+    title: "Save Relationship Explorer output"
+  });
 
-  const doc = await vscode.workspace.openTextDocument(uri);
+  if (!targetUri) {
+    return;
+  }
 
-  const editor = await vscode.window.showTextDocument(doc, { preview: false });
+  await vscode.workspace.fs.writeFile(targetUri, new TextEncoder().encode(content));
 
-  const edit = new vscode.WorkspaceEdit();
-  edit.insert(uri, new vscode.Position(0, 0), content);
-  await vscode.workspace.applyEdit(edit);
+  const doc = await vscode.workspace.openTextDocument(targetUri);
+  await vscode.window.showTextDocument(doc, { preview: false });
 }
 
 function tryGetEntitySetNameFromActiveEditor(): string | undefined {

@@ -130,6 +130,88 @@ suite("operationalProfileEngine", () => {
     assert.strictEqual(build(41).dimensions.find((dimension) => dimension.id === "automation")?.band, "veryHigh");
   });
 
+
+  test("balances overall density across multiple operational dimensions", () => {
+    const pluginOnly = buildOperationalProfile({
+      entityLogicalName: "pluginonly",
+      synchronousPluginStepCount: 53
+    });
+
+    assert.strictEqual(pluginOnly.dimensions.find((dimension) => dimension.id === "automation")?.band, "veryHigh");
+    assert.strictEqual(pluginOnly.headlineBand, "moderate");
+
+    const broadEnterpriseEntity = buildOperationalProfile({
+      entityLogicalName: "contact",
+      synchronousPluginStepCount: 53,
+      relationshipCount: 586,
+      attributeCount: 573,
+      businessRuleCount: 8
+    });
+
+    assert.strictEqual(broadEnterpriseEntity.headlineBand, "high");
+
+    const pluginHeavyWithLimitedSupportingSignals = buildOperationalProfile({
+      entityLogicalName: "msemr_medicalidentifier",
+      synchronousPluginStepCount: 40,
+      asyncOperationCount7d: 11,
+      businessRuleCount: 4,
+      auditingEnabled: true
+    });
+
+    assert.strictEqual(pluginHeavyWithLimitedSupportingSignals.dimensions.find((dimension) => dimension.id === "automation")?.band, "high");
+    assert.strictEqual(pluginHeavyWithLimitedSupportingSignals.headlineBand, "moderate");
+  });
+
+
+  test("builds bounded contextual investigation actions from evidence dimensions", () => {
+    const profile = buildOperationalProfile({
+      entityLogicalName: "contact",
+      synchronousPluginStepCount: 53,
+      relationshipCount: 586,
+      asyncOperationCount7d: 15,
+      businessRuleCount: 4,
+      realTimeWorkflowCount: 2
+    });
+
+    assert.ok(profile.navigationActions.some((item) => item.actionId === "viewPluginSteps" && item.priority === "primary"));
+    assert.ok(profile.navigationActions.some((item) => item.actionId === "viewRelationships"));
+    assert.ok(profile.navigationActions.some((item) => item.actionId === "viewAsyncOperations"));
+    assert.ok(profile.navigationActions.some((item) => item.actionId === "viewBusinessRules"));
+    assert.ok(profile.navigationActions.every((item) => item.evidenceDimensionIds.length > 0));
+
+    const actionText = profile.navigationActions.map((item) => `${item.label} ${item.description}`).join(" ").toLowerCase();
+    assert.ok(!actionText.includes("root cause"));
+    assert.ok(!actionText.includes("caused by"));
+    assert.ok(!actionText.includes("broken"));
+    assert.ok(!actionText.includes("detected the exact issue"));
+  });
+
+  test("does not generate contextual investigation actions without supporting evidence", () => {
+    const profile = buildOperationalProfile({ entityLogicalName: "quietentity" });
+
+    assert.deepStrictEqual(profile.navigationActions, []);
+  });
+
+
+
+  test("surfaces subtle free and pro roadmap investigation capabilities", () => {
+    const profile = buildOperationalProfile({ entityLogicalName: "contact" });
+
+    assert.strictEqual(profile.futureSurfaces.length, 5);
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "customApiDiscovery" && item.availability === "freeRoadmap"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "crossSurfaceInvestigationPivots" && item.availability === "freeRoadmap"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "operationalProfileDriftComparison" && item.availability === "proRoadmap"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "crossEnvironmentOperationalComparison" && item.availability === "proRoadmap"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "deploymentOperationalImpactAnalysis" && item.availability === "proRoadmap"));
+
+    const futureText = profile.futureSurfaces.map((item) => `${item.label} ${item.description}`).join(" ").toLowerCase();
+    assert.ok(futureText.includes("custom api"));
+    assert.ok(futureText.includes("drift"));
+    assert.ok(!futureText.includes("root cause"));
+    assert.ok(!futureText.includes("buy now"));
+    assert.ok(!futureText.includes("upgrade now"));
+  });
+
   test("reports managed state as state context rather than density severity", () => {
     const profile = buildOperationalProfile({
       entityLogicalName: "contact",

@@ -26,13 +26,13 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.14 (Operational Profiles & Evidence-Backed Entity Investigation)
+## 🆕 What's New in v0.9.15 (Operational Investigation Surfaces & UX Refinement)
 
 > A focused **operational investigation release** — introducing Operational Profiles, operational density classification, evidence-backed investigation links, and entity-level orchestration visibility without introducing speculative telemetry or root-cause scoring.
 
 ---
 
-### 🧭 Operational Profiles (NEW)
+### 🧭 Operational Profiles (EXPANDED)
 
 DV Quick Run now introduces **Operational Profiles** — a new entity-scoped investigation surface designed to help engineers quickly understand the operational complexity surrounding a Dataverse table.
 
@@ -54,7 +54,7 @@ DV Quick Run now provides a bounded, evidence-backed operational overview in one
 
 ---
 
-### 📊 Operational Density Classification (NEW)
+### 📊 Operational Density Classification (REFINED)
 
 Operational Profiles now classify entities using bounded operational density signals:
 
@@ -155,12 +155,13 @@ DV Quick Run intentionally avoids implying:
 
 ### 🧩 Operational Profile UX
 
-Operational Profiles were designed to reinforce:
+Operational Profiles were refined to reinforce:
 
 * strongest operational signals first
 * evidence-backed interpretation
 * advisory-only investigation guidance
 * bounded operational reasoning
+* progressive disclosure over overload
 
 The UI emphasises:
 
@@ -168,8 +169,115 @@ The UI emphasises:
 * investigation entry points
 * evidence hierarchy
 * orchestration visibility
+* calmer scan-first investigation flow
+
+Additional refinement work focused on:
+
+* tighter section spacing
+* collapsed-by-default evidence and guidance sections
+* clearer suggested investigation actions
+* stronger signal-first scanning
+* reduced operational noise
 
 …without introducing speculative telemetry scoring or hidden analysis behaviour.
+
+---
+
+### 🧭 Suggested Investigation Actions (NEW)
+
+Operational Profiles now surface actionable investigation entry points directly inside the profile.
+
+Examples:
+
+* View plugin registrations
+* Investigate async operations
+* Review relationship footprint
+* View business rules
+
+Actions are:
+
+* entity-scoped
+* bounded
+* evidence-backed
+* investigation-oriented
+
+👉 Results in:
+
+* faster transition from signal → investigation
+* less manual query construction
+* clearer operational workflow guidance
+
+---
+
+### 📂 Progressive Disclosure UX Refinement (NEW)
+
+Operational Profile sections now open in a calmer, investigation-first state.
+
+Changes include:
+
+* Evidence collapsed by default
+* Suggested Investigation Actions collapsed by default
+* Investigation Guidance collapsed by default
+* Future Investigation Surfaces collapsed by default
+
+Behaviour:
+
+* strongest operational signals remain immediately visible
+* deeper operational evidence becomes progressively explorable
+* avoids overwhelming users during first scan
+
+👉 Results in:
+
+* faster visual comprehension
+* cleaner operational scanning
+* reduced cognitive overload
+
+---
+
+### 🔮 Future Investigation Surfaces (NEW)
+
+Operational Profiles now introduce roadmap visibility for upcoming investigation capabilities.
+
+Current roadmap surfaces include:
+
+Free roadmap:
+
+* Custom API Discovery
+* Cross-surface investigation pivots
+
+Pro roadmap:
+
+* Operational Profile drift comparison
+* Cross-environment operational comparison
+* Deployment operational impact analysis
+
+Behaviour:
+
+* roadmap items are informational only
+* hover descriptions explain future capability intent
+* no hidden execution or inaccessible behaviour
+
+👉 Results in:
+
+* clearer product direction
+* stronger platform identity
+* better user understanding of future operational workflows
+
+---
+
+### 🔗 Relationship Investigation Workflow Refinement
+
+Improved relationship investigation handling:
+
+* safer relationship export workflow
+* save dialog prompt support
+* cleaner transition into Relationship Explorer workflows
+
+👉 Results in:
+
+* more predictable export behaviour
+* smoother relationship investigation flow
+* better compatibility across environments
 
 ---
 
@@ -221,14 +329,18 @@ DV Quick Run can now:
 * surface operational density for Dataverse entities
 * expose orchestration participation clearly
 * provide evidence-backed investigation entry points
+* suggest contextual investigation actions
 * distinguish lightweight vs operationally dense entities
 * guide operational investigation without making root-cause claims
+* surface future investigation roadmap directions without interrupting the workflow
 
-👉 Establishes the foundation for:
+👉 Further strengthens the foundation for:
 
 * future operational reasoning layers
 * execution-aware entity profiling
 * cross-source operational investigation
+* operational comparison workflows
+* deployment-aware operational analysis
 * deeper Power Platform operational diagnostics
 
 ---

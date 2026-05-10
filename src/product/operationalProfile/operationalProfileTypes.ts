@@ -42,6 +42,25 @@ export interface OperationalProfileGuidanceItem {
   evidenceDimensionIds: string[];
 }
 
+export type OperationalProfileNavigationPriority = "primary" | "secondary";
+
+export interface OperationalProfileNavigationAction {
+  actionId: string;
+  label: string;
+  description: string;
+  priority: OperationalProfileNavigationPriority;
+  evidenceDimensionIds: string[];
+}
+
+export type OperationalProfileFutureSurfaceAvailability = "freeRoadmap" | "proRoadmap";
+
+export interface OperationalProfileFutureSurface {
+  id: string;
+  label: string;
+  description: string;
+  availability: OperationalProfileFutureSurfaceAvailability;
+}
+
 export interface OperationalProfileDimension {
   id: string;
   label: string;
@@ -65,6 +84,8 @@ export interface OperationalProfileModel {
   dimensions: OperationalProfileDimension[];
   evidence: OperationalProfileEvidenceItem[];
   guidance: OperationalProfileGuidanceItem[];
+  navigationActions: OperationalProfileNavigationAction[];
+  futureSurfaces: OperationalProfileFutureSurface[];
   /** @deprecated Use guidance for typed model-driven rendering. Kept for existing surfaces. */
   investigationGuidance: string[];
   invariants: {

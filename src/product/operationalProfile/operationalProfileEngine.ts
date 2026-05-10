@@ -3,7 +3,9 @@ import type {
   OperationalProfileDimension,
   OperationalProfileEvidenceItem,
   OperationalProfileInput,
-  OperationalProfileModel
+  OperationalProfileFutureSurface,
+  OperationalProfileModel,
+  OperationalProfileNavigationAction
 } from "./operationalProfileTypes.js";
 import { buildOperationalProfileGuidance } from "./operationalProfileGuidanceBuilder.js";
 
@@ -159,11 +161,20 @@ function highestComplexityBand(dimensions: OperationalProfileDimension[]): Opera
     { none: 0, low: 0, moderate: 0, high: 0, veryHigh: 0, partial: 0 } satisfies Record<OperationalProfileBand, number>
   );
 
-  if (countByBand.veryHigh > 0 || countByBand.high >= 2) {
+  const elevatedDimensionCount = countByBand.high + countByBand.veryHigh;
+  const moderateOrHigherCount = countByBand.moderate + elevatedDimensionCount;
+
+  if (
+    countByBand.veryHigh >= 2
+    || (countByBand.veryHigh >= 1 && countByBand.high >= 1)
+    || (countByBand.veryHigh >= 1 && countByBand.moderate >= 1)
+    || countByBand.high >= 2
+    || (countByBand.high >= 1 && countByBand.moderate >= 2)
+  ) {
     return "high";
   }
 
-  if (countByBand.high === 1 || countByBand.moderate >= 2) {
+  if (countByBand.veryHigh === 1 || countByBand.high === 1 || moderateOrHigherCount >= 2) {
     return "moderate";
   }
 
@@ -172,6 +183,123 @@ function highestComplexityBand(dimensions: OperationalProfileDimension[]): Opera
   }
 
   return "none";
+}
+
+
+function bandAtLeast(band: OperationalProfileBand, minimum: OperationalProfileBand): boolean {
+  const rank: Record<OperationalProfileBand, number> = {
+    none: 0,
+    low: 1,
+    partial: 1,
+    moderate: 2,
+    high: 3,
+    veryHigh: 4
+  };
+  return rank[band] >= rank[minimum];
+}
+
+function buildNavigationAction(args: OperationalProfileNavigationAction): OperationalProfileNavigationAction {
+  return args;
+}
+
+function buildOperationalProfileNavigationActions(
+  dimensions: readonly OperationalProfileDimension[]
+): OperationalProfileNavigationAction[] {
+  const actions: OperationalProfileNavigationAction[] = [];
+  const byId = new Map(dimensions.map((dimension) => [dimension.id, dimension]));
+
+  const automation = byId.get("automation");
+  if (bandAtLeast(automation?.band ?? "none", "moderate")) {
+    actions.push(buildNavigationAction({
+      actionId: "viewPluginSteps",
+      label: "View plugin registrations",
+      description: "Inspect synchronous plugin touchpoints for this entity.",
+      priority: bandAtLeast(automation?.band ?? "none", "high") ? "primary" : "secondary",
+      evidenceDimensionIds: ["automation"]
+    }));
+  }
+
+  const asyncLoad = byId.get("asyncLoad");
+  if (bandAtLeast(asyncLoad?.band ?? "none", "low")) {
+    actions.push(buildNavigationAction({
+      actionId: "viewAsyncOperations",
+      label: "Investigate async operations",
+      description: "Open recent asyncoperation evidence scoped to this entity.",
+      priority: bandAtLeast(asyncLoad?.band ?? "none", "moderate") ? "primary" : "secondary",
+      evidenceDimensionIds: ["asyncLoad"]
+    }));
+  }
+
+  const realTimeWorkflows = byId.get("realTimeWorkflows");
+  const workflows = byId.get("workflows");
+  if (bandAtLeast(realTimeWorkflows?.band ?? workflows?.band ?? "none", "low")) {
+    actions.push(buildNavigationAction({
+      actionId: "viewRealtimeWorkflows",
+      label: "Inspect real-time workflows",
+      description: "Review synchronous workflow participation for this entity.",
+      priority: bandAtLeast(realTimeWorkflows?.band ?? "none", "moderate") ? "primary" : "secondary",
+      evidenceDimensionIds: ["realTimeWorkflows"]
+    }));
+  }
+
+  const businessRules = byId.get("businessRules");
+  if (bandAtLeast(businessRules?.band ?? "none", "low")) {
+    actions.push(buildNavigationAction({
+      actionId: "viewBusinessRules",
+      label: "View business rules",
+      description: "Inspect form/table rule logic associated with this entity.",
+      priority: "secondary",
+      evidenceDimensionIds: ["businessRules"]
+    }));
+  }
+
+  const relationships = byId.get("relationships");
+  if (bandAtLeast(relationships?.band ?? "none", "moderate")) {
+    actions.push(buildNavigationAction({
+      actionId: "viewRelationships",
+      label: "Review relationship footprint",
+      description: "Use relationship evidence to decide traversal direction.",
+      priority: bandAtLeast(relationships?.band ?? "none", "high") ? "primary" : "secondary",
+      evidenceDimensionIds: ["relationships"]
+    }));
+  }
+
+  return actions.slice(0, 5);
+}
+
+function buildOperationalProfileFutureSurfaces(): OperationalProfileFutureSurface[] {
+  return [
+    {
+      id: "customApiDiscovery",
+      label: "Custom API Discovery",
+      description: "Discover Custom APIs associated with this entity and investigate related operational execution surfaces.",
+      availability: "freeRoadmap"
+    },
+    {
+      id: "crossSurfaceInvestigationPivots",
+      label: "Cross-surface investigation pivots",
+      description: "Move between related DV Quick Run investigation surfaces while preserving the current operational context.",
+      availability: "freeRoadmap"
+    },
+    {
+      id: "operationalProfileDriftComparison",
+      label: "Operational Profile drift comparison",
+      description: "Compare operational profile changes across deployments, environments, or snapshots to identify investigation-impacting drift.",
+      availability: "proRoadmap"
+    },
+    {
+      id: "crossEnvironmentOperationalComparison",
+      label: "Cross-environment operational comparison",
+      description: "Compare operational density, automation participation, and investigation surfaces between environments.",
+      availability: "proRoadmap"
+    },
+    {
+      id: "deploymentOperationalImpactAnalysis",
+      label: "Deployment operational impact analysis",
+      description: "Review how deployments may change operational investigation surfaces, orchestration participation, or automation density.",
+      availability: "proRoadmap"
+    }
+  ];
 }
 
 function buildSummary(headlineBand: OperationalProfileBand): string {
@@ -373,6 +501,8 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
     .concat(createEvidence(flowEvidence), createEvidence(workflowEvidence));
   const headlineBand = highestComplexityBand(dimensions);
   const guidance = buildOperationalProfileGuidance(dimensions);
+  const navigationActions = buildOperationalProfileNavigationActions(dimensions);
+  const futureSurfaces = buildOperationalProfileFutureSurfaces();
 
   return {
     kind: "entityOperationalProfile",
@@ -384,6 +514,8 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
     dimensions,
     evidence,
     guidance,
+    navigationActions,
+    futureSurfaces,
     investigationGuidance: guidance.map((item) => item.message),
     invariants: {
       entityScoped: true,

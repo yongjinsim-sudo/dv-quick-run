@@ -966,6 +966,57 @@ function showCopyStatus(message) {
             return evidence.map((item) => buildProfileEvidenceRowHtml(profile, item)).join("");
         }
 
+
+        function buildProfileNavigationActionsHtml(profile) {
+            const actions = Array.isArray(profile?.navigationActions) ? profile.navigationActions : [];
+            if (!actions.length) {
+                return "";
+            }
+
+            const renderAction = (action) => {
+                const priority = String(action?.priority || "secondary");
+                return '<button class="profile-navigation-action profile-navigation-action-' + escapeAttribute(priority) + '" type="button" data-profile-action="' + escapeAttribute(action?.actionId || "") + '"' +
+                    ' data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '"' +
+                    ' data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '">' +
+                    '<span class="profile-navigation-action-label">' + escapeHtml(action?.label || "Open evidence") + '</span>' +
+                    '<span class="profile-navigation-action-desc">' + escapeHtml(action?.description || "Open related operational evidence.") + '</span>' +
+                    '</button>';
+            };
+
+            return '<details class="profile-navigation">' +
+                '<summary><span class="profile-navigation-icon">' + profileIconSvg("target", "Suggested investigation actions") + '</span><span>Suggested investigation actions</span><span class="profile-guidance-count">' + escapeHtml(String(actions.length)) + ' items</span></summary>' +
+                '<div class="profile-navigation-actions">' + actions.map(renderAction).join("") + '</div>' +
+                '</details>';
+        }
+
+
+        function buildProfileFutureSurfacesHtml(profile) {
+            const surfaces = Array.isArray(profile?.futureSurfaces) ? profile.futureSurfaces : [];
+            if (!surfaces.length) {
+                return "";
+            }
+
+            const renderSurface = (surface) => {
+                const availability = String(surface?.availability || "freeRoadmap");
+                const isPro = availability === "proRoadmap";
+                const badgeText = isPro ? "Pro roadmap" : "Free roadmap";
+                const tooltip = String(surface?.description || "Future investigation surface.");
+                return '<div class="profile-future-surface profile-future-surface-' + escapeAttribute(availability) + '" title="' + escapeAttribute(tooltip) + '" tabindex="0" aria-label="' + escapeAttribute((surface?.label || "Future investigation surface") + '. ' + tooltip) + '">' +
+                    '<span class="profile-future-lock" aria-hidden="true">' + (isPro ? '🔒' : '⏳') + '</span>' +
+                    '<span class="profile-future-main"><span class="profile-future-label">' + escapeHtml(surface?.label || "Future investigation surface") + '</span>' +
+                    '<span class="profile-future-description">' + escapeHtml(tooltip) + '</span></span>' +
+                    '<span class="profile-future-badge">' + escapeHtml(badgeText) + '</span>' +
+                    '</div>';
+            };
+
+            return '<details class="profile-future-surfaces">' +
+                '<summary><span class="profile-future-icon">' + profileIconSvg("target", "Future investigation surfaces") + '</span><span>Future investigation surfaces</span><span class="profile-guidance-count">' + escapeHtml(String(surfaces.length)) + ' items</span></summary>' +
+                '<div class="profile-future-surface-list">' +
+                '<div class="profile-future-surface-intro">Roadmap directions for deeper operational investigation and faster context switching.</div>' +
+                surfaces.map(renderSurface).join("") + '</div>' +
+                '</details>';
+        }
+
         function buildProfileGuidanceHtml(profile) {
             const typedGuidance = Array.isArray(profile?.guidance) ? profile.guidance : [];
             const legacyGuidance = Array.isArray(profile?.investigationGuidance) ? profile.investigationGuidance : [];
@@ -990,7 +1041,7 @@ function showCopyStatus(message) {
                 '<div class="profile-guidance-item"><strong>' + escapeHtml(item.title) + '</strong><br><span>' + escapeHtml(item.message) + '</span></div>'
             ).join("");
 
-            return '<details class="profile-guidance" open>' +
+            return '<details class="profile-guidance">' +
                 '<summary><span class="profile-guidance-icon">' + profileIconSvg("info", "Investigation guidance") + '</span><span>Investigation guidance</span><span class="profile-guidance-count">' + escapeHtml(String(guidance.length)) + ' items</span></summary>' +
                 '<div class="profile-guidance-scroll">' +
                 '<div class="profile-guidance-text">' + renderGuidanceItems(visibleGuidance) +
@@ -1014,8 +1065,10 @@ function showCopyStatus(message) {
                 '</div>' +
                 '<div class="profile-card-scroll">' +
                 '<div class="profile-metrics">' + dimensions.map((dimension) => buildProfileMetricRowHtml(profile, dimension)).join("") + '</div>' +
-                '<details class="profile-evidence" open><summary><span class="profile-evidence-summary-icon">' + profileIconSvg("evidence", "Evidence") + '</span><span>Evidence (click to expand)</span></summary>' + buildProfileEvidenceSectionHtml(profile) + '</details>' +
+                '<details class="profile-evidence"><summary><span class="profile-evidence-summary-icon">' + profileIconSvg("evidence", "Evidence") + '</span><span>Evidence (click to expand)</span></summary>' + buildProfileEvidenceSectionHtml(profile) + '</details>' +
+                buildProfileNavigationActionsHtml(profile) +
                 buildProfileGuidanceHtml(profile) +
+                buildProfileFutureSurfacesHtml(profile) +
                 '</div>' +
                 '<div class="profile-guardrails"><span>' + profileIconSvg("target", "Entity scoped") + 'Entity-scoped</span><span>•</span><span>' + profileIconSvg("user", "User triggered") + 'User-triggered</span><span>•</span><span>' + profileIconSvg("managed", "Advisory only") + 'Advisory-only</span><span>•</span><span>' + profileIconSvg("document", "Evidence backed") + 'Evidence-backed</span><span>•</span><span>' + profileIconSvg("blocked", "No root-cause claim") + 'No root-cause claim</span></div>' +
                 '</div>';

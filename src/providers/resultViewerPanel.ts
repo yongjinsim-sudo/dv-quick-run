@@ -53,6 +53,14 @@ type AsyncProfileEvidence = {
     distinctAsyncOperationCount7d?: number;
 };
 
+type OperationalProfileNavigationContext = {
+    entityLogicalName: string;
+    actionId: string;
+    entitySetName?: string;
+    source: "operationalProfile";
+    timestamp: number;
+};
+
 type ResultViewerMessage =
     | {
         type: "copyToClipboard";
@@ -221,6 +229,7 @@ export class ResultViewerPanel {
     private static currentSessionId: string | undefined;
     private static currentModel: ResultViewerDisplayModel | undefined;
     private static executionInsightsSuppressedUntilByEnvironment = new Map<string, number>();
+    private static lastOperationalProfileNavigationContext: OperationalProfileNavigationContext | undefined;
 
     public static show(
     ctx: CommandContext,
@@ -719,6 +728,14 @@ export class ResultViewerPanel {
             await ResultViewerPanel.showMetadata(entitySetName || undefined, entityLogicalName);
             return;
         }
+
+        ResultViewerPanel.lastOperationalProfileNavigationContext = {
+            entityLogicalName,
+            entitySetName: entitySetName || undefined,
+            actionId,
+            source: "operationalProfile",
+            timestamp: Date.now()
+        };
 
         const evidenceQuery = ResultViewerPanel.buildProfileEvidenceQuery(actionId, entityLogicalName);
         if (evidenceQuery) {

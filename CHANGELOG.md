@@ -6,6 +6,219 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.15 — Operational Profile Investigation Surfaces & UX Refinement
+
+This release refines Operational Profiles into a more complete operational investigation surface for Dataverse engineering workflows.
+
+It focuses on:
+
+- tighter operational density presentation
+- investigation-first UX refinement
+- evidence-backed operational guidance
+- clearer next-step investigation actions
+- roadmap visibility for future operational capabilities
+
+The goal is not to overwhelm users with telemetry.
+
+It is:
+
+- faster operational understanding
+- clearer investigation prioritisation
+- calmer investigation workflows
+- stronger operational trust
+
+---
+
+### Suggested Investigation Actions (NEW)
+
+Operational Profiles now surface actionable investigation entry points directly inside the profile.
+
+Examples:
+
+- View plugin registrations
+- Investigate async operations
+- Review relationship footprint
+- View business rules
+
+Actions are:
+
+- entity-scoped
+- bounded
+- evidence-backed
+- investigation-oriented
+
+Results in:
+
+- faster transition from signal to investigation
+- less manual query construction
+- clearer operational workflow guidance
+
+---
+
+### Progressive Disclosure UX Refinement (NEW)
+
+Operational Profile sections now open in a calmer, investigation-first state.
+
+Changes include:
+
+- Evidence collapsed by default
+- Suggested Investigation Actions collapsed by default
+- Investigation Guidance collapsed by default
+
+Behaviour:
+
+- strongest operational signals remain immediately visible
+- deeper operational evidence becomes progressively explorable
+- avoids overwhelming users during first scan
+
+Results in:
+
+- faster visual comprehension
+- cleaner operational scanning
+- reduced cognitive overload
+
+---
+
+### Investigation Guidance Refinement
+
+Refined investigation guidance wording to reinforce:
+
+- advisory-only reasoning
+- evidence-backed interpretation
+- operational context over root-cause implication
+
+Guidance now better explains:
+
+- why a signal may matter
+- when it becomes investigation-relevant
+- what operational context it represents
+
+Examples:
+
+- plugin touchpoint density
+- relationship footprint implications
+- metadata surface considerations
+- auditing context
+- managed-state governance context
+
+Results in:
+
+- stronger user trust
+- clearer operational semantics
+- reduced risk of misleading interpretation
+
+---
+
+### Future Investigation Surfaces (NEW)
+
+Operational Profiles now introduce roadmap visibility for upcoming investigation capabilities.
+
+Current roadmap surfaces include:
+
+Free roadmap:
+
+- Custom API Discovery
+- Cross-surface investigation pivots
+
+Pro roadmap:
+
+- Operational Profile drift comparison
+- Cross-environment operational comparison
+- Deployment operational impact analysis
+
+Behaviour:
+
+- roadmap items are informational only
+- hover descriptions explain future capability intent
+- no hidden execution or inaccessible behaviour
+
+Results in:
+
+- clearer product direction
+- stronger platform identity
+- better user understanding of future operational workflows
+
+---
+
+### Relationship Investigation Workflow Refinement
+
+Improved relationship investigation handling:
+
+- safer relationship export workflow
+- save dialog prompt support
+- cleaner transition into Relationship Explorer workflows
+
+Results in:
+
+- more predictable export behaviour
+- smoother relationship investigation flow
+- better compatibility across environments
+
+---
+
+### Operational Profile UX Polish
+
+Refined:
+
+- section spacing
+- hierarchy consistency
+- item count alignment
+- collapsed section readability
+- operational signal scanning flow
+
+Improved consistency between:
+
+- Suggested Investigation Actions
+- Investigation Guidance
+- Future Investigation Surfaces
+
+Results in:
+
+- more coherent operational UX
+- improved visual balance
+- cleaner investigation flow progression
+
+---
+
+## Notes
+
+This release reinforces Operational Profiles as:
+
+```text
+an operational investigation surface for Dataverse and Power Platform engineering
+```
+
+—not a telemetry dashboard or speculative scoring system.
+
+Key principles reinforced:
+
+- strongest signal first
+- investigation before explanation
+- evidence before interpretation
+- advisory-only operational guidance
+- progressive disclosure over overload
+
+---
+
+## Summary
+
+DV Quick Run can now:
+
+- guide users toward concrete operational investigations
+- present operational context more calmly
+- surface roadmap investigation directions
+- reduce operational scanning noise
+- improve investigation workflow coherence
+
+Establishes a stronger foundation for:
+
+- operational comparison workflows
+- deployment-aware operational analysis
+- future DVQR operational density evolution
+- cross-surface investigation experiences
+
+---
+
 ## v0.9.14 — Operational Profiles, Evidence Density & Entity Investigation Guidance
 
 This release introduces **Operational Profiles** — a new entity-scoped investigation surface designed to help engineers quickly understand the operational complexity surrounding a Dataverse table.
