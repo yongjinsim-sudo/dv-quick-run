@@ -202,6 +202,7 @@ export type TraversalInsightAction = {
 
 export type TraversalInsightActionContext = {
   route: TraversalRoute;
+  routeOptions?: TraversalRoute[];
   itinerary: TraversalExecutionPlan;
   step: TraversalExecutionStep;
   executionPlan: TraversalStepExecutionPlan;
@@ -223,6 +224,8 @@ export type TraversalViewerContext = {
   canSiblingExpand?: boolean;
   canRunBatch?: boolean;
   canRunOptimizedBatch?: boolean;
+  canGoBack?: boolean;
+  canChangeRoute?: boolean;
   showBanner?: boolean;
   bannerTitle?: string;
   bannerSubtitle?: string;
@@ -240,6 +243,7 @@ export type ActiveTraversalProgress = {
   debugLabel: string;
   isBestMatchRoute?: boolean;
   route: TraversalRoute;
+  routeOptions?: TraversalRoute[];
   itinerary: TraversalExecutionPlan;
   currentStepIndex: number;
   graph: TraversalGraph;

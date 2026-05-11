@@ -28,6 +28,8 @@ export function buildTraversalViewerContext(args: {
   canSiblingExpand?: boolean;
   canRunBatch?: boolean;
   canRunOptimizedBatch?: boolean;
+  canGoBack?: boolean;
+  canChangeRoute?: boolean;
   verbosity: TraversalExplainVerbosity;
 }): TraversalViewerContext {
   const nextStep = args.itinerary.steps[args.currentStepIndex + 1];
@@ -56,6 +58,8 @@ export function buildTraversalViewerContext(args: {
     canSiblingExpand: args.canSiblingExpand,
     canRunBatch: args.canRunBatch,
     canRunOptimizedBatch: args.canRunOptimizedBatch,
+    canGoBack: args.canGoBack,
+    canChangeRoute: args.canChangeRoute,
     showBanner: banner.showBanner,
     bannerTitle: banner.bannerTitle,
     bannerSubtitle: banner.bannerSubtitle

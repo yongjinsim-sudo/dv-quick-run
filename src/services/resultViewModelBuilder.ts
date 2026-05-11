@@ -16,6 +16,8 @@ import {
 } from "../providers/resultViewerActions/columnIntelligence.js";
 import { resolveChoiceValueFromMetadata } from "../commands/router/actions/shared/valueAwareness.js";
 import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggestion, buildResultViewerInsightSuggestions, getParsedQueryShape } from "../product/binder/buildBinderSuggestion.js";
+import { parseEditorQuery } from "../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
+import { parseExpandClause, type ExpandNode } from "../commands/router/actions/shared/expand/expandComposer.js";
 import type { BinderSuggestion } from "../product/binder/binderTypes.js";
 
 export interface ResultViewerEnvironmentInfo {
@@ -30,7 +32,20 @@ export interface ResultViewerTraversalStatus {
     canSiblingExpand?: boolean;
     canRunBatch?: boolean;
     canRunOptimizedBatch?: boolean;
+    canGoBack?: boolean;
+    canChangeRoute?: boolean;
     requiredCarryField?: string;
+}
+
+export type ResultViewerInvestigationPivotAction = "showOperationalProfile" | "requestExecutionInsights";
+
+export interface ResultViewerInvestigationPivot {
+    id: string;
+    label: string;
+    title: string;
+    action: ResultViewerInvestigationPivotAction;
+    source: "profile" | "execution" | "traversal" | "context";
+    payload?: Record<string, unknown>;
 }
 
 export interface ResultViewerEmptyState {
@@ -49,6 +64,8 @@ export interface ResultViewerTraversalContext extends ResultViewerTraversalActio
     bannerSubtitle?: string;
     canRunBatch?: boolean;
     canRunOptimizedBatch?: boolean;
+    canGoBack?: boolean;
+    canChangeRoute?: boolean;
 }
 
 export type ResultViewerCellValueType = "scalar" | "object" | "array" | "empty";
@@ -139,6 +156,7 @@ export interface ResultViewerModel {
     sourceTarget?: ResultViewerSourceTargetInfo;
     session?: ResultViewerSessionInfo;
     executionContext?: ResultViewerExecutionContext;
+    investigationPivots?: ResultViewerInvestigationPivot[];
 }
 
 export interface ResultViewerBuildOptions {
@@ -891,6 +909,301 @@ function buildRowActions(row: Record<string, ResultViewerCell>, primaryIdField?:
         .filter((action): action is ResultViewerResolvedAction => !!action);
 }
 
+
+function isExecutionInsightCandidate(queryPath: string, executionContext?: ResultViewerExecutionContext): boolean {
+    const normalized = queryPath.trim().toLowerCase().replace(/^\/+/, "");
+    const isPluginTrace = normalized.startsWith("plugintracelogs") || normalized.includes("/plugintracelogs");
+    const isAsyncOperation = normalized.startsWith("asyncoperations") || normalized.includes("/asyncoperations");
+    const hasExecutionContext = !!(
+        executionContext?.correlationId ||
+        executionContext?.requestId ||
+        executionContext?.operationId
+    );
+
+    return isPluginTrace || isAsyncOperation || hasExecutionContext;
+}
+
+
+interface InvestigationScopeSummaryArgs {
+    queryPath: string;
+    entityLogicalName?: string;
+    sourceColumns?: string[];
+}
+
+interface InvestigationScopeSummary {
+    label: string;
+    title: string;
+}
+
+function buildInvestigationScopeSummary(args: InvestigationScopeSummaryArgs): InvestigationScopeSummary | undefined {
+    const root = args.entityLogicalName?.trim();
+    if (!root) {
+        return undefined;
+    }
+
+    const expandNodes = getExpandNodes(args.queryPath);
+    if (!expandNodes.length) {
+        return {
+            label: root,
+            title: `Active investigation context: ${root}`
+        };
+    }
+
+    if (isLinearExpandPath(expandNodes)) {
+        const chain = buildLinearExpandChain(expandNodes[0], args.sourceColumns ?? []);
+        return {
+            label: [root, ...chain].join(" → "),
+            title: `Active investigation scope: ${[root, ...chain].join(" → ")}`
+        };
+    }
+
+    const expandedScopeCount = countExpandNodes(expandNodes);
+    const details = collectExpandPathDetails(expandNodes, args.sourceColumns ?? []);
+    return {
+        label: `${root} + ${expandedScopeCount} expanded ${expandedScopeCount === 1 ? "scope" : "scopes"}`,
+        title: [`Active investigation scope: ${root}`, "Expanded scopes:", ...details.map((detail) => `- ${detail}`)].join("\n")
+    };
+}
+
+interface ExpandedInvestigationEntity {
+    logicalName: string;
+    paths: string[];
+}
+
+function buildExpandedInvestigationEntities(args: InvestigationScopeSummaryArgs): ExpandedInvestigationEntity[] {
+    const root = args.entityLogicalName?.trim().toLowerCase();
+    const nodes = getExpandNodes(args.queryPath);
+    if (!nodes.length) {
+        return [];
+    }
+
+    const byEntity = new Map<string, Set<string>>();
+    collectExpandedInvestigationEntities(nodes, args.sourceColumns ?? [], [], byEntity);
+
+    return [...byEntity.entries()]
+        .filter(([logicalName]) => logicalName && logicalName !== root)
+        .map(([logicalName, paths]) => ({
+            logicalName,
+            paths: [...paths]
+        }))
+        .sort((left, right) => left.logicalName.localeCompare(right.logicalName));
+}
+
+function collectExpandedInvestigationEntities(
+    nodes: ExpandNode[],
+    sourceColumns: string[],
+    prefix: string[],
+    byEntity: Map<string, Set<string>>
+): void {
+    nodes.forEach((node) => {
+        const entityLogicalName = resolveExpandedEntityLogicalName(node.relationship, sourceColumns);
+        const scopeLabel = entityLogicalName ?? humanizeRelationshipName(node.relationship);
+        const currentPath = [...prefix, scopeLabel];
+
+        if (entityLogicalName) {
+            const normalized = entityLogicalName.toLowerCase();
+            const paths = byEntity.get(normalized) ?? new Set<string>();
+            paths.add(currentPath.join(" → "));
+            byEntity.set(normalized, paths);
+        }
+
+        collectExpandedInvestigationEntities(node.expand ?? [], sourceColumns, currentPath, byEntity);
+    });
+}
+
+function getExpandNodes(queryPath: string): ExpandNode[] {
+    try {
+        const parsed = parseEditorQuery(queryPath);
+        return parseExpandClause(parsed.queryOptions.get("$expand") ?? undefined);
+    } catch {
+        return [];
+    }
+}
+
+function isLinearExpandPath(nodes: ExpandNode[]): boolean {
+    if (nodes.length !== 1) {
+        return false;
+    }
+
+    let current: ExpandNode | undefined = nodes[0];
+    while (current) {
+        const children: ExpandNode[] = current.expand ?? [];
+        if (children.length > 1) {
+            return false;
+        }
+        current = children[0];
+    }
+
+    return true;
+}
+
+function buildLinearExpandChain(node: ExpandNode, sourceColumns: string[]): string[] {
+    const chain: string[] = [];
+    let current: ExpandNode | undefined = node;
+
+    while (current) {
+        chain.push(resolveExpandedScopeLabel(current.relationship, sourceColumns));
+        current = (current.expand ?? [])[0];
+    }
+
+    return chain;
+}
+
+function countExpandNodes(nodes: ExpandNode[]): number {
+    return nodes.reduce((total, node) => total + 1 + countExpandNodes(node.expand ?? []), 0);
+}
+
+function collectExpandPathDetails(nodes: ExpandNode[], sourceColumns: string[], prefix: string[] = []): string[] {
+    const details: string[] = [];
+
+    nodes.forEach((node) => {
+        const current = [...prefix, resolveExpandedScopeLabel(node.relationship, sourceColumns)];
+        details.push(current.join(" → "));
+        details.push(...collectExpandPathDetails(node.expand ?? [], sourceColumns, current));
+    });
+
+    return details;
+}
+
+function resolveExpandedScopeLabel(relationship: string, sourceColumns: string[]): string {
+    const inferred = resolveExpandedEntityLogicalName(relationship, sourceColumns);
+    return inferred ?? humanizeRelationshipName(relationship);
+}
+
+function resolveExpandedEntityLogicalName(relationship: string, sourceColumns: string[]): string | undefined {
+    return inferExpandedEntityFromColumns(relationship, sourceColumns)
+        ?? inferExpandedEntityFromRelationshipName(relationship);
+}
+
+function inferExpandedEntityFromRelationshipName(relationship: string): string | undefined {
+    const normalized = relationship.trim().toLowerCase();
+    const known: Record<string, string> = {
+        createdby: "systemuser",
+        modifiedby: "systemuser",
+        owninguser: "systemuser",
+        ownerid: "systemuser",
+        primarycontactid: "contact",
+        customerid_account: "account",
+        customerid_contact: "contact"
+    };
+
+    if (known[normalized]) {
+        return known[normalized];
+    }
+
+    const taskMatch = normalized.match(/(^|_)task(s)?$/);
+    if (taskMatch) {
+        return "task";
+    }
+
+    return undefined;
+}
+
+function inferExpandedEntityFromColumns(relationship: string, sourceColumns: string[]): string | undefined {
+    const prefix = `${relationship}.`;
+    const childColumns = sourceColumns
+        .filter((column) => column.startsWith(prefix))
+        .map((column) => column.slice(prefix.length).split(".")[0])
+        .filter(Boolean);
+
+    const idCandidate = childColumns.find((column) => /^[a-z][a-z0-9]*id$/i.test(column));
+    if (!idCandidate || idCandidate.length <= 2) {
+        return undefined;
+    }
+
+    return idCandidate.slice(0, -2).toLowerCase();
+}
+
+function humanizeRelationshipName(value: string): string {
+    return value
+        .replace(/^_+|_+$/g, "")
+        .split("_")
+        .filter(Boolean)
+        .slice(0, 3)
+        .join("_") || value;
+}
+
+function buildInvestigationPivots(args: {
+    queryPath: string;
+    entityLogicalName?: string;
+    entitySetName?: string;
+    traversalContext?: ResultViewerTraversalContext;
+    executionContext?: ResultViewerExecutionContext;
+    sourceColumns?: string[];
+}): ResultViewerInvestigationPivot[] {
+    const pivots: ResultViewerInvestigationPivot[] = [];
+    const entityLogicalName = args.entityLogicalName?.trim();
+    const scope = buildInvestigationScopeSummary({
+        queryPath: args.queryPath,
+        entityLogicalName,
+        sourceColumns: args.sourceColumns
+    });
+
+    if (scope) {
+        pivots.push({
+            id: "investigation-context",
+            label: scope.label,
+            title: scope.title,
+            action: "showOperationalProfile",
+            source: "context",
+            payload: {
+                entityLogicalName,
+                disabled: true
+            }
+        });
+    }
+
+    buildExpandedInvestigationEntities({
+        queryPath: args.queryPath,
+        entityLogicalName,
+        sourceColumns: args.sourceColumns
+    }).forEach((expandedEntity) => {
+        pivots.push({
+            id: `expanded-profile-${expandedEntity.logicalName}`,
+            label: expandedEntity.logicalName,
+            title: [
+                `Open Operational Profile for expanded entity: ${expandedEntity.logicalName}`,
+                "Expanded paths:",
+                ...expandedEntity.paths.map((path) => `- ${path}`)
+            ].join("\n"),
+            action: "showOperationalProfile",
+            source: "profile",
+            payload: {
+                entityLogicalName: expandedEntity.logicalName
+            }
+        });
+    });
+
+    if (args.traversalContext?.traversalSessionId) {
+        pivots.push({
+            id: "guided-traversal-context",
+            label: "Traversal Active",
+            title: "This result is part of an active Guided Traversal session. Use the traversal pill for Back or Route actions.",
+            action: "showOperationalProfile",
+            source: "traversal",
+            payload: {
+                entityLogicalName,
+                disabled: true
+            }
+        });
+    }
+
+    if (args.executionContext?.correlationId || args.executionContext?.requestId) {
+        pivots.push({
+            id: "execution-context-active",
+            label: "Execution Context",
+            title: "Execution trace and operational request context are available for this investigation.",
+            action: "requestExecutionInsights",
+            source: "execution",
+            payload: {
+                disabled: true
+            }
+        });
+    }
+
+    return pivots;
+}
+
 export function buildResultViewerModel(
     result: unknown,
     query: string,
@@ -922,19 +1235,26 @@ export function buildResultViewerModel(
                 canSiblingExpand: traversalContext.canSiblingExpand,
                 canRunBatch: traversalContext.canRunBatch,
                 canRunOptimizedBatch: traversalContext.canRunOptimizedBatch,
+                canGoBack: traversalContext.canGoBack,
+                canChangeRoute: traversalContext.canChangeRoute,
                 requiredCarryField: traversalContext.requiredCarryField
             }
             : undefined;
 
+    const hasTraversalRecovery = !!traversalContext?.traversalSessionId &&
+        (traversalContext.canGoBack === true || traversalContext.canChangeRoute === true);
+    const traversalRecoveryHint = hasTraversalRecovery
+        ? " Use Back or Route in the Guided Traversal pill above to continue exploring."
+        : "";
     const emptyState = traversalContext
         ? (traversalContext.isFinalLeg
             ? {
                 title: "Traversal finished",
-                message: "This route reached the destination, but no usable rows were returned."
+                message: `This traversal path reached the destination, but no usable rows were returned.${traversalRecoveryHint}`
             }
             : {
                 title: "No results for this path",
-                message: "This route is structurally valid, but valid routes do not guarantee matching data. Try another variant."
+                message: `This route is structurally valid, but valid routes do not guarantee matching data.${traversalRecoveryHint || " Try another variant."}`
             })
         : {
             title: "No results found."
@@ -1071,7 +1391,15 @@ export function buildResultViewerModel(
                     hasMoreRows: rowWindowOffset + mappedRows.length < rows.length
                 }
                 : undefined,
-            executionContext: options?.executionContext
+            executionContext: options?.executionContext,
+            investigationPivots: buildInvestigationPivots({
+                queryPath: query,
+                entityLogicalName,
+                entitySetName,
+                traversalContext,
+                executionContext: options?.executionContext,
+                sourceColumns
+            })
         };
     }
 
@@ -1140,7 +1468,15 @@ export function buildResultViewerModel(
             rowActions: recordRowActions.length ? recordRowActions : undefined,
             paging: options?.paging,
             sourceTarget: options?.sourceTarget,
-            executionContext: options?.executionContext
+            executionContext: options?.executionContext,
+            investigationPivots: buildInvestigationPivots({
+                queryPath: query,
+                entityLogicalName,
+                entitySetName,
+                traversalContext,
+                executionContext: options?.executionContext,
+                sourceColumns: columns
+            })
         };
     }
 
@@ -1175,6 +1511,13 @@ export function buildResultViewerModel(
         environment,
         paging: options?.paging,
         sourceTarget: options?.sourceTarget,
-        executionContext: options?.executionContext
+        executionContext: options?.executionContext,
+        investigationPivots: buildInvestigationPivots({
+            queryPath: query,
+            entityLogicalName,
+            entitySetName,
+            traversalContext,
+            executionContext: options?.executionContext
+        })
     };
 }

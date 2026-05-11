@@ -30,6 +30,8 @@ import { registerTrySampleQueryCommand } from "../commands/trySampleQuery.js";
 import { registerTryFetchXmlSampleCommand } from "../commands/tryFetchXmlSample.js";
 import { registerFindPathToTableCommand } from "../commands/findPathToTable.js";
 import { registerContinueTraversalCommand } from "../commands/continueTraversal.js";
+import { registerBackTraversalCommand } from "../commands/backTraversal.js";
+import { registerChangeTraversalRouteCommand } from "../commands/changeTraversalRoute.js";
 import { registerClearTraversalCacheCommand } from '../commands/clearTraversalCache';
 import { registerOpenQuickStartCommand } from "../commands/openQuickStart.js";
 import { registerApplyRecommendedNextStepFromExplainCommand } from "../commands/applyRecommendedNextStepFromExplain.js";
@@ -65,6 +67,8 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerTryFetchXmlSampleCommand,
   registerFindPathToTableCommand,
   registerContinueTraversalCommand,
+  registerBackTraversalCommand,
+  registerChangeTraversalRouteCommand,
   registerClearTraversalCacheCommand,
   registerOpenQuickStartCommand,
   registerApplyRecommendedNextStepFromExplainCommand,

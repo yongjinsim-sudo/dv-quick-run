@@ -19,6 +19,8 @@ import { runTrySampleQueryAction } from "./actions/onboarding/trySampleQueryActi
 import { runTryFetchXmlSampleAction } from "./actions/onboarding/tryFetchXmlSampleAction.js";
 import { runFindPathToTableAction } from "./actions/traversal/findPathToTableAction.js";
 import { runContinueTraversalAction } from "./actions/traversal/continueTraversalAction.js";
+import { runBackTraversalAction } from "./actions/traversal/backTraversalAction.js";
+import { runChangeTraversalRouteAction } from "./actions/traversal/changeTraversalRouteAction.js";
 import { runBatchQueriesAction } from "./actions/execution/runBatchQueriesAction.js";
 
 export type DvQuickRunAction = "get" 
@@ -47,6 +49,8 @@ export type DvQuickRunAction = "get"
   | "tryFetchXmlSample"
   | "findPathToTable"
   | "continueTraversal"
+  | "backTraversal"
+  | "changeTraversalRoute"
   | "runBatchQueries";
 
 export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext): Promise<void> {
@@ -128,6 +132,12 @@ export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: Command
     
     case "continueTraversal":
       return await runContinueTraversalAction(ctx);
+
+    case "backTraversal":
+      return await runBackTraversalAction(ctx);
+
+    case "changeTraversalRoute":
+      return await runChangeTraversalRouteAction(ctx);
 
     case "runBatchQueries":
       return await runBatchQueriesAction(ctx);

@@ -29,10 +29,25 @@ function extractBatchCandidateQueries(document: vscode.TextDocument, selection: 
     ? document.getText(selection)
     : document.getText();
 
+  return extractBatchCandidateQueriesFromText(sourceText);
+}
+
+export function extractBatchCandidateQueriesFromText(sourceText: string): string[] {
   return sourceText
     .split(/\r?\n/)
     .map((line: string) => line.trim())
-    .filter((line: string) => detectQueryKind(line) === "odata")
-    .filter((line: string, index: number, lines: string[]) => lines.indexOf(line) === index);
+    .filter((line: string) => line.length > 0)
+    .filter((line: string) => !line.startsWith("Run Query"))
+    .filter((line: string) => !line.startsWith("Explain"))
+    .map(normalizeBatchCandidateLine)
+    .filter((line: string) => detectQueryKind(line) === "odata");
 }
 
+function normalizeBatchCandidateLine(line: string): string {
+  const getMatch = /^GET\s+(.+)$/i.exec(line);
+  if (getMatch?.[1]) {
+    return getMatch[1].trim();
+  }
+
+  return line;
+}

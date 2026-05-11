@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { canApplyQueryDoctorFix } from "../product/capabilities/capabilityResolver.js";
+import { canApplyActionableInsight } from "../product/capabilities/capabilityResolver.js";
 import { getExplainDocumentState } from "../commands/router/actions/explain/explainDocState.js";
 import { looksLikeDataverseQuery , detectQueryKind } from "../shared/editorIntelligence/queryDetection.js";
 
@@ -28,7 +28,7 @@ export class QueryCodeLensProvider implements vscode.CodeLensProvider {
     const lenses: vscode.CodeLens[] = [];
 
     if (document.languageId === "markdown") {
-      if (!canApplyQueryDoctorFix()) {
+      if (!canApplyActionableInsight()) {
         return [];
       }
 

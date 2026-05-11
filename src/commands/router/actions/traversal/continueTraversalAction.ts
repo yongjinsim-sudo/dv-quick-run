@@ -9,7 +9,6 @@ import type {
   TraversalLandingContext
 } from "../shared/traversal/traversalTypes.js";
 import {
-  clearActiveTraversalProgress,
   getActiveTraversalProgress,
   isActiveTraversalSession,
   setActiveTraversalProgress
@@ -88,6 +87,8 @@ export async function runContinueTraversalAction(
           canSiblingExpand: true,
           canRunBatch: canRunTraversalBatch() && nextStepIndex >= progress.itinerary.steps.length - 1,
           canRunOptimizedBatch: canRunTraversalOptimizedBatch() && nextStepIndex >= progress.itinerary.steps.length - 1,
+          canGoBack: nextStepIndex > 0,
+          canChangeRoute: !!progress.routeOptions?.length,
           verbosity: explainVerbosity
         }),
         siblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex]
@@ -99,12 +100,35 @@ export async function runContinueTraversalAction(
     }
 
     if (execution.landing.ids.length === 0) {
-      clearActiveTraversalProgress();
+      setActiveTraversalProgress({
+        ...progress,
+        currentStepIndex: nextStepIndex,
+        currentStepInput: effectiveLanding,
+        selectedInputsByStep: {
+          ...(progress.selectedInputsByStep ?? {}),
+          [nextStepIndex]: effectiveLanding
+        },
+        selectedCarryValuesByStep: {
+          ...(progress.selectedCarryValuesByStep ?? {}),
+          [nextStepIndex]: request?.carryValue ? String(request.carryValue).trim() : undefined
+        },
+        currentStepSiblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex],
+        currentStepInsightActions: [],
+        nextQuerySequenceNumber:
+          (progress.nextQuerySequenceNumber ?? 1) + execution.executedQueryCount,
+        executedQueries: [...(progress.executedQueries ?? []), ...execution.executedQueries],
+        executedQueriesByStep: {
+          ...(progress.executedQueriesByStep ?? {}),
+          [nextStepIndex]: execution.executedQueries
+        },
+        isCompleted: false
+      });
+
       logInfo(ctx.output, `No usable rows were returned for this path.`);
       for (const line of buildNoResultGuidanceLines({ step: nextStep, verbosity: explainVerbosity })) {
         logInfo(ctx.output, line);
       }
-      logInfo(ctx.output, `This variant did not produce usable data at ${nextStep.toEntity}. Try another variant.`);
+      logInfo(ctx.output, `This variant did not produce usable data at ${nextStep.toEntity}. Use Back to choose another row or route variant.`);
       return;
     }
 

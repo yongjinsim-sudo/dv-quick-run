@@ -69,6 +69,28 @@ suite("binderSuggestion", () => {
     assert.strictEqual(suggestion?.actionId, "previewAddTop");
   });
 
+  test("stays quiet for active traversal recovery when no traversal action is available", () => {
+    const suggestion = buildResultViewerBinderSuggestion({
+      queryPath: "tasks?$select=subject",
+      rowCount: 0,
+      columnCount: 1,
+      traversalContext: {
+        traversalSessionId: "trv_123",
+        isBestMatchRoute: true,
+        legIndex: 1,
+        legCount: 2,
+        hasNextLeg: false,
+        currentEntityName: "task",
+        isFinalLeg: true,
+        canRunBatch: false,
+        canGoBack: true,
+        canChangeRoute: true
+      }
+    });
+
+    assert.strictEqual(suggestion, undefined);
+  });
+
   test("suggests add top for broad queries without top", () => {
     const suggestion = buildResultViewerBinderSuggestion({
       queryPath: "contacts?$filter=statecode eq 0",

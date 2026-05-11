@@ -181,6 +181,8 @@ export async function runApplySiblingExpandAction(
           currentEntityName: currentStep.toEntity,
           requiredCarryField: landedNode?.primaryIdAttribute,
           canSiblingExpand: candidates.length > 0,
+          canGoBack: progress.currentStepIndex > 0 || !!siblingExpandClause,
+          canChangeRoute: !!progress.routeOptions?.length,
           verbosity: explainVerbosity
         }),
         siblingExpandClause

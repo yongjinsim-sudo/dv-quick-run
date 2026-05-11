@@ -10,8 +10,11 @@ export type TraversalProgressReporter = {
   report: (message: string, increment?: number) => void;
 };
 
+import type { TraversalRoute } from "../shared/traversal/traversalTypes.js";
+
 export type TraversalStartOptions = {
   isBestMatchRoute?: boolean;
+  routeOptions?: TraversalRoute[];
 };
 
 export type TraversalScopeSettings = {

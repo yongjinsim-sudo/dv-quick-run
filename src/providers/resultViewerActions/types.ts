@@ -48,6 +48,8 @@ export interface ResultViewerTraversalActionContext {
   requiredCarryField?: string;
   isFinalLeg: boolean;
   canSiblingExpand?: boolean;
+  canGoBack?: boolean;
+  canChangeRoute?: boolean;
 }
 
 export interface ResultViewerActionContext {

@@ -6,6 +6,257 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.16 — Investigation Continuity, Context Surfaces & Operational Exploration
+
+This release evolves DV Quick Run from a collection of operational tooling surfaces into a more cohesive operational investigation platform.
+
+It focuses on:
+
+- investigation continuity
+- operational context awareness
+- traversal-aware exploration
+- calmer investigation UX
+- continuity-safe execution workflows
+- operational adjacency visibility
+
+The goal is not adding more telemetry.
+
+It is:
+
+- preserving investigation flow
+- reducing operational disorientation
+- making exploration reversible
+- exposing operational context progressively
+- strengthening investigation trust
+
+---
+
+### Investigation Context Surface (NEW)
+
+Introduced a dedicated **Investigation strip** inside the Result Viewer.
+
+The strip acts as a lightweight operational context surface for the current investigation session.
+
+Examples include:
+
+- traversal continuity
+- expanded investigation scopes
+- operational adjacency
+- execution context indicators
+- investigation-linked entity pivots
+
+Behaviour:
+
+- remains lightweight and non-invasive
+- preserves operational orientation
+- avoids dashboard-style noise
+
+Results in:
+
+- clearer investigation continuity
+- better operational awareness
+- smoother transition between exploration steps
+
+---
+
+### Traversal Continuity & Recovery (Major)
+
+Guided Traversal workflows now preserve investigation continuity more reliably.
+
+Added:
+
+- Back navigation
+- Route reselection
+- traversal continuation
+- dead-end recovery guidance
+- sibling expand continuity support
+
+Behaviour:
+
+- traversal state remains recoverable
+- users can pivot without restarting workflows
+- failed/no-result branches no longer terminate investigation flow
+
+Results in:
+
+- calmer traversal UX
+- reduced exploration friction
+- safer multi-hop investigation workflows
+
+---
+
+### Expanded Investigation Scope Awareness (NEW)
+
+Expanded entities and sibling expands now participate in the operational investigation surface.
+
+Examples:
+
+- `account`
+- `contact`
+- `systemuser`
+- sibling-expanded entities
+
+Behaviour:
+
+- expanded scopes appear as clickable operational investigation pills
+- allows fast contextual profile pivots
+- maintains entity-scoped investigation boundaries
+
+The primary/root entity continues to use the main Profile surface.
+
+Results in:
+
+- easier operational adjacency exploration
+- faster context switching
+- stronger relationship investigation workflows
+
+---
+
+### Execution Context Orientation (NEW)
+
+Added lightweight execution context cues directly into investigation workflows.
+
+Examples include:
+
+- active traversal state
+- execution-aware investigation hints
+- continuity-safe guidance
+- traversal-active operational indicators
+
+Behaviour:
+
+- only shown when operationally relevant
+- suppresses unnecessary noise
+- guidance remains advisory-only
+
+Results in:
+
+- clearer understanding of active investigation state
+- improved workflow orientation
+- stronger operational coherence
+
+---
+
+### Batch Investigation Continuity Fixes
+
+Fixed investigation continuity issues affecting `$batch` workflows.
+
+Resolved:
+
+- incorrect batch query extraction
+- traversal continuity loss after batch execution
+- sibling expand continuity inconsistencies
+- investigation state resets during batch transitions
+
+Behaviour:
+
+- batch execution now preserves operational context correctly
+- traversal-aware investigation survives execution pivots
+- continuity surfaces remain stable across batch results
+
+Results in:
+
+- more reliable operational workflows
+- safer multi-query investigation
+- stronger batch/traversal integration
+
+---
+
+### Guidance Refinement & Noise Reduction
+
+Refined contextual investigation guidance behaviour.
+
+Changes include:
+
+- suppression of redundant investigation hints
+- calmer traversal messaging
+- context-aware recommendation visibility
+- reduced operational duplication
+
+Examples:
+
+- removed redundant “Opened from Guided Traversal”
+- simplified traversal-active semantics
+- guidance shown only when confidence is meaningful
+
+Results in:
+
+- cleaner operational UX
+- lower cognitive overload
+- stronger recommendation trust
+
+---
+
+### Investigation Surface Stability
+
+Validated across:
+
+- traversal workflows
+- sibling expands
+- nested expands
+- `$batch` execution
+- operational profile pivots
+- dead-end traversal scenarios
+- empty-result recovery flows
+
+Verified:
+
+- traversal continuity preservation
+- investigation strip stability
+- operational profile pivot correctness
+- batch-aware investigation context handling
+
+No regression in:
+
+- Result Viewer
+- Guided Traversal
+- Operational Profiles
+- Execution Insights
+- Query Doctor
+- `$batch` execution
+
+---
+
+## Notes
+
+This release reinforces DV Quick Run’s direction as:
+
+```text
+an operational investigation workbench for Dataverse and Power Platform engineering
+```
+
+—not a disconnected collection of tooling surfaces.
+
+Key principles reinforced:
+
+- investigation continuity over restart workflows
+- operational context over telemetry overload
+- reversible exploration over procedural execution
+- advisory-only guidance
+- evidence-backed operational context
+- calmer investigation UX
+
+---
+
+## Summary
+
+DV Quick Run can now:
+
+- preserve investigation continuity across traversal workflows
+- expose expanded operational investigation scopes
+- maintain operational orientation during exploration
+- recover more gracefully from dead-end investigations
+- integrate traversal and batch execution more coherently
+
+Establishes a stronger foundation for:
+
+- persistent investigation workflows
+- cross-surface operational reasoning
+- future investigation export/import experiences
+- deeper operational exploration tooling
+
+---
+
 ## v0.9.15 — Operational Profile Investigation Surfaces & UX Refinement
 
 This release refines Operational Profiles into a more complete operational investigation surface for Dataverse engineering workflows.

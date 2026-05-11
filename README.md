@@ -26,299 +26,242 @@ All inside VS Code — with a preview-first, user-controlled workflow.
 
 ---
 
-## 🆕 What's New in v0.9.15 (Operational Investigation Surfaces & UX Refinement)
+---
 
-> A focused **operational investigation release** — introducing Operational Profiles, operational density classification, evidence-backed investigation links, and entity-level orchestration visibility without introducing speculative telemetry or root-cause scoring.
+## 🆕 What's New in v0.9.16 (Investigation Continuity, Context Surfaces & Operational Exploration)
+
+> A focused **operational investigation cohesion release** — introducing investigation continuity, operational context surfaces, traversal-aware recovery, expanded investigation pivots, and calmer operational guidance without introducing hidden orchestration or speculative automation.
 
 ---
 
-### 🧭 Operational Profiles (EXPANDED)
+### 🧭 Investigation Context Surface (NEW)
 
-DV Quick Run now introduces **Operational Profiles** — a new entity-scoped investigation surface designed to help engineers quickly understand the operational complexity surrounding a Dataverse table.
+DV Quick Run now introduces a dedicated **Investigation strip** directly inside the Result Viewer.
 
-Operational Profiles surface:
+The Investigation strip acts as a lightweight operational context surface for the active investigation session.
 
-* plugin orchestration density
-* relationship complexity
-* metadata footprint
-* async activity
-* Power Automate participation
-* workflow participation
-* managed-state context
+It can now surface:
 
-—all directly inside the Result Viewer.
+* traversal continuity
+* expanded investigation scopes
+* operational adjacency
+* execution-aware investigation context
+* contextual operational pivots
 
-Instead of manually stitching together metadata, plugin registrations, async operations, and workflows across multiple tools —
+Examples include:
 
-DV Quick Run now provides a bounded, evidence-backed operational overview in one place.
+* `account → contact`
+* `account + 3 expanded scopes`
+* traversal-active investigation state
+* contextual investigation-linked entity pivots
 
----
+The strip intentionally remains:
 
-### 📊 Operational Density Classification (REFINED)
-
-Operational Profiles now classify entities using bounded operational density signals:
-
-* 🟢 Low Operational Density
-* 🟡 Moderate Operational Density
-* 🔴 High Operational Density
-
-Signals include:
-
-* synchronous plugin registrations
-* relationship counts
-* attribute counts
-* async activity
-* orchestration participation
-
-Thresholds were tuned to avoid over-classifying normal entities as “high complexity.”
+* lightweight
+* contextual
+* operationally bounded
+* non-dashboard-like
 
 👉 Results in:
 
-* more trustworthy operational guidance
-* clearer differentiation between lightweight and orchestration-heavy entities
-* reduced false-positive complexity signals
+* clearer operational orientation
+* smoother exploration continuity
+* reduced investigation disorientation
+* calmer operational workflows
 
 ---
 
-### 🔗 Evidence-Backed Investigation Links (NEW)
+### 🔄 Guided Traversal Continuity & Recovery (Major)
 
-Operational Profiles now include direct investigation actions:
+Guided Traversal workflows now preserve operational continuity much more reliably.
 
-* View plugin steps
-* View relationships
-* View columns
-* View async operations
-* View flows
-* View workflows
+Added:
 
-Each action launches a concrete investigation query directly inside DV Quick Run.
-
-Examples:
-
-* `sdkmessageprocessingsteps`
-* `asyncoperations`
-* `workflows`
-
-👉 Results in:
-
-* faster investigation flow
-* smoother transition from signal → evidence
-* reduced manual query construction
-
----
-
-### ⚡ Async Operation Visibility (Expanded)
-
-Operational Profiles now surface bounded async-operation participation signals.
-
-DV Quick Run can now:
-
-* detect recent async activity
-* distinguish no activity vs operational participation
-* surface recent async investigation paths safely
-
-Async investigation remains:
-
-* bounded
-* entity-scoped
-* advisory-only
-
-👉 Results in:
-
-* clearer execution visibility
-* safer async investigation workflows
-* reduced historical noise
-
----
-
-### 🧠 Managed State Awareness (NEW)
-
-Operational Profiles now surface managed-state participation as governance/deployment context.
+* Back navigation
+* Route reselection
+* traversal continuation
+* dead-end recovery support
+* sibling expand continuity preservation
+* traversal-aware empty-result recovery
 
 Behaviour:
 
-* managed entities → surfaced as “Managed”
-* unmanaged entities → “No evidence observed”
-
-DV Quick Run intentionally avoids implying:
-
-* managed = healthy
-* unmanaged = risky
+* traversal state remains recoverable
+* exploration becomes reversible
+* failed/no-result branches no longer terminate investigation flow
+* Cytoscape and standard traversal paths now preserve continuity consistently
 
 👉 Results in:
 
-* clearer operational semantics
-* reduced interpretation ambiguity
-* safer governance signalling
+* calmer traversal UX
+* safer multi-hop investigation
+* reduced operational frustration
+* smoother relationship exploration
 
 ---
 
-### 🧩 Operational Profile UX
+### 🧩 Expanded Investigation Scope Awareness (NEW)
 
-Operational Profiles were refined to reinforce:
+Expanded entities and sibling expands now actively participate in the investigation surface.
 
-* strongest operational signals first
-* evidence-backed interpretation
-* advisory-only investigation guidance
-* bounded operational reasoning
-* progressive disclosure over overload
+Examples include:
 
-The UI emphasises:
+* `account`
+* `contact`
+* `systemuser`
+* sibling-expanded operational entities
 
-* operational density
-* investigation entry points
-* evidence hierarchy
-* orchestration visibility
-* calmer scan-first investigation flow
+Expanded entities now appear as clickable investigation pills directly inside the Investigation strip.
 
-Additional refinement work focused on:
+Behaviour:
 
-* tighter section spacing
-* collapsed-by-default evidence and guidance sections
-* clearer suggested investigation actions
-* stronger signal-first scanning
-* reduced operational noise
+* expanded entities become contextual operational pivots
+* allows fast entity-level Operational Profile switching
+* maintains investigation locality
+* deduplicates repeated operational entities automatically
 
-…without introducing speculative telemetry scoring or hidden analysis behaviour.
-
----
-
-### 🧭 Suggested Investigation Actions (NEW)
-
-Operational Profiles now surface actionable investigation entry points directly inside the profile.
-
-Examples:
-
-* View plugin registrations
-* Investigate async operations
-* Review relationship footprint
-* View business rules
-
-Actions are:
-
-* entity-scoped
-* bounded
-* evidence-backed
-* investigation-oriented
+The primary/root entity continues to use the main Profile surface.
 
 👉 Results in:
 
-* faster transition from signal → investigation
-* less manual query construction
-* clearer operational workflow guidance
+* easier operational adjacency exploration
+* stronger relationship investigation flow
+* smoother contextual pivots
+* reduced navigation disruption
 
 ---
 
-### 📂 Progressive Disclosure UX Refinement (NEW)
+### ⚡ Execution Context Orientation (NEW)
 
-Operational Profile sections now open in a calmer, investigation-first state.
+DV Quick Run now surfaces lightweight execution-aware investigation context directly inside the Result Viewer.
+
+Examples include:
+
+* active traversal investigation state
+* execution-aware operational investigation
+* traversal continuity indicators
+* contextual operational exploration state
+
+Behaviour:
+
+* only shown when operationally relevant
+* suppresses unnecessary investigation noise
+* remains advisory-only
+* avoids speculative reasoning
+
+👉 Results in:
+
+* clearer operational investigation state
+* stronger workflow orientation
+* safer contextual exploration
+
+---
+
+### 📦 Batch Investigation Continuity Fixes
+
+Fixed several investigation continuity issues affecting `$batch` workflows.
+
+Resolved:
+
+* incorrect batch query extraction
+* nested/sibling `$expand(...)` parsing issues
+* traversal continuity loss after batch execution
+* sibling expand continuity inconsistencies
+* route continuity resets during operational pivots
+
+Behaviour:
+
+* `$batch` execution now preserves operational context correctly
+* traversal-aware investigations survive batch pivots
+* nested expand workflows remain operationally stable
+* sibling expand investigations preserve continuity semantics
+
+👉 Results in:
+
+* more reliable operational workflows
+* safer multi-query exploration
+* stronger traversal + batch integration
+* reduced continuity breakage
+
+---
+
+### 🧠 Guidance Refinement & Noise Reduction
+
+Refined contextual investigation guidance behaviour across operational workflows.
 
 Changes include:
 
-* Evidence collapsed by default
-* Suggested Investigation Actions collapsed by default
-* Investigation Guidance collapsed by default
-* Future Investigation Surfaces collapsed by default
+* suppression of redundant investigation hints
+* calmer traversal messaging
+* context-aware recommendation visibility
+* operational-state-aware guidance suppression
+* dead-end-aware recovery nudges
 
-Behaviour:
+Examples:
 
-* strongest operational signals remain immediately visible
-* deeper operational evidence becomes progressively explorable
-* avoids overwhelming users during first scan
+* removed redundant “Opened from Guided Traversal”
+* simplified traversal-active semantics
+* suppress weak or redundant operational recommendations automatically
+* avoid guidance duplication during active traversal sessions
 
 👉 Results in:
 
-* faster visual comprehension
-* cleaner operational scanning
+* cleaner operational UX
 * reduced cognitive overload
+* stronger recommendation trust
+* calmer investigation flow
 
 ---
 
-### 🔮 Future Investigation Surfaces (NEW)
+### 🧪 Investigation Surface Stability
 
-Operational Profiles now introduce roadmap visibility for upcoming investigation capabilities.
+Validated across:
 
-Current roadmap surfaces include:
-
-Free roadmap:
-
-* Custom API Discovery
-* Cross-surface investigation pivots
-
-Pro roadmap:
-
-* Operational Profile drift comparison
-* Cross-environment operational comparison
-* Deployment operational impact analysis
-
-Behaviour:
-
-* roadmap items are informational only
-* hover descriptions explain future capability intent
-* no hidden execution or inaccessible behaviour
-
-👉 Results in:
-
-* clearer product direction
-* stronger platform identity
-* better user understanding of future operational workflows
-
----
-
-### 🔗 Relationship Investigation Workflow Refinement
-
-Improved relationship investigation handling:
-
-* safer relationship export workflow
-* save dialog prompt support
-* cleaner transition into Relationship Explorer workflows
-
-👉 Results in:
-
-* more predictable export behaviour
-* smoother relationship investigation flow
-* better compatibility across environments
-
----
-
-### 🧪 Dogfooding & Validation
-
-Operational Profiles were validated against:
-
-* lightweight entities
-* orchestration-heavy healthcare entities
-* plugin-heavy custom entities
-* sparse/system entities
-* async-heavy investigation scenarios
+* traversal workflows
+* sibling expands
+* nested expands
+* `$batch` execution
+* Operational Profile pivots
+* dead-end traversal scenarios
+* empty-result recovery workflows
+* Cytoscape-guided traversal
 
 Validation focused on:
 
-* operational truthfulness
-* advisory correctness
-* evidence consistency
-* avoiding root-cause implication
-* balanced operational density thresholds
+* operational continuity correctness
+* investigation strip stability
+* traversal recovery reliability
+* contextual pivot correctness
+* calmer operational UX semantics
+
+No regression in:
+
+* Result Viewer
+* Guided Traversal
+* Operational Profiles
+* Execution Insights
+* Query Doctor
+* `$batch` execution
 
 ---
 
 ## 🧭 Notes
 
-This release extends DV Quick Run’s direction from:
+This release strengthens DV Quick Run’s direction as:
 
-* execution-aware diagnostics
+* an operational investigation workbench for Dataverse and Power Platform engineering
 
-→ to:
-
-* operationally-aware investigation guidance
+—not a disconnected collection of tooling surfaces.
 
 Key principles reinforced:
 
-* evidence before interpretation
-* strongest operational signals first
-* bounded investigation behaviour
-* no speculative causality
+* investigation continuity over restart workflows
+* operational context over telemetry overload
+* reversible exploration over procedural execution
 * advisory-only operational guidance
-* operational density is not root cause
+* evidence-backed operational context
+* calmer operational UX
+* contextual pivots over disruptive navigation
 
 ---
 
@@ -326,22 +269,20 @@ Key principles reinforced:
 
 DV Quick Run can now:
 
-* surface operational density for Dataverse entities
-* expose orchestration participation clearly
-* provide evidence-backed investigation entry points
-* suggest contextual investigation actions
-* distinguish lightweight vs operationally dense entities
-* guide operational investigation without making root-cause claims
-* surface future investigation roadmap directions without interrupting the workflow
+* preserve operational continuity across traversal workflows
+* expose expanded investigation scopes directly inside the Result Viewer
+* maintain operational orientation during exploration
+* recover more gracefully from dead-end investigations
+* preserve continuity across `$batch` and traversal workflows
+* support contextual operational profile pivots without leaving the investigation surface
 
 👉 Further strengthens the foundation for:
 
-* future operational reasoning layers
-* execution-aware entity profiling
-* cross-source operational investigation
-* operational comparison workflows
-* deployment-aware operational analysis
-* deeper Power Platform operational diagnostics
+* persistent investigation workflows
+* cross-surface operational reasoning
+* deeper operational exploration tooling
+* future investigation export/import workflows
+* richer contextual operational diagnostics
 
 ---
 
@@ -398,6 +339,62 @@ start simple → run → explore → refine (Query-by-Canvas) → update safely 
 * Continue traversal using real data (row-driven)
 * Enrich results in-place using **Sibling Expand**
 * Build complex multi-entity queries without manual `$expand`
+
+---
+
+### 🧭 Investigation Surface & Operational Continuity
+
+DV Quick Run now provides a cohesive operational investigation surface directly inside the Result Viewer.
+
+Instead of treating traversal, expands, execution diagnostics, and operational pivots as disconnected tools —
+
+DV Quick Run now preserves investigation continuity across operational workflows.
+
+The Result Viewer can now surface:
+
+* active traversal context
+* expanded operational scopes
+* contextual operational pivots
+* execution-aware investigation context
+* operational adjacency between related entities
+
+Examples include:
+
+* `account → contact`
+* `account + 3 expanded scopes`
+* traversal-active investigation workflows
+* clickable expanded-entity investigation pivots
+
+Expanded operational entities now appear directly inside the investigation surface as lightweight contextual pivots.
+
+This allows engineers to:
+
+* continue operational exploration without restarting workflows
+* pivot between related operational entities more naturally
+* recover from traversal dead-ends more safely
+* preserve investigation locality during multi-hop exploration
+
+The investigation surface intentionally remains:
+
+* lightweight
+* bounded
+* contextual
+* advisory-only
+
+DV Quick Run intentionally avoids:
+
+* speculative orchestration
+* hidden investigation automation
+* noisy dashboard behaviour
+* disruptive navigation workflows
+
+👉 Results in:
+
+* calmer operational exploration
+* smoother traversal continuity
+* stronger contextual investigation workflows
+* reduced operational disorientation
+* safer relationship-driven investigation
 
 ---
 

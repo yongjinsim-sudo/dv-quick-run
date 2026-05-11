@@ -12,6 +12,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const jsonClearSearchBtn = document.getElementById("jsonClearSearchBtn");
         const jsonMatchStatus = document.getElementById("jsonMatchStatus");
         const batchResponseBar = document.getElementById("batchResponseBar");
+        const investigationPivotBar = document.getElementById("investigationPivotBar");
         const showTableBtn = document.getElementById("showTableBtn");
         const showJsonBtn = document.getElementById("showJsonBtn");
         const showInsightsBtn = document.getElementById("showInsightsBtn");
@@ -652,9 +653,12 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             model = resolveActiveModel();
             renderEnvironmentBadge(model.environment || rootModel.environment);
             renderTraversalStatus(model.traversal);
+            renderInvestigationPivotBar(model);
             renderBinderSuggestion(isBatchRoot ? (rootModel.binderSuggestion || null) : model.binderSuggestion);
             renderInsightsButton(resolveActiveInsightSuggestion());
             renderInsightsDrawer();
+            renderBackTraversalButton(model);
+            renderChangeTraversalRouteButton(model);
             renderSiblingExpandButton(model);
             renderTraversalBatchButton(model);
             renderPagingState(model);
@@ -931,6 +935,62 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             }
         });
 
+
+        if (investigationPivotBar instanceof HTMLElement) {
+            investigationPivotBar.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const actionButton = target.closest("[data-investigation-pivot-action]");
+                if (!(actionButton instanceof HTMLElement)) {
+                    return;
+                }
+
+                if (actionButton.getAttribute("data-disabled") === "true") {
+                    return;
+                }
+
+                const action = actionButton.getAttribute("data-investigation-pivot-action") || "";
+                let payload = {};
+                try {
+                    payload = JSON.parse(actionButton.getAttribute("data-investigation-pivot-payload") || "{}");
+                } catch {
+                    payload = {};
+                }
+
+                if (action === "showOperationalProfile") {
+                    closeInsightsDrawer();
+                    const entityLogicalName = String(payload.entityLogicalName || model.entityLogicalName || "");
+                    profileDrawerState = {
+                        status: "loading",
+                        entityLogicalName
+                    };
+                    profileDrawerOpen = true;
+                    renderProfileDrawer();
+                    vscodeApi.postMessage({
+                        type: "showOperationalProfile",
+                        payload: { entityLogicalName }
+                    });
+                    return;
+                }
+
+                if (action === "requestExecutionInsights") {
+                    closeProfileDrawer();
+                    insightsDrawerOpen = true;
+                    renderInsightsDrawer();
+                    vscodeApi.postMessage({
+                        type: "executeBinderSuggestion",
+                        payload: {
+                            actionId: "requestExecutionInsights",
+                            payload
+                        }
+                    });
+                }
+            });
+        }
+
         showProfileBtn.addEventListener("click", () => {
             closeInsightsDrawer();
             profileDrawerState = {
@@ -1077,6 +1137,41 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                 type: "nextPage"
             });
         });
+
+        if (traversalStatus instanceof HTMLElement) {
+            traversalStatus.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const actionButton = target.closest("[data-traversal-action]");
+                if (!(actionButton instanceof HTMLElement)) {
+                    return;
+                }
+
+                const traversalAction = actionButton.getAttribute("data-traversal-action");
+                const traversalSessionId = model.traversal?.traversalSessionId || "";
+                if (!traversalSessionId) {
+                    return;
+                }
+
+                if (traversalAction === "back") {
+                    vscodeApi.postMessage({
+                        type: "backTraversal",
+                        payload: { traversalSessionId }
+                    });
+                    return;
+                }
+
+                if (traversalAction === "change-route") {
+                    vscodeApi.postMessage({
+                        type: "changeTraversalRoute",
+                        payload: { traversalSessionId }
+                    });
+                }
+            });
+        }
 
         siblingExpandBtn.addEventListener("click", () => {
             vscodeApi.postMessage({

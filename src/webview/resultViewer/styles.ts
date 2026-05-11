@@ -1667,6 +1667,30 @@ export const RESULT_VIEWER_STYLES = `
             opacity: 0.8;
         }
 
+        .traversal-status-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 2px;
+        }
+
+        .traversal-status-action {
+            min-width: 0;
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid var(--vscode-focusBorder);
+            background: transparent;
+            color: var(--vscode-textLink-foreground);
+            font-size: 11px;
+            line-height: 1.25;
+            cursor: pointer;
+        }
+
+        .traversal-status-action:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+            color: var(--vscode-textLink-activeForeground);
+        }
+
         .inline-action-labeled {
             display: inline-flex;
             align-items: center;
@@ -2711,4 +2735,63 @@ export const RESULT_VIEWER_STYLES = `
     line-height: 1.4;
 }
 
+
+.investigation-pivot-bar {
+    padding: 6px 10px 0 10px;
+}
+
+.investigation-pivot-bar[hidden] {
+    display: none;
+}
+
+.investigation-pivot-shell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: color-mix(in srgb, var(--vscode-editorWidget-background) 82%, transparent 18%);
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+}
+
+.investigation-pivot-kicker {
+    color: var(--vscode-badge-foreground);
+    background: var(--vscode-badge-background);
+    border-radius: 999px;
+    padding: 2px 6px;
+    font-weight: 600;
+}
+
+.investigation-pivot-context {
+    color: var(--vscode-descriptionForeground);
+}
+
+.investigation-pivot-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.investigation-pivot-action {
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 999px;
+    padding: 2px 7px;
+    color: var(--vscode-button-secondaryForeground);
+    background: var(--vscode-button-secondaryBackground);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.investigation-pivot-action:hover:not(.is-disabled) {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.investigation-pivot-action.is-disabled {
+    opacity: 0.7;
+    cursor: default;
+}
 `;

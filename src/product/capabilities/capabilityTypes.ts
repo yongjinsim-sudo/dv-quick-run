@@ -1,8 +1,17 @@
 export type CapabilityLevel = 0 | 1 | 2 | 3;
 
+export interface ActionableInsightCapabilityProfile {
+  canApply: boolean;
+}
+
 export interface QueryDoctorCapabilityProfile {
   insightLevel: CapabilityLevel;
-  canApplyFix: boolean;
+
+  /**
+   * Legacy compatibility only. New code should use actionableInsights.canApply
+   * through canApplyActionableInsight().
+   */
+  canApplyFix?: boolean;
 }
 
 export interface TraversalCapabilityProfile {
@@ -12,5 +21,6 @@ export interface TraversalCapabilityProfile {
 
 export interface CapabilityProfile {
   queryDoctor: QueryDoctorCapabilityProfile;
+  actionableInsights: ActionableInsightCapabilityProfile;
   traversal: TraversalCapabilityProfile;
 }

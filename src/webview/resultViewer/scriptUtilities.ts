@@ -1138,6 +1138,48 @@ function showCopyStatus(message) {
             renderProfileDrawer();
         }
 
+        function renderInvestigationPivotBar(currentModel) {
+            if (!(investigationPivotBar instanceof HTMLElement)) {
+                return;
+            }
+
+            const pivots = Array.isArray(currentModel?.investigationPivots)
+                ? currentModel.investigationPivots
+                : [];
+
+            if (!pivots.length) {
+                investigationPivotBar.hidden = true;
+                investigationPivotBar.innerHTML = "";
+                return;
+            }
+
+            const contextPivot = pivots.find((pivot) => pivot.source === "context");
+            const contextLabel = contextPivot?.label
+                || (currentModel?.entityLogicalName ? currentModel.entityLogicalName : "Active context");
+            const contextTitle = contextPivot?.title || contextLabel;
+            const actionPivots = pivots.filter((pivot) => pivot.source !== "context");
+
+            const buttons = actionPivots.map((pivot) => {
+                const payload = JSON.stringify(pivot.payload || {}).replace(/'/g, "&#39;");
+                const disabled = pivot.payload?.disabled === true;
+                const disabledAttr = disabled ? " data-disabled='true' aria-disabled='true'" : "";
+                const disabledClass = disabled ? " is-disabled" : "";
+                return "<button type='button' class='investigation-pivot-action" + disabledClass + "'" +
+                    " data-investigation-pivot-action='" + escapeAttribute(pivot.action || "") + "'" +
+                    " data-investigation-pivot-payload='" + escapeAttribute(payload) + "'" +
+                    " title='" + escapeAttribute(pivot.title || pivot.label || "") + "'" +
+                    disabledAttr + ">" + escapeHtml(pivot.label || "Open") + "</button>";
+            }).join("");
+
+            investigationPivotBar.hidden = false;
+            investigationPivotBar.innerHTML =
+                "<div class='investigation-pivot-shell'>" +
+                "<span class='investigation-pivot-kicker'>Investigation</span>" +
+                "<span class='investigation-pivot-context' title='" + escapeAttribute(contextTitle) + "'>" + escapeHtml(contextLabel) + "</span>" +
+                (buttons ? "<span class='investigation-pivot-actions'>" + buttons + "</span>" : "") +
+                "</div>";
+        }
+
         function renderBinderSuggestion(suggestion) {
             if (!(binderSuggestionBtn instanceof HTMLButtonElement)) {
                 return;
@@ -1180,11 +1222,25 @@ function showCopyStatus(message) {
                 ? "<span class='traversal-status-subtitle'> • Choose a row to continue using " + escapeHtml(traversal.requiredCarryField) + "</span>"
                 : "";
 
+            const canGoBack = !!traversal.traversalSessionId && !!traversal.canGoBack;
+            const canChangeRoute = !!traversal.traversalSessionId && !!traversal.canChangeRoute;
+            const actions = (canGoBack || canChangeRoute)
+                ? "<span class='traversal-status-actions'>" +
+                    (canGoBack
+                        ? "<button type='button' class='traversal-status-action' data-traversal-action='back' title='Go back to the previous Guided Traversal step'>← Back</button>"
+                        : "") +
+                    (canChangeRoute
+                        ? "<button type='button' class='traversal-status-action' data-traversal-action='change-route' title='Choose another Guided Traversal route or variant from this active session'>Route</button>"
+                        : "") +
+                    "</span>"
+                : "";
+
             traversalStatus.innerHTML =
                 "<span class='traversal-status-pill'>" +
                 "<span class='traversal-status-title'>" + escapeHtml(traversal.title) + "</span>" +
                 subtitle +
                 carryHint +
+                actions +
                 "</span>";
         }
 `;

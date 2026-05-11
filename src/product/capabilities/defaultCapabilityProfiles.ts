@@ -4,8 +4,10 @@ import type { EntitlementPlan } from "./entitlementTypes.js";
 export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfile> = {
   free: {
     queryDoctor: {
-      insightLevel: 1,
-      canApplyFix: false
+      insightLevel: 1
+    },
+    actionableInsights: {
+      canApply: false
     },
     traversal: {
       canRunBatch: true,
@@ -14,8 +16,10 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
   },
   pro: {
     queryDoctor: {
-      insightLevel: 3,
-      canApplyFix: true
+      insightLevel: 3
+    },
+    actionableInsights: {
+      canApply: true
     },
     traversal: {
       canRunBatch: true,
@@ -24,8 +28,10 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
   },
   team: {
     queryDoctor: {
-      insightLevel: 3,
-      canApplyFix: true
+      insightLevel: 3
+    },
+    actionableInsights: {
+      canApply: true
     },
     traversal: {
       canRunBatch: true,
@@ -34,8 +40,10 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
   },
   enterprise: {
     queryDoctor: {
-      insightLevel: 3,
-      canApplyFix: true
+      insightLevel: 3
+    },
+    actionableInsights: {
+      canApply: true
     },
     traversal: {
       canRunBatch: true,
@@ -44,8 +52,10 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
   },
   dev: {
     queryDoctor: {
-      insightLevel: 3,
-      canApplyFix: true
+      insightLevel: 3
+    },
+    actionableInsights: {
+      canApply: true
     },
     traversal: {
       canRunBatch: true,

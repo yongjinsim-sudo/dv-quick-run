@@ -1,4 +1,4 @@
-import { canApplyQueryDoctorFix } from "../capabilities/capabilityResolver.js";
+import { canApplyActionableInsight } from "../capabilities/capabilityResolver.js";
 import { parseEditorQuery } from "../../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { extractExecutionEvidence } from "../../commands/router/actions/shared/diagnostics/executionEvidence.js";
 import { buildRankedResultInsightCandidates } from "../../commands/router/actions/shared/diagnostics/resultInsights/resultInsightPipeline.js";
@@ -54,7 +54,7 @@ function buildSuggestion(suggestion: BinderSuggestion): BinderSuggestion | undef
 
   return {
     ...suggestion,
-    canApply: suggestion.actionId === "requestResultInsights" || suggestion.actionId === "requestExecutionInsights" ? true : canApplyQueryDoctorFix(),
+    canApply: suggestion.actionId === "requestResultInsights" || suggestion.actionId === "requestExecutionInsights" ? true : canApplyActionableInsight(),
     applyLabel: suggestion.actionId === "requestResultInsights"
       ? "Get Insights"
       : suggestion.actionId === "requestExecutionInsights"
@@ -569,6 +569,10 @@ export function buildResultViewerBinderSuggestion(args: {
         traversalSessionId: traversal.traversalSessionId
       }
     });
+  }
+
+  if (shouldPreferTraversalSuggestion && traversal?.traversalSessionId) {
+    return undefined;
   }
 
   if (!args.queryPath.trim() || isLikelyFetchXml(args.queryPath)) {
