@@ -11,17 +11,19 @@ suite("environmentRuntimeState", () => {
     let metadataCleared = 0;
     let relationshipCleared = 0;
     let traversalCleared = 0;
+    let investigationCleared = 0;
     let hoverCleared = 0;
     let navigationCleared = 0;
     const logs: string[] = [];
 
     clearEnvironmentScopedRuntimeCachesWithDeps(
       {
-        clearMetadataSessionCache: () => { metadataCleared++; },
-        clearRelationshipMetadataMemory: () => { relationshipCleared++; },
-        clearTraversalCache: () => { traversalCleared++; },
-        clearHoverFieldContextCache: () => { hoverCleared++; },
-        clearNavigationHoverEnrichmentCache: () => { navigationCleared++; },
+        clearMetadataSessionCache: () => { metadataCleared += 1; },
+        clearRelationshipMetadataMemory: () => { relationshipCleared += 1; },
+        clearTraversalCache: () => { traversalCleared += 1; },
+        clearInvestigationContext: () => { investigationCleared += 1; },
+        clearHoverFieldContextCache: () => { hoverCleared += 1; },
+        clearNavigationHoverEnrichmentCache: () => { navigationCleared += 1; },
         logInfo: (message: string) => { logs.push(message); }
       },
       {} as any
@@ -30,6 +32,7 @@ suite("environmentRuntimeState", () => {
     assert.strictEqual(metadataCleared, 1);
     assert.strictEqual(relationshipCleared, 1);
     assert.strictEqual(traversalCleared, 1);
+    assert.strictEqual(investigationCleared, 1);
     assert.strictEqual(hoverCleared, 1);
     assert.strictEqual(navigationCleared, 1);
     assert.strictEqual(logs.length, 1);
@@ -42,7 +45,8 @@ suite("environmentRuntimeState", () => {
       {
         clearMetadataSessionCache: () => undefined,
         clearRelationshipMetadataMemory: () => undefined,
-        clearTraversalCache: () => { undefined; },
+        clearTraversalCache: () => undefined,
+        clearInvestigationContext: () => undefined,
         clearHoverFieldContextCache: () => undefined,
         clearNavigationHoverEnrichmentCache: () => undefined,
         logInfo: (message: string) => { logs.push(message); }
@@ -95,6 +99,7 @@ suite("environmentRuntimeState", () => {
         clearMetadataSessionCache: () => undefined,
         clearRelationshipMetadataMemory: () => undefined,
         clearTraversalCache: () => undefined,
+        clearInvestigationContext: () => undefined,
         clearHoverFieldContextCache: () => undefined,
         clearNavigationHoverEnrichmentCache: () => undefined,
         logInfo: () => undefined
@@ -105,5 +110,21 @@ suite("environmentRuntimeState", () => {
     assert.strictEqual(getActiveTraversalProgress(), undefined);
 
     clearActiveTraversalProgress();
+  });
+
+  test("clears investigation context through dependency hook", () => {
+    const calls: string[] = [];
+
+    clearEnvironmentScopedRuntimeCachesWithDeps({
+      clearMetadataSessionCache: () => calls.push("metadata"),
+      clearRelationshipMetadataMemory: () => calls.push("relationships"),
+      clearHoverFieldContextCache: () => calls.push("hover"),
+      clearNavigationHoverEnrichmentCache: () => calls.push("navHover"),
+      clearTraversalCache: () => calls.push("traversal"),
+      clearInvestigationContext: () => calls.push("investigation"),
+      logInfo: () => undefined
+    });
+
+    assert.ok(calls.includes("investigation"));
   });
 });

@@ -51,59 +51,79 @@ async function resolveEntity(
   return await pickEntity(defs);
 }
 
-async function openProfileDocument(markdown: string): Promise<void> {
-  const document = await vscode.workspace.openTextDocument({
-    content: markdown,
-    language: "markdown"
-  });
+function toSafeProfileFileName(entityLogicalName: string): string {
+  const safeEntity = entityLogicalName.replace(/[^a-zA-Z0-9_-]/g, "-") || "entity";
+  return `dv-quick-run-profile-${safeEntity}-${Date.now()}.md`;
+}
 
-  await vscode.window.showTextDocument(document, {
-    preview: false,
-    viewColumn: vscode.ViewColumn.Beside
-  });
+async function openProfilePreviewOnly(
+  ext: vscode.ExtensionContext,
+  entityLogicalName: string,
+  markdown: string
+): Promise<void> {
+  const directory = vscode.Uri.joinPath(ext.globalStorageUri, "operational-profile-snapshots");
+  await vscode.workspace.fs.createDirectory(directory);
 
-  await vscode.commands.executeCommand("markdown.showPreviewToSide", document.uri);
+  const uri = vscode.Uri.joinPath(directory, toSafeProfileFileName(entityLogicalName));
+  await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(markdown));
+
+  await vscode.commands.executeCommand("markdown.showPreviewToSide", uri);
+}
+
+async function exportOperationalProfileSnapshot(
+  ext: vscode.ExtensionContext,
+  ctx: CommandContext,
+  entityLogicalName?: string
+): Promise<void> {
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: "DV Quick Run: Exporting Operational Profile Snapshot...",
+      cancellable: false
+    },
+    async () => {
+      const token = await ctx.getToken(ctx.getScope());
+      const client = ctx.getClient();
+      const entity = await resolveEntity(ctx, entityLogicalName, token);
+
+      if (!entity) {
+        return;
+      }
+
+      const [fields, relationships] = await Promise.all([
+        loadFields(ctx, client, token, entity.logicalName, { silent: true }).catch(() => []),
+        loadNavigationProperties(ctx, client, token, entity.logicalName, { silent: true }).catch(() => [])
+      ]);
+
+      const profile = buildOperationalProfile({
+        entityLogicalName: entity.logicalName,
+        entityDisplayName: entity.displayName ?? entity.logicalName,
+        attributeCount: fields.length,
+        relationshipCount: relationships.length
+      });
+
+      await openProfilePreviewOnly(ext, entity.logicalName, renderOperationalProfileMarkdown(profile));
+    }
+  );
 }
 
 export function registerShowOperationalProfileCommand(
   ext: vscode.ExtensionContext,
   ctx: CommandContext
 ): void {
-  const disposable = vscode.commands.registerCommand(
-    "dvQuickRun.showOperationalProfile",
+  const exportDisposable = vscode.commands.registerCommand(
+    "dvQuickRun.exportOperationalProfileSnapshot",
     async (entityLogicalName?: string) => {
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "DV Quick Run: Building Operational Profile...",
-          cancellable: false
-        },
-        async () => {
-          const token = await ctx.getToken(ctx.getScope());
-          const client = ctx.getClient();
-          const entity = await resolveEntity(ctx, entityLogicalName, token);
-
-          if (!entity) {
-            return;
-          }
-
-          const [fields, relationships] = await Promise.all([
-            loadFields(ctx, client, token, entity.logicalName, { silent: true }).catch(() => []),
-            loadNavigationProperties(ctx, client, token, entity.logicalName, { silent: true }).catch(() => [])
-          ]);
-
-          const profile = buildOperationalProfile({
-            entityLogicalName: entity.logicalName,
-            entityDisplayName: entity.displayName ?? entity.logicalName,
-            attributeCount: fields.length,
-            relationshipCount: relationships.length
-          });
-
-          await openProfileDocument(renderOperationalProfileMarkdown(profile));
-        }
-      );
+      await exportOperationalProfileSnapshot(ext, ctx, entityLogicalName);
     }
   );
 
-  ext.subscriptions.push(disposable);
+  const legacyDisposable = vscode.commands.registerCommand(
+    "dvQuickRun.showOperationalProfile",
+    async (entityLogicalName?: string) => {
+      await exportOperationalProfileSnapshot(ext, ctx, entityLogicalName);
+    }
+  );
+
+  ext.subscriptions.push(exportDisposable, legacyDisposable);
 }

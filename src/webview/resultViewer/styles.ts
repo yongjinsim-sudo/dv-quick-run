@@ -1045,7 +1045,7 @@ export const RESULT_VIEWER_STYLES = `
         }
 
         .batch-summary-card {
-            padding: 16px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -1751,7 +1751,7 @@ export const RESULT_VIEWER_STYLES = `
 
         .batch-error-card {
             margin: 12px;
-            padding: 16px;
+            padding: 8px;
             border: 1px solid color-mix(in srgb, var(--vscode-errorForeground) 35%, var(--vscode-panel-border) 65%);
             border-radius: 10px;
             background: color-mix(in srgb, var(--vscode-editorWidget-background) 88%, transparent 12%);

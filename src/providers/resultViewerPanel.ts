@@ -19,6 +19,7 @@ import type { DataverseClient } from "../services/dataverseClient.js";
 import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
 import { buildExecutionInsightSuggestions } from "../product/executionInsights/executionInsightsOrchestrator.js";
 import { buildOperationalProfile } from "../product/operationalProfile/operationalProfileEngine.js";
+import { investigationContextStore } from "../investigation/context/investigationContextStore.js";
 import type { OperationalProfileModel } from "../product/operationalProfile/operationalProfileTypes.js";
 import { previewAndRunBatchQueries } from "../commands/router/actions/execution/batch/runBatchExecutionFlow.js";
 import {
@@ -124,6 +125,12 @@ type ResultViewerMessage =
             actionId?: string;
             entityLogicalName?: string;
             entitySetName?: string;
+        };
+    }
+    | {
+        type: "activeBatchChanged";
+        payload: {
+            batchItemKey?: string;
         };
     }
     | {
@@ -242,6 +249,9 @@ export class ResultViewerPanel {
     private static lastViewColumn: vscode.ViewColumn | undefined;
     private static currentSessionId: string | undefined;
     private static currentModel: ResultViewerDisplayModel | undefined;
+
+    private static lastRecoverableModel: ResultViewerModel | import("../services/resultViewModelBuilder.js").BatchResultViewerModel | undefined;
+    private static lastRecoverableContext: CommandContext | undefined;
     private static executionInsightsSuppressedUntilByEnvironment = new Map<string, number>();
     private static lastOperationalProfileNavigationContext: OperationalProfileNavigationContext | undefined;
 
@@ -263,6 +273,8 @@ export class ResultViewerPanel {
         ResultViewerPanel.currentContext = ctx;
         ResultViewerPanel.applyExecutionInsightsSuppression(model);
         ResultViewerPanel.currentModel = model;
+        ResultViewerPanel.lastRecoverableModel = model;
+        ResultViewerPanel.lastRecoverableContext = ctx;
         ResultViewerPanel.currentSessionId = isBatchResultViewerModel(model) ? undefined : model.session?.id;
 
         if (isBatchResultViewerModel(model)) {
@@ -299,6 +311,7 @@ export class ResultViewerPanel {
 
         const panelSessionId = isBatchResultViewerModel(model) ? undefined : model.session?.id;
         panel.onDidDispose(() => {
+            ResultViewerPanel.markResultViewerSurfaceClosed();
             if (panelSessionId) {
                 ResultViewerSessionStore.dispose(panelSessionId);
             }
@@ -312,6 +325,16 @@ export class ResultViewerPanel {
 
         ResultViewerPanel.lastViewColumn = panel.viewColumn;
         panel.webview.html = getResultViewerHtml(panel.webview, ctx.ext.extensionUri, model);
+
+        investigationContextStore.update({
+            source: "resultViewer",
+            surfaceState: {
+                resultViewerOpen: true,
+                recoverable: true,
+                expired: false,
+                staleReason: undefined
+            }
+        });
     }
 
 
@@ -429,6 +452,10 @@ export class ResultViewerPanel {
                 await ResultViewerPanel.handleProfileDrawerAction(message.payload);
                 return;
 
+            case "activeBatchChanged":
+                ResultViewerPanel.updateActiveBatchInvestigationContext(message.payload.batchItemKey);
+                return;
+
             case "exportCsv":
                 await ResultViewerPanel.exportCsv(
                     message.payload.fileName,
@@ -506,6 +533,147 @@ export class ResultViewerPanel {
         }
     }
 
+
+    private static toDisplayName(logicalName: string | undefined): string | undefined {
+        if (!logicalName) {
+            return undefined;
+        }
+
+        return logicalName
+            .split(/[_\s-]+/)
+            .filter((part) => part.length > 0)
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ");
+    }
+
+    private static markResultViewerSurfaceClosed(): void {
+        const model = ResultViewerPanel.currentModel;
+        if (!model) {
+            return;
+        }
+
+        investigationContextStore.update({
+            source: "resultViewer",
+            surfaceState: {
+                resultViewerOpen: false,
+                recoverable: true,
+                expired: false,
+                staleReason: undefined
+            }
+        });
+    }
+
+    private static getActiveBatchItem(batchItemKey?: string): import("../services/resultViewModelBuilder.js").BatchResultViewerItem | undefined {
+        const model = ResultViewerPanel.currentModel;
+
+        if (!model || !isBatchResultViewerModel(model)) {
+            return undefined;
+        }
+
+        const selectedKey = String(batchItemKey || model.selectedKey || "").trim();
+        return model.items.find((item) => item.key === selectedKey && !!item.model)
+            ?? model.items.find((item) => !!item.model);
+    }
+
+    private static updateActiveBatchInvestigationContext(batchItemKey?: string): void {
+        const model = ResultViewerPanel.currentModel;
+
+        if (!model || !isBatchResultViewerModel(model)) {
+            return;
+        }
+
+        const activeItem = ResultViewerPanel.getActiveBatchItem(batchItemKey);
+        if (!activeItem?.model) {
+            return;
+        }
+
+        model.selectedKey = activeItem.key;
+        const logicalName = activeItem.model.entityLogicalName;
+
+        investigationContextStore.update({
+            source: "resultViewer",
+            surfaceState: {
+                resultViewerOpen: true,
+                recoverable: true,
+                expired: false,
+                staleReason: undefined
+            },
+            currentEntity: {
+                logicalName,
+                displayName: ResultViewerPanel.toDisplayName(logicalName),
+                primaryIdAttribute: activeItem.model.primaryIdField
+            },
+            currentQuery: {
+                queryText: activeItem.queryText,
+                queryType: "batch"
+            },
+            batch: {
+                activeItemKey: activeItem.key,
+                activeLabel: activeItem.label,
+                activeEntityLogicalName: logicalName,
+                activeEntityDisplayName: ResultViewerPanel.toDisplayName(logicalName),
+                activeRowCount: activeItem.rowCount ?? activeItem.model.rowCount,
+                totalItems: model.items.length
+            }
+        });
+    }
+
+    public static reopenLastResultViewer(): boolean {
+        const ctx = ResultViewerPanel.lastRecoverableContext;
+        const model = ResultViewerPanel.lastRecoverableModel;
+
+        if (!ctx || !model) {
+            investigationContextStore.update({
+                source: "resultViewer",
+                surfaceState: {
+                    resultViewerOpen: false,
+                    recoverable: false,
+                    expired: true,
+                    staleReason: "the recoverable Result Viewer model is no longer available"
+                }
+            });
+            return false;
+        }
+
+        ResultViewerPanel.show(ctx, model);
+        investigationContextStore.update({
+            source: "resultViewer",
+            surfaceState: {
+                resultViewerOpen: true,
+                recoverable: true,
+                expired: false,
+                staleReason: undefined
+            }
+        });
+        return true;
+    }
+
+    public static async openOperationalProfileSurface(ctx: CommandContext, entityLogicalName?: string): Promise<boolean> {
+        const logicalName = String(entityLogicalName ?? ResultViewerPanel.getCurrentEntityLogicalName() ?? "").trim();
+        const panel = ResultViewerPanel.currentPanel;
+
+        if (!logicalName || !panel) {
+            return false;
+        }
+
+        panel.reveal(panel.viewColumn);
+        await ResultViewerPanel.showOperationalProfile(ctx, logicalName);
+        return true;
+    }
+
+    private static getCurrentEntityLogicalName(): string | undefined {
+        const model = ResultViewerPanel.currentModel;
+
+        if (!model) {
+            return undefined;
+        }
+
+        if (isBatchResultViewerModel(model)) {
+            return ResultViewerPanel.getActiveBatchItem(model.selectedKey)?.model?.entityLogicalName;
+        }
+
+        return model.entityLogicalName;
+    }
 
     private static async showOperationalProfile(ctx: CommandContext, entityLogicalName?: string): Promise<void> {
         const logicalName = String(entityLogicalName ?? "").trim();

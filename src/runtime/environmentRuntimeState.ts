@@ -6,6 +6,7 @@ import { clearRelationshipMetadataMemory } from "../commands/router/actions/shar
 import { TraversalCacheService  } from "../commands/router/actions/shared/traversal/traversalCacheService.js";
 import { logInfo } from "../utils/logger.js";
 import { clearActiveTraversalProgress } from "../commands/router/actions/shared/traversal/traversalProgressStore.js";
+import { investigationContextStore } from "../investigation/context/investigationContextStore.js";
 
 export type EnvironmentRuntimeCacheDeps = {
   clearMetadataSessionCache: () => void;
@@ -13,6 +14,7 @@ export type EnvironmentRuntimeCacheDeps = {
   clearHoverFieldContextCache: () => void;
   clearNavigationHoverEnrichmentCache: () => void;
   clearTraversalCache: () => void;
+  clearInvestigationContext: () => void;
   logInfo: (message: string) => void;
 };
 
@@ -24,11 +26,12 @@ export function clearEnvironmentScopedRuntimeCachesWithDeps(
   deps.clearRelationshipMetadataMemory();
   deps.clearTraversalCache();
   clearActiveTraversalProgress();
+  deps.clearInvestigationContext();
   deps.clearHoverFieldContextCache();
   deps.clearNavigationHoverEnrichmentCache();
 
   if (output) {
-        deps.logInfo("DV Quick Run: Cleared metadata, traversal caches, and active traversal state after environment change.");
+        deps.logInfo("DV Quick Run: Cleared metadata, traversal caches, active traversal state, and investigation context after environment change.");
   }
 }
 
@@ -39,6 +42,9 @@ export function clearEnvironmentScopedRuntimeCaches(output?: OutputChannel): voi
       clearRelationshipMetadataMemory,
       clearTraversalCache: () => {
         TraversalCacheService.clearAll();
+      },
+      clearInvestigationContext: () => {
+        investigationContextStore.reset();
       },
       clearHoverFieldContextCache,
       clearNavigationHoverEnrichmentCache,

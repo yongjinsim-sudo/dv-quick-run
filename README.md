@@ -1,298 +1,32 @@
 # DV Quick Run
 
-A fast, metadata-aware Dataverse query and workflow workbench for VS Code — with guided traversal, `$batch` execution, preview-first refinement, Smart PATCH, and execution-aware insights with grouped investigation.
+A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, and diagnose Dataverse execution behaviour — with Query-by-Canvas, Guided Traversal, Smart PATCH, `$batch` workflows, and Execution Insights — without leaving your editor.**
+**Run, understand, explore, refine, safely update, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Execution Insights, Operational Profiles, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
 ## 🚀 What is DV Quick Run?
 
-DV Quick Run turns VS Code into a **Dataverse developer console**.
-
-Instead of switching between Postman, browser tabs, and maker portals, you can:
-
-* Write queries
-* Run them instantly
-* Explore results in a table
-* Investigate records
-* Refine queries safely using Query-by-Canvas (preview-first)
-* Safely update records with Smart PATCH (preview-first)
-* Navigate relationships step-by-step (Guided Traversal)
-* Enrich results without rewriting queries
-* Inspect execution behaviour using correlation-based Execution Insights
-
-All inside VS Code — with a preview-first, user-controlled workflow.
-
----
-
----
-
-## 🆕 What's New in v0.9.16 (Investigation Continuity, Context Surfaces & Operational Exploration)
-
-> A focused **operational investigation cohesion release** — introducing investigation continuity, operational context surfaces, traversal-aware recovery, expanded investigation pivots, and calmer operational guidance without introducing hidden orchestration or speculative automation.
-
----
-
-### 🧭 Investigation Context Surface (NEW)
-
-DV Quick Run now introduces a dedicated **Investigation strip** directly inside the Result Viewer.
-
-The Investigation strip acts as a lightweight operational context surface for the active investigation session.
-
-It can now surface:
-
-* traversal continuity
-* expanded investigation scopes
-* operational adjacency
-* execution-aware investigation context
-* contextual operational pivots
-
-Examples include:
-
-* `account → contact`
-* `account + 3 expanded scopes`
-* traversal-active investigation state
-* contextual investigation-linked entity pivots
-
-The strip intentionally remains:
-
-* lightweight
-* contextual
-* operationally bounded
-* non-dashboard-like
-
-👉 Results in:
-
-* clearer operational orientation
-* smoother exploration continuity
-* reduced investigation disorientation
-* calmer operational workflows
-
----
-
-### 🔄 Guided Traversal Continuity & Recovery (Major)
-
-Guided Traversal workflows now preserve operational continuity much more reliably.
-
-Added:
-
-* Back navigation
-* Route reselection
-* traversal continuation
-* dead-end recovery support
-* sibling expand continuity preservation
-* traversal-aware empty-result recovery
-
-Behaviour:
-
-* traversal state remains recoverable
-* exploration becomes reversible
-* failed/no-result branches no longer terminate investigation flow
-* Cytoscape and standard traversal paths now preserve continuity consistently
-
-👉 Results in:
-
-* calmer traversal UX
-* safer multi-hop investigation
-* reduced operational frustration
-* smoother relationship exploration
-
----
-
-### 🧩 Expanded Investigation Scope Awareness (NEW)
-
-Expanded entities and sibling expands now actively participate in the investigation surface.
-
-Examples include:
-
-* `account`
-* `contact`
-* `systemuser`
-* sibling-expanded operational entities
-
-Expanded entities now appear as clickable investigation pills directly inside the Investigation strip.
-
-Behaviour:
-
-* expanded entities become contextual operational pivots
-* allows fast entity-level Operational Profile switching
-* maintains investigation locality
-* deduplicates repeated operational entities automatically
-
-The primary/root entity continues to use the main Profile surface.
-
-👉 Results in:
-
-* easier operational adjacency exploration
-* stronger relationship investigation flow
-* smoother contextual pivots
-* reduced navigation disruption
-
----
-
-### ⚡ Execution Context Orientation (NEW)
-
-DV Quick Run now surfaces lightweight execution-aware investigation context directly inside the Result Viewer.
-
-Examples include:
-
-* active traversal investigation state
-* execution-aware operational investigation
-* traversal continuity indicators
-* contextual operational exploration state
-
-Behaviour:
-
-* only shown when operationally relevant
-* suppresses unnecessary investigation noise
-* remains advisory-only
-* avoids speculative reasoning
-
-👉 Results in:
-
-* clearer operational investigation state
-* stronger workflow orientation
-* safer contextual exploration
-
----
-
-### 📦 Batch Investigation Continuity Fixes
-
-Fixed several investigation continuity issues affecting `$batch` workflows.
-
-Resolved:
-
-* incorrect batch query extraction
-* nested/sibling `$expand(...)` parsing issues
-* traversal continuity loss after batch execution
-* sibling expand continuity inconsistencies
-* route continuity resets during operational pivots
-
-Behaviour:
-
-* `$batch` execution now preserves operational context correctly
-* traversal-aware investigations survive batch pivots
-* nested expand workflows remain operationally stable
-* sibling expand investigations preserve continuity semantics
-
-👉 Results in:
-
-* more reliable operational workflows
-* safer multi-query exploration
-* stronger traversal + batch integration
-* reduced continuity breakage
-
----
-
-### 🧠 Guidance Refinement & Noise Reduction
-
-Refined contextual investigation guidance behaviour across operational workflows.
-
-Changes include:
-
-* suppression of redundant investigation hints
-* calmer traversal messaging
-* context-aware recommendation visibility
-* operational-state-aware guidance suppression
-* dead-end-aware recovery nudges
-
-Examples:
-
-* removed redundant “Opened from Guided Traversal”
-* simplified traversal-active semantics
-* suppress weak or redundant operational recommendations automatically
-* avoid guidance duplication during active traversal sessions
-
-👉 Results in:
-
-* cleaner operational UX
-* reduced cognitive overload
-* stronger recommendation trust
-* calmer investigation flow
-
----
-
-### 🧪 Investigation Surface Stability
-
-Validated across:
-
-* traversal workflows
-* sibling expands
-* nested expands
-* `$batch` execution
-* Operational Profile pivots
-* dead-end traversal scenarios
-* empty-result recovery workflows
-* Cytoscape-guided traversal
-
-Validation focused on:
-
-* operational continuity correctness
-* investigation strip stability
-* traversal recovery reliability
-* contextual pivot correctness
-* calmer operational UX semantics
-
-No regression in:
-
-* Result Viewer
-* Guided Traversal
-* Operational Profiles
-* Execution Insights
-* Query Doctor
-* `$batch` execution
-
----
-
-## 🧭 Notes
-
-This release strengthens DV Quick Run’s direction as:
-
-* an operational investigation workbench for Dataverse and Power Platform engineering
-
-—not a disconnected collection of tooling surfaces.
-
-Key principles reinforced:
-
-* investigation continuity over restart workflows
-* operational context over telemetry overload
-* reversible exploration over procedural execution
-* advisory-only operational guidance
-* evidence-backed operational context
-* calmer operational UX
-* contextual pivots over disruptive navigation
-
----
-
-## 🎯 Summary
-
-DV Quick Run can now:
-
-* preserve operational continuity across traversal workflows
-* expose expanded investigation scopes directly inside the Result Viewer
-* maintain operational orientation during exploration
-* recover more gracefully from dead-end investigations
-* preserve continuity across `$batch` and traversal workflows
-* support contextual operational profile pivots without leaving the investigation surface
-
-👉 Further strengthens the foundation for:
-
-* persistent investigation workflows
-* cross-surface operational reasoning
-* deeper operational exploration tooling
-* future investigation export/import workflows
-* richer contextual operational diagnostics
-
----
-
-## 🎬 Result Viewer
-
-![DV Quick Run Result Viewer](docs/demo-result-viewer.gif)
-
-Typical workflow:
-
-start simple → run → explore → refine (Query-by-Canvas) → update safely (Smart PATCH) → refresh → repeat
+DV Quick Run turns VS Code into a focused **Dataverse developer and investigation console**.
+
+Instead of switching between Postman, browser tabs, maker portals, Excel, and manual metadata lookups, you can:
+
+* run OData and FetchXML queries
+* inspect results in a table or JSON view
+* refine queries safely using preview-first workflows
+* update records using Smart PATCH
+* traverse Dataverse relationships step-by-step
+* run related queries as `$batch`
+* investigate runtime behaviour with Execution Insights
+* understand entity operational footprint with Operational Profiles
+* use the Hub to stay oriented across investigation workflows
+
+DV Quick Run is designed around a simple loop:
+
+```text
+write → run → explore → refine → investigate → act safely → verify
+```
 
 ---
 
@@ -301,15 +35,71 @@ start simple → run → explore → refine (Query-by-Canvas) → update safely 
 1. Install **DV Quick Run**
 2. Login:
 
-   ```
+   ```bash
    az login --allow-no-subscriptions
    ```
+
 3. Configure your Dataverse environment
 4. Run a query:
 
-   ```
+   ```http
    contacts?$top=10
    ```
+
+5. Open the Hub any time:
+
+   ```text
+   DV Quick Run: Open Hub
+   ```
+
+---
+
+## 🆕 What's New in v0.9.17
+
+v0.9.17 introduces the **DV Quick Run Hub** and improves investigation continuity across Result Viewer, `$batch`, FetchXML, Guided Traversal, Execution Insights, and Operational Profiles.
+
+Highlights:
+
+* **DV Quick Run Hub** for in-app operational workflow orientation
+* active / recoverable / historical / stale investigation context awareness
+* Result Viewer recovery for closed but recoverable investigations
+* environment-aware context reset to avoid stale cross-environment recovery
+* selected `$batch` sub-result context tracking
+* improved FetchXML context classification in the Hub
+* Quickstart updates for Hub discovery
+
+The Hub is intentionally:
+
+* lightweight
+* local
+* renderer-thin
+* non-chatbot
+* non-dashboard
+* optional during investigation
+
+It helps answer:
+
+```text
+Where am I?
+What context is active?
+What can I continue?
+What should I reopen?
+What changed when I switched environments?
+```
+
+---
+
+## 🎬 Result Viewer
+
+![DV Quick Run Result Viewer](docs/demo-result-viewer.gif)
+
+The Result Viewer is the main interactive surface for exploring query results.
+
+Typical workflow:
+
+```text
+start simple → run → explore → refine → update safely → refresh → repeat
+```
 
 ---
 
@@ -317,143 +107,123 @@ start simple → run → explore → refine (Query-by-Canvas) → update safely 
 
 ### 🔎 Run & Explore Queries
 
-* Run Dataverse queries (OData & FetchXML) directly in VS Code
+* Run Dataverse OData and FetchXML directly in VS Code
 * View results in an interactive table or JSON
 * Sort, filter, inspect, copy, and act on data inline
+* Use Ctrl+Enter to run the query under your cursor
+
+---
+
+### 🧭 DV Quick Run Hub
+
+The Hub provides a calm orientation surface for operational investigation workflows.
+
+It helps you:
+
+* understand current investigation context
+* see whether a Result Viewer context is active, recoverable, historical, or stale
+* reopen recoverable Result Viewer sessions
+* track selected `$batch` sub-results
+* pivot to related investigation surfaces
+* avoid stale context after environment switches
+
+The Hub is optional. It does not take over the workflow; it helps you recover orientation when you need it.
+
+---
+
+### 🧩 Query-by-Canvas
+
+Query-by-Canvas is DV Quick Run’s preview-first refinement model.
+
+Start simple, then refine from results:
+
+```text
+contacts
+→ add $top
+→ add $select
+→ filter by value
+→ rerun
+```
+
+Supported refinement paths include:
+
+* add fields
+* filter by value
+* preview query changes
+* apply safely
+* rerun and verify
+
+---
+
+### 🔗 Guided Traversal
+
+Guided Traversal helps you navigate relationships across Dataverse tables.
+
+Use it to:
+
+* find paths between entities
+* traverse using real returned rows
+* continue exploration step-by-step
+* understand relationship routes visually
+* replay traversal flows as `$batch`
+
+---
+
+### 📦 `$batch` Workflows
+
+Run multiple related queries together using `$batch`.
+
+Useful for:
+
+* validating several endpoints together
+* investigating related tables in one execution
+* replaying Guided Traversal routes
+* comparing related results without manual switching
+
+The Hub tracks selected `$batch` sub-results so investigation context stays aligned with the selected response.
 
 ---
 
 ### ✏️ Smart PATCH
 
-* Update Dataverse records directly from the Result Viewer
-* Preview PATCH payloads before applying changes
-* Use metadata-aware inputs for boolean and choice fields
-* Automatically refresh results after successful updates
-* Prevent unsafe updates on expanded / related fields
+Smart PATCH lets you update Dataverse records directly from the Result Viewer using a preview-first workflow.
+
+It supports:
+
+* previewing PATCH payloads before execution
+* metadata-aware boolean and choice inputs
+* automatic result refresh after update
+* guardrails for expanded or unsafe update contexts
 
 ---
 
-### 🔗 Guided Traversal + Enrichment
+### 📊 Execution Insights
 
-* Traverse relationships step-by-step across Dataverse tables
-* Continue traversal using real data (row-driven)
-* Enrich results in-place using **Sibling Expand**
-* Build complex multi-entity queries without manual `$expand`
+Understand what is happening **behind your Dataverse queries** without leaving VS Code.
 
----
+DV Quick Run surfaces execution behaviour across plugins, async operations, workflows, and Power Automate-related context.
 
-### 🧭 Investigation Surface & Operational Continuity
+It can help identify:
 
-DV Quick Run now provides a cohesive operational investigation surface directly inside the Result Viewer.
-
-Instead of treating traversal, expands, execution diagnostics, and operational pivots as disconnected tools —
-
-DV Quick Run now preserves investigation continuity across operational workflows.
-
-The Result Viewer can now surface:
-
-* active traversal context
-* expanded operational scopes
-* contextual operational pivots
-* execution-aware investigation context
-* operational adjacency between related entities
-
-Examples include:
-
-* `account → contact`
-* `account + 3 expanded scopes`
-* traversal-active investigation workflows
-* clickable expanded-entity investigation pivots
-
-Expanded operational entities now appear directly inside the investigation surface as lightweight contextual pivots.
-
-This allows engineers to:
-
-* continue operational exploration without restarting workflows
-* pivot between related operational entities more naturally
-* recover from traversal dead-ends more safely
-* preserve investigation locality during multi-hop exploration
-
-The investigation surface intentionally remains:
-
-* lightweight
-* bounded
-* contextual
-* advisory-only
-
-DV Quick Run intentionally avoids:
-
-* speculative orchestration
-* hidden investigation automation
-* noisy dashboard behaviour
-* disruptive navigation workflows
-
-👉 Results in:
-
-* calmer operational exploration
-* smoother traversal continuity
-* stronger contextual investigation workflows
-* reduced operational disorientation
-* safer relationship-driven investigation
-
----
-
-### 📊 Execution Insights (Runtime Diagnostics)
-
-Understand what’s happening **behind your Dataverse queries** — without leaving VS Code.
-
-DV Quick Run surfaces **execution behaviour across plugins, async operations, and workflows** directly in the Result Viewer:
-
-- Detect slow, failed, waiting, and repeated execution behaviour  
-- Distinguish normal behaviour vs potential issues (same request vs cross-request)  
-- See impact and recommended next steps instantly  
-- Drill into raw trace and execution data when deeper debugging is needed  
-
-Instead of manually querying `plugintracelogs`, `asyncoperations`, correlating requests, and scanning raw data across multiple tools —
-
-DV Quick Run surfaces the most important execution signals instantly, and lets you drill deeper only when needed.
-
----
-
-#### 🧠 Primary Signal Reasoning
-
-Execution Insights now prioritises the strongest execution pattern first, then surfaces supporting evidence underneath.
-
-Instead of presenting disconnected diagnostics equally, DV Quick Run guides you toward the most important execution behaviour to investigate first.
-
-Examples include:
-- repeated background execution
-- recurring async operations
-- nested plugin chains
-- repeated cross-request execution patterns
+* slow execution
+* failed or waiting async operations
+* repeated execution patterns
+* nested plugin behaviour
+* correlation/request-linked runtime evidence
 
 ![Primary Signal 1](docs/execution-insights-primary-1.png)
 
----
-
-#### 🔗 Guided Investigation Flow
-
-Execution Insights now provides structured investigation guidance directly inside the Result Viewer.
-
-DV Quick Run helps connect:
-- async operations
-- plugin traces
-- workflow context
-- correlation identifiers
-
-…into a more coherent debugging workflow.
-
-Instead of manually stitching together execution context across multiple tools, you can progressively investigate execution behaviour directly from the insight surface.
+Execution Insights prioritises the strongest signal first, then keeps supporting evidence available for deeper investigation.
 
 ![Guided Investigation 1](docs/execution-insights-next-1.png)
 
 ---
 
-### 🧭 Operational Profiles (Entity Investigation)
+### 🧭 Operational Profiles
 
-Understand the **operational footprint** of a Dataverse entity before diving into execution troubleshooting.
+Operational Profiles help you understand the **operational footprint** of a Dataverse entity before diving into deeper troubleshooting.
 
-DV Quick Run now surfaces **Operational Profiles** directly inside the Result Viewer:
+Profiles can surface:
 
 * plugin orchestration density
 * relationship complexity
@@ -463,54 +233,9 @@ DV Quick Run now surfaces **Operational Profiles** directly inside the Result Vi
 * workflow participation
 * managed-state context
 
-Instead of manually inspecting metadata, relationships, plugin registrations, workflows, and async operations separately —
-
-DV Quick Run provides a bounded, evidence-backed operational investigation surface in one place.
-
-Operational Profiles help answer questions like:
-
-* “Is this entity operationally dense?”
-* “Is this table heavily orchestrated?”
-* “Should I investigate plugins first?”
-* “Does this entity participate in async execution?”
-* “Is this likely to produce investigation noise?”
-
-All without implying speculative root cause.
-
 ![Operational Profile](docs/entity-profile-card.png)
 
----
-
-#### 🔗 Evidence-Backed Investigation Actions
-
-Operational Profiles include direct investigation links for:
-
-* plugin registrations
-* relationships
-* columns
-* async operations
-* Power Automate flows
-* workflows
-
-Each investigation action launches a real Dataverse query directly inside DV Quick Run.
-
-Examples include:
-
-* `sdkmessageprocessingsteps`
-* `asyncoperations`
-* `workflows`
-
-👉 Results in:
-
-* faster operational investigation
-* reduced manual query construction
-* smoother signal → evidence workflows
-
----
-
-#### 🧠 Advisory-Only Operational Guidance
-
-Operational Profiles are intentionally:
+Operational Profiles are:
 
 * entity-scoped
 * user-triggered
@@ -518,88 +243,78 @@ Operational Profiles are intentionally:
 * bounded
 * advisory-only
 
-DV Quick Run intentionally avoids:
-
-* speculative causality
-* hidden scoring systems
-* synthetic operational narratives
-* unsupported root-cause claims
-
-The goal is:
-
-* better investigation starting points
-* clearer operational awareness
-* safer execution reasoning
-* stronger evidence transparency
+They help identify good investigation starting points without implying speculative root cause.
 
 ---
 
 ### 🧠 Explain Query + Query Doctor
 
-* Break queries into human-readable explanations
-* Understand filters, sorting, and structure instantly
+Use Explain and Query Doctor to understand and improve queries.
 
-**Query Doctor (Intelligent Diagnostics):**
+Supported workflows include:
 
-* Analyse your query and detect issues
-* Get prioritised diagnostics with confidence scoring
-* Receive actionable **Suggested Fixes** with examples
-
-Turn this:
-  accounts?$expand=primarycontactid
-
-Into:
-
-* what the query does
-* what’s missing
-* how to improve it
-
-All directly inside VS Code.
+* break down query structure
+* understand filters, sorting, expands, and selected fields
+* identify missing `$top` or `$select`
+* preview suggested improvements
+* apply safe refinements through preview-first workflows
 
 ---
 
 ### 🔍 Investigate Record
 
-* Select a GUID → investigate instantly
-* Works on:
-  - primary keys
-  - surfaced business GUID fields in results
-* See:
-  - relationships
-  - structured summary
-  - **interpretation (what this record likely represents)**
-  - suggested queries
+Investigate a record from a GUID or result context.
 
----
+Useful for:
 
-### ⚡ Smart Query Helpers
-
-* Build queries and updates (GET / PATCH) with guided prompts
-* Incrementally refine queries ($select, $filter, $expand, $orderby)
-* Generate queries from JSON
+* primary keys
+* surfaced business GUID fields
+* record interpretation
+* relationship exploration
+* suggested follow-up queries
 
 ---
 
 ### 🧬 Metadata Intelligence
 
-* Hover to see field metadata
-* Resolve choice labels automatically
-* **Refine filter values inline (preview-first)**
-* Explore entity relationships
+DV Quick Run uses Dataverse metadata to improve query building and investigation.
+
+Features include:
+
+* field metadata hover
+* choice label resolution
+* relationship awareness
+* entity set resolution
+* preview-first filter refinement
 
 ---
 
 ### 🌍 Environment Support
 
-* Work across DEV / UAT / PROD
-* Safe environment switching
-* Environment-aware metadata caching
+Work across configured Dataverse environments such as DEV, UAT, SIT, and PROD.
+
+DV Quick Run supports:
+
+* active environment selection
+* environment-aware metadata caching
+* safe environment switching
+* investigation context reset on environment change
 
 ---
 
 ## 🛡 Guardrails
 
-DV Quick Run detects risky query, mutation, and diagnostic scenarios — such as missing `$top`, unsafe PATCH contexts, unsupported expanded-field updates, broad result analysis, or unavailable plugin trace access — and guides you before execution.
+DV Quick Run favours explicit, preview-first, user-controlled workflows.
+
+It detects or guards against risky situations such as:
+
+* missing `$top`
+* broad result analysis
+* unsafe PATCH contexts
+* unsupported expanded-field updates
+* stale investigation context
+* unavailable execution evidence
+* cross-environment investigation leakage
 
 ---
 
@@ -608,22 +323,28 @@ DV Quick Run detects risky query, mutation, and diagnostic scenarios — such as
 * Dataverse / Dynamics 365 developers
 * Power Platform engineers
 * Integration / API developers
+* Support engineers investigating Dataverse execution behaviour
+* Consultants working across complex Dataverse environments
 
 ---
 
 ## 💡 Why DV Quick Run?
 
-Because the fastest workflow is:
+Because the fastest Dataverse workflow is:
 
-**write → run → explore → refine → update → verify → repeat**
+```text
+write → run → explore → refine → investigate → verify
+```
 
 …without leaving your editor.
+
+DV Quick Run is designed to reduce tool switching while keeping investigation workflows explicit, bounded, and trustworthy.
 
 ---
 
 ## 🔧 Development
 
-```
+```bash
 npm install
 npm run compile
 ```
