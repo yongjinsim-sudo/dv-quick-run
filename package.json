@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Dataverse operational investigation and execution diagnostics for VS Code — run, explore, refine, traverse, profile, and investigate Dataverse behaviour with Query-by-Canvas, Guided Traversal, Operational Profiles, $batch workflows, and Execution Insights.",
-  "version": "0.9.16",
+  "description": "Metadata-aware Dataverse query (OData, $batch, and FetchXML) and operational investigation workbench for VS Code.",
+  "version": "0.9.17",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -182,8 +182,7 @@
       },
       {
         "command": "dvQuickRun.investigateRecord",
-        "title": "DV Quick Run: Investigate Record",
-        "category": "DV Quick Run"
+        "title": "DV Quick Run: Investigate Record"
       },
       {
         "command": "dvQuickRun.trySampleQuery",
@@ -196,6 +195,14 @@
       {
         "command": "dvQuickRun.openQuickStart",
         "title": "DV Quick Run: Open Quickstart"
+      },
+      {
+        "command": "dvQuickRun.openHub",
+        "title": "DV Quick Run: Open Hub"
+      },
+      {
+        "command": "dvQuickRun.exportOperationalProfileSnapshot",
+        "title": "DV Quick Run: Export Operational Profile Snapshot"
       },
       {
         "command": "dvQuickRun.runBatchQueries",

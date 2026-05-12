@@ -17,6 +17,8 @@ import {
     loadFields
 } from "../../shared/metadataAccess.js";
 import type { BatchExecutionPart } from "../../../../../services/batchExecution.js";
+import { buildEntityInvestigationContext, buildQueryInvestigationContext } from "../../../../../investigation/context/investigationContextBuilder.js";
+import { investigationContextStore } from "../../../../../investigation/context/investigationContextStore.js";
 import { findLogicalEditorQueryTargetByText } from "../../shared/queryMutation/editorQueryTarget.js";
 
 export type ResultViewerLaunchOptions = {
@@ -75,6 +77,20 @@ export async function showResultViewerForQuery(
     const activeEnvironment = ctx.envContext.getActiveEnvironment();
     const nextLink = extractNextLink(result) ?? options?.paging?.nextLink;
     const sourceTarget = tryCaptureSourceTarget(path);
+
+    investigationContextStore.update({
+        source: "resultViewer",
+        surfaceState: {
+            resultViewerOpen: true,
+            recoverable: true,
+            expired: false,
+            staleReason: undefined
+        },
+        ...buildQueryInvestigationContext(path),
+        ...buildEntityInvestigationContext(entityDef?.logicalName, entityDef?.displayName, entityDef?.primaryIdAttribute),
+        environmentName: activeEnvironment?.name,
+        environmentUrl: activeEnvironment?.url
+    });
 
     const model = ResultViewerSessionStore.createInitialModel(result, path, {
         entitySetName: entityDef?.entitySetName ?? entitySetName,
@@ -194,6 +210,26 @@ export async function showBatchResultViewer(
     const failureCount = items.length - successCount;
     const firstSelectable = items.find((item) => !!item.model || !!item.error || !!item.rawBody)?.key ?? "summary";
 
+    investigationContextStore.update({
+        source: "resultViewer",
+        surfaceState: {
+            resultViewerOpen: true,
+            recoverable: true,
+            expired: false,
+            staleReason: undefined
+        },
+        currentQuery: {
+            queryText: parts.map((part) => part.queryText).join("\n"),
+            queryType: "batch"
+        },
+        ...getBatchInvestigationContext(items, firstSelectable),
+        environmentName: activeEnvironment?.name,
+        environmentUrl: activeEnvironment?.url,
+        traversal: options?.traversalSessionId
+            ? { selectedRouteId: options.traversalSessionId }
+            : undefined
+    });
+
     const batchModel: BatchResultViewerModel = {
         type: "batch",
         title: "DV Quick Run Batch Result Viewer",
@@ -269,6 +305,42 @@ function buildBatchSummaryInsightSuggestions(
     }
 
     return undefined;
+}
+
+function getBatchItemDisplayName(logicalName: string | undefined): string | undefined {
+    if (!logicalName) {
+        return undefined;
+    }
+
+    return logicalName
+        .split(/[_\s-]+/)
+        .filter((part) => part.length > 0)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+}
+
+function getBatchInvestigationContext(items: BatchResultViewerItem[], selectedKey: string) {
+    const activeItem = items.find((item) => item.key === selectedKey && !!item.model)
+        ?? items.find((item) => !!item.model);
+    const logicalName = activeItem?.model?.entityLogicalName;
+
+    return activeItem?.model
+        ? {
+            currentEntity: {
+                logicalName,
+                displayName: getBatchItemDisplayName(logicalName),
+                primaryIdAttribute: activeItem.model.primaryIdField
+            },
+            batch: {
+                activeItemKey: activeItem.key,
+                activeLabel: activeItem.label,
+                activeEntityLogicalName: logicalName,
+                activeEntityDisplayName: getBatchItemDisplayName(logicalName),
+                activeRowCount: activeItem.rowCount ?? activeItem.model.rowCount,
+                totalItems: items.length
+            }
+        }
+        : {};
 }
 
 function buildBatchItemLabel(part: BatchExecutionPart): string {

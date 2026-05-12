@@ -6,6 +6,39 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.9.17 — Operational Investigation Fluency & Hub Experience
+
+This release makes DV Quick Run easier to discover and use as an operational investigation workflow.
+
+Added:
+
+- DV Quick Run Hub for in-app investigation guidance.
+- Workflow-oriented investigation playbooks.
+- Capability Explorer for released DV Quick Run features.
+- Lightweight product direction and philosophy sections.
+- Initial extension-session InvestigationContext foundation.
+- Quickstart integration updates for operational investigation workflows.
+- Hub entry points for:
+  - Query execution workflows
+  - Guided Traversal workflows
+  - Execution Insights
+  - Operational Profiles
+  - Investigation continuation patterns
+
+Behaviour:
+
+- Hub content remains static, typed, and renderer-thin.
+- InvestigationContext is memory-backed only for the current extension session.
+- Guidance is framed as contextual operational orientation, not AI recommendations.
+- Quickstart remains available as onboarding; Hub complements it as operational fluency guidance.
+- Hub and Quickstart now align more closely around:
+  - operational investigation workflows
+  - result-driven exploration
+  - investigation continuity
+  - execution-aware operational reasoning
+
+---
+
 ## v0.9.16 — Investigation Continuity, Context Surfaces & Operational Exploration
 
 This release evolves DV Quick Run from a collection of operational tooling surfaces into a more cohesive operational investigation platform.

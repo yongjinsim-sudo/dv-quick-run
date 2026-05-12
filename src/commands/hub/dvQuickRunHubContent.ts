@@ -1,0 +1,288 @@
+
+import type { CapabilityInfo, InvestigationPlaybook, ProductDirectionInfo } from "./dvQuickRunHubTypes.js";
+
+export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
+  {
+    id: "runtime-behaviour",
+    title: "Investigate runtime behaviour",
+    summary: "Start from a query result, inspect runtime evidence, and continue into related operational context without treating signals as root cause proof.",
+    whenToUse: [
+      "A query behaves unexpectedly or slowly.",
+      "You need to inspect plugin, async, workflow, or Flow evidence.",
+      "You want evidence before changing data or queries."
+    ],
+    flow: [
+      { label: "Run a focused query", description: "Start with the smallest useful Dataverse query that reproduces the operational context.", relatedSurface: "Editor" },
+      { label: "Inspect the Result Viewer", description: "Review rows, shape, entity context, and available investigation pivots.", relatedSurface: "Result Viewer" },
+      { label: "Open Execution Insights", description: "Review observed runtime evidence and raw details where available.", relatedSurface: "Execution Insights" },
+      { label: "Continue to Profile or evidence", description: "Use profile or raw evidence pivots to inspect related operational participation.", relatedSurface: "Operational Profile" }
+    ],
+    relatedCapabilities: ["result-viewer", "execution-insights", "operational-profiles"],
+    safetyNotes: ["Runtime evidence is an investigation signal, not a root-cause conclusion."]
+  },
+  {
+    id: "entity-relationships",
+    title: "Understand entity relationships",
+    summary: "Use Guided Traversal to restore relationship orientation before writing complex expands or manual queries.",
+    whenToUse: [
+      "You know the business entities but not the Dataverse relationship path.",
+      "You need to move from one table to related operational data.",
+      "A route returned no data and you need a recoverable path forward."
+    ],
+    flow: [
+      { label: "Choose source and target", description: "Start from the entities that represent the operational question.", commandId: "dvQuickRun.findPathToTable", relatedSurface: "Guided Traversal" },
+      { label: "Review route families", description: "Compare high-signal routes without treating confidence as certainty.", relatedSurface: "Guided Traversal" },
+      { label: "Use graph or list orientation", description: "Pick the route that best matches the investigation context.", relatedSurface: "Traversal Graph" },
+      { label: "Run and recover", description: "Continue, go back, or change route when evidence suggests a better path.", relatedSurface: "Result Viewer" }
+    ],
+    relatedCapabilities: ["guided-traversal", "result-viewer"]
+  },
+  {
+    id: "refine-from-results",
+    title: "Refine from results",
+    summary: "Use observed rows as the canvas for safer, more contextual query narrowing.",
+    whenToUse: [
+      "Your first query is intentionally broad.",
+      "You want to narrow by observed values or columns.",
+      "You want to preview refinements before changing the query."
+    ],
+    flow: [
+      { label: "Run a simple query", description: "Start with a small query rather than writing the final shape upfront.", relatedSurface: "Editor" },
+      { label: "Inspect rows and columns", description: "Look for meaningful business-status, ownership, or relationship signals.", relatedSurface: "Result Viewer" },
+      { label: "Slice or filter", description: "Use cell or column actions to preview a refinement.", relatedSurface: "Result Viewer" },
+      { label: "Explain and verify", description: "Use Explain or Query Doctor when the query shape needs review.",  relatedSurface: "Explain" }
+    ],
+    relatedCapabilities: ["query-by-canvas", "explain-query-doctor", "preview-first-mutation"]
+  },
+  {
+    id: "power-platform-participation",
+    title: "Investigate Power Platform participation",
+    summary: "Bridge Dataverse evidence with orchestration context while preserving scope honesty.",
+    whenToUse: [
+      "A Dataverse record appears to participate in workflow or Flow behaviour.",
+      "You need to inspect asyncoperation, workflow, or FlowSession evidence.",
+      "You want to explain operational participation without dashboard noise."
+    ],
+    flow: [
+      { label: "Start from returned evidence", description: "Use Result Viewer, Execution Insights, or a selected entity as the starting context.", relatedSurface: "Result Viewer" },
+      { label: "Inspect runtime providers", description: "Review provider cards and raw evidence when available.", relatedSurface: "Execution Insights" },
+      { label: "Open entity profile", description: "Review bounded operational participation for the entity.",  relatedSurface: "Operational Profile" },
+      { label: "Continue only where evidence supports it", description: "Use explicit pivots instead of broad hidden scans.", relatedSurface: "Investigation Pivots" }
+    ],
+    relatedCapabilities: ["execution-insights", "operational-profiles", "batch-workflows"],
+    safetyNotes: ["Provider evidence should remain bounded to the current investigation context."]
+  },
+  {
+    id: "production-safe-update",
+    title: "Production-safe update workflow",
+    summary: "Use preview-first mutation and environment awareness before applying operational changes.",
+    whenToUse: [
+      "You need to update a Dataverse record intentionally.",
+      "You want to verify payload shape before applying a PATCH.",
+      "You are working in a sensitive environment."
+    ],
+    flow: [
+      { label: "Inspect current data", description: "Confirm the entity, row identity, and current values first.", relatedSurface: "Result Viewer" },
+      { label: "Create a preview", description: "Generate an inspectable Smart PATCH preview before execution.",  relatedSurface: "Preview" },
+      { label: "Verify environment", description: "Check environment identity and warning colour semantics before applying.", relatedSurface: "Preview" },
+      { label: "Apply and verify", description: "Apply explicitly, then rerun or inspect the record to verify outcome.", relatedSurface: "Result Viewer" }
+    ],
+    relatedCapabilities: ["smart-patch", "preview-first-mutation", "result-viewer"],
+    safetyNotes: ["Mutation workflows must remain preview-first and user-triggered."]
+  }
+];
+
+export const capabilities: readonly CapabilityInfo[] = [
+  {
+    id: "odata-fetchxml-execution",
+    title: "OData and FetchXML execution",
+    group: "Query & Explore",
+    summary: "Run common Dataverse query styles directly from VS Code.",
+    operationalUseCase: "Use when you need fast operational visibility without switching tools.",
+    relatedPlaybooks: ["refine-from-results"],
+    contextRequirement: {
+      kind: "editorSelection",
+      label: "Starts from editor query text",
+      unavailableReason: "Open or write an OData or FetchXML query in the editor, then run it from the command palette, CodeLens, or context menu.",
+      recommendedSurface: "Editor"
+    },
+    status: "available",
+    sinceVersion: "v0.6.x"
+  },
+  {
+    id: "result-viewer",
+    title: "Result Viewer",
+    group: "Query & Explore",
+    summary: "Inspect table and JSON output with session-backed stability for operational payloads.",
+    operationalUseCase: "Use as the central workspace for inspecting, pivoting, refining, and verifying query results.",
+    relatedPlaybooks: ["runtime-behaviour", "refine-from-results"],
+    contextRequirement: {
+      kind: "resultViewer",
+      label: "Appears after query execution",
+      unavailableReason: "Run an OData, FetchXML, or batch query to open the Result Viewer.",
+      recommendedSurface: "Result Viewer"
+    },
+    status: "available",
+    sinceVersion: "v0.5.x"
+  },
+  {
+    id: "query-by-canvas",
+    title: "Query-by-Canvas",
+    group: "Refine & Understand",
+    summary: "Refine queries from observed rows, columns, and metadata-aware actions.",
+    operationalUseCase: "Use when the result itself tells you the next narrowing step.",
+    relatedPlaybooks: ["refine-from-results"],
+    contextRequirement: {
+      kind: "resultViewer",
+      label: "Requires returned rows",
+      unavailableReason: "Run a query and use Result Viewer cell or column actions when observed values suggest the next refinement.",
+      recommendedSurface: "Result Viewer"
+    },
+    status: "available",
+    sinceVersion: "v0.7.x"
+  },
+  {
+    id: "explain-query-doctor",
+    title: "Explain and Query Doctor",
+    group: "Refine & Understand",
+    summary: "Understand query shape and preview deterministic improvements where supported.",
+    operationalUseCase: "Use when a query needs explanation, narrowing guidance, or a safer previewed correction.",
+    relatedPlaybooks: ["refine-from-results"],
+    contextRequirement: {
+      kind: "query",
+      label: "Requires active query context",
+      unavailableReason: "Open an OData or FetchXML query in the editor, then run Explain from the editor, CodeLens, or Result Viewer context.",
+      recommendedSurface: "Editor or Result Viewer"
+    },
+    status: "available",
+    sinceVersion: "v0.7.x"
+  },
+  {
+    id: "guided-traversal",
+    title: "Guided Traversal",
+    group: "Navigate Relationships",
+    summary: "Find metadata-backed relationship paths and continue investigations across related tables.",
+    operationalUseCase: "Use when you know where you want to go operationally but not which Dataverse relationship path to take.",
+    relatedPlaybooks: ["entity-relationships"],
+    commandId: "dvQuickRun.findPathToTable",
+    actionLabel: "Start Guided Traversal",
+    launchNote: "This workflow can start from the Hub because it asks for source and target context.",
+    contextRequirement: {
+      kind: "selfContained",
+      label: "Can start from the Hub",
+      unavailableReason: "Guided Traversal asks for source and target context when launched.",
+      recommendedSurface: "Guided Traversal"
+    },
+    status: "available",
+    sinceVersion: "v0.7.x"
+  },
+  {
+    id: "execution-insights",
+    title: "Execution Insights",
+    group: "Investigate Runtime",
+    summary: "Surface bounded runtime evidence from providers such as plugin traces, async operations, workflows, and FlowSession direction where available.",
+    operationalUseCase: "Use when returned data needs runtime context or orchestration evidence.",
+    relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
+    contextRequirement: {
+      kind: "runtimeEvidence",
+      label: "Requires runtime evidence",
+      unavailableReason: "Run a query and open Execution Insights where provider evidence is available.",
+      recommendedSurface: "Result Viewer / Execution Insights"
+    },
+    status: "available",
+    sinceVersion: "v0.9.x"
+  },
+  {
+    id: "operational-profiles",
+    title: "Operational Profiles",
+    group: "Understand Entities",
+    summary: "Review bounded entity-scoped operational participation without turning it into a dashboard or root-cause claim.",
+    operationalUseCase: "Use when an entity appears operationally central and you need context about participation signals.",
+    relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
+    contextRequirement: {
+      kind: "entity",
+      label: "Requires entity context",
+      unavailableReason: "Open from a known entity or selected Result Viewer context so the profile remains entity-scoped.",
+      recommendedSurface: "Operational Profile"
+    },
+    status: "available",
+    sinceVersion: "v0.9.x"
+  },
+  {
+    id: "preview-first-mutation",
+    title: "Preview-first mutation",
+    group: "Act Safely",
+    summary: "Review proposed changes before applying or executing operational mutations.",
+    operationalUseCase: "Use whenever a workflow may change query text or Dataverse data.",
+    relatedPlaybooks: ["production-safe-update", "refine-from-results"],
+    contextRequirement: {
+      kind: "selectedRow",
+      label: "Requires previewable change context",
+      unavailableReason: "Start from a query refinement or selected record where DV Quick Run can show the exact preview before apply.",
+      recommendedSurface: "Preview"
+    },
+    status: "available"
+  },
+  {
+    id: "smart-patch",
+    title: "Smart PATCH",
+    group: "Act Safely",
+    summary: "Prepare explicit, inspectable PATCH workflows with environment-aware safety cues.",
+    operationalUseCase: "Use when you need a deliberate record update and a verification path.",
+    relatedPlaybooks: ["production-safe-update"],
+    contextRequirement: {
+      kind: "selectedRow",
+      label: "Requires selected record context",
+      unavailableReason: "Start from a Result Viewer row or record context so the PATCH payload can be previewed safely.",
+      recommendedSurface: "Result Viewer / Preview"
+    },
+    status: "available",
+    sinceVersion: "v0.9.x"
+  },
+  {
+    id: "batch-workflows",
+    title: "$batch workflows",
+    group: "Advanced Workflows",
+    summary: "Run related queries together and inspect individual sub-results with investigation context preserved.",
+    operationalUseCase: "Use when related operational queries should be executed and reviewed as one workflow.",
+    howToUse: [
+      "Open a document with two or more OData GET queries.",
+      "Highlight the queries you want to run together.",
+      "Right-click the selection and choose: DV Quick Run: Run Selected Queries as $batch.",
+      "Inspect individual sub-results in the Result Viewer."
+    ],
+    relatedPlaybooks: ["power-platform-participation"],
+    contextRequirement: {
+      kind: "editorSelection",
+      label: "Requires selected queries",
+      unavailableReason: "Select two or more OData GET queries in the editor, then run the batch command from the context menu.",
+      recommendedSurface: "Editor selection"
+    },
+    status: "available",
+    sinceVersion: "v0.9.0"
+  }
+];
+
+export const productDirection: readonly ProductDirectionInfo[] = [
+  { title: "Investigation continuity", summary: "Preserve context across query results, traversal, runtime evidence, profiles, and preview workflows." },
+  { title: "Runtime and Power Platform visibility", summary: "Continue bridging Dataverse execution evidence with orchestration participation where evidence supports it." },
+  { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
+  { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
+  { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." }
+];
+
+export const whatsNew: readonly string[] = [
+  "DV Quick Run Hub for in-app operational guidance.",
+  "Workflow-oriented investigation playbooks.",
+  "Capability explorer for released investigation features.",
+  "Lightweight product direction and philosophy orientation.",
+  "Initial extension-session investigation context foundation."
+];
+
+export const philosophy: readonly string[] = [
+  "Evidence first, bounded interpretation second, user judgement always.",
+  "Free capabilities preserve understanding; future premium capabilities may accelerate workflows.",
+  "Mutation workflows remain preview-first and explicitly applied.",
+  "Runtime and profile signals are investigation pivots, not root-cause conclusions.",
+  "Guidance should stay calm, low-noise, and operationally useful."
+];

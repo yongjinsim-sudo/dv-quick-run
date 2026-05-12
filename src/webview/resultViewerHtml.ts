@@ -21,7 +21,7 @@ export function getResultViewerHtml(
     model: ResultViewerDisplayModel
 ): string {
     const iconUri = webview.asWebviewUri(
-        vscode.Uri.joinPath(extensionUri, "images", "icon16.png")
+        vscode.Uri.joinPath(extensionUri, "images", "icon32.png")
     );
 
     const initialModelJson = JSON.stringify(JSON.stringify(model));

@@ -34,9 +34,12 @@ import { registerBackTraversalCommand } from "../commands/backTraversal.js";
 import { registerChangeTraversalRouteCommand } from "../commands/changeTraversalRoute.js";
 import { registerClearTraversalCacheCommand } from '../commands/clearTraversalCache';
 import { registerOpenQuickStartCommand } from "../commands/openQuickStart.js";
+import { registerOpenDvQuickRunHubCommand } from "../commands/hub/openDvQuickRunHubCommand.js";
 import { registerApplyRecommendedNextStepFromExplainCommand } from "../commands/applyRecommendedNextStepFromExplain.js";
 import { registerRunBatchQueriesCommand } from "../commands/runBatchQueries.js";
 import { registerShowOperationalProfileCommand } from "../commands/showOperationalProfile.js";
+import { registerOpenOperationalProfileSurfaceCommand } from "../commands/openOperationalProfileSurface.js";
+import { registerReopenLastResultViewerCommand } from "../commands/reopenLastResultViewer.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -71,9 +74,12 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerChangeTraversalRouteCommand,
   registerClearTraversalCacheCommand,
   registerOpenQuickStartCommand,
+  registerOpenDvQuickRunHubCommand,
   registerApplyRecommendedNextStepFromExplainCommand,
   registerRunBatchQueriesCommand,
-  registerShowOperationalProfileCommand
+  registerShowOperationalProfileCommand,
+  registerOpenOperationalProfileSurfaceCommand,
+  registerReopenLastResultViewerCommand
 ];
 
 const diagnosticsRegistrations = (

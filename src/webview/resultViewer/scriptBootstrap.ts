@@ -704,6 +704,12 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             restoreActiveBatchViewState();
             closeTransientUi();
             renderCurrentModel();
+            vscodeApi.postMessage({
+                type: "activeBatchChanged",
+                payload: {
+                    batchItemKey: activeBatchKey
+                }
+            });
         }
 
         document.addEventListener("click", (event) => {
