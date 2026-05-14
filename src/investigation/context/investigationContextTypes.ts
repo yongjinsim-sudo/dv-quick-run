@@ -5,6 +5,7 @@ export type InvestigationSource =
   | "guidedTraversal"
   | "executionInsights"
   | "operationalProfile"
+  | "capabilityExplorer"
   | "hub"
   | "unknown";
 
@@ -34,7 +35,23 @@ export interface InvestigationTraversalContext {
 export interface InvestigationRuntimeContext {
   correlationId?: string;
   requestId?: string;
+  operationId?: string;
   providerIds?: string[];
+}
+
+export interface InvestigationCapabilityExecutionContext {
+  kind: "customApiExecution";
+  operationUniqueName: string;
+  operationDisplayName?: string;
+  operationKind?: "Action" | "Function";
+  bindingKind?: "Bound" | "Unbound" | "Unknown";
+  boundEntityLogicalName?: string;
+  status?: "previewed" | "completed" | "failed";
+  method?: "GET" | "POST";
+  path?: string;
+  statusCode?: number;
+  durationMs?: number;
+  executedAtUtc?: string;
 }
 
 export interface InvestigationBatchContext {
@@ -57,6 +74,7 @@ export interface InvestigationContext {
   traversal?: InvestigationTraversalContext;
   runtime?: InvestigationRuntimeContext;
   batch?: InvestigationBatchContext;
+  capabilityExecution?: InvestigationCapabilityExecutionContext;
   surfaceState?: InvestigationSurfaceState;
   lastUpdatedUtc: string;
 }

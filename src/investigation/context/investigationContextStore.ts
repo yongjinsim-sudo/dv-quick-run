@@ -29,7 +29,8 @@ export class InvestigationContextStore {
           providerIds: this.currentContext.runtime.providerIds ? [...this.currentContext.runtime.providerIds] : undefined
         }
         : undefined,
-      batch: this.currentContext.batch ? { ...this.currentContext.batch } : undefined
+      batch: this.currentContext.batch ? { ...this.currentContext.batch } : undefined,
+      capabilityExecution: this.currentContext.capabilityExecution ? { ...this.currentContext.capabilityExecution } : undefined
     };
   }
 
@@ -49,6 +50,9 @@ export class InvestigationContextStore {
         }
         : this.currentContext.runtime,
       batch: patch.batch ? { ...this.currentContext.batch, ...patch.batch } : this.currentContext.batch,
+      capabilityExecution: patch.capabilityExecution
+        ? { ...this.currentContext.capabilityExecution, ...patch.capabilityExecution }
+        : this.currentContext.capabilityExecution,
       lastUpdatedUtc: now()
     };
 

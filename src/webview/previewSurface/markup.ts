@@ -14,11 +14,17 @@ function renderRiskBlock(model: PreviewSurfaceModel): string {
   const environment = model.environmentName ?? "Not specified";
 
   if (riskLevel === "red") {
-    return `<div class="risk-red"><strong>RED environment warning</strong><br/>Environment: ${escapeHtml(environment)}<br/>This PATCH will update data in this environment. Review the payload before applying.</div>`;
+    const warning = model.kind === "patch"
+      ? "This PATCH will update data in this environment. Review the payload before applying."
+      : "This operation targets a RED environment. Review carefully before continuing.";
+    return `<div class="risk-red"><strong>RED environment warning</strong><br/>Environment: ${escapeHtml(environment)}<br/>${escapeHtml(warning)}</div>`;
   }
 
   if (riskLevel === "amber") {
-    return `<div class="risk-amber"><strong>Amber environment caution</strong><br/>Environment: ${escapeHtml(environment)}<br/>Review carefully before applying.</div>`;
+    const warning = model.kind === "patch"
+      ? "Review carefully before applying."
+      : "Review carefully before continuing.";
+    return `<div class="risk-amber"><strong>Amber environment caution</strong><br/>Environment: ${escapeHtml(environment)}<br/>${escapeHtml(warning)}</div>`;
   }
 
   if (model.environmentName) {

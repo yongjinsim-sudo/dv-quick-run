@@ -86,3 +86,7 @@ export function createPreviewAction(args: {
 function createPreviewId(): string {
   return `preview-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
+
+export function closePreviewSurface(): void {
+  PreviewSurfacePanel.disposeCurrent();
+}

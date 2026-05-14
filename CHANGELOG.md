@@ -6,6 +6,230 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.10.1 — Execution Safety, Capability Continuity & Preview Trust Hardening
+
+This release hardens the operational execution model introduced in v0.10.0.
+
+It focuses on:
+
+- execution safety
+- environment-bound operational context
+- preview trustworthiness
+- capability execution continuity
+- investigation consistency
+- operational UX refinement
+
+The goal is not adding more execution capability.
+
+It is:
+
+- preventing unsafe operational behaviour
+- reinforcing explicit environment ownership
+- strengthening execution trust
+- reducing stale operational context risk
+- aligning preview surfaces with real execution authority
+
+---
+
+### 🛡️ Environment-Bound Capability Execution (Major)
+
+Capability execution context is now strictly bound to the active environment.
+
+Behaviour changes:
+
+- changing environments now invalidates active capability execution context
+- stale execution previews can no longer execute against prior environments
+- capability execution surfaces are closed automatically during environment transitions
+
+Affected surfaces include:
+
+- Capability Explorer
+- Custom API execution previews
+- Capability execution insights
+- preview-backed execution workflows
+
+Results:
+
+- prevents stale-environment execution
+- avoids accidental SIT/PROD execution drift
+- strengthens operational trust boundaries
+- aligns execution authority with active environment ownership
+
+---
+
+### 🔒 Preview Trust Hardening (NEW)
+
+Execution previews now enforce stronger operational continuity guarantees.
+
+Behaviour:
+
+- stale previews are no longer treated as executable authority
+- execution context must originate from the currently active environment
+- preview execution continuity resets safely after environment changes
+
+This prevents scenarios where:
+
+- a SIT preview remains executable after switching to DEV
+- stale capability metadata survives environment transition
+- investigation anchors leak across operational contexts
+
+Results:
+
+- safer operational execution
+- stronger preview correctness
+- reduced cross-environment execution risk
+- clearer operational mental model
+
+---
+
+### 🧠 Capability Execution Continuity Refinement
+
+Capability execution flows now behave more coherently during operational transitions.
+
+Behaviour improvements:
+
+- execution previews remain environment-scoped
+- capability execution insights remain tied to captured execution anchors
+- reopening previews after environment changes regenerates fresh operational context
+
+Results:
+
+- clearer operational continuity
+- safer investigation behaviour
+- reduced stale-context ambiguity
+- stronger alignment between preview, execution, and diagnostics
+
+---
+
+### 🧭 Capability Explorer UX Refinement
+
+Refined execution affordances and operational capability UX.
+
+Improvements include:
+
+- consistent execution button sizing
+- improved spacing/alignment for execution actions
+- cleaner execution preview affordances
+- stronger visual consistency between:
+  - Preview / Run Function
+  - Execution Insights
+
+Results:
+
+- calmer operational UX
+- more professional execution surface presentation
+- clearer execution interaction hierarchy
+- improved readability under dense operational layouts
+
+---
+
+### ⚡ Execution Insight Workflow Refinement
+
+Execution Insight flows now align more tightly with capability execution behaviour.
+
+Behaviour:
+
+- execution insights continue using captured request/correlation context
+- investigation surfaces remain execution-anchor bounded
+- execution diagnostics remain tied to originating capability execution
+
+Results:
+
+- stronger execution investigation coherence
+- safer operational traceability
+- clearer investigation lineage
+- reduced diagnostic ambiguity
+
+---
+
+### 🧩 Preview-Only Workflow Wording Refinement
+
+Refined preview-only operational wording throughout Capability Explorer.
+
+Changes include:
+
+- removed internal implementation/workstream wording from user-facing UX
+- simplified preview-only operational messaging
+- improved distinction between:
+  - executable capabilities
+  - preview-only capabilities
+  - inspect-only capabilities
+
+Results:
+
+- cleaner operational language
+- reduced internal terminology leakage
+- more polished capability exploration experience
+- stronger operational professionalism
+
+---
+
+### 🧪 Stability & Validation
+
+Verified:
+
+- environment transition invalidation
+- stale preview prevention
+- execution surface closure on environment change
+- safe regeneration of execution previews
+- execution insight continuity
+- Hub recovery behaviour after environment transition
+- capability execution button UX consistency
+
+No regression in:
+
+- Capability Explorer
+- Execution Insights
+- Result Viewer
+- Guided Traversal
+- Operational Profiles
+- `$batch` execution
+- Query Doctor
+- Hub workflows
+
+---
+
+### 🧭 Notes
+
+This release reinforces a critical operational invariant:
+
+```text
+active environment
+=
+execution authority boundary
+```
+
+DV Quick Run now treats operational environment transitions as authoritative context changes.
+
+Key principles reinforced:
+
+- fail closed over stale continuity
+- execution authority must remain environment-bound
+- previews are operational context, not persistent authority
+- operational investigation must remain trustworthy
+- execution safety takes precedence over convenience
+
+---
+
+### 🎯 Summary
+
+DV Quick Run now:
+
+- invalidates stale execution context safely
+- prevents cross-environment execution drift
+- closes unsafe preview surfaces automatically
+- strengthens capability execution trustworthiness
+- aligns execution continuity with operational environment ownership
+
+This establishes a safer foundation for:
+
+- future capability execution workflows
+- deeper operational diagnostics
+- execution-aware investigation continuity
+- environment-safe operational exploration
+
+---
+
 ## DV Quick Run v0.10.0 — Capability Explorer, Custom API Execution & Operational Capability Discovery
 
 This release introduces the first version of **Capability Explorer** — a new operational surface for discovering, understanding, previewing, and executing Dataverse Custom APIs directly inside DV Quick Run.

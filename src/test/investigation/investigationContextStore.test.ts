@@ -47,6 +47,36 @@ suite("investigationContextStore", () => {
     assert.deepStrictEqual(store.getCurrent().runtime?.providerIds, ["pluginTrace"]);
   });
 
+
+  test("preserves capability execution context as investigation anchor", () => {
+    const store = new InvestigationContextStore(() => "initial");
+    const updated = store.update({
+      source: "capabilityExplorer",
+      capabilityExecution: {
+        kind: "customApiExecution",
+        operationUniqueName: "new_CalculateScore",
+        operationDisplayName: "Calculate Score",
+        operationKind: "Function",
+        bindingKind: "Unbound",
+        status: "completed",
+        method: "GET",
+        statusCode: 200
+      },
+      runtime: {
+        requestId: "request-1",
+        correlationId: "correlation-1"
+      }
+    }, () => "updated");
+
+    assert.strictEqual(updated.source, "capabilityExplorer");
+    assert.strictEqual(updated.capabilityExecution?.operationUniqueName, "new_CalculateScore");
+    assert.strictEqual(updated.capabilityExecution?.status, "completed");
+    assert.strictEqual(
+      formatInvestigationContextSummary(updated),
+      "Capability: new_CalculateScore • Correlation: correlation-1"
+    );
+  });
+
   test("notifies listeners when context changes", () => {
     const store = new InvestigationContextStore(() => "initial");
     const observed: string[] = [];

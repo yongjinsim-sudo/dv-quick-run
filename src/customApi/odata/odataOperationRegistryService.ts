@@ -8,7 +8,11 @@ interface CachedRegistry {
   registry: ODataOperationRegistry;
 }
 
-let cachedRegistry: CachedRegistry | undefined;
+const cachedRegistries = new Map<string, CachedRegistry>();
+
+function normalizeEnvironmentUrl(environmentUrl: string): string {
+  return environmentUrl.trim().replace(/\/+$/, "").toLowerCase();
+}
 
 export class ODataOperationRegistryService {
   constructor(
@@ -18,19 +22,29 @@ export class ODataOperationRegistryService {
   ) {}
 
   async getRegistry(environmentUrl: string): Promise<ODataOperationRegistry> {
-    const normalizedEnvironmentUrl = environmentUrl.trim().replace(/\/+$/, "").toLowerCase();
-    if (cachedRegistry?.environmentUrl === normalizedEnvironmentUrl) {
+    const normalizedEnvironmentUrl = normalizeEnvironmentUrl(environmentUrl);
+    const cachedRegistry = cachedRegistries.get(normalizedEnvironmentUrl);
+    if (cachedRegistry) {
       return cachedRegistry.registry;
     }
 
     const metadataXml = await this.client.getText("/$metadata", this.token, { timeoutMs: 30000 });
     const registry = parseODataOperationRegistry(metadataXml);
-    cachedRegistry = { environmentUrl: normalizedEnvironmentUrl, registry };
+    cachedRegistries.set(normalizedEnvironmentUrl, { environmentUrl: normalizedEnvironmentUrl, registry });
     this.ctx.output.appendLine(`DV Quick Run: Loaded OData operation registry with ${registry.operations.length} operations.`);
     return registry;
   }
 
-  static clearCache(): void {
-    cachedRegistry = undefined;
+  static clearCache(environmentUrl?: string): void {
+    if (environmentUrl) {
+      cachedRegistries.delete(normalizeEnvironmentUrl(environmentUrl));
+      return;
+    }
+
+    cachedRegistries.clear();
+  }
+
+  static getCachedEnvironmentUrls(): string[] {
+    return Array.from(cachedRegistries.keys()).sort();
   }
 }

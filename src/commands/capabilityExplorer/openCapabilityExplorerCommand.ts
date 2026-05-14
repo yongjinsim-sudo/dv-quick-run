@@ -6,16 +6,47 @@ import { renderCapabilityExplorerHtml } from "../../webview/capabilityExplorer/r
 import { buildCustomApiExecutionPreview, buildCustomApiExecutionPreviewSurfaceSections } from "../../customApi/execution/customApiExecutionPreviewBuilder.js";
 import { buildCustomApiFunctionExecutionPlan, canExecuteCustomApiFunction, promptForCustomApiFunctionParameters } from "../../customApi/execution/customApiFunctionExecution.js";
 import { buildCustomApiExecutionErrorSurfaceSections, buildCustomApiExecutionResultSurfaceSections } from "../../customApi/execution/customApiExecutionResultSurface.js";
-import { ODataOperationRegistryService } from "../../customApi/odata/odataOperationRegistryService.js";
+import {
+  buildCapabilityExecutionContextFromError,
+  buildCapabilityExecutionContextFromPreview,
+  buildCapabilityExecutionContextFromResult,
+  buildCapabilityExecutionInvestigationPatch
+} from "../../customApi/execution/customApiExecutionContext.js";
 import { applyCustomApiExecutionEligibility } from "../../customApi/odata/odataOperationEligibility.js";
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
 import { runAction } from "../router/actions/shared/actionRunner.js";
 import { createPreviewAction, showPreviewSurface, updatePreviewSurface } from "../../services/previewSurfaceService.js";
+import type { PreviewSurfaceRiskLevel } from "../../services/previewSurfaceTypes.js";
 import { logDebug, logInfo, logWarn } from "../../utils/logger.js";
+import { loadODataOperationRegistry } from "../router/actions/shared/metadataAccess.js";
+import { investigationContextStore } from "../../investigation/context/investigationContextStore.js";
+import { resolveCapabilityRunEnvironmentLock } from "../../customApi/execution/capabilityExecutionEnvironmentGuard.js";
 
 let capabilityExplorerPanel: vscode.WebviewPanel | undefined;
 let latestDefinitions: CustomApiDefinition[] = [];
 let latestEnvironmentUrl = "";
+let latestEnvironmentName = "";
+
+function captureCapabilityExecutionContext(args: {
+  context: ReturnType<typeof buildCapabilityExecutionContextFromPreview>;
+  environmentUrl?: string;
+}): void {
+  investigationContextStore.update(
+    buildCapabilityExecutionInvestigationPatch(args.context, args.environmentUrl)
+  );
+}
+
+function notifyCapabilityExecutionAvailable(apiUniqueName: string, status: "completed" | "failed"): void {
+  if (!capabilityExplorerPanel) {
+    return;
+  }
+
+  void capabilityExplorerPanel.webview.postMessage({
+    type: "capabilityExecutionAvailable",
+    apiUniqueName,
+    status
+  });
+}
 
 async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<void> {
   const scope = ctx.getScope();
@@ -25,11 +56,11 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
   const discoveredDefinitions = await discoveryService.discoverCustomApis();
   const activeEnvironment = ctx.envContext.getActiveEnvironment();
   latestEnvironmentUrl = activeEnvironment?.url ?? "";
+  latestEnvironmentName = activeEnvironment?.name ?? "";
   let definitions = discoveredDefinitions;
 
   try {
-    const registryService = new ODataOperationRegistryService(ctx, client, token);
-    const registry = await registryService.getRegistry(latestEnvironmentUrl || await ctx.getBaseUrl());
+    const registry = await loadODataOperationRegistry(ctx, client, token, latestEnvironmentUrl || await ctx.getBaseUrl());
     definitions = applyCustomApiExecutionEligibility(discoveredDefinitions, registry);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -93,9 +124,31 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
             source: "capabilityExplorer",
             sourceAction: `Preview ${preview.apiUniqueName}`,
             environmentName: activeEnvironment?.name,
-            riskLevel: definition.operationKind === "Action" ? "amber" : "normal",
+            riskLevel: resolveCapabilityPreviewRiskLevel(activeEnvironment),
             summary: "Preview the Custom API request shape. No Dataverse operation is executed from this preview.",
             sections: buildCustomApiExecutionPreviewSurfaceSections(preview)
+          });
+          captureCapabilityExecutionContext({
+            context: buildCapabilityExecutionContextFromPreview({
+              definition,
+              environmentName: activeEnvironment?.name
+            }),
+            environmentUrl: activeEnvironment?.url
+          });
+          return;
+        }
+
+        const initialLock = resolveCapabilityRunEnvironmentLock({
+          capturedEnvironmentUrl: latestEnvironmentUrl,
+          capturedEnvironmentName: latestEnvironmentName,
+          activeEnvironmentUrl: activeEnvironment?.url,
+          activeEnvironmentName: activeEnvironment?.name
+        });
+
+        if (initialLock.isLocked) {
+          showCapabilityRunEnvironmentLock({
+            activeEnvironment,
+            reason: initialLock.reason
           });
           return;
         }
@@ -113,7 +166,7 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
           source: "capabilityExplorer",
           sourceAction: `Run ${preview.apiUniqueName}`,
           environmentName: activeEnvironment?.name,
-          riskLevel: "normal",
+          riskLevel: resolveCapabilityPreviewRiskLevel(activeEnvironment),
           summary: "Preview this read-oriented Custom API Function request before execution. Execution only runs after explicit confirmation.",
           sections: [
             ...buildCustomApiExecutionPreviewSurfaceSections(preview),
@@ -134,8 +187,34 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
           ]
         });
 
+        captureCapabilityExecutionContext({
+          context: buildCapabilityExecutionContextFromPreview({
+            definition,
+            executionPlan,
+            values,
+            environmentName: activeEnvironment?.name
+          }),
+          environmentUrl: activeEnvironment?.url
+        });
+
         if (previewResult.actionKind !== "apply") {
           void vscode.window.showInformationMessage("DV Quick Run: Custom API Function preview cancelled. No Dataverse operation was executed.");
+          return;
+        }
+
+        const postPreviewEnvironment = ctx.envContext.getActiveEnvironment();
+        const postPreviewLock = resolveCapabilityRunEnvironmentLock({
+          capturedEnvironmentUrl: latestEnvironmentUrl,
+          capturedEnvironmentName: latestEnvironmentName,
+          activeEnvironmentUrl: postPreviewEnvironment?.url,
+          activeEnvironmentName: postPreviewEnvironment?.name
+        });
+
+        if (postPreviewLock.isLocked) {
+          showCapabilityRunEnvironmentLock({
+            activeEnvironment: postPreviewEnvironment,
+            reason: postPreviewLock.reason
+          });
           return;
         }
 
@@ -147,6 +226,17 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
         try {
           const response = await client.getWithMetadata(executionPlan.path, token);
           logInfo(ctx.output, `→ Custom API Function completed (${response.executionContext.statusCode ?? "unknown"}, ${response.executionContext.durationMs ?? 0}ms)`);
+          captureCapabilityExecutionContext({
+            context: buildCapabilityExecutionContextFromResult({
+              definition,
+              executionPlan,
+              values,
+              result: response,
+              environmentName: activeEnvironment?.name
+            }),
+            environmentUrl: activeEnvironment?.url
+          });
+          notifyCapabilityExecutionAvailable(definition.uniqueName, "completed");
           updatePreviewSurface({
             kind: "customApi",
             title: "DV Quick Run – Custom API Result",
@@ -169,6 +259,17 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           logWarn(ctx.output, `→ Custom API Function failed: ${message}`);
+          captureCapabilityExecutionContext({
+            context: buildCapabilityExecutionContextFromError({
+              definition,
+              executionPlan,
+              values,
+              errorMessage: message,
+              environmentName: activeEnvironment?.name
+            }),
+            environmentUrl: activeEnvironment?.url
+          });
+          notifyCapabilityExecutionAvailable(definition.uniqueName, "failed");
           updatePreviewSurface({
             kind: "customApi",
             title: "DV Quick Run – Custom API Result",
@@ -193,9 +294,14 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
         return;
       }
 
-      if (message?.type === "runCommand" && typeof message.command === "string") {
-        const args = Array.isArray(message.args) ? message.args : [];
-        await vscode.commands.executeCommand(message.command, ...args);
+      if (message?.type === "openHub") {
+        await vscode.commands.executeCommand("dvQuickRun.openHub");
+        return;
+      }
+
+      if (message?.type === "openCapabilityExecutionInsights") {
+        await vscode.commands.executeCommand("dvQuickRun.openCapabilityExecutionInsights");
+        return;
       }
     }, null, ctx.ext.subscriptions);
   }
@@ -203,6 +309,54 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
   capabilityExplorerPanel.title = `Capability Explorer (${definitions.length} Custom APIs)`;
   capabilityExplorerPanel.webview.html = renderCapabilityExplorerHtml(capabilityExplorerPanel.webview, model);
   capabilityExplorerPanel.reveal(vscode.ViewColumn.One);
+}
+
+function showCapabilityRunEnvironmentLock(args: {
+  activeEnvironment: { name?: string; statusBarColor?: "white" | "amber" | "red" } | undefined;
+  reason?: string;
+}): void {
+  const reason = args.reason ?? "Capability execution is locked because the active Dataverse environment changed. Refresh Capability Explorer before running.";
+
+  updatePreviewSurface({
+    kind: "customApi",
+    title: "DV Quick Run – Custom API Function Locked",
+    source: "capabilityExplorer",
+    sourceAction: "Run Custom API Function",
+    environmentName: args.activeEnvironment?.name,
+    riskLevel: resolveCapabilityPreviewRiskLevel(args.activeEnvironment),
+    summary: reason,
+    sections: [
+      {
+        title: "Environment safety lock",
+        content: [
+          "Custom API Function execution was not started.",
+          reason,
+          "Refresh Capability Explorer in the active environment before running this capability."
+        ].join("\n"),
+        language: "text"
+      }
+    ]
+  });
+
+  void vscode.window.showWarningMessage(`DV Quick Run: ${reason}`);
+}
+
+
+function resolveCapabilityPreviewRiskLevel(
+  activeEnvironment: { statusBarColor?: "white" | "amber" | "red" } | undefined
+): PreviewSurfaceRiskLevel {
+  const colorHint = activeEnvironment?.statusBarColor ?? "white";
+  return colorHint === "red" || colorHint === "amber" ? colorHint : "normal";
+}
+
+export function closeCapabilityExplorer(): void {
+  latestDefinitions = [];
+  latestEnvironmentUrl = "";
+  latestEnvironmentName = "";
+
+  const panel = capabilityExplorerPanel;
+  capabilityExplorerPanel = undefined;
+  panel?.dispose();
 }
 
 export async function openCapabilityExplorer(ctx: CommandContext): Promise<void> {

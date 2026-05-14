@@ -1,4 +1,6 @@
 import type { CustomApiDefinition, CustomApiRequestParameter } from "../models/customApiTypes.js";
+import { resolveCustomApiExecutionCapability } from "./customApiExecutionCapabilityResolver.js";
+import { buildCustomApiPreviewInvocationPath } from "./customApiInvocationPathBuilder.js";
 
 export interface CustomApiExecutionPreviewParameter {
   name: string;
@@ -31,6 +33,7 @@ export interface CustomApiExecutionPreviewModel {
   parameters: CustomApiExecutionPreviewParameter[];
   unsupportedParameters: CustomApiExecutionPreviewParameter[];
   notes: string[];
+  executionCapability: ReturnType<typeof resolveCustomApiExecutionCapability>;
 }
 
 interface BuildCustomApiExecutionPreviewOptions {
@@ -67,25 +70,11 @@ function getParameterPlaceholder(parameter: CustomApiRequestParameter): unknown 
   }
 }
 
-function buildPathTemplate(definition: CustomApiDefinition): string {
-  const operationName = definition.executionEligibility?.odataInvocationName || definition.executionEligibility?.odataName || `Microsoft.Dynamics.CRM.${definition.uniqueName}`;
-
-  if (definition.bindingKind === "Bound") {
-    const entitySetPlaceholder = `{entity-set-for-${definition.boundEntityLogicalName || "bound-entity"}}`;
-    return `/${entitySetPlaceholder}({record-id})/${operationName}`;
-  }
-
-  return `/${operationName}`;
-}
-
-function buildQueryParameterTemplate(parameters: readonly CustomApiExecutionPreviewParameter[]): string {
-  if (parameters.length === 0) {
-    return "";
-  }
-
-  return parameters
-    .map((parameter) => `${parameter.name}=${JSON.stringify(parameter.placeholder)}`)
-    .join("&");
+function buildPreviewParameterValues(parameters: readonly CustomApiExecutionPreviewParameter[]): Record<string, unknown> {
+  return parameters.reduce<Record<string, unknown>>((values, parameter) => {
+    values[parameter.name] = parameter.placeholder;
+    return values;
+  }, {});
 }
 
 function buildRequestBody(parameters: readonly CustomApiExecutionPreviewParameter[], method: "GET" | "POST"): Record<string, unknown> | undefined {
@@ -135,9 +124,10 @@ function buildNotes(definition: CustomApiDefinition, unsupportedParameters: read
     notes.push(`${definition.executionEligibility.label} — ${definition.executionEligibility.reason}`);
   }
 
-  notes.push(definition.operationKind === "Function" && definition.bindingKind === "Unbound" && unsupportedParameters.length === 0 && definition.executionEligibility?.state === "executable"
-    ? "This Function can be executed explicitly after preview in this workstream."
-    : "This is a request preview only. DV Quick Run will not execute this operation from this preview.");
+  const capability = definition.executionCapability || resolveCustomApiExecutionCapability(definition);
+  notes.push(capability.canExecute
+    ? "This capability can be executed explicitly after preview confirmation."
+    : `${capability.label} — ${capability.reason}`);
   return notes;
 }
 
@@ -146,11 +136,13 @@ export function buildCustomApiExecutionPreview(
   options: BuildCustomApiExecutionPreviewOptions = {}
 ): CustomApiExecutionPreviewModel {
   const method = getMethod(definition);
-  const pathTemplate = buildPathTemplate(definition);
-  const requestUrlTemplate = `${normalizeEnvironmentUrl(options.environmentUrl)}/api/data/v9.2${pathTemplate}`;
   const parameters = buildPreviewParameters(definition);
+  const previewValues = buildPreviewParameterValues(parameters);
+  const pathTemplate = buildCustomApiPreviewInvocationPath(definition, previewValues);
+  const requestUrlTemplate = `${normalizeEnvironmentUrl(options.environmentUrl)}/api/data/v9.2${pathTemplate}`;
   const unsupportedParameters = parameters.filter((parameter) => !parameter.supported);
-  const queryParameterTemplate = method === "GET" ? buildQueryParameterTemplate(parameters) : "";
+  const executionCapability = definition.executionCapability || resolveCustomApiExecutionCapability(definition);
+  const queryParameterTemplate = "";
   const requestBody = buildRequestBody(parameters, method);
 
   return {
@@ -167,7 +159,8 @@ export function buildCustomApiExecutionPreview(
     readinessReason: definition.executionReadinessReason || "Preview eligibility is based on discovered parameter metadata.",
     parameters,
     unsupportedParameters,
-    notes: buildNotes(definition, unsupportedParameters)
+    notes: buildNotes(definition, unsupportedParameters),
+    executionCapability
   };
 }
 
@@ -247,9 +240,9 @@ export function buildCustomApiExecutionPreviewSurfaceSections(
       title: "Summary",
       content: [
         "Mode: Preview only",
-        preview.method === "GET" && preview.bindingKind === "Unbound" && preview.unsupportedParameters.length === 0 && preview.readinessLabel === "Preview-ready"
-          ? "Execution: depends on OData eligibility shown in the drawer"
-          : "Execution: Not available in this workstream",
+        preview.executionCapability.canExecute
+          ? "Execution: available after explicit confirmation"
+          : "Execution: preview-only",
         `Readiness: ${preview.readinessLabel}`,
         `Reason: ${preview.readinessReason}`
       ].join("\n"),

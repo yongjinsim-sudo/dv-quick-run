@@ -23,6 +23,7 @@ function hasMeaningfulContext(context: InvestigationContext): boolean {
     || context.runtime?.correlationId
     || context.runtime?.requestId
     || context.runtime?.providerIds?.length
+    || context.capabilityExecution?.operationUniqueName
     || context.batch?.activeItemKey
     || context.batch?.activeEntityLogicalName
   );
@@ -43,7 +44,12 @@ function hasRequirementContext(requirement: CapabilityContextRequirement | undef
     case "selectedRow":
       return Boolean(context.selectedRecord?.id);
     case "runtimeEvidence":
-      return Boolean(context.runtime?.correlationId || context.runtime?.requestId || context.runtime?.providerIds?.length);
+      return Boolean(
+        context.runtime?.correlationId
+        || context.runtime?.requestId
+        || context.runtime?.providerIds?.length
+        || context.capabilityExecution?.operationUniqueName
+      );
     case "entity":
       return Boolean(context.batch?.activeEntityLogicalName || context.currentEntity?.logicalName || context.selectedRecord?.entityLogicalName);
     case "editorSelection":
@@ -219,11 +225,31 @@ function buildContinuationActions(context: InvestigationContext): InvestigationC
     });
   }
 
+  if (context.capabilityExecution?.operationUniqueName) {
+    actions.push({
+      label: "Continue from capability execution",
+      detail: "Use the Custom API execution context as an investigation anchor for bounded runtime evidence review.",
+      surface: "Capability Explorer / Execution Insights",
+      commandId: "dvQuickRun.openCapabilityExplorer",
+      actionLabel: "Open Capability Explorer"
+    });
+
+    actions.push({
+      label: "Review linked execution evidence",
+      detail: "Run bounded Execution Insight providers from the captured Custom API execution anchors.",
+      surface: "Execution Insights",
+      commandId: "dvQuickRun.openCapabilityExecutionInsights",
+      actionLabel: "Open Execution Insights"
+    });
+  }
+
   if (context.runtime?.correlationId || context.runtime?.requestId || context.runtime?.providerIds?.length) {
     actions.push({
       label: "Continue runtime evidence review",
       detail: "Inspect bounded provider evidence and raw details without treating signals as root-cause proof.",
-      surface: "Execution Insights"
+      surface: "Execution Insights",
+      commandId: context.capabilityExecution?.operationUniqueName ? "dvQuickRun.openCapabilityExecutionInsights" : undefined,
+      actionLabel: context.capabilityExecution?.operationUniqueName ? "Open Execution Insights" : undefined
     });
   }
 
@@ -253,6 +279,13 @@ function buildTimeline(context: InvestigationContext): InvestigationTimelineStep
     timeline.push({
       label: "Result Viewer",
       detail: "Operational rows, columns, and pivots inspected from the current investigation surface."
+    });
+  }
+
+  if (context.capabilityExecution?.operationUniqueName) {
+    timeline.push({
+      label: "Capability Execution",
+      detail: `${context.capabilityExecution.operationUniqueName} captured as a ${context.capabilityExecution.status ?? "previewed"} execution-understanding context.`
     });
   }
 
@@ -291,6 +324,12 @@ export function buildInvestigationContinuationModel(context: InvestigationContex
     items.push({ label: "Selected batch rows", value: String(context.batch.activeRowCount) });
   }
   pushIfValue(items, "Selected record", context.selectedRecord?.displayLabel ?? context.selectedRecord?.id);
+  pushIfValue(items, "Capability execution", context.capabilityExecution?.operationDisplayName ?? context.capabilityExecution?.operationUniqueName);
+  pushIfValue(items, "Capability status", context.capabilityExecution?.status);
+  pushIfValue(items, "Capability method", context.capabilityExecution?.method);
+  if (typeof context.capabilityExecution?.statusCode === "number") {
+    items.push({ label: "Capability HTTP status", value: String(context.capabilityExecution.statusCode) });
+  }
 
   if (context.traversal?.sourceEntity || context.traversal?.targetEntity) {
     const source = context.traversal.sourceEntity ?? "unknown source";
@@ -300,6 +339,7 @@ export function buildInvestigationContinuationModel(context: InvestigationContex
 
   pushIfValue(items, "Correlation", context.runtime?.correlationId);
   pushIfValue(items, "Request", context.runtime?.requestId);
+  pushIfValue(items, "Operation", context.runtime?.operationId);
 
   if (context.surfaceState?.resultViewerOpen === true) {
     items.push({ label: "Result Viewer status", value: "Open" });

@@ -47,6 +47,23 @@ export interface CustomApiExecutionEligibility {
   odataBindingKind?: CustomApiBindingKind;
 }
 
+export type CustomApiExecutionCapabilityMode =
+  | "executable"
+  | "preview-only"
+  | "inspect-only"
+  | "validation-unavailable";
+
+export interface CustomApiExecutionCapability {
+  mode: CustomApiExecutionCapabilityMode;
+  label: string;
+  reason: string;
+  canPreview: boolean;
+  canExecute: boolean;
+  executionMethod?: "GET" | "POST";
+  operationKind: CustomApiOperationKind;
+  bindingKind: CustomApiBindingKind;
+}
+
 export interface CustomApiDefinition {
   id: string;
   uniqueName: string;
@@ -67,6 +84,7 @@ export interface CustomApiDefinition {
   executionReadinessLabel?: string;
   executionReadinessReason?: string;
   executionEligibility?: CustomApiExecutionEligibility;
+  executionCapability?: CustomApiExecutionCapability;
 }
 
 export interface CustomApiCatalogueRow {

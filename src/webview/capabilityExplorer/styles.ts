@@ -730,7 +730,20 @@ th:hover .dvqr-column-resizer::after,
   align-items: center;
   color: var(--vscode-descriptionForeground);
   display: flex;
-  gap: 12px;
+  gap: 14px;
+}
+
+.dvqr-next-step-row + .dvqr-next-step-row {
+  margin-top: 10px;
+}
+
+.dvqr-next-step-row .dvqr-button {
+  flex: 0 0 118px;
+  justify-content: center;
+  min-height: 48px;
+  text-align: center;
+  white-space: normal;
+  width: 118px;
 }
 
 .dvqr-next-step-row .dvqr-button:disabled {
