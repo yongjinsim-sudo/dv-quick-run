@@ -54,50 +54,37 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.10.0
+## 🆕 What's New in v0.10.1
 
-v0.10.0 introduces the new **Capability Explorer** operational surface and expands DV Quick Run into metadata-backed Custom API discovery, preview-first execution workflows, and execution diagnostics.
+v0.10.1 hardens DV Quick Run’s operational execution model introduced in v0.10.0.
 
 Highlights:
 
-* new Capability Explorer for discovering Dataverse operational capabilities
-* metadata-backed Function execution validation against the OData `$metadata` surface
-* preview-first Function execution workflows
-* execution readiness classification
-* executable vs inspect-only operational awareness
-* Function execution diagnostics and structured execution result surfaces
-* execution-safe request previews with parameter modelling
-* execution result investigation context foundations
-* Hub integration for Capability Explorer discovery
-* Quickstart updates for operational capability workflows
+* environment-bound capability execution safety
+* automatic invalidation of stale execution previews
+* safer execution continuity during environment switching
+* improved Capability Explorer execution workflows
+* tighter alignment between execution previews and Execution Insights
+* refined execution investigation continuity
+* cleaner operational UX and execution affordances
 
-Capability Explorer is intentionally:
+Key improvements include:
 
-* metadata-driven
-* preview-first
-* execution-safe
-* investigation-oriented
-* explicit rather than autonomous
+* stale capability execution previews now close automatically on environment change
+* execution context is now strictly environment-bound
+* capability execution insights remain tied to captured execution anchors
+* preview-only workflows and operational wording refined for clarity and trust
 
-The new execution workflow helps answer:
+This release reinforces a core operational invariant:
 
 ```text
-What operational capabilities exist in this environment?
-Can this Function actually execute through the Web API?
-Is this operation preview-safe?
-What parameters are supported?
-What execution metadata was captured?
-How can this become part of a larger investigation workflow later?
+active environment
+=
+execution authority boundary
 ```
 
-v0.10.0 also establishes the foundation for future:
+DV Quick Run continues evolving as a metadata-aware operational investigation workbench for Dataverse and Power Platform engineering.
 
-* Action execution
-* operational execution diagnostics
-* execution timelines
-* correlation-aware investigation
-* runtime reconstruction workflows
-* execution graphing and orchestration understanding
 
 ---
 

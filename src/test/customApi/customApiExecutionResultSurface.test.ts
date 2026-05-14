@@ -73,12 +73,15 @@ suite("customApiExecutionResultSurface", () => {
       "Execution values",
       "Response payload",
       "Diagnostics",
+      "Capability execution context",
       "Raw execution context"
     ]);
     assert.match(sections[0].content, /Status: Completed/);
     assert.match(sections[0].content, /HTTP status: 200/);
     assert.match(sections[4].content, /"IsReady": false/);
     assert.match(sections[5].content, /validated against the OData \$metadata operation registry/);
+    assert.match(sections[6].content, /"kind": "customApiExecution"/);
+    assert.match(sections[6].content, /"operationUniqueName": "IsCDS3Ready"/);
   });
 
   test("builds a structured error result surface", () => {
@@ -96,10 +99,12 @@ suite("customApiExecutionResultSurface", () => {
       "Request",
       "Execution values",
       "Error payload",
-      "Diagnostics"
+      "Diagnostics",
+      "Capability execution context"
     ]);
     assert.match(sections[0].content, /Status: Failed/);
     assert.match(sections[0].content, /HTTP status: 404/);
     assert.match(sections[4].content, /not found/);
+    assert.match(sections[6].content, /"status": "failed"/);
   });
 });

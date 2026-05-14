@@ -2,6 +2,11 @@ import type { DataverseGetResult } from "../../services/dataverseClient.js";
 import type { PreviewSurfaceSection } from "../../services/previewSurfaceTypes.js";
 import type { CustomApiDefinition } from "../models/customApiTypes.js";
 import type { CustomApiFunctionExecutionPlan, CustomApiFunctionParameterValues } from "./customApiFunctionExecution.js";
+import {
+  buildCapabilityExecutionContextFromError,
+  buildCapabilityExecutionContextFromResult,
+  type CapabilityExecutionContext
+} from "./customApiExecutionContext.js";
 
 export interface CustomApiExecutionResultSurfaceOptions {
   definition: CustomApiDefinition;
@@ -64,11 +69,16 @@ function buildExecutionSummary(options: CustomApiExecutionResultSurfaceOptions):
   ].join("\n");
 }
 
+function buildCapabilityExecutionContextSection(context: CapabilityExecutionContext): string {
+  return stringifyJson(context);
+}
+
 function buildDiagnostics(options: CustomApiExecutionResultSurfaceOptions): string {
   const context = options.result.executionContext;
   const lines = [
     "- Execution was explicitly confirmed from the Custom API preview surface.",
     "- The Function was validated against the OData $metadata operation registry before execution.",
+    "- A capability execution context has been captured as an investigation anchor.",
     "- This result is response inspection only; no follow-up diagnostics have been inferred yet."
   ];
 
@@ -84,6 +94,14 @@ function buildDiagnostics(options: CustomApiExecutionResultSurfaceOptions): stri
 export function buildCustomApiExecutionResultSurfaceSections(
   options: CustomApiExecutionResultSurfaceOptions
 ): PreviewSurfaceSection[] {
+  const capabilityExecutionContext = buildCapabilityExecutionContextFromResult({
+    definition: options.definition,
+    executionPlan: options.executionPlan,
+    values: options.values,
+    result: options.result,
+    environmentName: options.environmentName
+  });
+
   return [
     {
       title: "Summary",
@@ -116,6 +134,11 @@ export function buildCustomApiExecutionResultSurfaceSections(
       language: "markdown"
     },
     {
+      title: "Capability execution context",
+      content: buildCapabilityExecutionContextSection(capabilityExecutionContext),
+      language: "json"
+    },
+    {
       title: "Raw execution context",
       content: stringifyJson(options.result.executionContext),
       language: "json"
@@ -131,6 +154,14 @@ function parseStatusCode(errorMessage: string): string {
 export function buildCustomApiExecutionErrorSurfaceSections(
   options: CustomApiExecutionErrorSurfaceOptions
 ): PreviewSurfaceSection[] {
+  const capabilityExecutionContext = buildCapabilityExecutionContextFromError({
+    definition: options.definition,
+    executionPlan: options.executionPlan,
+    values: options.values,
+    errorMessage: options.errorMessage,
+    environmentName: options.environmentName
+  });
+
   return [
     {
       title: "Summary",
@@ -167,10 +198,16 @@ export function buildCustomApiExecutionErrorSurfaceSections(
       content: [
         "- Execution was explicitly confirmed from the Custom API preview surface.",
         "- The request failed at Dataverse execution time.",
+        "- A capability execution context has been captured as an investigation anchor.",
         "- This may indicate operation-specific validation, privilege, feature flag, route, or server-side implementation behaviour.",
         "- Future execution diagnostics can use this result as the starting evidence for trace/correlation lookup."
       ].join("\n"),
       language: "markdown"
+    },
+    {
+      title: "Capability execution context",
+      content: buildCapabilityExecutionContextSection(capabilityExecutionContext),
+      language: "json"
     }
   ];
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { suite, test } from "mocha";
 import { parseODataOperationRegistry } from "../../customApi/odata/odataMetadataParser.js";
-import { resolveCustomApiExecutionEligibility } from "../../customApi/odata/odataOperationEligibility.js";
+import { applyCustomApiExecutionEligibility, resolveCustomApiExecutionEligibility } from "../../customApi/odata/odataOperationEligibility.js";
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
 
 function buildDefinition(overrides: Partial<CustomApiDefinition> = {}): CustomApiDefinition {
@@ -72,6 +72,15 @@ suite("odataOperationRegistry", () => {
     const eligibility = resolveCustomApiExecutionEligibility(buildDefinition({ uniqueName: "new_NotInOData" }), registry);
 
     assert.equal(eligibility.state, "preview-only-not-found");
+  });
+
+  test("attaches central execution capability when applying eligibility", () => {
+    const registry = parseODataOperationRegistry(metadata);
+    const [definition] = applyCustomApiExecutionEligibility([buildDefinition()], registry);
+
+    assert.equal(definition.executionEligibility?.state, "executable");
+    assert.equal(definition.executionCapability?.mode, "executable");
+    assert.equal(definition.executionCapability?.canExecute, true);
   });
 
   test("marks unsupported parameter APIs as preview-only before OData execution", () => {

@@ -11,7 +11,9 @@ suite("environmentRuntimeState", () => {
     let metadataCleared = 0;
     let relationshipCleared = 0;
     let traversalCleared = 0;
+    let odataRegistryCleared = 0;
     let investigationCleared = 0;
+    let capabilitySurfacesClosed = 0;
     let hoverCleared = 0;
     let navigationCleared = 0;
     const logs: string[] = [];
@@ -20,8 +22,10 @@ suite("environmentRuntimeState", () => {
       {
         clearMetadataSessionCache: () => { metadataCleared += 1; },
         clearRelationshipMetadataMemory: () => { relationshipCleared += 1; },
+        clearODataOperationRegistryCache: () => { odataRegistryCleared += 1; },
         clearTraversalCache: () => { traversalCleared += 1; },
         clearInvestigationContext: () => { investigationCleared += 1; },
+        closeCapabilitySurfaces: () => { capabilitySurfacesClosed += 1; },
         clearHoverFieldContextCache: () => { hoverCleared += 1; },
         clearNavigationHoverEnrichmentCache: () => { navigationCleared += 1; },
         logInfo: (message: string) => { logs.push(message); }
@@ -31,8 +35,10 @@ suite("environmentRuntimeState", () => {
 
     assert.strictEqual(metadataCleared, 1);
     assert.strictEqual(relationshipCleared, 1);
+    assert.strictEqual(odataRegistryCleared, 1);
     assert.strictEqual(traversalCleared, 1);
     assert.strictEqual(investigationCleared, 1);
+    assert.strictEqual(capabilitySurfacesClosed, 1);
     assert.strictEqual(hoverCleared, 1);
     assert.strictEqual(navigationCleared, 1);
     assert.strictEqual(logs.length, 1);
@@ -45,8 +51,10 @@ suite("environmentRuntimeState", () => {
       {
         clearMetadataSessionCache: () => undefined,
         clearRelationshipMetadataMemory: () => undefined,
+        clearODataOperationRegistryCache: () => undefined,
         clearTraversalCache: () => undefined,
         clearInvestigationContext: () => undefined,
+        closeCapabilitySurfaces: () => undefined,
         clearHoverFieldContextCache: () => undefined,
         clearNavigationHoverEnrichmentCache: () => undefined,
         logInfo: (message: string) => { logs.push(message); }
@@ -98,8 +106,10 @@ suite("environmentRuntimeState", () => {
       {
         clearMetadataSessionCache: () => undefined,
         clearRelationshipMetadataMemory: () => undefined,
+        clearODataOperationRegistryCache: () => undefined,
         clearTraversalCache: () => undefined,
         clearInvestigationContext: () => undefined,
+        closeCapabilitySurfaces: () => undefined,
         clearHoverFieldContextCache: () => undefined,
         clearNavigationHoverEnrichmentCache: () => undefined,
         logInfo: () => undefined
@@ -118,13 +128,17 @@ suite("environmentRuntimeState", () => {
     clearEnvironmentScopedRuntimeCachesWithDeps({
       clearMetadataSessionCache: () => calls.push("metadata"),
       clearRelationshipMetadataMemory: () => calls.push("relationships"),
+      clearODataOperationRegistryCache: () => calls.push("odataRegistry"),
       clearHoverFieldContextCache: () => calls.push("hover"),
       clearNavigationHoverEnrichmentCache: () => calls.push("navHover"),
       clearTraversalCache: () => calls.push("traversal"),
       clearInvestigationContext: () => calls.push("investigation"),
+      closeCapabilitySurfaces: () => calls.push("capabilitySurfaces"),
       logInfo: () => undefined
     });
 
     assert.ok(calls.includes("investigation"));
+    assert.ok(calls.includes("odataRegistry"));
+    assert.ok(calls.includes("capabilitySurfaces"));
   });
 });

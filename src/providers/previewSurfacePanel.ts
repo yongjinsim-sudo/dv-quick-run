@@ -148,6 +148,26 @@ export class PreviewSurfacePanel {
     panel.reveal(revealColumn, true);
   }
 
+
+  public static disposeCurrent(): void {
+    const resolver = PreviewSurfacePanel.pendingResolver;
+    const previewId = PreviewSurfacePanel.currentPreviewId ?? "";
+    const panel = PreviewSurfacePanel.currentPanel;
+
+    PreviewSurfacePanel.pendingResolver = undefined;
+    PreviewSurfacePanel.currentPreviewId = undefined;
+    PreviewSurfacePanel.currentPanel = undefined;
+    PreviewSurfacePanel.hasFocusedOnce = false;
+
+    resolver?.({
+      actionId: "cancel",
+      actionKind: "cancel",
+      previewId
+    });
+
+    panel?.dispose();
+  }
+
   public static getCurrentViewColumn(): vscode.ViewColumn | undefined {
     return PreviewSurfacePanel.currentPanel?.viewColumn;
   }

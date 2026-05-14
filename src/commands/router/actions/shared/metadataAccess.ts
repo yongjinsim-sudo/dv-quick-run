@@ -46,3 +46,8 @@ export async function getEntitySetNameByLogicalName(
 
   return entity?.entitySetName;
 }
+
+export {
+  loadODataOperationRegistry,
+  clearODataOperationRegistryCache
+} from "./metadataAccess/metadataODataOperationAccess.js";

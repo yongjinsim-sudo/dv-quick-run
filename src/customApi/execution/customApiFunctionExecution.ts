@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
 import type { CustomApiDefinition, CustomApiRequestParameter } from "../models/customApiTypes.js";
+import { canExecuteCustomApiDefinition } from "./customApiExecutionCapabilityResolver.js";
+import { buildCustomApiFunctionInvocationPath } from "./customApiInvocationPathBuilder.js";
 
 export type CustomApiFunctionParameterValues = Record<string, unknown>;
 
@@ -10,11 +12,7 @@ export interface CustomApiFunctionExecutionPlan {
 }
 
 export function canExecuteCustomApiFunction(definition: CustomApiDefinition): boolean {
-  return definition.operationKind === "Function"
-    && definition.bindingKind === "Unbound"
-    && definition.executionReadiness === "preview-ready"
-    && definition.executionEligibility?.state === "executable"
-    && definition.requestParameters.every((parameter) => parameter.executionSupport === "preview-ready");
+  return canExecuteCustomApiDefinition(definition);
 }
 
 function getParameterKind(parameter: CustomApiRequestParameter): string {
@@ -135,55 +133,15 @@ export async function promptForCustomApiFunctionParameters(
   return values;
 }
 
-function encodeODataStringLiteral(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
-
-function toODataLiteral(value: unknown): string {
-  if (typeof value === "string") {
-    return encodeODataStringLiteral(value);
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "true" : "false";
-  }
-
-  if (typeof value === "number") {
-    return String(value);
-  }
-
-  return encodeODataStringLiteral(String(value ?? ""));
-}
-
-function encodeAliasLiteral(value: unknown): string {
-  if (typeof value === "string") {
-    return `'${encodeURIComponent(value.replace(/'/g, "''"))}'`;
-  }
-
-  return encodeURIComponent(toODataLiteral(value));
-}
-
 export function buildCustomApiFunctionExecutionPath(
   definition: CustomApiDefinition,
   values: CustomApiFunctionParameterValues
 ): string {
   if (!canExecuteCustomApiFunction(definition)) {
-    throw new Error("Only preview-ready unbound Custom API functions can be executed in this workstream.");
+    throw new Error("Only preview-ready unbound Custom API Functions can be executed.");
   }
 
-  const operationName = definition.executionEligibility?.odataInvocationName || definition.executionEligibility?.odataName || definition.uniqueName;
-  const parameters = definition.requestParameters.filter((parameter) => Object.prototype.hasOwnProperty.call(values, parameter.uniqueName));
-
-  if (parameters.length === 0) {
-    return `/${operationName}()`;
-  }
-
-  const aliases = parameters.map((parameter) => `${parameter.uniqueName}=@${parameter.uniqueName}`).join(",");
-  const query = parameters
-    .map((parameter) => `@${parameter.uniqueName}=${encodeAliasLiteral(values[parameter.uniqueName])}`)
-    .join("&");
-
-  return `/${operationName}(${aliases})?${query}`;
+  return buildCustomApiFunctionInvocationPath(definition, values);
 }
 
 export function buildCustomApiFunctionExecutionPlan(

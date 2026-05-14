@@ -42,6 +42,7 @@ import { registerOpenOperationalProfileSurfaceCommand } from "../commands/openOp
 import { registerReopenLastResultViewerCommand } from "../commands/reopenLastResultViewer.js";
 import { registerDiscoverCustomApisCommand } from "../commands/discoverCustomApis.js";
 import { registerOpenCapabilityExplorerCommand } from "../commands/capabilityExplorer/openCapabilityExplorerCommand.js";
+import { registerOpenCapabilityExecutionInsightsCommand } from "../commands/capabilityExplorer/openCapabilityExecutionInsightsCommand.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -83,7 +84,8 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerOpenOperationalProfileSurfaceCommand,
   registerReopenLastResultViewerCommand,
   registerDiscoverCustomApisCommand,
-  registerOpenCapabilityExplorerCommand
+  registerOpenCapabilityExplorerCommand,
+  registerOpenCapabilityExecutionInsightsCommand
 ];
 
 const diagnosticsRegistrations = (

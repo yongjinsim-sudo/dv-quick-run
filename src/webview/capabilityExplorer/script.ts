@@ -22,6 +22,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
   let currentPage = 1;
   let selectedUniqueName = '';
   let pageSize = pageSizeControl instanceof HTMLSelectElement ? Number(pageSizeControl.value) : 20;
+  let latestExecutionInsightUniqueName = '';
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -221,7 +222,8 @@ export function getCapabilityExplorerScript(modelJson: string): string {
     const inspectOnlyCount = Number(definition.inspectOnlyParameterCount || 0);
     const reason = definition.executionReadinessReason || 'Execution preview has not been implemented yet; this classification only describes parameter readiness.';
     const eligibility = definition.executionEligibility || { label: 'Validation unavailable', reason: 'OData execution validation has not been loaded for this environment.', state: 'unknown-validation-unavailable' };
-    const eligibilityClass = eligibility.state === 'executable' ? 'dvqr-readiness-good' : eligibility.state === 'preview-only-not-found' || eligibility.state === 'unknown-validation-unavailable' ? 'dvqr-readiness-muted' : 'dvqr-readiness-partial';
+    const capability = definition.executionCapability || { mode: 'validation-unavailable', label: 'Preview request only', reason: eligibility.reason, canPreview: true, canExecute: false };
+    const eligibilityClass = capability.canExecute ? 'dvqr-readiness-good' : capability.mode === 'validation-unavailable' || eligibility.state === 'preview-only-not-found' ? 'dvqr-readiness-muted' : 'dvqr-readiness-partial';
     const odataLine = eligibility.odataQualifiedName ? '<div class="dvqr-readiness-counts"><span>OData definition: ' + escapeHtml(eligibility.odataQualifiedName) + '</span></div>' : '';
     const routeLine = eligibility.odataInvocationName ? '<div class="dvqr-readiness-counts"><span>Invocation route: /' + escapeHtml(eligibility.odataInvocationName) + (definition.operationKind === 'Function' ? '()' : '') + '</span></div>' : '';
 
@@ -235,8 +237,8 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       + '<span>' + inspectOnlyCount + ' inspect-only parameter' + (inspectOnlyCount === 1 ? '' : 's') + '</span>'
       + '</div>'
       + '<div class="dvqr-readiness-card ' + eligibilityClass + '">'
-      + '<strong>' + escapeHtml(eligibility.label) + '</strong>'
-      + '<span>' + escapeHtml(eligibility.reason) + '</span>'
+      + '<strong>' + escapeHtml(capability.label) + '</strong>'
+      + '<span>' + escapeHtml(capability.reason) + '</span>'
       + '</div>'
       + odataLine
       + routeLine
@@ -253,6 +255,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       ['Privilege Name', definition.executePrivilegeName || '—'],
       ['Processing Step Type', definition.allowedCustomProcessingStepType ?? '—'],
       ['Execution Readiness', definition.executionReadinessLabel || 'Inspect only'],
+      ['Execution Capability', definition.executionCapability ? definition.executionCapability.label : 'Preview request only'],
       ['OData Eligibility', definition.executionEligibility ? definition.executionEligibility.label : 'Validation unavailable'],
       ['Preview-ready Params', String(definition.previewReadyParameterCount ?? 0)],
       ['Inspect-only Params', String(definition.inspectOnlyParameterCount ?? 0)],
@@ -280,6 +283,10 @@ export function getCapabilityExplorerScript(modelJson: string): string {
 
     notes.push((definition.executionReadinessLabel || 'Inspect only') + ' — ' + (definition.executionReadinessReason || 'preview support classification is based on parameter metadata.'));
 
+    if (definition.executionCapability) {
+      notes.push(definition.executionCapability.label + ' — ' + definition.executionCapability.reason);
+    }
+
     if (definition.executionEligibility) {
       notes.push(definition.executionEligibility.label + ' — ' + definition.executionEligibility.reason);
     }
@@ -296,6 +303,9 @@ export function getCapabilityExplorerScript(modelJson: string): string {
 
     const privateBadge = definition.isPrivate === true ? '<span class="dvqr-detail-badge dvqr-detail-badge-private">Private</span>' : '<span class="dvqr-detail-badge">Public</span>';
     const description = definition.description ? escapeHtml(definition.description) : 'No description discovered.';
+    const executionInsightButton = latestExecutionInsightUniqueName === definition.uniqueName
+      ? '<div class="dvqr-next-step-row dvqr-execution-insight-row"><button class="dvqr-button dvqr-button-primary" type="button" data-action="open-execution-insights" data-api-unique-name="' + escapeHtml(definition.uniqueName) + '">Execution Insights →</button><span>Continue bounded runtime evidence review from the captured capability execution context.</span></div>'
+      : '';
 
     detailContent.innerHTML = '<div class="dvqr-detail-header">'
       + '<h2 title="' + escapeHtml(definition.displayName || definition.uniqueName) + '">' + escapeHtml(definition.displayName || definition.uniqueName) + '</h2>'
@@ -314,8 +324,10 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       + renderOperationNotes(definition)
       + '</div>'
       + '<div class="dvqr-detail-footer"><section class="dvqr-drawer-section dvqr-next-steps"><h3>Execution Preview</h3><div class="dvqr-next-step-row">'
-      + '<button class="dvqr-button" type="button" data-action="preview-execution" data-api-unique-name="' + escapeHtml(definition.uniqueName) + '">' + (definition.operationKind === 'Function' && definition.bindingKind === 'Unbound' && definition.executionReadiness === 'preview-ready' && definition.executionEligibility && definition.executionEligibility.state === 'executable' ? 'Preview / Run Function' : 'Preview Request') + '</button>'
-      + '<span>' + (definition.operationKind === 'Function' && definition.bindingKind === 'Unbound' && definition.executionReadiness === 'preview-ready' && definition.executionEligibility && definition.executionEligibility.state === 'executable' ? 'Preview this read-oriented Function request, then run only after explicit confirmation.' : 'Generate a preview-only request template. No Dataverse operation will be executed.') + '</span></div></section></div>';
+      + '<button class="dvqr-button dvqr-button-primary" type="button" data-action="preview-execution" data-api-unique-name="' + escapeHtml(definition.uniqueName) + '">' + (definition.executionCapability && definition.executionCapability.canExecute ? 'Preview / Run Function' : 'Preview Request') + '</button>'
+      + '<span>' + (definition.executionCapability && definition.executionCapability.canExecute ? 'Preview this read-oriented Function request, then run only after explicit confirmation.' : 'Generate a preview-only request template. No Dataverse operation will be executed.') + '</span></div>'
+      + executionInsightButton
+      + '</section></div>';
 
     detailDrawer.hidden = false;
     if (explorerLayout instanceof HTMLElement) {
@@ -557,7 +569,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
     }
 
     if (action === 'open-hub') {
-      vscode.postMessage({ type: 'runCommand', command: 'dvQuickRun.openHub' });
+      vscode.postMessage({ type: 'openHub' });
       return;
     }
 
@@ -574,11 +586,37 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       return;
     }
 
+    if (action === 'open-execution-insights') {
+      const apiUniqueName = actionTarget.getAttribute('data-api-unique-name') || selectedUniqueName;
+      if (apiUniqueName && latestExecutionInsightUniqueName === apiUniqueName) {
+        vscode.postMessage({ type: 'openCapabilityExecutionInsights' });
+      }
+      return;
+    }
+
     if (action === 'copy-summary') {
       vscode.postMessage({
         type: 'copyText',
         text: 'Custom APIs: ' + model.customApiCount + '\\nBound: ' + model.boundCount + '\\nUnbound: ' + model.unboundCount + '\\nPrivate: ' + model.privateCount
       });
+    }
+  });
+
+  window.addEventListener('message', (event) => {
+    const message = event.data;
+    if (!message || message.type !== 'capabilityExecutionAvailable') {
+      return;
+    }
+
+    const apiUniqueName = typeof message.apiUniqueName === 'string' ? message.apiUniqueName : '';
+    if (!apiUniqueName) {
+      return;
+    }
+
+    latestExecutionInsightUniqueName = apiUniqueName;
+
+    if (selectedUniqueName === apiUniqueName) {
+      renderDetail(apiUniqueName);
     }
   });
 

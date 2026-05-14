@@ -1,6 +1,7 @@
 import type { CustomApiDefinition, CustomApiExecutionEligibility } from "../models/customApiTypes.js";
 import type { ODataOperationRegistry } from "./odataMetadataParser.js";
 import { findODataOperationForCustomApi } from "./odataOperationMatcher.js";
+import { withCustomApiExecutionCapability } from "../execution/customApiExecutionCapabilityResolver.js";
 
 export function buildUnknownODataEligibility(reason: string): CustomApiExecutionEligibility {
   return {
@@ -32,7 +33,7 @@ export function resolveCustomApiExecutionEligibility(
       state: "preview-only-bound-context-required",
       label: "Preview only — bound context required",
       reason: operation
-        ? "This operation appears in OData metadata, but bound execution needs a selected row/entity context and is not enabled in this workstream."
+        ? "This operation appears in OData metadata, but bound execution needs selected row/entity context and remains preview-only."
         : "This operation is bound and was not confirmed as a callable OData operation for the current metadata snapshot.",
       odataName: operation?.name,
       odataQualifiedName: operation?.qualifiedName,
@@ -81,7 +82,7 @@ export function applyCustomApiExecutionEligibility(
   unavailableReason?: string
 ): CustomApiDefinition[] {
   const unknown = unavailableReason ? buildUnknownODataEligibility(unavailableReason) : undefined;
-  return definitions.map((definition) => ({
+  return definitions.map((definition) => withCustomApiExecutionCapability({
     ...definition,
     executionEligibility: unknown ?? resolveCustomApiExecutionEligibility(definition, registry)
   }));

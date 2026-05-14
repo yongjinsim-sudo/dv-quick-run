@@ -79,6 +79,35 @@ suite("dvQuickRunHubContext", () => {
   });
 
 
+
+  test("surfaces Custom API execution as continuation context", () => {
+    const continuation = buildInvestigationContinuationModel({
+      ...emptyContext,
+      source: "capabilityExplorer",
+      environmentName: "DEV",
+      capabilityExecution: {
+        kind: "customApiExecution",
+        operationUniqueName: "new_CalculateScore",
+        operationDisplayName: "Calculate Score",
+        operationKind: "Function",
+        bindingKind: "Unbound",
+        status: "completed",
+        method: "GET",
+        statusCode: 200
+      },
+      runtime: {
+        requestId: "request-1",
+        correlationId: "correlation-1"
+      }
+    });
+
+    assert.strictEqual(continuation.hasContext, true);
+    assert.ok(continuation.items.some((item) => item.label === "Capability execution" && item.value === "Calculate Score"));
+    assert.ok(continuation.items.some((item) => item.label === "Capability HTTP status" && item.value === "200"));
+    assert.ok(continuation.actions.some((action) => action.label === "Continue from capability execution"));
+    assert.ok(continuation.timeline.some((step) => step.label === "Capability Execution"));
+  });
+
   test("shows recoverable closed Result Viewer state", () => {
     const continuation = buildInvestigationContinuationModel({
       ...emptyContext,
