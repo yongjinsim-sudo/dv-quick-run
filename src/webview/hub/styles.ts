@@ -310,18 +310,47 @@ h3 {
 }
 
 .dvqr-action-button {
-  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  align-items: center;
+  background: var(--vscode-button-background);
+  border: 1px solid color-mix(in srgb, var(--vscode-button-background) 70%, var(--vscode-button-border, var(--vscode-panel-border)));
   border-radius: 999px;
-  background: var(--vscode-button-secondaryBackground, transparent);
-  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  color: var(--vscode-button-foreground);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
   font-size: 12px;
-  padding: 4px 10px;
+  font-weight: 600;
+  gap: 6px;
+  letter-spacing: 0.01em;
+  min-height: 26px;
+  padding: 5px 12px;
+  text-decoration: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--vscode-button-background) 18%, transparent);
+}
+
+.dvqr-action-button::after {
+  content: "→";
+  font-size: 12px;
+  opacity: 0.85;
 }
 
 .dvqr-action-button:hover {
-  background: var(--vscode-button-secondaryHoverBackground, var(--vscode-toolbar-hoverBackground));
+  background: var(--vscode-button-hoverBackground);
+  border-color: color-mix(in srgb, var(--vscode-button-hoverBackground) 80%, var(--vscode-focusBorder));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--vscode-focusBorder) 32%, transparent);
+}
+
+.dvqr-action-button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 2px;
+}
+
+.dvqr-meta .dvqr-action-button {
+  margin-left: 4px;
+}
+
+.dvqr-flow .dvqr-action-button {
+  margin-top: 6px;
 }
 
 .dvqr-continuation-actions {

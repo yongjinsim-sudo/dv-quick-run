@@ -22,6 +22,7 @@ import { runContinueTraversalAction } from "./actions/traversal/continueTraversa
 import { runBackTraversalAction } from "./actions/traversal/backTraversalAction.js";
 import { runChangeTraversalRouteAction } from "./actions/traversal/changeTraversalRouteAction.js";
 import { runBatchQueriesAction } from "./actions/execution/runBatchQueriesAction.js";
+import { runDiscoverCustomApisAction } from "./actions/customApi/discoverCustomApisAction.js";
 
 export type DvQuickRunAction = "get" 
   | "whoAmI" 
@@ -51,7 +52,8 @@ export type DvQuickRunAction = "get"
   | "continueTraversal"
   | "backTraversal"
   | "changeTraversalRoute"
-  | "runBatchQueries";
+  | "runBatchQueries"
+  | "discoverCustomApis";
 
 export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext): Promise<void> {
   switch (action) {
@@ -141,6 +143,9 @@ export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: Command
 
     case "runBatchQueries":
       return await runBatchQueriesAction(ctx);
+
+    case "discoverCustomApis":
+      return await runDiscoverCustomApisAction(ctx);
 
     default: {
       const _exhaustive: never = action;

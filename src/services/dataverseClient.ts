@@ -123,6 +123,58 @@ export class DataverseClient {
     }
   }
 
+
+  async getTextWithMetadata(path: string, token: string, options: DataverseGetOptions = {}): Promise<DataverseGetResult<string>> {
+    const url = /^https?:\/\//i.test(path) ? path : `${this.baseUrl}${path}`;
+    const controller = typeof options.timeoutMs === "number" && options.timeoutMs > 0
+      ? new AbortController()
+      : undefined;
+    const timeout = controller
+      ? setTimeout(() => controller.abort(), options.timeoutMs)
+      : undefined;
+    const startedAt = Date.now();
+
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        signal: controller?.signal,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/xml,text/xml,*/*",
+          "OData-Version": "4.0",
+          "OData-MaxVersion": "4.0"
+        }
+      });
+
+      const durationMs = Date.now() - startedAt;
+      const executionContext = buildExecutionContext({
+        headers: response.headers,
+        method: "GET",
+        path,
+        url,
+        statusCode: response.status,
+        durationMs
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(`Dataverse error ${response.status} for GET ${url}: ${text}`);
+      }
+      return {
+        data: text,
+        executionContext
+      };
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    }
+  }
+
+  async getText(path: string, token: string, options: DataverseGetOptions = {}): Promise<string> {
+    const result = await this.getTextWithMetadata(path, token, options);
+    return result.data;
+  }
+
   async batchGet(paths: string[], token: string): Promise<BatchExecutionResult> {
     const normalizedPaths = paths
       .map((path) => path.trim())

@@ -1,0 +1,206 @@
+import * as vscode from "vscode";
+import type { CustomApiDefinition, CustomApiRequestParameter } from "../models/customApiTypes.js";
+
+export type CustomApiFunctionParameterValues = Record<string, unknown>;
+
+export interface CustomApiFunctionExecutionPlan {
+  path: string;
+  requestPreview: string;
+  values: CustomApiFunctionParameterValues;
+}
+
+export function canExecuteCustomApiFunction(definition: CustomApiDefinition): boolean {
+  return definition.operationKind === "Function"
+    && definition.bindingKind === "Unbound"
+    && definition.executionReadiness === "preview-ready"
+    && definition.executionEligibility?.state === "executable"
+    && definition.requestParameters.every((parameter) => parameter.executionSupport === "preview-ready");
+}
+
+function getParameterKind(parameter: CustomApiRequestParameter): string {
+  return (parameter.typeLabel || parameter.type || "").trim().toLowerCase();
+}
+
+function isRequired(parameter: CustomApiRequestParameter): boolean {
+  return parameter.isOptional !== true;
+}
+
+function parseParameterValue(parameter: CustomApiRequestParameter, rawValue: string): unknown {
+  const kind = getParameterKind(parameter);
+  const trimmed = rawValue.trim();
+
+  if (kind === "boolean") {
+    if (/^true$/i.test(trimmed)) {
+      return true;
+    }
+
+    if (/^false$/i.test(trimmed)) {
+      return false;
+    }
+
+    throw new Error(`${parameter.uniqueName} must be true or false.`);
+  }
+
+  if (kind === "integer") {
+    if (!/^-?\d+$/.test(trimmed)) {
+      throw new Error(`${parameter.uniqueName} must be an integer.`);
+    }
+
+    return Number.parseInt(trimmed, 10);
+  }
+
+  if (kind === "decimal" || kind === "float") {
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) {
+      throw new Error(`${parameter.uniqueName} must be a number.`);
+    }
+
+    return parsed;
+  }
+
+  if (kind === "guid") {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+      throw new Error(`${parameter.uniqueName} must be a valid GUID.`);
+    }
+
+    return trimmed;
+  }
+
+  return trimmed;
+}
+
+function getPlaceholder(parameter: CustomApiRequestParameter): string {
+  const kind = getParameterKind(parameter);
+
+  if (kind === "boolean") {
+    return "true or false";
+  }
+
+  if (kind === "integer") {
+    return "0";
+  }
+
+  if (kind === "decimal" || kind === "float") {
+    return "0";
+  }
+
+  if (kind === "guid") {
+    return "00000000-0000-0000-0000-000000000000";
+  }
+
+  if (kind === "datetime") {
+    return "2026-01-01T00:00:00Z";
+  }
+
+  return `<${parameter.uniqueName}>`;
+}
+
+export async function promptForCustomApiFunctionParameters(
+  definition: CustomApiDefinition
+): Promise<CustomApiFunctionParameterValues | undefined> {
+  const values: CustomApiFunctionParameterValues = {};
+
+  for (const parameter of definition.requestParameters) {
+    const required = isRequired(parameter);
+    const value = await vscode.window.showInputBox({
+      title: `DV Quick Run: ${definition.displayName || definition.uniqueName}`,
+      prompt: `${parameter.uniqueName} (${parameter.typeLabel || parameter.type || "Unknown"})${required ? " required" : " optional"}`,
+      placeHolder: getPlaceholder(parameter),
+      ignoreFocusOut: true,
+      validateInput: (input) => {
+        if (!input.trim()) {
+          return required ? `${parameter.uniqueName} is required.` : undefined;
+        }
+
+        try {
+          parseParameterValue(parameter, input);
+          return undefined;
+        } catch (error) {
+          return error instanceof Error ? error.message : String(error);
+        }
+      }
+    });
+
+    if (value === undefined) {
+      return undefined;
+    }
+
+    if (!value.trim() && !required) {
+      continue;
+    }
+
+    values[parameter.uniqueName] = parseParameterValue(parameter, value);
+  }
+
+  return values;
+}
+
+function encodeODataStringLiteral(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+function toODataLiteral(value: unknown): string {
+  if (typeof value === "string") {
+    return encodeODataStringLiteral(value);
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return encodeODataStringLiteral(String(value ?? ""));
+}
+
+function encodeAliasLiteral(value: unknown): string {
+  if (typeof value === "string") {
+    return `'${encodeURIComponent(value.replace(/'/g, "''"))}'`;
+  }
+
+  return encodeURIComponent(toODataLiteral(value));
+}
+
+export function buildCustomApiFunctionExecutionPath(
+  definition: CustomApiDefinition,
+  values: CustomApiFunctionParameterValues
+): string {
+  if (!canExecuteCustomApiFunction(definition)) {
+    throw new Error("Only preview-ready unbound Custom API functions can be executed in this workstream.");
+  }
+
+  const operationName = definition.executionEligibility?.odataInvocationName || definition.executionEligibility?.odataName || definition.uniqueName;
+  const parameters = definition.requestParameters.filter((parameter) => Object.prototype.hasOwnProperty.call(values, parameter.uniqueName));
+
+  if (parameters.length === 0) {
+    return `/${operationName}()`;
+  }
+
+  const aliases = parameters.map((parameter) => `${parameter.uniqueName}=@${parameter.uniqueName}`).join(",");
+  const query = parameters
+    .map((parameter) => `@${parameter.uniqueName}=${encodeAliasLiteral(values[parameter.uniqueName])}`)
+    .join("&");
+
+  return `/${operationName}(${aliases})?${query}`;
+}
+
+export function buildCustomApiFunctionExecutionPlan(
+  definition: CustomApiDefinition,
+  values: CustomApiFunctionParameterValues,
+  baseUrl: string
+): CustomApiFunctionExecutionPlan {
+  const path = buildCustomApiFunctionExecutionPath(definition, values);
+  const url = `${baseUrl.replace(/\/+$/, "")}/api/data/v9.2${path}`;
+  return {
+    path,
+    values,
+    requestPreview: [
+      `GET ${url} HTTP/1.1`,
+      "Accept: application/json",
+      "OData-Version: 4.0",
+      "OData-MaxVersion: 4.0"
+    ].join("\n")
+  };
+}

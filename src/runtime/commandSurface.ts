@@ -40,6 +40,8 @@ import { registerRunBatchQueriesCommand } from "../commands/runBatchQueries.js";
 import { registerShowOperationalProfileCommand } from "../commands/showOperationalProfile.js";
 import { registerOpenOperationalProfileSurfaceCommand } from "../commands/openOperationalProfileSurface.js";
 import { registerReopenLastResultViewerCommand } from "../commands/reopenLastResultViewer.js";
+import { registerDiscoverCustomApisCommand } from "../commands/discoverCustomApis.js";
+import { registerOpenCapabilityExplorerCommand } from "../commands/capabilityExplorer/openCapabilityExplorerCommand.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -79,7 +81,9 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerRunBatchQueriesCommand,
   registerShowOperationalProfileCommand,
   registerOpenOperationalProfileSurfaceCommand,
-  registerReopenLastResultViewerCommand
+  registerReopenLastResultViewerCommand,
+  registerDiscoverCustomApisCommand,
+  registerOpenCapabilityExplorerCommand
 ];
 
 const diagnosticsRegistrations = (

@@ -7,6 +7,7 @@ import { TraversalCacheService  } from "../commands/router/actions/shared/traver
 import { logInfo } from "../utils/logger.js";
 import { clearActiveTraversalProgress } from "../commands/router/actions/shared/traversal/traversalProgressStore.js";
 import { investigationContextStore } from "../investigation/context/investigationContextStore.js";
+import { ODataOperationRegistryService } from "../customApi/odata/odataOperationRegistryService.js";
 
 export type EnvironmentRuntimeCacheDeps = {
   clearMetadataSessionCache: () => void;

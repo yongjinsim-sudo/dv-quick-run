@@ -31,11 +31,11 @@ suite("dvQuickRunHubViewModel", () => {
     }
   });
 
-  test("only exposes guided traversal as launchable from an empty Hub context", () => {
+  test("exposes self-contained Hub workflows as launchable from an empty Hub context", () => {
     const model = buildDvQuickRunHubViewModel();
     const launchable = model.capabilities.filter((capability) => capability.contextState?.launchable).map((capability) => capability.id);
 
-    assert.deepStrictEqual(launchable, ["guided-traversal"]);
+    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer"]);
   });
 
   test("groups capabilities by operational use", () => {
