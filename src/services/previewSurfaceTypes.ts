@@ -1,6 +1,6 @@
-export type PreviewSurfaceKind = "query" | "patch" | "diagnostic" | "batch";
+export type PreviewSurfaceKind = "query" | "patch" | "diagnostic" | "batch" | "customApi";
 
-export type PreviewSurfaceSource = "resultViewer" | "editor" | "explain" | "queryDoctor" | "smartPatch";
+export type PreviewSurfaceSource = "resultViewer" | "editor" | "explain" | "queryDoctor" | "smartPatch" | "capabilityExplorer";
 
 export type PreviewSurfaceRiskLevel = "normal" | "amber" | "red";
 

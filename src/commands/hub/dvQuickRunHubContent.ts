@@ -240,6 +240,31 @@ export const capabilities: readonly CapabilityInfo[] = [
     sinceVersion: "v0.9.x"
   },
   {
+    id: "capability-explorer",
+    title: "Capability Explorer",
+    group: "Explore Capabilities",
+    summary: "Discover Custom APIs and other operational capabilities available in the current Dataverse environment.",
+    operationalUseCase: "Use when you need to understand what executable Custom APIs exist before testing or wiring operational actions.",
+    howToUse: [
+      "Open Capability Explorer from the Hub or command palette.",
+      "Filter Custom APIs by name, binding, type, or visibility.",
+      "Use the catalogue to understand bound entities, parameter complexity, execution readiness, and OData eligibility before execution.",
+      "Preview Function requests safely before execution and inspect structured execution diagnostics after completion.",
+      "Use execution results as investigation pivots for future operational diagnostics and runtime analysis."
+    ],
+    relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
+    commandId: "dvQuickRun.openCapabilityExplorer",
+    actionLabel: "Open Capability Explorer",
+    contextRequirement: {
+      kind: "selfContained",
+      label: "Can start from the Hub",
+      unavailableReason: "Capability Explorer discovers environment metadata after it opens.",
+      recommendedSurface: "Capability Explorer"
+    },
+    status: "available",
+    sinceVersion: "v0.10.0"
+  },
+  {
     id: "batch-workflows",
     title: "$batch workflows",
     group: "Advanced Workflows",
@@ -274,7 +299,9 @@ export const productDirection: readonly ProductDirectionInfo[] = [
 export const whatsNew: readonly string[] = [
   "DV Quick Run Hub for in-app operational guidance.",
   "Workflow-oriented investigation playbooks.",
-  "Capability explorer for released investigation features.",
+  "Capability Explorer as a dedicated operational capability discovery and execution surface.",
+  "Custom API discovery now opens in Capability Explorer instead of using Result Viewer as the primary catalogue surface.",
+  "Metadata-aware Function execution with structured execution diagnostics and investigation-ready response surfaces.",
   "Lightweight product direction and philosophy orientation.",
   "Initial extension-session investigation context foundation."
 ];

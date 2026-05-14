@@ -54,38 +54,50 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.9.17
+## 🆕 What's New in v0.10.0
 
-v0.9.17 introduces the **DV Quick Run Hub** and improves investigation continuity across Result Viewer, `$batch`, FetchXML, Guided Traversal, Execution Insights, and Operational Profiles.
+v0.10.0 introduces the new **Capability Explorer** operational surface and expands DV Quick Run into metadata-backed Custom API discovery, preview-first execution workflows, and execution diagnostics.
 
 Highlights:
 
-* **DV Quick Run Hub** for in-app operational workflow orientation
-* active / recoverable / historical / stale investigation context awareness
-* Result Viewer recovery for closed but recoverable investigations
-* environment-aware context reset to avoid stale cross-environment recovery
-* selected `$batch` sub-result context tracking
-* improved FetchXML context classification in the Hub
-* Quickstart updates for Hub discovery
+* new Capability Explorer for discovering Dataverse operational capabilities
+* metadata-backed Function execution validation against the OData `$metadata` surface
+* preview-first Function execution workflows
+* execution readiness classification
+* executable vs inspect-only operational awareness
+* Function execution diagnostics and structured execution result surfaces
+* execution-safe request previews with parameter modelling
+* execution result investigation context foundations
+* Hub integration for Capability Explorer discovery
+* Quickstart updates for operational capability workflows
 
-The Hub is intentionally:
+Capability Explorer is intentionally:
 
-* lightweight
-* local
-* renderer-thin
-* non-chatbot
-* non-dashboard
-* optional during investigation
+* metadata-driven
+* preview-first
+* execution-safe
+* investigation-oriented
+* explicit rather than autonomous
 
-It helps answer:
+The new execution workflow helps answer:
 
 ```text
-Where am I?
-What context is active?
-What can I continue?
-What should I reopen?
-What changed when I switched environments?
+What operational capabilities exist in this environment?
+Can this Function actually execute through the Web API?
+Is this operation preview-safe?
+What parameters are supported?
+What execution metadata was captured?
+How can this become part of a larger investigation workflow later?
 ```
+
+v0.10.0 also establishes the foundation for future:
+
+* Action execution
+* operational execution diagnostics
+* execution timelines
+* correlation-aware investigation
+* runtime reconstruction workflows
+* execution graphing and orchestration understanding
 
 ---
 
@@ -286,6 +298,43 @@ Features include:
 * relationship awareness
 * entity set resolution
 * preview-first filter refinement
+
+---
+
+### 🧩 Capability Model & Operational Execution
+
+DV Quick Run now includes a metadata-backed **Capability Explorer** for discovering and understanding Dataverse operational capabilities.
+
+It helps identify:
+
+* executable vs inspect-only Custom APIs
+* Functions vs Actions
+* bound vs unbound operations
+* parameter complexity
+* OData execution eligibility
+* execution readiness
+* preview-safe operational workflows
+
+Capability Explorer supports:
+
+* operational capability discovery
+* metadata-backed execution validation
+* preview-first Function execution
+* execution diagnostics
+* execution result inspection
+* structured operational investigation
+
+![Capability Explorer Function Preview](docs/capability-model-get-preview-sample.png)
+
+The capability model is intentionally:
+
+* metadata-driven
+* preview-first
+* explicit
+* investigation-oriented
+* execution-safe
+
+Execution is validated against the Dataverse OData `$metadata` surface before supported Functions can run.
 
 ---
 

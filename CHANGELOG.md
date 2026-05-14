@@ -6,6 +6,318 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.10.0 — Capability Explorer, Custom API Execution & Operational Capability Discovery
+
+This release introduces the first version of **Capability Explorer** — a new operational surface for discovering, understanding, previewing, and executing Dataverse Custom APIs directly inside DV Quick Run.
+
+It marks the beginning of DV Quick Run’s evolution from:
+
+- query + investigation tooling
+
+→ to:
+
+- operational capability discovery
+- execution investigation
+- metadata-backed operational understanding
+
+The goal is not becoming an API builder.
+
+It is:
+
+- exposing operational capabilities safely
+- understanding execution surfaces
+- preview-first operational workflows
+- execution-aware investigation
+- metadata-backed operational discovery
+
+---
+
+## 🧭 Capability Explorer (NEW)
+
+Introduced **Capability Explorer** — a dedicated operational discovery surface for Dataverse Custom APIs.
+
+Capability Explorer now provides:
+
+- Custom API catalogue
+- Action vs Function classification
+- Bound vs Unbound visibility
+- Public vs Private visibility
+- Execution readiness classification
+- OData metadata eligibility detection
+- Parameter inspection
+- Operational execution previews
+
+Behaviour:
+
+- capability discovery is metadata-driven
+- catalogue loads directly from Dataverse Custom API metadata
+- execution remains explicit and preview-first
+
+Users can now:
+
+- inspect operational APIs safely
+- understand execution complexity
+- identify executable Web API operations
+- distinguish previewable vs inspect-only capabilities
+
+Results:
+
+- operational capability visibility
+- safer API exploration
+- stronger Dataverse operational understanding
+- reduced guesswork around Custom API execution
+
+---
+
+## ⚡ OData Metadata Execution Validation (NEW)
+
+Added explicit validation against the Dataverse OData `$metadata` surface before execution.
+
+Capability Explorer now validates:
+
+- FunctionImport
+- ActionImport
+- operation definitions
+- invocation routes
+- OData eligibility
+
+Behaviour:
+
+- APIs discovered in Custom API metadata are cross-checked against executable OData metadata
+- execution is allowed only when a matching OData operation surface exists
+- non-exposed or internal APIs remain inspect-only
+
+Examples surfaced in UI:
+
+- Executable via OData metadata
+- Preview-only / Inspect-only
+- Not exposed through Web API
+
+Results:
+
+- prevents invalid execution attempts
+- avoids misleading preview surfaces
+- increases execution trustworthiness
+- aligns execution with actual Dataverse runtime capability
+
+---
+
+## 🔍 Execution Readiness Classification (NEW)
+
+Introduced structured execution readiness classification.
+
+Capability Explorer now distinguishes:
+
+- Preview-ready
+- Inspect-only
+- Executable via OData metadata
+
+Readiness reasoning includes:
+
+- parameter support complexity
+- preview-safe parameter types
+- OData operation visibility
+- metadata validation state
+
+Behaviour:
+
+- simple primitive parameters can be previewed safely
+- unsupported/complex parameters remain inspectable
+- execution readiness is explicit and explainable
+
+Results:
+
+- clearer operational expectations
+- safer execution workflows
+- reduced accidental misuse
+- stronger preview-first trust model
+
+---
+
+## 🧾 Custom API Execution Preview (NEW)
+
+Added dedicated execution preview workflows for executable Functions.
+
+Execution preview includes:
+
+- HTTP method
+- invocation path
+- executable route
+- request headers
+- parameter templates
+- execution values
+- operational notes
+
+Behaviour:
+
+- execution requires explicit user confirmation
+- generated routes now correctly use executable invocation syntax
+- Functions automatically append `()`
+- parameterised Functions generate executable parameter payloads safely
+
+Results:
+
+- transparent execution workflows
+- easier operational experimentation
+- safer Dataverse API interaction
+- clearer request semantics
+
+---
+
+## 🧠 Execution Result Surface (NEW)
+
+Introduced dedicated **Execution Result Webview** for Custom API execution workflows.
+
+Execution results now surface:
+
+- execution summary
+- HTTP status
+- duration
+- request ID
+- correlation context
+- operation metadata
+- request information
+- execution values
+- response payload
+- raw execution context
+- diagnostics notes
+
+Behaviour:
+
+- execution metadata is captured structurally
+- result rendering remains investigation-oriented
+- response inspection is separated from raw JSON-only output
+
+Results:
+
+- cleaner execution understanding
+- operational execution traceability
+- foundation for future execution diagnostics
+- stronger execution investigation workflows
+
+---
+
+## 🧪 Capability Explorer Operational UX (NEW)
+
+Added operational UX refinement throughout Capability Explorer.
+
+Improvements include:
+
+- environment-aware capability surfaces
+- execution readiness cards
+- operation overview summaries
+- parameter inspection panes
+- capability statistics
+- explicit operational notes
+- preview-first execution affordances
+
+Hub integration:
+
+- Capability Explorer now appears inside DV Quick Run Hub
+- Quickstart updated with operational capability discovery guidance
+- actionable Hub buttons now visually differentiate executable workflows
+
+Results:
+
+- calmer operational UX
+- stronger discoverability
+- clearer execution affordances
+- more cohesive operational workflow guidance
+
+---
+
+## 🧩 Metadata Registry Foundation (NEW)
+
+Introduced reusable metadata registry foundations for operational capability validation.
+
+Capability Explorer now reuses and extends:
+
+- metadata discovery pipelines
+- operational metadata registries
+- execution validation seams
+- metadata-backed operation reasoning
+
+Behaviour:
+
+- avoids isolated execution logic
+- prepares future operational metadata expansion
+- keeps renderer surfaces thin and metadata-driven
+
+Establishes foundation for:
+
+- future execution diagnostics
+- execution capability reasoning
+- operation investigation workflows
+- cross-surface operational intelligence
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+- executable Function validation
+- non-executable API suppression
+- OData metadata operation matching
+- parameterised Function preview generation
+- execution preview rendering
+- execution result rendering
+- request/response metadata capture
+- Hub integration flows
+
+No regression in:
+
+- Result Viewer
+- Guided Traversal
+- Execution Insights
+- Operational Profiles
+- Query Doctor
+- `$batch` execution
+- Investigation workflows
+
+---
+
+## 🧭 Notes
+
+This release establishes DV Quick Run as:
+
+> an operational capability exploration and investigation workbench for Dataverse and Power Platform engineering
+
+—not a Custom API authoring platform.
+
+Key principles reinforced:
+
+- preview-first operational execution
+- metadata-backed capability reasoning
+- explicit execution confirmation
+- execution transparency
+- operational understanding before execution
+- investigation-oriented operational UX
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+- discover Dataverse Custom APIs
+- classify executable vs inspect-only capabilities
+- validate execution eligibility against OData metadata
+- preview executable requests safely
+- execute supported Functions explicitly
+- capture structured execution diagnostics
+- inspect operational execution results in dedicated investigation surfaces
+
+This establishes the foundation for:
+
+- execution diagnostics
+- capability-aware investigation workflows
+- operational execution reasoning
+- future runtime correlation analysis
+- deeper Dataverse operational exploration
+
+---
+
 ## v0.9.17 — Operational Investigation Fluency & Hub Experience
 
 This release makes DV Quick Run easier to discover and use as an operational investigation workflow.
