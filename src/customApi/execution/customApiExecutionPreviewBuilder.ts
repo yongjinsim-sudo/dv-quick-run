@@ -1,6 +1,7 @@
 import type { CustomApiDefinition, CustomApiRequestParameter } from "../models/customApiTypes.js";
 import { resolveCustomApiExecutionCapability } from "./customApiExecutionCapabilityResolver.js";
 import { buildCustomApiPreviewInvocationPath } from "./customApiInvocationPathBuilder.js";
+import { buildAiExecutionAdvisoryLines, shouldShowAiExecutionAdvisory } from "./aiExecutionPolicy.js";
 
 export interface CustomApiExecutionPreviewParameter {
   name: string;
@@ -8,6 +9,7 @@ export interface CustomApiExecutionPreviewParameter {
   required: boolean;
   supported: boolean;
   placeholder: unknown;
+  valueSource: "placeholder" | "user-supplied" | "inspect-only";
   reason: string;
 }
 
@@ -38,6 +40,7 @@ export interface CustomApiExecutionPreviewModel {
 
 interface BuildCustomApiExecutionPreviewOptions {
   environmentUrl?: string;
+  parameterValues?: Record<string, unknown>;
 }
 
 function normalizeEnvironmentUrl(environmentUrl: string | undefined): string {
@@ -88,15 +91,24 @@ function buildRequestBody(parameters: readonly CustomApiExecutionPreviewParamete
   }, {});
 }
 
-function buildPreviewParameters(definition: CustomApiDefinition): CustomApiExecutionPreviewParameter[] {
-  return definition.requestParameters.map((parameter) => ({
-    name: parameter.uniqueName,
-    typeLabel: parameter.typeLabel || parameter.type || "Unknown",
-    required: parameter.isOptional !== true,
-    supported: parameter.executionSupport === "preview-ready",
-    placeholder: getParameterPlaceholder(parameter),
-    reason: parameter.executionSupportReason || "Preview support is based on discovered Custom API parameter metadata."
-  }));
+function buildPreviewParameters(
+  definition: CustomApiDefinition,
+  parameterValues: Record<string, unknown> = {}
+): CustomApiExecutionPreviewParameter[] {
+  return definition.requestParameters.map((parameter) => {
+    const supported = parameter.executionSupport === "preview-ready";
+    const hasUserValue = Object.prototype.hasOwnProperty.call(parameterValues, parameter.uniqueName);
+
+    return {
+      name: parameter.uniqueName,
+      typeLabel: parameter.typeLabel || parameter.type || "Unknown",
+      required: parameter.isOptional !== true,
+      supported,
+      placeholder: supported && hasUserValue ? parameterValues[parameter.uniqueName] : getParameterPlaceholder(parameter),
+      valueSource: supported && hasUserValue ? "user-supplied" : supported ? "placeholder" : "inspect-only",
+      reason: parameter.executionSupportReason || "Preview support is based on discovered Custom API parameter metadata."
+    };
+  });
 }
 
 function buildNotes(definition: CustomApiDefinition, unsupportedParameters: readonly CustomApiExecutionPreviewParameter[]): string[] {
@@ -125,6 +137,10 @@ function buildNotes(definition: CustomApiDefinition, unsupportedParameters: read
   }
 
   const capability = definition.executionCapability || resolveCustomApiExecutionCapability(definition);
+  if (capability.executionPolicy?.classification === "ai-related") {
+    notes.push(`AI execution policy — ${capability.executionPolicy.reason}`);
+  }
+
   notes.push(capability.canExecute
     ? "This capability can be executed explicitly after preview confirmation."
     : `${capability.label} — ${capability.reason}`);
@@ -136,7 +152,7 @@ export function buildCustomApiExecutionPreview(
   options: BuildCustomApiExecutionPreviewOptions = {}
 ): CustomApiExecutionPreviewModel {
   const method = getMethod(definition);
-  const parameters = buildPreviewParameters(definition);
+  const parameters = buildPreviewParameters(definition, options.parameterValues);
   const previewValues = buildPreviewParameterValues(parameters);
   const pathTemplate = buildCustomApiPreviewInvocationPath(definition, previewValues);
   const requestUrlTemplate = `${normalizeEnvironmentUrl(options.environmentUrl)}/api/data/v9.2${pathTemplate}`;
@@ -200,8 +216,41 @@ function renderOperationSummary(preview: CustomApiExecutionPreviewModel): string
     `Method: ${preview.method}`,
     `Binding: ${preview.bindingKind}`,
     `Bound entity: ${preview.boundEntityLogicalName || "—"}`,
-    `Readiness: ${preview.readinessLabel}`
+    `Readiness: ${preview.readinessLabel}`,
+    `Capability: ${preview.executionCapability.label}`
   ].join("\n");
+}
+
+function renderExecutionState(preview: CustomApiExecutionPreviewModel): string {
+  if (preview.executionCapability.executionPolicy?.classification === "ai-related" && !preview.executionCapability.executionPolicy.allowed) {
+    return "AI execution blocked by policy; preview and inspection remain available";
+  }
+
+  if (preview.executionCapability.canExecute) {
+    return "Execution available after explicit confirmation";
+  }
+
+  if (preview.method === "POST" && preview.bindingKind === "Unbound" && preview.executionCapability.executionMethod === "POST") {
+    return "Action preview-ready; POST execution is not enabled in this workstream";
+  }
+
+  if (preview.method === "POST" && preview.bindingKind === "Bound") {
+    return "Bound Action preview only; selected row/entity execution context is required";
+  }
+
+  return "Preview-only; no Dataverse operation will be executed from this surface";
+}
+
+function renderAuthorityState(preview: CustomApiExecutionPreviewModel): string {
+  if (preview.executionCapability.executionPolicy?.classification === "ai-related" && !preview.executionCapability.executionPolicy.allowed) {
+    return "AI-related execution authority is blocked by DV Quick Run policy";
+  }
+
+  if (preview.executionCapability.canExecute) {
+    return "Executable authority is bound to the active environment that generated this preview";
+  }
+
+  return "No executable authority is created by this preview";
 }
 
 function renderRequestPreview(preview: CustomApiExecutionPreviewModel): string {
@@ -211,6 +260,56 @@ function renderRequestPreview(preview: CustomApiExecutionPreviewModel): string {
     `Content-Type: application/json\n` +
     `OData-Version: 4.0\n` +
     `OData-MaxVersion: 4.0`;
+}
+
+function renderParameterValueSource(parameter: CustomApiExecutionPreviewParameter): string {
+  if (parameter.valueSource === "user-supplied") {
+    return "User-supplied preview value";
+  }
+
+  if (parameter.valueSource === "inspect-only") {
+    return "Inspect-only placeholder";
+  }
+
+  return "Generated placeholder";
+}
+
+function renderExecutionPolicy(preview: CustomApiExecutionPreviewModel): string {
+  const policy = preview.executionCapability.executionPolicy;
+  if (!policy || policy.classification !== "ai-related") {
+    return "No restrictive execution policy applies to this operation.";
+  }
+
+  const lines = [
+    "Policy: AI execution",
+    `Classification: ${policy.classification}`,
+    `Decision: ${policy.allowed ? "Allowed" : "Blocked"}`,
+    `Severity: ${policy.severity}`,
+    `Reason: ${policy.reason}`
+  ];
+
+  if (shouldShowAiExecutionAdvisory(policy)) {
+    lines.push(
+      "Trust model: Probabilistic / generated content",
+      "Human review: Recommended",
+      "Generated responses may be inaccurate, incomplete, non-deterministic, or unsuitable for direct operational decisions without review."
+    );
+  }
+
+  return lines.join("\n");
+}
+
+function renderAiExecutionAdvisory(preview: CustomApiExecutionPreviewModel): string {
+  const lines = buildAiExecutionAdvisoryLines(preview.executionCapability.executionPolicy);
+  if (lines.length === 0) {
+    return "No AI-generated content advisory applies to this operation.";
+  }
+
+  return [
+    "AI-generated content warning",
+    ...lines,
+    "Review generated responses before acting on them."
+  ].join("\n");
 }
 
 function renderParameters(preview: CustomApiExecutionPreviewModel): string {
@@ -224,10 +323,30 @@ function renderParameters(preview: CustomApiExecutionPreviewModel): string {
       `Type: ${parameter.typeLabel}`,
       `Required: ${parameter.required ? "Yes" : "No"}`,
       `Preview support: ${parameter.supported ? "Preview-ready" : "Inspect only"}`,
-      `Placeholder: ${JSON.stringify(parameter.placeholder)}`,
+      `Preview value: ${JSON.stringify(parameter.placeholder)}`,
+      `Value source: ${renderParameterValueSource(parameter)}`,
       `Reason: ${parameter.reason}`
     ].join("\n"))
     .join("\n\n");
+}
+
+
+function renderParameterInputGuidance(preview: CustomApiExecutionPreviewModel): string {
+  if (preview.parameters.length === 0) {
+    return "No parameter input is required for this preview.";
+  }
+
+  const userSuppliedCount = preview.parameters.filter((parameter) => parameter.valueSource === "user-supplied").length;
+  const placeholderCount = preview.parameters.filter((parameter) => parameter.valueSource === "placeholder").length;
+  const inspectOnlyCount = preview.parameters.filter((parameter) => parameter.valueSource === "inspect-only").length;
+
+  return [
+    `User-supplied preview values: ${userSuppliedCount}`,
+    `Generated placeholders: ${placeholderCount}`,
+    `Inspect-only placeholders: ${inspectOnlyCount}`,
+    "Simple preview-ready values shape the request body before execution is available.",
+    "Inspect-only parameters remain visible but require future explicit payload-shaping support."
+  ].join("\n");
 }
 
 export function buildCustomApiExecutionPreviewSurfaceSections(
@@ -239,12 +358,14 @@ export function buildCustomApiExecutionPreviewSurfaceSections(
     {
       title: "Summary",
       content: [
+        `State: ${preview.executionCapability.state}`,
         "Mode: Preview only",
-        preview.executionCapability.canExecute
-          ? "Execution: available after explicit confirmation"
-          : "Execution: preview-only",
+        `Execution state: ${renderExecutionState(preview)}`,
+        `Environment authority: ${renderAuthorityState(preview)}`,
         `Readiness: ${preview.readinessLabel}`,
-        `Reason: ${preview.readinessReason}`
+        `Capability: ${preview.executionCapability.label}`,
+        `Capability state: ${preview.executionCapability.state}`,
+        `Reason: ${preview.executionCapability.reason}`
       ].join("\n"),
       language: "text"
     },
@@ -264,8 +385,23 @@ export function buildCustomApiExecutionPreviewSurfaceSections(
       language: preview.requestBody ? "json" : "text"
     },
     {
+      title: "Execution policy",
+      content: renderExecutionPolicy(preview),
+      language: "text"
+    },
+    ...(shouldShowAiExecutionAdvisory(preview.executionCapability.executionPolicy) ? [{
+      title: "AI-generated content advisory",
+      content: renderAiExecutionAdvisory(preview),
+      language: "text" as const
+    }] : []),
+    {
       title: "Parameters",
       content: renderParameters(preview),
+      language: "text"
+    },
+    {
+      title: "Parameter input guidance",
+      content: renderParameterInputGuidance(preview),
       language: "text"
     },
     {

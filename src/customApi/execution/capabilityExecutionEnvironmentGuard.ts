@@ -1,3 +1,6 @@
+import type { CustomApiDefinition } from "../models/customApiTypes.js";
+import { resolveCustomApiExecutionCapability } from "./customApiExecutionCapabilityResolver.js";
+
 export interface CapabilityRunEnvironmentLockInput {
   readonly capturedEnvironmentUrl?: string;
   readonly activeEnvironmentUrl?: string;
@@ -7,7 +10,14 @@ export interface CapabilityRunEnvironmentLockInput {
 
 export interface CapabilityRunEnvironmentLockResult {
   readonly isLocked: boolean;
+  readonly state?: "stale" | "denied";
   readonly reason?: string;
+  readonly recovery?: string;
+}
+
+export interface CapabilityExecutionSafetyLockInput extends CapabilityRunEnvironmentLockInput {
+  readonly definition: CustomApiDefinition;
+  readonly expectedMethod: "GET" | "POST";
 }
 
 function normalizeEnvironmentUrl(value: string | undefined): string {
@@ -23,7 +33,9 @@ export function resolveCapabilityRunEnvironmentLock(
   if (!capturedUrl || !activeUrl) {
     return {
       isLocked: true,
-      reason: "Capability execution is locked because the active Dataverse environment could not be verified. Refresh Capability Explorer before running."
+      state: "denied",
+      reason: "Capability execution is denied because the active Dataverse environment could not be verified.",
+      recovery: "Refresh Capability Explorer in the active environment before running this capability."
     };
   }
 
@@ -33,7 +45,30 @@ export function resolveCapabilityRunEnvironmentLock(
 
     return {
       isLocked: true,
-      reason: `Capability execution is locked because the active environment changed from ${capturedLabel} to ${activeLabel}. Refresh Capability Explorer before running.`
+      state: "stale",
+      reason: `Capability execution is stale because the active environment changed from ${capturedLabel} to ${activeLabel}.`,
+      recovery: "Refresh Capability Explorer in the active environment to regenerate executable authority."
+    };
+  }
+
+  return { isLocked: false };
+}
+
+export function resolveCapabilityExecutionSafetyLock(
+  input: CapabilityExecutionSafetyLockInput
+): CapabilityRunEnvironmentLockResult {
+  const environmentLock = resolveCapabilityRunEnvironmentLock(input);
+  if (environmentLock.isLocked) {
+    return environmentLock;
+  }
+
+  const capability = input.definition.executionCapability || resolveCustomApiExecutionCapability(input.definition);
+  if (!capability.canExecute || capability.executionMethod !== input.expectedMethod) {
+    return {
+      isLocked: true,
+      state: "denied",
+      reason: `Capability execution is denied because this ${input.definition.operationKind} is ${capability.state}, not executable via ${input.expectedMethod}.`,
+      recovery: "Review capability eligibility and refresh Capability Explorer before running this capability."
     };
   }
 

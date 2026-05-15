@@ -692,6 +692,17 @@ th:hover .dvqr-column-resizer::after,
   color: #f6c343;
 }
 
+.dvqr-readiness-advisory {
+  background: color-mix(in srgb, #f6c343 10%, transparent);
+  border-color: color-mix(in srgb, #f6c343 48%, var(--vscode-panel-border));
+  line-height: 1.45;
+  margin-top: 12px;
+}
+
+.dvqr-readiness-advisory strong {
+  color: #f6c343;
+}
+
 .dvqr-readiness-muted {
   background: color-mix(in srgb, var(--vscode-descriptionForeground) 8%, transparent);
 }

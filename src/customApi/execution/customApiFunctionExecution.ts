@@ -1,18 +1,24 @@
 import * as vscode from "vscode";
 import type { CustomApiDefinition, CustomApiRequestParameter } from "../models/customApiTypes.js";
-import { canExecuteCustomApiDefinition } from "./customApiExecutionCapabilityResolver.js";
-import { buildCustomApiFunctionInvocationPath } from "./customApiInvocationPathBuilder.js";
+import { canExecuteCustomApiActionDefinition, canExecuteCustomApiFunctionDefinition } from "./customApiExecutionCapabilityResolver.js";
+import { buildCustomApiActionInvocationPath, buildCustomApiFunctionInvocationPath } from "./customApiInvocationPathBuilder.js";
 
 export type CustomApiFunctionParameterValues = Record<string, unknown>;
 
 export interface CustomApiFunctionExecutionPlan {
   path: string;
+  method: "GET" | "POST";
   requestPreview: string;
   values: CustomApiFunctionParameterValues;
+  body?: Record<string, unknown>;
 }
 
 export function canExecuteCustomApiFunction(definition: CustomApiDefinition): boolean {
-  return canExecuteCustomApiDefinition(definition);
+  return canExecuteCustomApiFunctionDefinition(definition);
+}
+
+export function canExecuteCustomApiAction(definition: CustomApiDefinition): boolean {
+  return canExecuteCustomApiActionDefinition(definition);
 }
 
 function getParameterKind(parameter: CustomApiRequestParameter): string {
@@ -153,12 +159,47 @@ export function buildCustomApiFunctionExecutionPlan(
   const url = `${baseUrl.replace(/\/+$/, "")}/api/data/v9.2${path}`;
   return {
     path,
+    method: "GET",
     values,
     requestPreview: [
       `GET ${url} HTTP/1.1`,
       "Accept: application/json",
       "OData-Version: 4.0",
       "OData-MaxVersion: 4.0"
+    ].join("\n")
+  };
+}
+
+export function buildCustomApiActionExecutionPath(definition: CustomApiDefinition): string {
+  if (!canExecuteCustomApiAction(definition)) {
+    throw new Error("Only preview-ready unbound public Custom API Actions can be executed.");
+  }
+
+  return buildCustomApiActionInvocationPath(definition);
+}
+
+export function buildCustomApiActionExecutionPlan(
+  definition: CustomApiDefinition,
+  values: CustomApiFunctionParameterValues,
+  baseUrl: string
+): CustomApiFunctionExecutionPlan {
+  const path = buildCustomApiActionExecutionPath(definition);
+  const url = `${baseUrl.replace(/\/+$/, "")}/api/data/v9.2${path}`;
+  const body = { ...values };
+
+  return {
+    path,
+    method: "POST",
+    values,
+    body,
+    requestPreview: [
+      `POST ${url} HTTP/1.1`,
+      "Accept: application/json",
+      "Content-Type: application/json",
+      "OData-Version: 4.0",
+      "OData-MaxVersion: 4.0",
+      "",
+      JSON.stringify(body, null, 2)
     ].join("\n")
   };
 }

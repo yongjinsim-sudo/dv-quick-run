@@ -31,6 +31,7 @@ function buildDefinition(): CustomApiDefinition {
     ],
     executionCapability: {
       mode: "executable",
+      state: "executable",
       label: "Executable",
       reason: "Matched in OData metadata.",
       canPreview: true,
@@ -50,6 +51,7 @@ function buildDefinition(): CustomApiDefinition {
 function buildPlan(): CustomApiFunctionExecutionPlan {
   return {
     path: "/new_CalculateScore(ContactId=@ContactId)?@ContactId='00000000-0000-0000-0000-000000000000'",
+    method: "GET",
     values: {
       ContactId: "00000000-0000-0000-0000-000000000000"
     },

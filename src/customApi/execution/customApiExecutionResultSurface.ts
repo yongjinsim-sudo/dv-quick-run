@@ -2,6 +2,7 @@ import type { DataverseGetResult } from "../../services/dataverseClient.js";
 import type { PreviewSurfaceSection } from "../../services/previewSurfaceTypes.js";
 import type { CustomApiDefinition } from "../models/customApiTypes.js";
 import type { CustomApiFunctionExecutionPlan, CustomApiFunctionParameterValues } from "./customApiFunctionExecution.js";
+import { buildAiExecutionAdvisoryLines, shouldShowAiExecutionAdvisory } from "./aiExecutionPolicy.js";
 import {
   buildCapabilityExecutionContextFromError,
   buildCapabilityExecutionContextFromResult,
@@ -47,19 +48,23 @@ function buildOperationSummary(definition: CustomApiDefinition, environmentName:
 }
 
 function buildRequestSummary(plan: CustomApiFunctionExecutionPlan): string {
-  return [
+  const lines = [
     `Path: ${plan.path}`,
-    "Method: GET",
+    `Method: ${plan.method}`,
     "Accept: application/json",
+    ...(plan.method === "POST" ? ["Content-Type: application/json"] : []),
     "OData-Version: 4.0",
     "OData-MaxVersion: 4.0"
-  ].join("\n");
+  ];
+
+  return lines.join("\n");
 }
 
 function buildExecutionSummary(options: CustomApiExecutionResultSurfaceOptions): string {
   const context = options.result.executionContext;
   return [
     "Status: Completed",
+    "Execution state: completed",
     `HTTP status: ${context.statusCode ?? "unknown"}`,
     `Duration: ${context.durationMs ?? 0}ms`,
     `Executed at: ${context.timestamp}`,
@@ -77,10 +82,18 @@ function buildDiagnostics(options: CustomApiExecutionResultSurfaceOptions): stri
   const context = options.result.executionContext;
   const lines = [
     "- Execution was explicitly confirmed from the Custom API preview surface.",
-    "- The Function was validated against the OData $metadata operation registry before execution.",
+    `- The ${options.definition.operationKind} was validated against the OData $metadata operation registry before execution.`,
     "- A capability execution context has been captured as an investigation anchor.",
     "- This result is response inspection only; no follow-up diagnostics have been inferred yet."
   ];
+
+  if (shouldShowAiExecutionAdvisory(options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy)) {
+    lines.push(
+      "- This operation returned AI-generated content.",
+      "- Generated responses may contain inaccuracies or hallucinations.",
+      "- Human validation is recommended before operational use."
+    );
+  }
 
   if (context.requestId || context.correlationId || context.operationId) {
     lines.push("- Request/correlation identifiers were captured for future execution diagnostics.");
@@ -89,6 +102,23 @@ function buildDiagnostics(options: CustomApiExecutionResultSurfaceOptions): stri
   }
 
   return lines.join("\n");
+}
+
+function buildAiAdvisorySection(definition: CustomApiDefinition): PreviewSurfaceSection | undefined {
+  const lines = buildAiExecutionAdvisoryLines(definition.executionPolicy ?? definition.executionCapability?.executionPolicy);
+  if (lines.length === 0) {
+    return undefined;
+  }
+
+  return {
+    title: "AI-generated content advisory",
+    content: [
+      "AI-generated content warning",
+      ...lines,
+      "Review generated responses before acting on them."
+    ].join("\n"),
+    language: "text"
+  };
 }
 
 export function buildCustomApiExecutionResultSurfaceSections(
@@ -133,6 +163,10 @@ export function buildCustomApiExecutionResultSurfaceSections(
       content: buildDiagnostics(options),
       language: "markdown"
     },
+    ...(() => {
+      const advisory = buildAiAdvisorySection(options.definition);
+      return advisory ? [advisory] : [];
+    })(),
     {
       title: "Capability execution context",
       content: buildCapabilityExecutionContextSection(capabilityExecutionContext),
@@ -167,8 +201,9 @@ export function buildCustomApiExecutionErrorSurfaceSections(
       title: "Summary",
       content: [
         "Status: Failed",
+        "Execution state: failed",
         `HTTP status: ${parseStatusCode(options.errorMessage)}`,
-        "Execution: Function invocation failed",
+        `Execution: ${options.definition.operationKind} invocation failed`,
         "Result: Review the error payload and request shape below."
       ].join("\n"),
       language: "text"
@@ -200,10 +235,20 @@ export function buildCustomApiExecutionErrorSurfaceSections(
         "- The request failed at Dataverse execution time.",
         "- A capability execution context has been captured as an investigation anchor.",
         "- This may indicate operation-specific validation, privilege, feature flag, route, or server-side implementation behaviour.",
-        "- Future execution diagnostics can use this result as the starting evidence for trace/correlation lookup."
+        "- Future execution diagnostics can use this result as the starting evidence for trace/correlation lookup.",
+        "- Failed execution is an investigation signal, not root-cause proof.",
+        ...(shouldShowAiExecutionAdvisory(options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy) ? [
+          "- This failed operation was classified as AI-related.",
+          "- Generated responses, when returned, may contain inaccuracies or hallucinations.",
+          "- Human validation is recommended before operational use."
+        ] : [])
       ].join("\n"),
       language: "markdown"
     },
+    ...(() => {
+      const advisory = buildAiAdvisorySection(options.definition);
+      return advisory ? [advisory] : [];
+    })(),
     {
       title: "Capability execution context",
       content: buildCapabilityExecutionContextSection(capabilityExecutionContext),

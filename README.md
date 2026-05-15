@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Execution Insights, Operational Profiles, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -20,6 +20,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * run related queries as `$batch`
 * investigate runtime behaviour with Execution Insights
 * understand entity operational footprint with Operational Profiles
+* discover and execute supported Custom API capabilities through Capability Explorer
 * use the Hub to stay oriented across investigation workflows
 
 DV Quick Run is designed around a simple loop:
@@ -54,28 +55,29 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.10.1
+## 🆕 What's New in v0.10.2
 
-v0.10.1 hardens DV Quick Run’s operational execution model introduced in v0.10.0.
+v0.10.2 expands Capability Explorer from Function execution understanding into **preview-first operational Action execution**, with new governance and trust safeguards for AI-related operations.
 
 Highlights:
 
-* environment-bound capability execution safety
-* automatic invalidation of stale execution previews
-* safer execution continuity during environment switching
-* improved Capability Explorer execution workflows
-* tighter alignment between execution previews and Execution Insights
-* refined execution investigation continuity
-* cleaner operational UX and execution affordances
+* eligible unbound Dataverse Actions can now be previewed and executed explicitly
+* Action request payloads can be shaped from simple metadata-backed parameters
+* execution results capture structured operational context and diagnostics
+* AI-related operations are denied by default through `dvQuickRun.execution.aiPolicy`
+* AI execution can be explicitly allowed, with amber advisory warnings and human-review guidance
+* execution remains environment-bound, preview-first, and user-controlled
 
 Key improvements include:
 
-* stale capability execution previews now close automatically on environment change
-* execution context is now strictly environment-bound
-* capability execution insights remain tied to captured execution anchors
-* preview-only workflows and operational wording refined for clarity and trust
+* clearer Action preview and execution affordances
+* explicit confirmation before Action execution
+* governed AI execution policy with `deny` as the default
+* AI-generated content advisories for probabilistic/generated responses
+* richer execution context capture for future investigation and governance workflows
+* continued fail-closed behaviour when execution authority becomes stale
 
-This release reinforces a core operational invariant:
+This release reinforces two core operational invariants:
 
 ```text
 active environment
@@ -83,7 +85,13 @@ active environment
 execution authority boundary
 ```
 
-DV Quick Run continues evolving as a metadata-aware operational investigation workbench for Dataverse and Power Platform engineering.
+```text
+execution capability
+≠
+execution recommendation
+```
+
+DV Quick Run continues evolving as a metadata-aware operational investigation and governed execution workbench for Dataverse and Power Platform engineering.
 
 
 ---
@@ -288,27 +296,33 @@ Features include:
 
 ---
 
-### 🧩 Capability Model & Operational Execution
+### 🧩 Capability Explorer & Governed Operational Execution
 
-DV Quick Run now includes a metadata-backed **Capability Explorer** for discovering and understanding Dataverse operational capabilities.
+DV Quick Run includes a metadata-backed **Capability Explorer** for discovering, understanding, previewing, and executing supported Dataverse operational capabilities.
 
 It helps identify:
 
 * executable vs inspect-only Custom APIs
 * Functions vs Actions
 * bound vs unbound operations
+* public vs private capability visibility
 * parameter complexity
 * OData execution eligibility
 * execution readiness
 * preview-safe operational workflows
+* AI-related execution policy state
 
 Capability Explorer supports:
 
 * operational capability discovery
 * metadata-backed execution validation
 * preview-first Function execution
+* preview-first eligible unbound Action execution
+* simple parameter request shaping
+* explicit execution confirmation
 * execution diagnostics
 * execution result inspection
+* Capability Execution Insights continuation
 * structured operational investigation
 
 ![Capability Explorer Function Preview](docs/capability-model-get-preview-sample.png)
@@ -320,8 +334,23 @@ The capability model is intentionally:
 * explicit
 * investigation-oriented
 * execution-safe
+* governance-aware
 
-Execution is validated against the Dataverse OData `$metadata` surface before supported Functions can run.
+Execution is validated against the Dataverse OData `$metadata` surface before supported Functions and eligible unbound Actions can run.
+
+AI-related operations are governed separately. By default, DV Quick Run blocks AI-related execution:
+
+```json
+"dvQuickRun.execution.aiPolicy": "deny"
+```
+
+Set the policy to `allow` only when AI-related execution is intentionally permitted:
+
+```json
+"dvQuickRun.execution.aiPolicy": "allow"
+```
+
+When AI execution is allowed, DV Quick Run still surfaces amber advisory warnings because generated responses may be inaccurate, incomplete, non-deterministic, or unsuitable for direct operational decisions without human review.
 
 ---
 
@@ -349,8 +378,20 @@ It detects or guards against risky situations such as:
 * unsafe PATCH contexts
 * unsupported expanded-field updates
 * stale investigation context
+* stale execution authority after environment changes
 * unavailable execution evidence
+* unsupported or inspect-only Custom API execution
+* AI-related execution blocked by default
+* AI-generated content requiring human review
 * cross-environment investigation leakage
+
+Execution-capable workflows are designed around:
+
+```text
+preview → explicit confirmation → execution → inspect result → investigate evidence
+```
+
+DV Quick Run does not treat generated or AI-assisted responses as operational truth. AI-related output should be reviewed before being used for operational decisions.
 
 ---
 
@@ -374,7 +415,7 @@ write → run → explore → refine → investigate → verify
 
 …without leaving your editor.
 
-DV Quick Run is designed to reduce tool switching while keeping investigation workflows explicit, bounded, and trustworthy.
+DV Quick Run is designed to reduce tool switching while keeping investigation and execution workflows explicit, bounded, governed, and trustworthy.
 
 ---
 

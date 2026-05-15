@@ -8,7 +8,7 @@ import type { CustomApiFunctionExecutionPlan } from "../../customApi/execution/c
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
 import type { DataverseGetResult } from "../../services/dataverseClient.js";
 
-function buildDefinition(): CustomApiDefinition {
+function buildDefinition(overrides: Partial<CustomApiDefinition> = {}): CustomApiDefinition {
   return {
     id: "api-1",
     uniqueName: "IsCDS3Ready",
@@ -26,13 +26,15 @@ function buildDefinition(): CustomApiDefinition {
       reason: "Matched in OData metadata.",
       odataName: "Microsoft.Dynamics.CRM.IsCDS3Ready",
       odataInvocationName: "IsCDS3Ready"
-    }
+    },
+    ...overrides
   };
 }
 
 function buildPlan(): CustomApiFunctionExecutionPlan {
   return {
     path: "/IsCDS3Ready()",
+    method: "GET",
     values: {},
     requestPreview: "GET https://example.crm.dynamics.com/api/data/v9.2/IsCDS3Ready() HTTP/1.1"
   };
@@ -107,4 +109,38 @@ suite("customApiExecutionResultSurface", () => {
     assert.match(sections[4].content, /not found/);
     assert.match(sections[6].content, /"status": "failed"/);
   });
+
+  test("adds AI advisory diagnostics and execution context metadata for allowed AI operations", () => {
+    const definition = buildDefinition({
+      uniqueName: "AIReply",
+      displayName: "AIReply",
+      operationKind: "Action",
+      executionPolicy: {
+        policyKind: "aiExecution",
+        classification: "ai-related",
+        allowed: true,
+        severity: "warning",
+        reason: "This operation is classified as AI-related, and AI execution is explicitly allowed by policy.",
+        trustModel: "probabilistic-generated-content",
+        humanReviewRecommended: true,
+        generatedContentWarning: true,
+        externalProcessingPossible: true
+      }
+    });
+    const sections = buildCustomApiExecutionResultSurfaceSections({
+      definition,
+      executionPlan: { ...buildPlan(), method: "POST", path: "/AIReply" },
+      values: { Text: "hello" },
+      result: buildResult(),
+      environmentName: "SIT"
+    });
+    const joined = sections.map((section) => `${section.title}\n${section.content}`).join("\n");
+
+    assert.match(joined, /AI-generated content advisory/);
+    assert.match(joined, /This operation returned AI-generated content/);
+    assert.match(joined, /Generated responses may contain inaccuracies or hallucinations/);
+    assert.match(joined, /"classification": "ai-related"/);
+    assert.match(joined, /"humanReviewRecommended": true/);
+  });
+
 });

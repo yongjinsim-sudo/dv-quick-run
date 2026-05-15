@@ -32,6 +32,7 @@ export interface CustomApiResponseProperty {
 export type CustomApiExecutionEligibilityState =
   | "executable"
   | "preview-only-not-found"
+  | "preview-only-private"
   | "preview-only-unsupported-parameters"
   | "preview-only-bound-context-required"
   | "unknown-validation-unavailable";
@@ -53,8 +54,31 @@ export type CustomApiExecutionCapabilityMode =
   | "inspect-only"
   | "validation-unavailable";
 
+export interface CustomApiExecutionPolicyDecision {
+  policyKind: "aiExecution";
+  classification: "ai-related" | "non-ai";
+  allowed: boolean;
+  severity: "info" | "warning" | "blocked";
+  reason: string;
+  trustModel?: "probabilistic-generated-content";
+  humanReviewRecommended?: boolean;
+  generatedContentWarning?: boolean;
+  externalProcessingPossible?: boolean;
+}
+
+export type CustomApiExecutionState =
+  | "executable"
+  | "preview-ready"
+  | "partially-preview-ready"
+  | "preview-only"
+  | "stale"
+  | "denied"
+  | "failed"
+  | "completed";
+
 export interface CustomApiExecutionCapability {
   mode: CustomApiExecutionCapabilityMode;
+  state: CustomApiExecutionState;
   label: string;
   reason: string;
   canPreview: boolean;
@@ -62,6 +86,7 @@ export interface CustomApiExecutionCapability {
   executionMethod?: "GET" | "POST";
   operationKind: CustomApiOperationKind;
   bindingKind: CustomApiBindingKind;
+  executionPolicy?: CustomApiExecutionPolicyDecision;
 }
 
 export interface CustomApiDefinition {
@@ -85,6 +110,7 @@ export interface CustomApiDefinition {
   executionReadinessReason?: string;
   executionEligibility?: CustomApiExecutionEligibility;
   executionCapability?: CustomApiExecutionCapability;
+  executionPolicy?: CustomApiExecutionPolicyDecision;
 }
 
 export interface CustomApiCatalogueRow {

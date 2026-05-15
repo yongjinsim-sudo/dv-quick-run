@@ -6,6 +6,281 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.10.2 — Action Execution, AI Governance & Operational Execution Trust
+
+This release expands Capability Explorer from previewable Functions into controlled Action execution workflows.
+
+It introduces:
+
+* explicit Action execution
+* execution governance foundations
+* AI-related execution policy enforcement
+* operational trust advisories
+* execution safety refinement
+* preview-first Action workflows
+
+The goal is not unrestricted execution.
+
+It is:
+
+* controlled operational execution
+* transparent execution behaviour
+* explicit user confirmation
+* metadata-backed execution trust
+* safe operational experimentation
+* governance-ready execution foundations
+
+---
+
+## ⚡ Custom API Action Execution (NEW)
+
+Capability Explorer now supports execution of eligible Dataverse Actions.
+
+Supported:
+
+* bound Actions
+* unbound Actions
+* preview-ready parameter surfaces
+* metadata-validated execution routes
+
+Behaviour:
+
+* execution remains explicit and preview-first
+* Actions require manual confirmation before execution
+* preview payloads are generated before runtime invocation
+* execution remains environment-bound
+
+Execution previews include:
+
+* HTTP method
+* invocation route
+* request headers
+* request body template
+* execution notes
+* execution readiness state
+
+Results:
+
+* safer operational execution workflows
+* clearer understanding of Action semantics
+* reduced guesswork during execution
+* improved operational experimentation
+
+---
+
+## 🧭 Action Preview & Execution UX Refinement
+
+Refined Action execution surfaces throughout Capability Explorer.
+
+Improvements include:
+
+* clearer execution readiness presentation
+* improved spacing and hierarchy between readiness cards
+* calmer execution affordances
+* cleaner preview-to-execution flow
+* stronger distinction between:
+
+  * preview-ready
+  * inspect-only
+  * AI-governed execution
+
+Behaviour:
+
+* execution cards remain visually grouped
+* operational warnings remain contextual instead of disruptive
+* execution confirmation remains explicit
+
+Results:
+
+* cleaner operational UX
+* reduced cognitive overload
+* stronger execution trust
+* more professional execution presentation
+
+---
+
+## 🛡️ AI Execution Governance Foundation (NEW)
+
+Introduced the first execution governance foundation for AI-related operations.
+
+DV Quick Run now classifies certain operations as:
+
+```text
+AI-related execution
+```
+
+Examples include:
+
+* AIReply
+* AISentiment
+* AITranslate
+* AISummarize
+* similar AI Builder / generated-content operations
+
+Behaviour:
+
+* AI execution is denied by default
+* execution requires explicit configuration opt-in
+* governance state is surfaced directly inside execution previews
+
+New configuration:
+
+```json
+"dvQuickRun.execution.aiPolicy": "deny"
+```
+
+Supported values:
+
+* `deny`
+* `allow`
+
+Results:
+
+* safer default operational posture
+* stronger enterprise governance readiness
+* clearer execution boundaries
+* reduced accidental AI execution risk
+
+---
+
+## ⚠️ AI-Generated Content Advisory (NEW)
+
+Added explicit AI-generated content advisories for AI-related operations.
+
+When AI execution is allowed, Capability Explorer now surfaces:
+
+* AI-generated content warnings
+* probabilistic output guidance
+* human-review recommendations
+* operational trust advisories
+
+Examples include warnings such as:
+
+* generated responses may be inaccurate
+* responses may be incomplete or non-deterministic
+* AI-generated content should not be trusted blindly for operational decisions
+* external AI processing may occur depending on Dataverse configuration
+
+Behaviour:
+
+* advisories remain contextual and bounded
+* warnings are visible during preview and execution result inspection
+* advisory wording avoids alarmism while remaining explicit
+
+Results:
+
+* stronger operational transparency
+* clearer execution expectations
+* improved governance posture
+* safer AI-assisted operational workflows
+
+---
+
+## 🧠 AI Execution Diagnostics & Investigation Context
+
+Execution result surfaces now capture AI-related operational context.
+
+Captured execution context includes:
+
+* AI-related execution classification
+* execution policy state
+* advisory notes
+* captured execution metadata
+* execution identifiers
+* operational investigation anchors
+
+Diagnostics now distinguish:
+
+* standard operational execution
+* AI-related execution context
+* governed execution behaviour
+
+Results:
+
+* clearer investigation traceability
+* stronger operational auditability
+* improved execution understanding
+* governance-aware diagnostics foundation
+
+---
+
+## 🔒 Governance-Oriented Execution Philosophy
+
+This release reinforces an important operational invariant:
+
+```text
+execution capability
+≠
+execution recommendation
+```
+
+DV Quick Run intentionally:
+
+* preserves explicit user control
+* avoids autonomous execution behaviour
+* reinforces preview-first operational workflows
+* surfaces governance boundaries visibly
+* prefers safe denial over implicit execution
+
+Key principles reinforced:
+
+* explicit execution over silent execution
+* preview-first operational trust
+* environment-bound execution authority
+* governance-aware operational UX
+* human-reviewed AI output
+* operational transparency over automation
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Action execution preview generation
+* bound/unbound Action execution
+* AI policy deny behaviour
+* AI policy allow behaviour
+* execution advisory rendering
+* AI warning UX spacing and hierarchy
+* execution result advisory rendering
+* execution diagnostics capture
+* environment-bound execution continuity
+
+No regression in:
+
+* Capability Explorer
+* Function execution
+* Execution Insights
+* Result Viewer
+* Guided Traversal
+* Query Doctor
+* `$batch` execution
+* Operational Profiles
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* execute supported Dataverse Actions safely
+* classify and govern AI-related operations
+* deny AI execution by default
+* surface AI-generated content advisories
+* capture governed execution diagnostics
+* maintain preview-first operational execution trust
+
+This establishes the foundation for:
+
+* future execution governance layers
+* enterprise operational controls
+* execution policy expansion
+* governed operational automation
+* deeper execution trust workflows
+
+---
+
 ## DV Quick Run v0.10.1 — Execution Safety, Capability Continuity & Preview Trust Hardening
 
 This release hardens the operational execution model introduced in v0.10.0.

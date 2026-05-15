@@ -60,6 +60,30 @@ suite("odataOperationRegistry", () => {
     assert.equal(eligibility.odataInvocationName, "new_TestFunction");
   });
 
+  test("marks matching public unbound ActionImport as executable eligibility", () => {
+    const registry = parseODataOperationRegistry(metadata);
+    const eligibility = resolveCustomApiExecutionEligibility(buildDefinition({
+      uniqueName: "new_TestAction",
+      operationKind: "Action"
+    }), registry);
+
+    assert.equal(eligibility.state, "executable");
+    assert.equal(eligibility.odataKind, "Action");
+    assert.equal(eligibility.odataQualifiedName, "Microsoft.Dynamics.CRM.new_TestAction");
+    assert.equal(eligibility.odataInvocationName, "new_TestAction");
+  });
+
+  test("keeps private Actions inspect-only before OData execution eligibility", () => {
+    const registry = parseODataOperationRegistry(metadata);
+    const eligibility = resolveCustomApiExecutionEligibility(buildDefinition({
+      uniqueName: "new_TestAction",
+      operationKind: "Action",
+      isPrivate: true
+    }), registry);
+
+    assert.equal(eligibility.state, "preview-only-private");
+  });
+
   test("marks unbound operation definitions without imports as preview-only", () => {
     const registry = parseODataOperationRegistry(metadata);
     const eligibility = resolveCustomApiExecutionEligibility(buildDefinition({ uniqueName: "new_DefinitionOnly" }), registry);

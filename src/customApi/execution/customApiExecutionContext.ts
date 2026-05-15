@@ -1,6 +1,7 @@
 import type { DataverseExecutionContext, DataverseGetResult } from "../../services/dataverseClient.js";
 import type { InvestigationContextPatch } from "../../investigation/context/investigationContextTypes.js";
 import type { CustomApiDefinition, CustomApiExecutionCapabilityMode, CustomApiExecutionEligibilityState, CustomApiOperationKind, CustomApiBindingKind } from "../models/customApiTypes.js";
+import { buildAiExecutionAdvisoryLines, shouldShowAiExecutionAdvisory } from "./aiExecutionPolicy.js";
 import type { CustomApiFunctionExecutionPlan, CustomApiFunctionParameterValues } from "./customApiFunctionExecution.js";
 
 export type CapabilityExecutionKind = "customApiExecution";
@@ -33,6 +34,11 @@ export interface CapabilityExecutionContext {
   readonly parameterNames: readonly string[];
   readonly responsePropertyNames: readonly string[];
   readonly notes: readonly string[];
+  readonly classification?: "ai-related";
+  readonly trustModel?: "probabilistic-generated-content";
+  readonly humanReviewRecommended?: boolean;
+  readonly generatedContentWarning?: boolean;
+  readonly externalProcessingPossible?: boolean;
 }
 
 export interface BuildCapabilityExecutionContextOptions {
@@ -81,6 +87,10 @@ function buildNotes(options: BuildCapabilityExecutionContextOptions): string[] {
     notes.push("No request/correlation identifiers were captured. Future runtime linkage should use bounded fallback only.");
   }
 
+  if (shouldShowAiExecutionAdvisory(options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy)) {
+    notes.push(...buildAiExecutionAdvisoryLines(options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy));
+  }
+
   if (options.errorMessage) {
     notes.push("Error payload is preserved separately by the execution result surface.");
   }
@@ -93,6 +103,9 @@ export function buildCapabilityExecutionContext(
 ): CapabilityExecutionContext {
   const executionContext = options.executionContext;
   const plan = options.executionPlan;
+
+  const executionPolicy = options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy;
+  const isAiAdvisory = shouldShowAiExecutionAdvisory(executionPolicy);
 
   return {
     kind: "customApiExecution",
@@ -117,7 +130,12 @@ export function buildCapabilityExecutionContext(
     operationId: executionContext?.operationId,
     parameterNames: Object.keys(options.values ?? {}),
     responsePropertyNames: options.definition.responseProperties.map((property) => property.uniqueName),
-    notes: buildNotes(options)
+    notes: buildNotes(options),
+    classification: isAiAdvisory ? "ai-related" : undefined,
+    trustModel: isAiAdvisory ? "probabilistic-generated-content" : undefined,
+    humanReviewRecommended: isAiAdvisory ? true : undefined,
+    generatedContentWarning: isAiAdvisory ? true : undefined,
+    externalProcessingPossible: isAiAdvisory ? true : undefined
   };
 }
 
