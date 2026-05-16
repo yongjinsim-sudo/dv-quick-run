@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { suite, test } from "mocha";
 import {
+  buildCustomApiActionExecutionPath,
+  buildCustomApiActionExecutionPlan,
   buildCustomApiFunctionExecutionPath,
   buildCustomApiFunctionExecutionPlan,
+  canExecuteCustomApiAction,
   canExecuteCustomApiFunction
 } from "../../customApi/execution/customApiFunctionExecution.js";
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
@@ -77,6 +80,52 @@ suite("customApiFunctionExecution", () => {
     );
 
     assert.equal(plan.path, "/new_TestFunction()");
+    assert.equal(plan.method, "GET");
     assert.match(plan.requestPreview, /^GET https:\/\/example\.crm\.dynamics\.com\/api\/data\/v9\.2\/new_TestFunction\(\) HTTP\/1\.1/);
+  });
+
+  test("allows only preview-ready public unbound Actions for POST execution", () => {
+    const action = buildDefinition({
+      operationKind: "Action",
+      uniqueName: "new_TestAction",
+      executionEligibility: {
+        state: "executable",
+        label: "Executable via OData metadata",
+        reason: "Matched in OData metadata.",
+        odataQualifiedName: "Microsoft.Dynamics.CRM.new_TestAction",
+        odataInvocationName: "new_TestAction"
+      }
+    });
+
+    assert.equal(canExecuteCustomApiAction(action), true);
+    assert.equal(canExecuteCustomApiAction(buildDefinition({ operationKind: "Action", bindingKind: "Bound", boundEntityLogicalName: "account" })), false);
+    assert.equal(canExecuteCustomApiAction(buildDefinition({ operationKind: "Action", isPrivate: true })), false);
+    assert.equal(canExecuteCustomApiFunction(action), false);
+  });
+
+  test("builds an Action execution plan with POST body", () => {
+    const action = buildDefinition({
+      operationKind: "Action",
+      uniqueName: "new_TestAction",
+      requestParameters: [
+        { uniqueName: "Text", typeLabel: "String", executionSupport: "preview-ready", isOptional: false }
+      ],
+      executionEligibility: {
+        state: "executable",
+        label: "Executable via OData metadata",
+        reason: "Matched in OData metadata.",
+        odataQualifiedName: "Microsoft.Dynamics.CRM.new_TestAction",
+        odataInvocationName: "new_TestAction"
+      }
+    });
+
+    assert.equal(buildCustomApiActionExecutionPath(action), "/new_TestAction");
+    const plan = buildCustomApiActionExecutionPlan(action, { Text: "hello" }, "https://example.crm.dynamics.com");
+
+    assert.equal(plan.path, "/new_TestAction");
+    assert.equal(plan.method, "POST");
+    assert.deepEqual(plan.body, { Text: "hello" });
+    assert.match(plan.requestPreview, /^POST https:\/\/example\.crm\.dynamics\.com\/api\/data\/v9\.2\/new_TestAction HTTP\/1\.1/);
+    assert.match(plan.requestPreview, /"Text": "hello"/);
   });
 });

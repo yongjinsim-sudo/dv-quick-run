@@ -1,7 +1,7 @@
 import type { CustomApiDefinition, CustomApiExecutionEligibility } from "../models/customApiTypes.js";
 import type { ODataOperationRegistry } from "./odataMetadataParser.js";
 import { findODataOperationForCustomApi } from "./odataOperationMatcher.js";
-import { withCustomApiExecutionCapability } from "../execution/customApiExecutionCapabilityResolver.js";
+import { withCustomApiExecutionCapability, type CustomApiExecutionCapabilityResolverOptions } from "../execution/customApiExecutionCapabilityResolver.js";
 
 export function buildUnknownODataEligibility(reason: string): CustomApiExecutionEligibility {
   return {
@@ -17,6 +17,14 @@ export function resolveCustomApiExecutionEligibility(
 ): CustomApiExecutionEligibility {
   if (!registry) {
     return buildUnknownODataEligibility("OData $metadata could not be loaded, so DV Quick Run cannot confirm whether this operation is executable through the Web API.");
+  }
+
+  if (definition.isPrivate === true) {
+    return {
+      state: "preview-only-private",
+      label: "Inspect only — private API",
+      reason: "This API is marked private in Custom API metadata. DV Quick Run keeps private operations inspect-only even if similar operation metadata appears in OData."
+    };
   }
 
   if (definition.executionReadiness !== "preview-ready") {
@@ -79,11 +87,12 @@ export function resolveCustomApiExecutionEligibility(
 export function applyCustomApiExecutionEligibility(
   definitions: CustomApiDefinition[],
   registry: ODataOperationRegistry | undefined,
-  unavailableReason?: string
+  unavailableReason?: string,
+  options: CustomApiExecutionCapabilityResolverOptions = {}
 ): CustomApiDefinition[] {
   const unknown = unavailableReason ? buildUnknownODataEligibility(unavailableReason) : undefined;
   return definitions.map((definition) => withCustomApiExecutionCapability({
     ...definition,
     executionEligibility: unknown ?? resolveCustomApiExecutionEligibility(definition, registry)
-  }));
+  }, options));
 }

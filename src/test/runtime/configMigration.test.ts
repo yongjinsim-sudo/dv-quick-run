@@ -31,6 +31,10 @@ suite("configMigration", () => {
       {
         section: "investigate.maxSearchColumns",
         defaultValue: 50
+      },
+      {
+        section: "execution.aiPolicy",
+        defaultValue: "deny"
       }
     ]);
 
@@ -62,6 +66,10 @@ suite("configMigration", () => {
       {
         section: "investigate.maxSearchColumns",
         value: 50
+      },
+      {
+        section: "execution.aiPolicy",
+        value: "deny"
       }
     ]);
   });
@@ -152,6 +160,36 @@ suite("configMigration", () => {
       {
         section: "investigate.maxSearchColumns",
         value: 50
+      }
+    ]);
+  });
+
+
+  test("does not overwrite explicit AI execution policy", () => {
+    const result = buildConfigMigrationPlan([
+      {
+        section: "execution.aiPolicy",
+        defaultValue: "deny",
+        globalValue: "allow"
+      }
+    ]);
+
+    assert.deepStrictEqual(result.writes, []);
+    assert.deepStrictEqual(result.skipped, ["execution.aiPolicy"]);
+  });
+
+  test("adds AI execution policy default when missing", () => {
+    const result = buildConfigMigrationPlan([
+      {
+        section: "execution.aiPolicy",
+        defaultValue: "deny"
+      }
+    ]);
+
+    assert.deepStrictEqual(result.writes, [
+      {
+        section: "execution.aiPolicy",
+        value: "deny"
       }
     ]);
   });

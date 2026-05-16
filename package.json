@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query and Custom API workbench for OData, FetchXML, $batch, and operational investigation in VS Code.",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -451,6 +451,15 @@
           "default": 50,
           "minimum": 1,
           "markdownDescription": "Maximum number of candidate identifier-like columns Investigate Record may evaluate during weak-context identifier resolution."
+        },
+        "dvQuickRun.execution.aiPolicy": {
+          "type": "string",
+          "default": "deny",
+          "enum": [
+            "deny",
+            "allow"
+          ],
+          "description": "Controls execution of AI-related Custom APIs discovered by Capability Explorer. Default deny keeps AI-related operations preview-only unless explicitly allowed."
         }
       }
     }

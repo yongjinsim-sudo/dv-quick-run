@@ -12,7 +12,8 @@ export const CONFIG_SECTIONS_TO_MIGRATE = [
   "traversal.explainVerbosity",
   "investigate.searchScopeTables",
   "investigate.maxSearchTables",
-  "investigate.maxSearchColumns"
+  "investigate.maxSearchColumns",
+  "execution.aiPolicy"
 ] as const;
 
 function readConfigInspections(

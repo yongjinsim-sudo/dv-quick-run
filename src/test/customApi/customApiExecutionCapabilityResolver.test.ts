@@ -41,7 +41,7 @@ suite("customApiExecutionCapabilityResolver", () => {
     assert.equal(canExecuteCustomApiDefinition(buildDefinition()), true);
   });
 
-  test("keeps Actions preview-only even when OData eligible", () => {
+  test("marks OData-validated unbound Actions as executable through the Action pipeline", () => {
     const capability = resolveCustomApiExecutionCapability(buildDefinition({
       operationKind: "Action",
       executionEligibility: {
@@ -50,6 +50,34 @@ suite("customApiExecutionCapabilityResolver", () => {
         reason: "Matched in OData metadata.",
         odataQualifiedName: "Microsoft.Dynamics.CRM.new_TestAction",
         odataInvocationName: "new_TestAction"
+      }
+    }));
+
+    assert.equal(capability.mode, "executable");
+    assert.equal(capability.label, "Preview / run Action");
+    assert.equal(capability.canPreview, true);
+    assert.equal(capability.canExecute, true);
+    assert.equal(capability.executionMethod, "POST");
+    assert.equal(canExecuteCustomApiDefinition(buildDefinition({
+      operationKind: "Action",
+      executionEligibility: {
+        state: "executable",
+        label: "Executable via OData metadata",
+        reason: "Matched in OData metadata.",
+        odataQualifiedName: "Microsoft.Dynamics.CRM.new_TestAction",
+        odataInvocationName: "new_TestAction"
+      }
+    })), true);
+  });
+
+  test("keeps private Actions inspectable even when OData eligible", () => {
+    const capability = resolveCustomApiExecutionCapability(buildDefinition({
+      operationKind: "Action",
+      isPrivate: true,
+      executionEligibility: {
+        state: "preview-only-private",
+        label: "Inspect only — private API",
+        reason: "Private operations remain inspect-only."
       }
     }));
 
@@ -94,5 +122,47 @@ suite("customApiExecutionCapabilityResolver", () => {
 
     assert.equal(enriched.executionCapability?.mode, "executable");
     assert.equal(enriched.executionCapability?.canExecute, true);
+  });
+
+  test("blocks AI-related executable Actions by default policy", () => {
+    const capability = resolveCustomApiExecutionCapability(buildDefinition({
+      operationKind: "Action",
+      uniqueName: "AIReply",
+      displayName: "AIReply",
+      executionEligibility: {
+        state: "executable",
+        label: "Executable via OData metadata",
+        reason: "Matched in OData metadata.",
+        odataQualifiedName: "Microsoft.Dynamics.CRM.AIReply",
+        odataInvocationName: "AIReply"
+      }
+    }));
+
+    assert.equal(capability.mode, "preview-only");
+    assert.equal(capability.state, "denied");
+    assert.equal(capability.label, "AI execution blocked by policy");
+    assert.equal(capability.canPreview, true);
+    assert.equal(capability.canExecute, false);
+    assert.equal(capability.executionPolicy?.classification, "ai-related");
+  });
+
+  test("allows AI-related executable Actions after explicit policy opt-in", () => {
+    const capability = resolveCustomApiExecutionCapability(buildDefinition({
+      operationKind: "Action",
+      uniqueName: "AIReply",
+      displayName: "AIReply",
+      executionEligibility: {
+        state: "executable",
+        label: "Executable via OData metadata",
+        reason: "Matched in OData metadata.",
+        odataQualifiedName: "Microsoft.Dynamics.CRM.AIReply",
+        odataInvocationName: "AIReply"
+      }
+    }), { aiPolicy: "allow" });
+
+    assert.equal(capability.mode, "executable");
+    assert.equal(capability.canExecute, true);
+    assert.equal(capability.executionMethod, "POST");
+    assert.equal(capability.executionPolicy?.allowed, true);
   });
 });

@@ -124,6 +124,71 @@ export class DataverseClient {
   }
 
 
+  async postWithMetadata<T = unknown>(path: string, token: string, body: unknown, options: DataverseGetOptions = {}): Promise<DataverseGetResult<T>> {
+    const url = /^https?:\/\//i.test(path) ? path : `${this.baseUrl}${path}`;
+    const controller = typeof options.timeoutMs === "number" && options.timeoutMs > 0
+      ? new AbortController()
+      : undefined;
+    const timeout = controller
+      ? setTimeout(() => controller.abort(), options.timeoutMs)
+      : undefined;
+    const startedAt = Date.now();
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        signal: controller?.signal,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "OData-Version": "4.0",
+          "OData-MaxVersion": "4.0"
+        },
+        body: JSON.stringify(body ?? {})
+      });
+
+      const durationMs = Date.now() - startedAt;
+      const executionContext = buildExecutionContext({
+        headers: response.headers,
+        method: "POST",
+        path,
+        url,
+        statusCode: response.status,
+        durationMs
+      });
+      const text = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`Dataverse error ${response.status} for POST ${url}: ${text}`);
+      }
+
+      if (!text.trim()) {
+        return {
+          data: { status: response.status } as T,
+          executionContext
+        };
+      }
+
+      try {
+        return {
+          data: JSON.parse(text) as T,
+          executionContext
+        };
+      } catch {
+        return {
+          data: { status: response.status, raw: text } as T,
+          executionContext
+        };
+      }
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    }
+  }
+
+
   async getTextWithMetadata(path: string, token: string, options: DataverseGetOptions = {}): Promise<DataverseGetResult<string>> {
     const url = /^https?:\/\//i.test(path) ? path : `${this.baseUrl}${path}`;
     const controller = typeof options.timeoutMs === "number" && options.timeoutMs > 0

@@ -215,6 +215,25 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>';
   }
 
+
+  function shouldShowAiExecutionAdvisory(definition) {
+    const policy = definition && (definition.executionPolicy || (definition.executionCapability && definition.executionCapability.executionPolicy));
+    return policy && policy.classification === 'ai-related' && policy.allowed === true;
+  }
+
+  function renderAiExecutionAdvisory(definition) {
+    if (!shouldShowAiExecutionAdvisory(definition)) {
+      return '';
+    }
+
+    return '<div class="dvqr-readiness-card dvqr-readiness-advisory">'
+      + '<strong>AI-generated content warning</strong>'
+      + '<span>This operation may invoke AI-generated or probabilistic output. Responses may be inaccurate, incomplete, non-deterministic, or unsuitable for direct operational decisions without review.</span>'
+      + '<span>Human validation is recommended before acting on generated content.</span>'
+      + '<span>This operation may invoke external AI processing depending on the Dataverse environment configuration.</span>'
+      + '</div>';
+  }
+
   function renderExecutionReadiness(definition) {
     const readiness = definition.executionReadinessLabel || 'Inspect only';
     const readinessClass = definition.executionReadiness === 'preview-ready' ? 'dvqr-readiness-good' : definition.executionReadiness === 'partial' ? 'dvqr-readiness-partial' : 'dvqr-readiness-muted';
@@ -240,6 +259,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       + '<strong>' + escapeHtml(capability.label) + '</strong>'
       + '<span>' + escapeHtml(capability.reason) + '</span>'
       + '</div>'
+      + renderAiExecutionAdvisory(definition)
       + odataLine
       + routeLine
       + '</section>';
@@ -287,12 +307,49 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       notes.push(definition.executionCapability.label + ' — ' + definition.executionCapability.reason);
     }
 
+    if (shouldShowAiExecutionAdvisory(definition)) {
+      notes.push('AI-generated content warning — responses may be inaccurate, incomplete, non-deterministic, or unsuitable for direct operational decisions without human review.');
+    }
+
     if (definition.executionEligibility) {
       notes.push(definition.executionEligibility.label + ' — ' + definition.executionEligibility.reason);
     }
 
     const noteHtml = notes.map((note) => '<li>' + escapeHtml(note) + '</li>').join('');
     return '<section class="dvqr-drawer-section"><h3>Operation Notes</h3><ul class="dvqr-notes-list">' + noteHtml + '</ul></section>';
+  }
+
+
+  function getPreviewButtonLabel(definition) {
+    if (definition.executionCapability && definition.executionCapability.canExecute) {
+      return 'Preview / Run Function';
+    }
+
+    if (definition.operationKind === 'Action' && definition.bindingKind === 'Unbound' && definition.executionCapability && definition.executionCapability.executionMethod === 'POST') {
+      return 'Preview Action Request';
+    }
+
+    if (definition.operationKind === 'Action' && definition.bindingKind === 'Bound') {
+      return 'Preview Bound Request';
+    }
+
+    return 'Preview Request';
+  }
+
+  function getPreviewButtonDescription(definition) {
+    if (definition.executionCapability && definition.executionCapability.canExecute) {
+      return 'Preview this read-oriented Function request, then run only after explicit confirmation.';
+    }
+
+    if (definition.operationKind === 'Action' && definition.bindingKind === 'Unbound' && definition.executionCapability && definition.executionCapability.executionMethod === 'POST') {
+      return 'Preview the POST Action request shape. No Dataverse operation is executed yet.';
+    }
+
+    if (definition.operationKind === 'Action' && definition.bindingKind === 'Bound') {
+      return 'Preview the bound request shape. Execution needs selected row/entity context and remains disabled.';
+    }
+
+    return 'Generate a preview-only request template. No Dataverse operation will be executed.';
   }
 
   function renderDetail(uniqueName) {
@@ -324,8 +381,8 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       + renderOperationNotes(definition)
       + '</div>'
       + '<div class="dvqr-detail-footer"><section class="dvqr-drawer-section dvqr-next-steps"><h3>Execution Preview</h3><div class="dvqr-next-step-row">'
-      + '<button class="dvqr-button dvqr-button-primary" type="button" data-action="preview-execution" data-api-unique-name="' + escapeHtml(definition.uniqueName) + '">' + (definition.executionCapability && definition.executionCapability.canExecute ? 'Preview / Run Function' : 'Preview Request') + '</button>'
-      + '<span>' + (definition.executionCapability && definition.executionCapability.canExecute ? 'Preview this read-oriented Function request, then run only after explicit confirmation.' : 'Generate a preview-only request template. No Dataverse operation will be executed.') + '</span></div>'
+      + '<button class="dvqr-button dvqr-button-primary" type="button" data-action="preview-execution" data-api-unique-name="' + escapeHtml(definition.uniqueName) + '">' + getPreviewButtonLabel(definition) + '</button>'
+      + '<span>' + getPreviewButtonDescription(definition) + '</span></div>'
       + executionInsightButton
       + '</section></div>';
 
