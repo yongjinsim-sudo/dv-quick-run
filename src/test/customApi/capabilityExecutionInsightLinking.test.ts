@@ -92,7 +92,7 @@ suite("capabilityExecutionInsightLinking", () => {
 
     assert.deepEqual(sections.map((section) => section.title), [
       "Capability execution anchor",
-      "Execution Insight linkage",
+      "Execution evidence linkage",
       "Captured execution identifiers",
       "Bounded provider findings"
     ]);

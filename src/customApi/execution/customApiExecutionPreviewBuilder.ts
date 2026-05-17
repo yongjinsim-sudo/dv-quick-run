@@ -36,6 +36,7 @@ export interface CustomApiExecutionPreviewModel {
   unsupportedParameters: CustomApiExecutionPreviewParameter[];
   notes: string[];
   executionCapability: ReturnType<typeof resolveCustomApiExecutionCapability>;
+  actionReadiness: NonNullable<ReturnType<typeof resolveCustomApiExecutionCapability>["actionReadiness"]> | undefined;
 }
 
 interface BuildCustomApiExecutionPreviewOptions {
@@ -160,6 +161,7 @@ export function buildCustomApiExecutionPreview(
   const executionCapability = definition.executionCapability || resolveCustomApiExecutionCapability(definition);
   const queryParameterTemplate = "";
   const requestBody = buildRequestBody(parameters, method);
+  const actionReadiness = executionCapability.actionReadiness;
 
   return {
     apiUniqueName: definition.uniqueName,
@@ -176,7 +178,8 @@ export function buildCustomApiExecutionPreview(
     parameters,
     unsupportedParameters,
     notes: buildNotes(definition, unsupportedParameters),
-    executionCapability
+    executionCapability,
+    actionReadiness
   };
 }
 
@@ -198,7 +201,8 @@ export function renderCustomApiExecutionPreviewMarkdown(preview: CustomApiExecut
     `| Method | ${preview.method} |\n` +
     `| Binding | ${preview.bindingKind} |\n` +
     `| Bound Entity | ${preview.boundEntityLogicalName || "—"} |\n` +
-    `| Readiness | ${preview.readinessLabel} |\n\n` +
+    `| Readiness | ${preview.readinessLabel} |\n` +
+    `| Action Readiness | ${preview.actionReadiness?.label || "—"} |\n\n` +
     `## Request URL Template\n\n` +
     `\`\`\`http\n${preview.method} ${preview.requestUrlTemplate}${preview.queryParameterTemplate ? `?${preview.queryParameterTemplate}` : ""}\n\`\`\`\n\n` +
     `## Request Body Template\n\n` +
@@ -216,9 +220,40 @@ function renderOperationSummary(preview: CustomApiExecutionPreviewModel): string
     `Method: ${preview.method}`,
     `Binding: ${preview.bindingKind}`,
     `Bound entity: ${preview.boundEntityLogicalName || "—"}`,
-    `Readiness: ${preview.readinessLabel}`,
     `Capability: ${preview.executionCapability.label}`
   ].join("\n");
+}
+
+function compactActionReasonCode(reasonCode: string): string {
+  const labels: Record<string, string> = {
+    PublicODataAction: "Metadata-valid",
+    SimplePreviewReadyParameters: "Preview-ready",
+    ComplexParameterShape: "Complex parameter",
+    EntityReferenceParameter: "Entity reference",
+    CollectionParameter: "Collection parameter",
+    UnknownParameterType: "Unknown parameter",
+    BoundActionDeferred: "Bound Action deferred",
+    PrivateCustomApi: "Private/internal",
+    MissingActionImport: "Missing ActionImport",
+    ValidationUnavailable: "Validation unavailable",
+    EnvironmentChanged: "Environment changed",
+    AiPolicyDenied: "AI policy denied",
+    GeneratedContentAdvisoryRequired: "AI advisory",
+    PotentialDestructiveOperation: "Destructive signal",
+    PotentialBusinessStateChange: "Business-state signal",
+    PotentialExternalSideEffect: "External side-effect signal",
+    NotAnAction: "Function semantics"
+  };
+
+  return labels[reasonCode] ?? reasonCode;
+}
+
+function compactActionReasonCodes(reasonCodes: readonly string[] | undefined): string {
+  if (!reasonCodes || reasonCodes.length === 0) {
+    return "—";
+  }
+
+  return reasonCodes.map(compactActionReasonCode).join(" • ");
 }
 
 function renderExecutionState(preview: CustomApiExecutionPreviewModel): string {
@@ -306,9 +341,9 @@ function renderAiExecutionAdvisory(preview: CustomApiExecutionPreviewModel): str
   }
 
   return [
-    "AI-generated content warning",
-    ...lines,
-    "Review generated responses before acting on them."
+    "Generated output may be inaccurate, incomplete, or non-deterministic.",
+    ...lines.filter((line) => !line.startsWith("Generated responses may")),
+    "Human validation is recommended before operational use."
   ].join("\n");
 }
 
@@ -325,7 +360,8 @@ function renderParameters(preview: CustomApiExecutionPreviewModel): string {
       `Preview support: ${parameter.supported ? "Preview-ready" : "Inspect only"}`,
       `Preview value: ${JSON.stringify(parameter.placeholder)}`,
       `Value source: ${renderParameterValueSource(parameter)}`,
-      `Reason: ${parameter.reason}`
+      `Reason: ${parameter.reason}`,
+      `Trust: ${preview.actionReadiness?.parameterTrust.find((trust) => trust.parameterName === parameter.name)?.state || "—"}`
     ].join("\n"))
     .join("\n\n");
 }
@@ -344,8 +380,8 @@ function renderParameterInputGuidance(preview: CustomApiExecutionPreviewModel): 
     `User-supplied preview values: ${userSuppliedCount}`,
     `Generated placeholders: ${placeholderCount}`,
     `Inspect-only placeholders: ${inspectOnlyCount}`,
-    "Simple preview-ready values shape the request body before execution is available.",
-    "Inspect-only parameters remain visible but require future explicit payload-shaping support."
+    "Preview-ready values shape the request body.",
+    "Inspect-only parameters remain visible until explicit payload shaping is supported."
   ].join("\n");
 }
 
@@ -358,13 +394,10 @@ export function buildCustomApiExecutionPreviewSurfaceSections(
     {
       title: "Summary",
       content: [
-        `State: ${preview.executionCapability.state}`,
-        "Mode: Preview only",
-        `Execution state: ${renderExecutionState(preview)}`,
+        `Execution: ${renderExecutionState(preview)}`,
         `Environment authority: ${renderAuthorityState(preview)}`,
-        `Readiness: ${preview.readinessLabel}`,
+        `Readiness: ${preview.actionReadiness?.label || preview.readinessLabel}`,
         `Capability: ${preview.executionCapability.label}`,
-        `Capability state: ${preview.executionCapability.state}`,
         `Reason: ${preview.executionCapability.reason}`
       ].join("\n"),
       language: "text"
@@ -374,6 +407,18 @@ export function buildCustomApiExecutionPreviewSurfaceSections(
       content: renderOperationSummary(preview),
       language: "text"
     },
+    ...(preview.actionReadiness ? [{
+      title: "Action execution trust",
+      content: [
+        `Readiness: ${preview.actionReadiness.label}`,
+        `Execution: ${preview.actionReadiness.canExecute ? "Allowed after explicit confirmation" : "Inspect/preview only"}`,
+        `Review level: ${preview.actionReadiness.caution ? "Caution" : "Standard"}`,
+        `Typed confirmation: ${preview.actionReadiness.requiresTypedConfirmation ? `Required (${preview.actionReadiness.confirmationPhrase})` : "Not required"}`,
+        `Signals: ${compactActionReasonCodes(preview.actionReadiness.reasonCodes)}`,
+        `Reason: ${preview.actionReadiness.reason}`
+      ].join("\n"),
+      language: "text" as const
+    }] : []),
     {
       title: "Request preview",
       content: renderRequestPreview(preview),

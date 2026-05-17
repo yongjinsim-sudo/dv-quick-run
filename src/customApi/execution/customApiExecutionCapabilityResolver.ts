@@ -1,5 +1,6 @@
 import type { CustomApiDefinition, CustomApiExecutionCapability } from "../models/customApiTypes.js";
 import { evaluateAiExecutionPolicy, type AiExecutionPolicyOptions } from "./aiExecutionPolicy.js";
+import { resolveActionExecutionReadiness } from "./actionExecutionReadiness.js";
 
 export interface CustomApiExecutionCapabilityResolverOptions extends AiExecutionPolicyOptions {}
 
@@ -25,6 +26,10 @@ function isODataValidatedUnboundAction(definition: CustomApiDefinition): boolean
 
 function withPolicy(capability: CustomApiExecutionCapability, definition: CustomApiDefinition, options: CustomApiExecutionCapabilityResolverOptions): CustomApiExecutionCapability {
   const executionPolicy = evaluateAiExecutionPolicy(definition, options);
+  const actionReadiness = definition.operationKind === "Action"
+    ? resolveActionExecutionReadiness({ ...definition, executionCapability: capability, executionPolicy }, options)
+    : undefined;
+
   if (capability.canExecute && !executionPolicy.allowed) {
     return {
       mode: "preview-only",
@@ -35,13 +40,25 @@ function withPolicy(capability: CustomApiExecutionCapability, definition: Custom
       canExecute: false,
       operationKind: capability.operationKind,
       bindingKind: capability.bindingKind,
-      executionPolicy
+      executionPolicy,
+      actionReadiness
+    };
+  }
+
+  if (actionReadiness?.state === "readyWithCaution") {
+    return {
+      ...capability,
+      label: "Run with caution",
+      reason: `${capability.reason} ${actionReadiness.reason}`,
+      executionPolicy,
+      actionReadiness
     };
   }
 
   return {
     ...capability,
-    executionPolicy
+    executionPolicy,
+    actionReadiness
   };
 }
 
@@ -98,7 +115,7 @@ export function resolveCustomApiExecutionCapability(
     capability = {
       mode: "executable",
       state: "executable",
-      label: "Preview / run Action",
+      label: "Ready to run",
       reason: "This unbound public Action is preview-ready and matched an ActionImport in the active environment. POST execution runs only after explicit preview confirmation.",
       canPreview: true,
       canExecute: true,
@@ -174,6 +191,7 @@ export function withCustomApiExecutionCapability(
   return {
     ...definition,
     executionCapability,
-    executionPolicy: executionCapability.executionPolicy
+    executionPolicy: executionCapability.executionPolicy,
+    actionReadiness: executionCapability.actionReadiness
   };
 }

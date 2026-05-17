@@ -42,6 +42,26 @@ function captureCapabilityExecutionContext(args: {
   );
 }
 
+
+async function confirmHighRiskActionExecution(definition: CustomApiDefinition): Promise<boolean> {
+  const readiness = definition.actionReadiness ?? definition.executionCapability?.actionReadiness;
+  if (!readiness?.requiresTypedConfirmation || !readiness.confirmationPhrase) {
+    return true;
+  }
+
+  const response = await vscode.window.showInputBox({
+    title: "DV Quick Run: Confirm high-risk Action",
+    prompt: `Type ${readiness.confirmationPhrase} to execute ${definition.displayName || definition.uniqueName}.`,
+    placeHolder: readiness.confirmationPhrase,
+    ignoreFocusOut: true,
+    validateInput: (input) => input.trim() === readiness.confirmationPhrase
+      ? undefined
+      : `Type ${readiness.confirmationPhrase} exactly to execute.`
+  });
+
+  return response?.trim() === readiness.confirmationPhrase;
+}
+
 function notifyCapabilityExecutionAvailable(apiUniqueName: string, status: "completed" | "failed"): void {
   if (!capabilityExplorerPanel) {
     return;
@@ -184,7 +204,7 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
                 language: "http"
               }
             ],
-            primaryAction: createPreviewAction({ id: "runCustomApiAction", label: "Run Action", kind: "apply" }),
+            primaryAction: createPreviewAction({ id: "runCustomApiAction", label: preview.actionReadiness?.caution ? "Run Action with caution" : "Run Action", kind: "apply" }),
             secondaryActions: [
               createPreviewAction({ id: "cancel", label: "Cancel", kind: "cancel" })
             ]
@@ -202,6 +222,11 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
 
           if (previewResult.actionKind !== "apply") {
             void vscode.window.showInformationMessage("DV Quick Run: Custom API Action preview cancelled. No Dataverse operation was executed.");
+            return;
+          }
+
+          if (!await confirmHighRiskActionExecution(definition)) {
+            void vscode.window.showInformationMessage("DV Quick Run: High-risk Custom API Action execution cancelled. No Dataverse operation was executed.");
             return;
           }
 
@@ -251,8 +276,8 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
               source: "capabilityExplorer",
               sourceAction: `Result ${definition.displayName || definition.uniqueName}`,
               environmentName: activeEnvironment?.name,
-              riskLevel: "normal",
-              summary: "Custom API Action execution completed. Review the response payload, request context, and captured execution metadata.",
+              riskLevel: definition.actionReadiness?.caution || definition.executionCapability?.actionReadiness?.caution ? "amber" : "normal",
+              summary: "Custom API Action execution completed. Review the response payload, request context, captured execution metadata, and Action readiness context.",
               sections: buildCustomApiExecutionResultSurfaceSections({
                 definition,
                 executionPlan,

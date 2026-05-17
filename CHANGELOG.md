@@ -6,6 +6,63 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.10.3 — Execution Support Classification & Operational Capability Semantics
+
+Refined operational execution semantics throughout Capability Explorer to establish a clearer and more trustworthy execution classification model.
+
+Capability surfaces now distinguish between:
+
+* Preview-ready
+* Partially preview-ready
+* Ready to run
+* Run with caution
+* Inspect only
+* Internal/private operations
+* Unsupported parameter scenarios
+
+Behaviour:
+
+* execution capability is now separated from execution recommendation
+* preview support is classified independently from execution eligibility
+* private/internal APIs remain inspectable while preventing unsafe execution workflows
+* unsupported parameter scenarios surface bounded preview-only behaviour instead of misleading execution affordances
+
+New operational UX semantics include:
+
+* `Preview / Run Action`
+* `Preview Request`
+* `Inspect only — internal/private Action`
+* `Inspect only — unsupported parameters`
+* `AI-generated content warning`
+
+Capability Explorer now adapts operational affordances based on:
+
+* parameter support complexity
+* OData execution eligibility
+* governance classification
+* AI-related execution policy
+* private/internal visibility
+* preview-safe parameter analysis
+
+Results:
+
+* clearer operational capability understanding
+* more predictable execution behaviour
+* reduced execution ambiguity
+* stronger governance transparency
+* calmer operational UX under complex metadata scenarios
+* improved trustworthiness during capability exploration
+
+This refinement also establishes a reusable operational capability taxonomy for future:
+
+* execution governance layers
+* capability-aware diagnostics
+* execution policy expansion
+* governed operational automation
+* metadata-driven operational reasoning
+
+---
+
 ## DV Quick Run v0.10.2 — Action Execution, AI Governance & Operational Execution Trust
 
 This release expands Capability Explorer from previewable Functions into controlled Action execution workflows.
