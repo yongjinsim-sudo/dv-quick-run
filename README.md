@@ -55,35 +55,45 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.10.2
+## 🆕 What's New in v0.10.3
 
-v0.10.2 expands Capability Explorer from Function execution understanding into **preview-first operational Action execution**, with new governance and trust safeguards for AI-related operations.
+v0.10.3 hardens Capability Explorer’s Action execution model with clearer **execution support classification**, safer **parameter trust semantics**, and calmer **operational readiness language**.
+
+This release is not about unrestricted execution.
+
+It is about making supported Action execution easier to understand, safer to preview, and more predictable across public, private, AI-related, and unsupported metadata scenarios.
 
 Highlights:
 
-* eligible unbound Dataverse Actions can now be previewed and executed explicitly
-* Action request payloads can be shaped from simple metadata-backed parameters
-* execution results capture structured operational context and diagnostics
-* AI-related operations are denied by default through `dvQuickRun.execution.aiPolicy`
-* AI execution can be explicitly allowed, with amber advisory warnings and human-review guidance
-* execution remains environment-bound, preview-first, and user-controlled
+* eligible unbound Dataverse Actions remain preview-first and explicitly confirmed
+* Action capability states are now clearer and more consistent
+* parameter support is classified as preview-ready, partially preview-ready, or inspect-only
+* private/internal Actions remain discoverable and inspectable without becoming executable
+* unsupported parameter shapes now surface preview-request behaviour instead of misleading run affordances
+* high-risk or AI-related operations use calmer advisory language and clearer trust semantics
+* execution result surfaces carry Action trust context forward for investigation
 
-Key improvements include:
+Capability Explorer now distinguishes:
 
-* clearer Action preview and execution affordances
-* explicit confirmation before Action execution
-* governed AI execution policy with `deny` as the default
-* AI-generated content advisories for probabilistic/generated responses
-* richer execution context capture for future investigation and governance workflows
-* continued fail-closed behaviour when execution authority becomes stale
+* Preview-ready
+* Partially preview-ready
+* Ready to run
+* Run with caution
+* Preview request only
+* Inspect only — internal/private Action
+* Inspect only — unsupported parameters
+* AI-generated content advisory
 
-This release reinforces two core operational invariants:
+This release reinforces the v0.10.x execution model:
 
 ```text
-active environment
-=
-execution authority boundary
+metadata validates
+policy blocks
+heuristics warn
+user confirms
 ```
+
+and keeps the core execution invariant intact:
 
 ```text
 execution capability
@@ -92,7 +102,6 @@ execution recommendation
 ```
 
 DV Quick Run continues evolving as a metadata-aware operational investigation and governed execution workbench for Dataverse and Power Platform engineering.
-
 
 ---
 
@@ -306,11 +315,11 @@ It helps identify:
 * Functions vs Actions
 * bound vs unbound operations
 * public vs private capability visibility
-* parameter complexity
+* parameter complexity and preview support
 * OData execution eligibility
-* execution readiness
-* preview-safe operational workflows
+* Action execution support state
 * AI-related execution policy state
+* governed operational execution context
 
 Capability Explorer supports:
 
@@ -325,6 +334,17 @@ Capability Explorer supports:
 * Capability Execution Insights continuation
 * structured operational investigation
 
+Capability Explorer now presents Action execution using a clearer support taxonomy:
+
+* **Preview-ready** — all discovered parameters can be represented safely in the preview foundation
+* **Partially preview-ready** — some parameters can be previewed, while others remain inspect-only
+* **Ready to run** — the Action is metadata-valid, OData-exposed, preview-ready, and executable after confirmation
+* **Run with caution** — the Action is executable, but DV Quick Run detected operational-impact or governance signals requiring extra review
+* **Preview request only** — a request template can be generated, but no Dataverse operation will be executed
+* **Inspect only** — the operation remains discoverable and inspectable, but cannot be executed safely in the current release boundary
+
+This keeps unsupported or private operations useful for investigation without making them appear broken or silently executable.
+
 ![Capability Explorer Function Preview](docs/capability-model-get-preview-sample.png)
 
 The capability model is intentionally:
@@ -337,6 +357,14 @@ The capability model is intentionally:
 * governance-aware
 
 Execution is validated against the Dataverse OData `$metadata` surface before supported Functions and eligible unbound Actions can run.
+
+The governing model is:
+
+```text
+Custom API metadata = discovery truth
+OData metadata = execution exposure truth
+active environment = execution authority boundary
+```
 
 AI-related operations are governed separately. By default, DV Quick Run blocks AI-related execution:
 
@@ -381,6 +409,9 @@ It detects or guards against risky situations such as:
 * stale execution authority after environment changes
 * unavailable execution evidence
 * unsupported or inspect-only Custom API execution
+* private/internal Custom APIs remaining preview-request only
+* unsupported or complex Action parameter shapes
+* high-risk Actions requiring clearer caution semantics
 * AI-related execution blocked by default
 * AI-generated content requiring human review
 * cross-environment investigation leakage

@@ -135,6 +135,7 @@ suite("customApiExecutionPreviewBuilder", () => {
     assert.deepEqual(sections.map((section) => section.title), [
       "Summary",
       "Operation",
+      "Action execution trust",
       "Request preview",
       "Request body template",
       "Execution policy",
@@ -142,10 +143,9 @@ suite("customApiExecutionPreviewBuilder", () => {
       "Parameter input guidance",
       "Notes"
     ]);
-    assert.match(sections[0].content, /Mode: Preview only/);
-    assert.match(sections[0].content, /Execution state: Preview-only; no Dataverse operation will be executed from this surface/);
+    assert.match(sections[0].content, /Execution: Preview-only; no Dataverse operation will be executed from this surface/);
     assert.match(sections[0].content, /Environment authority: No executable authority is created by this preview/);
-    assert.match(sections[2].content, /POST .*Microsoft\.Dynamics\.CRM\.new_TestOperation/);
+    assert.match(sections[3].content, /POST .*Microsoft\.Dynamics\.CRM\.new_TestOperation/);
   });
 
   test("describes unbound Action previews as POST-ready without executable authority", () => {
@@ -171,7 +171,7 @@ suite("customApiExecutionPreviewBuilder", () => {
     }));
     const sections = buildCustomApiExecutionPreviewSurfaceSections(preview);
 
-    assert.match(sections[0].content, /Execution state: Action preview-ready; POST execution is not enabled in this workstream/);
+    assert.match(sections[0].content, /Execution: Action preview-ready; POST execution is not enabled in this workstream/);
     assert.match(sections[0].content, /Environment authority: No executable authority is created by this preview/);
     assert.match(sections[1].content, /Capability: Action execution eligible/);
   });
@@ -256,7 +256,7 @@ suite("customApiExecutionPreviewBuilder", () => {
       executionCapability: {
         mode: "executable",
         state: "executable",
-        label: "Preview / run Action",
+        label: "Ready to run",
         reason: "This unbound public Action is preview-ready.",
         canPreview: true,
         canExecute: true,

@@ -54,7 +54,7 @@ suite("customApiExecutionCapabilityResolver", () => {
     }));
 
     assert.equal(capability.mode, "executable");
-    assert.equal(capability.label, "Preview / run Action");
+    assert.equal(capability.label, "Ready to run");
     assert.equal(capability.canPreview, true);
     assert.equal(capability.canExecute, true);
     assert.equal(capability.executionMethod, "POST");

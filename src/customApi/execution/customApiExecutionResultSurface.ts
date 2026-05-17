@@ -47,6 +47,42 @@ function buildOperationSummary(definition: CustomApiDefinition, environmentName:
   ].join("\n");
 }
 
+function compactActionReasonCode(reasonCode: string): string {
+  const labels: Record<string, string> = {
+    PublicODataAction: "Metadata-valid",
+    SimplePreviewReadyParameters: "Preview-ready",
+    GeneratedContentAdvisoryRequired: "AI advisory",
+    PotentialDestructiveOperation: "Destructive signal",
+    PotentialBusinessStateChange: "Business-state signal",
+    PotentialExternalSideEffect: "External side-effect signal",
+    AiPolicyDenied: "AI policy denied"
+  };
+
+  return labels[reasonCode] ?? reasonCode;
+}
+
+function compactActionReasonCodes(reasonCodes: readonly string[] | undefined): string {
+  if (!reasonCodes || reasonCodes.length === 0) {
+    return "—";
+  }
+
+  return reasonCodes.map(compactActionReasonCode).join(" • ");
+}
+
+function buildActionTrustContext(definition: CustomApiDefinition): string | undefined {
+  const actionReadiness = definition.actionReadiness ?? definition.executionCapability?.actionReadiness;
+  if (!actionReadiness) {
+    return undefined;
+  }
+
+  return [
+    `Readiness: ${actionReadiness.label}`,
+    `Review level: ${actionReadiness.caution ? "Caution" : "Standard"}`,
+    `Signals: ${compactActionReasonCodes(actionReadiness.reasonCodes)}`,
+    `Typed confirmation: ${actionReadiness.requiresTypedConfirmation ? `Required (${actionReadiness.confirmationPhrase})` : "Not required"}`
+  ].join("\n");
+}
+
 function buildRequestSummary(plan: CustomApiFunctionExecutionPlan): string {
   const lines = [
     `Path: ${plan.path}`,
@@ -87,12 +123,8 @@ function buildDiagnostics(options: CustomApiExecutionResultSurfaceOptions): stri
     "- This result is response inspection only; no follow-up diagnostics have been inferred yet."
   ];
 
-  if (shouldShowAiExecutionAdvisory(options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy)) {
-    lines.push(
-      "- This operation returned AI-generated content.",
-      "- Generated responses may contain inaccuracies or hallucinations.",
-      "- Human validation is recommended before operational use."
-    );
+  if (options.definition.actionReadiness?.caution || options.definition.executionCapability?.actionReadiness?.caution) {
+    lines.push("- Caution classification was captured separately as Action trust context.");
   }
 
   if (context.requestId || context.correlationId || context.operationId) {
@@ -113,9 +145,9 @@ function buildAiAdvisorySection(definition: CustomApiDefinition): PreviewSurface
   return {
     title: "AI-generated content advisory",
     content: [
-      "AI-generated content warning",
-      ...lines,
-      "Review generated responses before acting on them."
+      "Generated output may be inaccurate, incomplete, or non-deterministic.",
+      ...lines.filter((line) => !line.startsWith("Generated responses may")),
+      "Human validation is recommended before operational use."
     ].join("\n"),
     language: "text"
   };
@@ -143,6 +175,10 @@ export function buildCustomApiExecutionResultSurfaceSections(
       content: buildOperationSummary(options.definition, options.environmentName),
       language: "text"
     },
+    ...(() => {
+      const actionTrustContext = buildActionTrustContext(options.definition);
+      return actionTrustContext ? [{ title: "Action trust context", content: actionTrustContext, language: "text" as const }] : [];
+    })(),
     {
       title: "Request",
       content: buildRequestSummary(options.executionPlan),
@@ -204,7 +240,8 @@ export function buildCustomApiExecutionErrorSurfaceSections(
         "Execution state: failed",
         `HTTP status: ${parseStatusCode(options.errorMessage)}`,
         `Execution: ${options.definition.operationKind} invocation failed`,
-        "Result: Review the error payload and request shape below."
+        "Result: Review the error payload and request shape below.",
+        `Action readiness: ${options.definition.actionReadiness?.label || options.definition.executionCapability?.actionReadiness?.label || "—"}`
       ].join("\n"),
       language: "text"
     },
@@ -213,6 +250,10 @@ export function buildCustomApiExecutionErrorSurfaceSections(
       content: buildOperationSummary(options.definition, options.environmentName),
       language: "text"
     },
+    ...(() => {
+      const actionTrustContext = buildActionTrustContext(options.definition);
+      return actionTrustContext ? [{ title: "Action trust context", content: actionTrustContext, language: "text" as const }] : [];
+    })(),
     {
       title: "Request",
       content: buildRequestSummary(options.executionPlan),
@@ -238,9 +279,7 @@ export function buildCustomApiExecutionErrorSurfaceSections(
         "- Future execution diagnostics can use this result as the starting evidence for trace/correlation lookup.",
         "- Failed execution is an investigation signal, not root-cause proof.",
         ...(shouldShowAiExecutionAdvisory(options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy) ? [
-          "- This failed operation was classified as AI-related.",
-          "- Generated responses, when returned, may contain inaccuracies or hallucinations.",
-          "- Human validation is recommended before operational use."
+          "- This failed operation was classified as AI-related; advisory context is captured separately."
         ] : [])
       ].join("\n"),
       language: "markdown"

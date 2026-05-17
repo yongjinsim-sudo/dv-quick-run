@@ -228,10 +228,42 @@ export function getCapabilityExplorerScript(modelJson: string): string {
 
     return '<div class="dvqr-readiness-card dvqr-readiness-advisory">'
       + '<strong>AI-generated content warning</strong>'
-      + '<span>This operation may invoke AI-generated or probabilistic output. Responses may be inaccurate, incomplete, non-deterministic, or unsuitable for direct operational decisions without review.</span>'
-      + '<span>Human validation is recommended before acting on generated content.</span>'
-      + '<span>This operation may invoke external AI processing depending on the Dataverse environment configuration.</span>'
+      + '<span>Generated output may be inaccurate, incomplete, or non-deterministic.</span>'
+      + '<span>Human validation is recommended before operational use.</span>'
       + '</div>';
+  }
+
+  function compactActionReasonCode(reasonCode) {
+    const labels = {
+      PublicODataAction: 'Metadata-valid',
+      SimplePreviewReadyParameters: 'Preview-ready',
+      ComplexParameterShape: 'Complex parameter',
+      EntityReferenceParameter: 'Entity reference',
+      CollectionParameter: 'Collection parameter',
+      UnknownParameterType: 'Unknown parameter',
+      BoundActionDeferred: 'Bound Action deferred',
+      PrivateCustomApi: 'Private/internal',
+      MissingActionImport: 'Missing ActionImport',
+      ValidationUnavailable: 'Validation unavailable',
+      EnvironmentChanged: 'Environment changed',
+      AiPolicyDenied: 'AI policy denied',
+      GeneratedContentAdvisoryRequired: 'AI advisory',
+      PotentialDestructiveOperation: 'Destructive signal',
+      PotentialBusinessStateChange: 'Business-state signal',
+      PotentialExternalSideEffect: 'External side-effect signal',
+      NotAnAction: 'Function semantics'
+    };
+
+    return labels[reasonCode] || reasonCode;
+  }
+
+  function compactActionReasonCodes(reasonCodes) {
+    const codes = Array.isArray(reasonCodes) ? reasonCodes : [];
+    if (codes.length === 0) {
+      return '—';
+    }
+
+    return codes.map(compactActionReasonCode).join(' • ');
   }
 
   function renderExecutionReadiness(definition) {
@@ -245,8 +277,30 @@ export function getCapabilityExplorerScript(modelJson: string): string {
     const eligibilityClass = capability.canExecute ? 'dvqr-readiness-good' : capability.mode === 'validation-unavailable' || eligibility.state === 'preview-only-not-found' ? 'dvqr-readiness-muted' : 'dvqr-readiness-partial';
     const odataLine = eligibility.odataQualifiedName ? '<div class="dvqr-readiness-counts"><span>OData definition: ' + escapeHtml(eligibility.odataQualifiedName) + '</span></div>' : '';
     const routeLine = eligibility.odataInvocationName ? '<div class="dvqr-readiness-counts"><span>Invocation route: /' + escapeHtml(eligibility.odataInvocationName) + (definition.operationKind === 'Function' ? '()' : '') + '</span></div>' : '';
+    const actionReadiness = definition.actionReadiness || (definition.executionCapability && definition.executionCapability.actionReadiness);
+    const actionReadinessClass = actionReadiness && actionReadiness.canExecute
+      ? (actionReadiness.caution ? 'dvqr-readiness-partial' : 'dvqr-readiness-good')
+      : 'dvqr-readiness-muted';
+    const actionReasonSummary = actionReadiness ? compactActionReasonCodes(actionReadiness.reasonCodes) : '—';
+    const actionReadinessHtml = actionReadiness ? '<div class="dvqr-readiness-card dvqr-action-readiness-card ' + actionReadinessClass + '">'
+      + '<strong>Action readiness: ' + escapeHtml(actionReadiness.label) + '</strong>'
+      + '<span>' + escapeHtml(actionReadiness.reason) + '</span>'
+      + '<span>' + escapeHtml(actionReasonSummary) + '</span>'
+      + (actionReadiness.requiresTypedConfirmation ? '<span>Typed confirmation required: ' + escapeHtml(actionReadiness.confirmationPhrase || definition.uniqueName.toUpperCase()) + '</span>' : '')
+      + '</div>' : '';
+    const capabilityCardHtml = actionReadiness
+      ? ''
+      : '<div class="dvqr-readiness-card ' + eligibilityClass + '">'
+        + '<strong>' + escapeHtml(capability.label) + '</strong>'
+        + '<span>' + escapeHtml(capability.reason) + '</span>'
+        + '</div>';
+    const advisoryStack = '<div class="dvqr-capability-advisory-stack">'
+      + capabilityCardHtml
+      + renderAiExecutionAdvisory(definition)
+      + actionReadinessHtml
+      + '</div>';
 
-    return '<section class="dvqr-drawer-section dvqr-readiness-section"><h3>Execution Readiness</h3>'
+    return '<section class="dvqr-drawer-section dvqr-readiness-section"><h3>Execution Support</h3>'
       + '<div class="dvqr-readiness-card ' + readinessClass + '">'
       + '<strong>' + escapeHtml(readiness) + '</strong>'
       + '<span>' + escapeHtml(reason) + '</span>'
@@ -255,11 +309,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       + '<span>' + readyCount + ' preview-ready parameter' + (readyCount === 1 ? '' : 's') + '</span>'
       + '<span>' + inspectOnlyCount + ' inspect-only parameter' + (inspectOnlyCount === 1 ? '' : 's') + '</span>'
       + '</div>'
-      + '<div class="dvqr-readiness-card ' + eligibilityClass + '">'
-      + '<strong>' + escapeHtml(capability.label) + '</strong>'
-      + '<span>' + escapeHtml(capability.reason) + '</span>'
-      + '</div>'
-      + renderAiExecutionAdvisory(definition)
+      + advisoryStack
       + odataLine
       + routeLine
       + '</section>';
@@ -274,11 +324,10 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       ['Is Private', displayBoolean(definition.isPrivate)],
       ['Privilege Name', definition.executePrivilegeName || '—'],
       ['Processing Step Type', definition.allowedCustomProcessingStepType ?? '—'],
-      ['Execution Readiness', definition.executionReadinessLabel || 'Inspect only'],
-      ['Execution Capability', definition.executionCapability ? definition.executionCapability.label : 'Preview request only'],
+      ['Capability', definition.operationKind === 'Action' && (definition.actionReadiness || definition.executionCapability && definition.executionCapability.actionReadiness) ? (definition.actionReadiness ? definition.actionReadiness.label : definition.executionCapability.actionReadiness.label) : definition.executionCapability ? definition.executionCapability.label : 'Preview request only'],
+      ['Preview Support', definition.executionReadinessLabel || 'Inspect only'],
       ['OData Eligibility', definition.executionEligibility ? definition.executionEligibility.label : 'Validation unavailable'],
-      ['Preview-ready Params', String(definition.previewReadyParameterCount ?? 0)],
-      ['Inspect-only Params', String(definition.inspectOnlyParameterCount ?? 0)],
+      ['Parameter Support', String(definition.previewReadyParameterCount ?? 0) + ' preview-ready / ' + String(definition.inspectOnlyParameterCount ?? 0) + ' inspect-only'],
       ['Description', definition.description || '—']
     ].map(([label, value]) => '<div class="dvqr-overview-row"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + '</strong></div>').join('');
 
@@ -301,18 +350,8 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       notes.push('Private API — inspect metadata before attempting execution.');
     }
 
-    notes.push((definition.executionReadinessLabel || 'Inspect only') + ' — ' + (definition.executionReadinessReason || 'preview support classification is based on parameter metadata.'));
-
-    if (definition.executionCapability) {
-      notes.push(definition.executionCapability.label + ' — ' + definition.executionCapability.reason);
-    }
-
-    if (shouldShowAiExecutionAdvisory(definition)) {
-      notes.push('AI-generated content warning — responses may be inaccurate, incomplete, non-deterministic, or unsuitable for direct operational decisions without human review.');
-    }
-
-    if (definition.executionEligibility) {
-      notes.push(definition.executionEligibility.label + ' — ' + definition.executionEligibility.reason);
+    if (definition.operationKind === 'Action' && definition.executionCapability && definition.executionCapability.executionMethod === 'POST') {
+      notes.push('Execution uses a metadata-backed Action route and remains bound to the active environment preview context.');
     }
 
     const noteHtml = notes.map((note) => '<li>' + escapeHtml(note) + '</li>').join('');
@@ -322,7 +361,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
 
   function getPreviewButtonLabel(definition) {
     if (definition.executionCapability && definition.executionCapability.canExecute) {
-      return 'Preview / Run Function';
+      return definition.operationKind === 'Action' ? 'Preview / Run Action' : 'Preview / Run Function';
     }
 
     if (definition.operationKind === 'Action' && definition.bindingKind === 'Unbound' && definition.executionCapability && definition.executionCapability.executionMethod === 'POST') {
@@ -338,7 +377,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
 
   function getPreviewButtonDescription(definition) {
     if (definition.executionCapability && definition.executionCapability.canExecute) {
-      return 'Preview this read-oriented Function request, then run only after explicit confirmation.';
+      return definition.operationKind === 'Action' ? 'Preview this POST Action request, then run only after explicit confirmation.' : 'Preview this read-oriented Function request, then run only after explicit confirmation.';
     }
 
     if (definition.operationKind === 'Action' && definition.bindingKind === 'Unbound' && definition.executionCapability && definition.executionCapability.executionMethod === 'POST') {

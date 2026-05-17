@@ -137,8 +137,8 @@ suite("customApiExecutionResultSurface", () => {
     const joined = sections.map((section) => `${section.title}\n${section.content}`).join("\n");
 
     assert.match(joined, /AI-generated content advisory/);
-    assert.match(joined, /This operation returned AI-generated content/);
-    assert.match(joined, /Generated responses may contain inaccuracies or hallucinations/);
+    assert.match(joined, /Generated output may be inaccurate, incomplete, or non-deterministic/);
+    assert.match(joined, /Generated responses may be inaccurate, incomplete, non-deterministic/);
     assert.match(joined, /"classification": "ai-related"/);
     assert.match(joined, /"humanReviewRecommended": true/);
   });

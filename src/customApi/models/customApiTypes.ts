@@ -87,6 +87,7 @@ export interface CustomApiExecutionCapability {
   operationKind: CustomApiOperationKind;
   bindingKind: CustomApiBindingKind;
   executionPolicy?: CustomApiExecutionPolicyDecision;
+  actionReadiness?: import("../execution/actionExecutionReadiness.js").ActionExecutionReadiness;
 }
 
 export interface CustomApiDefinition {
@@ -111,6 +112,7 @@ export interface CustomApiDefinition {
   executionEligibility?: CustomApiExecutionEligibility;
   executionCapability?: CustomApiExecutionCapability;
   executionPolicy?: CustomApiExecutionPolicyDecision;
+  actionReadiness?: import("../execution/actionExecutionReadiness.js").ActionExecutionReadiness;
 }
 
 export interface CustomApiCatalogueRow {
