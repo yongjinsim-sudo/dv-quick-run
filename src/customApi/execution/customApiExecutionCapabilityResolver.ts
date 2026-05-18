@@ -40,6 +40,9 @@ function withPolicy(capability: CustomApiExecutionCapability, definition: Custom
       canExecute: false,
       operationKind: capability.operationKind,
       bindingKind: capability.bindingKind,
+      boundTargetKind: capability.boundTargetKind,
+      boundTargetLabel: capability.boundTargetLabel,
+      boundTargetReason: capability.boundTargetReason,
       executionPolicy,
       actionReadiness
     };
@@ -72,13 +75,16 @@ export function resolveCustomApiExecutionCapability(
     capability = {
       mode: "executable",
       state: "executable",
-      label: "Preview / run Function",
-      reason: "This unbound Function is preview-ready and was validated against the OData operation surface for the active environment.",
+      label: "Preview and execute Function",
+      reason: "This Function was validated against the active environment OData operation surface and is eligible for execution.",
       canPreview: true,
       canExecute: true,
       executionMethod: "GET",
       operationKind: definition.operationKind,
-      bindingKind: definition.bindingKind
+      bindingKind: definition.bindingKind,
+      boundTargetKind: definition.boundTargetKind,
+      boundTargetLabel: definition.boundTargetLabel,
+      boundTargetReason: definition.boundTargetReason
     };
     return withPolicy(capability, definition, options);
   }
@@ -92,7 +98,10 @@ export function resolveCustomApiExecutionCapability(
       canPreview: true,
       canExecute: false,
       operationKind: definition.operationKind,
-      bindingKind: definition.bindingKind
+      bindingKind: definition.bindingKind,
+      boundTargetKind: definition.boundTargetKind,
+      boundTargetLabel: definition.boundTargetLabel,
+      boundTargetReason: definition.boundTargetReason
     };
     return withPolicy(capability, definition, options);
   }
@@ -106,7 +115,10 @@ export function resolveCustomApiExecutionCapability(
       canPreview: true,
       canExecute: false,
       operationKind: definition.operationKind,
-      bindingKind: definition.bindingKind
+      bindingKind: definition.bindingKind,
+      boundTargetKind: definition.boundTargetKind,
+      boundTargetLabel: definition.boundTargetLabel,
+      boundTargetReason: definition.boundTargetReason
     };
     return withPolicy(capability, definition, options);
   }
@@ -121,7 +133,10 @@ export function resolveCustomApiExecutionCapability(
       canExecute: true,
       executionMethod: "POST",
       operationKind: definition.operationKind,
-      bindingKind: definition.bindingKind
+      bindingKind: definition.bindingKind,
+      boundTargetKind: definition.boundTargetKind,
+      boundTargetLabel: definition.boundTargetLabel,
+      boundTargetReason: definition.boundTargetReason
     };
     return withPolicy(capability, definition, options);
   }
@@ -135,7 +150,10 @@ export function resolveCustomApiExecutionCapability(
       canPreview: true,
       canExecute: false,
       operationKind: definition.operationKind,
-      bindingKind: definition.bindingKind
+      bindingKind: definition.bindingKind,
+      boundTargetKind: definition.boundTargetKind,
+      boundTargetLabel: definition.boundTargetLabel,
+      boundTargetReason: definition.boundTargetReason
     };
     return withPolicy(capability, definition, options);
   }
@@ -149,7 +167,10 @@ export function resolveCustomApiExecutionCapability(
       canPreview: true,
       canExecute: false,
       operationKind: definition.operationKind,
-      bindingKind: definition.bindingKind
+      bindingKind: definition.bindingKind,
+      boundTargetKind: definition.boundTargetKind,
+      boundTargetLabel: definition.boundTargetLabel,
+      boundTargetReason: definition.boundTargetReason
     };
     return withPolicy(capability, definition, options);
   }
@@ -162,7 +183,10 @@ export function resolveCustomApiExecutionCapability(
     canPreview: true,
     canExecute: false,
     operationKind: definition.operationKind,
-    bindingKind: definition.bindingKind
+    bindingKind: definition.bindingKind,
+    boundTargetKind: definition.boundTargetKind,
+    boundTargetLabel: definition.boundTargetLabel,
+    boundTargetReason: definition.boundTargetReason
   };
   return withPolicy(capability, definition, options);
 }

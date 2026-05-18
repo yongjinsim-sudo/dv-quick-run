@@ -4,6 +4,7 @@ export type CustomApiInvocationParameterValues = Record<string, unknown>;
 
 export interface CustomApiInvocationPathOptions {
   encodeAliasValues?: boolean;
+  boundTargetRowId?: string;
 }
 
 export function resolveCustomApiODataInvocationName(definition: CustomApiDefinition): string {
@@ -44,9 +45,25 @@ function formatAliasLiteral(value: unknown, encodeAliasValues: boolean): string 
   return encodeAliasValues ? encodeAliasLiteral(value) : toODataLiteral(value);
 }
 
-function getBoundOperationPrefix(definition: CustomApiDefinition): string {
-  const entitySetPlaceholder = `{entity-set-for-${definition.boundEntityLogicalName || "bound-entity"}}`;
-  return `/${entitySetPlaceholder}({record-id})`;
+function getBoundTargetKind(definition: CustomApiDefinition): string | undefined {
+  return definition.boundTargetKind || definition.executionEligibility?.odataBoundTargetKind;
+}
+
+function getBoundEntitySetName(definition: CustomApiDefinition): string {
+  return definition.boundEntitySetName
+    || definition.executionEligibility?.odataBoundEntitySetName
+    || "<entity-set-unresolved>";
+}
+
+function getBoundOperationPrefix(definition: CustomApiDefinition, boundTargetRowId?: string): string {
+  const entitySetName = getBoundEntitySetName(definition);
+
+  if (getBoundTargetKind(definition) === "collection") {
+    return `/${entitySetName}`;
+  }
+
+  const recordId = boundTargetRowId?.trim() || "{record-id}";
+  return `/${entitySetName}(${recordId})`;
 }
 
 export function buildCustomApiFunctionInvocationPath(
@@ -56,7 +73,7 @@ export function buildCustomApiFunctionInvocationPath(
 ): string {
   const operationName = resolveCustomApiODataInvocationName(definition);
   const parameters = definition.requestParameters.filter((parameter) => Object.prototype.hasOwnProperty.call(values, parameter.uniqueName));
-  const operationPrefix = definition.bindingKind === "Bound" ? getBoundOperationPrefix(definition) : "";
+  const operationPrefix = definition.bindingKind === "Bound" ? getBoundOperationPrefix(definition, options.boundTargetRowId) : "";
 
   if (parameters.length === 0) {
     return `${operationPrefix}/${operationName}()`;
@@ -70,19 +87,26 @@ export function buildCustomApiFunctionInvocationPath(
   return `${operationPrefix}/${operationName}(${aliases})?${query}`;
 }
 
-export function buildCustomApiActionInvocationPath(definition: CustomApiDefinition): string {
+export function buildCustomApiActionInvocationPath(
+  definition: CustomApiDefinition,
+  options: Pick<CustomApiInvocationPathOptions, "boundTargetRowId"> = {}
+): string {
   const operationName = resolveCustomApiODataInvocationName(definition);
-  const operationPrefix = definition.bindingKind === "Bound" ? getBoundOperationPrefix(definition) : "";
+  const operationPrefix = definition.bindingKind === "Bound" ? getBoundOperationPrefix(definition, options.boundTargetRowId) : "";
   return `${operationPrefix}/${operationName}`;
 }
 
 export function buildCustomApiPreviewInvocationPath(
   definition: CustomApiDefinition,
-  values: CustomApiInvocationParameterValues = {}
+  values: CustomApiInvocationParameterValues = {},
+  options: Pick<CustomApiInvocationPathOptions, "boundTargetRowId"> = {}
 ): string {
   if (definition.operationKind === "Function") {
-    return buildCustomApiFunctionInvocationPath(definition, values, { encodeAliasValues: false });
+    return buildCustomApiFunctionInvocationPath(definition, values, {
+      encodeAliasValues: false,
+      boundTargetRowId: options.boundTargetRowId
+    });
   }
 
-  return buildCustomApiActionInvocationPath(definition);
+  return buildCustomApiActionInvocationPath(definition, options);
 }

@@ -49,12 +49,19 @@ export function getPreviewSurfaceMarkup(model: PreviewSurfaceModel): string {
     model.primaryAction ? renderAction(model.primaryAction, true) : ""
   ].filter(Boolean).join("\n");
 
-  const sections = model.sections.map((section) => `
-    <section class="preview-section">
-      <h2>${escapeHtml(section.title)}</h2>
+  const sections = model.sections.map((section) => {
+    const sectionMarkup = `
+      <summary>
+        <span>${escapeHtml(section.title)}</span>
+        <span class="section-chevron" aria-hidden="true">›</span>
+      </summary>
       <pre data-language="${escapeHtml(section.language ?? "text")}">${escapeHtml(section.content)}</pre>
-    </section>
-  `).join("\n");
+    `;
+
+    return section.defaultCollapsed
+      ? `<details class="preview-section">${sectionMarkup}</details>`
+      : `<details class="preview-section" open>${sectionMarkup}</details>`;
+  }).join("\n");
 
   return `
     <main class="preview-shell" data-preview-id="${escapeHtml(model.previewId)}">

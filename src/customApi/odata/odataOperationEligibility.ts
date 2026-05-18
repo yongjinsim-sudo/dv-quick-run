@@ -37,17 +37,32 @@ export function resolveCustomApiExecutionEligibility(
 
   if (definition.bindingKind === "Bound") {
     const operation = findODataOperationForCustomApi(registry, definition);
+    const isCollectionBound = definition.boundTargetKind === "collection" || operation?.boundTargetKind === "collection";
+    const isEntityBound = definition.boundTargetKind === "entity" || operation?.boundTargetKind === "entity";
+
     return {
       state: "preview-only-bound-context-required",
-      label: "Preview only — bound context required",
+      label: isCollectionBound
+        ? "Preview-ready — collection-bound Action"
+        : isEntityBound
+          ? "Inspect only — target row required"
+          : "Inspect only — bound context required",
       reason: operation
-        ? "This operation appears in OData metadata, but bound execution needs selected row/entity context and remains preview-only."
+        ? isCollectionBound
+          ? "This operation appears in OData metadata as collection-bound. Collection-bound execution does not require a target row and can run after explicit preview confirmation when parameters are supported."
+          : isEntityBound
+            ? "This operation appears in OData metadata as entity-bound. Bound execution requires explicit target row context before it can run."
+            : "This operation appears in OData metadata, but DV Quick Run could not classify the bound target shape deterministically."
         : "This operation is bound and was not confirmed as a callable OData operation for the current metadata snapshot.",
       odataName: operation?.name,
       odataQualifiedName: operation?.qualifiedName,
       odataInvocationName: operation?.importName || operation?.qualifiedName,
       odataKind: operation?.kind,
-      odataBindingKind: operation?.bindingKind
+      odataBindingKind: operation?.bindingKind,
+      odataBoundTargetKind: operation?.boundTargetKind,
+      odataBoundEntityLogicalName: operation?.boundEntityLogicalName,
+      odataBoundEntitySetName: operation?.boundEntitySetName,
+      odataBindingParameterName: operation?.bindingParameterName
     };
   }
 
@@ -68,7 +83,11 @@ export function resolveCustomApiExecutionEligibility(
       odataName: operation.name,
       odataQualifiedName: operation.qualifiedName,
       odataKind: operation.kind,
-      odataBindingKind: operation.bindingKind
+      odataBindingKind: operation.bindingKind,
+      odataBoundTargetKind: operation.boundTargetKind,
+      odataBoundEntityLogicalName: operation.boundEntityLogicalName,
+      odataBoundEntitySetName: operation.boundEntitySetName,
+      odataBindingParameterName: operation.bindingParameterName
     };
   }
 
@@ -80,7 +99,11 @@ export function resolveCustomApiExecutionEligibility(
     odataQualifiedName: operation.qualifiedName,
     odataInvocationName: operation.importName || operation.qualifiedName,
     odataKind: operation.kind,
-    odataBindingKind: operation.bindingKind
+    odataBindingKind: operation.bindingKind,
+    odataBoundTargetKind: operation.boundTargetKind,
+    odataBoundEntityLogicalName: operation.boundEntityLogicalName,
+    odataBoundEntitySetName: operation.boundEntitySetName,
+    odataBindingParameterName: operation.bindingParameterName
   };
 }
 

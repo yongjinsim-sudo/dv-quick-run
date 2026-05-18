@@ -23,6 +23,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
   let selectedUniqueName = '';
   let pageSize = pageSizeControl instanceof HTMLSelectElement ? Number(pageSizeControl.value) : 20;
   let latestExecutionInsightUniqueName = '';
+  const boundTargetRowIds = new Map();
 
   function escapeHtml(value) {
     return String(value ?? '')
@@ -31,6 +32,15 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+
+  function cssEscape(value) {
+    if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+      return CSS.escape(String(value || ''));
+    }
+
+    return String(value || '').replace(/[^a-zA-Z0-9_-]/g, '\\$&');
   }
 
   function display(value) {
@@ -83,7 +93,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
 
   function matches(row) {
     const filters = readFilters();
-    const searchable = [row.displayName, row.uniqueName, row.description, row.boundEntityLogicalName, row.executePrivilegeName]
+    const searchable = [row.displayName, row.uniqueName, row.description, row.boundTargetLabel, row.boundEntityLogicalName, row.executePrivilegeName]
       .join(' ')
       .toLowerCase();
 
@@ -266,6 +276,82 @@ export function getCapabilityExplorerScript(modelJson: string): string {
     return codes.map(compactActionReasonCode).join(' • ');
   }
 
+
+  function isEntityBoundAction(definition) {
+    return definition
+      && definition.operationKind === 'Action'
+      && definition.bindingKind === 'Bound'
+      && (definition.boundTargetKind === 'entity' || definition.executionEligibility && definition.executionEligibility.odataBoundTargetKind === 'entity');
+  }
+
+  function normalizeGuid(value) {
+    const trimmed = String(value || '').trim();
+    const match = trimmed.match(/^\{?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\}?$/);
+    return match ? match[1].toLowerCase() : '';
+  }
+
+  function isValidGuid(value) {
+    return normalizeGuid(value).length > 0;
+  }
+
+  function getBoundTargetRowId(definition) {
+    return boundTargetRowIds.get(definition.uniqueName) || '';
+  }
+
+  function getBoundEntitySetName(definition) {
+    return definition.boundEntitySetName || definition.executionEligibility && definition.executionEligibility.odataBoundEntitySetName || '';
+  }
+
+  function isBoundEntitySetResolved(definition) {
+    const entitySet = getBoundEntitySetName(definition).trim();
+    return entitySet.length > 0 && entitySet !== '<entity-set-unresolved>';
+  }
+
+  function renderBoundTargetInput(definition) {
+    if (!isEntityBoundAction(definition)) {
+      return '';
+    }
+
+    const entity = definition.boundEntityLogicalName || definition.executionEligibility && definition.executionEligibility.odataBoundEntityLogicalName || '—';
+    const entitySet = getBoundEntitySetName(definition) || '—';
+
+    return '<section class="dvqr-drawer-section dvqr-bound-target-section"><h3>Bound Target</h3>'
+      + '<div class="dvqr-bound-target-summary">'
+      + '<span>Required entity</span><strong>' + escapeHtml(entity) + '</strong>'
+      + '<span>Entity set</span><strong>' + escapeHtml(entitySet) + '</strong>'
+      + '<span>Input source</span><strong>manualInput</strong>'
+      + '</div>'
+      + '<div class="dvqr-target-validation">Target entity is fixed from metadata. Enter the target row GUID in the execution preview section below.</div>'
+      + '</section>';
+  }
+
+  function getBoundTargetValidationHtml(definition, currentValue) {
+    if (!isBoundEntitySetResolved(definition)) {
+      return '<div class="dvqr-target-validation dvqr-target-validation-error">The bound entity set could not be resolved from metadata. DV Quick Run cannot create an executable bound route for this operation.</div>';
+    }
+
+    if (currentValue && !isValidGuid(currentValue)) {
+      return '<div class="dvqr-target-validation dvqr-target-validation-error">Enter a valid target row GUID before generating preview.</div>';
+    }
+
+    return '<div class="dvqr-target-validation">Required for entity-bound Actions. DV Quick Run does not infer this from the Result Viewer.</div>';
+  }
+
+  function renderBoundTargetFooterInput(definition) {
+    if (!isEntityBoundAction(definition)) {
+      return '';
+    }
+
+    const currentValue = getBoundTargetRowId(definition);
+    const hint = getBoundTargetValidationHtml(definition, currentValue);
+
+    return '<div class="dvqr-footer-target-input">'
+      + '<label class="dvqr-target-input-label" for="dvqr-bound-target-row-id-footer-' + escapeHtml(definition.uniqueName) + '">Target row GUID</label>'
+      + '<input class="dvqr-target-input" id="dvqr-bound-target-row-id-footer-' + escapeHtml(definition.uniqueName) + '" data-role="bound-target-row-id" data-api-unique-name="' + escapeHtml(definition.uniqueName) + '" type="text" value="' + escapeHtml(currentValue) + '" placeholder="00000000-0000-0000-0000-000000000000" />'
+      + hint
+      + '</div>';
+  }
+
   function renderExecutionReadiness(definition) {
     const readiness = definition.executionReadinessLabel || 'Inspect only';
     const readinessClass = definition.executionReadiness === 'preview-ready' ? 'dvqr-readiness-good' : definition.executionReadiness === 'partial' ? 'dvqr-readiness-partial' : 'dvqr-readiness-muted';
@@ -320,6 +406,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       ['Unique Name', definition.uniqueName],
       ['Type', definition.operationKind + (definition.operationKind === 'Action' ? ' (POST)' : ' (GET)')],
       ['Binding', definition.bindingKind],
+      ['Bound Target', definition.boundTargetLabel || '—'],
       ['Bound Entity', definition.boundEntityLogicalName || '—'],
       ['Is Private', displayBoolean(definition.isPrivate)],
       ['Privilege Name', definition.executePrivilegeName || '—'],
@@ -341,7 +428,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       : 'This is a GET-style function where exposed by Dataverse.');
 
     if (definition.bindingKind === 'Bound') {
-      notes.push('This operation is bound to ' + display(definition.boundEntityLogicalName) + ' records.');
+      notes.push(definition.boundTargetReason || 'This operation is bound to ' + display(definition.boundEntityLogicalName) + ' records.');
     } else {
       notes.push('This operation is unbound and is not tied to a selected row.');
     }
@@ -385,7 +472,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
     }
 
     if (definition.operationKind === 'Action' && definition.bindingKind === 'Bound') {
-      return 'Preview the bound request shape. Execution needs selected row/entity context and remains disabled.';
+      return 'Enter an explicit target row GUID, then preview the bound request shape. Execution remains disabled.';
     }
 
     return 'Generate a preview-only request template. No Dataverse operation will be executed.';
@@ -415,11 +502,14 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       + '<div class="dvqr-detail-body">'
       + renderOverview(definition)
       + renderExecutionReadiness(definition)
+      + renderBoundTargetInput(definition)
       + '<section class="dvqr-drawer-section"><h3>Parameters (' + definition.requestParameters.length + ')</h3>' + renderParameterRows(definition.requestParameters || []) + '</section>'
       + '<section class="dvqr-drawer-section"><h3>Response Properties (' + definition.responseProperties.length + ')</h3>' + renderResponseRows(definition.responseProperties || []) + '</section>'
       + renderOperationNotes(definition)
       + '</div>'
-      + '<div class="dvqr-detail-footer"><section class="dvqr-drawer-section dvqr-next-steps"><h3>Execution Preview</h3><div class="dvqr-next-step-row">'
+      + '<div class="dvqr-detail-footer"><section class="dvqr-drawer-section dvqr-next-steps"><h3>Execution Preview</h3>'
+      + renderBoundTargetFooterInput(definition)
+      + '<div class="dvqr-next-step-row">'
       + '<button class="dvqr-button dvqr-button-primary" type="button" data-action="preview-execution" data-api-unique-name="' + escapeHtml(definition.uniqueName) + '">' + getPreviewButtonLabel(definition) + '</button>'
       + '<span>' + getPreviewButtonDescription(definition) + '</span></div>'
       + executionInsightButton
@@ -467,6 +557,7 @@ export function getCapabilityExplorerScript(modelJson: string): string {
         + '<td title="' + escapeHtml(row.uniqueName) + '">' + escapeHtml(row.uniqueName) + '</td>'
         + '<td><span class="' + pillClass('type', row.operationKind) + '" title="' + escapeHtml(row.operationKind) + '">' + escapeHtml(row.operationKind) + '</span></td>'
         + '<td><span class="' + pillClass('', row.bindingKind).replace('dvqr-pill--', 'dvqr-pill-') + '" title="' + escapeHtml(row.bindingKind) + '">' + escapeHtml(row.bindingKind) + '</span></td>'
+        + '<td title="' + escapeHtml(row.boundTargetLabel) + '">' + escapeHtml(row.boundTargetLabel) + '</td>'
         + '<td title="' + escapeHtml(row.boundEntityLogicalName) + '">' + escapeHtml(row.boundEntityLogicalName) + '</td>'
         + '<td title="' + escapeHtml(row.requestParameterCount) + '">' + escapeHtml(row.requestParameterCount) + '</td>'
         + '<td title="' + escapeHtml(row.responsePropertyCount) + '">' + escapeHtml(row.responsePropertyCount) + '</td>'
@@ -516,7 +607,12 @@ export function getCapabilityExplorerScript(modelJson: string): string {
         return;
       }
 
-      selectedUniqueName = target.getAttribute('data-api-unique-name') || '';
+      const nextUniqueName = target.getAttribute('data-api-unique-name') || '';
+      if (selectedUniqueName && nextUniqueName && selectedUniqueName !== nextUniqueName) {
+        vscode.postMessage({ type: 'capabilitySelectionChanged', apiUniqueName: nextUniqueName });
+      }
+
+      selectedUniqueName = nextUniqueName;
       document.querySelectorAll('tr[data-api-unique-name]').forEach((row) => row.classList.remove('dvqr-selected-row'));
       target.classList.add('dvqr-selected-row');
       renderDetail(selectedUniqueName);
@@ -651,6 +747,46 @@ export function getCapabilityExplorerScript(modelJson: string): string {
     setupResizableTable(table, columnWidthsKey);
   }
 
+
+  function updateBoundTargetInputValidation(apiUniqueName) {
+    const definition = definitionsByUniqueName.get(apiUniqueName);
+    if (!definition) {
+      return;
+    }
+
+    const currentValue = getBoundTargetRowId(definition);
+    const isInvalidGuid = currentValue.trim().length > 0 && !isValidGuid(currentValue);
+    const validationHtml = getBoundTargetValidationHtml(definition, currentValue);
+    document.querySelectorAll('[data-role="bound-target-row-id"][data-api-unique-name="' + cssEscape(apiUniqueName) + '"]').forEach((matchingInput) => {
+      if (!(matchingInput instanceof HTMLInputElement)) {
+        return;
+      }
+
+      matchingInput.value = currentValue;
+      matchingInput.classList.toggle('dvqr-target-input-invalid', isInvalidGuid);
+      const wrapper = matchingInput.closest('.dvqr-footer-target-input');
+      const validation = wrapper ? wrapper.querySelector('.dvqr-target-validation') : undefined;
+      if (validation instanceof HTMLElement) {
+        validation.outerHTML = validationHtml;
+      }
+    });
+  }
+
+  document.addEventListener('input', (event) => {
+    const input = event.target instanceof HTMLElement ? event.target.closest('[data-role="bound-target-row-id"]') : undefined;
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const apiUniqueName = input.getAttribute('data-api-unique-name') || selectedUniqueName;
+    if (!apiUniqueName) {
+      return;
+    }
+
+    boundTargetRowIds.set(apiUniqueName, input.value.trim());
+    updateBoundTargetInputValidation(apiUniqueName);
+  });
+
   document.addEventListener('click', (event) => {
     const actionTarget = event.target instanceof Element ? event.target.closest('[data-action]') : undefined;
     if (!(actionTarget instanceof HTMLElement)) {
@@ -676,7 +812,35 @@ export function getCapabilityExplorerScript(modelJson: string): string {
 
     if (action === 'preview-execution') {
       const apiUniqueName = actionTarget.getAttribute('data-api-unique-name') || selectedUniqueName;
+      const definition = definitionsByUniqueName.get(apiUniqueName);
       if (apiUniqueName) {
+        if (isEntityBoundAction(definition)) {
+          const rowId = getBoundTargetRowId(definition);
+          const normalizedRowId = normalizeGuid(rowId);
+          if (!isBoundEntitySetResolved(definition)) {
+            vscode.postMessage({
+              type: 'boundRouteUnavailable',
+              apiUniqueName,
+              reason: 'The bound entity set could not be resolved from metadata, so DV Quick Run cannot create an executable bound route.'
+            });
+            renderDetail(apiUniqueName);
+            return;
+          }
+
+          if (!normalizedRowId) {
+            vscode.postMessage({
+              type: 'boundTargetInvalid',
+              apiUniqueName,
+              reason: 'Enter a valid target row GUID before generating a bound Action preview.'
+            });
+            renderDetail(apiUniqueName);
+            return;
+          }
+
+          vscode.postMessage({ type: 'previewCustomApi', apiUniqueName, boundTargetRowId: normalizedRowId });
+          return;
+        }
+
         vscode.postMessage({ type: 'previewCustomApi', apiUniqueName });
       }
       return;

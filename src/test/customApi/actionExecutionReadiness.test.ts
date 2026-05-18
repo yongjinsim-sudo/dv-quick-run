@@ -90,6 +90,50 @@ suite("actionExecutionReadiness", () => {
     assert.deepEqual(readiness.reasonCodes, ["BoundActionDeferred"]);
   });
 
+
+
+  test("keeps entity-bound Actions inspect-only with target-required reason", () => {
+    const readiness = resolveActionExecutionReadiness(buildAction({
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      boundEntityLogicalName: "account",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — target row required",
+        reason: "Entity-bound execution requires explicit target row context.",
+        odataBoundTargetKind: "entity",
+        odataBoundEntityLogicalName: "account"
+      }
+    }));
+
+    assert.equal(readiness.state, "inspectOnlyUnsupportedBinding");
+    assert.equal(readiness.label, "Inspect only — target row required");
+    assert.deepEqual(readiness.reasonCodes, ["EntityBoundActionRequiresTarget"]);
+  });
+
+  test("marks collection-bound Actions executable when route and parameters are supported", () => {
+    const readiness = resolveActionExecutionReadiness(buildAction({
+      bindingKind: "Bound",
+      boundTargetKind: "collection",
+      boundEntityLogicalName: "account",
+      boundEntitySetName: "accounts",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Preview-ready — collection-bound Action",
+        reason: "Collection-bound execution is available after confirmation.",
+        odataBoundTargetKind: "collection",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts"
+      }
+    }));
+
+    assert.equal(readiness.state, "ready");
+    assert.equal(readiness.label, "Ready to run collection-bound Action");
+    assert.equal(readiness.canExecute, true);
+    assert.ok(readiness.reasonCodes.includes("CollectionBoundAction"));
+    assert.ok(readiness.reasonCodes.includes("BoundRouteResolved"));
+  });
+
   test("classifies complex parameters as inspect-only unsupported parameters", () => {
     const readiness = resolveActionExecutionReadiness(buildAction({
       executionReadiness: "inspect-only",
@@ -110,5 +154,71 @@ suite("actionExecutionReadiness", () => {
     assert.equal(readiness.canExecute, false);
     assert.ok(readiness.reasonCodes.includes("EntityReferenceParameter"));
     assert.equal(readiness.parameterTrust[0]?.state, "unsupportedEntityReference");
+  });
+});
+
+suite("actionExecutionReadiness bound target validation", () => {
+  test("marks entity-bound Actions with a valid target as target captured but still inspect-only", () => {
+    const readiness = resolveActionExecutionReadiness(buildAction({
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      boundEntityLogicalName: "account",
+      boundEntitySetName: "accounts",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — target row required",
+        reason: "Entity-bound execution requires explicit target row context.",
+        odataBoundTargetKind: "entity",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts"
+      }
+    }), {
+      boundTargetValidation: {
+        valid: true,
+        normalizedRowId: "11111111-1111-1111-1111-111111111111",
+        entityLogicalName: "account",
+        entitySetName: "accounts",
+        bindingKind: "entity",
+        reasonCodes: ["BoundEntityAction"],
+        label: "Bound target valid",
+        reason: "The target is valid."
+      }
+    });
+
+    assert.equal(readiness.state, "ready");
+    assert.equal(readiness.label, "Ready to run bound Action");
+    assert.equal(readiness.canPreview, true);
+    assert.equal(readiness.canExecute, true);
+    assert.ok(readiness.reasonCodes.includes("BoundEntityAction"));
+    assert.ok(readiness.reasonCodes.includes("BoundRouteResolved"));
+  });
+
+  test("uses bound target validation reason when route metadata is unavailable", () => {
+    const readiness = resolveActionExecutionReadiness(buildAction({
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      boundEntityLogicalName: "workflow",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — target row required",
+        reason: "Entity-bound execution requires explicit target row context.",
+        odataBoundTargetKind: "entity",
+        odataBoundEntityLogicalName: "workflow"
+      }
+    }), {
+      boundTargetValidation: {
+        valid: false,
+        entityLogicalName: "workflow",
+        entitySetName: "",
+        bindingKind: "entity",
+        reasonCodes: ["BoundRouteUnavailable"],
+        label: "Inspect only — bound route unavailable",
+        reason: "The bound entity set could not be resolved from metadata."
+      }
+    });
+
+    assert.equal(readiness.state, "inspectOnlyUnsupportedBinding");
+    assert.equal(readiness.label, "Inspect only — bound route unavailable");
+    assert.deepEqual(readiness.reasonCodes, ["BoundRouteUnavailable"]);
   });
 });

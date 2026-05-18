@@ -119,7 +119,7 @@ function buildDiagnostics(options: CustomApiExecutionResultSurfaceOptions): stri
   const lines = [
     "- Execution was explicitly confirmed from the Custom API preview surface.",
     `- The ${options.definition.operationKind} was validated against the OData $metadata operation registry before execution.`,
-    "- A capability execution context has been captured as an investigation anchor.",
+    "- The execution context was captured as an investigation anchor.",
     "- This result is response inspection only; no follow-up diagnostics have been inferred yet."
   ];
 
@@ -173,7 +173,8 @@ export function buildCustomApiExecutionResultSurfaceSections(
     {
       title: "Operation",
       content: buildOperationSummary(options.definition, options.environmentName),
-      language: "text"
+      language: "text",
+      defaultCollapsed: true
     },
     ...(() => {
       const actionTrustContext = buildActionTrustContext(options.definition);
@@ -206,12 +207,14 @@ export function buildCustomApiExecutionResultSurfaceSections(
     {
       title: "Capability execution context",
       content: buildCapabilityExecutionContextSection(capabilityExecutionContext),
-      language: "json"
+      language: "json",
+      defaultCollapsed: true
     },
     {
       title: "Raw execution context",
       content: stringifyJson(options.result.executionContext),
-      language: "json"
+      language: "json",
+      defaultCollapsed: true
     }
   ];
 }
@@ -219,6 +222,15 @@ export function buildCustomApiExecutionResultSurfaceSections(
 function parseStatusCode(errorMessage: string): string {
   const match = /Dataverse error\s+(\d+)/i.exec(errorMessage);
   return match?.[1] ?? "unknown";
+}
+
+function buildErrorPayloadSummary(options: CustomApiExecutionErrorSurfaceOptions): string {
+  const status = parseStatusCode(options.errorMessage);
+  return [
+    `Dataverse returned HTTP ${status} for the executed ${options.definition.operationKind} request.`,
+    "",
+    options.errorMessage
+  ].join("\n");
 }
 
 export function buildCustomApiExecutionErrorSurfaceSections(
@@ -248,7 +260,8 @@ export function buildCustomApiExecutionErrorSurfaceSections(
     {
       title: "Operation",
       content: buildOperationSummary(options.definition, options.environmentName),
-      language: "text"
+      language: "text",
+      defaultCollapsed: true
     },
     ...(() => {
       const actionTrustContext = buildActionTrustContext(options.definition);
@@ -266,7 +279,7 @@ export function buildCustomApiExecutionErrorSurfaceSections(
     },
     {
       title: "Error payload",
-      content: options.errorMessage,
+      content: buildErrorPayloadSummary(options),
       language: "text"
     },
     {
@@ -274,9 +287,9 @@ export function buildCustomApiExecutionErrorSurfaceSections(
       content: [
         "- Execution was explicitly confirmed from the Custom API preview surface.",
         "- The request failed at Dataverse execution time.",
-        "- A capability execution context has been captured as an investigation anchor.",
+        "- The execution context was captured as an investigation anchor.",
         "- This may indicate operation-specific validation, privilege, feature flag, route, or server-side implementation behaviour.",
-        "- Future execution diagnostics can use this result as the starting evidence for trace/correlation lookup.",
+        "- Future execution diagnostics can use this result as the starting evidence for runtime evidence lookup.",
         "- Failed execution is an investigation signal, not root-cause proof.",
         ...(shouldShowAiExecutionAdvisory(options.definition.executionPolicy ?? options.definition.executionCapability?.executionPolicy) ? [
           "- This failed operation was classified as AI-related; advisory context is captured separately."
@@ -291,7 +304,8 @@ export function buildCustomApiExecutionErrorSurfaceSections(
     {
       title: "Capability execution context",
       content: buildCapabilityExecutionContextSection(capabilityExecutionContext),
-      language: "json"
+      language: "json",
+      defaultCollapsed: true
     }
   ];
 }

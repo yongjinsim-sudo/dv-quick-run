@@ -3,8 +3,12 @@ import type { CommandContext } from "../context/commandContext.js";
 import { CustomApiDiscoveryService } from "../../customApi/discovery/customApiDiscoveryService.js";
 import { buildCapabilityExplorerViewModel } from "../../capabilityExplorer/capabilityExplorerViewModelBuilder.js";
 import { renderCapabilityExplorerHtml } from "../../webview/capabilityExplorer/renderCapabilityExplorerHtml.js";
-import { buildCustomApiExecutionPreview, buildCustomApiExecutionPreviewSurfaceSections } from "../../customApi/execution/customApiExecutionPreviewBuilder.js";
-import { buildCustomApiActionExecutionPlan, buildCustomApiFunctionExecutionPlan, canExecuteCustomApiAction, canExecuteCustomApiFunction, promptForCustomApiFunctionParameters } from "../../customApi/execution/customApiFunctionExecution.js";
+import {
+  buildCustomApiExecutionPreview,
+  buildCustomApiExecutionPreviewSurfaceSections,
+  renderCustomApiExecutionRequestText
+} from "../../customApi/execution/customApiExecutionPreviewBuilder.js";
+import { buildCustomApiActionExecutionPlan, buildCustomApiFunctionExecutionPlan, canExecuteCustomApiAction, canExecuteCustomApiCollectionBoundAction, canExecuteCustomApiEntityBoundAction, canExecuteCustomApiFunction, promptForCustomApiFunctionParameters } from "../../customApi/execution/customApiFunctionExecution.js";
 import { promptForCustomApiActionPreviewParameters, shouldPromptForCustomApiActionPreviewParameters } from "../../customApi/execution/customApiActionPreviewParameters.js";
 import { buildCustomApiExecutionErrorSurfaceSections, buildCustomApiExecutionResultSurfaceSections } from "../../customApi/execution/customApiExecutionResultSurface.js";
 import {
@@ -16,13 +20,29 @@ import {
 import { applyCustomApiExecutionEligibility } from "../../customApi/odata/odataOperationEligibility.js";
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
 import { runAction } from "../router/actions/shared/actionRunner.js";
-import { createPreviewAction, showPreviewSurface, updatePreviewSurface } from "../../services/previewSurfaceService.js";
-import type { PreviewSurfaceRiskLevel } from "../../services/previewSurfaceTypes.js";
+import { closePreviewSurface, createPreviewAction, showPreviewSurface, updatePreviewSurface } from "../../services/previewSurfaceService.js";
+import type { PreviewSurfaceRiskLevel, PreviewSurfaceSection } from "../../services/previewSurfaceTypes.js";
 import { logDebug, logInfo, logWarn } from "../../utils/logger.js";
 import { loadODataOperationRegistry } from "../router/actions/shared/metadataAccess.js";
 import { investigationContextStore } from "../../investigation/context/investigationContextStore.js";
-import { resolveCapabilityExecutionSafetyLock } from "../../customApi/execution/capabilityExecutionEnvironmentGuard.js";
+import { resolveCapabilityExecutionSafetyLock, resolveCapabilityRunEnvironmentLock } from "../../customApi/execution/capabilityExecutionEnvironmentGuard.js";
 import { normalizeAiExecutionPolicy, type AiExecutionPolicyMode } from "../../customApi/execution/aiExecutionPolicy.js";
+import { validateBoundActionTarget } from "../../customApi/execution/boundActionTargetValidation.js";
+
+
+function arrangePreviewSectionsForExecution(
+  sections: PreviewSurfaceSection[],
+  prioritySections: PreviewSurfaceSection[]
+): PreviewSurfaceSection[] {
+  const primarySections = sections.filter((section) => !section.defaultCollapsed);
+  const supportingSections = sections.filter((section) => section.defaultCollapsed);
+
+  return [
+    ...primarySections,
+    ...prioritySections,
+    ...supportingSections
+  ];
+}
 
 let capabilityExplorerPanel: vscode.WebviewPanel | undefined;
 let latestDefinitions: CustomApiDefinition[] = [];
@@ -31,6 +51,69 @@ let latestEnvironmentName = "";
 
 function getAiExecutionPolicy(): AiExecutionPolicyMode {
   return normalizeAiExecutionPolicy(vscode.workspace.getConfiguration("dvQuickRun").get("execution.aiPolicy"));
+}
+
+
+
+function isEntityBoundAction(definition: CustomApiDefinition): boolean {
+  return definition.operationKind === "Action"
+    && definition.bindingKind === "Bound"
+    && (definition.boundTargetKind === "entity" || definition.executionEligibility?.odataBoundTargetKind === "entity");
+}
+
+function isCollectionBoundAction(definition: CustomApiDefinition): boolean {
+  return definition.operationKind === "Action"
+    && definition.bindingKind === "Bound"
+    && (definition.boundTargetKind === "collection" || definition.executionEligibility?.odataBoundTargetKind === "collection");
+}
+
+
+function canRunCurrentActionPreview(args: {
+  definition: CustomApiDefinition;
+  preview: ReturnType<typeof buildCustomApiExecutionPreview>;
+  boundTargetRowId?: string;
+}): boolean {
+  if (args.preview.method !== "POST") {
+    return false;
+  }
+
+  if (args.definition.bindingKind === "Unbound") {
+    return canExecuteCustomApiAction(args.definition)
+      && args.preview.executionCapability.canExecute === true
+      && args.preview.actionReadiness?.canExecute === true;
+  }
+
+  if (isEntityBoundAction(args.definition)) {
+    return canExecuteCustomApiEntityBoundAction(args.definition, args.boundTargetRowId)
+      && args.preview.boundTargetContext !== undefined
+      && args.preview.actionReadiness?.canExecute === true
+      && args.preview.unsupportedParameters.length === 0;
+  }
+
+  if (isCollectionBoundAction(args.definition)) {
+    return canExecuteCustomApiCollectionBoundAction(args.definition)
+      && args.preview.boundTargetContext === undefined
+      && args.preview.actionReadiness?.canExecute === true
+      && args.preview.unsupportedParameters.length === 0;
+  }
+
+  return false;
+}
+
+function withPreviewExecutionState(definition: CustomApiDefinition, preview: ReturnType<typeof buildCustomApiExecutionPreview>): CustomApiDefinition {
+  return {
+    ...definition,
+    actionReadiness: preview.actionReadiness ?? definition.actionReadiness,
+    executionCapability: {
+      ...preview.executionCapability,
+      mode: preview.actionReadiness?.canExecute ? "executable" : preview.executionCapability.mode,
+      state: preview.actionReadiness?.canExecute ? "executable" : preview.executionCapability.state,
+      label: preview.actionReadiness?.canExecute ? preview.actionReadiness.label : preview.executionCapability.label,
+      reason: preview.actionReadiness?.reason ?? preview.executionCapability.reason,
+      canExecute: preview.actionReadiness?.canExecute === true,
+      actionReadiness: preview.actionReadiness ?? preview.executionCapability.actionReadiness
+    }
+  };
 }
 
 function captureCapabilityExecutionContext(args: {
@@ -43,8 +126,8 @@ function captureCapabilityExecutionContext(args: {
 }
 
 
-async function confirmHighRiskActionExecution(definition: CustomApiDefinition): Promise<boolean> {
-  const readiness = definition.actionReadiness ?? definition.executionCapability?.actionReadiness;
+async function confirmHighRiskActionExecution(definition: CustomApiDefinition, readinessOverride?: CustomApiDefinition["actionReadiness"]): Promise<boolean> {
+  const readiness = readinessOverride ?? definition.actionReadiness ?? definition.executionCapability?.actionReadiness;
   if (!readiness?.requiresTypedConfirmation || !readiness.confirmationPhrase) {
     return true;
   }
@@ -134,6 +217,20 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
         return;
       }
 
+      if (message?.type === "capabilitySelectionChanged") {
+        closePreviewSurface();
+        return;
+      }
+
+      if (message?.type === "boundTargetInvalid") {
+        void vscode.window.showWarningMessage("DV Quick Run: Enter a valid target row GUID before generating a bound Action preview.");
+        return;
+      }
+
+      if (message?.type === "boundRouteUnavailable") {
+        void vscode.window.showWarningMessage("DV Quick Run: The bound entity set could not be resolved from metadata, so DV Quick Run cannot create an executable bound route.");
+        return;
+      }
 
       if (message?.type === "previewCustomApi" && typeof message.apiUniqueName === "string") {
         const definition = latestDefinitions.find((item) => item.uniqueName === message.apiUniqueName);
@@ -143,209 +240,364 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
         }
 
         const activeEnvironment = ctx.envContext.getActiveEnvironment();
-        const canRunFunction = canExecuteCustomApiFunction(definition);
-        const canRunAction = canExecuteCustomApiAction(definition);
-        let actionPreviewValues: Record<string, unknown> | undefined;
-
-        if (!canRunFunction && shouldPromptForCustomApiActionPreviewParameters(definition)) {
-          actionPreviewValues = await promptForCustomApiActionPreviewParameters(definition);
-          if (!actionPreviewValues) {
-            void vscode.window.showInformationMessage("DV Quick Run: Custom API Action preview cancelled. No Dataverse operation was executed.");
+        let boundTargetRowId: string | undefined;
+        if (isEntityBoundAction(definition)) {
+          const targetValidation = validateBoundActionTarget({
+            definition,
+            rowId: message.boundTargetRowId,
+            capturedEnvironmentUrl: latestEnvironmentUrl,
+            activeEnvironmentUrl: activeEnvironment?.url
+          });
+          if (!targetValidation.valid) {
+            void vscode.window.showWarningMessage(`DV Quick Run: ${targetValidation.reason}`);
             return;
           }
+          boundTargetRowId = targetValidation.normalizedRowId;
         }
+
+        const canRunFunction = canExecuteCustomApiFunction(definition);
+        const canRunAction = canExecuteCustomApiAction(definition)
+          || canExecuteCustomApiEntityBoundAction(definition, boundTargetRowId)
+          || canExecuteCustomApiCollectionBoundAction(definition);
+        let actionPreviewValues: Record<string, unknown> | undefined;
 
         const preview = buildCustomApiExecutionPreview(definition, {
           environmentUrl: latestEnvironmentUrl,
-          parameterValues: actionPreviewValues
+          parameterValues: actionPreviewValues,
+          boundTargetRowId
         });
 
         if (canRunAction) {
-          const initialLock = resolveCapabilityExecutionSafetyLock({
-            definition,
-            expectedMethod: "POST",
-            capturedEnvironmentUrl: latestEnvironmentUrl,
-            capturedEnvironmentName: latestEnvironmentName,
-            activeEnvironmentUrl: activeEnvironment?.url,
-            activeEnvironmentName: activeEnvironment?.name
-          });
+          let executionValues = actionPreviewValues;
 
-          if (initialLock.isLocked) {
-            showCapabilityRunEnvironmentLock({
-              activeEnvironment,
-              operationKind: "Action",
-              reason: initialLock.reason,
-              state: initialLock.state,
-              recovery: initialLock.recovery
+          while (true) {
+            const executablePreviewModel = buildCustomApiExecutionPreview(definition, {
+              environmentUrl: latestEnvironmentUrl,
+              parameterValues: executionValues,
+              boundTargetRowId
             });
-            return;
-          }
-
-          const values = actionPreviewValues ?? {};
-          const executionPlan = buildCustomApiActionExecutionPlan(definition, values, latestEnvironmentUrl || await ctx.getBaseUrl());
-          const previewResult = await showPreviewSurface({
-            kind: "customApi",
-            title: "DV Quick Run – Custom API Action Preview",
-            source: "capabilityExplorer",
-            sourceAction: `Run ${preview.apiUniqueName}`,
-            environmentName: activeEnvironment?.name,
-            riskLevel: resolveCapabilityPreviewRiskLevel(activeEnvironment),
-            summary: "Preview this POST Custom API Action request before execution. Execution only runs after explicit confirmation.",
-            sections: [
-              ...buildCustomApiExecutionPreviewSurfaceSections(preview),
-              {
-                title: "Execution values",
-                content: JSON.stringify(values, null, 2),
-                language: "json"
-              },
-              {
-                title: "Executable request",
-                content: executionPlan.requestPreview,
-                language: "http"
-              }
-            ],
-            primaryAction: createPreviewAction({ id: "runCustomApiAction", label: preview.actionReadiness?.caution ? "Run Action with caution" : "Run Action", kind: "apply" }),
-            secondaryActions: [
-              createPreviewAction({ id: "cancel", label: "Cancel", kind: "cancel" })
-            ]
-          });
-
-          captureCapabilityExecutionContext({
-            context: buildCapabilityExecutionContextFromPreview({
+            const currentValues = executionValues ?? {};
+            const executionPlan = buildCustomApiActionExecutionPlan(definition, currentValues, latestEnvironmentUrl || await ctx.getBaseUrl(), { boundTargetRowId });
+            const hasEditedPayload = Object.keys(currentValues).length > 0;
+            const initialLock = resolveCapabilityRunEnvironmentLock({
+              capturedEnvironmentUrl: latestEnvironmentUrl,
+              capturedEnvironmentName: latestEnvironmentName,
+              activeEnvironmentUrl: activeEnvironment?.url,
+              activeEnvironmentName: activeEnvironment?.name
+            });
+            const previewAllowsExecution = canRunCurrentActionPreview({
               definition,
-              executionPlan,
-              values,
-              environmentName: activeEnvironment?.name
-            }),
-            environmentUrl: activeEnvironment?.url
-          });
-
-          if (previewResult.actionKind !== "apply") {
-            void vscode.window.showInformationMessage("DV Quick Run: Custom API Action preview cancelled. No Dataverse operation was executed.");
-            return;
-          }
-
-          if (!await confirmHighRiskActionExecution(definition)) {
-            void vscode.window.showInformationMessage("DV Quick Run: High-risk Custom API Action execution cancelled. No Dataverse operation was executed.");
-            return;
-          }
-
-          const postPreviewEnvironment = ctx.envContext.getActiveEnvironment();
-          const postPreviewLock = resolveCapabilityExecutionSafetyLock({
-            definition,
-            expectedMethod: "POST",
-            capturedEnvironmentUrl: latestEnvironmentUrl,
-            capturedEnvironmentName: latestEnvironmentName,
-            activeEnvironmentUrl: postPreviewEnvironment?.url,
-            activeEnvironmentName: postPreviewEnvironment?.name
-          });
-
-          if (postPreviewLock.isLocked) {
-            showCapabilityRunEnvironmentLock({
-              activeEnvironment: postPreviewEnvironment,
-              operationKind: "Action",
-              reason: postPreviewLock.reason,
-              state: postPreviewLock.state,
-              recovery: postPreviewLock.recovery
+              preview: executablePreviewModel,
+              boundTargetRowId
             });
-            return;
-          }
+            const executableDefinition = withPreviewExecutionState(definition, executablePreviewModel);
+            const runUnavailableReason = initialLock.reason
+              || executablePreviewModel.actionReadiness?.reason
+              || executablePreviewModel.executionCapability.reason
+              || "This Custom API Action is not executable from the current preview context.";
+            const runEnabled = !initialLock.isLocked && previewAllowsExecution;
 
-          const token = await ctx.getToken(ctx.getScope());
-          const client = ctx.getClient();
-          logInfo(ctx.output, `[DV:${ctx.envContext.getEnvironmentName()}] Custom API Action POST ${definition.uniqueName}`);
-          logDebug(ctx.output, `POST ${executionPlan.path}`);
+            const previewResult = await showPreviewSurface({
+              kind: "customApi",
+              title: "DV Quick Run – Custom API Action Preview",
+              source: "capabilityExplorer",
+              sourceAction: `Run ${executablePreviewModel.apiUniqueName}`,
+              environmentName: activeEnvironment?.name,
+              riskLevel: resolveCapabilityPreviewRiskLevel(activeEnvironment),
+              summary: "Preview this POST Custom API Action request before execution. Execution only runs after explicit confirmation.",
+              sections: arrangePreviewSectionsForExecution(
+                buildCustomApiExecutionPreviewSurfaceSections(executablePreviewModel),
+                [
+                  {
+                    title: "Executable request",
+                    content: executionPlan.requestPreview,
+                    language: "http"
+                  },
+                  {
+                    title: "Execution confirmation shell",
+                  content: [
+                    `Execution status: ${runEnabled ? "Ready for explicit confirmation" : "Unavailable"}`,
+                    `Operation: ${definition.displayName || definition.uniqueName}`,
+                    `Environment: ${activeEnvironment?.name ?? latestEnvironmentName ?? "Unknown"}`,
+                    `Route: ${executionPlan.path}`,
+                    `Payload source: ${hasEditedPayload ? "User-edited preview payload" : "Metadata-generated preview payload"}`,
+                    `Readiness: ${definition.executionCapability?.label ?? definition.actionReadiness?.state ?? "Ready to run"}`,
+                    `Authority boundary: active environment must match the preview environment before execution.`,
+                    initialLock.isLocked ? `Execution lock: ${initialLock.reason}` : "Execution lock: none"
+                  ].join("\n"),
+                    language: "text",
+                    defaultCollapsed: true
+                  }
+                ]
+              ),
+              primaryAction: createPreviewAction({
+                id: "runCustomApiAction",
+                label: runEnabled ? (executablePreviewModel.actionReadiness?.caution ? "Run Action with caution" : "Run Action") : "Run Action unavailable",
+                kind: "apply",
+                enabled: runEnabled,
+                description: runEnabled
+                  ? "Run this Custom API Action after explicit confirmation."
+                  : runUnavailableReason
+              }),
+              secondaryActions: [
+                ...(shouldPromptForCustomApiActionPreviewParameters(definition)
+                  ? [createPreviewAction({
+                    id: "editPreviewPayload",
+                    label: "Edit Payload",
+                    kind: "copy",
+                    description: "Edit the preview JSON request body before execution."
+                  })]
+                  : []),
+                createPreviewAction({
+                  id: "copyPreviewRequest",
+                  label: "Copy Request",
+                  kind: "copy",
+                  description: "Copy the current executable request and JSON body."
+                }),
+                ...(shouldPromptForCustomApiActionPreviewParameters(definition)
+                  ? [createPreviewAction({
+                    id: "resetPreviewPayload",
+                    label: hasEditedPayload ? "Reset Payload" : "Reset Payload unavailable",
+                    kind: "copy",
+                    enabled: hasEditedPayload,
+                    description: hasEditedPayload
+                      ? "Restore the metadata-generated preview payload."
+                      : "Payload is already using the metadata-generated template."
+                  })]
+                  : []),
+                createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
+              ]
+            });
 
-          try {
-            const response = await client.postWithMetadata(executionPlan.path, token, executionPlan.body ?? {});
-            logInfo(ctx.output, `→ Custom API Action completed (${response.executionContext.statusCode ?? "unknown"}, ${response.executionContext.durationMs ?? 0}ms)`);
             captureCapabilityExecutionContext({
-              context: buildCapabilityExecutionContextFromResult({
-                definition,
+              context: buildCapabilityExecutionContextFromPreview({
+                definition: executableDefinition,
                 executionPlan,
-                values,
-                result: response,
+                values: currentValues,
                 environmentName: activeEnvironment?.name
               }),
               environmentUrl: activeEnvironment?.url
             });
-            notifyCapabilityExecutionAvailable(definition.uniqueName, "completed");
-            updatePreviewSurface({
-              kind: "customApi",
-              title: "DV Quick Run – Custom API Action Result",
-              source: "capabilityExplorer",
-              sourceAction: `Result ${definition.displayName || definition.uniqueName}`,
-              environmentName: activeEnvironment?.name,
-              riskLevel: definition.actionReadiness?.caution || definition.executionCapability?.actionReadiness?.caution ? "amber" : "normal",
-              summary: "Custom API Action execution completed. Review the response payload, request context, captured execution metadata, and Action readiness context.",
-              sections: buildCustomApiExecutionResultSurfaceSections({
-                definition,
-                executionPlan,
-                values,
-                result: response,
-                environmentName: activeEnvironment?.name
-              }),
-              secondaryActions: [
-                createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
-              ]
+
+            if (previewResult.actionId === "copyPreviewRequest") {
+              await vscode.env.clipboard.writeText(executionPlan.requestPreview);
+              void vscode.window.showInformationMessage("DV Quick Run: Executable request copied. No Dataverse operation was executed.");
+              continue;
+            }
+
+            if (previewResult.actionId === "resetPreviewPayload") {
+              executionValues = undefined;
+              void vscode.window.showInformationMessage("DV Quick Run: Preview payload reset to the metadata-generated template.");
+              continue;
+            }
+
+            if (previewResult.actionId === "editPreviewPayload") {
+              const editedValues = await promptForCustomApiActionPreviewParameters(definition, executionValues, activeEnvironment?.name, ctx);
+              if (editedValues === undefined) {
+                void vscode.window.showInformationMessage("DV Quick Run: Preview payload edit cancelled. No Dataverse operation was executed.");
+                continue;
+              }
+              executionValues = editedValues;
+              continue;
+            }
+
+            if (previewResult.actionKind !== "apply") {
+              void vscode.window.showInformationMessage("DV Quick Run: Custom API Action preview closed. No Dataverse operation was executed.");
+              return;
+            }
+
+            if (!runEnabled) {
+              void vscode.window.showWarningMessage(`DV Quick Run: Custom API Action execution is unavailable. ${runUnavailableReason}`);
+              continue;
+            }
+
+            if (!await confirmHighRiskActionExecution(executableDefinition, executablePreviewModel.actionReadiness)) {
+              void vscode.window.showInformationMessage("DV Quick Run: Custom API Action execution cancelled. No Dataverse operation was executed.");
+              continue;
+            }
+
+            const postPreviewEnvironment = ctx.envContext.getActiveEnvironment();
+            const postPreviewLock = resolveCapabilityRunEnvironmentLock({
+              capturedEnvironmentUrl: latestEnvironmentUrl,
+              capturedEnvironmentName: latestEnvironmentName,
+              activeEnvironmentUrl: postPreviewEnvironment?.url,
+              activeEnvironmentName: postPreviewEnvironment?.name
             });
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            logWarn(ctx.output, `→ Custom API Action failed: ${message}`);
-            captureCapabilityExecutionContext({
-              context: buildCapabilityExecutionContextFromError({
-                definition,
-                executionPlan,
-                values,
-                errorMessage: message,
-                environmentName: activeEnvironment?.name
-              }),
-              environmentUrl: activeEnvironment?.url
-            });
-            notifyCapabilityExecutionAvailable(definition.uniqueName, "failed");
-            updatePreviewSurface({
-              kind: "customApi",
-              title: "DV Quick Run – Custom API Action Result",
-              source: "capabilityExplorer",
-              sourceAction: `Failed ${definition.displayName || definition.uniqueName}`,
-              environmentName: activeEnvironment?.name,
-              riskLevel: "amber",
-              summary: "Custom API Action execution failed. Review the request, execution values, and returned Dataverse error payload.",
-              sections: buildCustomApiExecutionErrorSurfaceSections({
-                definition,
-                executionPlan,
-                values,
-                errorMessage: message,
-                environmentName: activeEnvironment?.name
-              }),
-              secondaryActions: [
-                createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
-              ]
-            });
-            void vscode.window.showErrorMessage(`DV Quick Run: Custom API Action failed. ${message}`);
+
+            if (postPreviewLock.isLocked) {
+              showCapabilityRunEnvironmentLock({
+                activeEnvironment: postPreviewEnvironment,
+                operationKind: "Action",
+                reason: postPreviewLock.reason,
+                state: postPreviewLock.state,
+                recovery: postPreviewLock.recovery
+              });
+              continue;
+            }
+
+            const token = await ctx.getToken(ctx.getScope());
+            const client = ctx.getClient();
+            logInfo(ctx.output, `[DV:${ctx.envContext.getEnvironmentName()}] Custom API Action POST ${definition.uniqueName}`);
+            logDebug(ctx.output, `POST ${executionPlan.path}`);
+
+            try {
+              const response = await client.postWithMetadata(executionPlan.path, token, executionPlan.body ?? {});
+              logInfo(ctx.output, `→ Custom API Action completed (${response.executionContext.statusCode ?? "unknown"}, ${response.executionContext.durationMs ?? 0}ms)`);
+              captureCapabilityExecutionContext({
+                context: buildCapabilityExecutionContextFromResult({
+                  definition: executableDefinition,
+                  executionPlan,
+                  values: currentValues,
+                  result: response,
+                  environmentName: activeEnvironment?.name
+                }),
+                environmentUrl: activeEnvironment?.url
+              });
+              notifyCapabilityExecutionAvailable(definition.uniqueName, "completed");
+              updatePreviewSurface({
+                kind: "customApi",
+                title: "DV Quick Run – Custom API Action Result",
+                source: "capabilityExplorer",
+                sourceAction: `Result ${definition.displayName || definition.uniqueName}`,
+                environmentName: activeEnvironment?.name,
+                riskLevel: executablePreviewModel.actionReadiness?.caution || executableDefinition.actionReadiness?.caution || executableDefinition.executionCapability?.actionReadiness?.caution ? "amber" : "normal",
+                summary: "Custom API Action execution completed. Review the response payload, request context, captured execution metadata, and Action readiness context.",
+                sections: buildCustomApiExecutionResultSurfaceSections({
+                  definition: executableDefinition,
+                  executionPlan,
+                  values: currentValues,
+                  result: response,
+                  environmentName: activeEnvironment?.name
+                }),
+                secondaryActions: [
+                  createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
+                ]
+              });
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              logWarn(ctx.output, `→ Custom API Action failed: ${message}`);
+              captureCapabilityExecutionContext({
+                context: buildCapabilityExecutionContextFromError({
+                  definition: executableDefinition,
+                  executionPlan,
+                  values: currentValues,
+                  errorMessage: message,
+                  environmentName: activeEnvironment?.name
+                }),
+                environmentUrl: activeEnvironment?.url
+              });
+              notifyCapabilityExecutionAvailable(definition.uniqueName, "failed");
+              updatePreviewSurface({
+                kind: "customApi",
+                title: "DV Quick Run – Custom API Action Result",
+                source: "capabilityExplorer",
+                sourceAction: `Failed ${definition.displayName || definition.uniqueName}`,
+                environmentName: activeEnvironment?.name,
+                riskLevel: "amber",
+                summary: "Custom API Action execution failed. Review the request, execution values, and returned Dataverse error payload.",
+                sections: buildCustomApiExecutionErrorSurfaceSections({
+                  definition: executableDefinition,
+                  executionPlan,
+                  values: currentValues,
+                  errorMessage: message,
+                  environmentName: activeEnvironment?.name
+                }),
+                secondaryActions: [
+                  createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
+                ]
+              });
+              void vscode.window.showErrorMessage(`DV Quick Run: Custom API Action failed. ${message}`);
+            }
+            return;
           }
-          return;
         }
 
         if (!canRunFunction) {
-          updatePreviewSurface({
-            kind: "customApi",
-            title: "DV Quick Run – Custom API Preview",
-            source: "capabilityExplorer",
-            sourceAction: `Preview ${preview.apiUniqueName}`,
-            environmentName: activeEnvironment?.name,
-            riskLevel: resolveCapabilityPreviewRiskLevel(activeEnvironment),
-            summary: "Preview the Custom API request shape. No Dataverse operation is executed from this preview.",
-            sections: buildCustomApiExecutionPreviewSurfaceSections(preview)
-          });
-          captureCapabilityExecutionContext({
-            context: buildCapabilityExecutionContextFromPreview({
-              definition,
-              environmentName: activeEnvironment?.name
-            }),
-            environmentUrl: activeEnvironment?.url
-          });
-          return;
+          let previewValues = actionPreviewValues;
+          while (true) {
+            const previewOnlyModel = buildCustomApiExecutionPreview(definition, {
+              environmentUrl: latestEnvironmentUrl,
+              parameterValues: previewValues,
+              boundTargetRowId
+            });
+
+            const previewOnlyResult = await showPreviewSurface({
+              kind: "customApi",
+              title: "DV Quick Run – Custom API Preview",
+              source: "capabilityExplorer",
+              sourceAction: `Preview ${previewOnlyModel.apiUniqueName}`,
+              environmentName: activeEnvironment?.name,
+              riskLevel: resolveCapabilityPreviewRiskLevel(activeEnvironment),
+              summary: "Preview the Custom API request shape. No Dataverse operation is executed from this preview.",
+              sections: buildCustomApiExecutionPreviewSurfaceSections(previewOnlyModel),
+              primaryAction: createPreviewAction({
+                id: "runActionUnavailable",
+                label: "Run Action unavailable",
+                kind: "apply",
+                enabled: false,
+                description: "Execution confirmation shell only. No Dataverse operation is executed in this workstream."
+              }),
+              secondaryActions: [
+                ...(shouldPromptForCustomApiActionPreviewParameters(definition)
+                  ? [createPreviewAction({
+                    id: "editPreviewPayload",
+                    label: "Edit Payload",
+                    kind: "copy",
+                    description: "Edit the preview JSON request body. No Dataverse operation is executed."
+                  })]
+                  : []),
+                createPreviewAction({
+                  id: "copyPreviewRequest",
+                  label: "Copy Request",
+                  kind: "copy",
+                  description: "Copy the current preview request and JSON body."
+                }),
+                ...(shouldPromptForCustomApiActionPreviewParameters(definition)
+                  ? [createPreviewAction({
+                    id: "resetPreviewPayload",
+                    label: previewValues && Object.keys(previewValues).length > 0 ? "Reset Payload" : "Reset Payload unavailable",
+                    kind: "copy",
+                    enabled: !!(previewValues && Object.keys(previewValues).length > 0),
+                    description: previewValues && Object.keys(previewValues).length > 0
+                      ? "Restore the metadata-generated preview payload."
+                      : "Payload is already using the metadata-generated template."
+                  })]
+                  : []),
+                createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
+              ]
+            });
+
+            captureCapabilityExecutionContext({
+              context: buildCapabilityExecutionContextFromPreview({
+                definition,
+                environmentName: activeEnvironment?.name
+              }),
+              environmentUrl: activeEnvironment?.url
+            });
+
+            if (previewOnlyResult.actionId === "copyPreviewRequest") {
+              await vscode.env.clipboard.writeText(renderCustomApiExecutionRequestText(previewOnlyModel));
+              void vscode.window.showInformationMessage("DV Quick Run: Preview request copied. No Dataverse operation was executed.");
+              continue;
+            }
+
+            if (previewOnlyResult.actionId === "resetPreviewPayload") {
+              previewValues = undefined;
+              void vscode.window.showInformationMessage("DV Quick Run: Preview payload reset to the metadata-generated template.");
+              continue;
+            }
+
+            if (previewOnlyResult.actionId !== "editPreviewPayload") {
+              return;
+            }
+
+            const editedValues = await promptForCustomApiActionPreviewParameters(definition, previewValues, activeEnvironment?.name, ctx);
+            if (editedValues === undefined) {
+              void vscode.window.showInformationMessage("DV Quick Run: Preview payload edit cancelled. No Dataverse operation was executed.");
+              continue;
+            }
+            previewValues = editedValues;
+          }
         }
 
         const initialLock = resolveCapabilityExecutionSafetyLock({
@@ -368,7 +620,7 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
           return;
         }
 
-        const values = await promptForCustomApiFunctionParameters(definition);
+        const values = await promptForCustomApiFunctionParameters(definition, undefined, activeEnvironment?.name);
         if (!values) {
           void vscode.window.showInformationMessage("DV Quick Run: Custom API Function execution cancelled. No Dataverse operation was executed.");
           return;
@@ -382,20 +634,22 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
           sourceAction: `Run ${preview.apiUniqueName}`,
           environmentName: activeEnvironment?.name,
           riskLevel: resolveCapabilityPreviewRiskLevel(activeEnvironment),
-          summary: "Preview this read-oriented Custom API Function request before execution. Execution only runs after explicit confirmation.",
-          sections: [
-            ...buildCustomApiExecutionPreviewSurfaceSections(preview),
-            {
-              title: "Execution values",
-              content: JSON.stringify(values, null, 2),
-              language: "json"
-            },
-            {
-              title: "Executable request",
-              content: executionPlan.requestPreview,
-              language: "http"
-            }
-          ],
+          summary: "Review the generated Function request before execution. Execution only occurs after explicit confirmation.",
+          sections: arrangePreviewSectionsForExecution(
+            buildCustomApiExecutionPreviewSurfaceSections(preview),
+            [
+              {
+                title: "Execution values",
+                content: JSON.stringify(values, null, 2),
+                language: "json"
+              },
+              {
+                title: "Executable request",
+                content: executionPlan.requestPreview,
+                language: "http"
+              }
+            ]
+          ),
           primaryAction: createPreviewAction({ id: "runCustomApiFunction", label: "Run Function", kind: "apply" }),
           secondaryActions: [
             createPreviewAction({ id: "cancel", label: "Cancel", kind: "cancel" })

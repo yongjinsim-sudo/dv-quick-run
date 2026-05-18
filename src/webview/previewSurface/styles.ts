@@ -94,12 +94,37 @@ export function getPreviewSurfaceStyles(): string {
       background: var(--vscode-editor-background);
     }
 
-    .preview-section h2 {
+    .preview-section summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       margin: 0;
       padding: 10px 12px;
       font-size: 13px;
+      font-weight: 700;
       background: var(--vscode-sideBar-background);
       border-bottom: 1px solid var(--vscode-panel-border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .preview-section summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .preview-section:not([open]) summary {
+      border-bottom: none;
+    }
+
+    .section-chevron {
+      opacity: 0.7;
+      transform: rotate(0deg);
+      transition: transform 120ms ease;
+    }
+
+    .preview-section[open] .section-chevron {
+      transform: rotate(90deg);
     }
 
     pre {

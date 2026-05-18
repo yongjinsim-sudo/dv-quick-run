@@ -128,8 +128,8 @@ export function buildCapabilityExecutionInsightSections(args: {
       language: "markdown",
       content: [
         `- **Evidence linkage:** ${linkSummary.strength}`,
-        `- **Execution context:** ${linkSummary.label}`,
-        `- **Captured anchors:** ${linkSummary.anchorDescription}`,
+        `- **Execution anchor:** ${linkSummary.label}`,
+        `- **Evidence scope:** ${linkSummary.anchorDescription}`,
         `- **Provider scope:** ${linkSummary.detail}`,
         "- Runtime evidence is an investigation signal, not root-cause proof.",
         args.shouldSuppressExecutionInsights

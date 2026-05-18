@@ -1,5 +1,6 @@
 import type { CustomApiDefinition, CustomApiRequestParameter } from "../models/customApiTypes.js";
 import { evaluateAiExecutionPolicy, type AiExecutionPolicyOptions } from "./aiExecutionPolicy.js";
+import type { BoundActionTargetValidationResult } from "./boundActionTargetValidation.js";
 
 export type ActionExecutionReadinessState =
   | "ready"
@@ -19,6 +20,16 @@ export type ActionExecutionReasonCode =
   | "EntityReferenceParameter"
   | "CollectionParameter"
   | "UnknownParameterType"
+  | "BoundEntityAction"
+  | "CollectionBoundAction"
+  | "BoundRouteResolved"
+  | "BoundRouteUnavailable"
+  | "BoundTargetRequired"
+  | "BoundTargetEntityMismatch"
+  | "BoundTargetInvalidGuid"
+  | "BoundTargetEnvironmentMismatch"
+  | "EntityBoundActionRequiresTarget"
+  | "CollectionBoundActionDeferred"
   | "BoundActionDeferred"
   | "PrivateCustomApi"
   | "MissingActionImport"
@@ -47,6 +58,10 @@ export interface ActionParameterTrustClassification {
   supported: boolean;
   reasonCode: ActionExecutionReasonCode;
   reason: string;
+}
+
+export interface ActionExecutionReadinessOptions extends AiExecutionPolicyOptions {
+  readonly boundTargetValidation?: BoundActionTargetValidationResult;
 }
 
 export interface ActionExecutionReadiness {
@@ -142,6 +157,20 @@ function classifyParameterTrust(parameter: CustomApiRequestParameter): ActionPar
   };
 }
 
+function mapBoundTargetValidationReasonCode(code: BoundActionTargetValidationResult["reasonCodes"][number]): ActionExecutionReasonCode {
+  if (code === "BoundCollectionActionDeferred") {
+    return "CollectionBoundActionDeferred";
+  }
+
+  return code;
+}
+
+function mapBoundTargetValidationReasonCodes(
+  reasonCodes: readonly BoundActionTargetValidationResult["reasonCodes"][number][]
+): ActionExecutionReasonCode[] {
+  return reasonCodes.map(mapBoundTargetValidationReasonCode);
+}
+
 function uniqueReasonCodes(reasonCodes: readonly ActionExecutionReasonCode[]): ActionExecutionReasonCode[] {
   return [...new Set(reasonCodes)];
 }
@@ -175,7 +204,7 @@ function confirmationPhrase(definition: CustomApiDefinition): string {
 
 export function resolveActionExecutionReadiness(
   definition: CustomApiDefinition,
-  options: AiExecutionPolicyOptions = {}
+  options: ActionExecutionReadinessOptions = {}
 ): ActionExecutionReadiness {
   const parameterTrust = definition.requestParameters.map(classifyParameterTrust);
 
@@ -237,11 +266,142 @@ export function resolveActionExecutionReadiness(
   }
 
   if (definition.bindingKind === "Bound" || definition.executionEligibility?.state === "preview-only-bound-context-required") {
+    const isCollectionBound = definition.boundTargetKind === "collection"
+      || definition.executionEligibility?.odataBoundTargetKind === "collection";
+    const isEntityBound = definition.boundTargetKind === "entity"
+      || definition.executionEligibility?.odataBoundTargetKind === "entity";
+    const targetValidation = options.boundTargetValidation;
+
+    if (isEntityBound && targetValidation) {
+      if (targetValidation.valid) {
+        const unsupportedParameterReasons = parameterTrust
+          .filter((parameter) => !parameter.supported)
+          .map((parameter) => parameter.reasonCode);
+
+        if (definition.executionReadiness !== "preview-ready" || unsupportedParameterReasons.length > 0) {
+          return {
+            state: "inspectOnlyUnsupportedParameters",
+            label: "Inspect only — unsupported parameters",
+            reason: definition.executionReadinessReason || "This bound Action has parameter shapes that cannot be previewed deterministically yet.",
+            reasonCodes: uniqueReasonCodes(unsupportedParameterReasons.length > 0 ? unsupportedParameterReasons : ["ComplexParameterShape"]),
+            canPreview: true,
+            canExecute: false,
+            caution: false,
+            requiresTypedConfirmation: false,
+            parameterTrust
+          };
+        }
+
+        const cautionReasonCodes = getCautionReasonCodes(definition);
+        if (policy.classification === "ai-related" && policy.allowed) {
+          cautionReasonCodes.push("GeneratedContentAdvisoryRequired");
+        }
+
+        const caution = cautionReasonCodes.length > 0;
+        return {
+          state: caution ? "readyWithCaution" : "ready",
+          label: caution ? "Run bound Action with caution" : "Ready to run bound Action",
+          reason: caution
+            ? "The target row id, binding entity, and entity set are valid for execution. Operational-impact signals detected; review recommended."
+            : "The target row id, binding entity, entity set, and preview-ready payload are valid. This bound Action can run after explicit confirmation.",
+          reasonCodes: uniqueReasonCodes([
+            "BoundEntityAction",
+            "BoundRouteResolved",
+            "SimplePreviewReadyParameters",
+            ...mapBoundTargetValidationReasonCodes(targetValidation.reasonCodes),
+            ...cautionReasonCodes
+          ]),
+          canPreview: true,
+          canExecute: true,
+          caution,
+          requiresTypedConfirmation: cautionReasonCodes.includes("PotentialDestructiveOperation"),
+          confirmationPhrase: cautionReasonCodes.includes("PotentialDestructiveOperation") ? confirmationPhrase(definition) : undefined,
+          parameterTrust
+        };
+      }
+
+      return {
+        state: targetValidation.reasonCodes.includes("BoundTargetEnvironmentMismatch") ? "staleEnvironmentAuthority" : "inspectOnlyUnsupportedBinding",
+        label: targetValidation.label,
+        reason: targetValidation.reason,
+        reasonCodes: mapBoundTargetValidationReasonCodes(targetValidation.reasonCodes),
+        canPreview: true,
+        canExecute: false,
+        caution: targetValidation.reasonCodes.includes("BoundTargetEnvironmentMismatch"),
+        requiresTypedConfirmation: false,
+        parameterTrust
+      };
+    }
+
+    if (isCollectionBound) {
+      const unsupportedParameterReasons = parameterTrust
+        .filter((parameter) => !parameter.supported)
+        .map((parameter) => parameter.reasonCode);
+      const entitySetName = definition.boundEntitySetName || definition.executionEligibility?.odataBoundEntitySetName || "";
+      const hasResolvedCollectionRoute = entitySetName.trim().length > 0 && entitySetName !== "<entity-set-unresolved>";
+
+      if (!hasResolvedCollectionRoute) {
+        return {
+          state: "inspectOnlyUnsupportedBinding",
+          label: "Inspect only — collection route unavailable",
+          reason: "The collection-bound entity set could not be resolved from OData metadata, so DV Quick Run cannot create an executable route.",
+          reasonCodes: ["BoundRouteUnavailable"],
+          canPreview: true,
+          canExecute: false,
+          caution: false,
+          requiresTypedConfirmation: false,
+          parameterTrust
+        };
+      }
+
+      if (definition.executionReadiness !== "preview-ready" || unsupportedParameterReasons.length > 0) {
+        return {
+          state: "inspectOnlyUnsupportedParameters",
+          label: "Inspect only — unsupported parameters",
+          reason: definition.executionReadinessReason || "This collection-bound Action has parameter shapes that cannot be previewed deterministically yet.",
+          reasonCodes: uniqueReasonCodes(unsupportedParameterReasons.length > 0 ? unsupportedParameterReasons : ["ComplexParameterShape"]),
+          canPreview: true,
+          canExecute: false,
+          caution: false,
+          requiresTypedConfirmation: false,
+          parameterTrust
+        };
+      }
+
+      const cautionReasonCodes = getCautionReasonCodes(definition);
+      if (policy.classification === "ai-related" && policy.allowed) {
+        cautionReasonCodes.push("GeneratedContentAdvisoryRequired");
+      }
+
+      const caution = cautionReasonCodes.length > 0;
+      return {
+        state: caution ? "readyWithCaution" : "ready",
+        label: caution ? "Run collection-bound Action with caution" : "Ready to run collection-bound Action",
+        reason: caution
+          ? "The collection-bound entity set route and preview-ready payload are valid for execution. Operational-impact signals detected; review recommended."
+          : "The collection-bound entity set route and preview-ready payload are valid. This Action can run after explicit confirmation.",
+        reasonCodes: uniqueReasonCodes([
+          "CollectionBoundAction",
+          "BoundRouteResolved",
+          "SimplePreviewReadyParameters",
+          ...cautionReasonCodes
+        ]),
+        canPreview: true,
+        canExecute: true,
+        caution,
+        requiresTypedConfirmation: cautionReasonCodes.includes("PotentialDestructiveOperation"),
+        confirmationPhrase: cautionReasonCodes.includes("PotentialDestructiveOperation") ? confirmationPhrase(definition) : undefined,
+        parameterTrust
+      };
+    }
+
     return {
       state: "inspectOnlyUnsupportedBinding",
-      label: "Inspect only — bound Action deferred",
-      reason: definition.executionEligibility?.reason || "Bound Action execution needs selected row/entity context and is deferred.",
-      reasonCodes: ["BoundActionDeferred"],
+      label: isEntityBound
+        ? "Inspect only — target row required"
+        : "Inspect only — bound Action deferred",
+      reason: definition.executionEligibility?.reason || definition.boundTargetReason || "Bound Action execution needs selected row/entity context and is deferred.",
+      reasonCodes: isEntityBound ? ["EntityBoundActionRequiresTarget"] : ["BoundActionDeferred"],
       canPreview: true,
       canExecute: false,
       caution: false,

@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import type { CommandContext } from "../context/commandContext.js";
 import { investigationContextStore } from "../../investigation/context/investigationContextStore.js";
 import { buildExecutionInsightSuggestions } from "../../product/executionInsights/executionInsightsOrchestrator.js";
-import { updatePreviewSurface } from "../../services/previewSurfaceService.js";
+import { createPreviewAction, updatePreviewSurface } from "../../services/previewSurfaceService.js";
 import { buildCapabilityExecutionInsightLinkContext, buildCapabilityExecutionInsightSections, deriveCapabilityExecutionInsightLinkSummary } from "../../customApi/execution/capabilityExecutionInsightLinking.js";
 import { registerCommand } from "../registerCommandHelpers.js";
 
@@ -27,7 +27,11 @@ export async function openCapabilityExecutionInsights(ctx: CommandContext): Prom
       sections: buildCapabilityExecutionInsightSections({
         context: linkContext,
         suggestions: []
-      })
+      }),
+      secondaryActions: [
+        createPreviewAction({ id: "returnToCapabilityExecutionResult", label: "Back to Execution Result", kind: "copy" }),
+        createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
+      ]
     });
     return;
   }
@@ -58,7 +62,7 @@ export async function openCapabilityExecutionInsights(ctx: CommandContext): Prom
 
   const surfaceSummary = linkSummary.strength === "direct"
     ? "Bounded runtime evidence linked from captured Custom API execution identifiers."
-    : "Bounded runtime evidence review started from the Custom API execution context.";
+    : "Runtime evidence review started from the captured execution context.";
 
   updatePreviewSurface({
     kind: "diagnostic",
@@ -71,7 +75,11 @@ export async function openCapabilityExecutionInsights(ctx: CommandContext): Prom
       context: linkContext,
       suggestions: executionInsightResult.suggestions,
       shouldSuppressExecutionInsights: executionInsightResult.shouldSuppressExecutionInsights
-    })
+    }),
+    secondaryActions: [
+      createPreviewAction({ id: "returnToCapabilityExecutionResult", label: "Back to Execution Result", kind: "copy" }),
+      createPreviewAction({ id: "cancel", label: "Close", kind: "cancel" })
+    ]
   });
 }
 

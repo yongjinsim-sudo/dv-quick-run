@@ -18,6 +18,7 @@ export interface PreviewSurfaceSection {
   title: string;
   content: string;
   language?: "text" | "json" | "http" | "bash" | "markdown";
+  defaultCollapsed?: boolean;
 }
 
 export interface PreviewSurfaceModel {

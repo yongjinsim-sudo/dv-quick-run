@@ -16,6 +16,16 @@ function scoreMatch(definition: CustomApiDefinition, operation: ODataOperationDe
     score += 6;
   }
 
+  if (operation.boundTargetKind && operation.boundTargetKind === definition.boundTargetKind) {
+    score += 3;
+  }
+
+  if (operation.boundEntityLogicalName
+    && definition.boundEntityLogicalName
+    && normalize(operation.boundEntityLogicalName) === normalize(definition.boundEntityLogicalName)) {
+    score += 4;
+  }
+
   if (normalize(operation.name) === normalize(definition.uniqueName)) {
     score += 5;
   }

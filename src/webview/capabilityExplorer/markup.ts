@@ -107,8 +107,9 @@ export function getCapabilityExplorerMarkup(model: CapabilityExplorerViewModel):
                 <col data-column="displayName" style="width: 19%;" />
                 <col data-column="uniqueName" style="width: 19%;" />
                 <col data-column="operationKind" style="width: 8%;" />
-                <col data-column="bindingKind" style="width: 8%;" />
-                <col data-column="boundEntityLogicalName" style="width: 12%;" />
+                <col data-column="bindingKind" style="width: 7%;" />
+                <col data-column="boundTargetLabel" style="width: 10%;" />
+                <col data-column="boundEntityLogicalName" style="width: 10%;" />
                 <col data-column="requestParameterCount" style="width: 7%;" />
                 <col data-column="responsePropertyCount" style="width: 8%;" />
                 <col data-column="requiredParameterCount" style="width: 7%;" />
@@ -121,6 +122,7 @@ export function getCapabilityExplorerMarkup(model: CapabilityExplorerViewModel):
                   <th data-column="uniqueName">Unique Name<span class="dvqr-column-resizer" data-resize-column="uniqueName"></span></th>
                   <th data-column="operationKind">Type<span class="dvqr-column-resizer" data-resize-column="operationKind"></span></th>
                   <th data-column="bindingKind">Binding<span class="dvqr-column-resizer" data-resize-column="bindingKind"></span></th>
+                  <th data-column="boundTargetLabel">Bound Target<span class="dvqr-column-resizer" data-resize-column="boundTargetLabel"></span></th>
                   <th data-column="boundEntityLogicalName">Bound Entity<span class="dvqr-column-resizer" data-resize-column="boundEntityLogicalName"></span></th>
                   <th data-column="requestParameterCount">Params<span class="dvqr-column-resizer" data-resize-column="requestParameterCount"></span></th>
                   <th data-column="responsePropertyCount">Response<span class="dvqr-column-resizer" data-resize-column="responsePropertyCount"></span></th>

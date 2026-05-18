@@ -1,4 +1,4 @@
-import type { CustomApiBindingKind, CustomApiDefinition, CustomApiOperationKind } from "../customApi/models/customApiTypes.js";
+import type { CustomApiBindingKind, CustomApiBoundTargetKind, CustomApiDefinition, CustomApiOperationKind } from "../customApi/models/customApiTypes.js";
 
 export interface CapabilityExplorerMetric {
   id: string;
@@ -14,7 +14,10 @@ export interface CapabilityExplorerCustomApiRow {
   displayName: string;
   operationKind: CustomApiOperationKind;
   bindingKind: CustomApiBindingKind;
+  boundTargetKind: CustomApiBoundTargetKind;
+  boundTargetLabel: string;
   boundEntityLogicalName: string;
+  boundEntitySetName: string;
   requestParameterCount: number;
   responsePropertyCount: number;
   requiredParameterCount: number;
