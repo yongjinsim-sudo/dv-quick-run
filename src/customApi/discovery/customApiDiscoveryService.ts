@@ -3,6 +3,7 @@ import { getCustomApiTypeMetadata } from "../metadata/customApiMetadataEnrichmen
 import type { DataverseClient } from "../../services/dataverseClient.js";
 import type {
   CustomApiBindingKind,
+  CustomApiBoundTargetKind,
   CustomApiDefinition,
   CustomApiOperationKind,
   CustomApiRequestParameter,
@@ -88,6 +89,66 @@ function normalizeBindingKind(record: CustomApiRecord): CustomApiBindingKind {
   }
 
   return "Unknown";
+}
+
+
+function normalizeBoundTargetKind(record: CustomApiRecord): CustomApiBoundTargetKind {
+  if (record.bindingtype === 0) {
+    return "none";
+  }
+
+  if (record.bindingtype === 1) {
+    return "entity";
+  }
+
+  if (record.bindingtype === 2) {
+    return "collection";
+  }
+
+  if (toText(record.boundentitylogicalname)) {
+    return "entity";
+  }
+
+  if (typeof record.bindingtype === "number" && record.bindingtype > 0) {
+    return "unknown";
+  }
+
+  return normalizeBindingKind(record) === "Bound" ? "unknown" : "none";
+}
+
+function describeBoundTargetKind(
+  targetKind: CustomApiBoundTargetKind,
+  boundEntityLogicalName: string | undefined
+): Pick<CustomApiDefinition, "boundTargetLabel" | "boundTargetReason"> {
+  if (targetKind === "entity") {
+    return {
+      boundTargetLabel: "Entity-bound",
+      boundTargetReason: boundEntityLogicalName
+        ? `This operation is bound to the ${boundEntityLogicalName} table and requires an explicit target row before execution.`
+        : "This operation is bound to a single table row and requires explicit target context before execution."
+    };
+  }
+
+  if (targetKind === "collection") {
+    return {
+      boundTargetLabel: "Collection-bound",
+      boundTargetReason: boundEntityLogicalName
+        ? `This operation is bound to the ${boundEntityLogicalName} collection. Collection-bound execution is deferred.`
+        : "This operation is bound to a collection. Collection-bound execution is deferred."
+    };
+  }
+
+  if (targetKind === "unknown") {
+    return {
+      boundTargetLabel: "Bound target unknown",
+      boundTargetReason: "This operation is marked as bound, but DV Quick Run could not classify whether the target is a row or collection from Custom API metadata."
+    };
+  }
+
+  return {
+    boundTargetLabel: "Unbound",
+    boundTargetReason: "This operation is not bound to a specific Dataverse row or collection."
+  };
 }
 
 function normalizeParameterType(value: unknown): string | undefined {
@@ -195,6 +256,8 @@ function mapDefinition(
   const id = toText(record.customapiid) ?? "";
   const mappedRequestParameters = requestParameters.map(mapRequestParameter);
   const mappedResponseProperties = responseProperties.map(mapResponseProperty);
+  const boundEntityLogicalName = toText(record.boundentitylogicalname);
+  const boundTargetKind = normalizeBoundTargetKind(record);
 
   return {
     id,
@@ -204,7 +267,9 @@ function mapDefinition(
     operationKind: normalizeOperationKind(record),
     bindingKind: normalizeBindingKind(record),
     bindingType: toNumber(record.bindingtype),
-    boundEntityLogicalName: toText(record.boundentitylogicalname),
+    boundTargetKind,
+    ...describeBoundTargetKind(boundTargetKind, boundEntityLogicalName),
+    boundEntityLogicalName,
     executePrivilegeName: toText(record.executeprivilegename),
     allowedCustomProcessingStepType: toNumber(record.allowedcustomprocessingsteptype),
     isPrivate: toBoolean(record.isprivate),

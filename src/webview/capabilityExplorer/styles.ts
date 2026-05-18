@@ -777,6 +777,64 @@ th:hover .dvqr-column-resizer::after,
   opacity: 0.55;
 }
 
+.dvqr-bound-target-summary {
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1.25fr);
+  margin-bottom: 12px;
+}
+
+.dvqr-bound-target-summary span,
+.dvqr-target-input-label,
+.dvqr-target-validation {
+  color: var(--vscode-descriptionForeground);
+}
+
+.dvqr-bound-target-summary strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dvqr-target-input-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.dvqr-footer-target-input {
+  background: color-mix(in srgb, var(--vscode-input-background) 65%, transparent);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+}
+
+.dvqr-target-input {
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+  border-radius: 6px;
+  color: var(--vscode-input-foreground);
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.dvqr-target-input:focus {
+  border-color: var(--vscode-focusBorder);
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.dvqr-target-input-invalid {
+  border-color: var(--vscode-errorForeground);
+}
+
+.dvqr-target-validation {
+  line-height: 1.45;
+  margin-top: 8px;
+}
+
+.dvqr-target-validation-error {
+  color: var(--vscode-errorForeground);
+}
+
 @media (max-width: 1180px) {
   .dvqr-explorer-layout,
   .dvqr-explorer-layout-with-drawer {

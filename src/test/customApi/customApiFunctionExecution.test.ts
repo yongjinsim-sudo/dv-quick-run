@@ -6,6 +6,8 @@ import {
   buildCustomApiFunctionExecutionPath,
   buildCustomApiFunctionExecutionPlan,
   canExecuteCustomApiAction,
+  canExecuteCustomApiCollectionBoundAction,
+  canExecuteCustomApiEntityBoundAction,
   canExecuteCustomApiFunction
 } from "../../customApi/execution/customApiFunctionExecution.js";
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
@@ -101,6 +103,77 @@ suite("customApiFunctionExecution", () => {
     assert.equal(canExecuteCustomApiAction(buildDefinition({ operationKind: "Action", bindingKind: "Bound", boundEntityLogicalName: "account" })), false);
     assert.equal(canExecuteCustomApiAction(buildDefinition({ operationKind: "Action", isPrivate: true })), false);
     assert.equal(canExecuteCustomApiFunction(action), false);
+  });
+
+  test("allows preview-ready public collection-bound Actions for POST execution", () => {
+    const action = buildDefinition({
+      operationKind: "Action",
+      uniqueName: "new_CollectionAction",
+      bindingKind: "Bound",
+      boundTargetKind: "collection",
+      boundEntityLogicalName: "account",
+      boundEntitySetName: "accounts",
+      requestParameters: [
+        { uniqueName: "Name", typeLabel: "String", executionSupport: "preview-ready", isOptional: false }
+      ],
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Preview-ready — collection-bound Action",
+        reason: "Matched as collection-bound Action.",
+        odataQualifiedName: "Microsoft.Dynamics.CRM.new_CollectionAction",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_CollectionAction",
+        odataBoundTargetKind: "collection",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts"
+      }
+    });
+
+    assert.equal(canExecuteCustomApiCollectionBoundAction(action), true);
+    assert.equal(buildCustomApiActionExecutionPath(action), "/accounts/Microsoft.Dynamics.CRM.new_CollectionAction");
+    const plan = buildCustomApiActionExecutionPlan(action, { Name: "test" }, "https://example.crm.dynamics.com");
+
+    assert.equal(plan.path, "/accounts/Microsoft.Dynamics.CRM.new_CollectionAction");
+    assert.deepEqual(plan.body, { Name: "test" });
+  });
+
+
+
+  test("allows preview-ready public entity-bound Actions for POST execution when a target row is supplied", () => {
+    const action = buildDefinition({
+      operationKind: "Action",
+      uniqueName: "new_EntityAction",
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      boundEntityLogicalName: "account",
+      boundEntitySetName: "accounts",
+      requestParameters: [
+        { uniqueName: "Name", typeLabel: "String", executionSupport: "preview-ready", isOptional: false }
+      ],
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Preview-ready — entity-bound Action",
+        reason: "Matched as entity-bound Action.",
+        odataQualifiedName: "Microsoft.Dynamics.CRM.new_EntityAction",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_EntityAction",
+        odataBoundTargetKind: "entity",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts"
+      }
+    });
+
+    assert.equal(canExecuteCustomApiEntityBoundAction(action, undefined), false);
+    assert.equal(canExecuteCustomApiEntityBoundAction(action, "11111111-1111-1111-1111-111111111111"), true);
+    assert.equal(
+      buildCustomApiActionExecutionPath(action, "11111111-1111-1111-1111-111111111111"),
+      "/accounts(11111111-1111-1111-1111-111111111111)/Microsoft.Dynamics.CRM.new_EntityAction"
+    );
+
+    const plan = buildCustomApiActionExecutionPlan(action, { Name: "test" }, "https://example.crm.dynamics.com", {
+      boundTargetRowId: "11111111-1111-1111-1111-111111111111"
+    });
+
+    assert.equal(plan.path, "/accounts(11111111-1111-1111-1111-111111111111)/Microsoft.Dynamics.CRM.new_EntityAction");
+    assert.deepEqual(plan.body, { Name: "test" });
   });
 
   test("builds an Action execution plan with POST body", () => {

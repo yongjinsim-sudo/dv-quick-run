@@ -18,6 +18,7 @@ export class PreviewSurfacePanel {
   private static currentPanel: vscode.WebviewPanel | undefined;
   private static currentPreviewId: string | undefined;
   private static pendingResolver: ((result: PreviewSurfaceResult) => void) | undefined;
+  private static lastCapabilityExecutionResultModel: PreviewSurfaceModel | undefined;
   private static lastViewColumn: vscode.ViewColumn | undefined;
   private static hasFocusedOnce = false;
 
@@ -34,6 +35,7 @@ export class PreviewSurfacePanel {
     }
 
     PreviewSurfacePanel.currentPreviewId = model.previewId;
+    PreviewSurfacePanel.rememberCapabilityExecutionResult(model);
 
     if (!PreviewSurfacePanel.currentPanel) {
       const viewColumn = PreviewSurfacePanel.resolveCreateViewColumn();
@@ -97,6 +99,7 @@ export class PreviewSurfacePanel {
 
   public static update(model: PreviewSurfaceModel): void {
     PreviewSurfacePanel.currentPreviewId = model.previewId;
+    PreviewSurfacePanel.rememberCapabilityExecutionResult(model);
 
     if (!PreviewSurfacePanel.currentPanel) {
       const viewColumn = PreviewSurfacePanel.resolveCreateViewColumn();
@@ -212,6 +215,27 @@ export class PreviewSurfacePanel {
     return column as vscode.ViewColumn;
   }
 
+  private static rememberCapabilityExecutionResult(model: PreviewSurfaceModel): void {
+    if (model.kind === "customApi" && model.title.includes("Custom API") && model.title.includes("Result")) {
+      PreviewSurfacePanel.lastCapabilityExecutionResultModel = model;
+    }
+  }
+
+  private static restoreCapabilityExecutionResult(): void {
+    const model = PreviewSurfacePanel.lastCapabilityExecutionResultModel;
+    const panel = PreviewSurfacePanel.currentPanel;
+
+    if (!model || !panel) {
+      void vscode.window.showInformationMessage("DV Quick Run: No previous Custom API execution result is available to reopen.");
+      return;
+    }
+
+    PreviewSurfacePanel.currentPreviewId = model.previewId;
+    panel.title = "DV Quick Run – Preview";
+    panel.webview.html = getPreviewSurfaceHtml(panel.webview, model);
+    panel.reveal(PreviewSurfacePanel.resolveRevealViewColumn(panel.viewColumn), true);
+  }
+
   private static async handleMessage(message: PreviewSurfaceMessage): Promise<void> {
     if (message.type !== "previewAction") {
       return;
@@ -226,10 +250,23 @@ export class PreviewSurfacePanel {
       return;
     }
 
+    if (message.actionId === "returnToCapabilityExecutionResult") {
+      PreviewSurfacePanel.restoreCapabilityExecutionResult();
+      return;
+    }
+
     const resolver = PreviewSurfacePanel.pendingResolver;
+
+    if (!resolver) {
+      if (message.actionKind === "cancel") {
+        PreviewSurfacePanel.disposeCurrent();
+      }
+      return;
+    }
+
     PreviewSurfacePanel.pendingResolver = undefined;
 
-    resolver?.({
+    resolver({
       actionId: message.actionId,
       actionKind: message.actionKind,
       previewId: message.previewId

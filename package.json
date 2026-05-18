@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query and Custom API workbench for OData, FetchXML, $batch, and operational investigation in VS Code.",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",

@@ -34,7 +34,14 @@ const metadata = `<?xml version="1.0" encoding="utf-8"?>
       <Function Name="new_BoundFunction" IsBound="true">
         <Parameter Name="entity" Type="Microsoft.Dynamics.CRM.account" />
       </Function>
+      <Action Name="new_BoundAccountAction" IsBound="true">
+        <Parameter Name="entity" Type="Microsoft.Dynamics.CRM.account" />
+      </Action>
+      <Action Name="new_BoundAccountCollectionAction" IsBound="true">
+        <Parameter Name="entityset" Type="Collection(Microsoft.Dynamics.CRM.account)" />
+      </Action>
       <EntityContainer Name="Service">
+        <EntitySet Name="accounts" EntityType="Microsoft.Dynamics.CRM.account" />
         <FunctionImport Name="new_TestFunction" Function="Microsoft.Dynamics.CRM.new_TestFunction" />
         <ActionImport Name="new_TestAction" Action="Microsoft.Dynamics.CRM.new_TestAction" />
       </EntityContainer>
@@ -49,6 +56,11 @@ suite("odataOperationRegistry", () => {
     assert.ok(registry.operations.some((operation) => operation.kind === "Function" && operation.importName === "new_TestFunction"));
     assert.ok(registry.operations.some((operation) => operation.kind === "Action" && operation.importName === "new_TestAction"));
     assert.ok(registry.operations.some((operation) => operation.kind === "Function" && operation.name === "new_BoundFunction" && operation.bindingKind === "Bound"));
+    const entityBoundAction = registry.operations.find((operation) => operation.kind === "Action" && operation.name === "new_BoundAccountAction" && operation.boundTargetKind === "entity");
+    assert.ok(entityBoundAction);
+    assert.equal(entityBoundAction.boundEntitySetName, "accounts");
+    assert.equal(entityBoundAction.bindingParameterName, "entity");
+    assert.ok(registry.operations.some((operation) => operation.kind === "Action" && operation.name === "new_BoundAccountCollectionAction" && operation.boundTargetKind === "collection"));
   });
 
   test("marks matching unbound function as executable", () => {
@@ -82,6 +94,42 @@ suite("odataOperationRegistry", () => {
     }), registry);
 
     assert.equal(eligibility.state, "preview-only-private");
+  });
+
+
+
+  test("preserves entity-bound Action metadata as target-required inspect-only eligibility", () => {
+    const registry = parseODataOperationRegistry(metadata);
+    const eligibility = resolveCustomApiExecutionEligibility(buildDefinition({
+      uniqueName: "new_BoundAccountAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      boundEntityLogicalName: "account"
+    }), registry);
+
+    assert.equal(eligibility.state, "preview-only-bound-context-required");
+    assert.equal(eligibility.label, "Inspect only — target row required");
+    assert.equal(eligibility.odataBoundTargetKind, "entity");
+    assert.equal(eligibility.odataBoundEntityLogicalName, "account");
+    assert.equal(eligibility.odataBoundEntitySetName, "accounts");
+    assert.equal(eligibility.odataBindingParameterName, "entity");
+  });
+
+  test("preserves collection-bound Action metadata as deferred inspect-only eligibility", () => {
+    const registry = parseODataOperationRegistry(metadata);
+    const eligibility = resolveCustomApiExecutionEligibility(buildDefinition({
+      uniqueName: "new_BoundAccountCollectionAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundTargetKind: "collection",
+      boundEntityLogicalName: "account"
+    }), registry);
+
+    assert.equal(eligibility.state, "preview-only-bound-context-required");
+    assert.equal(eligibility.label, "Inspect only — collection-bound Action deferred");
+    assert.equal(eligibility.odataBoundTargetKind, "collection");
+    assert.equal(eligibility.odataBoundEntityLogicalName, "account");
   });
 
   test("marks unbound operation definitions without imports as preview-only", () => {

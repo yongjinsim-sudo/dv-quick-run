@@ -66,7 +66,7 @@ suite("customApiExecutionPreviewBuilder", () => {
     }));
 
     assert.equal(preview.method, "GET");
-    assert.equal(preview.pathTemplate, "/{entity-set-for-account}({record-id})/new_GetStatus(CorrelationId=@CorrelationId)?@CorrelationId='00000000-0000-0000-0000-000000000000'");
+    assert.equal(preview.pathTemplate, "/<entity-set-unresolved>({record-id})/new_GetStatus(CorrelationId=@CorrelationId)?@CorrelationId='00000000-0000-0000-0000-000000000000'");
     assert.equal(preview.queryParameterTemplate, "");
     assert.equal(preview.requestBody, undefined);
   });
@@ -109,6 +109,117 @@ suite("customApiExecutionPreviewBuilder", () => {
     assert.equal(preview.queryParameterTemplate, "");
   });
 
+  test("builds a bound action preview using metadata-derived entity set route", () => {
+    const preview = buildCustomApiExecutionPreview(buildDefinition({
+      uniqueName: "new_BoundAccountAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundEntityLogicalName: "account",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — target row required",
+        reason: "Bound target required.",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_BoundAccountAction",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts",
+        odataBindingParameterName: "entity"
+      }
+    }), { environmentUrl: "https://example.crm.dynamics.com" });
+
+    assert.equal(preview.method, "POST");
+    assert.equal(preview.boundEntitySetName, "accounts");
+    assert.equal(preview.bindingParameterName, "entity");
+    assert.equal(preview.pathTemplate, "/accounts({record-id})/Microsoft.Dynamics.CRM.new_BoundAccountAction");
+    assert.equal(preview.requestUrlTemplate, "https://example.crm.dynamics.com/api/data/v9.2/accounts({record-id})/Microsoft.Dynamics.CRM.new_BoundAccountAction");
+  });
+
+
+  test("builds a collection-bound action preview without an entity record placeholder", () => {
+    const preview = buildCustomApiExecutionPreview(buildDefinition({
+      uniqueName: "new_CollectionAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundTargetKind: "collection",
+      boundEntityLogicalName: "account",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — collection-bound Action deferred",
+        reason: "Collection-bound Action execution is deferred.",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_CollectionAction",
+        odataBoundTargetKind: "collection",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts",
+        odataBindingParameterName: "entityset"
+      }
+    }), { environmentUrl: "https://example.crm.dynamics.com" });
+
+    assert.equal(preview.method, "POST");
+    assert.equal(preview.boundEntitySetName, "accounts");
+    assert.equal(preview.bindingParameterName, "entityset");
+    assert.equal(preview.pathTemplate, "/accounts/Microsoft.Dynamics.CRM.new_CollectionAction");
+    assert.equal(preview.requestUrlTemplate, "https://example.crm.dynamics.com/api/data/v9.2/accounts/Microsoft.Dynamics.CRM.new_CollectionAction");
+  });
+
+
+
+  test("uses explicit entity-bound target row id in the preview route", () => {
+    const preview = buildCustomApiExecutionPreview(buildDefinition({
+      uniqueName: "new_BoundAccountAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — target row required",
+        reason: "Bound target required.",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_BoundAccountAction",
+        odataBoundTargetKind: "entity",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts",
+        odataBindingParameterName: "entity"
+      }
+    }), {
+      environmentUrl: "https://example.crm.dynamics.com",
+      boundTargetRowId: "11111111-2222-3333-4444-555555555555"
+    });
+
+    assert.equal(preview.pathTemplate, "/accounts(11111111-2222-3333-4444-555555555555)/Microsoft.Dynamics.CRM.new_BoundAccountAction");
+    assert.equal(preview.requestUrlTemplate, "https://example.crm.dynamics.com/api/data/v9.2/accounts(11111111-2222-3333-4444-555555555555)/Microsoft.Dynamics.CRM.new_BoundAccountAction");
+    assert.deepEqual(preview.boundTargetContext, {
+      entityLogicalName: "account",
+      entitySetName: "accounts",
+      rowId: "11111111-2222-3333-4444-555555555555",
+      source: "manualInput"
+    });
+  });
+
+  test("renders explicit entity-bound target context in preview sections", () => {
+    const preview = buildCustomApiExecutionPreview(buildDefinition({
+      uniqueName: "new_BoundAccountAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — target row required",
+        reason: "Bound target required.",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_BoundAccountAction",
+        odataBoundTargetKind: "entity",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts",
+        odataBindingParameterName: "entity"
+      }
+    }), { boundTargetRowId: "11111111-2222-3333-4444-555555555555" });
+    const sections = buildCustomApiExecutionPreviewSurfaceSections(preview);
+    const joined = sections.map((section) => `${section.title}\n${section.content}`).join("\n");
+
+    assert.match(joined, /Target input source: manualInput/);
+    assert.match(joined, /Target entity: account/);
+    assert.match(joined, /Target row id: 11111111-2222-3333-4444-555555555555/);
+    assert.match(joined, /Bound Action preview only; explicit target row context is captured/);
+  });
+
+
   test("keeps inspect-only parameters visible in the preview", () => {
     const preview = buildCustomApiExecutionPreview(buildDefinition({
       requestParameters: [
@@ -134,18 +245,20 @@ suite("customApiExecutionPreviewBuilder", () => {
 
     assert.deepEqual(sections.map((section) => section.title), [
       "Summary",
-      "Operation",
+      "Parameters",
+      "Operation metadata",
       "Action execution trust",
       "Request preview",
+      "Preview payload state",
+      "Execution confirmation shell",
       "Request body template",
       "Execution policy",
-      "Parameters",
       "Parameter input guidance",
       "Notes"
     ]);
     assert.match(sections[0].content, /Execution: Preview-only; no Dataverse operation will be executed from this surface/);
     assert.match(sections[0].content, /Environment authority: No executable authority is created by this preview/);
-    assert.match(sections[3].content, /POST .*Microsoft\.Dynamics\.CRM\.new_TestOperation/);
+    assert.match(sections[4].content, /POST .*Microsoft\.Dynamics\.CRM\.new_TestOperation/);
   });
 
   test("describes unbound Action previews as POST-ready without executable authority", () => {
@@ -173,7 +286,7 @@ suite("customApiExecutionPreviewBuilder", () => {
 
     assert.match(sections[0].content, /Execution: Action preview-ready; POST execution is not enabled in this workstream/);
     assert.match(sections[0].content, /Environment authority: No executable authority is created by this preview/);
-    assert.match(sections[1].content, /Capability: Action execution eligible/);
+    assert.match(sections[2].content, /Capability: Action execution eligible/);
   });
 
   test("uses supplied Action preview parameter values in the POST body", () => {
@@ -217,6 +330,93 @@ suite("customApiExecutionPreviewBuilder", () => {
   });
 
 
+
+
+  test("excludes bound binding parameter from preview body and user-shaped payload", () => {
+    const preview = buildCustomApiExecutionPreview(buildDefinition({
+      uniqueName: "new_BoundAction",
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      boundEntityLogicalName: "account",
+      boundEntitySetName: "accounts",
+      bindingParameterName: "entity",
+      requestParameters: [
+        { uniqueName: "entity", type: "mscrm.account", typeLabel: "Entity", executionSupport: "preview-ready", isOptional: false },
+        { uniqueName: "Name", type: "10", typeLabel: "String", executionSupport: "preview-ready", isOptional: false }
+      ]
+    }), {
+      boundTargetRowId: "11111111-1111-1111-1111-111111111111",
+      parameterValues: {
+        entity: { shouldBeIgnored: true },
+        Name: "Preview name"
+      }
+    });
+
+    assert.deepEqual(preview.requestBody, { Name: "Preview name" });
+    assert.equal(preview.omittedBindingParameterCount, 1);
+    assert.equal(preview.parameters.some((parameter) => parameter.name === "entity"), false);
+    assert.equal(preview.parameters[0]?.valueSource, "user-supplied");
+  });
+
+
+  test("renders dedicated bound Action preview context and entity-bound wording", () => {
+    const preview = buildCustomApiExecutionPreview(buildDefinition({
+      uniqueName: "new_BoundAccountAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundTargetKind: "entity",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — target row required",
+        reason: "Bound target required.",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_BoundAccountAction",
+        odataBoundTargetKind: "entity",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts",
+        odataBindingParameterName: "entity"
+      }
+    }), { boundTargetRowId: "11111111-2222-3333-4444-555555555555" });
+    const sections = buildCustomApiExecutionPreviewSurfaceSections(preview);
+    const context = sections.find((section) => section.title === "Bound Action preview context");
+    const notes = sections.find((section) => section.title === "Notes");
+
+    assert.ok(context);
+    assert.match(context.content, /Operation type: Bound Action/);
+    assert.match(context.content, /Binding kind: entity/);
+    assert.match(context.content, /Metadata-derived route: \/accounts\(11111111-2222-3333-4444-555555555555\)\/Microsoft\.Dynamics\.CRM\.new_BoundAccountAction/);
+    assert.match(context.content, /Preview authority: This preview is scoped to this operation, route, captured input, and active environment only\./);
+    assert.ok(notes);
+    assert.match(notes.content, /This operation is entity-bound\. The target row is represented by the metadata-derived route, not by a JSON body field\./);
+  });
+
+  test("renders collection-bound wording without selected-record guidance", () => {
+    const preview = buildCustomApiExecutionPreview(buildDefinition({
+      uniqueName: "new_CollectionAction",
+      operationKind: "Action",
+      bindingKind: "Bound",
+      boundTargetKind: "collection",
+      executionEligibility: {
+        state: "preview-only-bound-context-required",
+        label: "Inspect only — collection-bound Action deferred",
+        reason: "Collection-bound Action execution is deferred.",
+        odataInvocationName: "Microsoft.Dynamics.CRM.new_CollectionAction",
+        odataBoundTargetKind: "collection",
+        odataBoundEntityLogicalName: "account",
+        odataBoundEntitySetName: "accounts",
+        odataBindingParameterName: "entityset"
+      }
+    }));
+    const sections = buildCustomApiExecutionPreviewSurfaceSections(preview);
+    const context = sections.find((section) => section.title === "Bound Action preview context");
+    const notes = sections.find((section) => section.title === "Notes");
+
+    assert.ok(context);
+    assert.match(context.content, /Binding kind: collection/);
+    assert.match(context.content, /Target: Collection scope; no row id is accepted in this workstream/);
+    assert.ok(notes);
+    assert.match(notes.content, /This operation is collection-bound\. Collection-bound execution is deferred and remains inspect-only\./);
+    assert.doesNotMatch(notes.content, /selected record id/);
+  });
 
   test("renders AI execution policy block in preview sections", () => {
     const preview = buildCustomApiExecutionPreview(buildDefinition({

@@ -2,6 +2,8 @@ export type CustomApiOperationKind = "Action" | "Function";
 
 export type CustomApiBindingKind = "Bound" | "Unbound" | "Unknown";
 
+export type CustomApiBoundTargetKind = "none" | "entity" | "collection" | "unknown";
+
 export interface CustomApiRequestParameter {
   id?: string;
   uniqueName: string;
@@ -46,6 +48,10 @@ export interface CustomApiExecutionEligibility {
   odataInvocationName?: string;
   odataKind?: CustomApiOperationKind;
   odataBindingKind?: CustomApiBindingKind;
+  odataBoundTargetKind?: CustomApiBoundTargetKind;
+  odataBoundEntityLogicalName?: string;
+  odataBoundEntitySetName?: string;
+  odataBindingParameterName?: string;
 }
 
 export type CustomApiExecutionCapabilityMode =
@@ -86,6 +92,9 @@ export interface CustomApiExecutionCapability {
   executionMethod?: "GET" | "POST";
   operationKind: CustomApiOperationKind;
   bindingKind: CustomApiBindingKind;
+  boundTargetKind?: CustomApiBoundTargetKind;
+  boundTargetLabel?: string;
+  boundTargetReason?: string;
   executionPolicy?: CustomApiExecutionPolicyDecision;
   actionReadiness?: import("../execution/actionExecutionReadiness.js").ActionExecutionReadiness;
 }
@@ -98,7 +107,12 @@ export interface CustomApiDefinition {
   operationKind: CustomApiOperationKind;
   bindingKind: CustomApiBindingKind;
   bindingType?: number;
+  boundTargetKind?: CustomApiBoundTargetKind;
+  boundTargetLabel?: string;
+  boundTargetReason?: string;
   boundEntityLogicalName?: string;
+  boundEntitySetName?: string;
+  bindingParameterName?: string;
   executePrivilegeName?: string;
   allowedCustomProcessingStepType?: number;
   isPrivate?: boolean;
@@ -120,7 +134,10 @@ export interface CustomApiCatalogueRow {
   displayName: string;
   operationKind: CustomApiOperationKind;
   bindingKind: CustomApiBindingKind;
+  boundTargetKind: CustomApiBoundTargetKind;
+  boundTargetLabel: string;
   boundEntityLogicalName: string;
+  boundEntitySetName: string;
   requestParameterCount: number;
   responsePropertyCount: number;
   requiredParameterCount: number;

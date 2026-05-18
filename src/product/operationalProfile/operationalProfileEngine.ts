@@ -270,12 +270,6 @@ function buildOperationalProfileNavigationActions(
 function buildOperationalProfileFutureSurfaces(): OperationalProfileFutureSurface[] {
   return [
     {
-      id: "customApiDiscovery",
-      label: "Custom API Discovery",
-      description: "Discover Custom APIs associated with this entity and investigate related operational execution surfaces.",
-      availability: "freeRoadmap"
-    },
-    {
       id: "crossSurfaceInvestigationPivots",
       label: "Cross-surface investigation pivots",
       description: "Move between related DV Quick Run investigation surfaces while preserving the current operational context.",

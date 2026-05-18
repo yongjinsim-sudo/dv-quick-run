@@ -6,6 +6,261 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.10.4 — Entity-Bound Action Execution & Preview-First Operational Execution
+
+This release completes the next major phase of Capability Explorer by introducing safe, preview-first execution support for **entity-bound Dataverse Actions**.
+
+DV Quick Run can now:
+
+* resolve bound entity execution routes
+* generate executable entity-bound OData invocation paths
+* support explicit target-row execution
+* execute bound Actions safely through preview-first workflows
+* capture execution diagnostics and operational investigation context
+* preserve governance-aware execution trust semantics
+
+This marks a major transition:
+
+```text
+Capability discovery
+→
+operational execution infrastructure
+```
+
+The goal is not unrestricted execution.
+
+It is:
+
+* explicit operational execution
+* metadata-backed execution understanding
+* safe execution confirmation
+* execution investigation continuity
+* governance-aware execution trust
+* operational transparency
+
+---
+
+## ⚡ Entity-Bound Action Execution (Major)
+
+Capability Explorer now supports execution of eligible entity-bound Dataverse Actions.
+
+Supported:
+
+* entity-bound Actions
+* collection-bound Actions
+* explicit target-row execution
+* metadata-backed route resolution
+* preview-first execution workflows
+
+Behaviour:
+
+* bound execution requires explicit target row context
+* execution routes are generated using OData metadata semantics
+* execution remains environment-bound and confirmation-driven
+* request shape is validated before execution
+
+Examples:
+
+```text
+/workflows(<guid>)/Microsoft.Dynamics.CRM.SomeBoundAction
+```
+
+Results:
+
+* operational execution directly from Capability Explorer
+* safer execution semantics
+* reduced manual REST tooling dependency
+* clearer understanding of Dataverse Action invocation models
+
+---
+
+## 🧭 Bound Route Resolution (NEW)
+
+Introduced metadata-aware bound route generation.
+
+Capability Explorer now resolves:
+
+* entity-bound routes
+* collection-bound routes
+* executable OData invocation paths
+* target entity set semantics
+
+Behaviour:
+
+* entity-bound operations now correctly require explicit row context
+* collection-bound operations resolve against entity collections
+* invalid preview routes are prevented before execution
+
+Results:
+
+* trustworthy execution previews
+* safer operational execution
+* stronger alignment with real Dataverse OData semantics
+
+---
+
+## 🧠 Execution Capability Semantics Refinement
+
+Refined operational execution semantics for bound operations.
+
+Capability Explorer now distinguishes:
+
+* inspect-only
+* preview-only
+* preview-ready
+* executable
+* bound-context-required execution
+
+New operational semantics include:
+
+* `Inspect only — target row required`
+* `Preview bound request`
+* `Ready to run bound Action`
+
+Behaviour:
+
+* entity-bound Actions no longer appear ambiguously executable
+* missing bound context is surfaced explicitly
+* preview surfaces explain why execution is or is not currently possible
+
+Results:
+
+* calmer operational UX
+* stronger execution trust
+* reduced execution ambiguity
+* clearer Dataverse execution understanding
+
+---
+
+## 🛡️ Preview Payload Validation Improvements
+
+Refined Action parameter validation and preview generation behaviour.
+
+Changes include:
+
+* parameter metadata treated as execution contract authority
+* entity metadata choice values now treated as advisory hints only
+* execution validation now prioritises actual Custom API parameter metadata
+* preview payload validation better aligns with Dataverse runtime expectations
+
+Behaviour:
+
+* primitive execution types remain strongly typed
+* advisory metadata no longer incorrectly overrides Action parameter contracts
+* execution previews remain editable before confirmation
+
+Results:
+
+* safer preview generation
+* fewer false validation failures
+* stronger compatibility with real-world Dataverse Actions
+* clearer distinction between metadata hints and execution contracts
+
+---
+
+## 🔍 Execution Diagnostics & Investigation Context (Expanded)
+
+Bound Action execution now captures structured operational investigation context.
+
+Captured execution context includes:
+
+* execution route
+* execution identifiers
+* execution duration
+* request metadata
+* operation binding metadata
+* execution capability state
+* execution investigation notes
+
+Execution result surfaces now provide:
+
+* request shape visibility
+* execution summary
+* response payload inspection
+* captured execution anchors
+* raw execution context
+
+Results:
+
+* stronger operational traceability
+* clearer execution understanding
+* foundation for deeper execution diagnostics
+* execution-aware investigation continuity
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* entity-bound Action execution
+* collection-bound Action execution
+* explicit GUID target execution
+* OData route generation
+* preview → execute workflows
+* execution diagnostics capture
+* request/response rendering
+* execution context persistence
+* metadata-backed route validation
+
+No regression in:
+
+* Capability Explorer
+* Function execution
+* Execution Insights
+* Result Viewer
+* Guided Traversal
+* `$batch` execution
+* Operational Profiles
+* Query Doctor
+
+---
+
+## 🧭 Notes
+
+This release reinforces a major DV Quick Run invariant:
+
+```text
+execution capability
+must remain:
+explicit
+metadata-aware
+preview-first
+investigation-oriented
+```
+
+Key principles reinforced:
+
+* explicit confirmation over silent execution
+* operational transparency over hidden behaviour
+* metadata-backed execution trust
+* environment-bound execution authority
+* investigation continuity after execution
+* execution diagnostics as operational evidence
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* execute entity-bound Dataverse Actions safely
+* resolve executable bound OData routes automatically
+* support target-row operational execution
+* capture structured execution diagnostics
+* preserve preview-first governance semantics
+* maintain execution investigation continuity
+
+This establishes the foundation for:
+
+* deeper execution diagnostics
+* execution-aware investigation workflows
+* orchestration correlation
+* runtime execution reconstruction
+* future operational execution intelligence
+
+---
+
 ## DV Quick Run v0.10.3 — Execution Support Classification & Operational Capability Semantics
 
 Refined operational execution semantics throughout Capability Explorer to establish a clearer and more trustworthy execution classification model.

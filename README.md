@@ -55,53 +55,56 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.10.3
+## 🆕 What's New in v0.10.4
 
-v0.10.3 hardens Capability Explorer’s Action execution model with clearer **execution support classification**, safer **parameter trust semantics**, and calmer **operational readiness language**.
+v0.10.4 marks a major Capability Explorer milestone: DV Quick Run can now move beyond discovery and safely execute supported Dataverse operational capabilities through preview-first workflows.
 
-This release is not about unrestricted execution.
+This release introduces **entity-bound Action execution**, expands bound Action support, and strengthens the execution pipeline around explicit confirmation, route validation, execution diagnostics, and investigation continuity.
 
-It is about making supported Action execution easier to understand, safer to preview, and more predictable across public, private, AI-related, and unsupported metadata scenarios.
+This is not unrestricted REST execution.
+
+It is governed operational execution inside DV Quick Run’s existing safety model:
+
+```text
+preview → explicit confirmation → execution → inspect result → investigate evidence
+```
 
 Highlights:
 
-* eligible unbound Dataverse Actions remain preview-first and explicitly confirmed
-* Action capability states are now clearer and more consistent
-* parameter support is classified as preview-ready, partially preview-ready, or inspect-only
-* private/internal Actions remain discoverable and inspectable without becoming executable
-* unsupported parameter shapes now surface preview-request behaviour instead of misleading run affordances
-* high-risk or AI-related operations use calmer advisory language and clearer trust semantics
-* execution result surfaces carry Action trust context forward for investigation
+* supported entity-bound Dataverse Actions can now be executed from Capability Explorer
+* collection-bound Action execution is supported through metadata-aware route generation
+* explicit target-row context is required for entity-bound execution
+* bound OData routes are resolved and validated before execution
+* editable preview payloads now support safer JSON-based request shaping
+* Custom API parameter metadata remains the execution contract
+* bound entity metadata is used only as advisory enrichment for hints and possible values
+* execution results capture request shape, response payload, status, duration, request ID, and diagnostic context
+* Capability Execution Insights can continue from captured execution anchors
+* execution remains environment-bound, preview-first, and explicitly confirmed
 
-Capability Explorer now distinguishes:
+Capability Explorer now supports a broader operational execution model:
 
-* Preview-ready
-* Partially preview-ready
-* Ready to run
-* Run with caution
-* Preview request only
-* Inspect only — internal/private Action
-* Inspect only — unsupported parameters
-* AI-generated content advisory
+* preview-first Function execution
+* preview-first eligible unbound Action execution
+* preview-first entity-bound Action execution
+* preview-first collection-bound Action execution
+* explicit target-row execution workflows
+* metadata-aware bound route generation
+* governed execution result inspection
+* execution-aware investigation continuation
 
-This release reinforces the v0.10.x execution model:
-
-```text
-metadata validates
-policy blocks
-heuristics warn
-user confirms
-```
-
-and keeps the core execution invariant intact:
+This release reinforces the v0.10.x execution invariants:
 
 ```text
-execution capability
-≠
-execution recommendation
+Custom API metadata = discovery truth
+OData metadata = execution exposure truth
+bound route metadata = execution route truth
+Custom API parameter metadata = execution contract
+bound entity metadata = advisory enrichment only
+active environment = execution authority boundary
 ```
 
-DV Quick Run continues evolving as a metadata-aware operational investigation and governed execution workbench for Dataverse and Power Platform engineering.
+DV Quick Run continues evolving from a metadata-aware query and investigation tool into a governed operational execution workbench for Dataverse and Power Platform engineering — while keeping execution explicit, bounded, inspectable, and evidence-backed.
 
 ---
 
@@ -323,10 +326,15 @@ It helps identify:
 
 Capability Explorer supports:
 
+* entity-bound operational execution
 * operational capability discovery
 * metadata-backed execution validation
 * preview-first Function execution
 * preview-first eligible unbound Action execution
+* preview-first entity-bound Action execution
+* preview-first collection-bound Action execution
+* metadata-aware bound route generation
+* explicit target-row execution workflows
 * simple parameter request shaping
 * explicit execution confirmation
 * execution diagnostics
@@ -347,6 +355,37 @@ This keeps unsupported or private operations useful for investigation without ma
 
 ![Capability Explorer Function Preview](docs/capability-model-get-preview-sample.png)
 
+### 🔗 Entity-Bound Action Execution
+
+DV Quick Run can now execute supported entity-bound Dataverse Actions using explicit target-row context.
+
+Capability Explorer automatically:
+
+* resolves executable bound OData routes
+* generates preview-ready request shapes
+* validates execution eligibility
+* preserves preview-first execution trust semantics
+* captures execution diagnostics and operational investigation context
+
+Bound execution remains:
+
+* metadata-aware
+* explicit
+* environment-bound
+* confirmation-driven
+* investigation-oriented
+
+![Entity-Bound Action Execution](docs/bound-actions-success-1.png)
+
+Execution results preserve:
+
+* request shape visibility
+* execution identifiers
+* execution diagnostics
+* captured operational investigation context
+
+![Entity-Bound Action Result](docs/bound-actions-success-2.png)
+
 The capability model is intentionally:
 
 * metadata-driven
@@ -363,6 +402,7 @@ The governing model is:
 ```text
 Custom API metadata = discovery truth
 OData metadata = execution exposure truth
+bound route metadata = execution route truth
 active environment = execution authority boundary
 ```
 
