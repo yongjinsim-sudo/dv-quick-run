@@ -25,6 +25,32 @@ function renderMetricIcon(metric: CapabilityExplorerMetric): string {
   return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 13.4a4 4 0 0 1 0-5.7l2-2a4 4 0 1 1 5.7 5.7l-1.2 1.2" /><path d="M13.4 10.6a4 4 0 0 1 0 5.7l-2 2a4 4 0 1 1-5.7-5.7l1.2-1.2" /></svg>`;
 }
 
+
+function renderAccessRestriction(model: CapabilityExplorerViewModel): string {
+  const restriction = model.accessRestriction;
+  if (!restriction) {
+    return "";
+  }
+
+  const rows = [
+    restriction.principalId ? ["Principal user", restriction.principalId] : undefined,
+    restriction.missingPrivilege ? ["Missing privilege", restriction.missingPrivilege] : undefined,
+    restriction.entityLogicalName ? ["Required entity", restriction.entityLogicalName] : undefined,
+    restriction.statusCode ? ["HTTP status", restriction.statusCode] : undefined,
+    restriction.correlationId ? ["Correlation ID", restriction.correlationId] : undefined
+  ].filter((row): row is string[] => Array.isArray(row));
+
+  return `<section class="dvqr-access-state" aria-label="Capability Explorer access restriction">
+    <div class="dvqr-access-icon" aria-hidden="true">🔒</div>
+    <div>
+      <h2>${escapeHtml(restriction.title)}</h2>
+      <p>${escapeHtml(restriction.message)}</p>
+      ${rows.length > 0 ? `<dl>${rows.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
+      <p class="dvqr-muted">Ask your administrator to grant access to Custom API metadata discovery. DV Quick Run has not attempted any execution.</p>
+    </div>
+  </section>`;
+}
+
 function renderMetric(metric: CapabilityExplorerMetric): string {
   return `<article class="dvqr-metric-card dvqr-metric-card-${escapeHtml(metric.tone)}">
     <div class="dvqr-metric-icon dvqr-metric-icon-${escapeHtml(metric.tone)}">${renderMetricIcon(metric)}</div>
@@ -55,11 +81,11 @@ export function getCapabilityExplorerMarkup(model: CapabilityExplorerViewModel):
       </div>
     </header>
 
-    <section class="dvqr-metric-grid" aria-label="Capability summary">
+    ${model.accessRestriction ? renderAccessRestriction(model) : `<section class="dvqr-metric-grid" aria-label="Capability summary">
       ${model.metrics.map(renderMetric).join("")}
-    </section>
+    </section>`}
 
-    <section>
+    ${model.accessRestriction ? "" : `<section>
       <div class="dvqr-section-header">
         <div>
           <h2>Custom APIs (${model.customApiCount})</h2>
@@ -147,6 +173,6 @@ export function getCapabilityExplorerMarkup(model: CapabilityExplorerViewModel):
           <div data-role="detail-content"></div>
         </aside>
       </div>
-    </section>
+    </section>`}
   </main>`;
 }

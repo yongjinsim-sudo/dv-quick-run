@@ -133,8 +133,8 @@ function describeBoundTargetKind(
     return {
       boundTargetLabel: "Collection-bound",
       boundTargetReason: boundEntityLogicalName
-        ? `This operation is bound to the ${boundEntityLogicalName} collection. Collection-bound execution is deferred.`
-        : "This operation is bound to a collection. Collection-bound execution is deferred."
+        ? `This operation is bound to the ${boundEntityLogicalName} collection. Collection-bound execution can run when OData route metadata and supported payload parameters are available.`
+        : "This operation is bound to a collection. Collection-bound execution can run when OData route metadata and supported payload parameters are available."
     };
   }
 

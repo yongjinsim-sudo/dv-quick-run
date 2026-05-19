@@ -143,7 +143,7 @@ suite("customApiExecutionPreviewBuilder", () => {
       boundEntityLogicalName: "account",
       executionEligibility: {
         state: "preview-only-bound-context-required",
-        label: "Inspect only — collection-bound Action deferred",
+        label: "Preview-ready — collection-bound Action",
         reason: "Collection-bound Action execution is deferred.",
         odataInvocationName: "Microsoft.Dynamics.CRM.new_CollectionAction",
         odataBoundTargetKind: "collection",
@@ -216,7 +216,7 @@ suite("customApiExecutionPreviewBuilder", () => {
     assert.match(joined, /Target input source: manualInput/);
     assert.match(joined, /Target entity: account/);
     assert.match(joined, /Target row id: 11111111-2222-3333-4444-555555555555/);
-    assert.match(joined, /Bound Action preview only; explicit target row context is captured/);
+    assert.match(joined, /Execution available after explicit confirmation/);
   });
 
 
@@ -284,8 +284,8 @@ suite("customApiExecutionPreviewBuilder", () => {
     }));
     const sections = buildCustomApiExecutionPreviewSurfaceSections(preview);
 
-    assert.match(sections[0].content, /Execution: Action preview-ready; POST execution is not enabled in this workstream/);
-    assert.match(sections[0].content, /Environment authority: No executable authority is created by this preview/);
+    assert.match(sections[0].content, /Execution: Execution available after explicit confirmation/);
+    assert.match(sections[0].content, /Environment authority: Execution is restricted to the active environment that generated this preview/);
     assert.match(sections[2].content, /Capability: Action execution eligible/);
   });
 
@@ -397,7 +397,7 @@ suite("customApiExecutionPreviewBuilder", () => {
       boundTargetKind: "collection",
       executionEligibility: {
         state: "preview-only-bound-context-required",
-        label: "Inspect only — collection-bound Action deferred",
+        label: "Preview-ready — collection-bound Action",
         reason: "Collection-bound Action execution is deferred.",
         odataInvocationName: "Microsoft.Dynamics.CRM.new_CollectionAction",
         odataBoundTargetKind: "collection",
@@ -412,9 +412,9 @@ suite("customApiExecutionPreviewBuilder", () => {
 
     assert.ok(context);
     assert.match(context.content, /Binding kind: collection/);
-    assert.match(context.content, /Target: Collection scope; no row id is accepted in this workstream/);
+    assert.match(context.content, /Target: Collection scope; no row id is required or accepted/);
     assert.ok(notes);
-    assert.match(notes.content, /This operation is collection-bound\. Collection-bound execution is deferred and remains inspect-only\./);
+    assert.match(notes.content, /This operation is collection-bound\. The collection route is metadata-derived; no target row id is required or accepted\./);
     assert.doesNotMatch(notes.content, /selected record id/);
   });
 

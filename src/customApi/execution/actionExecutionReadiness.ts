@@ -1,6 +1,7 @@
 import type { CustomApiDefinition, CustomApiRequestParameter } from "../models/customApiTypes.js";
 import { evaluateAiExecutionPolicy, type AiExecutionPolicyOptions } from "./aiExecutionPolicy.js";
 import type { BoundActionTargetValidationResult } from "./boundActionTargetValidation.js";
+import { classifyCustomApiSupportedParameterKind, isCustomApiParameterPreviewShapeSupported } from "./customApiParameterSupport.js";
 
 export type ActionExecutionReadinessState =
   | "ready"
@@ -18,6 +19,8 @@ export type ActionExecutionReasonCode =
   | "SimplePreviewReadyParameters"
   | "ComplexParameterShape"
   | "EntityReferenceParameter"
+  | "PrimitiveArrayParameter"
+  | "EntityReferenceArrayParameter"
   | "CollectionParameter"
   | "UnknownParameterType"
   | "BoundEntityAction"
@@ -47,7 +50,9 @@ export type ActionParameterTrustState =
   | "supportedNullablePrimitive"
   | "supportedEnumLike"
   | "unsupportedComplexObject"
-  | "unsupportedEntityReference"
+  | "supportedEntityReference"
+  | "supportedPrimitiveArray"
+  | "supportedEntityReferenceArray"
   | "unsupportedCollection"
   | "unknownType";
 
@@ -81,21 +86,19 @@ const DESTRUCTIVE_PATTERN = /(^|[_\s-])(delete|remove|purge|destroy|erase|termin
 const BUSINESS_STATE_PATTERN = /(^|[_\s-])(cancel|close|approve|reject|submit|post|publish|deactivate|activate|merge|assign|share|grant|revoke|void|refund|payment|pay|provision)([_\s-]|$)/i;
 const EXTERNAL_SIDE_EFFECT_PATTERN = /(^|[_\s-])(send|email|notify|dispatch|sync|trigger|execute|callout|webhook|export)([_\s-]|$)/i;
 
-function normalizeType(parameter: CustomApiRequestParameter): string {
-  return (parameter.typeLabel || parameter.type || "").trim().toLowerCase();
-}
-
 function classifyParameterTrust(parameter: CustomApiRequestParameter): ActionParameterTrustClassification {
-  const normalizedType = normalizeType(parameter);
   const typeLabel = parameter.typeLabel || parameter.type || "Unknown";
   const isOptional = parameter.isOptional === true;
+  const supportedKind = classifyCustomApiSupportedParameterKind(parameter);
+  const previewShapeSupported = isCustomApiParameterPreviewShapeSupported(parameter);
+  const supported = previewShapeSupported && parameter.executionSupport === "preview-ready";
 
-  if (["boolean", "datetime", "decimal", "float", "guid", "integer", "string"].includes(normalizedType)) {
+  if (supportedKind === "primitive") {
     return {
       parameterName: parameter.uniqueName,
       typeLabel,
       state: isOptional ? "supportedNullablePrimitive" : "supportedPrimitive",
-      supported: parameter.executionSupport === "preview-ready",
+      supported,
       reasonCode: "SimplePreviewReadyParameters",
       reason: isOptional
         ? "Optional primitive parameter can be safely omitted or represented in the preview payload."
@@ -103,47 +106,58 @@ function classifyParameterTrust(parameter: CustomApiRequestParameter): ActionPar
     };
   }
 
-  if (["picklist", "choice", "optionset", "option set"].includes(normalizedType)) {
+  if (supportedKind === "enumLike") {
     return {
       parameterName: parameter.uniqueName,
       typeLabel,
       state: "supportedEnumLike",
-      supported: parameter.executionSupport === "preview-ready",
+      supported,
       reasonCode: "SimplePreviewReadyParameters",
-      reason: "Enum-like parameter is only executable when metadata marks it preview-ready."
+      reason: "Enum-like parameter is executable when metadata marks it preview-ready and the payload value remains explicit."
     };
   }
 
-  if (["entityreference", "entity reference", "lookup"].includes(normalizedType)) {
+  if (supportedKind === "entityReference") {
     return {
       parameterName: parameter.uniqueName,
       typeLabel,
-      state: "unsupportedEntityReference",
-      supported: false,
+      state: "supportedEntityReference",
+      supported,
       reasonCode: "EntityReferenceParameter",
-      reason: "Entity reference parameters need explicit record-binding semantics before execution support."
+      reason: "EntityReference parameter can be represented as explicit JSON with @odata.type and one GUID id property."
     };
   }
 
-  if (["entitycollection", "stringarray", "collection", "array"].includes(normalizedType)) {
+  if (supportedKind === "primitiveArray") {
+    return {
+      parameterName: parameter.uniqueName,
+      typeLabel,
+      state: "supportedPrimitiveArray",
+      supported,
+      reasonCode: "PrimitiveArrayParameter",
+      reason: "Primitive array parameter can be represented as explicit JSON array values."
+    };
+  }
+
+  if (supportedKind === "entityReferenceArray") {
+    return {
+      parameterName: parameter.uniqueName,
+      typeLabel,
+      state: "supportedEntityReferenceArray",
+      supported,
+      reasonCode: "EntityReferenceArrayParameter",
+      reason: "EntityReference array parameter can be represented as explicit JSON array of EntityReference objects."
+    };
+  }
+
+  if (supportedKind === "unsupportedComplex") {
     return {
       parameterName: parameter.uniqueName,
       typeLabel,
       state: "unsupportedCollection",
       supported: false,
       reasonCode: "CollectionParameter",
-      reason: "Collection parameters need a dedicated payload workspace before execution support."
-    };
-  }
-
-  if (["entity", "money", "complex"].includes(normalizedType)) {
-    return {
-      parameterName: parameter.uniqueName,
-      typeLabel,
-      state: "unsupportedComplexObject",
-      supported: false,
-      reasonCode: "ComplexParameterShape",
-      reason: "Complex parameters need explicit payload shaping before execution support."
+      reason: "Complex object and collection parameters remain inspect-only until a bounded payload authoring model is introduced."
     };
   }
 
@@ -157,22 +171,25 @@ function classifyParameterTrust(parameter: CustomApiRequestParameter): ActionPar
   };
 }
 
-function mapBoundTargetValidationReasonCode(code: BoundActionTargetValidationResult["reasonCodes"][number]): ActionExecutionReasonCode {
-  if (code === "BoundCollectionActionDeferred") {
-    return "CollectionBoundActionDeferred";
-  }
-
-  return code;
-}
-
 function mapBoundTargetValidationReasonCodes(
   reasonCodes: readonly BoundActionTargetValidationResult["reasonCodes"][number][]
 ): ActionExecutionReasonCode[] {
-  return reasonCodes.map(mapBoundTargetValidationReasonCode);
+  return [...reasonCodes];
 }
 
 function uniqueReasonCodes(reasonCodes: readonly ActionExecutionReasonCode[]): ActionExecutionReasonCode[] {
   return [...new Set(reasonCodes)];
+}
+
+
+function getPreviewReadyParameterReasonCodes(parameterTrust: readonly ActionParameterTrustClassification[]): ActionExecutionReasonCode[] {
+  const supportedParameterReasonCodes = parameterTrust
+    .filter((parameter) => parameter.supported)
+    .map((parameter) => parameter.reasonCode);
+
+  return supportedParameterReasonCodes.length > 0
+    ? uniqueReasonCodes(supportedParameterReasonCodes)
+    : ["SimplePreviewReadyParameters"];
 }
 
 function operationSearchText(definition: CustomApiDefinition): string {
@@ -198,8 +215,8 @@ function getCautionReasonCodes(definition: CustomApiDefinition): ActionExecution
   return reasonCodes;
 }
 
-function confirmationPhrase(definition: CustomApiDefinition): string {
-  return definition.uniqueName.toUpperCase();
+function confirmationPhrase(definition: CustomApiDefinition, targetRowId?: string): string {
+  return targetRowId ? `${definition.uniqueName} ${targetRowId}` : definition.uniqueName.toUpperCase();
 }
 
 export function resolveActionExecutionReadiness(
@@ -278,7 +295,7 @@ export function resolveActionExecutionReadiness(
           .filter((parameter) => !parameter.supported)
           .map((parameter) => parameter.reasonCode);
 
-        if (definition.executionReadiness !== "preview-ready" || unsupportedParameterReasons.length > 0) {
+        if ((definition.executionReadiness !== undefined && definition.executionReadiness !== "preview-ready") || unsupportedParameterReasons.length > 0) {
           return {
             state: "inspectOnlyUnsupportedParameters",
             label: "Inspect only — unsupported parameters",
@@ -307,7 +324,7 @@ export function resolveActionExecutionReadiness(
           reasonCodes: uniqueReasonCodes([
             "BoundEntityAction",
             "BoundRouteResolved",
-            "SimplePreviewReadyParameters",
+            ...getPreviewReadyParameterReasonCodes(parameterTrust),
             ...mapBoundTargetValidationReasonCodes(targetValidation.reasonCodes),
             ...cautionReasonCodes
           ]),
@@ -315,7 +332,7 @@ export function resolveActionExecutionReadiness(
           canExecute: true,
           caution,
           requiresTypedConfirmation: cautionReasonCodes.includes("PotentialDestructiveOperation"),
-          confirmationPhrase: cautionReasonCodes.includes("PotentialDestructiveOperation") ? confirmationPhrase(definition) : undefined,
+          confirmationPhrase: cautionReasonCodes.includes("PotentialDestructiveOperation") ? confirmationPhrase(definition, targetValidation.normalizedRowId) : undefined,
           parameterTrust
         };
       }
@@ -354,7 +371,7 @@ export function resolveActionExecutionReadiness(
         };
       }
 
-      if (definition.executionReadiness !== "preview-ready" || unsupportedParameterReasons.length > 0) {
+      if ((definition.executionReadiness !== undefined && definition.executionReadiness !== "preview-ready") || unsupportedParameterReasons.length > 0) {
         return {
           state: "inspectOnlyUnsupportedParameters",
           label: "Inspect only — unsupported parameters",
@@ -383,7 +400,7 @@ export function resolveActionExecutionReadiness(
         reasonCodes: uniqueReasonCodes([
           "CollectionBoundAction",
           "BoundRouteResolved",
-          "SimplePreviewReadyParameters",
+          ...getPreviewReadyParameterReasonCodes(parameterTrust),
           ...cautionReasonCodes
         ]),
         canPreview: true,
@@ -413,7 +430,7 @@ export function resolveActionExecutionReadiness(
   const unsupportedParameterReasons = parameterTrust
     .filter((parameter) => !parameter.supported)
     .map((parameter) => parameter.reasonCode);
-  if (definition.executionReadiness !== "preview-ready" || unsupportedParameterReasons.length > 0) {
+  if ((definition.executionReadiness !== undefined && definition.executionReadiness !== "preview-ready") || unsupportedParameterReasons.length > 0) {
     return {
       state: "inspectOnlyUnsupportedParameters",
       label: "Inspect only — unsupported parameters",
@@ -467,7 +484,7 @@ export function resolveActionExecutionReadiness(
     reason: caution
       ? "Metadata-valid and executable. Operational-impact signals detected; review recommended."
       : "This public unbound Action is OData-exposed, preview-ready, and executable after explicit confirmation.",
-    reasonCodes: uniqueReasonCodes(["PublicODataAction", "SimplePreviewReadyParameters", ...cautionReasonCodes]),
+    reasonCodes: uniqueReasonCodes(["PublicODataAction", ...getPreviewReadyParameterReasonCodes(parameterTrust), ...cautionReasonCodes]),
     canPreview: true,
     canExecute: true,
     caution,

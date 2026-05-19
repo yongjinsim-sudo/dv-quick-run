@@ -58,7 +58,7 @@ suite("boundActionTargetValidation", () => {
     assert.deepEqual(result.reasonCodes, ["BoundTargetEntityMismatch"]);
   });
 
-  test("rejects collection-bound Actions for target row execution", () => {
+  test("accepts collection-bound Action route context", () => {
     const result = validateBoundActionTarget({
       definition: buildDefinition({
         boundTargetKind: "collection",
@@ -68,9 +68,9 @@ suite("boundActionTargetValidation", () => {
       rowId: "11111111-2222-3333-4444-555555555555"
     });
 
-    assert.equal(result.valid, false);
-    assert.equal(result.label, "Inspect only — collection-bound Action deferred");
-    assert.deepEqual(result.reasonCodes, ["BoundCollectionActionDeferred"]);
+    assert.equal(result.valid, true);
+    assert.equal(result.label, "Collection route valid");
+    assert.deepEqual(result.reasonCodes, ["CollectionBoundAction"]);
   });
 
   test("rejects unresolved entity set metadata", () => {

@@ -125,8 +125,8 @@ function renderBackTraversalButton(currentModel) {
         }
 
         function groupActionsByGroup(actions) {
-            const order = ["refine", "slice", "dice", "correct", "investigate", "traversal", "copy", "metadata"];
-            const labels = { refine: "Refine", slice: "Slice", dice: "Dice", correct: "Correct", investigate: "Investigate", traversal: "Traversal", copy: "Copy", metadata: "Metadata" };
+            const order = ["refine", "slice", "dice", "correct", "operate", "capability", "investigate", "traversal", "copy", "metadata"];
+            const labels = { refine: "Refine", slice: "Slice", dice: "Dice", correct: "Correct", operate: "Operate", capability: "Capability", investigate: "Investigate", traversal: "Traversal", copy: "Copy", metadata: "Metadata" };
             return order
                 .map((group) => ({ group, label: labels[group], actions: actions.filter((action) => action.group === group) }))
                 .filter((entry) => entry.actions.length > 0);
@@ -166,6 +166,9 @@ function renderBackTraversalButton(currentModel) {
                 "<span class=\\"inline-action-icon\\">" + escapeHtml(action.icon) + "</span>" +
                 (includeLabel ? "<span class=\\"inline-action-label\\">" + escapeHtml(action.title) + "</span>" : "") +
                 "</button>";
+            return isEnabled
+                ? buttonHtml
+                : "<span class=\\"inline-action-disabled-wrapper\\" title=\\"" + escapeAttribute(title) + "\\">" + buttonHtml + "</span>";
         }
 
         function buildGroupedOverflowMenuHtml(actions) {

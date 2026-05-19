@@ -55,9 +55,9 @@ const TYPE_METADATA_BY_CODE: Record<string, Omit<CustomApiTypeMetadata, "rawType
     label: "EntityReference",
     category: "Reference",
     description: "Reference to a Dataverse record.",
-    executionSupport: "inspect-only",
-    supportLabel: "Inspect only",
-    supportReason: "Entity references need record-binding semantics before execution preview."
+    executionSupport: "preview-ready",
+    supportLabel: "Preview-ready",
+    supportReason: "Entity references can be represented as explicit JSON with @odata.type and one GUID id property."
   },
   "6": {
     label: "Float",
@@ -103,9 +103,9 @@ const TYPE_METADATA_BY_CODE: Record<string, Omit<CustomApiTypeMetadata, "rawType
     label: "StringArray",
     category: "Collection",
     description: "Collection of text values.",
-    executionSupport: "inspect-only",
-    supportLabel: "Inspect only",
-    supportReason: "Array payloads need explicit collection editing support before execution preview."
+    executionSupport: "preview-ready",
+    supportLabel: "Preview-ready",
+    supportReason: "String arrays can be represented as explicit JSON arrays with lightweight add/remove editing."
   },
   "12": {
     label: "Guid",

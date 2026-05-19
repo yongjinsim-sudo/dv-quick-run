@@ -139,6 +139,7 @@ suite("resultViewerInvariants", () => {
       "preview-odata-filter",
       "preview-root-odata-orderby",
       "update-record",
+      "preview-bound-actions",
       "copy-display-value",
       "copy-raw-value",
       "copy-record-url",
@@ -156,6 +157,7 @@ suite("resultViewerInvariants", () => {
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",
       "open-in-dataverse-ui",
+      "preview-bound-actions",
       "copy-record-url"
     ]);
     assert.strictEqual(model.rowActions?.[0]?.actions[0]?.payload.columnName, "contactid");
@@ -233,6 +235,7 @@ suite("resultViewerInvariants", () => {
       "preview-odata-filter",
       "preview-root-odata-orderby",
       "update-record",
+      "preview-bound-actions",
       "copy-display-value",
       "copy-raw-value",
       "copy-record-url",
@@ -259,6 +262,7 @@ suite("resultViewerInvariants", () => {
     assert.deepStrictEqual(model.rowActions?.[0]?.actions.map((action) => action.id), [
       "investigate-record",
       "open-in-dataverse-ui",
+      "preview-bound-actions",
       "copy-record-url",
     ]);
   });

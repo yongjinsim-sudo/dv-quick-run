@@ -2,7 +2,7 @@ import type { CustomApiBoundTargetKind, CustomApiDefinition } from "../models/cu
 
 export type BoundActionTargetValidationReasonCode =
   | "BoundEntityAction"
-  | "BoundCollectionActionDeferred"
+  | "CollectionBoundAction"
   | "BoundTargetRequired"
   | "BoundTargetEntityMismatch"
   | "BoundTargetInvalidGuid"
@@ -82,14 +82,39 @@ export function validateBoundActionTarget(
   const expectedEntityLogicalName = entityLogicalName.trim().toLowerCase();
 
   if (bindingKind === "collection") {
-    return fail({
+    if (!entitySetName || entitySetName === ENTITY_SET_UNRESOLVED) {
+      return fail({
+        entityLogicalName,
+        entitySetName,
+        bindingKind,
+        reasonCodes: ["BoundRouteUnavailable"],
+        label: "Inspect only — collection route unavailable",
+        reason: "The collection-bound entity set could not be resolved from metadata, so DV Quick Run cannot create an executable collection route."
+      });
+    }
+
+    const capturedEnvironment = normalizeEnvironmentUrl(request.capturedEnvironmentUrl);
+    const activeEnvironment = normalizeEnvironmentUrl(request.activeEnvironmentUrl);
+    if (capturedEnvironment && activeEnvironment && capturedEnvironment !== activeEnvironment) {
+      return fail({
+        entityLogicalName,
+        entitySetName,
+        bindingKind,
+        reasonCodes: ["BoundTargetEnvironmentMismatch"],
+        label: "Stale context",
+        reason: "The active environment changed after this collection-bound Action context was created. Refresh Capability Explorer and generate a fresh preview."
+      });
+    }
+
+    return {
+      valid: true,
       entityLogicalName,
       entitySetName,
       bindingKind,
-      reasonCodes: ["BoundCollectionActionDeferred"],
-      label: "Inspect only — collection-bound Action deferred",
-      reason: "Collection-bound Action execution is deferred and does not accept a target row id."
-    });
+      reasonCodes: ["CollectionBoundAction"],
+      label: "Collection route valid",
+      reason: "The collection-bound entity set and active environment are valid for a collection-bound Action preview."
+    };
   }
 
   if (bindingKind !== "entity") {

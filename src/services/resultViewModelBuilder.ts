@@ -19,6 +19,7 @@ import { buildBatchResultViewerBinderSuggestion, buildResultViewerBinderSuggesti
 import { parseEditorQuery } from "../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 import { parseExpandClause, type ExpandNode } from "../commands/router/actions/shared/expand/expandComposer.js";
 import type { BinderSuggestion } from "../product/binder/binderTypes.js";
+import { getCustomApiDiscoveryAccessRestriction } from "../customApi/discovery/customApiDiscoveryAccessState.js";
 
 export interface ResultViewerEnvironmentInfo {
     name: string;
@@ -879,11 +880,72 @@ function appendHiddenRelationshipActionsToPrimaryCell(
     primaryCell.overflowActions = merged.filter((action) => action.placement === "overflow");
 }
 
+
+function appendBoundActionPreviewToPrimaryCell(
+    rowModel: Record<string, ResultViewerCell>,
+    options: ResultViewerBuildOptions | undefined,
+    primaryIdField: string | undefined
+): void {
+    if (!primaryIdField) {
+        return;
+    }
+
+    const primaryCell = rowModel[primaryIdField];
+    if (!primaryCell) {
+        return;
+    }
+
+    const rowId = String(primaryCell.rawValue ?? primaryCell.copyValue ?? primaryCell.value ?? "").trim();
+    const entityLogicalName = String(options?.entityLogicalName ?? "").trim();
+    if (!rowId || !entityLogicalName) {
+        return;
+    }
+
+    const existingActions = primaryCell.actions ?? [];
+    if (existingActions.some((action) => action.id === "preview-bound-actions")) {
+        return;
+    }
+
+    const accessRestriction = getCustomApiDiscoveryAccessRestriction(undefined);
+    const action: ResultViewerResolvedAction = {
+        id: "preview-bound-actions",
+        title: "Bound Actions on this record",
+        icon: "⚙",
+        placement: "overflow",
+        group: "operate",
+        kind: "preview",
+        payload: {
+            guid: rowId,
+            entitySetName: options?.entitySetName,
+            entityLogicalName,
+            primaryIdField,
+            columnName: primaryIdField,
+            rawValue: rowId,
+            currentValue: rowId,
+            sourceDocumentUri: options?.sourceTarget?.sourceDocumentUri,
+            sourceRangeStartLine: options?.sourceTarget?.sourceRangeStartLine,
+            sourceRangeStartCharacter: options?.sourceTarget?.sourceRangeStartCharacter,
+            sourceRangeEndLine: options?.sourceTarget?.sourceRangeEndLine,
+            sourceRangeEndCharacter: options?.sourceTarget?.sourceRangeEndCharacter
+        },
+        isEnabled: accessRestriction === undefined,
+        disabledReason: accessRestriction
+            ? `Custom API discovery is restricted for this environment or security context.${accessRestriction.missingPrivilege ? ` Missing privilege: ${accessRestriction.missingPrivilege}.` : ""}`
+            : undefined
+    };
+
+    const merged = [...existingActions, action];
+    primaryCell.actions = merged;
+    primaryCell.primaryActions = merged.filter((candidate) => candidate.placement === "primary");
+    primaryCell.overflowActions = merged.filter((candidate) => candidate.placement === "overflow");
+}
+
 function buildRowActions(row: Record<string, ResultViewerCell>, primaryIdField?: string): ResultViewerResolvedAction[] {
     const priority = [
         "investigate-record",
         "open-in-dataverse-ui",
         "continue-traversal",
+        "preview-bound-actions",
         "copy-record-url"
         ];
     const byId = new Map<string, ResultViewerResolvedAction>();
@@ -1336,6 +1398,13 @@ export function buildResultViewerModel(
                     primaryIdField,
                     environment
                 }, primaryIdField, fieldMap, queryMode);
+                appendBoundActionPreviewToPrimaryCell(mapped, {
+                    ...options,
+                    entitySetName,
+                    entityLogicalName,
+                    primaryIdField,
+                    environment
+                }, primaryIdField);
             }
 
             return mapped;
@@ -1432,6 +1501,13 @@ export function buildResultViewerModel(
             primaryIdField,
             environment
         }, primaryIdField, fieldMap, detectResultViewerQueryMode(query));
+        appendBoundActionPreviewToPrimaryCell(mapped, {
+            ...options,
+            entitySetName,
+            entityLogicalName,
+            primaryIdField,
+            environment
+        }, primaryIdField);
 
         const recordRowActions = [{ rowIndex: 0, actions: buildRowActions(mapped, primaryIdField) }].filter((item) => item.actions.length > 0);
 

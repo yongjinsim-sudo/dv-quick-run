@@ -6,6 +6,306 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.10.5 — Result Viewer Action Execution, Operational Capability Trust & Access-Aware UX
+
+This release completes the first full operational execution loop between the Result Viewer and Capability Explorer.
+
+DV Quick Run can now:
+
+* launch bound Dataverse Actions directly from Result Viewer row context
+* preserve preview-first execution workflows
+* classify operational execution trust more clearly
+* capture execution investigation context from Result Viewer interactions
+* degrade gracefully under restricted Custom API permissions
+* preserve calm operational UX even when execution capability is unavailable
+
+This release focuses heavily on:
+
+```text
+operational execution trust
++
+access-aware UX
++
+investigation continuity
+```
+
+The goal is not unrestricted execution.
+
+It is:
+
+* explicit operational execution
+* preview-first investigation workflows
+* trustworthy execution affordances
+* graceful degradation under restricted environments
+* metadata-backed operational understanding
+* calmer operational exploration
+
+---
+
+## ⚡ Result Viewer Bound Action Execution (Major)
+
+Result Viewer rows can now launch entity-bound Dataverse Actions directly from operational investigation context.
+
+Added:
+
+* `Bound Actions on this record`
+* row-context Action previews
+* target-row execution binding
+* preview-first operational execution flows
+
+Behaviour:
+
+* Result Viewer supplies explicit entity + row context
+* execution still requires preview and confirmation
+* preview surfaces preserve environment-bound authority semantics
+* bound route generation remains metadata-aware
+
+Examples:
+
+```text
+/workflows(<guid>)/Microsoft.Dynamics.CRM.SomeBoundAction
+```
+
+Results:
+
+* tighter investigation → execution workflow continuity
+* reduced context switching
+* operational execution directly from investigation surfaces
+* clearer entity-bound Action semantics
+
+---
+
+## 🧭 Result Viewer → Capability Explorer Operational Bridge (NEW)
+
+Introduced a structured bridge between:
+
+```text
+Result Viewer
+→
+Capability execution preview
+→
+Operational execution result
+```
+
+Behaviour:
+
+* Result Viewer now acts as an operational execution launch surface
+* execution previews preserve investigation anchors
+* execution results retain operational context and captured identifiers
+
+Captured context includes:
+
+* source surface
+* target entity
+* target row id
+* execution identifiers
+* execution duration
+* operation binding metadata
+
+Results:
+
+* stronger investigation continuity
+* clearer operational execution lineage
+* safer execution understanding
+* execution-aware operational workflows
+
+---
+
+## 🛡️ Access-Restricted Capability Explorer UX (Major)
+
+Capability Explorer now degrades gracefully when users lack Custom API discovery permissions.
+
+Previously:
+
+* discovery failures surfaced as raw Output errors
+* Capability Explorer launch could feel broken or incomplete
+
+Now:
+
+* Capability Explorer opens in restricted-access mode
+* operational messaging remains calm and explicit
+* discovery restrictions are surfaced structurally inside the UI
+
+Restricted surfaces now display:
+
+* principal user
+* missing privilege
+* restricted entity
+* HTTP status
+
+Examples:
+
+```text
+Missing privilege:
+prvReadCustomAPI
+```
+
+Behaviour:
+
+* no execution is attempted
+* no misleading capability state is shown
+* operational trust remains preserved
+
+Results:
+
+* calmer operational UX
+* reduced confusion under restricted environments
+* clearer remediation guidance
+* safer enterprise dogfooding experience
+
+---
+
+## 🔒 Access-Aware Result Viewer Action Behaviour (NEW)
+
+Result Viewer operational actions now adapt to Custom API discovery availability.
+
+Behaviour:
+
+* Bound Action launch remains visible but unavailable
+* restricted execution surfaces provide explicit operational explanation
+* unavailable actions no longer fail silently
+
+Examples:
+
+```text
+Bound Actions unavailable.
+Missing prvReadCustomAPI privilege on customapi.
+```
+
+Additional behaviour:
+
+* missing privilege names are extracted dynamically from Dataverse responses
+* avoids misleading hardcoded privilege assumptions
+* preserves accurate remediation guidance
+
+Results:
+
+* stronger execution trust
+* clearer operational semantics
+* reduced ambiguity around disabled operational actions
+* more truthful capability behaviour
+
+---
+
+## 🎨 Operational Execution UX Refinement
+
+Refined execution affordances throughout Result Viewer and Capability Explorer.
+
+Changes include:
+
+* improved bound Action wording
+* clearer operational grouping semantics
+* calmer disabled-state presentation
+* execution-warning consistency across environments
+* improved preview/result visual continuity
+
+Environment trust semantics now align consistently with:
+
+* DEV / GREY environments
+* SIT / AMBER environments
+* PROD / RED environments
+
+Behaviour:
+
+* execution warnings remain contextual
+* preview-first trust framing remains visible
+* operational authority boundaries remain explicit
+
+Results:
+
+* more cohesive operational UX
+* stronger environment-awareness
+* cleaner execution mental model
+* reduced operational friction
+
+---
+
+## 🧠 Investigation Context & Execution Continuity (Expanded)
+
+Bound Action execution from Result Viewer now captures richer operational investigation context.
+
+Captured execution metadata includes:
+
+* execution route
+* bound entity information
+* row-context authority
+* request identifiers
+* execution timestamps
+* execution duration
+* execution source surface
+
+Execution result surfaces now preserve:
+
+* operational trust context
+* execution investigation anchors
+* execution-aware diagnostics continuity
+
+Results:
+
+* stronger operational traceability
+* safer execution understanding
+* clearer investigation lineage
+* improved future execution diagnostics foundation
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Result Viewer bound Action launch
+* entity-bound execution previews
+* preview → execute workflows
+* restricted-access Capability Explorer rendering
+* dynamic privilege extraction
+* disabled action behaviour
+* environment-aware warning presentation
+* execution investigation context capture
+
+No regression in:
+
+* Capability Explorer
+* Execution Insights
+* Guided Traversal
+* `$batch` execution
+* Operational Profiles
+* Query Doctor
+* Result Viewer interaction workflows
+
+---
+
+## 🧭 Notes
+
+Key principles reinforced:
+
+* graceful degradation over noisy failure
+* operational transparency over hidden execution state
+* investigation continuity over disconnected execution workflows
+* accurate capability semantics over optimistic execution assumptions
+* environment-aware operational trust
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* launch bound Actions directly from Result Viewer rows
+* preserve operational execution continuity
+* degrade gracefully under restricted capability access
+* surface accurate privilege remediation guidance
+* maintain preview-first operational execution trust
+* capture richer execution investigation context
+
+This establishes the foundation for:
+
+* deeper execution-aware investigation workflows
+* operational capability trust refinement
+* richer execution diagnostics correlation
+* future operational execution intelligence
+
+---
+
 ## DV Quick Run v0.10.4 — Entity-Bound Action Execution & Preview-First Operational Execution
 
 This release completes the next major phase of Capability Explorer by introducing safe, preview-first execution support for **entity-bound Dataverse Actions**.

@@ -55,42 +55,44 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.10.4
+## 🆕 What's New in v0.10.5
 
-v0.10.4 marks a major Capability Explorer milestone: DV Quick Run can now move beyond discovery and safely execute supported Dataverse operational capabilities through preview-first workflows.
+v0.10.5 completes the first full operational execution loop between the **Result Viewer** and **Capability Explorer**.
 
-This release introduces **entity-bound Action execution**, expands bound Action support, and strengthens the execution pipeline around explicit confirmation, route validation, execution diagnostics, and investigation continuity.
+DV Quick Run can now move from a returned Dataverse row directly into compatible bound Actions for that row, while preserving the same preview-first, environment-bound, explicit execution model used throughout Capability Explorer.
 
-This is not unrestricted REST execution.
+This is not direct row automation.
 
-It is governed operational execution inside DV Quick Run’s existing safety model:
+It is contextual, governed operational execution inside DV Quick Run’s existing safety model:
 
 ```text
-preview → explicit confirmation → execution → inspect result → investigate evidence
+query → inspect row → preview bound Action → explicit confirmation → execute → inspect result → investigate evidence
 ```
 
 Highlights:
 
-* supported entity-bound Dataverse Actions can now be executed from Capability Explorer
-* collection-bound Action execution is supported through metadata-aware route generation
-* explicit target-row context is required for entity-bound execution
-* bound OData routes are resolved and validated before execution
-* editable preview payloads now support safer JSON-based request shaping
-* Custom API parameter metadata remains the execution contract
-* bound entity metadata is used only as advisory enrichment for hints and possible values
-* execution results capture request shape, response payload, status, duration, request ID, and diagnostic context
-* Capability Execution Insights can continue from captured execution anchors
-* execution remains environment-bound, preview-first, and explicitly confirmed
+* Result Viewer rows now expose **Bound Actions on this record** from the row action menu
+* entity-bound Actions can be launched from row context without manually constructing OData routes
+* Result Viewer supplies only the target entity and row id; execution still requires preview and confirmation
+* execution previews clearly show source, target entity, target row id, request route, payload, and environment authority
+* execution results capture request shape, response payload, status, duration, request ID, and investigation context
+* Capability Explorer now degrades gracefully when Custom API discovery access is restricted
+* restricted Custom API access surfaces actionable details such as principal user, missing privilege, required entity, and HTTP status
+* Result Viewer bound Action entry remains visible but explains restricted access calmly when discovery is unavailable
+* unsupported or complex parameter shapes remain inspectable without pretending to be safely executable
+* environment trust banners now align consistently with DEV, amber, and RED/PROD-style execution caution semantics
 
-Capability Explorer now supports a broader operational execution model:
+Capability Explorer and Result Viewer now support a more integrated operational execution model:
 
 * preview-first Function execution
 * preview-first eligible unbound Action execution
 * preview-first entity-bound Action execution
 * preview-first collection-bound Action execution
+* Result Viewer row-context bound Action previews
 * explicit target-row execution workflows
 * metadata-aware bound route generation
 * governed execution result inspection
+* access-aware capability discovery UX
 * execution-aware investigation continuation
 
 This release reinforces the v0.10.x execution invariants:
@@ -101,10 +103,11 @@ OData metadata = execution exposure truth
 bound route metadata = execution route truth
 Custom API parameter metadata = execution contract
 bound entity metadata = advisory enrichment only
+Result Viewer row context = target identity only
 active environment = execution authority boundary
 ```
 
-DV Quick Run continues evolving from a metadata-aware query and investigation tool into a governed operational execution workbench for Dataverse and Power Platform engineering — while keeping execution explicit, bounded, inspectable, and evidence-backed.
+DV Quick Run continues evolving from a metadata-aware query and investigation tool into a governed operational execution workbench for Dataverse and Power Platform engineering — while keeping execution explicit, bounded, inspectable, access-aware, and evidence-backed.
 
 ---
 
@@ -118,6 +121,14 @@ Typical workflow:
 
 ```text
 start simple → run → explore → refine → update safely → refresh → repeat
+```
+
+Result Viewer also acts as an operational launch surface. From a primary row id, you can open **Bound Actions on this record** to preview compatible entity-bound Actions for that specific row.
+
+The Result Viewer only supplies target row context. Execution still flows through DV Quick Run’s governed preview surface:
+
+```text
+row → bound Action preview → explicit confirmation → execution result → investigation context
 ```
 
 ---
@@ -333,10 +344,12 @@ Capability Explorer supports:
 * preview-first eligible unbound Action execution
 * preview-first entity-bound Action execution
 * preview-first collection-bound Action execution
+* Result Viewer row-context bound Action previews
 * metadata-aware bound route generation
 * explicit target-row execution workflows
 * simple parameter request shaping
 * explicit execution confirmation
+* access-aware discovery behaviour under restricted permissions
 * execution diagnostics
 * execution result inspection
 * Capability Execution Insights continuation
@@ -385,6 +398,37 @@ Execution results preserve:
 * captured operational investigation context
 
 ![Entity-Bound Action Result](docs/bound-actions-success-2.png)
+
+### 🧭 Result Viewer Bound Actions
+
+Result Viewer rows can now open compatible bound Actions directly from the row action menu.
+
+Use **Bound Actions on this record** to move from a returned Dataverse row into a governed Action preview without manually constructing the bound OData route.
+
+Behaviour:
+
+* the row supplies target entity and row id context
+* DV Quick Run resolves the bound OData route from metadata
+* execution preview remains the authority boundary
+* execution still requires explicit confirmation
+* request and response context are captured as investigation evidence
+
+If Custom API discovery is restricted, DV Quick Run keeps the action visible but explains why it is unavailable instead of showing noisy failures.
+
+### 🔒 Access-Aware Capability Discovery
+
+Capability Explorer now handles restricted Custom API discovery access as an expected enterprise condition.
+
+When access is restricted, DV Quick Run opens a calm restricted-access surface instead of treating the launch as a tool failure.
+
+Where available, DV Quick Run surfaces actionable remediation details:
+
+* principal user
+* missing privilege
+* required entity
+* HTTP status
+
+This keeps enterprise environments understandable even when security roles intentionally restrict Custom API metadata visibility.
 
 The capability model is intentionally:
 
@@ -450,6 +494,8 @@ It detects or guards against risky situations such as:
 * unavailable execution evidence
 * unsupported or inspect-only Custom API execution
 * private/internal Custom APIs remaining preview-request only
+* restricted Custom API discovery access
+* unavailable Result Viewer bound Action discovery
 * unsupported or complex Action parameter shapes
 * high-risk Actions requiring clearer caution semantics
 * AI-related execution blocked by default

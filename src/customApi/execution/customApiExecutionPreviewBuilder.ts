@@ -4,6 +4,7 @@ import { validateBoundActionTarget } from "./boundActionTargetValidation.js";
 import { resolveActionExecutionReadiness } from "./actionExecutionReadiness.js";
 import { buildCustomApiPreviewInvocationPath } from "./customApiInvocationPathBuilder.js";
 import { buildAiExecutionAdvisoryLines, shouldShowAiExecutionAdvisory } from "./aiExecutionPolicy.js";
+import { getCustomApiParameterPlaceholder, isCustomApiParameterPreviewShapeSupported } from "./customApiParameterSupport.js";
 
 export interface CustomApiExecutionPreviewParameter {
   name: string;
@@ -78,24 +79,7 @@ function isBindingParameter(definition: CustomApiDefinition, parameter: CustomAp
 }
 
 function getParameterPlaceholder(parameter: CustomApiRequestParameter): unknown {
-  const typeLabel = parameter.typeLabel?.toLowerCase();
-
-  switch (typeLabel) {
-    case "boolean":
-      return false;
-    case "integer":
-    case "decimal":
-    case "float":
-      return 0;
-    case "datetime":
-      return "2026-01-01T00:00:00Z";
-    case "guid":
-      return "00000000-0000-0000-0000-000000000000";
-    case "string":
-      return `<${parameter.uniqueName}>`;
-    default:
-      return `<inspect-only: ${parameter.typeLabel || parameter.type || "Unknown"}>`;
-  }
+  return getCustomApiParameterPlaceholder(parameter);
 }
 
 function buildPreviewParameterValues(parameters: readonly CustomApiExecutionPreviewParameter[]): Record<string, unknown> {
@@ -121,7 +105,7 @@ function buildPreviewParameters(
   parameterValues: Record<string, unknown> = {}
 ): CustomApiExecutionPreviewParameter[] {
   return definition.requestParameters.filter((parameter) => !isBindingParameter(definition, parameter)).map((parameter) => {
-    const supported = parameter.executionSupport === "preview-ready";
+    const supported = parameter.executionSupport === "preview-ready" && isCustomApiParameterPreviewShapeSupported(parameter);
     const hasUserValue = Object.prototype.hasOwnProperty.call(parameterValues, parameter.uniqueName);
 
     return {
@@ -148,7 +132,7 @@ function buildNotes(definition: CustomApiDefinition, unsupportedParameters: read
     if (boundTargetKind === "entity") {
       notes.push("This operation is entity-bound. The target row is represented by the metadata-derived route, not by a JSON body field.");
     } else if (boundTargetKind === "collection") {
-      notes.push("This operation is collection-bound. Collection-bound execution is deferred and remains inspect-only.");
+      notes.push("This operation is collection-bound. The collection route is metadata-derived; no target row id is required or accepted.");
     } else {
       notes.push("This operation is bound. The entity set route is metadata-derived where available; execution remains inspect-only until the binding shape is fully supported.");
     }
@@ -192,7 +176,8 @@ export function buildCustomApiExecutionPreview(
   });
   const requestUrlTemplate = `${normalizeEnvironmentUrl(options.environmentUrl)}/api/data/v9.2${pathTemplate}`;
   const unsupportedParameters = parameters.filter((parameter) => !parameter.supported);
-  const boundTargetValidation = definition.bindingKind === "Bound" && (definition.boundTargetKind || definition.executionEligibility?.odataBoundTargetKind) === "entity" && options.boundTargetRowId
+  const boundTargetKind = definition.boundTargetKind || definition.executionEligibility?.odataBoundTargetKind;
+  const boundTargetValidation = definition.bindingKind === "Bound" && (boundTargetKind === "collection" || (boundTargetKind === "entity" && options.boundTargetRowId))
     ? validateBoundActionTarget({
       definition,
       rowId: options.boundTargetRowId,
@@ -203,7 +188,7 @@ export function buildCustomApiExecutionPreview(
   const executionCapability = definition.executionCapability || resolveCustomApiExecutionCapability(definition);
   const queryParameterTemplate = "";
   const requestBody = buildRequestBody(parameters, method);
-  const actionReadiness = definition.operationKind === "Action" && boundTargetValidation
+  const actionReadiness = definition.operationKind === "Action"
     ? resolveActionExecutionReadiness(definition, {
       aiPolicy: definition.executionPolicy?.allowed === true ? "allow" : undefined,
       boundTargetValidation
@@ -368,6 +353,8 @@ function compactActionReasonCode(reasonCode: string): string {
     EntityBoundActionRequiresTarget: "Target row required",
     CollectionBoundAction: "Collection-bound Action",
     CollectionBoundActionDeferred: "Collection-bound deferred",
+    PrimitiveArrayParameter: "Primitive array",
+    EntityReferenceArrayParameter: "EntityReference array",
     PrivateCustomApi: "Private/internal",
     MissingActionImport: "Missing ActionImport",
     ValidationUnavailable: "Validation unavailable",
@@ -407,7 +394,7 @@ function renderExecutionState(preview: CustomApiExecutionPreviewModel): string {
   if (preview.method === "POST" && preview.bindingKind === "Bound") {
     return preview.boundTargetContext
       ? "Bound Action preview only; explicit target row context is captured"
-      : "Bound Action preview only; selected row/entity execution context is required";
+      : "Bound Action preview only; entity-bound execution needs target row context, while collection-bound execution uses the resolved collection route";
   }
 
   return "Preview-only; no Dataverse operation will be executed from this surface";

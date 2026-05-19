@@ -270,6 +270,12 @@ function buildOperationalProfileNavigationActions(
 function buildOperationalProfileFutureSurfaces(): OperationalProfileFutureSurface[] {
   return [
     {
+      id: "executionInsightsExpansion",
+      label: "Execution Insights Expansion",
+      description: "Expand operational investigation visibility across audits, solutions, security roles, flows, automation participation, and runtime evidence surfaces.",
+      availability: "freeRoadmap"
+    },
+    {
       id: "crossSurfaceInvestigationPivots",
       label: "Cross-surface investigation pivots",
       description: "Move between related DV Quick Run investigation surfaces while preserving the current operational context.",

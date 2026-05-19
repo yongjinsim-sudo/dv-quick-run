@@ -27,6 +27,16 @@ export interface CapabilityExplorerCustomApiRow {
   description: string;
 }
 
+export interface CapabilityExplorerAccessRestrictionViewModel {
+  title: string;
+  message: string;
+  principalId: string;
+  missingPrivilege: string;
+  entityLogicalName: string;
+  statusCode: string;
+  correlationId: string;
+}
+
 export interface CapabilityExplorerViewModel {
   title: string;
   subtitle: string;
@@ -43,4 +53,5 @@ export interface CapabilityExplorerViewModel {
   actionCount: number;
   functionCount: number;
   definitions: CustomApiDefinition[];
+  accessRestriction?: CapabilityExplorerAccessRestrictionViewModel;
 }
