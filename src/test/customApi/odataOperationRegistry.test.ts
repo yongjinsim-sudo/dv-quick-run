@@ -116,7 +116,7 @@ suite("odataOperationRegistry", () => {
     assert.equal(eligibility.odataBindingParameterName, "entity");
   });
 
-  test("preserves collection-bound Action metadata as deferred inspect-only eligibility", () => {
+  test("preserves collection-bound Action metadata as preview-ready eligibility", () => {
     const registry = parseODataOperationRegistry(metadata);
     const eligibility = resolveCustomApiExecutionEligibility(buildDefinition({
       uniqueName: "new_BoundAccountCollectionAction",
@@ -127,7 +127,7 @@ suite("odataOperationRegistry", () => {
     }), registry);
 
     assert.equal(eligibility.state, "preview-only-bound-context-required");
-    assert.equal(eligibility.label, "Inspect only — collection-bound Action deferred");
+    assert.equal(eligibility.label, "Preview-ready — collection-bound Action");
     assert.equal(eligibility.odataBoundTargetKind, "collection");
     assert.equal(eligibility.odataBoundEntityLogicalName, "account");
   });

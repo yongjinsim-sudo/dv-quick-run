@@ -134,26 +134,26 @@ suite("actionExecutionReadiness", () => {
     assert.ok(readiness.reasonCodes.includes("BoundRouteResolved"));
   });
 
-  test("classifies complex parameters as inspect-only unsupported parameters", () => {
+  test("classifies EntityReference parameters as supported when preview-ready", () => {
     const readiness = resolveActionExecutionReadiness(buildAction({
-      executionReadiness: "inspect-only",
-      executionReadinessReason: "Entity payloads need explicit payload shaping.",
+      executionReadiness: "preview-ready",
+      executionReadinessReason: "EntityReference payloads are preview-ready.",
       requestParameters: [{
         uniqueName: "Target",
         typeLabel: "EntityReference",
-        executionSupport: "inspect-only"
+        executionSupport: "preview-ready"
       }],
       executionEligibility: {
-        state: "preview-only-unsupported-parameters",
-        label: "Preview only — unsupported parameters",
-        reason: "Complex parameters are not execution-ready."
+        state: "executable",
+        label: "Executable via OData metadata",
+        reason: "Matched an ActionImport."
       }
     }));
 
-    assert.equal(readiness.state, "inspectOnlyUnsupportedParameters");
-    assert.equal(readiness.canExecute, false);
+    assert.equal(readiness.state, "ready");
+    assert.equal(readiness.canExecute, true);
     assert.ok(readiness.reasonCodes.includes("EntityReferenceParameter"));
-    assert.equal(readiness.parameterTrust[0]?.state, "unsupportedEntityReference");
+    assert.equal(readiness.parameterTrust[0]?.state, "supportedEntityReference");
   });
 });
 

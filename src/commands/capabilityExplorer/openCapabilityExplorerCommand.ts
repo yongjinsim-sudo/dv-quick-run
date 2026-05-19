@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../context/commandContext.js";
 import { CustomApiDiscoveryService } from "../../customApi/discovery/customApiDiscoveryService.js";
+import { formatCustomApiAccessRestrictionSummary, parseCustomApiAccessRestriction, type CustomApiAccessRestrictionDetails } from "../../customApi/discovery/customApiAccessRestriction.js";
+import { clearCustomApiDiscoveryAccessRestriction, setCustomApiDiscoveryAccessRestriction } from "../../customApi/discovery/customApiDiscoveryAccessState.js";
 import { buildCapabilityExplorerViewModel } from "../../capabilityExplorer/capabilityExplorerViewModelBuilder.js";
 import { renderCapabilityExplorerHtml } from "../../webview/capabilityExplorer/renderCapabilityExplorerHtml.js";
 import {
@@ -48,6 +50,65 @@ let capabilityExplorerPanel: vscode.WebviewPanel | undefined;
 let latestDefinitions: CustomApiDefinition[] = [];
 let latestEnvironmentUrl = "";
 let latestEnvironmentName = "";
+let capabilityExplorerPanelIsAccessRestricted = false;
+
+
+function ensureCapabilityExplorerPanel(ctx: CommandContext): vscode.WebviewPanel {
+  if (!capabilityExplorerPanel) {
+    capabilityExplorerPanel = vscode.window.createWebviewPanel(
+      "dvQuickRunCapabilityExplorer",
+      "Capability Explorer",
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true
+      }
+    );
+
+    capabilityExplorerPanel.onDidDispose(() => {
+      capabilityExplorerPanel = undefined;
+      capabilityExplorerPanelIsAccessRestricted = false;
+    }, null, ctx.ext.subscriptions);
+
+    capabilityExplorerPanel.webview.onDidReceiveMessage(async (message) => {
+      if (message?.type === "refresh") {
+        await openCapabilityExplorer(ctx);
+        return;
+      }
+
+      if (message?.type === "copyText" && typeof message.text === "string") {
+        await vscode.env.clipboard.writeText(message.text);
+        void vscode.window.showInformationMessage("Capability Explorer summary copied.");
+        return;
+      }
+
+      if (message?.type === "openHub") {
+        await vscode.commands.executeCommand("dvQuickRun.openHub");
+      }
+    }, null, ctx.ext.subscriptions);
+  }
+
+  return capabilityExplorerPanel;
+}
+
+function renderCapabilityExplorerAccessRestriction(ctx: CommandContext, restriction: CustomApiAccessRestrictionDetails): void {
+  const activeEnvironment = ctx.envContext.getActiveEnvironment();
+  latestEnvironmentUrl = activeEnvironment?.url ?? "";
+  latestEnvironmentName = activeEnvironment?.name ?? "";
+  latestDefinitions = [];
+  setCustomApiDiscoveryAccessRestriction(latestEnvironmentUrl, restriction);
+  capabilityExplorerPanelIsAccessRestricted = true;
+
+  const model = buildCapabilityExplorerViewModel([], {
+    name: activeEnvironment?.name,
+    url: activeEnvironment?.url
+  }, { accessRestriction: restriction });
+
+  const panel = ensureCapabilityExplorerPanel(ctx);
+  panel.title = "Capability Explorer (Access restricted)";
+  panel.webview.html = renderCapabilityExplorerHtml(panel.webview, model);
+  panel.reveal(vscode.ViewColumn.One);
+}
 
 function getAiExecutionPolicy(): AiExecutionPolicyMode {
   return normalizeAiExecutionPolicy(vscode.workspace.getConfiguration("dvQuickRun").get("execution.aiPolicy"));
@@ -162,11 +223,31 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
   const token = await ctx.getToken(scope);
   const client = ctx.getClient();
   const discoveryService = new CustomApiDiscoveryService(ctx, client, token);
-  const discoveredDefinitions = await discoveryService.discoverCustomApis();
+  let discoveredDefinitions: CustomApiDefinition[];
+  try {
+    discoveredDefinitions = await discoveryService.discoverCustomApis();
+    clearCustomApiDiscoveryAccessRestriction(ctx.envContext.getActiveEnvironment()?.url);
+  } catch (error) {
+    const restriction = parseCustomApiAccessRestriction(error);
+    if (restriction) {
+      renderCapabilityExplorerAccessRestriction(ctx, restriction);
+      void vscode.window.showInformationMessage("DV Quick Run: Capability Explorer is unavailable because Custom API discovery is restricted for this environment or security context.");
+      return;
+    }
+
+    throw error;
+  }
   const activeEnvironment = ctx.envContext.getActiveEnvironment();
   latestEnvironmentUrl = activeEnvironment?.url ?? "";
   latestEnvironmentName = activeEnvironment?.name ?? "";
   let definitions = discoveredDefinitions;
+
+  if (capabilityExplorerPanelIsAccessRestricted) {
+    const panel = capabilityExplorerPanel;
+    capabilityExplorerPanel = undefined;
+    capabilityExplorerPanelIsAccessRestricted = false;
+    panel?.dispose();
+  }
 
   try {
     const registry = await loadODataOperationRegistry(ctx, client, token, latestEnvironmentUrl || await ctx.getBaseUrl());
@@ -203,6 +284,7 @@ async function buildAndRenderCapabilityExplorer(ctx: CommandContext): Promise<vo
 
     capabilityExplorerPanel.onDidDispose(() => {
       capabilityExplorerPanel = undefined;
+      capabilityExplorerPanelIsAccessRestricted = false;
     }, null, ctx.ext.subscriptions);
 
     capabilityExplorerPanel.webview.onDidReceiveMessage(async (message) => {
@@ -842,6 +924,7 @@ function resolveCapabilityPreviewRiskLevel(
 }
 
 export function closeCapabilityExplorer(): void {
+  capabilityExplorerPanelIsAccessRestricted = false;
   latestDefinitions = [];
   latestEnvironmentUrl = "";
   latestEnvironmentName = "";

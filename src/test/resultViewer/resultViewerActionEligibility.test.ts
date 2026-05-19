@@ -21,6 +21,7 @@ suite("resultViewerActionEligibility", () => {
       "preview-odata-filter",
       "preview-root-odata-orderby",
       "update-record",
+      "preview-bound-actions",
       "copy-display-value",
       "copy-raw-value",
       "copy-record-url",

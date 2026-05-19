@@ -1,5 +1,5 @@
 export type ResultViewerActionPlacement = "primary" | "overflow";
-export type ResultViewerActionGroup = "refine" | "slice" | "dice" | "correct" | "investigate" | "traversal" | "copy" | "metadata";
+export type ResultViewerActionGroup = "refine" | "slice" | "dice" | "correct" | "operate" | "investigate" | "traversal" | "copy" | "metadata" | "capability";
 export type ResultViewerQueryMode = "odata" | "fetchxml";
 
 export interface ResultViewerActionPayload {

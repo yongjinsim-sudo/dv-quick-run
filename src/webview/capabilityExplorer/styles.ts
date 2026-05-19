@@ -835,6 +835,66 @@ th:hover .dvqr-column-resizer::after,
   color: var(--vscode-errorForeground);
 }
 
+
+.dvqr-access-state {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--vscode-input-background) 72%, transparent);
+  border: 1px solid var(--vscode-panel-border);
+  border-left: 4px solid var(--vscode-charts-yellow);
+  border-radius: 10px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: auto 1fr;
+  margin-top: 18px;
+  max-width: 920px;
+  padding: 18px;
+}
+
+.dvqr-access-state h2 {
+  font-size: 1.2rem;
+  margin: 0 0 8px;
+}
+
+.dvqr-access-state p {
+  margin: 0 0 12px;
+}
+
+.dvqr-access-state dl {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.dvqr-access-state dl > div {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(140px, 180px) 1fr;
+}
+
+.dvqr-access-state dt {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dvqr-access-state dd {
+  font-family: var(--vscode-editor-font-family);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dvqr-access-icon {
+  align-items: center;
+  background: color-mix(in srgb, var(--vscode-charts-yellow) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vscode-charts-yellow) 45%, transparent);
+  border-radius: 8px;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+
 @media (max-width: 1180px) {
   .dvqr-explorer-layout,
   .dvqr-explorer-layout-with-drawer {

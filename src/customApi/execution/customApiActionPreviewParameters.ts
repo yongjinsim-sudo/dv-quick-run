@@ -3,6 +3,7 @@ import { openMetadataAwareJsonPayloadEditor } from "../../webview/payloadEditor/
 import type { CommandContext } from "../../commands/context/commandContext.js";
 import { loadChoiceMetadata } from "../../commands/router/actions/shared/metadataAccess.js";
 import type { ChoiceMetadata } from "../../metadata/metadataModel.js";
+import { classifyCustomApiSupportedParameterKind, getCustomApiParameterKind, getCustomApiParameterPlaceholder, parseCustomApiParameterValue, validateCustomApiParameterValue } from "./customApiParameterSupport.js";
 
 export type CustomApiActionPreviewParameterValues = Record<string, unknown>;
 
@@ -18,12 +19,8 @@ function formatChoiceOptions(choice: ChoiceMetadata): string {
   return choice.options.map((option) => `${String(option.value)} = ${option.label}`).join(", ");
 }
 
-function getParameterKind(parameter: CustomApiRequestParameter): string {
-  return (parameter.typeLabel || parameter.type || "").trim().toLowerCase();
-}
-
 function isStringParameter(parameter: CustomApiRequestParameter): boolean {
-  return getParameterKind(parameter) === "string";
+  return getCustomApiParameterKind(parameter) === "string";
 }
 
 function getChoiceHintDefault(parameter: CustomApiRequestParameter, choice: ChoiceMetadata): unknown {
@@ -68,13 +65,8 @@ function getPromptablePreviewParameters(definition: CustomApiDefinition): Custom
   return definition.requestParameters.filter((parameter) => isPreviewReady(parameter) && !isBindingParameter(definition, parameter));
 }
 
-function normalizeRawPreviewValue(value: unknown): string {
-  return typeof value === "string" ? value : String(value);
-}
-
 function parsePreviewParameterValue(parameter: CustomApiRequestParameter, rawValue: unknown): unknown {
-  const kind = getParameterKind(parameter);
-  const trimmed = normalizeRawPreviewValue(rawValue).trim();
+  const kind = getCustomApiParameterKind(parameter);
 
   if (kind === "picklist") {
     const choice = getEntityChoiceMetadata(parameter);
@@ -93,53 +85,7 @@ function parsePreviewParameterValue(parameter: CustomApiRequestParameter, rawVal
     return rawValue;
   }
 
-  if (kind === "boolean") {
-    if (/^true$/i.test(trimmed)) {
-      return true;
-    }
-
-    if (/^false$/i.test(trimmed)) {
-      return false;
-    }
-
-    throw new Error(`${parameter.uniqueName} must be true or false.`);
-  }
-
-  if (kind === "integer") {
-    if (!/^-?\d+$/.test(trimmed)) {
-      throw new Error(`${parameter.uniqueName} must be an integer.`);
-    }
-
-    return Number.parseInt(trimmed, 10);
-  }
-
-  if (kind === "decimal" || kind === "float") {
-    const parsed = Number(trimmed);
-    if (!Number.isFinite(parsed)) {
-      throw new Error(`${parameter.uniqueName} must be a number.`);
-    }
-
-    return parsed;
-  }
-
-  if (kind === "guid") {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
-      throw new Error(`${parameter.uniqueName} must be a valid GUID.`);
-    }
-
-    return trimmed;
-  }
-
-  if (kind === "datetime") {
-    const parsed = Date.parse(trimmed);
-    if (Number.isNaN(parsed)) {
-      throw new Error(`${parameter.uniqueName} must be a valid date/time value.`);
-    }
-
-    return trimmed;
-  }
-
-  return trimmed;
+  return parseCustomApiParameterValue(parameter, rawValue);
 }
 
 function getPreviewPlaceholder(parameter: CustomApiRequestParameter): unknown {
@@ -148,25 +94,7 @@ function getPreviewPlaceholder(parameter: CustomApiRequestParameter): unknown {
     return getChoiceHintDefault(parameter, choice);
   }
 
-  const kind = getParameterKind(parameter);
-
-  if (kind === "boolean") {
-    return false;
-  }
-
-  if (kind === "integer" || kind === "decimal" || kind === "float") {
-    return 0;
-  }
-
-  if (kind === "guid") {
-    return "00000000-0000-0000-0000-000000000000";
-  }
-
-  if (kind === "datetime") {
-    return "2026-01-01T00:00:00Z";
-  }
-
-  return `<${parameter.uniqueName}>`;
+  return getCustomApiParameterPlaceholder(parameter);
 }
 
 function buildPreviewPayloadTemplate(parameters: readonly CustomApiRequestParameter[]): Record<string, unknown> {
@@ -202,14 +130,22 @@ function validatePreviewPayloadShape(
 
   for (const parameter of parameters) {
     const value = payloadRecord[parameter.uniqueName];
-    if (value === undefined || value === null || String(value).trim() === "") {
+    if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) {
       continue;
     }
 
-    try {
-      parsePreviewParameterValue(parameter, value);
-    } catch (error) {
-      return error instanceof Error ? error.message : String(error);
+    if (getCustomApiParameterKind(parameter) === "picklist") {
+      try {
+        parsePreviewParameterValue(parameter, value);
+      } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
+      continue;
+    }
+
+    const validationError = validateCustomApiParameterValue(parameter, value);
+    if (validationError) {
+      return validationError;
     }
   }
 
@@ -224,7 +160,7 @@ function parsePreviewPayloadValues(
 
   for (const parameter of parameters) {
     const value = payload[parameter.uniqueName];
-    if (value === undefined || value === null || String(value).trim() === "") {
+    if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) {
       continue;
     }
 
@@ -311,6 +247,7 @@ export async function promptForCustomApiActionPreviewParameters(
       trust: parameter.typeCategory,
       allowedValues: getChoiceHintValues(parameter),
       allowedValuesLabel: getEntityChoiceMetadata(parameter) ? "Suggested values from bound entity metadata" : undefined,
+      parameterKind: classifyCustomApiSupportedParameterKind(parameter),
       source: getEntityChoiceMetadata(parameter)
         ? `Execution contract: Custom API parameter metadata. Advisory hint: ${getEntityChoiceMetadata(parameter)?.entityLogicalName}.${getEntityChoiceMetadata(parameter)?.fieldLogicalName}.`
         : "Execution contract: Custom API parameter metadata."

@@ -24,7 +24,7 @@ suite("operationalProfileMarkdownRenderer", () => {
     assert.ok(!markdown.includes("High (75%)"));
     assert.ok(markdown.includes("74 relationships"));
     assert.ok(markdown.includes("Review relationship footprint"));
-    assert.ok(markdown.includes("Custom API Discovery"));
+    assert.ok(markdown.includes("Execution Insights Expansion"));
     assert.ok(markdown.includes("Operational Profile drift comparison"));
     assert.ok(markdown.includes("347 attributes"));
     assert.ok(markdown.includes("advisory-only"));

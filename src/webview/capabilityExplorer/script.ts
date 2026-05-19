@@ -249,6 +249,8 @@ export function getCapabilityExplorerScript(modelJson: string): string {
       SimplePreviewReadyParameters: 'Preview-ready',
       ComplexParameterShape: 'Complex parameter',
       EntityReferenceParameter: 'Entity reference',
+      PrimitiveArrayParameter: 'Primitive array',
+      EntityReferenceArrayParameter: 'EntityReference array',
       CollectionParameter: 'Collection parameter',
       UnknownParameterType: 'Unknown parameter',
       BoundActionDeferred: 'Bound Action deferred',

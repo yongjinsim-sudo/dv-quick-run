@@ -10,6 +10,7 @@ export interface MetadataAwareJsonPayloadField {
   source?: string;
   allowedValues?: Array<{ value: string | number | boolean; label: string }>;
   allowedValuesLabel?: string;
+  parameterKind?: "primitive" | "enumLike" | "entityReference" | "primitiveArray" | "entityReferenceArray" | "unsupportedComplex" | "unknown";
 }
 
 export interface MetadataAwareJsonPayloadEditorOptions {
@@ -219,6 +220,23 @@ function renderPayloadEditorHtml(options: MetadataAwareJsonPayloadEditorOptions)
       color: var(--muted);
       font-size: 11px;
     }
+    .field-helpers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .field-helper {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 7px;
+      color: var(--fg);
+      background: transparent;
+      font-size: 11px;
+    }
+    .field-helper:hover {
+      background: var(--input);
+    }
     @media (max-width: 720px) {
       .field {
         grid-template-columns: 1fr;
@@ -294,6 +312,95 @@ function renderPayloadEditorHtml(options: MetadataAwareJsonPayloadEditorOptions)
     document.getElementById('route').textContent = state.routePreview;
     payload.value = state.payloadJson;
 
+    function safeParsePayload() {
+      try {
+        const parsed = JSON.parse(payload.value || '{}');
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+      } catch (_error) {
+        return undefined;
+      }
+    }
+
+    function writePayloadObject(nextPayload) {
+      payload.value = JSON.stringify(nextPayload, null, 2);
+      localValidate();
+    }
+
+    function buildEntityReferenceTemplate() {
+      return {
+        '@odata.type': 'Microsoft.Dynamics.CRM.<entityLogicalName>',
+        '<primaryIdAttribute>': '00000000-0000-0000-0000-000000000000'
+      };
+    }
+
+    function getDefaultArrayItem(field) {
+      if (field.parameterKind === 'entityReferenceArray') {
+        return buildEntityReferenceTemplate();
+      }
+      return '<value>';
+    }
+
+    function updateFieldValue(field, updater) {
+      const current = safeParsePayload();
+      if (!current) {
+        validation.textContent = 'Fix JSON syntax before using metadata helpers.';
+        validation.className = 'validation error';
+        apply.disabled = true;
+        return;
+      }
+
+      const next = { ...current };
+      next[field.name] = updater(next[field.name]);
+      writePayloadObject(next);
+    }
+
+    function addFieldHelperButton(container, label, title, onClick) {
+      const button = document.createElement('button');
+      button.className = 'field-helper';
+      button.type = 'button';
+      button.textContent = label;
+      button.title = title;
+      button.addEventListener('click', onClick);
+      container.append(button);
+    }
+
+    function renderFieldHelpers(field, meta) {
+      const helpers = document.createElement('div');
+      helpers.className = 'field-helpers';
+
+      if (field.parameterKind === 'entityReference') {
+        addFieldHelperButton(helpers, 'Insert EntityReference template', 'Insert transparent JSON for a Dataverse record reference.', () => {
+          updateFieldValue(field, () => buildEntityReferenceTemplate());
+        });
+      }
+
+      if (field.parameterKind === 'primitiveArray') {
+        addFieldHelperButton(helpers, 'Add array item', 'Append a primitive placeholder to this JSON array.', () => {
+          updateFieldValue(field, (currentValue) => {
+            const currentArray = Array.isArray(currentValue) ? currentValue.slice() : [];
+            currentArray.push('<value>');
+            return currentArray;
+          });
+        });
+        addFieldHelperButton(helpers, 'Clear array', 'Reset this parameter to an empty JSON array.', () => updateFieldValue(field, () => []));
+      }
+
+      if (field.parameterKind === 'entityReferenceArray') {
+        addFieldHelperButton(helpers, 'Add EntityReference', 'Append an EntityReference JSON object to this array.', () => {
+          updateFieldValue(field, (currentValue) => {
+            const currentArray = Array.isArray(currentValue) ? currentValue.slice() : [];
+            currentArray.push(getDefaultArrayItem(field));
+            return currentArray;
+          });
+        });
+        addFieldHelperButton(helpers, 'Clear references', 'Reset this parameter to an empty JSON array.', () => updateFieldValue(field, () => []));
+      }
+
+      if (helpers.childElementCount > 0) {
+        meta.append(helpers);
+      }
+    }
+
     const fields = document.getElementById('fields');
     for (const field of state.fields) {
       const row = document.createElement('div');
@@ -327,6 +434,7 @@ function renderPayloadEditorHtml(options: MetadataAwareJsonPayloadEditorOptions)
         source.textContent = field.source;
         meta.append(source);
       }
+      renderFieldHelpers(field, meta);
       row.append(name, meta);
       fields.append(row);
     }

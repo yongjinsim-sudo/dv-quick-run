@@ -1,9 +1,14 @@
 import type { CustomApiDefinition } from "../customApi/models/customApiTypes.js";
-import type { CapabilityExplorerCustomApiRow, CapabilityExplorerMetric, CapabilityExplorerViewModel } from "./capabilityExplorerTypes.js";
+import type { CapabilityExplorerAccessRestrictionViewModel, CapabilityExplorerCustomApiRow, CapabilityExplorerMetric, CapabilityExplorerViewModel } from "./capabilityExplorerTypes.js";
+import type { CustomApiAccessRestrictionDetails } from "../customApi/discovery/customApiAccessRestriction.js";
 
 interface CapabilityExplorerEnvironmentContext {
   name?: string;
   url?: string;
+}
+
+interface CapabilityExplorerBuildOptions {
+  accessRestriction?: CustomApiAccessRestrictionDetails;
 }
 
 function displayText(value: string | undefined): string {
@@ -28,6 +33,22 @@ function displayBoolean(value: boolean | undefined): string {
 
 function displayNumber(value: number | undefined): string {
   return typeof value === "number" ? String(value) : "";
+}
+
+function buildAccessRestrictionViewModel(restriction: CustomApiAccessRestrictionDetails | undefined): CapabilityExplorerAccessRestrictionViewModel | undefined {
+  if (!restriction) {
+    return undefined;
+  }
+
+  return {
+    title: "Capability Explorer unavailable",
+    message: "Custom API discovery is restricted in this environment or security context.",
+    principalId: displayOptionalText(restriction.principalId),
+    missingPrivilege: displayOptionalText(restriction.missingPrivilege),
+    entityLogicalName: displayOptionalText(restriction.entityLogicalName),
+    statusCode: displayNumber(restriction.statusCode),
+    correlationId: displayOptionalText(restriction.correlationId)
+  };
 }
 
 function countRequiredParameters(definition: CustomApiDefinition): number {
@@ -101,7 +122,8 @@ function buildMetrics(definitions: readonly CustomApiDefinition[]): CapabilityEx
 
 export function buildCapabilityExplorerViewModel(
   definitions: CustomApiDefinition[],
-  environment: CapabilityExplorerEnvironmentContext
+  environment: CapabilityExplorerEnvironmentContext,
+  options: CapabilityExplorerBuildOptions = {}
 ): CapabilityExplorerViewModel {
   const boundCount = definitions.filter((definition) => definition.bindingKind === "Bound").length;
   const unboundCount = definitions.filter((definition) => definition.bindingKind === "Unbound").length;
@@ -124,6 +146,7 @@ export function buildCapabilityExplorerViewModel(
     publicCount: definitions.length - privateCount,
     actionCount,
     functionCount,
-    definitions
+    definitions,
+    accessRestriction: buildAccessRestrictionViewModel(options.accessRestriction)
   };
 }

@@ -22,6 +22,9 @@ import {
 import { previewAndApplyAddSelectFromColumn } from "./previewAddSelectFromColumn.js";
 import { previewAndApplyExpandRelationship } from "./previewExpandRelationship.js";
 import { runSmartPatchPrefilledWorkflow } from "../../commands/router/actions/smartPatch/smartPatchWorkflows.js";
+import { previewBoundActionFromResultViewer } from "../../commands/capabilityExplorer/previewBoundActionFromResultViewerCommand.js";
+import { getCustomApiDiscoveryAccessRestriction } from "../../customApi/discovery/customApiDiscoveryAccessState.js";
+import { type CustomApiAccessRestrictionDetails } from "../../customApi/discovery/customApiAccessRestriction.js";
 import {
   getSupportedSliceDefinitions,
   previewAndApplyFetchXmlSlice,
@@ -142,6 +145,21 @@ export function resolveResultViewerActions(
         disabledReason: (!!payload.guid && !!payload.entitySetName && !!payload.entityLogicalName)
           ? undefined
           : "Update this record requires entity, table, and record id context."
+      }),
+      createAction({
+        id: "preview-bound-actions",
+        title: "Bound Actions on this record",
+        icon: "⚙",
+        placement: "overflow",
+        group: "operate",
+        kind: "preview",
+        payload,
+        isEnabled: getCustomApiDiscoveryAccessRestriction(undefined) === undefined && !!payload.guid && !!payload.entityLogicalName,
+        disabledReason: getCustomApiDiscoveryAccessRestriction(undefined)
+          ? buildBoundActionsUnavailableReason()
+          : ((!!payload.guid && !!payload.entityLogicalName)
+            ? undefined
+            : "Bound Action preview requires entity and row id context.")
       })
     );
   } else if (analysis.isBusinessGuid || analysis.isBusinessIdentifier) {
@@ -487,6 +505,20 @@ export async function executeResultViewerAction(
       return;
     }
 
+    case "preview-bound-actions": {
+      if (!guid || !payload.entityLogicalName?.trim()) {
+        void vscode.window.showWarningMessage("DV Quick Run: Bound Action preview requires entity and row id context.");
+        return;
+      }
+
+      await previewBoundActionFromResultViewer(ctx, {
+        entityLogicalName: payload.entityLogicalName.trim(),
+        entitySetName: payload.entitySetName?.trim(),
+        rowId: guid
+      });
+      return;
+    }
+
     case "update-field":
     case "set-field-null": {
       const fieldLogicalName = String(payload.fieldLogicalName ?? columnName).trim();
@@ -724,6 +756,34 @@ function resolveTraversalActions(
   ];
 }
 
+function buildBoundActionsUnavailableReason(): string {
+  const restriction = getCustomApiDiscoveryAccessRestriction(undefined);
+
+  if (!restriction) {
+    return "Bound Actions unavailable.";
+  }
+
+  const details = restriction as CustomApiAccessRestrictionDetails & {
+    entityLogicalName?: string;
+    entity?: string;
+    logicalName?: string;
+  };
+  const requiredEntity =
+    details.entityLogicalName ??
+    details.entity ??
+    details.logicalName;
+
+  if (restriction.missingPrivilege && requiredEntity) {
+    return `Bound Actions unavailable. Missing ${restriction.missingPrivilege} privilege on ${requiredEntity}.`;
+  }
+
+  if (restriction.missingPrivilege) {
+    return `Bound Actions unavailable. Missing ${restriction.missingPrivilege} privilege.`;
+  }
+
+  return "Bound Actions unavailable. Custom API discovery is restricted for this environment or security context.";
+}
+
 function createAction(action: ResultViewerResolvedAction): ResultViewerResolvedAction {
   return {
     ...action,
@@ -737,10 +797,12 @@ function sortActions(actions: ResultViewerResolvedAction[]): ResultViewerResolve
     slice: 1,
     dice: 2,
     correct: 3,
-    investigate: 4,
-    traversal: 5,
-    copy: 6,
-    metadata: 7
+    capability: 4,
+    operate: 5,
+    investigate: 6,
+    traversal: 7,
+    copy: 8,
+    metadata: 9
   };
 
   return actions.slice().sort((left, right) => {

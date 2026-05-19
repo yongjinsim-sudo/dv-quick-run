@@ -198,14 +198,14 @@ suite("operationalProfileEngine", () => {
     const profile = buildOperationalProfile({ entityLogicalName: "contact" });
 
     assert.strictEqual(profile.futureSurfaces.length, 5);
-    assert.ok(profile.futureSurfaces.some((item) => item.id === "customApiDiscovery" && item.availability === "freeRoadmap"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "executionInsightsExpansion" && item.availability === "freeRoadmap"));
     assert.ok(profile.futureSurfaces.some((item) => item.id === "crossSurfaceInvestigationPivots" && item.availability === "freeRoadmap"));
     assert.ok(profile.futureSurfaces.some((item) => item.id === "operationalProfileDriftComparison" && item.availability === "proRoadmap"));
     assert.ok(profile.futureSurfaces.some((item) => item.id === "crossEnvironmentOperationalComparison" && item.availability === "proRoadmap"));
     assert.ok(profile.futureSurfaces.some((item) => item.id === "deploymentOperationalImpactAnalysis" && item.availability === "proRoadmap"));
 
     const futureText = profile.futureSurfaces.map((item) => `${item.label} ${item.description}`).join(" ").toLowerCase();
-    assert.ok(futureText.includes("custom api"));
+    assert.ok(futureText.includes("audits"));
     assert.ok(futureText.includes("drift"));
     assert.ok(!futureText.includes("root cause"));
     assert.ok(!futureText.includes("buy now"));
