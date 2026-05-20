@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -20,6 +20,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * run related queries as `$batch`
 * investigate runtime behaviour with Execution Insights
 * understand entity operational footprint with Operational Profiles
+* inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
 * discover and execute supported Custom API capabilities through Capability Explorer
 * use the Hub to stay oriented across investigation workflows
 
@@ -55,59 +56,90 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.10.5
+## 🆕 What's New in v0.11.0
 
-v0.10.5 completes the first full operational execution loop between the **Result Viewer** and **Capability Explorer**.
+v0.11.0 introduces **Operational Context Foundations** inside Operational Profiles.
 
-DV Quick Run can now move from a returned Dataverse row directly into compatible bound Actions for that row, while preserving the same preview-first, environment-bound, explicit execution model used throughout Capability Explorer.
-
-This is not direct row automation.
-
-It is contextual, governed operational execution inside DV Quick Run’s existing safety model:
+DV Quick Run now helps you understand not only how operationally dense an entity is, but also what contextual evidence surrounds it:
 
 ```text
-query → inspect row → preview bound Action → explicit confirmation → execute → inspect result → investigate evidence
+profile entity → bounded operational context → inline evidence continuation → copyable evidence
 ```
 
-Highlights:
+This release adds four new context surfaces:
 
-* Result Viewer rows now expose **Bound Actions on this record** from the row action menu
-* entity-bound Actions can be launched from row context without manually constructing OData routes
-* Result Viewer supplies only the target entity and row id; execution still requires preview and confirmation
-* execution previews clearly show source, target entity, target row id, request route, payload, and environment authority
-* execution results capture request shape, response payload, status, duration, request ID, and investigation context
-* Capability Explorer now degrades gracefully when Custom API discovery access is restricted
-* restricted Custom API access surfaces actionable details such as principal user, missing privilege, required entity, and HTTP status
-* Result Viewer bound Action entry remains visible but explains restricted access calmly when discovery is unavailable
-* unsupported or complex parameter shapes remain inspectable without pretending to be safely executable
-* environment trust banners now align consistently with DEV, amber, and RED/PROD-style execution caution semantics
+* **Solution Context** — shows observed solution package participation and deployment/layering context
+* **Access Context** — shows the current Dataverse principal and access evidence when Dataverse returns it
+* **Runtime Actor Context** — preserves observed identity distinctions such as human user, app user, service principal, workflow owner, or impersonation
+* **Ownership / Participation Context** — explains ownership model, managed metadata state, activity-table status, and custom-table status
 
-Capability Explorer and Result Viewer now support a more integrated operational execution model:
+The goal is not broad topology crawling or automated RCA.
 
-* preview-first Function execution
-* preview-first eligible unbound Action execution
-* preview-first entity-bound Action execution
-* preview-first collection-bound Action execution
-* Result Viewer row-context bound Action previews
-* explicit target-row execution workflows
-* metadata-aware bound route generation
-* governed execution result inspection
-* access-aware capability discovery UX
-* execution-aware investigation continuation
+It is:
 
-This release reinforces the v0.10.x execution invariants:
+* bounded operational understanding
+* contextual investigation continuity
+* evidence-backed participation visibility
+* clearer deployment/layering awareness
+* safer identity and access interpretation
+* calm, copyable diagnostic evidence
+
+Operational Context introduces a new investigation pattern:
 
 ```text
-Custom API metadata = discovery truth
-OData metadata = execution exposure truth
-bound route metadata = execution route truth
-Custom API parameter metadata = execution contract
-bound entity metadata = advisory enrichment only
-Result Viewer row context = target identity only
-active environment = execution authority boundary
+observed evidence
+→ curated semantic expansion
+→ inline details
+→ no new query tab
+→ no topology crawl
 ```
 
-DV Quick Run continues evolving from a metadata-aware query and investigation tool into a governed operational execution workbench for Dataverse and Power Platform engineering — while keeping execution explicit, bounded, inspectable, access-aware, and evidence-backed.
+Example:
+
+```text
+Contact
+→ solutioncomponent
+→ observed solution packages
+→ View details inline
+```
+
+Solution Context now performs a bounded internal lookup, ranks observed solution packages, and shows the most useful packages first while preserving raw evidence. This helps surface high-signal packages such as Power Pages, Power Automate, app-specific, custom, or managed layers before generic System/Default noise.
+
+Access and actor context remain intentionally evidence-limited:
+
+* DV Quick Run does not simulate RBAC
+* missing privileges are shown only when Dataverse returns them
+* current request principal is shown as context, not effective-permission proof
+* identity context does not imply runtime responsibility
+
+Ownership context remains structural:
+
+* ownership model explains table ownership semantics
+* managed metadata state may matter for customisation/editability
+* activity/custom table status is context only
+* ownership and participation do not imply causality
+
+Evidence sections now include:
+
+* **Copy query**
+* **Copy JSON**
+* collapsed diagnostic query patterns
+* collapsed raw evidence
+* boundedness notes when more evidence may exist
+
+This release reinforces the v0.11.x invariants:
+
+```text
+participation does not imply causality
+operational context remains bounded
+curated semantic expansion is explicit and provider-owned
+no recursive topology crawling
+no audit chronology reconstruction
+no speculative RCA narrative
+evidence remains inspectable and copyable
+```
+
+DV Quick Run continues evolving into a calm operational investigation workbench for Dataverse and Power Platform engineering — helping operators see operational context without pretending to know root cause.
 
 ---
 
@@ -501,6 +533,8 @@ It detects or guards against risky situations such as:
 * AI-related execution blocked by default
 * AI-generated content requiring human review
 * cross-environment investigation leakage
+* operational-context overclaiming beyond bounded evidence
+* causal claims from solution, ownership, access, or actor participation
 
 Execution-capable workflows are designed around:
 
@@ -532,7 +566,7 @@ write → run → explore → refine → investigate → verify
 
 …without leaving your editor.
 
-DV Quick Run is designed to reduce tool switching while keeping investigation and execution workflows explicit, bounded, governed, and trustworthy.
+DV Quick Run is designed to reduce tool switching while keeping investigation, operational context, and execution workflows explicit, bounded, governed, and trustworthy.
 
 ---
 

@@ -39,4 +39,39 @@ suite("operationalProfileMarkdownRenderer", () => {
     assert.ok(markdown.includes("Automation (Plugin Steps)</strong> — No evidence observed"));
     assert.ok(markdown.includes("_No evidence was provided for this section._"));
   });
+  test("renders Operational Context without turning participation into causality", () => {
+    const profile = buildOperationalProfile({
+      entityLogicalName: "account",
+      operationalContext: {
+        subject: { type: "entity", logicalName: "account", displayName: "Account" },
+        sections: [{
+          id: "solutionContext",
+          label: "Solution Context",
+          summary: "Solution participation is available for this entity.",
+          evidence: [{
+            subject: { type: "entity", logicalName: "account", displayName: "Account" },
+            evidenceType: "SolutionParticipation",
+            title: "Solution participation",
+            summary: "This is participation context only, not deployment causality.",
+            source: "metadata",
+            scope: "oneHopRelated",
+            confidence: "related"
+          }]
+        }],
+        guardrails: [
+          "Providers use curated semantic expansions only.",
+          "Participation does not imply causality or root cause."
+        ]
+      }
+    });
+
+    const markdown = renderOperationalProfileMarkdown(profile);
+
+    assert.ok(markdown.includes("## Operational Context"));
+    assert.ok(markdown.includes("Solution Context"));
+    assert.ok(markdown.includes("curated semantic expansions"));
+    assert.ok(markdown.includes("Participation does not imply causality"));
+    assert.ok(!markdown.toLowerCase().includes("caused by"));
+  });
+
 });

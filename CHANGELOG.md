@@ -6,6 +6,308 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## v0.11.0 — Operational Context Foundations, Evidence Continuity & Investigation Context Expansion
+
+This release establishes the first complete Operational Context foundation layer inside DV Quick Run.
+
+Operational Profiles now move beyond density-only signals into:
+
+* bounded operational context
+* evidence continuation
+* contextual participation visibility
+* identity-aware investigation surfaces
+* deployment/layering visibility
+* ownership and runtime actor understanding
+
+The goal is not environment crawling or speculative RCA.
+
+It is:
+
+* calmer operational understanding
+* evidence-backed investigation context
+* bounded contextual expansion
+* explainable operational participation
+* continuity-safe investigation workflows
+
+---
+
+## 🧭 Operational Context Foundations (Major)
+
+Introduced the first complete Operational Context framework inside Operational Profiles.
+
+Operational Profiles now surface bounded contextual investigation cards including:
+
+* Solution Context
+* Access Context
+* Runtime Actor Context
+* Ownership / Participation Context
+
+Behaviour:
+
+* all contexts remain explicitly bounded
+* contextual expansion is limited to one-hop provider-owned evidence
+* contextual evidence remains advisory-only
+* participation does not imply causality
+
+Results:
+
+* stronger operational understanding
+* clearer deployment/layering awareness
+* improved investigation orientation
+* calmer context-driven troubleshooting
+
+---
+
+## 🧩 Solution Context (NEW)
+
+Operational Profiles now surface curated solution participation evidence.
+
+Behaviour:
+
+* detects solutioncomponent participation
+* resolves participating solutions
+* ranks and curates highest-signal packages
+* surfaces deployment/layering context inline
+
+Examples surfaced:
+
+* System Solution
+* Application Common
+* Power Pages Runtime Core
+* AIPlatformExtensionsCore
+* Power Automate Workflow Table Extensions
+
+Operational semantics:
+
+* participation only
+* not deployment blame
+* not runtime causality
+* not full topology reconstruction
+
+Additional behaviour:
+
+* inline expandable solution details
+* managed/unmanaged visibility
+* solution version visibility
+* copyable evidence query paths
+* copyable raw evidence JSON
+
+Results:
+
+* significantly improved operational layering visibility
+* easier understanding of platform/application participation
+* better deployment-context investigation flow
+* reduced need for separate manual solution queries
+
+---
+
+## 🔐 Access Context (NEW)
+
+Operational Profiles now preserve Dataverse access/principal investigation context.
+
+Surfaces:
+
+* current Dataverse principal
+* actor classification
+* access mode
+* Azure object id
+* request principal evidence
+
+Behaviour:
+
+* preserves observed identity context only
+* does not simulate RBAC
+* does not infer remediation
+* missing privileges only shown when Dataverse explicitly returns them
+
+Results:
+
+* clearer operational trust context
+* better understanding of execution identity
+* stronger investigation continuity
+* safer access-related operational reasoning
+
+---
+
+## 👤 Runtime Actor Context (NEW)
+
+Added Runtime Actor Context to preserve execution identity distinctions.
+
+Operational Profiles now distinguish:
+
+* human user
+* app user
+* service principal
+* workflow owner
+* impersonated actor
+
+Behaviour:
+
+* preserves observed identity semantics
+* does not imply runtime responsibility
+* preserves identity evidence separately from causality reasoning
+
+Results:
+
+* stronger execution identity understanding
+* safer operational investigation semantics
+* better future execution-correlation foundation
+
+---
+
+## 🏛️ Ownership / Participation Context (NEW)
+
+Operational Profiles now surface ownership and metadata participation context.
+
+Examples include:
+
+* ownership model
+* managed metadata state
+* activity-table participation
+* custom-table classification
+
+Behaviour:
+
+* ownership remains structural context only
+* no runtime responsibility inference
+* metadata participation remains bounded and explainable
+
+Results:
+
+* clearer table semantics
+* easier operational interpretation
+* stronger metadata-aware investigation continuity
+
+---
+
+## 📋 Evidence Continuation UX (Major)
+
+Operational Context surfaces now support investigation continuation directly inline.
+
+Added:
+
+* `View details`
+* inline contextual detail expansion
+* inline evidence continuation
+* copyable diagnostic query patterns
+* copyable raw evidence JSON
+
+New UX actions:
+
+* `Copy query`
+* `Copy JSON`
+
+Behaviour:
+
+* investigation continuity remains inside the same operational surface
+* avoids context-loss from launching disconnected query tabs
+* preserves operational orientation during exploration
+
+Results:
+
+* significantly smoother investigation workflows
+* less operational disorientation
+* improved evidence portability
+* calmer debugging experience
+
+---
+
+## 🧠 Ranked Context Curation (NEW)
+
+Introduced ranked contextual evidence curation for operational context providers.
+
+Behaviour:
+
+* providers may now return larger bounded evidence sets internally
+* UI curates and prioritises highest-signal evidence
+* additional evidence remains available via raw evidence continuation
+
+Example:
+
+* top-ranked solution participation surfaces first
+* lower-signal/system-heavy packages deprioritised
+* raw evidence still preserved transparently
+
+Results:
+
+* cleaner operational UX
+* stronger signal-to-noise ratio
+* improved operational readability
+* foundation for future contextual ranking systems
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Solution Context evidence continuation
+* inline detail expansion
+* Access Context rendering
+* Runtime Actor Context rendering
+* Ownership Context rendering
+* copy query behaviour
+* copy raw JSON behaviour
+* ranked contextual evidence presentation
+* bounded one-hop continuation semantics
+
+No regression in:
+
+* Operational Profiles
+* Result Viewer
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* `$batch` execution
+* Query Doctor
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical v0.11.x invariants:
+
+* participation does not imply causality
+* operational context remains bounded
+* contextual expansion remains provider-owned
+* no recursive topology crawling
+* no audit chronology reconstruction
+* no speculative RCA narratives
+* evidence remains inspectable and explainable
+* operational guidance remains advisory-only
+
+Operational Context continues to prioritise:
+
+```text
+understanding
+before
+automation
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* preserve operational context directly inside investigations
+* expose deployment/layering participation safely
+* preserve runtime identity distinctions
+* surface ownership and metadata semantics clearly
+* continue investigations inline without losing context
+* provide copyable evidence and diagnostic paths
+* curate operational context more intelligently
+
+This establishes the foundation for:
+
+* contextual operational ranking
+* DVQR Score evolution
+* future operational comparison workflows
+* richer execution-aware contextual investigation
+* cross-surface operational continuity
+
+---
+
 # DV Quick Run v0.10.5 — Result Viewer Action Execution, Operational Capability Trust & Access-Aware UX
 
 This release completes the first full operational execution loop between the Result Viewer and Capability Explorer.

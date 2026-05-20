@@ -763,6 +763,42 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                     return;
                 }
 
+                const contextCopy = target instanceof HTMLElement ? target.closest("[data-profile-context-copy]") : null;
+                if (contextCopy instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const container = contextCopy.closest("details");
+                    const copyTarget = container instanceof HTMLElement ? container.querySelector("pre, code") : null;
+                    const text = copyTarget?.textContent || "";
+                    if (!text.trim()) {
+                        showCopyStatus("No operational context evidence available");
+                        return;
+                    }
+                    navigator.clipboard.writeText(text)
+                        .then(() => showCopyStatus("Operational context evidence copied"))
+                        .catch(() => showCopyStatus("Copy failed"));
+                    return;
+                }
+
+                const solutionToggle = target instanceof HTMLElement ? target.closest("[data-profile-solution-toggle]") : null;
+                if (solutionToggle instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const detailId = solutionToggle.getAttribute("data-profile-solution-toggle") || "";
+                    const detail = detailId ? document.getElementById(detailId) : null;
+                    if (detail instanceof HTMLElement) {
+                        const shouldOpen = detail.hasAttribute("hidden");
+                        if (shouldOpen) {
+                            detail.removeAttribute("hidden");
+                        } else {
+                            detail.setAttribute("hidden", "");
+                        }
+                        solutionToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+                        solutionToggle.textContent = shouldOpen ? "Hide details" : "View details";
+                    }
+                    return;
+                }
+
                 const action = target instanceof HTMLElement ? target.closest("[data-profile-action]") : null;
                 if (!(action instanceof HTMLElement)) {
                     return;
@@ -775,7 +811,8 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                     payload: {
                         actionId: action.getAttribute("data-profile-action") || "",
                         entityLogicalName: action.getAttribute("data-entity-logical-name") || model.entityLogicalName || "",
-                        entitySetName: action.getAttribute("data-entity-set-name") || model.entitySetName || ""
+                        entitySetName: action.getAttribute("data-entity-set-name") || model.entitySetName || "",
+                        solutionId: action.getAttribute("data-solution-id") || ""
                     }
                 });
             });

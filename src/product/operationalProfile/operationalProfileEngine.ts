@@ -516,6 +516,7 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
     guidance,
     navigationActions,
     futureSurfaces,
+    operationalContext: input.operationalContext,
     investigationGuidance: guidance.map((item) => item.message),
     invariants: {
       entityScoped: true,

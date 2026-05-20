@@ -1051,6 +1051,248 @@ function showCopyStatus(message) {
                 '</details>';
         }
 
+
+        function contextDetailRow(label, value) {
+            const shown = value === undefined || value === null || String(value).trim() === "" ? "Not returned" : String(value);
+            return '<div class="profile-context-solution-detail-row"><span>' + escapeHtml(label) + '</span><code>' + escapeHtml(shown) + '</code></div>';
+        }
+
+        function profileContextToggleButton(detailId, enabled) {
+            return enabled
+                ? '<button class="profile-context-path-action" type="button" data-profile-solution-toggle="' + detailId + '" aria-expanded="false">View details</button>'
+                : '<span class="profile-context-path-muted">Details unavailable</span>';
+        }
+
+        function buildOperationalContextSolutionPathHtml(item) {
+            const raw = item?.raw;
+            const solutions = raw && Array.isArray(raw.solutions) ? raw.solutions : [];
+            if (!solutions.length) {
+                return "";
+            }
+
+            const displayLimit = Number(raw?.displayLimit || 8);
+            const visibleSolutions = solutions.slice(0, displayLimit);
+            const rows = visibleSolutions.map((solution) => {
+                const id = String(solution?.id || "").trim();
+                const name = solution?.friendlyName || solution?.uniqueName || id || "Unnamed solution";
+                const uniqueNameValue = solution?.uniqueName ? String(solution.uniqueName) : "";
+                const uniqueName = uniqueNameValue && uniqueNameValue !== name ? '<span class="profile-context-solution-unique">' + escapeHtml(uniqueNameValue) + '</span>' : '';
+                const managed = typeof solution?.isManaged === "boolean" ? (solution.isManaged ? "Managed" : "Unmanaged") : "Managed state unknown";
+                const version = solution?.version ? 'v' + String(solution.version) : "Version unknown";
+                const detailId = 'solution-detail-' + escapeAttribute(id || uniqueNameValue || name).replace(/[^a-zA-Z0-9_-]/g, "-");
+                const detailRows = [
+                    contextDetailRow('Friendly name', name),
+                    contextDetailRow('Unique name', uniqueNameValue),
+                    contextDetailRow('Managed state', managed),
+                    contextDetailRow('Version', solution?.version),
+                    contextDetailRow('Solution id', id)
+                ].join("");
+
+                return '<div class="profile-context-solution-row">' +
+                    '<div class="profile-context-solution-main"><strong>' + escapeHtml(name) + '</strong>' + uniqueName + '</div>' +
+                    '<div class="profile-context-solution-meta"><span>' + escapeHtml(managed) + '</span><span>' + escapeHtml(version) + '</span></div>' +
+                    '<div class="profile-context-solution-action">' + profileContextToggleButton(detailId, !!id) + '</div>' +
+                    '<div id="' + detailId + '" class="profile-context-solution-details" hidden>' +
+                    '<div class="profile-context-solution-detail-heading">Selected solution details</div>' +
+                    detailRows +
+                    '<div class="profile-context-path-note">Inline detail only: this follows the selected solution evidence path without opening a new query tab or crawling broader topology.</div>' +
+                    '</div>' +
+                    '</div>';
+            }).join("");
+
+            const moreHint = raw?.resultSetComplete === false
+                ? '<div class="profile-context-path-note">Bounded result set: more solution participation may exist. Displayed solutions are ranked for operational signal; use details one path at a time rather than treating this as a full topology scan.</div>'
+                : '<div class="profile-context-path-note">Curated evidence path: solutioncomponent → selected solution. This is not a generic topology crawl.</div>';
+
+            return '<details class="profile-context-paths" open>' +
+                '<summary>Observed solution packages</summary>' +
+                '<div class="profile-context-solution-list">' + rows + '</div>' +
+                moreHint +
+                '</details>';
+        }
+
+        function buildOperationalContextAccessPathHtml(item) {
+            const raw = item?.raw;
+            const details = raw && Array.isArray(raw.accessDetails) ? raw.accessDetails : [];
+            if (!details.length) {
+                return "";
+            }
+
+            const rows = details.slice(0, 3).map((detail, index) => {
+                const principal = detail?.principal || {};
+                const name = detail?.label || principal.displayName || principal.uniqueName || "Access evidence";
+                const source = detail?.source || principal.source || "observed evidence";
+                const detailId = 'access-detail-' + index + '-' + escapeAttribute(name).replace(/[^a-zA-Z0-9_-]/g, "-");
+                const detailRows = [
+                    contextDetailRow('Evidence', detail?.summary),
+                    contextDetailRow('Principal name', principal.displayName || principal.uniqueName),
+                    contextDetailRow('Principal type', principal.actorType),
+                    contextDetailRow('User id', principal.id),
+                    contextDetailRow('Application id', principal.applicationId),
+                    contextDetailRow('Access mode', principal.accessMode),
+                    contextDetailRow('Source', source)
+                ].join("");
+
+                return '<div class="profile-context-solution-row">' +
+                    '<div class="profile-context-solution-main"><strong>' + escapeHtml(name) + '</strong><span class="profile-context-solution-unique">' + escapeHtml(source) + '</span></div>' +
+                    '<div class="profile-context-solution-meta"><span>Evidence path</span><span>Access</span></div>' +
+                    '<div class="profile-context-solution-action">' + profileContextToggleButton(detailId, true) + '</div>' +
+                    '<div id="' + detailId + '" class="profile-context-solution-details" hidden>' +
+                    '<div class="profile-context-solution-detail-heading">Selected access details</div>' +
+                    detailRows +
+                    '<div class="profile-context-path-note">Inline detail only: this follows the selected access evidence path. DV Quick Run does not simulate RBAC or infer remediation.</div>' +
+                    '</div>' +
+                    '</div>';
+            }).join("");
+
+            return '<details class="profile-context-paths" open>' +
+                '<summary>Observed access evidence</summary>' +
+                '<div class="profile-context-solution-list">' + rows + '</div>' +
+                '<div class="profile-context-path-note">Access Context surfaces observed access/principal evidence only. Missing privileges are shown only when Dataverse returns them.</div>' +
+                '</details>';
+        }
+
+        function buildOperationalContextActorPathHtml(item) {
+            const raw = item?.raw;
+            const actors = raw && Array.isArray(raw.actors) ? raw.actors : [];
+            if (!actors.length) {
+                return "";
+            }
+
+            const rows = actors.slice(0, 3).map((actor, index) => {
+                const name = actor?.displayName || actor?.uniqueName || actor?.id || "Observed actor";
+                const actorType = actor?.actorType || "Actor type not returned";
+                const detailId = 'actor-detail-' + index + '-' + escapeAttribute(name).replace(/[^a-zA-Z0-9_-]/g, "-");
+                const detailRows = [
+                    contextDetailRow('Display name', actor?.displayName),
+                    contextDetailRow('Unique name', actor?.uniqueName),
+                    contextDetailRow('Actor type', actorType),
+                    contextDetailRow('User id', actor?.id),
+                    contextDetailRow('Application id', actor?.applicationId),
+                    contextDetailRow('Azure object id', actor?.azureObjectId),
+                    contextDetailRow('Disabled', typeof actor?.isDisabled === "boolean" ? (actor.isDisabled ? "Yes" : "No") : undefined),
+                    contextDetailRow('Source', actor?.source)
+                ].join("");
+
+                return '<div class="profile-context-solution-row">' +
+                    '<div class="profile-context-solution-main"><strong>' + escapeHtml(name) + '</strong><span class="profile-context-solution-unique">' + escapeHtml(actorType) + '</span></div>' +
+                    '<div class="profile-context-solution-meta"><span>Observed actor</span><span>Identity</span></div>' +
+                    '<div class="profile-context-solution-action">' + profileContextToggleButton(detailId, true) + '</div>' +
+                    '<div id="' + detailId + '" class="profile-context-solution-details" hidden>' +
+                    '<div class="profile-context-solution-detail-heading">Selected actor details</div>' +
+                    detailRows +
+                    '<div class="profile-context-path-note">Inline detail only: this follows the selected actor evidence path. Identity context does not imply runtime responsibility.</div>' +
+                    '</div>' +
+                    '</div>';
+            }).join("");
+
+            return '<details class="profile-context-paths" open>' +
+                '<summary>Observed runtime actor evidence</summary>' +
+                '<div class="profile-context-solution-list">' + rows + '</div>' +
+                '<div class="profile-context-path-note">Runtime Actor Context preserves observed identity distinctions such as human user, app user, service principal, workflow owner, or impersonation.</div>' +
+                '</details>';
+        }
+
+        function buildOperationalContextOwnershipPathHtml(item) {
+            const raw = item?.raw;
+            const details = raw && Array.isArray(raw.ownershipDetails) ? raw.ownershipDetails : [];
+            if (!details.length) {
+                return "";
+            }
+
+            const rows = details.slice(0, 6).map((detail, index) => {
+                const label = detail?.label || "Ownership evidence";
+                const value = detail?.value || "Not returned";
+                const detailId = 'ownership-detail-' + index + '-' + escapeAttribute(label).replace(/[^a-zA-Z0-9_-]/g, "-");
+                const detailRows = [
+                    contextDetailRow('Signal', label),
+                    contextDetailRow('Observed value', value),
+                    contextDetailRow('Meaning', detail?.meaning),
+                    contextDetailRow('Source', detail?.source)
+                ].join("");
+
+                return '<div class="profile-context-solution-row">' +
+                    '<div class="profile-context-solution-main"><strong>' + escapeHtml(label) + '</strong><span class="profile-context-solution-unique">' + escapeHtml(value) + '</span></div>' +
+                    '<div class="profile-context-solution-meta"><span>Context</span><span>Ownership</span></div>' +
+                    '<div class="profile-context-solution-action">' + profileContextToggleButton(detailId, true) + '</div>' +
+                    '<div id="' + detailId + '" class="profile-context-solution-details" hidden>' +
+                    '<div class="profile-context-solution-detail-heading">Selected ownership / participation details</div>' +
+                    detailRows +
+                    '<div class="profile-context-path-note">Inline detail only: this follows the selected ownership evidence path. Ownership and participation do not imply causality.</div>' +
+                    '</div>' +
+                    '</div>';
+            }).join("");
+
+            return '<details class="profile-context-paths" open>' +
+                '<summary>Observed ownership / participation signals</summary>' +
+                '<div class="profile-context-solution-list">' + rows + '</div>' +
+                '<div class="profile-context-path-note">Ownership structure and participation are context only. They do not assign runtime responsibility.</div>' +
+                '</details>';
+        }
+
+        function buildOperationalContextEvidenceHtml(section) {
+            const evidence = Array.isArray(section?.evidence) ? section.evidence : [];
+            if (!evidence.length) {
+                const reason = section?.unavailableReason || "No contextual evidence was returned for this provider.";
+                return '<div class="profile-context-empty">' + escapeHtml(reason) + '</div>';
+            }
+
+            return evidence.map((item) => {
+                const confidence = item?.confidence ? '<span class="profile-context-meta">Confidence: ' + escapeHtml(item.confidence) + '</span>' : '';
+                const scope = item?.scope ? '<span class="profile-context-meta">Scope: ' + escapeHtml(item.scope) + '</span>' : '';
+                const source = item?.source ? '<span class="profile-context-meta">Source: ' + escapeHtml(item.source) + '</span>' : '';
+                const query = item?.query
+                    ? '<details class="profile-context-query"><summary><span>Evidence query pattern (diagnostic, not auto-run)</span><button class="profile-context-copy" type="button" data-profile-context-copy="query">Copy query</button></summary><pre><code>' + escapeHtml(item.query) + '</code></pre></details>'
+                    : '';
+                const raw = item && Object.prototype.hasOwnProperty.call(item, "raw")
+                    ? '<details class="profile-context-raw"><summary><span>Raw evidence</span><button class="profile-context-copy" type="button" data-profile-context-copy="raw">Copy JSON</button></summary><pre><code>' + escapeHtml(JSON.stringify(item.raw, null, 2)) + '</code></pre></details>'
+                    : '';
+                const emphasis = item?.emphasis ? ' profile-context-evidence-' + escapeAttribute(String(item.emphasis)) : '';
+                const continuationPaths = [
+                    buildOperationalContextSolutionPathHtml(item),
+                    buildOperationalContextAccessPathHtml(item),
+                    buildOperationalContextActorPathHtml(item),
+                    buildOperationalContextOwnershipPathHtml(item)
+                ].filter(Boolean).join("");
+
+                return '<div class="profile-context-evidence' + emphasis + '">' +
+                    '<div class="profile-context-evidence-title">' + escapeHtml(item?.title || "Context evidence") + '</div>' +
+                    '<div class="profile-context-evidence-summary">' + escapeHtml(item?.summary || "No summary provided.") + '</div>' +
+                    continuationPaths +
+                    '<div class="profile-context-meta-row">' + confidence + scope + source + '</div>' +
+                    query + raw +
+                    '</div>';
+            }).join("");
+        }
+
+        function buildOperationalContextHtml(profile) {
+            const context = profile?.operationalContext;
+            const sections = Array.isArray(context?.sections) ? context.sections : [];
+            if (!sections.length) {
+                return "";
+            }
+
+            const guardrails = Array.isArray(context?.guardrails) ? context.guardrails.slice(0, 5) : [];
+            const sectionHtml = sections.map((section) => {
+                return '<details class="profile-context-section">' +
+                    '<summary><span class="profile-evidence-summary-icon">' + profileIconSvg("target", "Operational Context") + '</span>' +
+                    '<span>' + escapeHtml(section?.label || "Operational Context") + '</span></summary>' +
+                    '<div class="profile-context-summary">' + escapeHtml(section?.summary || "No contextual summary was provided.") + '</div>' +
+                    buildOperationalContextEvidenceHtml(section) +
+                    '</details>';
+            }).join("");
+            const guardrailHtml = guardrails.length
+                ? '<div class="profile-context-guardrails">' + guardrails.map((item) => '<span>' + escapeHtml(item) + '</span>').join("") + '</div>'
+                : "";
+
+            return '<details class="profile-context">' +
+                '<summary><span class="profile-evidence-summary-icon">' + profileIconSvg("info", "Operational Context") + '</span>' +
+                '<span>Operational Context</span><span class="profile-guidance-count">' + escapeHtml(String(sections.length)) + ' sections</span></summary>' +
+                '<div class="profile-context-intro">What this tells you: bounded operational context for the selected subject. These cards explain where the subject participates, what evidence is missing, and what should not be assumed.</div>' +
+                sectionHtml + guardrailHtml +
+                '</details>';
+        }
+
         function buildProfileCardHtml(profile) {
             const dimensions = Array.isArray(profile?.dimensions) ? profile.dimensions : [];
             const band = String(profile?.headlineBand || "none");
@@ -1066,6 +1308,7 @@ function showCopyStatus(message) {
                 '<div class="profile-card-scroll">' +
                 '<div class="profile-metrics">' + dimensions.map((dimension) => buildProfileMetricRowHtml(profile, dimension)).join("") + '</div>' +
                 '<details class="profile-evidence"><summary><span class="profile-evidence-summary-icon">' + profileIconSvg("evidence", "Evidence") + '</span><span>Evidence (click to expand)</span></summary>' + buildProfileEvidenceSectionHtml(profile) + '</details>' +
+                buildOperationalContextHtml(profile) +
                 buildProfileNavigationActionsHtml(profile) +
                 buildProfileGuidanceHtml(profile) +
                 buildProfileFutureSurfacesHtml(profile) +

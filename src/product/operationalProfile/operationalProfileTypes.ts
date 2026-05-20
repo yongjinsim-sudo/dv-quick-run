@@ -74,6 +74,8 @@ export interface OperationalProfileDimension {
   evidence: OperationalProfileEvidenceItem[];
 }
 
+import type { OperationalContextViewModel } from "../operationalContext/operationalContextTypes.js";
+
 export interface OperationalProfileModel {
   kind: "entityOperationalProfile";
   entityLogicalName: string;
@@ -86,6 +88,7 @@ export interface OperationalProfileModel {
   guidance: OperationalProfileGuidanceItem[];
   navigationActions: OperationalProfileNavigationAction[];
   futureSurfaces: OperationalProfileFutureSurface[];
+  operationalContext?: OperationalContextViewModel;
   /** @deprecated Use guidance for typed model-driven rendering. Kept for existing surfaces. */
   investigationGuidance: string[];
   invariants: {
@@ -113,4 +116,5 @@ export interface OperationalProfileInput {
   isManaged?: boolean;
   isPartiallyManaged?: boolean;
   managedDetail?: string;
+  operationalContext?: OperationalContextViewModel;
 }
