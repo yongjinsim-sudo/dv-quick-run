@@ -6,6 +6,7 @@ import type {
   OperationalProfileModel,
   OperationalProfileNavigationAction
 } from "./operationalProfileTypes.js";
+import { renderOperationalContextMarkdown } from "../operationalContext/operationalContextMarkdownRenderer.js";
 
 function escapeMarkdown(value: string): string {
   return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
@@ -86,6 +87,7 @@ export function renderOperationalProfileMarkdown(profile: OperationalProfileMode
     "## Operational Density",
     "",
     ...profile.dimensions.map(renderDimension).flatMap((section) => [section, ""]),
+    ...(profile.operationalContext ? [renderOperationalContextMarkdown(profile.operationalContext), ""] : []),
     "## Suggested Investigation Actions",
     "",
     renderNavigationActions(profile.navigationActions ?? []),
@@ -109,6 +111,7 @@ export function renderOperationalProfileMarkdown(profile: OperationalProfileMode
     "- This Profile is advisory-only.",
     "- This Profile surfaces evidence and must not imply root cause.",
     "- This Profile does not reconstruct timelines, perform hidden scans, or merge unrelated evidence into a narrative conclusion.",
+    "- Operational Context defaults to one-hop context; curated semantic expansions must remain explicit, bounded, and non-causal.",
     "- Bands are explainable labels, not opaque numeric scores."
   ];
 

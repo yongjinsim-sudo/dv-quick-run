@@ -19,6 +19,8 @@ import type { DataverseClient } from "../services/dataverseClient.js";
 import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
 import { buildExecutionInsightSuggestions } from "../product/executionInsights/executionInsightsOrchestrator.js";
 import { buildOperationalProfile } from "../product/operationalProfile/operationalProfileEngine.js";
+import { buildOperationalContextViewModel } from "../product/operationalContext/operationalContextEngine.js";
+import { createDefaultOperationalContextProviders } from "../product/operationalContext/defaultOperationalContextProviders.js";
 import { investigationContextStore } from "../investigation/context/investigationContextStore.js";
 import type { OperationalProfileModel } from "../product/operationalProfile/operationalProfileTypes.js";
 import { previewAndRunBatchQueries } from "../commands/router/actions/execution/batch/runBatchExecutionFlow.js";
@@ -712,13 +714,22 @@ export class ResultViewerPanel {
         const entity = await loadEntityDefByLogicalName(ctx, client, token, entityLogicalName);
         const resolvedLogicalName = entity?.logicalName ?? entityLogicalName;
 
-        const [fields, relationships, pluginEvidence, workflowEvidence, asyncEvidence, managedEvidence] = await Promise.all([
+        const [fields, relationships, pluginEvidence, workflowEvidence, asyncEvidence, managedEvidence, operationalContext] = await Promise.all([
             loadFields(ctx, client, token, resolvedLogicalName, { silent: true }).catch(() => []),
             loadNavigationProperties(ctx, client, token, resolvedLogicalName, { silent: true }).catch(() => []),
             ResultViewerPanel.loadPluginStepProfileEvidence(client, token, resolvedLogicalName),
             ResultViewerPanel.loadWorkflowProfileEvidence(client, token, resolvedLogicalName),
             ResultViewerPanel.loadAsyncProfileEvidence(client, token, resolvedLogicalName),
-            ResultViewerPanel.loadManagedProfileEvidence(client, token, resolvedLogicalName)
+            ResultViewerPanel.loadManagedProfileEvidence(client, token, resolvedLogicalName),
+            buildOperationalContextViewModel({
+                subject: {
+                    type: "entity",
+                    logicalName: resolvedLogicalName,
+                    displayName: entity?.displayName ?? resolvedLogicalName
+                },
+                providers: createDefaultOperationalContextProviders(),
+                dataverse: { client, token }
+            })
         ]);
 
         return buildOperationalProfile({
@@ -737,7 +748,8 @@ export class ResultViewerPanel {
             auditingEnabled: managedEvidence.auditingEnabled,
             isManaged: managedEvidence.isManaged,
             isPartiallyManaged: managedEvidence.isPartiallyManaged,
-            managedDetail: managedEvidence.managedDetail
+            managedDetail: managedEvidence.managedDetail,
+            operationalContext
         });
     }
 
@@ -904,12 +916,37 @@ export class ResultViewerPanel {
         }
     }
 
-    private static async handleProfileDrawerAction(payload: { actionId?: string; entityLogicalName?: string; entitySetName?: string }): Promise<void> {
+    private static async handleProfileDrawerAction(payload: { actionId?: string; entityLogicalName?: string; entitySetName?: string; solutionId?: string }): Promise<void> {
         const actionId = String(payload.actionId ?? "").trim();
         const entityLogicalName = String(payload.entityLogicalName ?? "").trim();
         const entitySetName = String(payload.entitySetName ?? "").trim();
+        const solutionId = String(payload.solutionId ?? "").trim().replace(/[{}]/g, "");
 
-        if (!actionId || !entityLogicalName) {
+        if (!actionId) {
+            return;
+        }
+
+        if (actionId === "viewSolutionDetails") {
+            if (!/^[0-9a-fA-F-]{36}$/.test(solutionId)) {
+                void vscode.window.showWarningMessage("DV Quick Run: Solution details need a valid solution id.");
+                return;
+            }
+
+            ResultViewerPanel.lastOperationalProfileNavigationContext = {
+                entityLogicalName: entityLogicalName || "solution",
+                entitySetName: entitySetName || undefined,
+                actionId,
+                source: "operationalProfile",
+                timestamp: Date.now()
+            };
+
+            await ResultViewerPanel.handleRunExecutionInsightQuery({
+                query: `solutions?$select=solutionid,uniquename,friendlyname,ismanaged,version&$filter=solutionid eq ${solutionId}&$top=1`
+            });
+            return;
+        }
+
+        if (!entityLogicalName) {
             return;
         }
 

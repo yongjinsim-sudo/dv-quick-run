@@ -2794,4 +2794,276 @@ export const RESULT_VIEWER_STYLES = `
     opacity: 0.7;
     cursor: default;
 }
+
+        .profile-context {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            margin-top: 10px;
+            overflow: hidden;
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 78%, transparent);
+        }
+
+        .profile-context > summary,
+        .profile-context-section > summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 9px 12px;
+            font-weight: 600;
+            color: var(--vscode-foreground);
+        }
+
+        .profile-context > summary::-webkit-details-marker,
+        .profile-context-section > summary::-webkit-details-marker,
+        .profile-context-raw > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .profile-context-intro,
+        .profile-context-summary,
+        .profile-context-empty {
+            padding: 8px 12px;
+            color: var(--vscode-descriptionForeground);
+            line-height: 1.45;
+        }
+
+        .profile-context-section {
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .profile-context-evidence {
+            margin: 8px 12px 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--vscode-editor-background) 82%, transparent);
+        }
+
+        .profile-context-evidence-notable {
+            border-color: color-mix(in srgb, var(--vscode-notificationsInfoIcon-foreground) 45%, var(--vscode-panel-border));
+        }
+
+        .profile-context-evidence-caution {
+            border-color: color-mix(in srgb, var(--vscode-notificationsWarningIcon-foreground) 50%, var(--vscode-panel-border));
+        }
+
+        .profile-context-evidence-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .profile-context-evidence-summary {
+            color: var(--vscode-descriptionForeground);
+            line-height: 1.45;
+        }
+
+        .profile-context-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .profile-context-meta {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 999px;
+            padding: 2px 7px;
+            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
+        }
+
+        .profile-context-paths {
+            margin-top: 10px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: color-mix(in srgb, var(--vscode-editorWidget-background) 72%, transparent);
+        }
+
+        .profile-context-paths > summary {
+            cursor: pointer;
+            padding: 7px 9px;
+            color: var(--vscode-foreground);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .profile-context-paths > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .profile-context-solution-list {
+            display: grid;
+            gap: 1px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .profile-context-solution-row {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) minmax(150px, auto) auto;
+            gap: 8px;
+            align-items: center;
+            padding: 7px 9px;
+            background: color-mix(in srgb, var(--vscode-editor-background) 88%, transparent);
+        }
+
+        .profile-context-solution-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .profile-context-solution-unique {
+            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .profile-context-solution-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: flex-end;
+            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
+        }
+
+        .profile-context-solution-meta span {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 999px;
+            padding: 2px 7px;
+        }
+
+        .profile-context-path-action {
+            border: 1px solid color-mix(in srgb, var(--vscode-button-background) 65%, var(--vscode-panel-border));
+            border-radius: 6px;
+            background: color-mix(in srgb, var(--vscode-button-background) 85%, transparent);
+            color: var(--vscode-button-foreground);
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .profile-context-path-action:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+
+
+        .profile-context-solution-details {
+            grid-column: 1 / -1;
+            margin-top: 8px;
+            padding: 9px 10px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--vscode-editor-background) 72%, transparent);
+        }
+
+        .profile-context-solution-detail-heading {
+            color: var(--vscode-editor-foreground);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .profile-context-solution-detail-row {
+            display: grid;
+            grid-template-columns: minmax(110px, 0.35fr) 1fr;
+            gap: 8px;
+            padding: 3px 0;
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+        }
+
+        .profile-context-solution-detail-row code {
+            color: var(--vscode-editor-foreground);
+            white-space: normal;
+            word-break: break-word;
+            background: transparent;
+            padding: 0;
+        }
+
+        .profile-context-path-muted,
+        .profile-context-path-note {
+            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
+        }
+
+        .profile-context-path-note {
+            padding: 7px 9px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        .profile-context-query {
+            margin-top: 8px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .profile-context-query > summary,
+        .profile-context-raw > summary {
+            cursor: pointer;
+            color: var(--vscode-textLink-foreground);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .profile-context-copy {
+            border: 1px solid var(--vscode-button-border, transparent);
+            border-radius: 6px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 8px;
+        }
+
+        .profile-context-copy:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .profile-context-query pre,
+        .profile-context-query code {
+            display: block;
+            margin-top: 6px;
+            max-height: 80px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            padding: 6px;
+            border-radius: 6px;
+            background: var(--vscode-textCodeBlock-background);
+        }
+
+        .profile-context-raw {
+            margin-top: 8px;
+        }
+
+        .profile-context-raw pre {
+            max-height: 160px;
+            overflow: auto;
+            padding: 8px;
+            border-radius: 6px;
+            background: var(--vscode-textCodeBlock-background);
+        }
+
+        .profile-context-guardrails {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px 12px 12px;
+            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
+        }
+
+        .profile-context-guardrails span {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 999px;
+            padding: 2px 7px;
+        }
 `;

@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { CommandContext } from "./context/commandContext.js";
 import { buildOperationalProfile } from "../product/operationalProfile/operationalProfileEngine.js";
 import { renderOperationalProfileMarkdown } from "../product/operationalProfile/operationalProfileMarkdownRenderer.js";
+import { buildOperationalContextViewModel } from "../product/operationalContext/operationalContextEngine.js";
+import { createDefaultOperationalContextProviders } from "../product/operationalContext/defaultOperationalContextProviders.js";
 import {
   loadEntityDefByLogicalName,
   loadEntityDefs,
@@ -95,11 +97,22 @@ async function exportOperationalProfileSnapshot(
         loadNavigationProperties(ctx, client, token, entity.logicalName, { silent: true }).catch(() => [])
       ]);
 
+      const operationalContext = await buildOperationalContextViewModel({
+        subject: {
+          type: "entity",
+          logicalName: entity.logicalName,
+          displayName: entity.displayName ?? entity.logicalName
+        },
+        providers: createDefaultOperationalContextProviders(),
+        dataverse: { client, token }
+      });
+
       const profile = buildOperationalProfile({
         entityLogicalName: entity.logicalName,
         entityDisplayName: entity.displayName ?? entity.logicalName,
         attributeCount: fields.length,
-        relationshipCount: relationships.length
+        relationshipCount: relationships.length,
+        operationalContext
       });
 
       await openProfilePreviewOnly(ext, entity.logicalName, renderOperationalProfileMarkdown(profile));
