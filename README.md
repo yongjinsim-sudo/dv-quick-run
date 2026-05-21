@@ -56,90 +56,101 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.11.0
+## 🆕 What's New in v0.11.1
 
-v0.11.0 introduces **Operational Context Foundations** inside Operational Profiles.
-
-DV Quick Run now helps you understand not only how operationally dense an entity is, but also what contextual evidence surrounds it:
+v0.11.1 introduces the first production-ready version of:
 
 ```text
-profile entity → bounded operational context → inline evidence continuation → copyable evidence
+DVQR Score
 ```
 
-This release adds four new context surfaces:
+DVQR Score helps surface:
 
-* **Solution Context** — shows observed solution package participation and deployment/layering context
-* **Access Context** — shows the current Dataverse principal and access evidence when Dataverse returns it
-* **Runtime Actor Context** — preserves observed identity distinctions such as human user, app user, service principal, workflow owner, or impersonation
-* **Ownership / Participation Context** — explains ownership model, managed metadata state, activity-table status, and custom-table status
+* operational density
+* contextual investigation complexity
+* orchestration participation
+* metadata complexity
+* relationship surface area
+* operational packaging participation
 
-The goal is not broad topology crawling or automated RCA.
+DVQR Score is:
 
-It is:
+* evidence-backed
+* advisory-only
+* bounded
+* explainable
+* entity-scoped
 
-* bounded operational understanding
-* contextual investigation continuity
-* evidence-backed participation visibility
-* clearer deployment/layering awareness
-* safer identity and access interpretation
-* calm, copyable diagnostic evidence
+DVQR Score is **not**:
 
-Operational Context introduces a new investigation pattern:
+* a health score
+* a risk score
+* a security score
+* runtime certainty
+* root-cause proof
+
+Operational Profiles now support:
 
 ```text
-observed evidence
-→ curated semantic expansion
-→ inline details
-→ no new query tab
-→ no topology crawl
+DVQR Score
+├─ Primary Contributors
+└─ How is DVQR Score calculated?
 ```
 
-Example:
+### 🧠 Explainable Operational Density
 
-```text
-Contact
-→ solutioncomponent
-→ observed solution packages
-→ View details inline
-```
+Operational Profiles now expose explainable density decomposition.
 
-Solution Context now performs a bounded internal lookup, ranks observed solution packages, and shows the most useful packages first while preserving raw evidence. This helps surface high-signal packages such as Power Pages, Power Automate, app-specific, custom, or managed layers before generic System/Default noise.
+Each operational signal can surface:
 
-Access and actor context remain intentionally evidence-limited:
+* raw evidence
+* soft-cap normalization
+* weighted contribution
+* normalized ratio
+* contribution weighting
 
-* DV Quick Run does not simulate RBAC
-* missing privileges are shown only when Dataverse returns them
-* current request principal is shown as context, not effective-permission proof
-* identity context does not imply runtime responsibility
+Signals currently include:
 
-Ownership context remains structural:
+* Broad Relationship Surface
+* Heavy Runtime Participation
+* Significant Orchestration Density
+* Ownership Complexity
+* Operational Packaging Participation
+* Customisation Footprint
 
-* ownership model explains table ownership semantics
-* managed metadata state may matter for customisation/editability
-* activity/custom table status is context only
-* ownership and participation do not imply causality
+Calculation semantics remain:
 
-Evidence sections now include:
+* evidence-backed
+* bounded
+* deterministic
+* progressively disclosed
 
-* **Copy query**
-* **Copy JSON**
-* collapsed diagnostic query patterns
-* collapsed raw evidence
-* boundedness notes when more evidence may exist
+DVQR Score calculation detail now remains collapsed by default to preserve calm operational investigation UX while still keeping scoring explainability available on demand.
 
-This release reinforces the v0.11.x invariants:
+### ⚖️ Density Calibration Refinement
 
-```text
-participation does not imply causality
-operational context remains bounded
-curated semantic expansion is explicit and provider-owned
-no recursive topology crawling
-no audit chronology reconstruction
-no speculative RCA narrative
-evidence remains inspectable and copyable
-```
+Operational density calibration has been refined to better match real-world Dataverse environments.
 
-DV Quick Run continues evolving into a calm operational investigation workbench for Dataverse and Power Platform engineering — helping operators see operational context without pretending to know root cause.
+Calibration goals include:
+
+* lightweight entities should remain low-density
+* common business entities should not immediately appear alarming
+* orchestration-heavy entities should stand out clearly
+* operational density should feel believable across environments
+
+### 🎨 Operational Profile UX Refinement
+
+Operational Profiles received major presentation and readability refinement:
+
+* calmer operational score presentation
+* progressive disclosure for contributors and calculations
+* simplified decomposition visuals
+* reduced duplicated visual density indicators
+* refined contributor hierarchy
+* improved operational readability
+* consistent operational iconography
+
+The result is a calmer and more trustworthy operational investigation surface focused on investigation guidance rather than dashboard-style telemetry overload.
 
 ---
 
