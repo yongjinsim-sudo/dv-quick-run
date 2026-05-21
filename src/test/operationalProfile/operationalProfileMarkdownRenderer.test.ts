@@ -15,7 +15,16 @@ suite("operationalProfileMarkdownRenderer", () => {
 
     assert.ok(markdown.includes("# DV Quick Run Profile — Contact"));
     assert.ok(markdown.includes("**Entity:** `contact`"));
+    assert.ok(markdown.includes("## DVQR Score"));
     assert.ok(markdown.includes("## Operational Density"));
+    assert.ok(markdown.includes("Operational Density"));
+    assert.ok(markdown.includes("How does the calculation work?"));
+    assert.ok(markdown.includes("Observed evidence → bounded interpretation → guided investigation"));
+    assert.ok(markdown.includes("Normalization profile:** `dvqr-density-v1`"));
+    assert.ok(markdown.includes("### Primary Contributors"));
+    assert.ok(markdown.includes("Primitive formula"));
+    assert.ok(markdown.includes("Display formula"));
+    assert.ok(markdown.includes("Raw / soft cap"));
     assert.ok(markdown.includes("## Evidence Summary"));
     assert.ok(markdown.includes("## Future Investigation Surfaces"));
     assert.ok(markdown.includes("## Suggested Investigation Actions"));
@@ -28,6 +37,7 @@ suite("operationalProfileMarkdownRenderer", () => {
     assert.ok(markdown.includes("Operational Profile drift comparison"));
     assert.ok(markdown.includes("347 attributes"));
     assert.ok(markdown.includes("advisory-only"));
+    assert.ok(markdown.includes("not risk, health, quality, security severity, or root cause"));
     assert.ok(!markdown.toLowerCase().includes("root cause:"));
   });
 
@@ -75,3 +85,5 @@ suite("operationalProfileMarkdownRenderer", () => {
   });
 
 });
+
+

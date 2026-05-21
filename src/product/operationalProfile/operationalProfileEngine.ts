@@ -8,6 +8,7 @@ import type {
   OperationalProfileNavigationAction
 } from "./operationalProfileTypes.js";
 import { buildOperationalProfileGuidance } from "./operationalProfileGuidanceBuilder.js";
+import { buildDvqrScore } from "../../dvqrScore/dvqrScoreEngine.js";
 
 interface BandThresholds {
   low: number;
@@ -318,6 +319,26 @@ function buildSummary(headlineBand: OperationalProfileBand): string {
   return "No strong operational density signals were observed from the provided evidence.";
 }
 
+function buildScoreAwareSummary(displayScore: number): string {
+  if (displayScore >= 86) {
+    return "This entity shows very high operational density based on the available evidence. Use it to choose where to investigate first, not as root-cause proof.";
+  }
+
+  if (displayScore >= 61) {
+    return "This entity shows high operational density based on the available evidence. Use it to choose where to investigate first, not as root-cause proof.";
+  }
+
+  if (displayScore >= 41) {
+    return "This entity shows moderate operational density. Review the evidence before assuming execution complexity is caused by any single layer.";
+  }
+
+  if (displayScore >= 21) {
+    return "This entity shows some operational participation. Use the evidence sections as investigation context rather than root-cause proof.";
+  }
+
+  return "No strong operational density signals were observed from the provided evidence.";
+}
+
 /**
  * Builds an entity-scoped Operational Profile model from already-bounded evidence.
  *
@@ -504,7 +525,7 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
   const navigationActions = buildOperationalProfileNavigationActions(dimensions);
   const futureSurfaces = buildOperationalProfileFutureSurfaces();
 
-  return {
+  const profile: OperationalProfileModel = {
     kind: "entityOperationalProfile",
     entityLogicalName,
     entityDisplayName,
@@ -524,5 +545,13 @@ export function buildOperationalProfile(input: OperationalProfileInput): Operati
       advisoryOnly: true,
       evidenceBacked: true
     }
+  };
+
+  const dvqrScore = input.dvqrScore ?? buildDvqrScore(profile);
+
+  return {
+    ...profile,
+    summary: buildScoreAwareSummary(dvqrScore.displayScore),
+    dvqrScore
   };
 }

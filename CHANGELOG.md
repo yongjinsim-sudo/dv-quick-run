@@ -6,6 +6,310 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# v0.11.1 — DVQR Score, Operational Density Calibration & Evidence-Backed Complexity Semantics
+
+This release evolves Operational Profiles from:
+
+* operational context visibility
+
+→ to:
+
+* calibrated operational density interpretation
+* evidence-backed complexity scoring
+* explainable density decomposition
+* trustworthy investigation guidance
+
+DV Quick Run now introduces the first production-ready version of:
+
+```text
+DVQR Score
+```
+
+The goal is not risk scoring, health scoring, or root-cause prediction.
+
+It is:
+
+* operational density understanding
+* contextual complexity visibility
+* orchestration awareness
+* investigation prioritisation
+* evidence-backed interpretation
+* explainable scoring semantics
+
+DVQR Score remains:
+
+* bounded
+* advisory-only
+* evidence-backed
+* entity-scoped
+* investigation-oriented
+
+---
+
+## 📊 DVQR Score (NEW)
+
+Introduced the first full DVQR Score model inside Operational Profiles.
+
+DVQR Score represents:
+
+```text
+operational density
++
+contextual investigation complexity
+```
+
+—not:
+
+* system health
+* runtime quality
+* security severity
+* performance scoring
+* deployment correctness
+* root-cause certainty
+
+DVQR Score currently evaluates evidence such as:
+
+* relationship surface area
+* plugin/runtime participation
+* workflow/orchestration density
+* ownership complexity
+* solution participation
+* metadata customisation footprint
+
+Behaviour:
+
+* evidence is compressed using bounded soft-cap normalization
+* signals contribute weighted operational density points
+* final score is calibrated into a bounded 0–100 scale
+* interpretation remains advisory-only
+
+Results:
+
+* clearer operational investigation prioritisation
+* stronger orchestration visibility
+* easier identification of operationally dense entities
+* more believable operational complexity interpretation
+
+---
+
+## 🧠 Explainable Density Calculation (NEW)
+
+Operational Profiles now expose explainable score decomposition.
+
+Added:
+
+* `How is DVQR Score calculated?`
+* evidence-backed contribution breakdowns
+* soft-cap normalization visibility
+* weighted evidence summaries
+* raw evidence vs normalized ratio visibility
+* calculation explanation versioning
+
+Example decomposition includes:
+
+* Broad Relationship Surface
+* Heavy Runtime Participation
+* Significant Orchestration Density
+* Ownership Complexity
+* Operational Packaging Participation
+* Customisation Footprint
+
+Each signal now surfaces:
+
+* raw evidence count
+* soft cap
+* normalized ratio
+* weighted contribution
+
+Behaviour:
+
+* strongest contributors remain visible first
+* deeper calculation semantics are progressively disclosed
+* operational interpretation remains separate from calculation detail
+
+Results:
+
+* stronger operational trust
+* explainable investigation semantics
+* reduced "magic score" ambiguity
+* clearer understanding of why entities score differently
+
+---
+
+## ⚖️ Operational Density Calibration Refinement (Major)
+
+Refined operational density calibration to better match real-world Dataverse operational complexity.
+
+Adjusted:
+
+* density weighting balance
+* orchestration weighting
+* relationship normalization
+* metadata density interpretation
+* ownership participation semantics
+* packaging participation weighting
+
+Calibration goals:
+
+* lightweight entities should remain clearly low-density
+* common business entities should not immediately appear alarming
+* orchestration-heavy entities should feel meaningfully distinct
+* density distribution should remain believable across environments
+
+Examples:
+
+| Entity Type                  | Example Behaviour |
+| ---------------------------- | ----------------- |
+| Lightweight helper table     | Low density       |
+| Vanilla account/contact      | Moderate density  |
+| Plugin-heavy business entity | High density      |
+| Deep orchestration entity    | Very high density |
+
+Results:
+
+* more believable operational scoring
+* reduced false alarm semantics
+* stronger psychological trust in score interpretation
+* calmer operational investigation UX
+
+---
+
+## 🧭 Progressive Disclosure UX Refinement
+
+Refined Operational Profile presentation hierarchy around:
+
+* strongest operational signal first
+* investigation interpretation second
+* scoring decomposition third
+
+Operational Profile structure now follows:
+
+```text
+DVQR Score
+├─ Primary Contributors
+└─ How is DVQR Score calculated?
+```
+
+Behaviour:
+
+* Primary Contributors collapsed by default
+* Calculation details collapsed by default
+* strongest operational interpretation remains immediately visible
+* deeper scoring detail remains explorable on demand
+
+Results:
+
+* calmer operational UX
+* reduced visual overload
+* faster operational scanning
+* stronger investigation readability
+
+---
+
+## 🎨 Operational Profile UX Polish
+
+Refined visual structure and operational readability throughout Operational Profiles.
+
+Improvements include:
+
+* calmer score presentation
+* contributor hierarchy refinement
+* cleaner evidence decomposition layout
+* reduced duplicated graphical density visuals
+* improved section spacing and alignment
+* improved contributor readability
+* stronger progressive disclosure behaviour
+* refined operational terminology consistency
+
+Additional refinements:
+
+* contributor sections now use consistent operational iconography
+* calculation semantics remain visually secondary to investigation guidance
+* decomposition visuals simplified to reduce redundancy
+
+Results:
+
+* more professional operational presentation
+* cleaner investigation flow
+* stronger visual trustworthiness
+* reduced cognitive overload
+
+---
+
+## 🧪 Density Validation & Dogfooding
+
+DVQR Score calibration and Operational Profiles were validated against:
+
+* lightweight metadata entities
+* plugin-dense business entities
+* workflow-heavy operational entities
+* managed platform entities
+* sparse helper/system entities
+
+Examples validated include:
+
+* `contact`
+* `account`
+* `workflow`
+* `plugintracelog`
+* `sdkmessageprocessingstep`
+
+Validation focused on:
+
+* operational believability
+* advisory correctness
+* score consistency
+* psychological trust
+* density distribution realism
+* evidence explainability
+* avoiding implied root-cause certainty
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DVQR operational reasoning invariants:
+
+* operational density is not root cause
+* evidence remains inspectable and explainable
+* strongest signal appears first
+* interpretation remains advisory-only
+* participation does not imply causality
+* scoring must remain explainable
+* operational context remains bounded
+* operational guidance remains calm and investigation-oriented
+
+DVQR Score prioritises:
+
+```text
+understanding
+before
+automation
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* surface explainable operational density scoring
+* decompose operational complexity transparently
+* expose weighted evidence contribution semantics
+* calibrate density more realistically across entity types
+* provide calmer and more trustworthy investigation guidance
+* preserve evidence-backed operational interpretation
+
+This establishes the foundation for:
+
+* future DVQR Score evolution
+* operational density comparison workflows
+* operational drift analysis
+* evidence-backed operational ranking
+* future investigation continuity and replay workflows
+
+---
+
 ## v0.11.0 — Operational Context Foundations, Evidence Continuity & Investigation Context Expansion
 
 This release establishes the first complete Operational Context foundation layer inside DV Quick Run.
