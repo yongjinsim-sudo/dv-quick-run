@@ -7,6 +7,7 @@ import type {
   OperationalProfileNavigationAction
 } from "./operationalProfileTypes.js";
 import { renderOperationalContextMarkdown } from "../operationalContext/operationalContextMarkdownRenderer.js";
+import type { DvqrScoreModel } from "../../dvqrScore/dvqrScoreTypes.js";
 
 function escapeMarkdown(value: string): string {
   return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
@@ -59,6 +60,45 @@ function renderGuidanceList(guidance: readonly OperationalProfileGuidanceItem[],
   return fallback.map((item) => `- ${escapeMarkdown(item)}`).join("\n");
 }
 
+function renderDvqrScore(score: DvqrScoreModel | undefined): string {
+  if (!score) {
+    return "_No DVQR Score was generated for this Profile._";
+  }
+
+  const factors = score.contributingFactors
+    .filter((factor) => factor.weightedContribution > 0)
+    .sort((left, right) => right.weightedContribution - left.weightedContribution)
+    .map((factor) => `| ${escapeMarkdown(factor.label)} | ${factor.rawValue} | ${factor.rawValue} / ${factor.softCap} | ${factor.weightedContribution} / ${factor.maxContribution} | ${escapeMarkdown(factor.formula)} |`)
+    .join("\n");
+
+  return [
+    `**DVQR Score:** ${score.displayScore} / 100`,
+    "",
+    `**Band:** ${escapeMarkdown(score.band)} Operational Density & Complexity`,
+    "",
+    `> ${escapeMarkdown(score.summary)}`,
+    "",
+    "### Primary Contributors",
+    "",
+    factors || "_No contributing factors were observed._",
+    "",
+    "<details>",
+    "<summary><strong>How does the calculation work?</strong></summary>",
+    "",
+    `- **Normalization profile:** \`${escapeMarkdown(score.normalizationVersion)}\``,
+    `- **Explanation version:** \`${escapeMarkdown(score.explanationVersion)}\``,
+    `- **Evidence principle:** ${escapeMarkdown(score.evidencePrinciple)}`,
+    "- **Primitive formula:** `min(max contribution, max contribution × ln(raw + 1) / ln(soft cap + 1))`",
+    "- **Display formula:** `round(low-end damping(100 × sum(weighted contributions) / 80))`",
+    "",
+    "| Signal | Raw evidence | Raw / soft cap | Contribution | Formula |",
+    "|---|---:|---:|---:|---|",
+    factors || "| None observed | 0 | 0 | 0 | n/a |",
+    "",
+    "</details>"
+  ].join("\n");
+}
+
 function renderDimension(dimension: OperationalProfileDimension): string {
   return [
     "<details open>",
@@ -83,6 +123,10 @@ export function renderOperationalProfileMarkdown(profile: OperationalProfileMode
     `**Profile band:** ${profile.headlineLabel}`,
     "",
     `> ${profile.summary}`,
+    "",
+    "## DVQR Score",
+    "",
+    renderDvqrScore(profile.dvqrScore),
     "",
     "## Operational Density",
     "",
@@ -112,8 +156,11 @@ export function renderOperationalProfileMarkdown(profile: OperationalProfileMode
     "- This Profile surfaces evidence and must not imply root cause.",
     "- This Profile does not reconstruct timelines, perform hidden scans, or merge unrelated evidence into a narrative conclusion.",
     "- Operational Context defaults to one-hop context; curated semantic expansions must remain explicit, bounded, and non-causal.",
-    "- Bands are explainable labels, not opaque numeric scores."
+    "- DVQR Score represents operational density / contextual complexity, not risk, health, quality, security severity, or root cause.",
+    "- Bands are explainable labels, not opaque risk scores."
   ];
 
   return `${lines.join("\n").trim()}\n`;
 }
+
+

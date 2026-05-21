@@ -26,8 +26,14 @@ suite("operationalProfileEngine", () => {
     assert.strictEqual(profile.invariants.advisoryOnly, true);
     assert.strictEqual(profile.invariants.evidenceBacked, true);
 
-    assert.ok(profile.summary.includes("high operational density"));
-    assert.ok(!profile.summary.toLowerCase().includes("root cause"));
+    assert.ok(profile.summary.toLowerCase().includes("operational density"));
+    assert.ok(!profile.summary.toLowerCase().includes("root cause:"));
+    assert.ok(profile.dvqrScore);
+    assert.strictEqual(profile.dvqrScore?.normalizationVersion, "dvqr-density-v1");
+    assert.strictEqual(profile.dvqrScore?.explanationVersion, "v1");
+    assert.strictEqual(profile.dvqrScore?.evidencePrinciple, "Observed evidence → bounded interpretation → guided investigation");
+    assert.ok(profile.dvqrScore?.methodology.toLowerCase().includes("observable metadata"));
+    assert.ok(profile.dvqrScore?.contributingFactors.every((factor) => factor.explanation.length > 0));
     assert.ok(profile.evidence.some((item) => item.label === "Plugin Registrations" && item.value === "8 synchronous steps"));
     assert.ok(profile.evidence.some((item) => item.label === "Power Automate / Flow" && item.value === "6 flows reference this entity"));
     assert.ok(profile.guidance.some((item) => item.title === "Advisory context only"));
@@ -43,6 +49,10 @@ suite("operationalProfileEngine", () => {
 
     assert.strictEqual(profile.headlineBand, "low");
     assert.ok(!Object.prototype.hasOwnProperty.call(profile, "score"));
+    assert.ok(profile.dvqrScore);
+    assert.strictEqual(profile.dvqrScore?.summary.includes("operational density"), true);
+    assert.strictEqual(profile.dvqrScore?.normalizationVersion, "dvqr-density-v1");
+    assert.strictEqual(profile.dvqrScore?.explanationVersion, "v1");
     assert.ok(profile.dimensions.every((dimension) => typeof dimension.band === "string"));
     assert.ok(profile.dimensions.every((dimension) => typeof dimension.explanation === "string" && dimension.explanation.length > 0));
     assert.ok(profile.dimensions.every((dimension) => typeof dimension.whyItMatters === "string" && dimension.whyItMatters.length > 0));

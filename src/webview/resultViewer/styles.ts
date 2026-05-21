@@ -170,7 +170,7 @@ export const RESULT_VIEWER_STYLES = `
             display: grid;
             grid-template-columns: minmax(150px, max-content) 1fr max-content;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             margin-top: 14px;
         }
 
@@ -228,7 +228,7 @@ export const RESULT_VIEWER_STYLES = `
         .profile-metric-row {
             display: grid;
             grid-template-columns: 210px minmax(140px, 1fr) 120px minmax(180px, 1.2fr);
-            gap: 14px;
+            gap: 12px;
             align-items: center;
             font-size: 12px;
             color: var(--vscode-editorWidget-foreground, var(--vscode-editor-foreground));
@@ -2129,7 +2129,7 @@ export const RESULT_VIEWER_STYLES = `
 
 .profile-summary-row {
     grid-template-columns: minmax(185px, max-content) 1fr max-content;
-    gap: 14px;
+    gap: 12px;
     margin-top: 10px;
 }
 
@@ -2164,7 +2164,7 @@ export const RESULT_VIEWER_STYLES = `
 
 .profile-metric-row {
     grid-template-columns: 210px minmax(150px, 1fr) 120px minmax(180px, 1.2fr);
-    gap: 14px;
+    gap: 12px;
     min-height: 36px;
     padding: 5px 0;
 }
@@ -3066,4 +3066,398 @@ export const RESULT_VIEWER_STYLES = `
             border-radius: 999px;
             padding: 2px 7px;
         }
+
+/* v0.11.1 DVQR Score: calm operational-density presentation, not risk/severity. */
+.profile-summary-row {
+    grid-template-columns: 1fr max-content;
+    align-items: start;
+}
+
+.profile-dvqr-score {
+    display: grid;
+    grid-template-columns: minmax(116px, 0.3fr) minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--vscode-textLink-foreground) 30%, var(--vscode-panel-border) 70%);
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--vscode-textLink-foreground) 10%, transparent 90%), transparent 42%),
+        color-mix(in srgb, var(--vscode-editorWidget-background) 82%, var(--vscode-editor-background) 18%);
+}
+
+.profile-dvqr-score-main {
+    display: grid;
+    gap: 4px;
+    align-content: center;
+    min-width: 0;
+}
+
+.profile-dvqr-score-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+
+.profile-dvqr-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: 1px solid color-mix(in srgb, var(--vscode-descriptionForeground) 45%, transparent 55%);
+    border-radius: 999px;
+    color: color-mix(in srgb, var(--vscode-descriptionForeground) 88%, var(--vscode-editor-foreground) 12%);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1;
+    text-transform: none;
+}
+
+.profile-dvqr-score-number {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 84%, var(--vscode-editor-foreground) 16%);
+    font-weight: 760;
+    line-height: 1;
+}
+
+.profile-dvqr-score-number span {
+    font-size: 30px;
+    letter-spacing: -0.05em;
+}
+
+.profile-dvqr-score-number small {
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.profile-dvqr-score-band {
+    color: color-mix(in srgb, var(--vscode-editorWidget-foreground, var(--vscode-editor-foreground)) 88%, var(--vscode-textLink-foreground) 12%);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.profile-dvqr-score-detail {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.profile-dvqr-score-summary {
+    color: color-mix(in srgb, var(--vscode-editorWidget-foreground, var(--vscode-editor-foreground)) 88%, var(--vscode-descriptionForeground) 12%);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.profile-dvqr-breakdown {
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 78%, transparent 22%);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--vscode-editor-background) 82%, var(--vscode-editorWidget-background) 18%);
+}
+
+.profile-dvqr-breakdown summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 10px;
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 78%, var(--vscode-textLink-foreground) 22%);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.profile-dvqr-breakdown summary > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-dvqr-factor-list {
+    display: grid;
+    gap: 8px;
+    padding: 8px 10px 10px;
+}
+
+.profile-dvqr-factor-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 0.7fr) minmax(100px, 1fr) minmax(52px, max-content);
+    gap: 8px;
+    align-items: center;
+    font-size: 11px;
+}
+
+.profile-dvqr-factor-label {
+    color: color-mix(in srgb, var(--vscode-editorWidget-foreground, var(--vscode-editor-foreground)) 88%, var(--vscode-descriptionForeground) 12%);
+    font-weight: 700;
+}
+
+.profile-dvqr-factor-bar {
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--vscode-editorWidget-background) 68%, var(--vscode-panel-border) 32%);
+}
+
+.profile-dvqr-factor-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--vscode-textLink-foreground) 42%, var(--vscode-editor-foreground) 58%),
+        color-mix(in srgb, var(--vscode-textLink-foreground) 78%, var(--vscode-editor-foreground) 22%));
+}
+
+.profile-dvqr-factor-value {
+    color: var(--vscode-descriptionForeground);
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.profile-dvqr-factor-explanation {
+    grid-column: 1 / -1;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.35;
+}
+
+.profile-dvqr-normalization,
+.profile-dvqr-factor-empty {
+    padding: 0 10px 10px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+}
+
+
+.profile-dvqr-calculation {
+    margin: 0;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 78%, transparent 22%);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--vscode-editorWidget-background) 72%, var(--vscode-editor-background) 28%);
+}
+
+.profile-dvqr-calculation summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 12px;
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 84%, var(--vscode-textLink-foreground) 16%);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.profile-dvqr-calc-body {
+    display: grid;
+    gap: 10px;
+    padding: 10px 12px 12px;
+}
+
+.profile-dvqr-calc-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.profile-dvqr-calc-summary-grid > div {
+    padding: 8px 10px;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 72%, transparent 28%);
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--vscode-editor-background) 88%, transparent 12%);
+}
+
+.profile-dvqr-calc-summary-grid span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.profile-dvqr-calc-summary-grid strong {
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 86%, var(--vscode-textLink-foreground) 14%);
+    font-size: 12px;
+}
+
+.profile-dvqr-calc-formula-card {
+    display: grid;
+    gap: 4px;
+    padding: 9px 10px;
+    border: 1px solid color-mix(in srgb, var(--vscode-editorWidget-border) 70%, transparent 30%);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-textLink-foreground) 10%);
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 80%, var(--vscode-descriptionForeground) 20%);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.profile-dvqr-calc-formula-card code,
+.profile-dvqr-calculation code {
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 82%, var(--vscode-editor-foreground) 18%);
+    white-space: normal;
+}
+
+.profile-dvqr-calc-list {
+    display: grid;
+    gap: 7px;
+}
+
+.profile-dvqr-calc-row {
+    padding: 9px 10px;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 68%, transparent 32%);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--vscode-editorWidget-background) 72%, transparent 28%);
+}
+
+.profile-dvqr-calc-row-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+}
+
+.profile-dvqr-calc-contribution {
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 78%, var(--vscode-descriptionForeground) 22%);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.profile-dvqr-calc-ratio {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-top: 7px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+}
+
+.profile-dvqr-calc-ratio strong {
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 80%, var(--vscode-descriptionForeground) 20%);
+}
+
+.profile-dvqr-calc-muted {
+    margin-top: 3px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.profile-dvqr-calc-note {
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+    .profile-dvqr-calc-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.profile-metrics-heading {
+    padding: 10px 18px 2px;
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.profile-band-badge {
+    border-color: color-mix(in srgb, var(--vscode-textLink-foreground) 34%, var(--vscode-panel-border) 66%);
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 82%, var(--vscode-editor-foreground) 18%);
+    background: color-mix(in srgb, var(--vscode-textLink-foreground) 10%, transparent 90%);
+}
+
+.profile-band-badge.profile-band-high,
+.profile-band-badge.profile-band-very-high,
+.profile-band-badge.profile-band-moderate,
+.profile-band-badge.profile-band-partial,
+.profile-band-badge.profile-band-low {
+    border-color: color-mix(in srgb, var(--vscode-textLink-foreground) 34%, var(--vscode-panel-border) 66%);
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 82%, var(--vscode-editor-foreground) 18%);
+    background: color-mix(in srgb, var(--vscode-textLink-foreground) 10%, transparent 90%);
+}
+
+.profile-metric-bar.profile-band-very-high span,
+.profile-metric-bar.profile-band-high span,
+.profile-metric-bar.profile-band-moderate span,
+.profile-metric-bar.profile-band-partial span,
+.profile-metric-bar.profile-band-low span,
+.profile-band-very-high .profile-metric-bar span,
+.profile-band-high .profile-metric-bar span {
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--vscode-textLink-foreground) 42%, var(--vscode-editor-foreground) 58%),
+        color-mix(in srgb, var(--vscode-textLink-foreground) 74%, var(--vscode-editor-foreground) 26%));
+    box-shadow: none;
+}
+
+
+.profile-dvqr-methodology {
+    display: grid;
+    gap: 4px;
+    margin: 10px 0 12px;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--vscode-editorWidget-border) 70%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--vscode-editor-background) 88%, var(--vscode-textLink-foreground) 12%);
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 78%, transparent);
+    font-size: 12px;
+}
+
+.profile-dvqr-methodology code {
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 82%, var(--vscode-editor-foreground) 18%);
+}
+
+.profile-dvqr-breakdown-heading {
+    margin: 10px 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--vscode-editor-foreground) 70%, transparent);
+    font-weight: 700;
+}
+
+.profile-metric-status.profile-band-high,
+.profile-metric-status.profile-band-very-high,
+.profile-metric-status.profile-band-moderate,
+.profile-metric-status.profile-band-partial,
+.profile-metric-status.profile-band-low {
+    color: color-mix(in srgb, var(--vscode-textLink-foreground) 82%, var(--vscode-editor-foreground) 18%);
+    background: transparent;
+    border-color: transparent;
+}
+
+/* DVQR Score calculation polish: calculation rows are evidence decomposition, not duplicated charts. */
+.profile-dvqr-calc-row.profile-dvqr-calc-row {
+    padding: 8px 10px;
+    background: color-mix(in srgb, var(--vscode-editorWidget-background) 60%, transparent 40%);
+}
+
+.profile-dvqr-calc-ratio.profile-dvqr-calc-ratio {
+    margin-top: 6px;
+    gap: 6px 14px;
+}
+
+.profile-dvqr-breakdown summary {
+    justify-content: flex-start;
+}
+
 `;
+
+

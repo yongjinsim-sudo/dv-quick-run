@@ -75,6 +75,7 @@ export interface OperationalProfileDimension {
 }
 
 import type { OperationalContextViewModel } from "../operationalContext/operationalContextTypes.js";
+import type { DvqrScoreModel } from "../../dvqrScore/dvqrScoreTypes.js";
 
 export interface OperationalProfileModel {
   kind: "entityOperationalProfile";
@@ -89,6 +90,7 @@ export interface OperationalProfileModel {
   navigationActions: OperationalProfileNavigationAction[];
   futureSurfaces: OperationalProfileFutureSurface[];
   operationalContext?: OperationalContextViewModel;
+  dvqrScore?: DvqrScoreModel;
   /** @deprecated Use guidance for typed model-driven rendering. Kept for existing surfaces. */
   investigationGuidance: string[];
   invariants: {
@@ -117,4 +119,5 @@ export interface OperationalProfileInput {
   isPartiallyManaged?: boolean;
   managedDetail?: string;
   operationalContext?: OperationalContextViewModel;
+  dvqrScore?: DvqrScoreModel;
 }

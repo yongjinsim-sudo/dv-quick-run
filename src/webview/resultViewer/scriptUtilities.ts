@@ -779,8 +779,123 @@ function showCopyStatus(message) {
         }
 
         function bandDisplayLabel(profile) {
+            const score = profile?.dvqrScore;
+            if (score?.band) {
+                return String(score.band) + " operational density";
+            }
+
             const label = String(profile?.headlineLabel || "Operational profile");
             return label.replace(/ complexity$/i, " operational density");
+        }
+
+        function dvqrScoreBandCssClass(band) {
+            return String(band || "minimal").replace(/\s+/g, "-").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+        }
+
+        function buildProfileDvqrScoreHtml(profile) {
+            const score = profile?.dvqrScore;
+            if (!score) {
+                return '<div class="profile-dvqr-score profile-dvqr-score-empty">' +
+                    '<div class="profile-dvqr-score-kicker">DVQR Score</div>' +
+                    '<div class="profile-dvqr-score-summary">Not available for this profile.</div>' +
+                    '</div>';
+            }
+
+            const band = String(score.band || "Minimal");
+            return '<section class="profile-dvqr-score profile-dvqr-score-' + escapeAttribute(dvqrScoreBandCssClass(band)) + '">' +
+                '<div class="profile-dvqr-score-main">' +
+                '<div class="profile-dvqr-score-kicker">DVQR Score</div>' +
+                '<div class="profile-dvqr-score-number"><span>' + escapeHtml(String(score.displayScore)) + '</span><small>/100</small></div>' +
+                '<div class="profile-dvqr-score-band">' + escapeHtml(band) + ' Operational Density &amp; Complexity</div>' +
+                '</div>' +
+                '<div class="profile-dvqr-score-detail">' +
+                '<div class="profile-dvqr-score-summary">' + escapeHtml(score.summary || "Operational density / contextual complexity only. Not risk, health, quality, or root cause.") + '</div>' +
+                '<details class="profile-dvqr-breakdown"><summary><span><span class="profile-evidence-summary-icon">' + profileIconSvg("target", "Primary Contributors") + '</span><span>Primary Contributors</span></span></summary>' +
+                buildProfileDvqrPrimaryContributorSummaryHtml(score) +
+                '</details>' +
+                buildProfileDvqrCalculationHtml(profile) +
+                '</div>' +
+                '</section>';
+        }
+
+        function buildProfileDvqrPrimaryContributorSummaryHtml(score) {
+            const factors = Array.isArray(score?.contributingFactors) ? score.contributingFactors.slice() : [];
+            const visibleFactors = factors
+                .filter((factor) => Number(factor?.weightedContribution || 0) > 0)
+                .sort((left, right) => Number(right?.weightedContribution || 0) - Number(left?.weightedContribution || 0))
+                .slice(0, 5);
+
+            if (!visibleFactors.length) {
+                return '<div class="profile-dvqr-factor-empty">No contributing factors were observed.</div>';
+            }
+
+            return '<div class="profile-dvqr-factor-list profile-dvqr-factor-list-compact">' + visibleFactors.map((factor) => {
+                const contribution = Number(factor?.weightedContribution || 0);
+                const maxContribution = Number(factor?.maxContribution || 0);
+                const percent = maxContribution > 0 ? Math.max(0, Math.min(100, Math.round((contribution / maxContribution) * 100))) : 0;
+                return '<div class="profile-dvqr-factor-row">' +
+                    '<div class="profile-dvqr-factor-label">' + escapeHtml(factor?.label || "Operational factor") + '</div>' +
+                    '<div class="profile-dvqr-factor-bar" aria-hidden="true"><span style="width: ' + percent + '%"></span></div>' +
+                    '<div class="profile-dvqr-factor-value">' + escapeHtml(String(contribution)) + ' / ' + escapeHtml(String(maxContribution)) + '</div>' +
+                    '<div class="profile-dvqr-factor-explanation">' + escapeHtml(factor?.explanation || "Evidence-backed operational density contribution.") + '</div>' +
+                    '</div>';
+            }).join("") + '</div>';
+        }
+
+        function buildProfileDvqrCalculationHtml(profile) {
+            const score = profile?.dvqrScore;
+            if (!score) {
+                return "";
+            }
+
+            const factors = Array.isArray(score.contributingFactors) ? score.contributingFactors.slice() : [];
+            const visibleFactors = factors
+                .filter((factor) => Number(factor?.weightedContribution || 0) > 0)
+                .sort((left, right) => Number(right?.weightedContribution || 0) - Number(left?.weightedContribution || 0));
+            const rawDensityIndex = Number(score.rawDensityIndex || 0);
+            const normalizationVersion = score.normalizationVersion || "dvqr-density-v1";
+            const explanationVersion = score.explanationVersion || "v1";
+            const evidencePrinciple = score.evidencePrinciple || "Observed evidence → bounded interpretation → guided investigation";
+            const displayScore = Number(score.displayScore || 0);
+            const weightedTotal = visibleFactors.reduce((total, factor) => total + Number(factor?.weightedContribution || 0), 0);
+            const maxTotal = visibleFactors.reduce((total, factor) => total + Number(factor?.maxContribution || 0), 0);
+            const factorRows = visibleFactors.length
+                ? visibleFactors.map((factor) => {
+                    const rawValue = Number(factor?.rawValue || 0);
+                    const softCap = Number(factor?.softCap || 0);
+                    const contribution = Number(factor?.weightedContribution || 0);
+                    const maxContribution = Number(factor?.maxContribution || 0);
+                    const ratioPercent = softCap > 0 ? Math.round(Math.min(1, rawValue / softCap) * 100) : 0;
+                    return '<div class="profile-dvqr-calc-row">' +
+                        '<div class="profile-dvqr-calc-row-main">' +
+                        '<div><strong>' + escapeHtml(factor?.label || "Operational factor") + '</strong><div class="profile-dvqr-calc-muted">' + escapeHtml(factor?.explanation || "Evidence-backed contribution.") + '</div></div>' +
+                        '<div class="profile-dvqr-calc-contribution">' + escapeHtml(String(contribution)) + ' / ' + escapeHtml(String(maxContribution)) + '</div>' +
+                        '</div>' +
+                        '<div class="profile-dvqr-calc-ratio"><span>Raw evidence: <strong>' + escapeHtml(String(rawValue)) + '</strong></span><span>Soft cap: <strong>' + escapeHtml(String(softCap)) + '</strong></span><span>Ratio: <strong>' + escapeHtml(String(ratioPercent)) + '%</strong></span></div>' +
+                        
+                        '</div>';
+                }).join("")
+                : '<div class="profile-dvqr-calc-row">No contributing factors were observed.</div>';
+
+            return '<details class="profile-dvqr-calculation">' +
+                '<summary><span class="profile-evidence-summary-icon">' + profileIconSvg("calculator", "How the score is calculated") + '</span>' +
+                '<span>How is DVQR Score calculated?</span></summary>' +
+                '<div class="profile-dvqr-calc-body">' +
+                '<div class="profile-dvqr-calc-summary-grid">' +
+                '<div><span>Final score</span><strong>' + escapeHtml(String(displayScore)) + ' / 100</strong></div>' +
+                '<div><span>Weighted evidence</span><strong>' + escapeHtml(String(Number(weightedTotal.toFixed(2)))) + ' / ' + escapeHtml(String(Number(maxTotal.toFixed(2)))) + '</strong></div>' +
+                '<div><span>Profile</span><strong>' + escapeHtml(normalizationVersion) + '</strong></div>' +
+                '</div>' +
+                '<div class="profile-dvqr-calc-formula-card">' +
+                '<div><strong>Evidence principle:</strong> ' + escapeHtml(evidencePrinciple) + '</div>' +
+                '<div><strong>Primitive contribution:</strong> <code>max × ln(raw + 1) / ln(soft cap + 1)</code></div>' +
+                '<div><strong>Display score:</strong> <code>round(low-end damping(100 × weighted evidence / calibrated ceiling))</code></div>' +
+                '<div><strong>Current calculation:</strong> <code>round(low-end damping(100 × ' + escapeHtml(String(Number(rawDensityIndex.toFixed(2)))) + ' / 80)) = ' + escapeHtml(String(displayScore)) + '</code></div>' +
+                '</div>' +
+                '<div class="profile-dvqr-calc-list">' + factorRows + '</div>' +
+                '<div class="profile-dvqr-calc-note">Explanation version <code>' + escapeHtml(explanationVersion) + '</code>. Bands describe operational density and contextual investigation complexity only. They do not imply risk, health, quality, security severity, or root-cause certainty.</div>' +
+                '</div>' +
+                '</details>';
         }
 
         function profileIconSvg(kind, title) {
@@ -809,6 +924,9 @@ function showCopyStatus(message) {
             }
             if (kind === "flow") {
                 return '<svg' + common + '><path d="M12 5v4"/><path d="M7 15v2"/><path d="M17 15v2"/><path d="M12 9H7v3"/><path d="M12 9h5v3"/><rect x="9" y="3" width="6" height="4" rx="1"/><rect x="4" y="12" width="6" height="4" rx="1"/><rect x="14" y="12" width="6" height="4" rx="1"/><title>' + safeTitle + '</title></svg>';
+            }
+            if (kind === "calculator") {
+                return '<svg' + common + '><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 7h8"/><path d="M8 11h2"/><path d="M12 11h2"/><path d="M16 11h.01"/><path d="M8 15h2"/><path d="M12 15h2"/><path d="M16 15h.01"/><title>' + safeTitle + '</title></svg>';
             }
             if (kind === "info") {
                 return '<svg' + common + '><circle cx="12" cy="12" r="9"/><path d="M12 10v6"/><path d="M12 7h.01"/><title>' + safeTitle + '</title></svg>';
@@ -1295,17 +1413,17 @@ function showCopyStatus(message) {
 
         function buildProfileCardHtml(profile) {
             const dimensions = Array.isArray(profile?.dimensions) ? profile.dimensions : [];
-            const band = String(profile?.headlineBand || "none");
             return '<div class="profile-card">' +
                 '<div class="profile-card-heading">' +
                 '<div class="profile-title-row"><span class="profile-entity-icon">' + profileIconSvg("entity", "Entity") + '</span><span>' + escapeHtml(profile?.entityDisplayName || profile?.entityLogicalName || "Entity") + ' (' + escapeHtml(profile?.entityLogicalName || "") + ') — Operational Profile</span></div>' +
                 '<div class="profile-summary-row">' +
-                '<span class="profile-band-badge profile-band-' + escapeAttribute(bandCssClass(band)) + '">' + escapeHtml(bandDisplayLabel(profile)) + '</span>' +
                 '<div class="profile-summary">' + escapeHtml(profile?.summary || "Operational profile evidence is unavailable.") + '</div>' +
                 '<button class="profile-why-link" type="button" data-profile-action="viewMetadata" data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '" data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '">Why is this?</button>' +
                 '</div>' +
+                buildProfileDvqrScoreHtml(profile) +
                 '</div>' +
                 '<div class="profile-card-scroll">' +
+                '<div class="profile-metrics-heading">Operational density evidence</div>' +
                 '<div class="profile-metrics">' + dimensions.map((dimension) => buildProfileMetricRowHtml(profile, dimension)).join("") + '</div>' +
                 '<details class="profile-evidence"><summary><span class="profile-evidence-summary-icon">' + profileIconSvg("evidence", "Evidence") + '</span><span>Evidence (click to expand)</span></summary>' + buildProfileEvidenceSectionHtml(profile) + '</details>' +
                 buildOperationalContextHtml(profile) +
@@ -1487,3 +1605,5 @@ function showCopyStatus(message) {
                 "</span>";
         }
 `;
+
+
