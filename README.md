@@ -56,101 +56,128 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.11.2
+## 🆕 What's New in v0.11.3
 
-v0.11.1 introduces the first production-ready version of:
+v0.11.3 introduces the first full **Access Context investigation workflow** inside DV Quick Run.
 
-```text
-DVQR Score
-```
+DV Quick Run can now investigate operational identity participation directly from:
 
-DVQR Score helps surface:
+* Command Palette workflows
+* Result Viewer operational continuation
+* runtime and identity investigation pivots
 
-* operational density
-* contextual investigation complexity
-* orchestration participation
-* metadata complexity
-* relationship surface area
-* operational packaging participation
+The goal is not RBAC simulation or security administration.
 
-DVQR Score is:
+It is:
 
-* evidence-backed
+* identity-centric operational investigation
+* bounded access-topology understanding
+* explainable operational participation visibility
+* calmer operational context exploration
+* investigation continuity
+* evidence-backed identity interpretation
+
+### 🔐 Access Context Investigation
+
+Access Context can now investigate:
+
+* Dataverse users
+* application users
+* non-interactive users
+* service identities
+* operational participation topology
+* direct role participation
+* team participation
+* inherited team role participation
+
+Access Context remains:
+
+* bounded
 * advisory-only
-* bounded
-* explainable
-* entity-scoped
+* investigation-oriented
+* evidence-backed
+* non-alarmist
+* operationally contextual
 
-DVQR Score is **not**:
+### ⚡ Result Viewer → Access Context Continuation
 
-* a health score
-* a risk score
-* a security score
-* runtime certainty
-* root-cause proof
+Added contextual operational continuation directly from Result Viewer.
 
-Operational Profiles now support:
+Available on:
 
 ```text
-DVQR Score
-├─ Primary Contributors
-└─ How is DVQR Score calculated?
+systemusers.systemuserid
 ```
 
-### 🧠 Explainable Operational Density
+New Result Viewer action:
 
-Operational Profiles now expose explainable density decomposition.
+```text
+OPERATE
+→ Check User Access Context
+```
 
-Each operational signal can surface:
+This preserves investigation continuity directly from row context while keeping Result Viewer as the operational workspace.
 
-* raw evidence
-* soft-cap normalization
-* weighted contribution
-* normalized ratio
-* contribution weighting
+### 🧠 Operational Significance Interpretation
 
-Signals currently include:
+Access Context now surfaces bounded operational interpretation summaries.
 
-* Broad Relationship Surface
-* Heavy Runtime Participation
-* Significant Orchestration Density
-* Ownership Complexity
-* Operational Packaging Participation
-* Customisation Footprint
+Examples include:
 
-Calculation semantics remain:
+* broad administrative participation
+* automation-oriented identities
+* AI Builder participation
+* synchronization/integration-oriented identities
+* scoped operational participation
 
+Example interpretations:
+
+```text
+This application user has broad operational reach via observed System Administrator role participation.
+```
+
+```text
+This identity appears aligned to integration or synchronization operations rather than broad interactive user access.
+```
+
+Interpretation remains:
+
+* heuristic
 * evidence-backed
 * bounded
-* deterministic
-* progressively disclosed
+* non-authoritative
 
-DVQR Score calculation detail now remains collapsed by default to preserve calm operational investigation UX while still keeping scoring explainability available on demand.
+### 🧩 Progressive Disclosure & Searchable Evidence
 
-### ⚖️ Density Calibration Refinement
+Access Context now follows a calmer operational hierarchy:
 
-Operational density calibration has been refined to better match real-world Dataverse environments.
+```text
+Access Context
+├─ Operational Significance
+├─ Observed Access Signals
+├─ Searchable Evidence
+└─ Raw Verification Evidence
+```
 
-Calibration goals include:
+Added:
 
-* lightweight entities should remain low-density
-* common business entities should not immediately appear alarming
-* orchestration-heavy entities should stand out clearly
-* operational density should feel believable across environments
+* local evidence search
+* search highlighting
+* find-next navigation
+* progressive disclosure
+* exportable investigation evidence
 
-### 🎨 Operational Profile UX Refinement
+### 📦 Access Context Export Support
 
-Operational Profiles received major presentation and readability refinement:
+Access Context investigations now support:
 
-* calmer operational score presentation
-* progressive disclosure for contributors and calculations
-* simplified decomposition visuals
-* reduced duplicated visual density indicators
-* refined contributor hierarchy
-* improved operational readability
-* consistent operational iconography
+* Copy Markdown
+* Copy JSON
+* Save Markdown
+* Save JSON
+* Save HTML
 
-The result is a calmer and more trustworthy operational investigation surface focused on investigation guidance rather than dashboard-style telemetry overload.
+Exports preserve bounded operational semantics and evidence continuity.
 
 ---
 

@@ -13,6 +13,7 @@ export interface OperationalContextSubject {
 export type OperationalContextEvidenceType =
   | "SolutionParticipation"
   | "AccessRestriction"
+  | "AccessTopology"
   | "MissingPrivilege"
   | "RuntimeActor"
   | "Owner"

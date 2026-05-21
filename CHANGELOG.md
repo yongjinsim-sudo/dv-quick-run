@@ -6,6 +6,349 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# v0.11.3 — Access Context Foundations, Identity-Centric Operational Investigation & Bounded Access Topology
+
+This release introduces the first complete **Access Context investigation workflow** inside DV Quick Run.
+
+DV Quick Run can now investigate operational identity participation directly from:
+
+* Command Palette workflows
+* Result Viewer identity continuation flows
+* execution/runtime identity pivots
+
+The goal is not RBAC simulation or security administration.
+
+It is:
+
+* identity-centric operational investigation
+* bounded access-topology understanding
+* explainable operational participation visibility
+* calmer operational context exploration
+* investigation continuity
+* evidence-backed identity interpretation
+
+Access Context remains:
+
+* bounded
+* advisory-only
+* investigation-oriented
+* evidence-backed
+* non-alarmist
+* operationally contextual
+
+---
+
+## 🔐 Access Context Investigation (Major)
+
+Introduced the first full Access Context investigation workflow inside DV Quick Run.
+
+Access Context can now investigate:
+
+* Dataverse users
+* application users
+* non-interactive users
+* service identities
+* operational participation topology
+* direct role participation
+* team participation
+* inherited team role participation
+
+Behaviour:
+
+* Access Context remains explicitly bounded
+* does not simulate RBAC
+* does not infer effective record access
+* preserves operational participation semantics only
+
+Results:
+
+* stronger operational identity understanding
+* clearer service/app-user visibility
+* calmer operational investigation workflows
+* safer access-oriented operational reasoning
+
+---
+
+## 🧭 Identity-Centric Operational Investigation (NEW)
+
+DV Quick Run now treats operational identity as a first-class investigation dimension.
+
+Access Context surfaces:
+
+* principal type
+* access mode
+* business unit
+* application/service identity classification
+* direct role participation
+* team participation
+* inherited team role participation
+
+Examples include:
+
+* Power Automate identities
+* AI Builder identities
+* Copilot Studio identities
+* synchronization/integration service identities
+* administrative application users
+
+Results:
+
+* easier understanding of operational platform identities
+* improved runtime identity orientation
+* stronger operational ecosystem visibility
+* safer operational participation interpretation
+
+---
+
+## ⚡ Result Viewer → Access Context Continuation (NEW)
+
+Added contextual operational continuation directly from Result Viewer.
+
+Available on:
+
+```text
+systemusers.systemuserid
+```
+
+New Result Viewer action:
+
+```text
+OPERATE
+→ Check User Access Context
+```
+
+Behaviour:
+
+* preserves investigation continuity
+* launches identity investigation directly from row context
+* avoids disconnected operational workflows
+* keeps Result Viewer as the operational investigation workspace
+
+Results:
+
+* smoother operational investigation flow
+* reduced context switching
+* stronger operational continuity
+* clearer runtime identity exploration
+
+---
+
+## 🧠 Operational Significance Interpretation (NEW)
+
+Introduced bounded operational interpretation summaries inside Access Context.
+
+Examples include:
+
+* broad administrative participation
+* automation-oriented identities
+* AI Builder participation
+* integration/synchronization-oriented identities
+* scoped operational participation
+
+Behaviour:
+
+* interpretations remain heuristic and evidence-backed
+* avoids effective-access claims
+* avoids security/risk scoring
+* preserves explainability and bounded semantics
+
+Examples:
+
+```text
+This application user has broad operational reach via observed System Administrator role participation.
+```
+
+```text
+This identity appears aligned to integration or synchronization operations rather than broad interactive user access.
+```
+
+Results:
+
+* stronger operational understanding
+* clearer investigation meaning
+* reduced “raw evidence only” interpretation burden
+* calmer operational reasoning
+
+---
+
+## 🧩 Progressive Disclosure & Searchable Evidence UX (Major)
+
+Refined Access Context presentation hierarchy around:
+
+* meaning first
+* operational signals second
+* evidence third
+* raw verification last
+
+Access Context structure now follows:
+
+```text
+Access Context
+├─ Operational Significance
+├─ Observed Access Signals
+├─ Searchable Evidence
+└─ Raw Verification Evidence
+```
+
+Behaviour:
+
+* strongest operational interpretation appears first
+* raw evidence remains progressively explorable
+* dense identity topology remains bounded and readable
+* local evidence search remains available inside the current investigation context
+
+Added:
+
+* local Access Context evidence search
+* search highlighting
+* find-next navigation
+* auto-expansion of matched sections
+
+Results:
+
+* calmer operational UX
+* reduced cognitive overload
+* stronger investigation readability
+* safer enterprise-scale usability
+
+---
+
+## 📦 Access Context Export & Evidence Portability (NEW)
+
+Access Context investigations can now be exported explicitly.
+
+Added:
+
+* Copy Markdown
+* Copy JSON
+* Save Markdown
+* Save JSON
+* Save HTML
+
+Behaviour:
+
+* preview opens directly without exposing intermediate markdown tabs
+* exports preserve bounded operational semantics
+* evidence remains portable and shareable
+* raw verification context remains available when needed
+
+Results:
+
+* improved investigation portability
+* easier operational sharing/escalation
+* foundation for future investigation replay/export workflows
+* stronger operational evidence continuity
+
+---
+
+## 🎨 Access Context UX Refinement
+
+Refined operational presentation and wording throughout Access Context.
+
+Improvements include:
+
+* reduced disclaimer repetition
+* calmer operational wording
+* stronger operational hierarchy
+* clearer separation between meaning/signals/evidence
+* improved section collapsing behaviour
+* refined operational terminology consistency
+* cleaner raw evidence organisation
+
+Additional refinements:
+
+* governance boundaries now appear prominently once instead of repeatedly
+* evidence wording shortened to reduce fatigue
+* operational interpretation prioritised ahead of raw topology detail
+
+Results:
+
+* cleaner operational UX
+* stronger psychological trust
+* reduced defensive/noisy wording
+* improved operational scanability
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Command Palette identity investigation
+* Result Viewer operational continuation
+* application user investigation
+* non-interactive user investigation
+* service identity investigation
+* local evidence search behaviour
+* export workflows
+* progressive disclosure behaviour
+* bounded raw evidence rendering
+
+Validated against:
+
+* Power Automate identities
+* AI Builder identities
+* Copilot Studio identities
+* integration service identities
+* administrative application users
+* enterprise-scale identity datasets
+
+No regression in:
+
+* Result Viewer
+* Operational Profiles
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* `$batch` execution
+* Query Doctor
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DVQR operational investigation invariants:
+
+* Access Context is operational investigation, not security administration
+* participation does not imply effective access
+* operational identity context remains bounded
+* investigation guidance remains advisory-only
+* evidence remains inspectable and explainable
+* operational interpretation remains heuristic, not authoritative
+* Result Viewer remains the operational workspace
+* operational continuity takes precedence over disconnected tooling
+
+Access Context prioritises:
+
+```text
+understanding
+before
+authority
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* investigate Dataverse identity participation operationally
+* continue identity investigations directly from Result Viewer
+* interpret operational access topology more meaningfully
+* preserve bounded and explainable identity context
+* search and export operational identity evidence safely
+* investigate service/app-user participation coherently
+
+This establishes the foundation for:
+
+* runtime actor continuity
+* audit-oriented operational investigation
+* execution identity correlation
+* future access-topology investigation workflows
+* identity-aware operational replay and reconstruction
+
+---
+
 # v0.11.1 and v0.11.2 — DVQR Score, Operational Density Calibration & Evidence-Backed Complexity Semantics
 
 This release evolves Operational Profiles from:

@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
-  "displayName": "DV Quick Run",  
+  "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, operational investigation, and governed execution workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -183,6 +183,10 @@
       {
         "command": "dvQuickRun.investigateRecord",
         "title": "DV Quick Run: Investigate Record"
+      },
+      {
+        "command": "dvQuickRun.investigateAccessContext",
+        "title": "DV Quick Run: Investigate Access Context"
       },
       {
         "command": "dvQuickRun.trySampleQuery",

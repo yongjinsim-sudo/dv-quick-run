@@ -161,8 +161,7 @@ export function resolveResultViewerActions(
             ? undefined
             : "Bound Action preview requires entity and row id context.")
       })
-    );
-  } else if (analysis.isBusinessGuid || analysis.isBusinessIdentifier) {
+    );  } else if (analysis.isBusinessGuid || analysis.isBusinessIdentifier) {
     actions.push(
       createAction({
         id: "investigate-record",
@@ -515,6 +514,21 @@ export async function executeResultViewerAction(
         entityLogicalName: payload.entityLogicalName.trim(),
         entitySetName: payload.entitySetName?.trim(),
         rowId: guid
+      });
+      return;
+    }
+
+    case "check-user-access-context": {
+      if (!guid || (payload.entityLogicalName !== "systemuser" && payload.entitySetName !== "systemusers")) {
+        void vscode.window.showWarningMessage("DV Quick Run: Access Context requires a systemuser row id.");
+        return;
+      }
+
+      await vscode.commands.executeCommand("dvQuickRun.investigateAccessContext", {
+        id: guid,
+        type: "systemuser",
+        logicalName: "systemuser",
+        label: String(payload.displayValue ?? payload.rawValue ?? guid).trim() || guid
       });
       return;
     }
