@@ -6,7 +6,7 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
-# v0.11.1 — DVQR Score, Operational Density Calibration & Evidence-Backed Complexity Semantics
+# v0.11.1 and v0.11.2 — DVQR Score, Operational Density Calibration & Evidence-Backed Complexity Semantics
 
 This release evolves Operational Profiles from:
 
