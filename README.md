@@ -56,7 +56,7 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.11.1
+## 🆕 What's New in v0.11.2
 
 v0.11.1 introduces the first production-ready version of:
 
