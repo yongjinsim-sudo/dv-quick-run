@@ -15,6 +15,7 @@ export function buildDvQuickRunHubViewModel(context: InvestigationContext = empt
     subtitle: "Operational investigation playbooks, capability discovery, and calm product direction inside VS Code.",
     sectionLinks: [
       { label: "Current Context", anchor: "current-context" },
+      { label: "Access Context", anchor: "access-context" },
       { label: "Investigation Playbooks", anchor: "playbooks" },
       { label: "Capabilities", anchor: "capabilities" },
       { label: "What's New", anchor: "whats-new" },

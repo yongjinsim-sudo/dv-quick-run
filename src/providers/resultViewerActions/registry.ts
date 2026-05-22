@@ -533,6 +533,36 @@ export async function executeResultViewerAction(
       return;
     }
 
+    case "check-team-access-context": {
+      if (!guid || (payload.entityLogicalName !== "team" && payload.entitySetName !== "teams")) {
+        void vscode.window.showWarningMessage("DV Quick Run: Team Access Context requires a team row id.");
+        return;
+      }
+
+      await vscode.commands.executeCommand("dvQuickRun.investigateAccessContext", {
+        id: guid,
+        type: "team",
+        logicalName: "team",
+        label: String(payload.displayValue ?? payload.rawValue ?? guid).trim() || guid
+      });
+      return;
+    }
+
+    case "check-role-access-context": {
+      if (!guid || (payload.entityLogicalName !== "role" && payload.entitySetName !== "roles")) {
+        void vscode.window.showWarningMessage("DV Quick Run: Role Access Context requires a role row id.");
+        return;
+      }
+
+      await vscode.commands.executeCommand("dvQuickRun.investigateAccessContext", {
+        id: guid,
+        type: "role",
+        logicalName: "role",
+        label: String(payload.displayValue ?? payload.rawValue ?? guid).trim() || guid
+      });
+      return;
+    }
+
     case "update-field":
     case "set-field-null": {
       const fieldLogicalName = String(payload.fieldLogicalName ?? columnName).trim();

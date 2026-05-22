@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -21,6 +21,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * investigate runtime behaviour with Execution Insights
 * understand entity operational footprint with Operational Profiles
 * inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
+* investigate bounded Access Context for users, teams, and roles
 * discover and execute supported Custom API capabilities through Capability Explorer
 * use the Hub to stay oriented across investigation workflows
 
@@ -56,120 +57,113 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.11.3
+## 🆕 What's New in v0.11.4
 
-v0.11.3 introduces the first full **Access Context investigation workflow** inside DV Quick Run.
+v0.11.4 expands **Access Context** from user-centric identity investigation into a broader operational identity participation family.
 
-DV Quick Run can now investigate operational identity participation directly from:
+DV Quick Run can now investigate bounded operational access participation for:
 
-* Command Palette workflows
-* Result Viewer operational continuation
-* runtime and identity investigation pivots
+* users
+* teams
+* roles
 
-The goal is not RBAC simulation or security administration.
+The goal is still not RBAC simulation, privilege matrixing, or security administration.
 
 It is:
 
 * identity-centric operational investigation
 * bounded access-topology understanding
-* explainable operational participation visibility
-* calmer operational context exploration
+* explainable participation visibility
+* calmer access-oriented operational reasoning
 * investigation continuity
 * evidence-backed identity interpretation
 
-### 🔐 Access Context Investigation
+### 👥 Team Access Context
 
-Access Context can now investigate:
+Team Access Context helps you understand operational participation around Dataverse teams.
 
-* Dataverse users
-* application users
-* non-interactive users
-* service identities
-* operational participation topology
-* direct role participation
+It can surface:
+
+* team identity and business-unit context
+* direct team role participation
+* bounded member participation
+* identity composition
+* access-mode composition
+* notable participants
+* raw verification evidence
+
+Large teams are summarized first so the surface stays calm and readable. Full member evidence remains available through progressive disclosure.
+
+Team Access Context is useful for owner teams, service-heavy teams, and operational teams where membership composition matters more than a flat membership dump.
+
+### 🛡️ Role Access Context
+
+Role Access Context helps you understand where a Dataverse role participates operationally.
+
+It can surface:
+
+* role identity and business-unit context
+* direct user participation
 * team participation
-* inherited team role participation
+* identity composition
+* access-mode composition
+* notable participants
+* raw verification evidence
 
-Access Context remains:
-
-* bounded
-* advisory-only
-* investigation-oriented
-* evidence-backed
-* non-alarmist
-* operationally contextual
+Role Access Context does not inspect or score privileges. It focuses on observed participation only.
 
 ### ⚡ Result Viewer → Access Context Continuation
 
-Added contextual operational continuation directly from Result Viewer.
+Access Context is now easier to launch directly from Result Viewer row actions.
 
-Available on:
+Supported continuation examples include:
 
 ```text
 systemusers.systemuserid
-```
-
-New Result Viewer action:
-
-```text
-OPERATE
 → Check User Access Context
+
+teams.teamid
+→ Check Team Access Context
+
+roles.roleid
+→ Check Role Access Context
 ```
 
-This preserves investigation continuity directly from row context while keeping Result Viewer as the operational workspace.
+This keeps Result Viewer as the operational investigation workspace while reducing context switching.
 
-### 🧠 Operational Significance Interpretation
+### 🧭 Hub Access Context Launcher
 
-Access Context now surfaces bounded operational interpretation summaries.
+The DV Quick Run Hub now includes an **Access Context** discovery section.
 
-Examples include:
-
-* broad administrative participation
-* automation-oriented identities
-* AI Builder participation
-* synchronization/integration-oriented identities
-* scoped operational participation
-
-Example interpretations:
+From the Hub, you can launch the same bounded Access Context workflow for:
 
 ```text
-This application user has broad operational reach via observed System Administrator role participation.
+User | Team | Role
 ```
+
+This gives Access Context a first-class discovery point without turning the Hub into a dashboard.
+
+### 🧩 Summary-First Access Context UX
+
+Access Context now uses a more scalable summary-first presentation model.
+
+For larger identity surfaces, DV Quick Run prioritises:
 
 ```text
-This identity appears aligned to integration or synchronization operations rather than broad interactive user access.
+Operational Significance
+→ Observed Topology
+→ Summary / Notable Participation
+→ Full Evidence
+→ Raw Verification Evidence
 ```
 
-Interpretation remains:
+This helps keep large service/application-user-heavy teams readable while preserving evidence transparency.
 
-* heuristic
-* evidence-backed
-* bounded
-* non-authoritative
+### 📦 Searchable & Exportable Evidence
 
-### 🧩 Progressive Disclosure & Searchable Evidence
+Access Context investigations remain searchable and exportable.
 
-Access Context now follows a calmer operational hierarchy:
-
-```text
-Access Context
-├─ Operational Significance
-├─ Observed Access Signals
-├─ Searchable Evidence
-└─ Raw Verification Evidence
-```
-
-Added:
-
-* local evidence search
-* search highlighting
-* find-next navigation
-* progressive disclosure
-* exportable investigation evidence
-
-### 📦 Access Context Export Support
-
-Access Context investigations now support:
+Supported exports include:
 
 * Copy Markdown
 * Copy JSON
@@ -177,9 +171,30 @@ Access Context investigations now support:
 * Save JSON
 * Save HTML
 
-Exports preserve bounded operational semantics and evidence continuity.
+Search remains local to the currently loaded bounded evidence.
 
----
+### 🧭 Access Context Boundaries
+
+Access Context remains:
+
+* bounded
+* advisory-only
+* evidence-backed
+* operationally contextual
+* non-alarmist
+* not effective-access simulation
+* not privilege matrixing
+* not security administration
+
+The governing principle remains:
+
+```text
+understanding
+before
+authority
+```
+
+
 
 ## 🎬 Result Viewer
 
@@ -228,6 +243,57 @@ It helps you:
 * avoid stale context after environment switches
 
 The Hub is optional. It does not take over the workflow; it helps you recover orientation when you need it.
+
+
+---
+
+### 🔐 Access Context
+
+Access Context helps you investigate bounded operational identity participation without leaving VS Code.
+
+You can investigate:
+
+* users
+* application/service identities
+* teams
+* roles
+
+Access Context can surface:
+
+* business-unit context
+* direct role participation
+* team participation
+* inherited participation
+* member composition
+* role participation
+* notable operational participants
+* raw verification evidence
+
+It is designed for operational investigation, not security administration.
+
+Access Context does not:
+
+* simulate RBAC
+* calculate effective record access
+* generate privilege matrices
+* infer security risk
+* perform recursive environment-wide topology crawling
+
+Access Context can be launched from:
+
+* Command Palette
+* DV Quick Run Hub
+* Result Viewer row actions
+
+Common Result Viewer continuations include:
+
+```text
+systemusers.systemuserid → Check User Access Context
+teams.teamid             → Check Team Access Context
+roles.roleid             → Check Role Access Context
+```
+
+Access Context remains summary-first, searchable, exportable, and bounded to the current investigation subject.
 
 ---
 
@@ -572,6 +638,7 @@ It detects or guards against risky situations such as:
 * AI-generated content requiring human review
 * cross-environment investigation leakage
 * operational-context overclaiming beyond bounded evidence
+* effective-access claims from Access Context participation evidence
 * causal claims from solution, ownership, access, or actor participation
 
 Execution-capable workflows are designed around:

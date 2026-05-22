@@ -387,4 +387,30 @@ suite("resultViewerInvariants", () => {
     assert.strictEqual(relatedNameCell?.originalColumnName, "parentcustomerid_account.name");
   });
 
+  test("roles result rows expose Role Access Context row action", () => {
+    const model = buildResultViewerModel({
+      value: [
+        {
+          roleid: "4931681d-8163-e811-a965-000d3a11fe32",
+          name: "Export Customizations (Solution Checker)"
+        }
+      ]
+    }, "roles", {
+      entitySetName: "roles",
+      entityLogicalName: "role",
+      primaryIdField: "roleid"
+    });
+
+    const roleCell = model.rows[0]["roleid"];
+    const actionIds = roleCell?.actions?.map((action) => action.id) ?? [];
+
+    assert.ok(actionIds.includes("check-role-access-context"));
+    assert.ok(model.rowActions?.[0]?.actions.some((action) => action.id === "check-role-access-context"));
+    assert.strictEqual(
+      roleCell?.actions?.find((action) => action.id === "check-role-access-context")?.payload.entityLogicalName,
+      "role"
+    );
+  });
+
+
 });

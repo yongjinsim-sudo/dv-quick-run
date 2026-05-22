@@ -74,6 +74,25 @@ function renderInvestigationContinuation(model: DvQuickRunHubViewModel): string 
   </section>`;
 }
 
+function renderAccessContextLauncher(): string {
+  return `<section id="access-context">
+    <h2>Access Context</h2>
+    <p class="dvqr-section-note">Investigate bounded operational identity participation for users, teams, and roles without simulating effective access.</p>
+    <div class="dvqr-card dvqr-access-context-card">
+      <div>
+        <h3>Investigate Access Context</h3>
+        <p>Search for a user, team, or role and open the same evidence-backed Access Context surface used by Result Viewer row actions.</p>
+        <div class="dvqr-meta">
+          <span class="dvqr-chip">User</span>
+          <span class="dvqr-chip">Team</span>
+          <span class="dvqr-chip">Role</span>
+        </div>
+      </div>
+      <button class="dvqr-action-button" data-command="dvQuickRun.investigateAccessContext">Investigate Access Context</button>
+    </div>
+  </section>`;
+}
+
 function groupCapabilities(capabilities: readonly CapabilityInfo[]): Map<string, CapabilityInfo[]> {
   const grouped = new Map<string, CapabilityInfo[]>();
 
@@ -126,6 +145,8 @@ export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: 
     </section>
 
     ${renderInvestigationContinuation(model)}
+
+    ${renderAccessContextLauncher()}
 
     <section id="playbooks">
       <h2>Investigation Playbooks</h2>
