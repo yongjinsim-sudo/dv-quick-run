@@ -1012,6 +1012,145 @@ function appendSystemUserAccessContextActionToPrimaryCell(
     primaryCell.overflowActions = merged.filter((candidate) => candidate.placement === "overflow");
 }
 
+function appendTeamAccessContextActionToPrimaryCell(
+    rowModel: Record<string, ResultViewerCell>,
+    options: ResultViewerBuildOptions | undefined,
+    primaryIdField: string | undefined
+): void {
+    if (!primaryIdField) {
+        return;
+    }
+
+    const entityLogicalName = String(options?.entityLogicalName ?? "").trim();
+    const entitySetName = String(options?.entitySetName ?? "").trim();
+    if (entityLogicalName !== "team" && entitySetName !== "teams") {
+        return;
+    }
+
+    const primaryCell = rowModel[primaryIdField];
+    if (!primaryCell) {
+        return;
+    }
+
+    const rowId = String(primaryCell.rawValue ?? primaryCell.copyValue ?? primaryCell.value ?? "").trim();
+    if (!rowId) {
+        return;
+    }
+
+    const existingActions = primaryCell.actions ?? [];
+    if (existingActions.some((action) => action.id === "check-team-access-context")) {
+        return;
+    }
+
+    const displayName = String(
+        rowModel.name?.value ??
+        rowModel.name?.copyValue ??
+        primaryCell.value ??
+        primaryCell.copyValue ??
+        rowId
+    ).trim();
+
+    const action: ResultViewerResolvedAction = {
+        id: "check-team-access-context",
+        title: "Check Team Access Context",
+        icon: "◉",
+        placement: "overflow",
+        group: "operate",
+        kind: "execute",
+        payload: {
+            guid: rowId,
+            entitySetName: options?.entitySetName,
+            entityLogicalName: "team",
+            primaryIdField,
+            columnName: primaryIdField,
+            rawValue: rowId,
+            currentValue: rowId,
+            displayValue: displayName || rowId,
+            sourceDocumentUri: options?.sourceTarget?.sourceDocumentUri,
+            sourceRangeStartLine: options?.sourceTarget?.sourceRangeStartLine,
+            sourceRangeStartCharacter: options?.sourceTarget?.sourceRangeStartCharacter,
+            sourceRangeEndLine: options?.sourceTarget?.sourceRangeEndLine,
+            sourceRangeEndCharacter: options?.sourceTarget?.sourceRangeEndCharacter
+        },
+        isEnabled: true
+    };
+
+    const merged = [...existingActions, action];
+    primaryCell.actions = merged;
+    primaryCell.primaryActions = merged.filter((candidate) => candidate.placement === "primary");
+    primaryCell.overflowActions = merged.filter((candidate) => candidate.placement === "overflow");
+}
+
+
+function appendRoleAccessContextActionToPrimaryCell(
+    rowModel: Record<string, ResultViewerCell>,
+    options: ResultViewerBuildOptions | undefined,
+    primaryIdField: string | undefined
+): void {
+    if (!primaryIdField) {
+        return;
+    }
+
+    const entityLogicalName = String(options?.entityLogicalName ?? "").trim();
+    const entitySetName = String(options?.entitySetName ?? "").trim();
+    if (entityLogicalName !== "role" && entitySetName !== "roles") {
+        return;
+    }
+
+    const primaryCell = rowModel[primaryIdField];
+    if (!primaryCell) {
+        return;
+    }
+
+    const rowId = String(primaryCell.rawValue ?? primaryCell.copyValue ?? primaryCell.value ?? "").trim();
+    if (!rowId) {
+        return;
+    }
+
+    const existingActions = primaryCell.actions ?? [];
+    if (existingActions.some((action) => action.id === "check-role-access-context")) {
+        return;
+    }
+
+    const displayName = String(
+        rowModel.name?.value ??
+        rowModel.name?.copyValue ??
+        primaryCell.value ??
+        primaryCell.copyValue ??
+        rowId
+    ).trim();
+
+    const action: ResultViewerResolvedAction = {
+        id: "check-role-access-context",
+        title: "Check Role Access Context",
+        icon: "◉",
+        placement: "overflow",
+        group: "operate",
+        kind: "execute",
+        payload: {
+            guid: rowId,
+            entitySetName: options?.entitySetName,
+            entityLogicalName: "role",
+            primaryIdField,
+            columnName: primaryIdField,
+            rawValue: rowId,
+            currentValue: rowId,
+            displayValue: displayName || rowId,
+            sourceDocumentUri: options?.sourceTarget?.sourceDocumentUri,
+            sourceRangeStartLine: options?.sourceTarget?.sourceRangeStartLine,
+            sourceRangeStartCharacter: options?.sourceTarget?.sourceRangeStartCharacter,
+            sourceRangeEndLine: options?.sourceTarget?.sourceRangeEndLine,
+            sourceRangeEndCharacter: options?.sourceTarget?.sourceRangeEndCharacter
+        },
+        isEnabled: true
+    };
+
+    const merged = [...existingActions, action];
+    primaryCell.actions = merged;
+    primaryCell.primaryActions = merged.filter((candidate) => candidate.placement === "primary");
+    primaryCell.overflowActions = merged.filter((candidate) => candidate.placement === "overflow");
+}
+
 function buildRowActions(row: Record<string, ResultViewerCell>, primaryIdField?: string): ResultViewerResolvedAction[] {
     const priority = [
         "investigate-record",
@@ -1019,6 +1158,8 @@ function buildRowActions(row: Record<string, ResultViewerCell>, primaryIdField?:
         "continue-traversal",
         "preview-bound-actions",
         "check-user-access-context",
+        "check-team-access-context",
+        "check-role-access-context",
         "copy-record-url"
         ];
     const byId = new Map<string, ResultViewerResolvedAction>();
@@ -1485,6 +1626,20 @@ export function buildResultViewerModel(
                     primaryIdField,
                     environment
                 }, primaryIdField);
+                appendTeamAccessContextActionToPrimaryCell(mapped, {
+                    ...options,
+                    entitySetName,
+                    entityLogicalName,
+                    primaryIdField,
+                    environment
+                }, primaryIdField);
+                appendRoleAccessContextActionToPrimaryCell(mapped, {
+                    ...options,
+                    entitySetName,
+                    entityLogicalName,
+                    primaryIdField,
+                    environment
+                }, primaryIdField);
             }
 
             return mapped;
@@ -1589,6 +1744,20 @@ export function buildResultViewerModel(
             environment
         }, primaryIdField);
         appendSystemUserAccessContextActionToPrimaryCell(mapped, {
+            ...options,
+            entitySetName,
+            entityLogicalName,
+            primaryIdField,
+            environment
+        }, primaryIdField);
+        appendTeamAccessContextActionToPrimaryCell(mapped, {
+            ...options,
+            entitySetName,
+            entityLogicalName,
+            primaryIdField,
+            environment
+        }, primaryIdField);
+        appendRoleAccessContextActionToPrimaryCell(mapped, {
             ...options,
             entitySetName,
             entityLogicalName,

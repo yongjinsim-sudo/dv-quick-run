@@ -10,6 +10,7 @@ suite("dvQuickRunHubViewModel", () => {
     assert.strictEqual(model.title, "DV Quick Run Hub");
     assert.deepStrictEqual(model.sectionLinks.map((link) => link.anchor), [
       "current-context",
+      "access-context",
       "playbooks",
       "capabilities",
       "whats-new",
@@ -56,6 +57,7 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes("Content-Security-Policy"));
     assert.ok(html.includes("nonce-"));
     assert.ok(html.includes('id="current-context"'));
+    assert.ok(html.includes('id="access-context"'));
     assert.ok(html.includes('id="playbooks"'));
     assert.ok(html.includes('id="capabilities"'));
     assert.ok(html.includes('id="whats-new"'));

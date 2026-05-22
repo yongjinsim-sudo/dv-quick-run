@@ -13,12 +13,12 @@ type PrincipalPick = {
   description?: string;
   detail?: string;
   id: string;
-  type: "systemuser" | "team";
+  type: "systemuser" | "team" | "role";
 };
 
 type InvestigateAccessContextInput = {
   id?: string;
-  type?: "systemuser" | "team";
+  type?: "systemuser" | "team" | "role";
   label?: string;
   displayName?: string;
   logicalName?: string;
@@ -69,6 +69,21 @@ function toTeamPick(row: Record<string, unknown>): PrincipalPick | undefined {
   };
 }
 
+function toRolePick(row: Record<string, unknown>): PrincipalPick | undefined {
+  const id = normalizeGuidLike(String(row.roleid ?? ""));
+  if (!id) {
+    return undefined;
+  }
+
+  const displayName = normalizeString(row.name) ?? id;
+  return {
+    label: displayName,
+    detail: "role",
+    id,
+    type: "role"
+  };
+}
+
 async function getList(ctx: CommandContext, query: string): Promise<Array<Record<string, unknown>>> {
   const token = await ctx.getToken(ctx.getScope());
   const response = await ctx.getClient().get(query, token, { timeoutMs: 5000 }) as ODataListResponse;
@@ -109,20 +124,38 @@ async function findPrincipalPicks(ctx: CommandContext, input: string): Promise<P
       // No team match.
     }
 
+    try {
+      const token = await ctx.getToken(ctx.getScope());
+      const role = await ctx.getClient().get(
+        `/roles(${guid})?$select=roleid,name`,
+        token,
+        { timeoutMs: 5000 }
+      ) as Record<string, unknown>;
+      const rolePick = toRolePick(role);
+      if (rolePick) {
+        picks.push(rolePick);
+      }
+    } catch {
+      // No role match.
+    }
+
     return picks;
   }
 
   const term = escapeODataString(input.trim());
   const userFilter = encodeURIComponent(`contains(fullname,'${term}') or contains(domainname,'${term}')`);
   const teamFilter = encodeURIComponent(`contains(name,'${term}')`);
-  const [users, teams] = await Promise.all([
+  const roleFilter = encodeURIComponent(`contains(name,'${term}')`);
+  const [users, teams, roles] = await Promise.all([
     getList(ctx, `/systemusers?$select=systemuserid,fullname,domainname&$filter=${userFilter}&$top=10`),
-    getList(ctx, `/teams?$select=teamid,name&$filter=${teamFilter}&$top=10`)
+    getList(ctx, `/teams?$select=teamid,name&$filter=${teamFilter}&$top=10`),
+    getList(ctx, `/roles?$select=roleid,name&$filter=${roleFilter}&$top=10`)
   ]);
 
   return [
     ...users.map(toSystemUserPick).filter((pick): pick is PrincipalPick => !!pick),
-    ...teams.map(toTeamPick).filter((pick): pick is PrincipalPick => !!pick)
+    ...teams.map(toTeamPick).filter((pick): pick is PrincipalPick => !!pick),
+    ...roles.map(toRolePick).filter((pick): pick is PrincipalPick => !!pick)
   ];
 }
 
@@ -485,7 +518,7 @@ function buildAccessContextPreviewHtml(args: {
     }
     details:not([open]) summary { border-bottom: none; }
     h2 { margin: 18px 0 8px; font-size: 22px; }
-    h3 { margin: 18px 0 8px; font-size: 16px; }
+    h3 { margin: 18px 12px 8px; font-size: 16px; }
     h4 { margin: 16px 12px 8px; font-size: 13px; }
     p, blockquote, .access-list-item { line-height: 1.55; }
     p { margin: 8px 12px; }
@@ -627,7 +660,11 @@ function pickFromInput(input: InvestigateAccessContextInput): PrincipalPick | un
   }
 
   const logicalName = String(input.logicalName ?? input.type ?? "systemuser").trim().toLowerCase();
-  const type: "systemuser" | "team" = logicalName === "team" || logicalName === "teams" ? "team" : "systemuser";
+  const type: "systemuser" | "team" | "role" = logicalName === "team" || logicalName === "teams"
+    ? "team"
+    : logicalName === "role" || logicalName === "roles"
+      ? "role"
+      : "systemuser";
   const label = normalizeString(input.label) ?? normalizeString(input.displayName) ?? id;
   return {
     label,
@@ -668,7 +705,7 @@ async function investigateAccessContext(ctx: CommandContext, inputArg?: Investig
   if (typeof inputArg === "object" && inputArg !== null) {
     const selected = pickFromInput(inputArg);
     if (!selected) {
-      void vscode.window.showWarningMessage("DV Quick Run: Access Context requires a user or team id.");
+      void vscode.window.showWarningMessage("DV Quick Run: Access Context requires a user, team, or role id.");
       return;
     }
 
@@ -680,8 +717,8 @@ async function investigateAccessContext(ctx: CommandContext, inputArg?: Investig
     ? inputArg.trim()
     : await vscode.window.showInputBox({
       title: "DV Quick Run: Investigate Access Context",
-      prompt: "Enter a user/team name, email/domain name, or GUID. Search is for selecting a principal; preview search remains local to the retrieved evidence.",
-      placeHolder: "e.g. jane@contoso.com, Jane Smith, Integration Team, or GUID"
+      prompt: "Enter a user/team/role name, email/domain name, or GUID. Search is for selecting a principal; preview search remains local to the retrieved evidence.",
+      placeHolder: "e.g. jane@contoso.com, Jane Smith, Integration Team, System Administrator, or GUID"
     });
 
   if (!input || !input.trim()) {
@@ -690,7 +727,7 @@ async function investigateAccessContext(ctx: CommandContext, inputArg?: Investig
 
   const picks = await findPrincipalPicks(ctx, input);
   if (!picks.length) {
-    void vscode.window.showInformationMessage("DV Quick Run: No user or team matched that Access Context lookup.");
+    void vscode.window.showInformationMessage("DV Quick Run: No user, team, or role matched that Access Context lookup.");
     return;
   }
 

@@ -163,6 +163,30 @@ h3 {
   }
 }
 
+.dvqr-access-context-card {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.dvqr-access-context-card p {
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 0;
+}
+
+.dvqr-access-context-card .dvqr-action-button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 720px) {
+  .dvqr-access-context-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
 .dvqr-card {
   border: 1px solid var(--vscode-panel-border);
   border-radius: 10px;

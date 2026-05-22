@@ -6,6 +6,396 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# v0.11.4 — Team Access Context, Role Access Context & Identity Participation Expansion
+
+This release expands the Access Context investigation family beyond individual users into broader operational identity participation understanding.
+
+DV Quick Run can now investigate:
+
+* Teams
+* Security Roles
+* inherited role participation
+* operational access topology
+* identity participation relationships
+
+The goal is not RBAC simulation or security administration.
+
+It is:
+
+* operational identity investigation
+* bounded access-topology understanding
+* explainable participation visibility
+* calmer access-oriented operational reasoning
+* investigation continuity
+* evidence-backed identity interpretation
+
+This release evolves Access Context from:
+
+```text
+user-centric investigation
+```
+
+→ to:
+
+```text
+identity-centric operational participation investigation
+```
+
+while preserving DVQR’s core operational investigation invariants.
+
+---
+
+## 👥 Team Access Context (Major)
+
+Introduced Team Access Context investigation support.
+
+DV Quick Run can now investigate:
+
+* owner teams
+* access teams
+* Azure AD group teams
+* business-unit aligned teams
+* direct team role participation
+* operational team identity topology
+
+Behaviour:
+
+* Team Access Context remains bounded
+* does not simulate effective access
+* does not calculate privilege matrices
+* preserves operational participation semantics only
+
+Team Access Context surfaces:
+
+* team type
+* business unit alignment
+* team membership indicators
+* direct role participation
+* operational participation interpretation
+
+Results:
+
+* clearer understanding of operational team identities
+* improved investigation of shared/team-owned operations
+* safer operational reasoning around inherited participation
+* stronger operational topology visibility
+
+---
+
+## 🛡️ Role Access Context (NEW)
+
+Introduced Role Access Context investigation support.
+
+DV Quick Run can now investigate:
+
+* Dataverse security roles
+* role participation topology
+* inherited operational role visibility
+* team-linked role participation
+* broad administrative role context
+* operational access participation patterns
+
+Role Access Context focuses on:
+
+* participation understanding
+* operational significance
+* contextual investigation guidance
+
+—not:
+
+* effective-access simulation
+* privilege auditing
+* permission matrix generation
+* security administration
+
+Behaviour:
+
+* roles are treated as operational participation context
+* interpretation remains heuristic and bounded
+* investigation remains evidence-backed and explainable
+
+Results:
+
+* easier understanding of operational role significance
+* clearer inherited-role investigation
+* stronger operational access interpretation
+* calmer identity-topology reasoning
+
+---
+
+## ⚡ Result Viewer → Role Access Context Continuation (NEW)
+
+Added direct operational continuation from Result Viewer into Role Access Context.
+
+Available on:
+
+```text
+roles.roleid
+```
+
+New Result Viewer action:
+
+```text
+OPERATE
+→ Check Role Access Context
+```
+
+Behaviour:
+
+* preserves operational investigation continuity
+* launches Role Access Context directly from row context
+* avoids disconnected operational workflows
+* keeps Result Viewer as the operational investigation workspace
+
+Results:
+
+* smoother role investigation flow
+* reduced operational context switching
+* stronger investigation continuity
+* clearer operational role exploration
+
+---
+
+## 🧠 Expanded Operational Significance Interpretation
+
+Expanded Access Context interpretation semantics across:
+
+* users
+* teams
+* roles
+
+Examples now include:
+
+* broad administrative participation
+* operational coordination teams
+* automation-oriented identities
+* integration/synchronization participation
+* operationally elevated role participation
+* scoped operational identities
+
+Behaviour:
+
+* interpretations remain bounded and heuristic
+* avoids effective-access claims
+* avoids authority/risk scoring
+* preserves explainability and evidence-backed semantics
+
+Examples:
+
+```text
+This role appears broadly operational in nature and may participate across multiple execution or administration workflows.
+```
+
+```text
+This team appears aligned to shared operational coordination rather than lightweight collaboration semantics.
+```
+
+Results:
+
+* stronger operational understanding
+* clearer investigation meaning
+* safer interpretation boundaries
+* reduced raw-evidence interpretation burden
+
+---
+
+## 🧩 Access Context Family Consistency Refinement
+
+Refined the Access Context architecture to support a consistent investigation model across:
+
+```text
+User
+→ Team
+→ Role
+```
+
+Shared behaviour now includes:
+
+* progressive disclosure
+* searchable evidence
+* operational significance interpretation
+* raw verification evidence
+* export semantics
+* investigation continuity
+* bounded operational context
+
+Behaviour:
+
+* all Access Context investigations preserve the same operational semantics
+* renderer behaviour remains consistent across identity types
+* operational interpretation remains explainable and inspectable
+
+Results:
+
+* calmer investigation UX
+* stronger mental model consistency
+* improved cross-identity investigation flow
+* safer long-term extensibility
+
+---
+
+## 🔍 Searchable Operational Evidence Improvements
+
+Expanded searchable evidence behaviour across Team and Role Access Context investigations.
+
+Added/refined:
+
+* local evidence search
+* search highlighting
+* find-next navigation
+* auto-expansion of matched sections
+* searchable inherited-role participation evidence
+
+Behaviour:
+
+* search remains bounded to the current investigation context only
+* no environment-wide identity crawling
+* no hidden access-topology expansion
+
+Results:
+
+* easier evidence inspection
+* stronger operational readability
+* calmer enterprise-scale investigation UX
+* reduced cognitive overload
+
+---
+
+## 📦 Operational Evidence Export Refinement
+
+Expanded export support across the full Access Context family.
+
+Supported exports:
+
+* Copy Markdown
+* Copy JSON
+* Save Markdown
+* Save JSON
+* Save HTML
+
+Behaviour:
+
+* exports preserve operational interpretation structure
+* raw evidence remains portable
+* investigation semantics remain bounded and explainable
+
+Results:
+
+* improved operational investigation portability
+* easier escalation and sharing workflows
+* stronger investigation continuity foundations
+* reusable operational evidence capture
+
+---
+
+## 🎨 Operational UX Refinement
+
+Refined operational wording and hierarchy throughout Team and Role Access Context workflows.
+
+Improvements include:
+
+* calmer operational terminology
+* clearer interpretation hierarchy
+* refined evidence readability
+* improved section collapsing behaviour
+* reduced disclaimer repetition
+* cleaner operational grouping semantics
+
+Additional refinements:
+
+* governance boundaries now appear more consistently
+* operational interpretation remains visually prioritised ahead of raw evidence
+* dense role/team participation evidence remains progressively explorable
+
+Results:
+
+* stronger psychological trust
+* cleaner operational investigation UX
+* improved readability under dense identity topologies
+* calmer enterprise investigation experience
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Team Access Context investigations
+* Role Access Context investigations
+* Result Viewer role continuation flows
+* inherited role participation rendering
+* operational significance interpretation
+* local evidence search behaviour
+* export workflows
+* progressive disclosure behaviour
+* bounded evidence rendering
+
+Validated against:
+
+* owner teams
+* Azure AD group teams
+* administrative roles
+* operational application roles
+* integration-oriented identities
+* enterprise-scale access datasets
+
+No regression in:
+
+* User Access Context
+* Result Viewer
+* Operational Profiles
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* `$batch` execution
+* Query Doctor
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DVQR operational investigation invariants:
+
+* Access Context is operational investigation, not security administration
+* participation does not imply effective access
+* operational identity context remains bounded
+* operational interpretation remains heuristic, not authoritative
+* evidence remains inspectable and explainable
+* investigation guidance remains advisory-only
+* Result Viewer remains the operational workspace
+* operational continuity takes precedence over disconnected tooling
+
+Access Context continues to prioritise:
+
+```text
+understanding
+before
+authority
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* investigate operational participation across users, teams, and roles
+* continue role investigations directly from Result Viewer
+* interpret inherited participation more coherently
+* preserve bounded and explainable access topology context
+* search and export operational identity evidence safely
+* investigate operational role significance without RBAC overreach
+
+This establishes the foundation for:
+
+* broader identity-topology investigation
+* access-participation continuity
+* future audit-oriented operational investigation
+* runtime actor and role correlation
+* deeper operational access-context workflows
+
+---
+
 # v0.11.3 — Access Context Foundations, Identity-Centric Operational Investigation & Bounded Access Topology
 
 This release introduces the first complete **Access Context investigation workflow** inside DV Quick Run.

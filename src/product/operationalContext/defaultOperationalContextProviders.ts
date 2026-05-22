@@ -29,7 +29,9 @@ type ActorDetail = {
   azureObjectId?: string;
 };
 
-type AccessPrincipalType = "Human User" | "Application User" | "Service Principal Context" | "SYSTEM Context" | "Team Context" | "Unknown Principal";
+type AccessPrincipalType = "Human User" | "Application User" | "Service Principal Context" | "SYSTEM Context" | "Team Context" | "Role Context" | "Unknown Principal";
+
+type AccessContextSubjectKind = "systemuser" | "team" | "role";
 
 type PrincipalSummary = {
   id?: string;
@@ -62,8 +64,21 @@ type TeamMembership = {
   inheritedRoles: AccessRole[];
 };
 
+type TeamMemberSummary = {
+  userId?: string;
+  displayName: string;
+  uniqueName?: string;
+  principalType?: AccessPrincipalType;
+  isDisabled?: boolean;
+  accessMode?: string;
+  businessUnitId?: string;
+  businessUnitName?: string;
+  applicationId?: string;
+  azureObjectId?: string;
+};
+
 type AccessEvidenceDetail = {
-  sourceType: "principal" | "businessUnit" | "directRole" | "teamMembership" | "inheritedTeamRole" | "lookup";
+  sourceType: "principal" | "businessUnit" | "directRole" | "teamMembership" | "teamMember" | "roleUser" | "roleTeam" | "inheritedTeamRole" | "lookup";
   sourceId?: string;
   sourceDisplayName: string;
   relationshipType: string;
@@ -72,9 +87,13 @@ type AccessEvidenceDetail = {
 };
 
 type AccessContextDetail = {
+  subjectKind: AccessContextSubjectKind;
   principalSummary: PrincipalSummary;
   directRoles: AccessRole[];
   teamMemberships: TeamMembership[];
+  teamMembers: TeamMemberSummary[];
+  roleUsers: TeamMemberSummary[];
+  roleTeams: TeamMembership[];
   inheritedRoles: AccessRole[];
   evidence: AccessEvidenceDetail[];
   operationalSignificance: string;
@@ -84,6 +103,7 @@ type AccessContextDetail = {
     roleTop: number;
     teamTop: number;
     teamRoleTop: number;
+    teamMemberTop: number;
     displayedByDefault: number;
   };
   searchHint: string;
@@ -213,6 +233,7 @@ const ENTITY_COMPONENT_TYPE = 1;
 const SOLUTION_LOOKUP_TOP = 15;
 const SOLUTION_CONTEXT_DISPLAY_LIMIT = 8;
 const SOLUTION_CONTEXT_TIMEOUT_MS = 5000;
+const ACCESS_TEAM_MEMBER_TOP = 100;
 
 function subjectLabel(request: OperationalContextProviderRequest): string {
   return request.subject.displayName ?? request.subject.logicalName ?? request.subject.id ?? request.subject.type;
@@ -583,11 +604,13 @@ function classifyPrincipal(row: Record<string, unknown>, fallback: "user" | "tea
 }
 
 function toPrincipalSummary(row: Record<string, unknown>): PrincipalSummary {
+  const isTeam = !!normalizeString(row.teamid);
+  const isRole = !!normalizeString(row.roleid);
   return {
-    id: normalizeGuidLike(row.systemuserid ?? row.teamid),
+    id: normalizeGuidLike(row.systemuserid ?? row.teamid ?? row.roleid),
     displayName: normalizeString(row.fullname) ?? normalizeString(row.name),
     uniqueName: normalizeString(row.domainname),
-    principalType: normalizeString(row.teamid) ? "Team Context" : classifyPrincipal(row),
+    principalType: isRole ? "Role Context" : (isTeam ? "Team Context" : classifyPrincipal(row)),
     isDisabled: normalizeBoolean(row.isdisabled),
     accessMode: accessModeLabel(row.accessmode),
     applicationId: normalizeString(row.applicationid),
@@ -617,6 +640,20 @@ function toTeamMembership(row: Record<string, unknown>): TeamMembership {
   };
 }
 
+function toTeamMemberSummary(row: Record<string, unknown>): TeamMemberSummary {
+  return {
+    userId: normalizeGuidLike(row.systemuserid),
+    displayName: normalizeString(row.fullname) ?? normalizeString(row.domainname) ?? normalizeGuidLike(row.systemuserid) ?? "Unnamed team member",
+    uniqueName: normalizeString(row.domainname),
+    principalType: classifyPrincipal(row),
+    isDisabled: normalizeBoolean(row.isdisabled),
+    accessMode: accessModeLabel(row.accessmode),
+    businessUnitId: getLookupId(row, "businessunitid"),
+    applicationId: normalizeString(row.applicationid),
+    azureObjectId: normalizeString(row.azureactivedirectoryobjectid)
+  };
+}
+
 function accessEvidenceSearchText(context: AccessContextDetail): string {
   return [
     context.principalSummary.displayName,
@@ -625,6 +662,9 @@ function accessEvidenceSearchText(context: AccessContextDetail): string {
     context.principalSummary.accessMode,
     context.directRoles.map((role) => role.roleName).join(" "),
     context.teamMemberships.map((team) => `${team.teamName} ${team.teamType ?? ""}`).join(" "),
+    context.teamMembers.map((member) => `${member.displayName} ${member.uniqueName ?? ""} ${member.principalType ?? ""}`).join(" "),
+    context.roleUsers.map((member) => `${member.displayName} ${member.uniqueName ?? ""} ${member.principalType ?? ""}`).join(" "),
+    context.roleTeams.map((team) => `${team.teamName} ${team.teamType ?? ""}`).join(" "),
     context.inheritedRoles.map((role) => `${role.roleName} ${role.sourceTeamName ?? ""}`).join(" "),
     context.evidence.map((item) => `${item.sourceDisplayName} ${item.relationshipType} ${item.evidenceDescription}`).join(" ")
   ].filter((value): value is string => !!value).join(" ").toLowerCase();
@@ -661,6 +701,39 @@ function createAccessEvidence(context: AccessContextDetail): AccessEvidenceDetai
       sourceDisplayName: team.teamName,
       relationshipType: "team membership",
       evidenceDescription: `Observed ${team.teamType ?? "team"} membership.`,
+      rawContext: team
+    });
+  }
+
+  for (const member of context.teamMembers) {
+    evidence.push({
+      sourceType: "teamMember",
+      sourceId: member.userId,
+      sourceDisplayName: member.displayName,
+      relationshipType: "team member participation",
+      evidenceDescription: `Observed ${member.principalType ?? "team member"} participation in the selected team.`,
+      rawContext: member
+    });
+  }
+
+  for (const member of context.roleUsers) {
+    evidence.push({
+      sourceType: "roleUser",
+      sourceId: member.userId,
+      sourceDisplayName: member.displayName,
+      relationshipType: "direct user role participation",
+      evidenceDescription: `Observed ${member.principalType ?? "user"} participation through the selected role.`,
+      rawContext: member
+    });
+  }
+
+  for (const team of context.roleTeams) {
+    evidence.push({
+      sourceType: "roleTeam",
+      sourceId: team.teamId,
+      sourceDisplayName: team.teamName,
+      relationshipType: "team role participation",
+      evidenceDescription: `Observed ${team.teamType ?? "team"} participation through the selected role.`,
       rawContext: team
     });
   }
@@ -727,9 +800,13 @@ async function loadPrincipalAccessContext(client: DataverseClient, token: string
 
   const topologySummary = accessTopologySummary(principalSummary, directRoles, teamMemberships, inheritedRoles);
   const context: AccessContextDetail = {
+    subjectKind: "systemuser",
     principalSummary,
     directRoles,
     teamMemberships,
+    teamMembers: [],
+    roleUsers: [],
+    roleTeams: [],
     inheritedRoles,
     evidence: [],
     operationalSignificance: accessOperationalSignificance(principalSummary, directRoles, teamMemberships, inheritedRoles),
@@ -739,6 +816,7 @@ async function loadPrincipalAccessContext(client: DataverseClient, token: string
       roleTop: ACCESS_ROLE_TOP,
       teamTop: ACCESS_TEAM_TOP,
       teamRoleTop: ACCESS_TEAM_ROLE_TOP,
+      teamMemberTop: ACCESS_TEAM_MEMBER_TOP,
       displayedByDefault: ACCESS_CONTEXT_DISPLAYED_BY_DEFAULT
     },
     searchHint: "Search is local to the Access Context evidence currently loaded."
@@ -750,7 +828,7 @@ async function loadPrincipalAccessContext(client: DataverseClient, token: string
 
 async function loadTeamAccessContext(client: DataverseClient, token: string, teamId: string): Promise<AccessContextDetail> {
   const queryLog: string[] = [];
-  const teamQuery = `/teams(${teamId})?$select=teamid,name,teamtype,_businessunitid_value`;
+  const teamQuery = `/teams(${teamId})?$select=teamid,name,teamtype,_businessunitid_value,azureactivedirectoryobjectid,isdefault`;
   queryLog.push(teamQuery);
   const teamRow = await client.get(teamQuery, token, { timeoutMs: SOLUTION_CONTEXT_TIMEOUT_MS }) as Record<string, unknown>;
   const principalSummary = toPrincipalSummary(teamRow);
@@ -766,29 +844,210 @@ async function loadTeamAccessContext(client: DataverseClient, token: string, tea
 
   const teamRolesQuery = `/teams(${teamId})/teamroles_association?$select=roleid,name,_businessunitid_value&$top=${ACCESS_TEAM_ROLE_TOP}`;
   queryLog.push(teamRolesQuery);
-  const directRoles = (await getDataverseList(client, token, teamRolesQuery)).map((row) => toAccessRole(row, "direct", team));
+  const directRoles = (await getDataverseList(client, token, teamRolesQuery)).map((row) => toAccessRole(row, "team", team));
+  team.inheritedRoles = directRoles;
+
+  const teamMembersQuery = `/teams(${teamId})/teammembership_association?$select=systemuserid,fullname,domainname,applicationid,azureactivedirectoryobjectid,accessmode,isdisabled,_businessunitid_value&$top=${ACCESS_TEAM_MEMBER_TOP}`;
+  queryLog.push(teamMembersQuery);
+  let teamMembers: TeamMemberSummary[] = [];
+  try {
+    teamMembers = (await getDataverseList(client, token, teamMembersQuery)).map(toTeamMemberSummary);
+  } catch {
+    teamMembers = [];
+  }
 
   const inheritedRoles: AccessRole[] = [];
-  const topologySummary = accessTopologySummary(principalSummary, directRoles, [team], inheritedRoles);
+  const topologySummary = teamAccessTopologySummary(principalSummary, directRoles, teamMembers);
   const context: AccessContextDetail = {
+    subjectKind: "team",
     principalSummary,
     directRoles,
-    teamMemberships: [team],
+    teamMemberships: [],
+    teamMembers,
+    roleUsers: [],
+    roleTeams: [],
     inheritedRoles,
     evidence: [],
-    operationalSignificance: accessOperationalSignificance(principalSummary, directRoles, [team], inheritedRoles),
+    operationalSignificance: teamAccessOperationalSignificance(principalSummary, directRoles, teamMembers),
     topologySummary,
     queryLog,
     limits: {
       roleTop: ACCESS_ROLE_TOP,
       teamTop: ACCESS_TEAM_TOP,
       teamRoleTop: ACCESS_TEAM_ROLE_TOP,
+      teamMemberTop: ACCESS_TEAM_MEMBER_TOP,
       displayedByDefault: ACCESS_CONTEXT_DISPLAYED_BY_DEFAULT
     },
     searchHint: "Search is local to the Team Access Context evidence currently loaded."
   };
   context.evidence = createAccessEvidence(context);
   return context;
+}
+
+async function loadRoleAccessContext(client: DataverseClient, token: string, roleId: string): Promise<AccessContextDetail> {
+  const queryLog: string[] = [];
+  const roleQuery = `/roles(${roleId})?$select=roleid,name,_businessunitid_value`;
+  queryLog.push(roleQuery);
+  const roleRow = await client.get(roleQuery, token, { timeoutMs: SOLUTION_CONTEXT_TIMEOUT_MS }) as Record<string, unknown>;
+  const principalSummary = toPrincipalSummary(roleRow);
+  principalSummary.businessUnitName = await loadBusinessUnitName(client, token, principalSummary.businessUnitId, queryLog);
+
+  const roleUsersQuery = `/roles(${roleId})/systemuserroles_association?$select=systemuserid,fullname,domainname,applicationid,azureactivedirectoryobjectid,accessmode,isdisabled,_businessunitid_value&$top=${ACCESS_ROLE_TOP}`;
+  queryLog.push(roleUsersQuery);
+  let roleUsers: TeamMemberSummary[] = [];
+  try {
+    roleUsers = (await getDataverseList(client, token, roleUsersQuery)).map(toTeamMemberSummary);
+  } catch {
+    roleUsers = [];
+  }
+
+  const roleTeamsQuery = `/roles(${roleId})/teamroles_association?$select=teamid,name,teamtype,_businessunitid_value&$top=${ACCESS_TEAM_TOP}`;
+  queryLog.push(roleTeamsQuery);
+  let roleTeams: TeamMembership[] = [];
+  try {
+    roleTeams = (await getDataverseList(client, token, roleTeamsQuery)).map(toTeamMembership);
+  } catch {
+    roleTeams = [];
+  }
+
+  const topologySummary = roleAccessTopologySummary(principalSummary, roleUsers, roleTeams);
+  const context: AccessContextDetail = {
+    subjectKind: "role",
+    principalSummary,
+    directRoles: [],
+    teamMemberships: [],
+    teamMembers: [],
+    roleUsers,
+    roleTeams,
+    inheritedRoles: [],
+    evidence: [],
+    operationalSignificance: roleAccessOperationalSignificance(principalSummary, roleUsers, roleTeams),
+    topologySummary,
+    queryLog,
+    limits: {
+      roleTop: ACCESS_ROLE_TOP,
+      teamTop: ACCESS_TEAM_TOP,
+      teamRoleTop: ACCESS_TEAM_ROLE_TOP,
+      teamMemberTop: ACCESS_TEAM_MEMBER_TOP,
+      displayedByDefault: ACCESS_CONTEXT_DISPLAYED_BY_DEFAULT
+    },
+    searchHint: "Search is local to the Role Access Context evidence currently loaded."
+  };
+  context.evidence = createAccessEvidence(context);
+  return context;
+}
+
+
+function roleAccessTopologySummary(
+  principalSummary: PrincipalSummary,
+  roleUsers: readonly TeamMemberSummary[],
+  roleTeams: readonly TeamMembership[]
+): string {
+  const role = principalSummary.displayName ?? principalSummary.id ?? "Selected role";
+  const bu = principalSummary.businessUnitName ? ` Business unit: ${principalSummary.businessUnitName}.` : "";
+  const identitySummary = roleUsers.length > 0
+    ? ` Direct user identity composition: ${summarizeTeamMemberCounts(countTeamMembersBy(roleUsers, (member) => member.principalType ?? "Unknown principal type"))}.`
+    : "";
+  const teamTypeSummary = roleTeams.length > 0
+    ? ` Team composition: ${summarizeTeamMemberCounts(countTeamMembershipsBy(roleTeams, (team) => team.teamType ?? "team type not returned"))}.`
+    : "";
+  return `${role}: ${roleUsers.length} direct user participant${roleUsers.length === 1 ? "" : "s"}; ${roleTeams.length} team participant${roleTeams.length === 1 ? "" : "s"}.${bu}${identitySummary}${teamTypeSummary}`;
+}
+
+function roleAccessOperationalSignificance(
+  principalSummary: PrincipalSummary,
+  roleUsers: readonly TeamMemberSummary[],
+  roleTeams: readonly TeamMembership[]
+): string {
+  const role = principalSummary.displayName ?? principalSummary.id ?? "Selected role";
+  const bu = principalSummary.businessUnitName ? ` in business unit ${principalSummary.businessUnitName}` : "";
+  const appUserCount = roleUsers.filter((member) => (member.principalType ?? "").toLowerCase().includes("application")).length;
+  const humanCount = roleUsers.filter((member) => (member.principalType ?? "").toLowerCase().includes("human")).length;
+  const teamCountText = `${roleTeams.length} team participant${roleTeams.length === 1 ? "" : "s"}`;
+  const userCountText = `${roleUsers.length} direct user participant${roleUsers.length === 1 ? "" : "s"}`;
+
+  if (roleUsers.length === 0 && roleTeams.length === 0) {
+    return `${role} is shown as Role Context${bu}, with no direct user or team participation returned in this bounded lookup. This provides role participation orientation without implying effective access or privilege evaluation.`;
+  }
+
+  if (appUserCount > 0 && appUserCount / Math.max(roleUsers.length, 1) >= 0.75) {
+    return `${role} is shown as Role Context${bu}. Observed direct user participation is mostly application/service identity based (${appUserCount} of ${roleUsers.length} observed direct users), alongside ${teamCountText}. This provides bounded role participation orientation without proving effective access.`;
+  }
+
+  if (humanCount > 0) {
+    return `${role} is shown as Role Context${bu}, with ${humanCount} human user participant${humanCount === 1 ? "" : "s"}, ${roleUsers.length - humanCount} other direct user participant${roleUsers.length - humanCount === 1 ? "" : "s"}, and ${teamCountText}. This highlights observed role participation, not privilege authority.`;
+  }
+
+  return `${role} is shown as Role Context${bu}, with ${userCountText} and ${teamCountText}. This provides role participation orientation for the current investigation without simulating privileges or effective access.`;
+}
+
+function countTeamMembershipsBy(teamMemberships: readonly TeamMembership[], keySelector: (team: TeamMembership) => string): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const team of teamMemberships) {
+    const key = keySelector(team);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function countTeamMembersBy(teamMembers: readonly TeamMemberSummary[], keySelector: (member: TeamMemberSummary) => string): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const member of teamMembers) {
+    const key = keySelector(member);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function summarizeTeamMemberCounts(counts: Map<string, number>): string {
+  return Array.from(counts.entries())
+    .sort(([leftKey, leftCount], [rightKey, rightCount]) => rightCount - leftCount || leftKey.localeCompare(rightKey))
+    .map(([key, count]) => `${count} ${key}`)
+    .join(", ");
+}
+
+function teamAccessTopologySummary(
+  principalSummary: PrincipalSummary,
+  directRoles: readonly AccessRole[],
+  teamMembers: readonly TeamMemberSummary[]
+): string {
+  const team = principalSummary.displayName ?? principalSummary.id ?? "Selected team";
+  const bu = principalSummary.businessUnitName ? ` Business unit: ${principalSummary.businessUnitName}.` : "";
+  const identitySummary = teamMembers.length > 0
+    ? ` Identity composition: ${summarizeTeamMemberCounts(countTeamMembersBy(teamMembers, (member) => member.principalType ?? "Unknown principal type"))}.`
+    : "";
+  const accessModeSummary = teamMembers.length > 0
+    ? ` Access mode composition: ${summarizeTeamMemberCounts(countTeamMembersBy(teamMembers, (member) => member.accessMode ?? "access mode not returned"))}.`
+    : "";
+  return `${team}: ${directRoles.length} direct team role${directRoles.length === 1 ? "" : "s"}; ${teamMembers.length} bounded member participation record${teamMembers.length === 1 ? "" : "s"}.${bu}${identitySummary}${accessModeSummary}`;
+}
+
+function teamAccessOperationalSignificance(
+  principalSummary: PrincipalSummary,
+  directRoles: readonly AccessRole[],
+  teamMembers: readonly TeamMemberSummary[]
+): string {
+  const team = principalSummary.displayName ?? principalSummary.id ?? "Selected team";
+  const bu = principalSummary.businessUnitName ? ` in business unit ${principalSummary.businessUnitName}` : "";
+  const roleDescription = describeRoleSet(directRoles);
+  const appUserCount = teamMembers.filter((member) => (member.principalType ?? "").toLowerCase().includes("application")).length;
+  const nonInteractiveCount = teamMembers.filter((member) => (member.accessMode ?? "").toLowerCase().includes("non-interactive")).length;
+  const readWriteCount = teamMembers.filter((member) => (member.accessMode ?? "").toLowerCase().includes("read-write")).length;
+
+  if (directRoles.length === 0 && teamMembers.length === 0) {
+    return `${team} is shown as ${principalSummary.principalType}${bu}, with no direct team roles or member participation returned in this bounded lookup. This provides team access-topology orientation without implying effective access.`;
+  }
+
+  if (appUserCount > 0 && appUserCount / Math.max(teamMembers.length, 1) >= 0.75) {
+    const readWriteNote = readWriteCount > 0 ? ` ${readWriteCount} read-write member${readWriteCount === 1 ? "" : "s"} appear as notable participation.` : "";
+    return `${team} is shown as ${principalSummary.principalType}${bu}. Observed member participation is mostly application/service identity based (${appUserCount} of ${teamMembers.length} observed members), with ${nonInteractiveCount} non-interactive member${nonInteractiveCount === 1 ? "" : "s"}.${readWriteNote} This provides bounded team participation orientation without proving effective access.`;
+  }
+
+  if (directRoles.length === 0) {
+    return `${team} is shown as ${principalSummary.principalType}${bu}, with observed bounded member participation and no direct team roles returned in this lookup. This helps explain nearby team participation without proving effective access.`;
+  }
+
+  return `${team} is shown as ${principalSummary.principalType}${bu} with ${roleDescription} and ${teamMembers.length} bounded member participation record${teamMembers.length === 1 ? "" : "s"}. This provides team access-topology orientation for the current investigation without proving effective access.`;
 }
 
 function roleNames(roles: readonly AccessRole[]): string[] {
@@ -938,7 +1197,9 @@ export class AccessContextProvider implements OperationalContextProvider {
 
       const accessContext = request.subject.logicalName === "team"
         ? await loadTeamAccessContext(client, token, principalId)
-        : await loadPrincipalAccessContext(client, token, principalId);
+        : request.subject.logicalName === "role"
+          ? await loadRoleAccessContext(client, token, principalId)
+          : await loadPrincipalAccessContext(client, token, principalId);
       const evidence: OperationalContextEvidence[] = [{
         subject: {
           ...request.subject,
@@ -957,7 +1218,7 @@ export class AccessContextProvider implements OperationalContextProvider {
         raw: {
           accessContext,
           searchableText: accessEvidenceSearchText(accessContext),
-          progressiveDisclosure: "Principal Summary, Business Unit, Direct Roles, Team Memberships, Inherited Team Roles, and Access Evidence should remain collapsed/expandable and searchable within the currently retrieved bounded evidence.",
+          progressiveDisclosure: "Principal/Team/Role Summary, Business Unit, Direct Roles, Team Memberships, Role Participation, Inherited Team Roles, and Access Evidence should remain collapsed/expandable and searchable within the currently retrieved bounded evidence.",
           runnable: false,
           note: "Access Context shows bounded operational participation evidence."
         }
