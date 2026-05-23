@@ -29,9 +29,9 @@ type ActorDetail = {
   azureObjectId?: string;
 };
 
-type AccessPrincipalType = "Human User" | "Application User" | "Service Principal Context" | "SYSTEM Context" | "Team Context" | "Role Context" | "Unknown Principal";
+type AccessPrincipalType = "Human User" | "Application User" | "Service Principal Context" | "SYSTEM Context" | "Team Context" | "Role Context" | "Business Unit Context" | "Unknown Principal";
 
-type AccessContextSubjectKind = "systemuser" | "team" | "role";
+type AccessContextSubjectKind = "systemuser" | "applicationuser" | "team" | "role" | "businessunit";
 
 type PrincipalSummary = {
   id?: string;
@@ -78,7 +78,7 @@ type TeamMemberSummary = {
 };
 
 type AccessEvidenceDetail = {
-  sourceType: "principal" | "businessUnit" | "directRole" | "teamMembership" | "teamMember" | "roleUser" | "roleTeam" | "inheritedTeamRole" | "lookup";
+  sourceType: "principal" | "businessUnit" | "childBusinessUnit" | "businessUnitUser" | "businessUnitTeam" | "businessUnitAppUser" | "businessUnitRole" | "directRole" | "teamMembership" | "teamMember" | "roleUser" | "roleTeam" | "inheritedTeamRole" | "lookup";
   sourceId?: string;
   sourceDisplayName: string;
   relationshipType: string;
@@ -86,9 +86,22 @@ type AccessEvidenceDetail = {
   rawContext?: unknown;
 };
 
+type BusinessUnitSummary = {
+  businessUnitId?: string;
+  name?: string;
+  parentBusinessUnitId?: string;
+  parentBusinessUnitName?: string;
+  childBusinessUnitCount?: number;
+  userParticipationCount?: number;
+  teamParticipationCount?: number;
+  applicationUserParticipationCount?: number;
+  roleParticipationCount?: number;
+};
+
 type AccessContextDetail = {
   subjectKind: AccessContextSubjectKind;
   principalSummary: PrincipalSummary;
+  businessUnitSummary?: BusinessUnitSummary;
   directRoles: AccessRole[];
   teamMemberships: TeamMembership[];
   teamMembers: TeamMemberSummary[];
@@ -606,11 +619,12 @@ function classifyPrincipal(row: Record<string, unknown>, fallback: "user" | "tea
 function toPrincipalSummary(row: Record<string, unknown>): PrincipalSummary {
   const isTeam = !!normalizeString(row.teamid);
   const isRole = !!normalizeString(row.roleid);
+  const isBusinessUnit = !!normalizeString(row.businessunitid) && !isTeam && !isRole;
   return {
-    id: normalizeGuidLike(row.systemuserid ?? row.teamid ?? row.roleid),
+    id: normalizeGuidLike(row.systemuserid ?? row.teamid ?? row.roleid ?? row.businessunitid),
     displayName: normalizeString(row.fullname) ?? normalizeString(row.name),
     uniqueName: normalizeString(row.domainname),
-    principalType: isRole ? "Role Context" : (isTeam ? "Team Context" : classifyPrincipal(row)),
+    principalType: isBusinessUnit ? "Business Unit Context" : (isRole ? "Role Context" : (isTeam ? "Team Context" : classifyPrincipal(row))),
     isDisabled: normalizeBoolean(row.isdisabled),
     accessMode: accessModeLabel(row.accessmode),
     applicationId: normalizeString(row.applicationid),
@@ -665,6 +679,7 @@ function accessEvidenceSearchText(context: AccessContextDetail): string {
     context.teamMembers.map((member) => `${member.displayName} ${member.uniqueName ?? ""} ${member.principalType ?? ""}`).join(" "),
     context.roleUsers.map((member) => `${member.displayName} ${member.uniqueName ?? ""} ${member.principalType ?? ""}`).join(" "),
     context.roleTeams.map((team) => `${team.teamName} ${team.teamType ?? ""}`).join(" "),
+    context.businessUnitSummary ? `${context.businessUnitSummary.name ?? ""} ${context.businessUnitSummary.parentBusinessUnitName ?? ""} ${context.businessUnitSummary.userParticipationCount ?? ""} ${context.businessUnitSummary.teamParticipationCount ?? ""} ${context.businessUnitSummary.applicationUserParticipationCount ?? ""} ${context.businessUnitSummary.roleParticipationCount ?? ""}` : undefined,
     context.inheritedRoles.map((role) => `${role.roleName} ${role.sourceTeamName ?? ""}`).join(" "),
     context.evidence.map((item) => `${item.sourceDisplayName} ${item.relationshipType} ${item.evidenceDescription}`).join(" ")
   ].filter((value): value is string => !!value).join(" ").toLowerCase();
@@ -747,6 +762,28 @@ function createAccessEvidence(context: AccessContextDetail): AccessEvidenceDetai
       evidenceDescription: `Observed role participation through team ${role.sourceTeamName ?? "unknown team"}.`,
       rawContext: role
     });
+  }
+
+  if (context.businessUnitSummary) {
+    evidence.push({
+      sourceType: "businessUnit",
+      sourceId: context.businessUnitSummary.businessUnitId,
+      sourceDisplayName: context.businessUnitSummary.name ?? principalName,
+      relationshipType: "business unit summary",
+      evidenceDescription: "Observed bounded business unit structural participation summary.",
+      rawContext: context.businessUnitSummary
+    });
+
+    if (context.businessUnitSummary.parentBusinessUnitName) {
+      evidence.push({
+        sourceType: "businessUnit",
+        sourceId: context.businessUnitSummary.parentBusinessUnitId,
+        sourceDisplayName: context.businessUnitSummary.parentBusinessUnitName,
+        relationshipType: "parent business unit",
+        evidenceDescription: "Observed parent business unit reference. Hierarchy is not recursively expanded.",
+        rawContext: context.businessUnitSummary
+      });
+    }
   }
 
   return evidence;
@@ -1125,6 +1162,126 @@ function accessOperationalSignificance(
 
   return `${principal} participates as ${principalType}${accessMode} with ${roleDescription}. This provides access-topology orientation for the current investigation.`;
 }
+function businessUnitAccessTopologySummary(businessUnit: BusinessUnitSummary): string {
+  const name = businessUnit.name ?? businessUnit.businessUnitId ?? "Selected business unit";
+  const parent = businessUnit.parentBusinessUnitName ? ` Parent business unit: ${businessUnit.parentBusinessUnitName}.` : "";
+  return `${name}: ${businessUnit.childBusinessUnitCount ?? 0} bounded child business unit${businessUnit.childBusinessUnitCount === 1 ? "" : "s"}; ${businessUnit.userParticipationCount ?? 0} user participant${businessUnit.userParticipationCount === 1 ? "" : "s"}; ${businessUnit.teamParticipationCount ?? 0} team participant${businessUnit.teamParticipationCount === 1 ? "" : "s"}; ${businessUnit.applicationUserParticipationCount ?? 0} application/service identity participant${businessUnit.applicationUserParticipationCount === 1 ? "" : "s"}; ${businessUnit.roleParticipationCount ?? 0} role participant${businessUnit.roleParticipationCount === 1 ? "" : "s"}.${parent}`;
+}
+
+function businessUnitAccessOperationalSignificance(businessUnit: BusinessUnitSummary): string {
+  const name = businessUnit.name ?? businessUnit.businessUnitId ?? "Selected business unit";
+  const parent = businessUnit.parentBusinessUnitName ? ` under parent business unit ${businessUnit.parentBusinessUnitName}` : "";
+  const appUsers = businessUnit.applicationUserParticipationCount ?? 0;
+  const users = businessUnit.userParticipationCount ?? 0;
+  const teams = businessUnit.teamParticipationCount ?? 0;
+  const roles = businessUnit.roleParticipationCount ?? 0;
+
+  if (users === 0 && teams === 0 && roles === 0) {
+    return `${name} is shown as Business Unit Context${parent}, with no user, team, or role participation returned in this bounded lookup. This provides structural operational orientation without modelling organizational authority.`;
+  }
+
+  if (appUsers > 0) {
+    return `${name} is shown as Business Unit Context${parent}. The bounded lookup observed ${users} user participant${users === 1 ? "" : "s"}, including ${appUsers} automation-oriented identity participant${appUsers === 1 ? "" : "s"}, ${teams} team participant${teams === 1 ? "" : "s"}, and ${roles} role participant${roles === 1 ? "" : "s"}. This explains nearby structural participation without asserting access authority.`;
+  }
+
+  return `${name} is shown as Business Unit Context${parent}, with ${users} user participant${users === 1 ? "" : "s"}, ${teams} team participant${teams === 1 ? "" : "s"}, and ${roles} role participant${roles === 1 ? "" : "s"} returned in this bounded lookup. This provides operational grouping orientation without recursive hierarchy exploration or authority modelling.`;
+}
+
+function applicationUserAccessOperationalSignificance(
+  principalSummary: PrincipalSummary,
+  directRoles: readonly AccessRole[],
+  teamMemberships: readonly TeamMembership[],
+  inheritedRoles: readonly AccessRole[]
+): string {
+  const principal = principalSummary.displayName ?? principalSummary.uniqueName ?? principalSummary.id ?? "Selected application user";
+  const bu = principalSummary.businessUnitName ? ` in business unit ${principalSummary.businessUnitName}` : "";
+  const roleDescription = describeRoleSet(directRoles);
+  const teamCount = teamMemberships.length;
+  const inheritedCount = inheritedRoles.length;
+
+  return `${principal} appears automation-oriented as ${principalSummary.principalType}${bu}, with ${roleDescription}, ${teamCount} team membership${teamCount === 1 ? "" : "s"}, and ${inheritedCount} inherited team role${inheritedCount === 1 ? "" : "s"} returned in this bounded lookup. This explains automation identity participation without implying ownership, responsibility, or effective access.`;
+}
+
+async function loadApplicationUserAccessContext(client: DataverseClient, token: string, principalId: string): Promise<AccessContextDetail> {
+  const context = await loadPrincipalAccessContext(client, token, principalId);
+  context.subjectKind = "applicationuser";
+  context.operationalSignificance = applicationUserAccessOperationalSignificance(
+    context.principalSummary,
+    context.directRoles,
+    context.teamMemberships,
+    context.inheritedRoles
+  );
+  context.searchHint = "Search is local to the Application User Context evidence currently loaded.";
+  context.evidence = createAccessEvidence(context);
+  return context;
+}
+
+async function loadBusinessUnitAccessContext(client: DataverseClient, token: string, businessUnitId: string): Promise<AccessContextDetail> {
+  const queryLog: string[] = [];
+  const businessUnitQuery = `/businessunits(${businessUnitId})?$select=businessunitid,name,_parentbusinessunitid_value`;
+  queryLog.push(businessUnitQuery);
+  const businessUnitRow = await client.get(businessUnitQuery, token, { timeoutMs: SOLUTION_CONTEXT_TIMEOUT_MS }) as Record<string, unknown>;
+  const principalSummary = toPrincipalSummary(businessUnitRow);
+  const parentBusinessUnitId = getLookupId(businessUnitRow, "parentbusinessunitid");
+  const parentBusinessUnitName = await loadBusinessUnitName(client, token, parentBusinessUnitId, queryLog);
+
+  const childBuQuery = `/businessunits?$select=businessunitid,name,_parentbusinessunitid_value&$filter=_parentbusinessunitid_value eq ${businessUnitId}&$top=${ACCESS_TEAM_TOP}`;
+  queryLog.push(childBuQuery);
+  const childBusinessUnits = await getDataverseList(client, token, childBuQuery);
+
+  const usersQuery = `/systemusers?$select=systemuserid,fullname,domainname,applicationid,azureactivedirectoryobjectid,accessmode,isdisabled,_businessunitid_value&$filter=_businessunitid_value eq ${businessUnitId}&$top=${ACCESS_TEAM_MEMBER_TOP}`;
+  queryLog.push(usersQuery);
+  const users = (await getDataverseList(client, token, usersQuery)).map(toTeamMemberSummary);
+
+  const teamsQuery = `/teams?$select=teamid,name,teamtype,_businessunitid_value&$filter=_businessunitid_value eq ${businessUnitId}&$top=${ACCESS_TEAM_TOP}`;
+  queryLog.push(teamsQuery);
+  const teams = (await getDataverseList(client, token, teamsQuery)).map(toTeamMembership);
+
+  const rolesQuery = `/roles?$select=roleid,name,_businessunitid_value&$filter=_businessunitid_value eq ${businessUnitId}&$top=${ACCESS_ROLE_TOP}`;
+  queryLog.push(rolesQuery);
+  const roles = (await getDataverseList(client, token, rolesQuery)).map((row) => toAccessRole(row, "direct"));
+
+  const appUsers = users.filter((user) => (user.principalType ?? "").toLowerCase().includes("application") || (user.accessMode ?? "").toLowerCase().includes("non-interactive"));
+  const businessUnitSummary: BusinessUnitSummary = {
+    businessUnitId: principalSummary.id,
+    name: principalSummary.displayName,
+    parentBusinessUnitId,
+    parentBusinessUnitName,
+    childBusinessUnitCount: childBusinessUnits.length,
+    userParticipationCount: users.length,
+    teamParticipationCount: teams.length,
+    applicationUserParticipationCount: appUsers.length,
+    roleParticipationCount: roles.length
+  };
+
+  principalSummary.businessUnitName = principalSummary.displayName;
+  const context: AccessContextDetail = {
+    subjectKind: "businessunit",
+    principalSummary,
+    businessUnitSummary,
+    directRoles: roles,
+    teamMemberships: teams,
+    teamMembers: users,
+    roleUsers: [],
+    roleTeams: [],
+    inheritedRoles: [],
+    evidence: [],
+    operationalSignificance: businessUnitAccessOperationalSignificance(businessUnitSummary),
+    topologySummary: businessUnitAccessTopologySummary(businessUnitSummary),
+    queryLog,
+    limits: {
+      roleTop: ACCESS_ROLE_TOP,
+      teamTop: ACCESS_TEAM_TOP,
+      teamRoleTop: ACCESS_TEAM_ROLE_TOP,
+      teamMemberTop: ACCESS_TEAM_MEMBER_TOP,
+      displayedByDefault: ACCESS_CONTEXT_DISPLAYED_BY_DEFAULT
+    },
+    searchHint: "Search is local to the Business Unit Context evidence currently loaded."
+  };
+  context.evidence = createAccessEvidence(context);
+  return context;
+}
+
 
 function accessContextSummary(context: AccessContextDetail): string {
   return context.operationalSignificance;
@@ -1199,7 +1356,11 @@ export class AccessContextProvider implements OperationalContextProvider {
         ? await loadTeamAccessContext(client, token, principalId)
         : request.subject.logicalName === "role"
           ? await loadRoleAccessContext(client, token, principalId)
-          : await loadPrincipalAccessContext(client, token, principalId);
+          : request.subject.logicalName === "businessunit"
+            ? await loadBusinessUnitAccessContext(client, token, principalId)
+            : request.subject.logicalName === "applicationuser"
+              ? await loadApplicationUserAccessContext(client, token, principalId)
+              : await loadPrincipalAccessContext(client, token, principalId);
       const evidence: OperationalContextEvidence[] = [{
         subject: {
           ...request.subject,
@@ -1218,7 +1379,7 @@ export class AccessContextProvider implements OperationalContextProvider {
         raw: {
           accessContext,
           searchableText: accessEvidenceSearchText(accessContext),
-          progressiveDisclosure: "Principal/Team/Role Summary, Business Unit, Direct Roles, Team Memberships, Role Participation, Inherited Team Roles, and Access Evidence should remain collapsed/expandable and searchable within the currently retrieved bounded evidence.",
+          progressiveDisclosure: "Principal/Application User/Team/Role/Business Unit Summary, Business Unit, Direct Roles, Team Memberships, Role Participation, Business Unit Participation, Inherited Team Roles, and Access Evidence should remain collapsed/expandable and searchable within the currently retrieved bounded evidence.",
           runnable: false,
           note: "Access Context shows bounded operational participation evidence."
         }

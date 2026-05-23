@@ -35,7 +35,7 @@ suite("Access Context team rendering", () => {
                 id: "11111111-1111-1111-1111-111111111111",
                 displayName: "HEKA - Data Admin",
                 principalType: "Team Context",
-                businessUnitName: "Bupa Health Services"
+                businessUnitName: "Contoso Health Services"
               },
               directRoles: [{ roleName: "Data Admin", source: "team", sourceTeamName: "HEKA - Data Admin" }],
               teamMemberships: [],

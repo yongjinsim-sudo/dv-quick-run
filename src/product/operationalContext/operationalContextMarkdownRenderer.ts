@@ -41,7 +41,7 @@ type RenderableAccessEvidence = {
 };
 
 type RenderableAccessContext = {
-  subjectKind?: "systemuser" | "team" | "role";
+  subjectKind?: "systemuser" | "applicationuser" | "team" | "role" | "businessunit";
   principalSummary?: {
     displayName?: string;
     uniqueName?: string;
@@ -50,6 +50,17 @@ type RenderableAccessContext = {
     accessMode?: string;
     businessUnitName?: string;
     applicationId?: string;
+  };
+  businessUnitSummary?: {
+    businessUnitId?: string;
+    name?: string;
+    parentBusinessUnitId?: string;
+    parentBusinessUnitName?: string;
+    childBusinessUnitCount?: number;
+    userParticipationCount?: number;
+    teamParticipationCount?: number;
+    applicationUserParticipationCount?: number;
+    roleParticipationCount?: number;
   };
   directRoles?: RenderableAccessRole[];
   teamMemberships?: RenderableTeamMembership[];
@@ -77,6 +88,78 @@ function accessContextFromEvidence(item: OperationalContextEvidence): Renderable
 function renderAccessRole(role: RenderableAccessRole): string {
   const source = role.sourceTeamName ? ` — from ${role.sourceTeamName}` : "";
   return `- ${escapeMarkdown(role.roleName ?? "Unnamed role")}${escapeMarkdown(source)}`;
+}
+
+function renderBusinessUnitRoleGroups(roles: RenderableAccessRole[]): string {
+  if (!roles || roles.length === 0) {
+    return "_No observed business unit roles in this bounded lookup._";
+  }
+
+  const groups: Record<string, RenderableAccessRole[]> = {
+    "Microsoft / Platform Service Roles": [],
+    "Automation / Integration Roles": [],
+    "AI / Copilot Roles": [],
+    "Data / Analytics Roles": [],
+    "Human-facing / Business Roles": [],
+    "Custom / Organizational Roles": []
+  };
+
+  for (const role of roles) {
+    groups[classifyBusinessUnitRoleName(role.roleName ?? "Unnamed role")].push(role);
+  }
+
+  const lines: string[] = [
+    "> Heuristic operational grouping for orientation only. Grouping does not imply privilege equivalence.",
+    ""
+  ];
+
+  for (const [groupName, groupedRoles] of Object.entries(groups)) {
+    if (groupedRoles.length === 0) {
+      continue;
+    }
+
+    const examples = groupedRoles.slice(0, 3).map((role) => escapeMarkdown(role.roleName ?? "Unnamed role")).join(", ");
+    const suffix = groupedRoles.length > 3 ? `, +${groupedRoles.length - 3} more` : "";
+    lines.push("<details>");
+    lines.push(`<summary>${escapeMarkdown(groupName)} (${groupedRoles.length}) — ${examples}${suffix}</summary>`);
+    lines.push("");
+
+    for (const role of groupedRoles.slice(0, 5)) {
+      lines.push(renderAccessRole(role));
+    }
+
+    if (groupedRoles.length > 5) {
+      lines.push(`- ... and ${groupedRoles.length - 5} more`);
+      lines.push("");
+      lines.push("<details>");
+      lines.push(`<summary>Full ${escapeMarkdown(groupName.toLowerCase())}</summary>`);
+      lines.push("");
+
+      for (const role of groupedRoles) {
+        lines.push(renderAccessRole(role));
+      }
+
+      lines.push("");
+      lines.push("</details>");
+    }
+
+    lines.push("");
+    lines.push("</details>");
+    lines.push("");
+  }
+
+  lines.push("<details>");
+  lines.push(`<summary>Full observed role list (${roles.length})</summary>`);
+  lines.push("");
+
+  for (const role of roles) {
+    lines.push(renderAccessRole(role));
+  }
+
+  lines.push("");
+  lines.push("</details>");
+
+  return lines.join("\n");
 }
 
 function renderAccessTeam(team: RenderableTeamMembership): string {
@@ -344,7 +427,9 @@ function renderAccessContextDetails(accessContext: RenderableAccessContext): str
   const disabled = typeof principal.isDisabled === "boolean" ? (principal.isDisabled ? "Disabled" : "Enabled") : "Not returned";
   const isTeamContext = accessContext.subjectKind === "team" || principal.principalType === "Team Context";
   const isRoleContext = accessContext.subjectKind === "role" || principal.principalType === "Role Context";
-  const summaryLabel = isRoleContext ? "#### Role Summary" : (isTeamContext ? "#### Team Summary" : "#### Principal Summary");
+  const isBusinessUnitContext = accessContext.subjectKind === "businessunit" || principal.principalType === "Business Unit Context";
+  const isApplicationUserContext = accessContext.subjectKind === "applicationuser";
+  const summaryLabel = isBusinessUnitContext ? "#### Business Unit Summary" : (isRoleContext ? "#### Role Summary" : (isTeamContext ? "#### Team Summary" : (isApplicationUserContext ? "#### Application User Summary" : "#### Principal Summary")));
   return [
     "",
     "<details>",
@@ -353,40 +438,59 @@ function renderAccessContextDetails(accessContext: RenderableAccessContext): str
     summaryLabel,
     `- Name: ${escapeMarkdown(principal.displayName ?? principal.uniqueName ?? "Not returned")}`,
     `- Principal type: ${escapeMarkdown(principal.principalType ?? "Unknown Principal")}`,
-    ...(isTeamContext || isRoleContext ? [] : [`- State: ${escapeMarkdown(disabled)}`, `- Access mode: ${escapeMarkdown(principal.accessMode ?? "Not returned")}`]),
+    ...(isTeamContext || isRoleContext || isBusinessUnitContext ? [] : [`- State: ${escapeMarkdown(disabled)}`, `- Access mode: ${escapeMarkdown(principal.accessMode ?? "Not returned")}`]),
     `- Business unit: ${escapeMarkdown(principal.businessUnitName ?? "Not returned")}`,
     ...(isTeamContext && principal.businessUnitName ? ["- Business unit hierarchy is not expanded in this Team Access Context; this keeps the lookup one-hop and bounded."] : []),
     ...(isRoleContext && principal.businessUnitName ? ["- Business unit hierarchy is not expanded in this Role Access Context; this keeps the lookup one-hop and bounded."] : []),
+    ...(isBusinessUnitContext ? [`- Parent business unit: ${escapeMarkdown(accessContext.businessUnitSummary?.parentBusinessUnitName ?? "Not returned")}`, `- Bounded child business units returned: ${escapeMarkdown(String(accessContext.businessUnitSummary?.childBusinessUnitCount ?? 0))}`, `- User participants returned: ${escapeMarkdown(String(accessContext.businessUnitSummary?.userParticipationCount ?? 0))}`, `- Team participants returned: ${escapeMarkdown(String(accessContext.businessUnitSummary?.teamParticipationCount ?? 0))}`, `- Application/service identity participants returned: ${escapeMarkdown(String(accessContext.businessUnitSummary?.applicationUserParticipationCount ?? 0))}`, `- Role participants returned: ${escapeMarkdown(String(accessContext.businessUnitSummary?.roleParticipationCount ?? 0))}`, "- Business unit hierarchy is not recursively expanded; this keeps the lookup structural, one-hop, and bounded."] : []),
     ...(principal.applicationId ? [`- Application id: \`${escapeMarkdown(principal.applicationId)}\``] : []),
     "",
-    ...(isRoleContext
+    ...(isBusinessUnitContext
       ? [
-        "#### Role Participation",
-        renderRoleParticipationSummary(accessContext.roleUsers, accessContext.roleTeams),
+        "#### Key Signals",
+        renderBusinessUnitKeySignals(accessContext),
+        "",
+        "#### Business Unit Participation",
+        "##### Users in Business Unit",
+        renderTeamMemberParticipation(accessContext.teamMembers),
+        "",
+        "##### Teams in Business Unit",
+        renderAccessArray(accessContext.teamMemberships, renderAccessTeam, "teams in this business unit"),
+        "",
+        "##### Roles in Business Unit",
+        renderBusinessUnitRoleGroups(accessContext.directRoles ?? []),
         ""
       ]
-      : [
-        isTeamContext ? "#### Direct Team Roles" : "#### Direct Roles",
-        renderAccessArray(accessContext.directRoles, renderAccessRole, isTeamContext ? "direct team roles" : "direct roles"),
-        "",
-        ...(isTeamContext
-          ? [
-            "#### Member Participation",
-            renderTeamMemberParticipation(accessContext.teamMembers),
-            ""
-          ]
-          : [
-            "#### Team Memberships",
-            renderAccessArray(accessContext.teamMemberships, renderAccessTeam, "team memberships"),
-            "",
-            "#### Inherited Team Roles",
-            renderAccessArray(accessContext.inheritedRoles, renderAccessRole, "inherited team roles"),
-            ""
-          ])
-      ]),
+      : isRoleContext
+        ? [
+          "#### Role Participation",
+          renderRoleParticipationSummary(accessContext.roleUsers, accessContext.roleTeams),
+          ""
+        ]
+        : [
+          isTeamContext ? "#### Direct Team Roles" : "#### Direct Roles",
+          renderAccessArray(accessContext.directRoles, renderAccessRole, isTeamContext ? "direct team roles" : "direct roles"),
+          "",
+          ...(isTeamContext
+            ? [
+              "#### Member Participation",
+              renderTeamMemberParticipation(accessContext.teamMembers),
+              ""
+            ]
+            : [
+              "#### Team Memberships",
+              renderAccessArray(accessContext.teamMemberships, renderAccessTeam, "team memberships"),
+              "",
+              "#### Inherited Team Roles",
+              renderAccessArray(accessContext.inheritedRoles, renderAccessRole, "inherited team roles"),
+              ""
+            ])
+        ]),
     "#### Access Evidence",
-    isRoleContext
-      ? renderGroupedRoleAccessEvidence(accessContext.evidence)
+    isBusinessUnitContext
+      ? renderGroupedBusinessUnitAccessEvidence(accessContext.evidence ?? [])
+      : isRoleContext
+        ? renderGroupedRoleAccessEvidence(accessContext.evidence)
       : isTeamContext
         ? renderGroupedTeamAccessEvidence(accessContext.evidence)
         : renderAccessArray(accessContext.evidence, renderAccessEvidenceDetail, "access evidence"),
@@ -394,6 +498,274 @@ function renderAccessContextDetails(accessContext: RenderableAccessContext): str
     "</details>"
   ].join("\n");
 }
+
+
+function classifyBusinessUnitRoleName(roleName: string): string {
+  const lower = roleName.toLowerCase();
+
+  if (lower.includes("copilot") || lower.includes("ai") || lower.includes("prompt") || lower.includes("agent")) {
+    return "AI / Copilot Roles";
+  }
+
+  if (lower.includes("sync") || lower.includes("flow") || lower.includes("integration") || lower.includes("orchestration") || lower.includes("connector") || lower.includes("deployment")) {
+    return "Automation / Integration Roles";
+  }
+
+  if (lower.includes("data") || lower.includes("analytics") || lower.includes("lake") || lower.includes("search") || lower.includes("power bi") || lower.includes("report")) {
+    return "Data / Analytics Roles";
+  }
+
+  if (lower.includes("service") || lower.includes("platform") || lower.includes("app access") || lower.includes("system") || lower.includes("dataverse")) {
+    return "Microsoft / Platform Service Roles";
+  }
+
+  if (lower.includes("sales") || lower.includes("customer") || lower.includes("knowledge") || lower.includes("support") || lower.includes("maker") || lower.includes("delegate")) {
+    return "Human-facing / Business Roles";
+  }
+
+  return "Custom / Organizational Roles";
+}
+
+function renderBusinessUnitKeySignals(accessContext: RenderableAccessContext): string {
+  const signals: string[] = [];
+  const summary = accessContext.businessUnitSummary;
+  const roleCount = summary?.roleParticipationCount ?? accessContext.directRoles?.length ?? 0;
+  const applicationUserCount = summary?.applicationUserParticipationCount ?? 0;
+  const teamCount = summary?.teamParticipationCount ?? accessContext.teamMemberships?.length ?? 0;
+  const roles = accessContext.directRoles ?? [];
+  const roleNames = roles.map((role) => role.roleName ?? "");
+
+  if (applicationUserCount >= 25) {
+    signals.push(`${applicationUserCount} automation-oriented identities observed in this bounded lookup.`);
+  }
+
+  if (roleCount >= 25) {
+    signals.push(`${roleCount} role participants observed; role grouping is heuristic and for orientation only.`);
+  }
+
+  if (teamCount > 0) {
+    signals.push(`${teamCount} team participants observed near this business unit.`);
+  }
+
+  if (roleNames.some((name) => name.toLowerCase().includes("system administrator"))) {
+    signals.push("System Administrator role participation is present in the bounded role set.");
+  }
+
+  if (roleNames.some((name) => /copilot|ai|agent|prompt/i.test(name))) {
+    signals.push("AI/Copilot-oriented role participation is present.");
+  }
+
+  if (roleNames.some((name) => /flow|sync|connector|orchestration|automation/i.test(name))) {
+    signals.push("Automation/integration-oriented role participation is present.");
+  }
+
+  if (signals.length === 0) {
+    return "_No standout bounded operational signals detected beyond the summary counts._";
+  }
+
+  return signals.slice(0, 5).map((signal) => `- ${escapeMarkdown(signal)}`).join("\n");
+}
+
+
+function renderGroupedBusinessUnitAccessEvidence(evidence: RenderableAccessEvidence[]): string {
+  if (!evidence || evidence.length === 0) {
+    return "_No observed business unit access evidence in this bounded lookup._";
+  }
+
+  const subjectEvidence = evidence.filter((item) => isEvidenceMatch(item, ["principal summary", "business unit summary"]));
+  const roleEvidence = evidence.filter((item) => isEvidenceMatch(item, ["role assignment", "role participation"]));
+  const teamEvidence = evidence.filter((item) => isEvidenceMatch(item, ["team membership"]));
+  const identityEvidence = evidence.filter((item) => isEvidenceMatch(item, ["team member participation", "identity participation", "member participation"]));
+  const grouped = new Set<RenderableAccessEvidence>([
+    ...subjectEvidence,
+    ...roleEvidence,
+    ...teamEvidence,
+    ...identityEvidence
+  ]);
+  const otherEvidence = evidence.filter((item) => !grouped.has(item));
+
+  const lines: string[] = [
+    "> Evidence is grouped for operational readability. Grouping preserves the original evidence entries and does not imply access authority.",
+    ""
+  ];
+
+  lines.push(...renderAccessEvidenceDetailsGroup("Subject summary evidence", subjectEvidence, 5));
+
+  if (roleEvidence.length > 0) {
+    lines.push("<details>");
+    lines.push(`<summary>Direct role participation evidence (${roleEvidence.length})</summary>`);
+    lines.push("");
+    lines.push(renderGroupedBusinessUnitRoleEvidence(roleEvidence));
+    lines.push("");
+    lines.push("</details>");
+    lines.push("");
+  }
+
+  lines.push(...renderAccessEvidenceDetailsGroup("Team participation evidence", teamEvidence, 5));
+  lines.push(...renderAccessEvidenceDetailsGroup("Application/service identity participation evidence", identityEvidence, 5));
+  lines.push(...renderAccessEvidenceDetailsGroup("Other bounded evidence", otherEvidence, 8));
+
+  lines.push("<details>");
+  lines.push(`<summary>Audit/debug: full flat evidence list (${evidence.length})</summary>`);
+  lines.push("");
+
+  for (const item of evidence) {
+    lines.push(renderAccessEvidenceDetail(item));
+  }
+
+  lines.push("");
+  lines.push("</details>");
+
+  return lines.join("\n");
+}
+
+function isEvidenceMatch(item: RenderableAccessEvidence, tokens: string[]): boolean {
+  const text = `${item.sourceDisplayName ?? ""} ${item.relationshipType ?? ""} ${item.evidenceDescription ?? ""}`.toLowerCase();
+  return tokens.some((token) => text.includes(token));
+}
+
+function renderAccessEvidenceDetailsGroup(label: string, evidence: RenderableAccessEvidence[], previewLimit: number): string[] {
+  if (!evidence || evidence.length === 0) {
+    return [];
+  }
+
+  const lines: string[] = [
+    "<details>",
+    `<summary>${escapeMarkdown(label)} (${evidence.length})</summary>`,
+    ""
+  ];
+
+  for (const item of evidence.slice(0, previewLimit)) {
+    lines.push(renderAccessEvidenceDetail(item));
+  }
+
+  if (evidence.length > previewLimit) {
+    lines.push(`- ... and ${evidence.length - previewLimit} more`);
+    lines.push("");
+    lines.push("<details>");
+    lines.push(`<summary>Full ${escapeMarkdown(label.toLowerCase())}</summary>`);
+    lines.push("");
+
+    for (const item of evidence) {
+      lines.push(renderAccessEvidenceDetail(item));
+    }
+
+    lines.push("");
+    lines.push("</details>");
+  }
+
+  lines.push("");
+  lines.push("</details>");
+  lines.push("");
+
+  return lines;
+}
+
+function renderGroupedBusinessUnitRoleEvidence(evidence: RenderableAccessEvidence[]): string {
+  const groups: Record<string, RenderableAccessEvidence[]> = {
+    "Microsoft / Platform Service Role Evidence": [],
+    "Automation / Integration Role Evidence": [],
+    "AI / Copilot Role Evidence": [],
+    "Data / Analytics Role Evidence": [],
+    "Human-facing / Business Role Evidence": [],
+    "Custom / Organizational Role Evidence": []
+  };
+
+  for (const item of evidence) {
+    groups[classifyBusinessUnitRoleEvidence(item)].push(item);
+  }
+
+  const lines: string[] = [
+    "> Role evidence uses heuristic operational grouping for orientation only.",
+    ""
+  ];
+
+  for (const [groupName, groupEvidence] of Object.entries(groups)) {
+    if (groupEvidence.length === 0) {
+      continue;
+    }
+
+    lines.push("<details>");
+    const examples = groupEvidence.slice(0, 3).map((item) => escapeMarkdown(item.sourceDisplayName ?? "Unnamed evidence")).join(", ");
+    const suffix = groupEvidence.length > 3 ? `, +${groupEvidence.length - 3} more` : "";
+    lines.push(`<summary>${escapeMarkdown(groupName)} (${groupEvidence.length}) — ${examples}${suffix}</summary>`);
+    lines.push("");
+
+    for (const item of groupEvidence.slice(0, 3)) {
+      lines.push(renderAccessEvidenceDetail(item));
+    }
+
+    if (groupEvidence.length > 3) {
+      lines.push(`- ... and ${groupEvidence.length - 3} more`);
+      lines.push("");
+      lines.push("<details>");
+      lines.push(`<summary>Full ${escapeMarkdown(groupName.toLowerCase())}</summary>`);
+      lines.push("");
+
+      for (const item of groupEvidence) {
+        lines.push(renderAccessEvidenceDetail(item));
+      }
+
+      lines.push("");
+      lines.push("</details>");
+    }
+
+    lines.push("");
+    lines.push("</details>");
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+function classifyBusinessUnitRoleEvidence(item: RenderableAccessEvidence): string {
+  const name = `${item.sourceDisplayName ?? ""} ${item.evidenceDescription ?? ""}`.toLowerCase();
+
+  if (name.includes("copilot")
+    || name.includes("ai")
+    || name.includes("prompt")
+    || name.includes("agent")) {
+    return "AI / Copilot Role Evidence";
+  }
+
+  if (name.includes("sync")
+    || name.includes("flow")
+    || name.includes("integration")
+    || name.includes("orchestration")
+    || name.includes("connector")
+    || name.includes("deployment")) {
+    return "Automation / Integration Role Evidence";
+  }
+
+  if (name.includes("data")
+    || name.includes("analytics")
+    || name.includes("lake")
+    || name.includes("search")
+    || name.includes("power bi")
+    || name.includes("report")) {
+    return "Data / Analytics Role Evidence";
+  }
+
+  if (name.includes("service")
+    || name.includes("platform")
+    || name.includes("app access")
+    || name.includes("system")
+    || name.includes("dataverse")) {
+    return "Microsoft / Platform Service Role Evidence";
+  }
+
+  if (name.includes("sales")
+    || name.includes("customer")
+    || name.includes("knowledge")
+    || name.includes("support")
+    || name.includes("maker")
+    || name.includes("delegate")) {
+    return "Human-facing / Business Role Evidence";
+  }
+
+  return "Custom / Organizational Role Evidence";
+}
+
 
 function renderRawJsonDetails(summary: string, value: unknown): string {
   return [
@@ -447,6 +819,8 @@ function renderRawEvidence(item: OperationalContextEvidence): string {
   if (accessContext) {
     rawLines.push(
       renderRawJsonDetails("Principal raw context", accessContext.principalSummary ?? {}),
+      "",
+      renderRawJsonDetails("Business unit summary raw context", accessContext.businessUnitSummary ?? {}),
       "",
       renderRawJsonDetails("Direct roles raw context", accessContext.directRoles ?? []),
       "",

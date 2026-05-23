@@ -77,15 +77,17 @@ function renderInvestigationContinuation(model: DvQuickRunHubViewModel): string 
 function renderAccessContextLauncher(): string {
   return `<section id="access-context">
     <h2>Access Context</h2>
-    <p class="dvqr-section-note">Investigate bounded operational identity participation for users, teams, and roles without simulating effective access.</p>
+    <p class="dvqr-section-note">Investigate bounded operational identity participation for users, application users, teams, roles, and business units without simulating effective access.</p>
     <div class="dvqr-card dvqr-access-context-card">
       <div>
         <h3>Investigate Access Context</h3>
-        <p>Search for a user, team, or role and open the same evidence-backed Access Context surface used by Result Viewer row actions.</p>
+        <p>Search for a user, application user, team, role, or business unit and open the same evidence-backed Access Context surface used by Result Viewer row actions.</p>
         <div class="dvqr-meta">
           <span class="dvqr-chip">User</span>
+          <span class="dvqr-chip">Application User</span>
           <span class="dvqr-chip">Team</span>
           <span class="dvqr-chip">Role</span>
+          <span class="dvqr-chip">Business Unit</span>
         </div>
       </div>
       <button class="dvqr-action-button" data-command="dvQuickRun.investigateAccessContext">Investigate Access Context</button>
