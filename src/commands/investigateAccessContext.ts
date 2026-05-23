@@ -13,12 +13,12 @@ type PrincipalPick = {
   description?: string;
   detail?: string;
   id: string;
-  type: "systemuser" | "team" | "role";
+  type: "systemuser" | "applicationuser" | "team" | "role" | "businessunit";
 };
 
 type InvestigateAccessContextInput = {
   id?: string;
-  type?: "systemuser" | "team" | "role";
+  type?: "systemuser" | "applicationuser" | "team" | "role" | "businessunit";
   label?: string;
   displayName?: string;
   logicalName?: string;
@@ -84,10 +84,162 @@ function toRolePick(row: Record<string, unknown>): PrincipalPick | undefined {
   };
 }
 
+function toBusinessUnitPick(row: Record<string, unknown>): PrincipalPick | undefined {
+  const id = normalizeGuidLike(String(row.businessunitid ?? ""));
+  if (!id) {
+    return undefined;
+  }
+
+  const displayName = normalizeString(row.name) ?? id;
+  return {
+    label: displayName,
+    detail: "businessunit",
+    id,
+    type: "businessunit"
+  };
+}
+
 async function getList(ctx: CommandContext, query: string): Promise<Array<Record<string, unknown>>> {
   const token = await ctx.getToken(ctx.getScope());
   const response = await ctx.getClient().get(query, token, { timeoutMs: 5000 }) as ODataListResponse;
   return Array.isArray(response.value) ? response.value : [];
+}
+
+async function getRecord(ctx: CommandContext, query: string): Promise<Record<string, unknown>> {
+  const token = await ctx.getToken(ctx.getScope());
+  return await ctx.getClient().get(query, token, { timeoutMs: 5000 }) as Record<string, unknown>;
+}
+
+function getRecordString(row: Record<string, unknown>, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = normalizeString(row[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function getRecordGuid(row: Record<string, unknown>, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = normalizeGuidLike(String(row[key] ?? ""));
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function toApplicationUserPick(row: Record<string, unknown>): PrincipalPick | undefined {
+  const id = getRecordGuid(row, "applicationuserid", "_applicationuserid_value");
+  if (!id) {
+    return undefined;
+  }
+
+  const displayName = getRecordString(row, "applicationname", "name", "domainname", "fullname") ?? id;
+  return {
+    label: displayName,
+    description: getRecordString(row, "domainname", "applicationid"),
+    detail: "applicationuser",
+    id,
+    type: "applicationuser"
+  };
+}
+
+async function findSystemUserByApplicationUserRow(ctx: CommandContext, applicationUserRow: Record<string, unknown>): Promise<PrincipalPick | undefined> {
+  const systemUserId = getRecordGuid(applicationUserRow, "systemuserid", "_systemuserid_value");
+  if (systemUserId) {
+    try {
+      return toSystemUserPick(await getRecord(ctx, `/systemusers(${systemUserId})?$select=systemuserid,fullname,domainname`));
+    } catch {
+      // Continue with metadata-based resolution below.
+    }
+  }
+
+  const applicationId = getRecordGuid(applicationUserRow, "applicationid", "_applicationid_value");
+  if (applicationId) {
+    const matches = await getList(
+      ctx,
+      `/systemusers?$select=systemuserid,fullname,domainname,applicationid&$filter=applicationid eq ${applicationId}&$top=2`
+    );
+    const pick = matches.map(toSystemUserPick).find((candidate): candidate is PrincipalPick => !!candidate);
+    if (pick) {
+      return pick;
+    }
+  }
+
+  const aadObjectId = getRecordGuid(applicationUserRow, "azureactivedirectoryobjectid", "azureadobjectid", "aadobjectid");
+  if (aadObjectId) {
+    const matches = await getList(
+      ctx,
+      `/systemusers?$select=systemuserid,fullname,domainname,azureactivedirectoryobjectid&$filter=azureactivedirectoryobjectid eq ${aadObjectId}&$top=2`
+    );
+    const pick = matches.map(toSystemUserPick).find((candidate): candidate is PrincipalPick => !!candidate);
+    if (pick) {
+      return pick;
+    }
+  }
+
+  const domainName = getRecordString(applicationUserRow, "domainname", "uniquename", "uniqueName");
+  if (domainName) {
+    const matches = await getList(
+      ctx,
+      `/systemusers?$select=systemuserid,fullname,domainname&$filter=domainname eq '${escapeODataString(domainName)}'&$top=2`
+    );
+    const pick = matches.map(toSystemUserPick).find((candidate): candidate is PrincipalPick => !!candidate);
+    if (pick) {
+      return pick;
+    }
+  }
+
+  return undefined;
+}
+
+async function resolveApplicationUserPick(ctx: CommandContext, selected: PrincipalPick): Promise<PrincipalPick> {
+  try {
+    const directSystemUser = await getRecord(
+      ctx,
+      `/systemusers(${selected.id})?$select=systemuserid,fullname,domainname,applicationid,azureactivedirectoryobjectid,accessmode`
+    );
+    const pick = toSystemUserPick(directSystemUser);
+    if (pick) {
+      return {
+        ...pick,
+        label: selected.label || pick.label,
+        detail: "applicationuser",
+        type: "applicationuser"
+      };
+    }
+  } catch {
+    // The applicationusers row id is not always the backing systemuser id. Resolve it below.
+  }
+
+  let applicationUserRow: Record<string, unknown> | undefined;
+  try {
+    applicationUserRow = await getRecord(ctx, `/applicationusers(${selected.id})`);
+  } catch {
+    applicationUserRow = undefined;
+  }
+
+  if (applicationUserRow) {
+    const resolved = await findSystemUserByApplicationUserRow(ctx, applicationUserRow);
+    if (resolved) {
+      const label = getRecordString(applicationUserRow, "fullname", "name", "domainname") ?? selected.label ?? resolved.label;
+      return {
+        ...resolved,
+        label,
+        detail: "applicationuser",
+        type: "applicationuser"
+      };
+    }
+  }
+
+  void vscode.window.showWarningMessage(
+    "DV Quick Run: Could not resolve this applicationusers row to its backing systemuser. Showing bounded provider evidence without guessing."
+  );
+  return selected;
 }
 
 async function findPrincipalPicks(ctx: CommandContext, input: string): Promise<PrincipalPick[]> {
@@ -139,6 +291,31 @@ async function findPrincipalPicks(ctx: CommandContext, input: string): Promise<P
       // No role match.
     }
 
+    try {
+      const token = await ctx.getToken(ctx.getScope());
+      const businessUnit = await ctx.getClient().get(
+        `/businessunits(${guid})?$select=businessunitid,name`,
+        token,
+        { timeoutMs: 5000 }
+      ) as Record<string, unknown>;
+      const businessUnitPick = toBusinessUnitPick(businessUnit);
+      if (businessUnitPick) {
+        picks.push(businessUnitPick);
+      }
+    } catch {
+      // No business unit match.
+    }
+
+    try {
+      const applicationUser = await getRecord(ctx, `/applicationusers(${guid})`);
+      const applicationUserPick = toApplicationUserPick(applicationUser);
+      if (applicationUserPick) {
+        picks.push(applicationUserPick);
+      }
+    } catch {
+      // No applicationusers match.
+    }
+
     return picks;
   }
 
@@ -146,16 +323,29 @@ async function findPrincipalPicks(ctx: CommandContext, input: string): Promise<P
   const userFilter = encodeURIComponent(`contains(fullname,'${term}') or contains(domainname,'${term}')`);
   const teamFilter = encodeURIComponent(`contains(name,'${term}')`);
   const roleFilter = encodeURIComponent(`contains(name,'${term}')`);
-  const [users, teams, roles] = await Promise.all([
-    getList(ctx, `/systemusers?$select=systemuserid,fullname,domainname&$filter=${userFilter}&$top=10`),
-    getList(ctx, `/teams?$select=teamid,name&$filter=${teamFilter}&$top=10`),
-    getList(ctx, `/roles?$select=roleid,name&$filter=${roleFilter}&$top=10`)
+  const businessUnitFilter = encodeURIComponent(`contains(name,'${term}')`);
+  const applicationUserFilter = encodeURIComponent(`contains(applicationname,'${term}')`);
+  const safeGetList = async (query: string): Promise<Array<Record<string, unknown>>> => {
+    try {
+      return await getList(ctx, query);
+    } catch {
+      return [];
+    }
+  };
+  const [users, teams, roles, businessUnits, applicationUsers] = await Promise.all([
+    safeGetList(`/systemusers?$select=systemuserid,fullname,domainname&$filter=${userFilter}&$top=10`),
+    safeGetList(`/teams?$select=teamid,name&$filter=${teamFilter}&$top=10`),
+    safeGetList(`/roles?$select=roleid,name&$filter=${roleFilter}&$top=10`),
+    safeGetList(`/businessunits?$select=businessunitid,name&$filter=${businessUnitFilter}&$top=10`),
+    safeGetList(`/applicationusers?$select=applicationuserid,applicationid,applicationname&$filter=${applicationUserFilter}&$top=10`)
   ]);
 
   return [
     ...users.map(toSystemUserPick).filter((pick): pick is PrincipalPick => !!pick),
     ...teams.map(toTeamPick).filter((pick): pick is PrincipalPick => !!pick),
-    ...roles.map(toRolePick).filter((pick): pick is PrincipalPick => !!pick)
+    ...roles.map(toRolePick).filter((pick): pick is PrincipalPick => !!pick),
+    ...businessUnits.map(toBusinessUnitPick).filter((pick): pick is PrincipalPick => !!pick),
+    ...applicationUsers.map(toApplicationUserPick).filter((pick): pick is PrincipalPick => !!pick)
   ];
 }
 
@@ -660,11 +850,15 @@ function pickFromInput(input: InvestigateAccessContextInput): PrincipalPick | un
   }
 
   const logicalName = String(input.logicalName ?? input.type ?? "systemuser").trim().toLowerCase();
-  const type: "systemuser" | "team" | "role" = logicalName === "team" || logicalName === "teams"
+  const type: "systemuser" | "applicationuser" | "team" | "role" | "businessunit" = logicalName === "team" || logicalName === "teams"
     ? "team"
     : logicalName === "role" || logicalName === "roles"
       ? "role"
-      : "systemuser";
+      : logicalName === "businessunit" || logicalName === "businessunits"
+        ? "businessunit"
+        : logicalName === "applicationuser" || logicalName === "applicationusers"
+          ? "applicationuser"
+          : "systemuser";
   const label = normalizeString(input.label) ?? normalizeString(input.displayName) ?? id;
   return {
     label,
@@ -675,12 +869,15 @@ function pickFromInput(input: InvestigateAccessContextInput): PrincipalPick | un
 }
 
 async function showAccessContextForPick(ctx: CommandContext, selected: PrincipalPick): Promise<void> {
+  const resolvedSelected = selected.type === "applicationuser"
+    ? await resolveApplicationUserPick(ctx, selected)
+    : selected;
   const token = await ctx.getToken(ctx.getScope());
   const subject: OperationalContextSubject = {
     type: "principal",
-    id: selected.id,
-    logicalName: selected.type,
-    displayName: selected.label
+    id: resolvedSelected.id,
+    logicalName: resolvedSelected.type,
+    displayName: resolvedSelected.label
   };
 
   const context = await buildOperationalContextViewModel({
@@ -696,8 +893,8 @@ async function showAccessContextForPick(ctx: CommandContext, selected: Principal
   await showAccessContextPreview({
     markdown,
     json: JSON.stringify(context, null, 2),
-    title: `Access Context — ${selected.label}`,
-    subjectName: selected.label
+    title: `Access Context — ${resolvedSelected.label}`,
+    subjectName: resolvedSelected.label
   });
 }
 
@@ -717,8 +914,8 @@ async function investigateAccessContext(ctx: CommandContext, inputArg?: Investig
     ? inputArg.trim()
     : await vscode.window.showInputBox({
       title: "DV Quick Run: Investigate Access Context",
-      prompt: "Enter a user/team/role name, email/domain name, or GUID. Search is for selecting a principal; preview search remains local to the retrieved evidence.",
-      placeHolder: "e.g. jane@contoso.com, Jane Smith, Integration Team, System Administrator, or GUID"
+      prompt: "Enter a user/application user/team/role/business unit name, email/domain name, or GUID. Search is for selecting a principal; preview search remains local to the retrieved evidence.",
+      placeHolder: "e.g. jane@contoso.com, Jane Smith, Integration Team, System Administrator, Contoso Health Services, or GUID"
     });
 
   if (!input || !input.trim()) {
@@ -727,7 +924,7 @@ async function investigateAccessContext(ctx: CommandContext, inputArg?: Investig
 
   const picks = await findPrincipalPicks(ctx, input);
   if (!picks.length) {
-    void vscode.window.showInformationMessage("DV Quick Run: No user, team, or role matched that Access Context lookup.");
+    void vscode.window.showInformationMessage("DV Quick Run: No user, application user, team, role, or business unit matched that Access Context lookup.");
     return;
   }
 

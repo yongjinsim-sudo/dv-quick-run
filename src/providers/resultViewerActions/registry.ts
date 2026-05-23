@@ -533,6 +533,26 @@ export async function executeResultViewerAction(
       return;
     }
 
+    case "check-application-user-access-context": {
+      if (!guid || (
+        payload.entityLogicalName !== "applicationuser" &&
+        payload.entityLogicalName !== "systemuser" &&
+        payload.entitySetName !== "systemusers" &&
+        payload.entitySetName !== "applicationusers"
+      )) {
+        void vscode.window.showWarningMessage("DV Quick Run: Application User Context requires an application-oriented systemuser or applicationuser row id.");
+        return;
+      }
+
+      await vscode.commands.executeCommand("dvQuickRun.investigateAccessContext", {
+        id: guid,
+        type: "applicationuser",
+        logicalName: "applicationuser",
+        label: String(payload.displayValue ?? payload.rawValue ?? guid).trim() || guid
+      });
+      return;
+    }
+
     case "check-team-access-context": {
       if (!guid || (payload.entityLogicalName !== "team" && payload.entitySetName !== "teams")) {
         void vscode.window.showWarningMessage("DV Quick Run: Team Access Context requires a team row id.");
@@ -558,6 +578,21 @@ export async function executeResultViewerAction(
         id: guid,
         type: "role",
         logicalName: "role",
+        label: String(payload.displayValue ?? payload.rawValue ?? guid).trim() || guid
+      });
+      return;
+    }
+
+    case "check-business-unit-access-context": {
+      if (!guid || (payload.entityLogicalName !== "businessunit" && payload.entitySetName !== "businessunits")) {
+        void vscode.window.showWarningMessage("DV Quick Run: Business Unit Context requires a businessunit row id.");
+        return;
+      }
+
+      await vscode.commands.executeCommand("dvQuickRun.investigateAccessContext", {
+        id: guid,
+        type: "businessunit",
+        logicalName: "businessunit",
         label: String(payload.displayValue ?? payload.rawValue ?? guid).trim() || guid
       });
       return;

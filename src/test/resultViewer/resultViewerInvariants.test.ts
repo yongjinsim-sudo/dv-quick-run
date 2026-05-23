@@ -387,6 +387,33 @@ suite("resultViewerInvariants", () => {
     assert.strictEqual(relatedNameCell?.originalColumnName, "parentcustomerid_account.name");
   });
 
+
+  test("applicationusers result rows expose Application User Context row action", () => {
+    const model = buildResultViewerModel({
+      value: [
+        {
+          applicationuserid: "15de15c1-f4e8-496f-b315-0344734e7502",
+          applicationid: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          name: "Power Automate Worker"
+        }
+      ]
+    }, "applicationusers", {
+      entitySetName: "applicationusers",
+      entityLogicalName: "applicationuser",
+      primaryIdField: "applicationuserid"
+    });
+
+    const applicationUserCell = model.rows[0]["applicationuserid"];
+    const actionIds = applicationUserCell?.actions?.map((action) => action.id) ?? [];
+
+    assert.ok(actionIds.includes("check-application-user-access-context"));
+    assert.ok(model.rowActions?.[0]?.actions.some((action) => action.id === "check-application-user-access-context"));
+    assert.strictEqual(
+      applicationUserCell?.actions?.find((action) => action.id === "check-application-user-access-context")?.payload.entityLogicalName,
+      "applicationuser"
+    );
+  });
+
   test("roles result rows expose Role Access Context row action", () => {
     const model = buildResultViewerModel({
       value: [

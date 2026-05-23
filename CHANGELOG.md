@@ -6,6 +6,434 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# v0.11.5 — Business Unit Context, Application User Context & Operational Identity Expansion
+
+This release expands the Access Context investigation family beyond:
+
+```text
+User
+→ Team
+→ Role
+```
+
+into broader:
+
+```text
+Business Unit
+→ Application User
+→ Operational Identity Participation
+```
+
+understanding.
+
+DV Quick Run can now investigate:
+
+* Business Units
+* Application Users
+* automation-oriented identities
+* operational service participation
+* bounded organizational operational topology
+* operational role participation density
+* identity-centric operational structure
+
+The goal is not organizational administration, RBAC simulation, or hierarchy exploration.
+
+It is:
+
+* operational participation understanding
+* bounded operational orientation
+* calmer enterprise-scale investigation
+* explainable identity topology visibility
+* evidence-backed operational reasoning
+* progressive operational investigation continuity
+
+This release reinforces DVQR’s operational investigation philosophy:
+
+```text
+understanding
+before
+authority
+```
+
+while extending Access Context into richer operational identity participation surfaces.
+
+---
+
+## 🏛️ Business Unit Context (Major)
+
+Introduced Business Unit Context investigation support.
+
+DV Quick Run can now investigate:
+
+* business units
+* bounded business-unit participation topology
+* operational role density
+* application/service identity participation
+* nearby operational team participation
+* operational identity composition
+
+Business Unit Context surfaces:
+
+* business unit identity
+* parent business unit
+* bounded child participation counts
+* direct role participation
+* application/service identity participation
+* operational participation summaries
+* operational grouping semantics
+
+Behaviour:
+
+* Business Unit Context remains explicitly bounded
+* no recursive organization traversal
+* no environment-wide hierarchy crawling
+* no access-authority interpretation
+* no RBAC simulation
+* no organizational administration semantics
+
+Results:
+
+* stronger operational organizational understanding
+* clearer visibility into automation-heavy business units
+* calmer enterprise-scale investigation flow
+* safer operational topology interpretation
+
+---
+
+## 🤖 Application User Context (Major)
+
+Introduced dedicated Application User Context investigation support.
+
+DV Quick Run now distinguishes operational automation identities from standard interactive users.
+
+Application User Context can investigate:
+
+* application users
+* service principals
+* integration identities
+* synchronization identities
+* non-interactive automation identities
+* operational service participation
+
+Application User Context surfaces:
+
+* identity classification
+* access mode
+* operational participation
+* direct role participation
+* inherited operational participation
+* operational identity interpretation
+
+Behaviour:
+
+* preserves observed operational identity semantics only
+* avoids responsibility/ownership claims
+* does not imply operational causality
+* does not infer effective access
+
+Examples include:
+
+* Power Automate identities
+* Copilot identities
+* AI Builder identities
+* integration service accounts
+* synchronization/service principals
+
+Results:
+
+* clearer automation-oriented operational understanding
+* improved runtime identity visibility
+* safer operational reasoning around service identities
+* stronger Dataverse operational ecosystem understanding
+
+---
+
+## ⚡ Result Viewer → Business Unit Context Continuation (NEW)
+
+Added direct operational continuation from Result Viewer into Business Unit Context.
+
+Available on:
+
+```text
+businessunits.businessunitid
+```
+
+New Result Viewer action:
+
+```text
+OPERATE
+→ Check Business Unit Context
+```
+
+Behaviour:
+
+* preserves operational investigation continuity
+* launches Business Unit investigation directly from row context
+* avoids disconnected organizational investigation workflows
+* keeps Result Viewer as the operational investigation workspace
+
+Results:
+
+* smoother operational topology investigation
+* reduced context switching
+* stronger investigation continuity
+* clearer organizational operational exploration
+
+---
+
+## 🤖 Result Viewer → Application User Context Continuation (NEW)
+
+Added dedicated operational continuation into Application User Context.
+
+Application-oriented identities now launch:
+
+```text
+OPERATE
+→ Check Application User Context
+```
+
+instead of generic user investigation flows.
+
+Behaviour:
+
+* application users remain operationally distinct from interactive users
+* automation-oriented semantics remain preserved
+* service/runtime identities render using Application User interpretation paths
+
+Results:
+
+* clearer automation investigation semantics
+* safer runtime identity interpretation
+* stronger operational identity differentiation
+* improved execution-oriented investigation continuity
+
+---
+
+## 🧠 Operational Grouping & Key Signal Interpretation (Major)
+
+Introduced grouped operational participation rendering for dense Business Unit investigations.
+
+Business Unit Context now groups operational participation into bounded operational categories such as:
+
+* Microsoft / Platform Service Roles
+* Automation / Integration Roles
+* AI / Copilot Roles
+* Data / Analytics Roles
+* Human-facing / Business Roles
+* Custom / Organizational Roles
+
+Business Unit Context also introduces:
+
+```text
+Key Signals
+```
+
+Examples include:
+
+* automation-oriented identity density
+* AI/Copilot participation
+* integration-oriented participation
+* elevated operational role participation
+* broad operational orchestration signals
+
+Behaviour:
+
+* grouping remains heuristic and bounded
+* grouping does not imply privilege equivalence
+* interpretation remains advisory-only
+* strongest operational meaning appears before raw evidence
+
+Results:
+
+* dramatically reduced cognitive overload
+* calmer enterprise-scale investigation UX
+* stronger operational readability
+* improved operational signal-to-noise ratio
+
+---
+
+## 🧩 Progressive Disclosure & Evidence Hierarchy Refinement
+
+Refined Business Unit and Application User rendering hierarchy around:
+
+```text
+Operational Significance
+→ Key Signals
+→ Participation
+→ Grouped Evidence
+→ Audit/debug Evidence
+```
+
+Behaviour:
+
+* strongest operational meaning appears first
+* dense evidence remains progressively explorable
+* raw verification evidence remains preserved
+* grouped participation mirrors grouped evidence structure
+
+Additional refinements include:
+
+* collapsed operational role groups
+* capped preview rendering
+* grouped evidence sections
+* reduced evidence duplication
+* calmer enterprise-scale rendering behaviour
+* audit/debug demotion for canonical flat evidence lists
+
+Results:
+
+* significantly cleaner operational UX
+* stronger investigation readability
+* improved enterprise-scale usability
+* safer operational evidence interpretation
+
+---
+
+## 🔍 Searchable Operational Evidence Expansion
+
+Expanded searchable evidence behaviour across Business Unit and Application User investigations.
+
+Added/refined:
+
+* grouped evidence rendering
+* bounded evidence previews
+* searchable operational participation evidence
+* auto-expansion of matched operational evidence sections
+* improved application/service identity evidence readability
+
+Behaviour:
+
+* search remains bounded to the current investigation context only
+* no hidden organizational crawling
+* no recursive operational expansion
+
+Results:
+
+* easier evidence inspection
+* stronger operational readability
+* calmer investigation workflows under dense identity participation
+* reduced cognitive overload
+
+---
+
+## 🎨 Operational UX Refinement
+
+Refined operational wording and hierarchy throughout Business Unit and Application User Context workflows.
+
+Improvements include:
+
+* calmer operational terminology
+* tighter operational significance summaries
+* cleaner participation grouping
+* stronger operational hierarchy consistency
+* reduced raw-evidence overload
+* improved progressive disclosure semantics
+* cleaner operational investigation flow
+
+Additional refinements:
+
+* operational interpretation remains visually prioritised ahead of raw evidence
+* grouped operational participation improves enterprise-scale readability
+* audit/debug evidence is visually separated from primary operational understanding
+
+Results:
+
+* stronger psychological trust
+* calmer operational investigation UX
+* improved scanability under dense enterprise participation
+* stronger bounded operational semantics
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Business Unit Context investigations
+* Application User Context investigations
+* Result Viewer Business Unit continuation flows
+* Result Viewer Application User continuation flows
+* grouped operational role rendering
+* grouped evidence rendering
+* Key Signals rendering
+* enterprise-scale business unit participation rendering
+* progressive disclosure behaviour
+* searchable evidence behaviour
+* export workflows
+
+Validated against:
+
+* automation-heavy business units
+* Power Automate identities
+* Copilot identities
+* AI Builder identities
+* synchronization/integration identities
+* enterprise-scale access datasets
+* operationally dense application-user participation
+
+No regression in:
+
+* User Access Context
+* Team Access Context
+* Role Access Context
+* Result Viewer
+* Operational Profiles
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* `$batch` execution
+* Query Doctor
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DVQR operational investigation invariants:
+
+* Business Unit Context is operational orientation, not organizational administration
+* Application User Context preserves automation-oriented semantics
+* participation does not imply authority or causality
+* operational investigation remains bounded
+* evidence remains inspectable and explainable
+* operational interpretation remains heuristic and advisory-only
+* progressive disclosure takes precedence over topology dumping
+* Result Viewer remains the operational investigation workspace
+* operational continuity takes precedence over disconnected tooling
+
+Access Context continues to prioritise:
+
+```text
+understanding
+before
+authority
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* investigate Business Unit operational participation safely
+* investigate automation/service identities coherently
+* continue Business Unit investigations directly from Result Viewer
+* distinguish Application User operational semantics from interactive users
+* group dense operational participation into calmer operational categories
+* surface Key Signals ahead of raw operational evidence
+* preserve bounded and explainable operational topology understanding
+* search and export operational participation evidence safely
+
+This establishes the foundation for:
+
+* broader operational organizational investigation
+* deeper automation/runtime identity understanding
+* future audit-oriented operational investigation
+* operational topology continuity
+* richer operational participation interpretation
+* future environment and integration operational context workflows
+
+---
+
 # v0.11.4 — Team Access Context, Role Access Context & Identity Participation Expansion
 
 This release expands the Access Context investigation family beyond individual users into broader operational identity participation understanding.

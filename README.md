@@ -57,107 +57,142 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.11.4
+## 🆕 What's New in v0.11.5
 
-v0.11.4 expands **Access Context** from user-centric identity investigation into a broader operational identity participation family.
+v0.11.5 expands **Access Context** beyond users, teams, and roles into broader:
 
-DV Quick Run can now investigate bounded operational access participation for:
+```text
+Business Unit
+→ Application User
+→ Operational Identity Participation
+```
 
-* users
-* teams
-* roles
+understanding.
 
-The goal is still not RBAC simulation, privilege matrixing, or security administration.
+DV Quick Run can now investigate bounded operational participation for:
+
+* business units
+* application users
+* service principals
+* automation-oriented identities
+* integration/synchronization identities
+* operational organizational topology
+
+The goal is still not RBAC simulation, organizational administration, or recursive hierarchy exploration.
 
 It is:
 
-* identity-centric operational investigation
-* bounded access-topology understanding
-* explainable participation visibility
-* calmer access-oriented operational reasoning
+* operational participation understanding
+* bounded operational orientation
+* explainable identity topology visibility
+* calmer enterprise-scale investigation
 * investigation continuity
-* evidence-backed identity interpretation
+* evidence-backed operational interpretation
 
-### 👥 Team Access Context
+### 🏛️ Business Unit Context
 
-Team Access Context helps you understand operational participation around Dataverse teams.
-
-It can surface:
-
-* team identity and business-unit context
-* direct team role participation
-* bounded member participation
-* identity composition
-* access-mode composition
-* notable participants
-* raw verification evidence
-
-Large teams are summarized first so the surface stays calm and readable. Full member evidence remains available through progressive disclosure.
-
-Team Access Context is useful for owner teams, service-heavy teams, and operational teams where membership composition matters more than a flat membership dump.
-
-### 🛡️ Role Access Context
-
-Role Access Context helps you understand where a Dataverse role participates operationally.
+Business Unit Context helps you understand operational participation around Dataverse business units.
 
 It can surface:
 
-* role identity and business-unit context
-* direct user participation
-* team participation
-* identity composition
-* access-mode composition
-* notable participants
+* business-unit identity and hierarchy context
+* operational role participation
+* automation/service identity density
+* nearby operational team participation
+* grouped operational participation semantics
+* operational participation summaries
 * raw verification evidence
 
-Role Access Context does not inspect or score privileges. It focuses on observed participation only.
+Business Unit Context remains:
 
-### ⚡ Result Viewer → Access Context Continuation
+* bounded
+* advisory-only
+* non-recursive
+* operationally contextual
+* not organizational administration
+* not authority modelling
 
-Access Context is now easier to launch directly from Result Viewer row actions.
+### 🤖 Application User Context
 
-Supported continuation examples include:
+Application User Context now treats automation-oriented identities as a dedicated operational investigation surface.
+
+It can surface:
+
+* service/application identity classification
+* operational participation
+* direct role participation
+* inherited participation
+* automation-oriented operational interpretation
+* raw verification evidence
+
+Examples include:
+
+* Power Automate identities
+* Copilot identities
+* AI Builder identities
+* integration identities
+* synchronization/service principals
+
+Application User Context preserves automation-oriented semantics without treating application users as standard interactive users.
+
+### ⚡ Result Viewer → Business Unit & Application User Continuation
+
+Result Viewer can now launch additional bounded operational investigation flows directly from row context.
+
+Examples include:
 
 ```text
+businessunits.businessunitid
+→ Check Business Unit Context
+
 systemusers.systemuserid
-→ Check User Access Context
-
-teams.teamid
-→ Check Team Access Context
-
-roles.roleid
-→ Check Role Access Context
+→ Check Application User Context
 ```
 
-This keeps Result Viewer as the operational investigation workspace while reducing context switching.
+This preserves operational investigation continuity while keeping Result Viewer as the operational workspace.
 
-### 🧭 Hub Access Context Launcher
+### 🧠 Grouped Operational Participation & Key Signals
 
-The DV Quick Run Hub now includes an **Access Context** discovery section.
+Business Unit investigations now use calmer grouped operational participation rendering.
 
-From the Hub, you can launch the same bounded Access Context workflow for:
+Examples include:
 
 ```text
-User | Team | Role
+Microsoft / Platform Service Roles
+Automation / Integration Roles
+AI / Copilot Roles
+Data / Analytics Roles
+Human-facing / Business Roles
 ```
 
-This gives Access Context a first-class discovery point without turning the Hub into a dashboard.
+Business Unit Context also introduces:
 
-### 🧩 Summary-First Access Context UX
+```text
+Key Signals
+```
 
-Access Context now uses a more scalable summary-first presentation model.
+Examples include:
 
-For larger identity surfaces, DV Quick Run prioritises:
+* automation-oriented identity density
+* AI/Copilot participation
+* integration-oriented participation
+* elevated operational role participation
+
+This helps large enterprise-scale participation surfaces remain understandable without hiding raw evidence.
+
+### 🧩 Summary-First Operational Rendering Refinement
+
+Business Unit and Application User Context now follow a clearer operational investigation hierarchy:
 
 ```text
 Operational Significance
-→ Observed Topology
-→ Summary / Notable Participation
-→ Full Evidence
-→ Raw Verification Evidence
+→ Key Signals
+→ Participation
+→ Grouped Evidence
+→ Audit/debug Evidence
 ```
 
-This helps keep large service/application-user-heavy teams readable while preserving evidence transparency.
+This keeps the strongest operational meaning visible first while preserving progressive disclosure and evidence transparency.
 
 ### 📦 Searchable & Exportable Evidence
 
@@ -171,7 +206,7 @@ Supported exports include:
 * Save JSON
 * Save HTML
 
-Search remains local to the currently loaded bounded evidence.
+Search remains local to the current bounded investigation context.
 
 ### 🧭 Access Context Boundaries
 
@@ -185,6 +220,7 @@ Access Context remains:
 * not effective-access simulation
 * not privilege matrixing
 * not security administration
+* not organizational authority modelling
 
 The governing principle remains:
 
