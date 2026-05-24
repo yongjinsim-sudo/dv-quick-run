@@ -50,29 +50,29 @@ suite("open-core boundaries", () => {
     assert.ok(gitignore.includes("!/src/enterprise/.gitkeep"));
   });
 
-test("public repository keeps proprietary folders limited to approved scaffolding", () => {
-    const repoRoot = path.join(__dirname, "..", "..", "..");
+  test("public repository keeps proprietary folders limited to approved scaffolding", () => {
+      const repoRoot = path.join(__dirname, "..", "..", "..");
 
-    const allowedFilesByFolder: Record<string, string[]> = {
-        pro: ["index.ts", "providers"],
-        team: ["index.ts"],
-        enterprise: ["index.ts"]
-    };
+      const allowedFilesByFolder: Record<string, string[]> = {
+          pro: ["index.ts", "providers"],
+          team: ["index.ts"],
+          enterprise: ["index.ts"]
+      };
 
-    for (const folder of ["pro", "team", "enterprise"]) {
-        const folderPath = path.join(repoRoot, "src", folder);
+      for (const folder of ["pro", "team", "enterprise"]) {
+          const folderPath = path.join(repoRoot, "src", folder);
 
-        const visibleFiles = fs.existsSync(folderPath)
-            ? fs.readdirSync(folderPath).filter((entry) => entry !== ".gitkeep")
-            : [];
+          const visibleFiles = fs.existsSync(folderPath)
+              ? fs.readdirSync(folderPath).filter((entry) => entry !== ".gitkeep")
+              : [];
 
-        assert.deepStrictEqual(
-            visibleFiles.sort(),
-            allowedFilesByFolder[folder].sort()
-        );
-    }
+          assert.deepStrictEqual(
+              visibleFiles.sort(),
+              allowedFilesByFolder[folder].sort()
+          );
+      }
+  });
 });
-
 
 function walk(dir: string): string[] {
   if (!fs.existsSync(dir)) {
