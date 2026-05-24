@@ -1171,8 +1171,7 @@ function appendApplicationUserAccessContextActionToPrimaryCell(
 
     const applicationId = String(rowModel.applicationid?.rawValue ?? rowModel.applicationid?.copyValue ?? rowModel.applicationid?.value ?? "").trim();
     const accessMode = String(rowModel.accessmode?.rawValue ?? rowModel.accessmode?.copyValue ?? rowModel.accessmode?.value ?? "").trim();
-    const azureObjectId = String(rowModel.azureactivedirectoryobjectid?.rawValue ?? rowModel.azureactivedirectoryobjectid?.copyValue ?? rowModel.azureactivedirectoryobjectid?.value ?? "").trim();
-    if (isSystemUsersResult && !applicationId && accessMode !== "4" && !azureObjectId) {
+    if (isSystemUsersResult && !applicationId && accessMode !== "4") {
         return;
     }
 

@@ -12,6 +12,11 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
     traversal: {
       canRunBatch: true,
       canRunOptimizedBatch: false
+    },
+    comparison: {
+      canRunCrossEnvironmentDiff: false,
+      canExportComparison: false,
+      showWhatIsComingTeaser: true
     }
   },
   pro: {
@@ -24,30 +29,11 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
     traversal: {
       canRunBatch: true,
       canRunOptimizedBatch: true
-    }
-  },
-  team: {
-    queryDoctor: {
-      insightLevel: 3
     },
-    actionableInsights: {
-      canApply: true
-    },
-    traversal: {
-      canRunBatch: true,
-      canRunOptimizedBatch: true
-    }
-  },
-  enterprise: {
-    queryDoctor: {
-      insightLevel: 3
-    },
-    actionableInsights: {
-      canApply: true
-    },
-    traversal: {
-      canRunBatch: true,
-      canRunOptimizedBatch: true
+    comparison: {
+      canRunCrossEnvironmentDiff: true,
+      canExportComparison: true,
+      showWhatIsComingTeaser: false
     }
   },
   dev: {
@@ -60,6 +46,11 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
     traversal: {
       canRunBatch: true,
       canRunOptimizedBatch: true
+    },
+    comparison: {
+      canRunCrossEnvironmentDiff: true,
+      canExportComparison: true,
+      showWhatIsComingTeaser: false
     }
   }
 };

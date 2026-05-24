@@ -1,3 +1,4 @@
+import { renderOperationalBulletList } from "../rendering/index.js";
 import type {
   OperationalContextEvidence,
   OperationalContextSectionViewModel,
@@ -32,6 +33,11 @@ type RenderableTeamMember = {
 type TeamMemberGroup = {
   key: string;
   members: RenderableTeamMember[];
+};
+
+type RenderableBusinessUnitRoleGroup = {
+  groupName?: string;
+  roles?: RenderableAccessRole[];
 };
 
 type RenderableAccessEvidence = {
@@ -72,6 +78,8 @@ type RenderableAccessContext = {
   operationalSignificance?: string;
   topologySummary?: string;
   queryLog?: string[];
+  keySignals?: string[];
+  businessUnitRoleGroups?: RenderableBusinessUnitRoleGroup[];
   searchHint?: string;
 };
 
@@ -90,33 +98,22 @@ function renderAccessRole(role: RenderableAccessRole): string {
   return `- ${escapeMarkdown(role.roleName ?? "Unnamed role")}${escapeMarkdown(source)}`;
 }
 
-function renderBusinessUnitRoleGroups(roles: RenderableAccessRole[]): string {
-  if (!roles || roles.length === 0) {
+function renderBusinessUnitRoleGroups(groups: RenderableBusinessUnitRoleGroup[] | undefined, fallbackRoles: RenderableAccessRole[] = []): string {
+  if ((!groups || groups.length === 0) && fallbackRoles.length === 0) {
     return "_No observed business unit roles in this bounded lookup._";
   }
 
-  const groups: Record<string, RenderableAccessRole[]> = {
-    "Microsoft / Platform Service Roles": [],
-    "Automation / Integration Roles": [],
-    "AI / Copilot Roles": [],
-    "Data / Analytics Roles": [],
-    "Human-facing / Business Roles": [],
-    "Custom / Organizational Roles": []
-  };
+  const renderGroups = (groups && groups.length > 0)
+    ? groups.map((group) => ({ groupName: group.groupName ?? "Observed Role Group", groupedRoles: group.roles ?? [] })).filter((group) => group.groupedRoles.length > 0)
+    : [{ groupName: "Observed Roles", groupedRoles: fallbackRoles }];
 
-  for (const role of roles) {
-    groups[classifyBusinessUnitRoleName(role.roleName ?? "Unnamed role")].push(role);
-  }
-
+  const roles = renderGroups.flatMap((group) => group.groupedRoles);
   const lines: string[] = [
-    "> Heuristic operational grouping for orientation only. Grouping does not imply privilege equivalence.",
+    "> Provider-supplied operational grouping for orientation only. Grouping does not imply privilege equivalence.",
     ""
   ];
 
-  for (const [groupName, groupedRoles] of Object.entries(groups)) {
-    if (groupedRoles.length === 0) {
-      continue;
-    }
+  for (const { groupName, groupedRoles } of renderGroups) {
 
     const examples = groupedRoles.slice(0, 3).map((role) => escapeMarkdown(role.roleName ?? "Unnamed role")).join(", ");
     const suffix = groupedRoles.length > 3 ? `, +${groupedRoles.length - 3} more` : "";
@@ -448,7 +445,7 @@ function renderAccessContextDetails(accessContext: RenderableAccessContext): str
     ...(isBusinessUnitContext
       ? [
         "#### Key Signals",
-        renderBusinessUnitKeySignals(accessContext),
+        renderBusinessUnitKeySignals(accessContext.keySignals),
         "",
         "#### Business Unit Participation",
         "##### Users in Business Unit",
@@ -458,7 +455,7 @@ function renderAccessContextDetails(accessContext: RenderableAccessContext): str
         renderAccessArray(accessContext.teamMemberships, renderAccessTeam, "teams in this business unit"),
         "",
         "##### Roles in Business Unit",
-        renderBusinessUnitRoleGroups(accessContext.directRoles ?? []),
+        renderBusinessUnitRoleGroups(accessContext.businessUnitRoleGroups, accessContext.directRoles ?? []),
         ""
       ]
       : isRoleContext
@@ -500,70 +497,11 @@ function renderAccessContextDetails(accessContext: RenderableAccessContext): str
 }
 
 
-function classifyBusinessUnitRoleName(roleName: string): string {
-  const lower = roleName.toLowerCase();
-
-  if (lower.includes("copilot") || lower.includes("ai") || lower.includes("prompt") || lower.includes("agent")) {
-    return "AI / Copilot Roles";
-  }
-
-  if (lower.includes("sync") || lower.includes("flow") || lower.includes("integration") || lower.includes("orchestration") || lower.includes("connector") || lower.includes("deployment")) {
-    return "Automation / Integration Roles";
-  }
-
-  if (lower.includes("data") || lower.includes("analytics") || lower.includes("lake") || lower.includes("search") || lower.includes("power bi") || lower.includes("report")) {
-    return "Data / Analytics Roles";
-  }
-
-  if (lower.includes("service") || lower.includes("platform") || lower.includes("app access") || lower.includes("system") || lower.includes("dataverse")) {
-    return "Microsoft / Platform Service Roles";
-  }
-
-  if (lower.includes("sales") || lower.includes("customer") || lower.includes("knowledge") || lower.includes("support") || lower.includes("maker") || lower.includes("delegate")) {
-    return "Human-facing / Business Roles";
-  }
-
-  return "Custom / Organizational Roles";
-}
-
-function renderBusinessUnitKeySignals(accessContext: RenderableAccessContext): string {
-  const signals: string[] = [];
-  const summary = accessContext.businessUnitSummary;
-  const roleCount = summary?.roleParticipationCount ?? accessContext.directRoles?.length ?? 0;
-  const applicationUserCount = summary?.applicationUserParticipationCount ?? 0;
-  const teamCount = summary?.teamParticipationCount ?? accessContext.teamMemberships?.length ?? 0;
-  const roles = accessContext.directRoles ?? [];
-  const roleNames = roles.map((role) => role.roleName ?? "");
-
-  if (applicationUserCount >= 25) {
-    signals.push(`${applicationUserCount} automation-oriented identities observed in this bounded lookup.`);
-  }
-
-  if (roleCount >= 25) {
-    signals.push(`${roleCount} role participants observed; role grouping is heuristic and for orientation only.`);
-  }
-
-  if (teamCount > 0) {
-    signals.push(`${teamCount} team participants observed near this business unit.`);
-  }
-
-  if (roleNames.some((name) => name.toLowerCase().includes("system administrator"))) {
-    signals.push("System Administrator role participation is present in the bounded role set.");
-  }
-
-  if (roleNames.some((name) => /copilot|ai|agent|prompt/i.test(name))) {
-    signals.push("AI/Copilot-oriented role participation is present.");
-  }
-
-  if (roleNames.some((name) => /flow|sync|connector|orchestration|automation/i.test(name))) {
-    signals.push("Automation/integration-oriented role participation is present.");
-  }
-
-  if (signals.length === 0) {
-    return "_No standout bounded operational signals detected beyond the summary counts._";
-  }
-
-  return signals.slice(0, 5).map((signal) => `- ${escapeMarkdown(signal)}`).join("\n");
+function renderBusinessUnitKeySignals(keySignals: readonly string[] | undefined): string {
+  return renderOperationalBulletList(
+    keySignals?.map((signal) => escapeMarkdown(signal)),
+    "No standout bounded operational signals detected beyond the summary counts."
+  );
 }
 
 

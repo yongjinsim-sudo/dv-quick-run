@@ -1,3 +1,5 @@
+// Compatibility shim for older imports.
+// Public core builds must not depend on ignored /src/pro implementation files.
 import type { PremiumProviderRegistry } from "../../core/providerRegistry/index.js";
 import {
   NoopExecutionReplayProvider,
@@ -6,7 +8,7 @@ import {
   NoopWorkflowAccelerationProvider
 } from "../../core/providerRegistry/index.js";
 
-export function createDefaultPremiumProviderRegistry(): PremiumProviderRegistry {
+export function createNoopPremiumProviderRegistry(): PremiumProviderRegistry {
   return {
     investigationContinuation: new NoopInvestigationContinuationProvider(),
     investigationComparison: new NoopInvestigationComparisonProvider(),

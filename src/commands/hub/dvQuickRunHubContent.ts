@@ -264,6 +264,21 @@ export const capabilities: readonly CapabilityInfo[] = [
     status: "available",
     sinceVersion: "v0.10.0"
   },
+
+  {
+    id: "cross-environment-comparison",
+    title: "Cross-environment comparison",
+    group: "Future Workflows",
+    summary: "Future workflow for bounded operational drift comparison across environments.",
+    operationalUseCase: "Use later when you need to understand how two environments differ operationally without turning DVQR into deployment or remediation tooling.",
+    howToUse: [
+      "Use this as future product orientation for operational drift investigation.",
+      "Comparison remains observational: DVQR observes operational drift, it does not fix drift."
+    ],
+    relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
+    status: "future",
+    sinceVersion: "v0.12.0"
+  },
   {
     id: "batch-workflows",
     title: "$batch workflows",
@@ -293,10 +308,13 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Runtime and Power Platform visibility", summary: "Continue bridging Dataverse execution evidence with orchestration participation where evidence supports it." },
   { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
-  { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." }
+  { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
+  { title: "Comparison foundations", summary: "Cross-environment comparison is planned as a bounded future workflow for understanding operational drift without turning DVQR into deployment or remediation tooling." }
 ];
 
 export const whatsNew: readonly string[] = [
+  "Platform stabilisation and operational continuity refinements.",
+  "Foundations for future operational comparison workflows.",
   "DV Quick Run Hub for in-app operational guidance.",
   "Workflow-oriented investigation playbooks.",
   "Capability Explorer as a dedicated operational capability discovery and execution surface.",
@@ -308,7 +326,7 @@ export const whatsNew: readonly string[] = [
 
 export const philosophy: readonly string[] = [
   "Evidence first, bounded interpretation second, user judgement always.",
-  "Free capabilities preserve understanding; future premium capabilities may accelerate workflows.",
+  "Understanding and evidence stay visible; future shortcuts should not hide operational context.",
   "Mutation workflows remain preview-first and explicitly applied.",
   "Runtime and profile signals are investigation pivots, not root-cause conclusions.",
   "Guidance should stay calm, low-noise, and operationally useful."

@@ -7,7 +7,7 @@ function buildEnvironmentSection(hasActiveEnvironment: boolean): string {
   if (hasActiveEnvironment) {
     return [
       "## Environment",
-      "✅ Your active environment is ready.",
+      "✅ Active Dataverse environment detected and ready.",
       "You can run the samples below straight away.",
       ""
     ].join("\n");
@@ -22,12 +22,13 @@ function buildEnvironmentSection(hasActiveEnvironment: boolean): string {
   ].join("\n");
 }
 
-function buildQuickStartContent(hasActiveEnvironment: boolean): string {
+export function buildQuickStartContent(hasActiveEnvironment: boolean): string {
   return [
     "# Welcome to DV Quick Run",
     "",
     "Run and explore Dataverse queries directly inside VS Code.",
     "",
+    buildEnvironmentSection(hasActiveEnvironment),
     "## Build Queries Incrementally",
     "",
     "Think of your query as a canvas, not a finished string.",
@@ -51,6 +52,23 @@ function buildQuickStartContent(hasActiveEnvironment: boolean): string {
     "Open it any time from the Command Palette:",
     "DV Quick Run: Open Hub",
     "",
+    "## Access Context",
+    "",
+    "Access Context helps you inspect bounded operational participation for users, application users, teams, roles, and business units.",
+    "",
+    "Use it when you need to understand who or what participates operationally without treating DVQR as RBAC simulation or security administration tooling.",
+    "",
+    "You can:",
+    "- inspect direct and inherited role participation",
+    "- review team, role, application-user, and business-unit participation evidence",
+    "- search the evidence locally inside the Access Context surface",
+    "- export evidence for review or handoff",
+    "",
+    "Open it from the Command Palette:",
+    "DV Quick Run: Investigate Access Context",
+    "",
+    "From Result Viewer rows, look for contextual actions such as Check User Access Context, Check Team Access Context, Check Role Access Context, Check Application User Context, or Check Business Unit Context when matching identity columns are present.",
+    "",
     "## Capability Explorer",
     "",
     "Capability Explorer helps you discover executable Custom APIs and Functions available in the current Dataverse environment.",
@@ -68,7 +86,6 @@ function buildQuickStartContent(hasActiveEnvironment: boolean): string {
     "The Hub shows whether your Result Viewer context is active, recoverable, historical, or stale.",
     "It also helps you reopen a closed Result Viewer and keeps investigation context isolated when you switch environments.",
     "",
-    buildEnvironmentSection(hasActiveEnvironment),
     "## Run your first query",
     '👉 Click "Run Query" above this line',
     "contacts",
@@ -156,7 +173,8 @@ function buildQuickStartContent(hasActiveEnvironment: boolean): string {
     "- Investigate Record: inspect a record from GUID / JSON / logs",
     "- Guided Traversal: navigate between related tables step-by-step",
     "- Metadata Hover: get field hints directly in the editor",
-    "- Capability Explorer: discover, preview, validate, and execute Dataverse Custom API Functions",
+    "- Capability Explorer: discover, preview, validate, and execute supported Dataverse Custom API capabilities",
+    "- Access Context: inspect bounded operational participation for users, application users, teams, roles, and business units",
     "- Execution Insights: understand plugin, async operation, workflow, and Power Automate execution context",
     "- Operational Profiles: explore operational activity and investigation context around entities and records",
     "",

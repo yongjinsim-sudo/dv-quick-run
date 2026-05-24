@@ -19,6 +19,18 @@ suite("dvQuickRunHubContext", () => {
     assert.strictEqual(enriched.find((capability) => capability.id === "batch-workflows")?.contextState?.kind, "requiresContext");
   });
 
+
+  test("marks future comparison workflow as planned rather than available", () => {
+    const enriched = applyCapabilityContextStates(capabilities, emptyContext);
+    const comparison = enriched.find((capability) => capability.id === "cross-environment-comparison");
+
+    assert.strictEqual(comparison?.status, "future");
+    assert.strictEqual(comparison?.contextState?.kind, "informational");
+    assert.strictEqual(comparison?.contextState?.label, "Planned");
+    assert.strictEqual(comparison?.contextState?.launchable, false);
+    assert.ok(comparison?.contextState?.detail.includes("not available in the current release"));
+  });
+
   test("surfaces active query context without making context-dependent workflows directly launchable", () => {
     const enriched = applyCapabilityContextStates(capabilities, {
       ...emptyContext,

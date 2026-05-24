@@ -414,6 +414,52 @@ suite("resultViewerInvariants", () => {
     );
   });
 
+  test("systemuser rows with only Azure AD object id do not expose Application User Context row action", () => {
+    const model = buildResultViewerModel({
+      value: [
+        {
+          systemuserid: "aaaa1111-2222-3333-4444-555555555555",
+          fullname: "Human User",
+          azureactivedirectoryobjectid: "bbbb1111-2222-3333-4444-555555555555",
+          accessmode: 0
+        }
+      ]
+    }, "systemusers", {
+      entitySetName: "systemusers",
+      entityLogicalName: "systemuser",
+      primaryIdField: "systemuserid"
+    });
+
+    const userCell = model.rows[0]["systemuserid"];
+    const actionIds = userCell?.actions?.map((action) => action.id) ?? [];
+
+    assert.ok(!actionIds.includes("check-application-user-access-context"));
+    assert.ok(!model.rowActions?.[0]?.actions.some((action) => action.id === "check-application-user-access-context"));
+  });
+
+  test("systemuser rows with application id expose Application User Context row action", () => {
+    const model = buildResultViewerModel({
+      value: [
+        {
+          systemuserid: "cccc1111-2222-3333-4444-555555555555",
+          fullname: "Integration User",
+          applicationid: "dddd1111-2222-3333-4444-555555555555",
+          accessmode: 0
+        }
+      ]
+    }, "systemusers", {
+      entitySetName: "systemusers",
+      entityLogicalName: "systemuser",
+      primaryIdField: "systemuserid"
+    });
+
+    const userCell = model.rows[0]["systemuserid"];
+    const actionIds = userCell?.actions?.map((action) => action.id) ?? [];
+
+    assert.ok(actionIds.includes("check-application-user-access-context"));
+    assert.ok(model.rowActions?.[0]?.actions.some((action) => action.id === "check-application-user-access-context"));
+  });
+
   test("roles result rows expose Role Access Context row action", () => {
     const model = buildResultViewerModel({
       value: [

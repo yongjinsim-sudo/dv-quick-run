@@ -50,6 +50,27 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(groups.has("Act Safely"));
   });
 
+
+  test("keeps public Hub copy focused on Free and Pro only", () => {
+    const model = buildDvQuickRunHubViewModel();
+    const copy = [
+      ...model.whatsNew,
+      ...model.productDirection.map((item) => `${item.title} ${item.summary}`),
+      ...model.capabilities.map((item) => `${item.group} ${item.title} ${item.summary} ${item.operationalUseCase} ${item.howToUse?.join(" ") ?? ""}`)
+    ].join("\n");
+
+    assert.strictEqual(copy.includes("Team/Enterprise"), false);
+    assert.strictEqual(copy.includes("Pro/Team/Enterprise"), false);
+    assert.strictEqual(copy.includes("Enterprise acceleration"), false);
+    assert.strictEqual(copy.includes("Open-core"), false);
+    assert.strictEqual(copy.includes("Pro acceleration"), false);
+    assert.strictEqual(copy.includes("Planned Pro workflow"), false);
+    assert.strictEqual(copy.includes("future premium"), false);
+    assert.strictEqual(copy.includes("v0.11.6 only prepares"), false);
+    assert.strictEqual(copy.includes("ahead of v0.12.0"), false);
+    assert.strictEqual(copy.includes("Cross-Environment Diff"), false);
+  });
+
   test("renders hub HTML with CSP and required sections", () => {
     const model = buildDvQuickRunHubViewModel();
     const html = renderDvQuickRunHubHtml({ cspSource: "vscode-resource:" } as never, model);
@@ -63,6 +84,20 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes('id="whats-new"'));
     assert.ok(html.includes('id="direction"'));
     assert.ok(html.includes('id="philosophy"'));
+  });
+
+
+  test("renders future capabilities as planned rather than available", () => {
+    const model = buildDvQuickRunHubViewModel();
+    const html = renderDvQuickRunHubHtml({ cspSource: "vscode-resource:" } as never, model);
+
+    assert.ok(html.includes("Planned v0.12.0"));
+    assert.ok(html.includes("Planned future workflow."));
+    assert.ok(html.includes("Future Workflows"));
+    assert.ok(html.includes("Use this as future product orientation for operational drift investigation."));
+    assert.strictEqual(html.includes("v0.11.6 only prepares"), false);
+    assert.strictEqual(html.includes("v0.12.0 will introduce"), false);
+    assert.strictEqual(html.includes("Since v0.12.0 planned"), false);
   });
 
   test("renders continuation actions without duplicating guided traversal launch wording", () => {

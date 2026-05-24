@@ -1,8 +1,6 @@
 export const entitlementPlans = [
   "free",
   "pro",
-  "team",
-  "enterprise",
   "dev"
 ] as const;
 

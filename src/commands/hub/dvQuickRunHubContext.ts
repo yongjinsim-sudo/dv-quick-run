@@ -63,6 +63,15 @@ export function buildCapabilityContextState(capability: CapabilityInfo, context:
   const requirement = capability.contextRequirement;
 
   if (!requirement) {
+    if (capability.status === "future") {
+      return {
+        kind: "informational",
+        label: "Planned",
+        detail: "Planned future workflow. This is shown for product orientation only and is not available in the current release.",
+        launchable: false
+      };
+    }
+
     return {
       kind: "informational",
       label: "Available",

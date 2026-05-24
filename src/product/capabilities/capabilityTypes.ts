@@ -19,8 +19,15 @@ export interface TraversalCapabilityProfile {
   canRunOptimizedBatch: boolean;
 }
 
+export interface ComparisonCapabilityProfile {
+  canRunCrossEnvironmentDiff: boolean;
+  canExportComparison: boolean;
+  showWhatIsComingTeaser: boolean;
+}
+
 export interface CapabilityProfile {
   queryDoctor: QueryDoctorCapabilityProfile;
   actionableInsights: ActionableInsightCapabilityProfile;
   traversal: TraversalCapabilityProfile;
+  comparison: ComparisonCapabilityProfile;
 }
