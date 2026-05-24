@@ -2,6 +2,7 @@ import { resolveEntitlement } from "./entitlementResolver.js";
 import type {
   ActionableInsightCapabilityProfile,
   CapabilityProfile,
+  ComparisonCapabilityProfile,
   QueryDoctorCapabilityProfile,
   TraversalCapabilityProfile
 } from "./capabilityTypes.js";
@@ -52,4 +53,21 @@ export function canRunTraversalBatch(plan?: ProductPlan): boolean {
 
 export function canRunTraversalOptimizedBatch(plan?: ProductPlan): boolean {
   return getTraversalCapabilities(plan).canRunOptimizedBatch;
+}
+
+
+export function getComparisonCapabilities(plan?: ProductPlan): ComparisonCapabilityProfile {
+  return getCapabilityProfile(plan).comparison;
+}
+
+export function canRunCrossEnvironmentDiff(plan?: ProductPlan): boolean {
+  return getComparisonCapabilities(plan).canRunCrossEnvironmentDiff;
+}
+
+export function canExportComparison(plan?: ProductPlan): boolean {
+  return getComparisonCapabilities(plan).canExportComparison;
+}
+
+export function shouldShowComparisonTeaser(plan?: ProductPlan): boolean {
+  return getComparisonCapabilities(plan).showWhatIsComingTeaser;
 }

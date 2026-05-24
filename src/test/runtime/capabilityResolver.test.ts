@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { canApplyActionableInsight, canApplyQueryDoctorFix, canRunTraversalBatch, getActionableInsightCapabilities, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel } from "../../product/capabilities/capabilityResolver.js";
+import { canApplyActionableInsight, canApplyQueryDoctorFix, canExportComparison, canRunCrossEnvironmentDiff, canRunTraversalBatch, getActionableInsightCapabilities, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel, shouldShowComparisonTeaser } from "../../product/capabilities/capabilityResolver.js";
 import { normalizeEntitlementPlan } from "../../product/capabilities/entitlementTypes.js";
 
 suite("capabilityResolver", () => {
@@ -16,6 +16,11 @@ suite("capabilityResolver", () => {
       traversal: {
         canRunBatch: true,
         canRunOptimizedBatch: false
+      },
+      comparison: {
+        canRunCrossEnvironmentDiff: false,
+        canExportComparison: false,
+        showWhatIsComingTeaser: true
       }
     });
   });
@@ -33,6 +38,11 @@ suite("capabilityResolver", () => {
       traversal: {
         canRunBatch: true,
         canRunOptimizedBatch: true
+      },
+      comparison: {
+        canRunCrossEnvironmentDiff: true,
+        canExportComparison: true,
+        showWhatIsComingTeaser: false
       }
     });
   });
@@ -50,14 +60,22 @@ suite("capabilityResolver", () => {
     assert.strictEqual(canApplyQueryDoctorFix("pro"), true);
     assert.strictEqual(canRunTraversalBatch("free"), true);
     assert.strictEqual(canRunTraversalBatch("pro"), true);
+    assert.strictEqual(canRunCrossEnvironmentDiff("free"), false);
+    assert.strictEqual(canRunCrossEnvironmentDiff("pro"), true);
+    assert.strictEqual(canExportComparison("free"), false);
+    assert.strictEqual(canExportComparison("pro"), true);
+    assert.strictEqual(shouldShowComparisonTeaser("free"), true);
+    assert.strictEqual(shouldShowComparisonTeaser("pro"), false);
   });
 
   test("getCurrentProductPlan uses normalized configuration plan", () => {
     assert.strictEqual(typeof getCurrentProductPlan(), "string");
   });
 
-  test("normalizes unknown plan values to dev", () => {
+  test("normalizes unknown and premature tier values to dev", () => {
     assert.strictEqual(normalizeEntitlementPlan("mystery"), "dev");
     assert.strictEqual(normalizeEntitlementPlan(undefined), "dev");
+    assert.strictEqual(normalizeEntitlementPlan("team"), "dev");
+    assert.strictEqual(normalizeEntitlementPlan("enterprise"), "dev");
   });
 });

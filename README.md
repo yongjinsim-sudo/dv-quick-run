@@ -21,7 +21,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * investigate runtime behaviour with Execution Insights
 * understand entity operational footprint with Operational Profiles
 * inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
-* investigate bounded Access Context for users, teams, and roles
+* investigate bounded Access Context for users, application users, teams, roles, and business units
 * discover and execute supported Custom API capabilities through Capability Explorer
 * use the Hub to stay oriented across investigation workflows
 
@@ -57,180 +57,26 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.11.5
+## 🆕 What's New in v0.11.6
 
-v0.11.5 expands **Access Context** beyond users, teams, and roles into broader:
+v0.11.6 focuses on platform stabilisation, operational continuity refinement, and preparation for future bounded comparison workflows.
 
-```text
-Business Unit
-→ Application User
-→ Operational Identity Participation
-```
+Highlights include:
 
-understanding.
+* refined Hub and Quickstart operational guidance
+* improved Access Context onboarding and investigation continuity
+* calmer product-direction wording and workflow orientation
+* strengthened operational rendering consistency
+* foundational work for future cross-environment comparison workflows
+* additional regression coverage and architecture hardening
 
-DV Quick Run can now investigate bounded operational participation for:
-
-* business units
-* application users
-* service principals
-* automation-oriented identities
-* integration/synchronization identities
-* operational organizational topology
-
-The goal is still not RBAC simulation, organizational administration, or recursive hierarchy exploration.
-
-It is:
-
-* operational participation understanding
-* bounded operational orientation
-* explainable identity topology visibility
-* calmer enterprise-scale investigation
-* investigation continuity
-* evidence-backed operational interpretation
-
-### 🏛️ Business Unit Context
-
-Business Unit Context helps you understand operational participation around Dataverse business units.
-
-It can surface:
-
-* business-unit identity and hierarchy context
-* operational role participation
-* automation/service identity density
-* nearby operational team participation
-* grouped operational participation semantics
-* operational participation summaries
-* raw verification evidence
-
-Business Unit Context remains:
-
-* bounded
-* advisory-only
-* non-recursive
-* operationally contextual
-* not organizational administration
-* not authority modelling
-
-### 🤖 Application User Context
-
-Application User Context now treats automation-oriented identities as a dedicated operational investigation surface.
-
-It can surface:
-
-* service/application identity classification
-* operational participation
-* direct role participation
-* inherited participation
-* automation-oriented operational interpretation
-* raw verification evidence
-
-Examples include:
-
-* Power Automate identities
-* Copilot identities
-* AI Builder identities
-* integration identities
-* synchronization/service principals
-
-Application User Context preserves automation-oriented semantics without treating application users as standard interactive users.
-
-### ⚡ Result Viewer → Business Unit & Application User Continuation
-
-Result Viewer can now launch additional bounded operational investigation flows directly from row context.
-
-Examples include:
-
-```text
-businessunits.businessunitid
-→ Check Business Unit Context
-
-systemusers.systemuserid
-→ Check Application User Context
-```
-
-This preserves operational investigation continuity while keeping Result Viewer as the operational workspace.
-
-### 🧠 Grouped Operational Participation & Key Signals
-
-Business Unit investigations now use calmer grouped operational participation rendering.
-
-Examples include:
-
-```text
-Microsoft / Platform Service Roles
-Automation / Integration Roles
-AI / Copilot Roles
-Data / Analytics Roles
-Human-facing / Business Roles
-```
-
-Business Unit Context also introduces:
-
-```text
-Key Signals
-```
-
-Examples include:
-
-* automation-oriented identity density
-* AI/Copilot participation
-* integration-oriented participation
-* elevated operational role participation
-
-This helps large enterprise-scale participation surfaces remain understandable without hiding raw evidence.
-
-### 🧩 Summary-First Operational Rendering Refinement
-
-Business Unit and Application User Context now follow a clearer operational investigation hierarchy:
-
-```text
-Operational Significance
-→ Key Signals
-→ Participation
-→ Grouped Evidence
-→ Audit/debug Evidence
-```
-
-This keeps the strongest operational meaning visible first while preserving progressive disclosure and evidence transparency.
-
-### 📦 Searchable & Exportable Evidence
-
-Access Context investigations remain searchable and exportable.
-
-Supported exports include:
-
-* Copy Markdown
-* Copy JSON
-* Save Markdown
-* Save JSON
-* Save HTML
-
-Search remains local to the current bounded investigation context.
-
-### 🧭 Access Context Boundaries
-
-Access Context remains:
-
-* bounded
-* advisory-only
-* evidence-backed
-* operationally contextual
-* non-alarmist
-* not effective-access simulation
-* not privilege matrixing
-* not security administration
-* not organizational authority modelling
-
-The governing principle remains:
+DV Quick Run continues to prioritise:
 
 ```text
 understanding
 before
-authority
+automation
 ```
-
-
 
 ## 🎬 Result Viewer
 
@@ -293,6 +139,7 @@ You can investigate:
 * application/service identities
 * teams
 * roles
+* business units
 
 Access Context can surface:
 
@@ -324,9 +171,11 @@ Access Context can be launched from:
 Common Result Viewer continuations include:
 
 ```text
-systemusers.systemuserid → Check User Access Context
-teams.teamid             → Check Team Access Context
-roles.roleid             → Check Role Access Context
+systemusers.systemuserid       → Check User Access Context
+systemusers.systemuserid       → Check Application User Context
+teams.teamid                   → Check Team Access Context
+roles.roleid                   → Check Role Access Context
+businessunits.businessunitid   → Check Business Unit Context
 ```
 
 Access Context remains summary-first, searchable, exportable, and bounded to the current investigation subject.

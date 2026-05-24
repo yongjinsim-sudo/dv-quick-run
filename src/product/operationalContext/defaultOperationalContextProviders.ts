@@ -86,6 +86,11 @@ type AccessEvidenceDetail = {
   rawContext?: unknown;
 };
 
+type BusinessUnitRoleGroup = {
+  groupName: string;
+  roles: AccessRole[];
+};
+
 type BusinessUnitSummary = {
   businessUnitId?: string;
   name?: string;
@@ -112,6 +117,8 @@ type AccessContextDetail = {
   operationalSignificance: string;
   topologySummary: string;
   queryLog: string[];
+  keySignals?: string[];
+  businessUnitRoleGroups?: BusinessUnitRoleGroup[];
   limits: {
     roleTop: number;
     teamTop: number;
@@ -604,7 +611,7 @@ function classifyPrincipal(row: Record<string, unknown>, fallback: "user" | "tea
     return "SYSTEM Context";
   }
 
-  if (normalizeString(row.applicationid) || normalizeString(row.azureactivedirectoryobjectid)) {
+  if (normalizeString(row.applicationid)) {
     return "Application User";
   }
 
@@ -680,6 +687,8 @@ function accessEvidenceSearchText(context: AccessContextDetail): string {
     context.roleUsers.map((member) => `${member.displayName} ${member.uniqueName ?? ""} ${member.principalType ?? ""}`).join(" "),
     context.roleTeams.map((team) => `${team.teamName} ${team.teamType ?? ""}`).join(" "),
     context.businessUnitSummary ? `${context.businessUnitSummary.name ?? ""} ${context.businessUnitSummary.parentBusinessUnitName ?? ""} ${context.businessUnitSummary.userParticipationCount ?? ""} ${context.businessUnitSummary.teamParticipationCount ?? ""} ${context.businessUnitSummary.applicationUserParticipationCount ?? ""} ${context.businessUnitSummary.roleParticipationCount ?? ""}` : undefined,
+    context.keySignals?.join(" "),
+    context.businessUnitRoleGroups?.map((group) => `${group.groupName} ${group.roles.map((role) => role.roleName).join(" ")}`).join(" "),
     context.inheritedRoles.map((role) => `${role.roleName} ${role.sourceTeamName ?? ""}`).join(" "),
     context.evidence.map((item) => `${item.sourceDisplayName} ${item.relationshipType} ${item.evidenceDescription}`).join(" ")
   ].filter((value): value is string => !!value).join(" ").toLowerCase();
@@ -1162,6 +1171,86 @@ function accessOperationalSignificance(
 
   return `${principal} participates as ${principalType}${accessMode} with ${roleDescription}. This provides access-topology orientation for the current investigation.`;
 }
+
+function classifyBusinessUnitRoleName(roleName: string): string {
+  const lower = roleName.toLowerCase();
+
+  if (lower.includes("copilot") || lower.includes("ai") || lower.includes("prompt") || lower.includes("agent")) {
+    return "AI / Copilot Roles";
+  }
+
+  if (lower.includes("sync") || lower.includes("flow") || lower.includes("integration") || lower.includes("orchestration") || lower.includes("connector") || lower.includes("deployment")) {
+    return "Automation / Integration Roles";
+  }
+
+  if (lower.includes("data") || lower.includes("analytics") || lower.includes("lake") || lower.includes("search") || lower.includes("power bi") || lower.includes("report")) {
+    return "Data / Analytics Roles";
+  }
+
+  if (lower.includes("service") || lower.includes("platform") || lower.includes("app access") || lower.includes("system") || lower.includes("dataverse")) {
+    return "Microsoft / Platform Service Roles";
+  }
+
+  if (lower.includes("sales") || lower.includes("customer") || lower.includes("knowledge") || lower.includes("support") || lower.includes("maker") || lower.includes("delegate")) {
+    return "Human-facing / Business Roles";
+  }
+
+  return "Custom / Organizational Roles";
+}
+
+function buildBusinessUnitRoleGroups(roles: readonly AccessRole[]): BusinessUnitRoleGroup[] {
+  const groups: Record<string, AccessRole[]> = {
+    "Microsoft / Platform Service Roles": [],
+    "Automation / Integration Roles": [],
+    "AI / Copilot Roles": [],
+    "Data / Analytics Roles": [],
+    "Human-facing / Business Roles": [],
+    "Custom / Organizational Roles": []
+  };
+
+  for (const role of roles) {
+    groups[classifyBusinessUnitRoleName(role.roleName ?? "Unnamed role")].push(role);
+  }
+
+  return Object.entries(groups)
+    .filter(([, groupedRoles]) => groupedRoles.length > 0)
+    .map(([groupName, groupedRoles]) => ({ groupName, roles: groupedRoles }));
+}
+
+function buildBusinessUnitKeySignals(businessUnit: BusinessUnitSummary, roles: readonly AccessRole[], teams: readonly TeamMembership[]): string[] {
+  const signals: string[] = [];
+  const roleCount = businessUnit.roleParticipationCount ?? roles.length;
+  const applicationUserCount = businessUnit.applicationUserParticipationCount ?? 0;
+  const teamCount = businessUnit.teamParticipationCount ?? teams.length;
+  const roleNames = roles.map((role) => role.roleName ?? "");
+
+  if (applicationUserCount >= 25) {
+    signals.push(`${applicationUserCount} automation-oriented identities observed in this bounded lookup.`);
+  }
+
+  if (roleCount >= 25) {
+    signals.push(`${roleCount} role participants observed; role grouping is heuristic and for orientation only.`);
+  }
+
+  if (teamCount > 0) {
+    signals.push(`${teamCount} team participants observed near this business unit.`);
+  }
+
+  if (roleNames.some((name) => name.toLowerCase().includes("system administrator"))) {
+    signals.push("System Administrator role participation is present in the bounded role set.");
+  }
+
+  if (roleNames.some((name) => /copilot|ai|agent|prompt/i.test(name))) {
+    signals.push("AI/Copilot-oriented role participation is present.");
+  }
+
+  if (roleNames.some((name) => /flow|sync|connector|orchestration|automation/i.test(name))) {
+    signals.push("Automation/integration-oriented role participation is present.");
+  }
+
+  return signals.slice(0, 5);
+}
+
 function businessUnitAccessTopologySummary(businessUnit: BusinessUnitSummary): string {
   const name = businessUnit.name ?? businessUnit.businessUnitId ?? "Selected business unit";
   const parent = businessUnit.parentBusinessUnitName ? ` Parent business unit: ${businessUnit.parentBusinessUnitName}.` : "";
@@ -1266,6 +1355,8 @@ async function loadBusinessUnitAccessContext(client: DataverseClient, token: str
     roleTeams: [],
     inheritedRoles: [],
     evidence: [],
+    keySignals: buildBusinessUnitKeySignals(businessUnitSummary, roles, teams),
+    businessUnitRoleGroups: buildBusinessUnitRoleGroups(roles),
     operationalSignificance: businessUnitAccessOperationalSignificance(businessUnitSummary),
     topologySummary: businessUnitAccessTopologySummary(businessUnitSummary),
     queryLog,

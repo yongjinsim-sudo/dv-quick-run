@@ -108,7 +108,9 @@ function groupCapabilities(capabilities: readonly CapabilityInfo[]): Map<string,
 }
 
 function renderCapability(capability: CapabilityInfo): string {
-  const since = capability.sinceVersion ? `<span class="dvqr-status">Since ${escapeHtml(capability.sinceVersion)}</span>` : "";
+  const since = capability.sinceVersion
+    ? `<span class="dvqr-status">${capability.status === "future" ? "Planned" : "Since"} ${escapeHtml(capability.sinceVersion)}</span>`
+    : "";
   const canLaunch = capability.commandId && capability.contextState?.launchable !== false;
   const action = canLaunch ? `<button class="dvqr-action-button" data-command="${escapeHtml(capability.commandId as string)}">${escapeHtml(capability.actionLabel ?? "Launch")}</button>` : "";
   const state = capability.contextState ? `<span class="dvqr-context-state dvqr-context-state-${escapeHtml(capability.contextState.kind)}">${escapeHtml(capability.contextState.label)}</span>` : "";

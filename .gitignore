@@ -8,3 +8,15 @@ node_modules
 *.vsix
 AGENTS.md
 GLOBAL-AGENTS.template.md
+# Proprietary/open-core implementation boundaries.
+# The public core repository must not commit paid acceleration modules.
+/src/pro/**
+!/src/pro/
+!/src/pro/.gitkeep
+/src/team/**
+!/src/team/
+!/src/team/.gitkeep
+/src/enterprise/**
+!/src/enterprise/
+!/src/enterprise/.gitkeep
+

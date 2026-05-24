@@ -6,6 +6,31 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# v0.11.6 — Platform Stabilisation, Open-Core Foundations & Pre-Comparison Hardening
+
+This release stabilises the v0.11.5 identity-context expansion and prepares DV Quick Run for the v0.12.x comparison arc.
+
+## Changed
+
+* Refined Hub and Quickstart wording for calmer operational orientation.
+* Added Access Context guidance to Quickstart.
+* Improved public product-direction wording for future comparison workflows.
+* Added comparison snapshot foundations for future bounded operational comparison without introducing live diff UI yet.
+* Added shared operational renderer primitives for grouped/signal-style surfaces.
+* Added boundary regression coverage for future capability separation.
+
+## Governance
+
+DVQR continues to preserve the boundary:
+
+```text
+DVQR continues to preserve the boundary between operational understanding and future acceleration workflows.
+```
+
+Cross-environment comparison remains observational, not remediation or deployment tooling.
+
+---
+
 # v0.11.5 — Business Unit Context, Application User Context & Operational Identity Expansion
 
 This release expands the Access Context investigation family beyond:

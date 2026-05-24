@@ -902,7 +902,7 @@ async function investigateAccessContext(ctx: CommandContext, inputArg?: Investig
   if (typeof inputArg === "object" && inputArg !== null) {
     const selected = pickFromInput(inputArg);
     if (!selected) {
-      void vscode.window.showWarningMessage("DV Quick Run: Access Context requires a user, team, or role id.");
+      void vscode.window.showWarningMessage("DV Quick Run: Access Context requires a user, application user, team, role, or business unit id.");
       return;
     }
 
