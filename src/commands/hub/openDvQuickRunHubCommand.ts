@@ -4,6 +4,7 @@ import { registerCommand } from "../registerCommandHelpers.js";
 import { buildDvQuickRunHubViewModel } from "./dvQuickRunHubViewModel.js";
 import { renderDvQuickRunHubHtml } from "../../webview/hub/renderDvQuickRunHubHtml.js";
 import { investigationContextStore } from "../../investigation/context/investigationContextStore.js";
+import { resolveEntitlement } from "../../product/capabilities/entitlementResolver.js";
 
 let hubPanel: vscode.WebviewPanel | undefined;
 let hubContextChangeSubscription: { dispose: () => void } | undefined;
@@ -19,7 +20,7 @@ function refreshHubPanel(ctx: CommandContext): void {
 
   hubPanel.webview.html = renderDvQuickRunHubHtml(
     hubPanel.webview,
-    buildDvQuickRunHubViewModel(investigationContextStore.getCurrent()),
+    buildDvQuickRunHubViewModel(investigationContextStore.getCurrent(), resolveEntitlement()),
     getHubIconUri(ctx.ext, hubPanel.webview)
   );
 }
@@ -64,7 +65,7 @@ export async function openDvQuickRunHub(ctx: CommandContext): Promise<void> {
 
   hubPanel.webview.html = renderDvQuickRunHubHtml(
     hubPanel.webview,
-    buildDvQuickRunHubViewModel(currentInvestigationContext),
+    buildDvQuickRunHubViewModel(currentInvestigationContext, resolveEntitlement()),
     getHubIconUri(ctx.ext, hubPanel.webview)
   );
   hubPanel.webview.onDidReceiveMessage(async (message) => {
@@ -85,9 +86,14 @@ export async function openDvQuickRunHub(ctx: CommandContext): Promise<void> {
   }, null, ctx.ext.subscriptions);
 }
 
+async function openDvQuickRunDiscussions(): Promise<void> {
+  await vscode.env.openExternal(vscode.Uri.parse("https://github.com/yongjinsim-sudo/dv-quick-run/discussions"));
+}
+
 export function registerOpenDvQuickRunHubCommand(
   context: vscode.ExtensionContext,
   ctx: CommandContext
 ): void {
   registerCommand(context, "dvQuickRun.openHub", openDvQuickRunHub, ctx);
+  registerCommand(context, "dvQuickRun.openDiscussions", openDvQuickRunDiscussions, ctx);
 }

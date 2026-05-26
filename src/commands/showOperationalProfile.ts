@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { CommandContext } from "./context/commandContext.js";
 import { buildOperationalProfile } from "../product/operationalProfile/operationalProfileEngine.js";
-import { renderOperationalProfileMarkdown } from "../product/operationalProfile/operationalProfileMarkdownRenderer.js";
 import { buildOperationalContextViewModel } from "../product/operationalContext/operationalContextEngine.js";
 import { createDefaultOperationalContextProviders } from "../product/operationalContext/defaultOperationalContextProviders.js";
 import {
@@ -11,6 +10,29 @@ import {
   loadNavigationProperties
 } from "./router/actions/shared/metadataAccess.js";
 import type { EntityDef } from "../utils/entitySetCache.js";
+import {
+  buildSnapshotRegistryEntry,
+  createComparisonEvidenceSnapshot,
+  createOperationalComparisonSnapshotDocument,
+  registerComparisonSnapshot
+} from "../product/comparison/index.js";
+import type { ComparisonEvidenceSnapshot } from "../product/comparison/index.js";
+import { buildIdentityParticipationSnapshotPayloadFromProfile } from "../product/comparison/comparisonSnapshotExtraction.js";
+import { canExportComparison, shouldShowComparisonTeaser } from "../product/capabilities/capabilityResolver.js";
+
+
+async function promptForSnapshotExportProAccess(): Promise<boolean> {
+  if (canExportComparison()) {
+    return true;
+  }
+
+  const message = shouldShowComparisonTeaser()
+    ? "Export Snapshot is a DV Quick Run Pro workflow. Free keeps operational understanding available; Pro unlocks snapshot persistence, Snapshot Library, Timeline Diff, and Cross-Environment Diff workflows."
+    : "Export Snapshot is not available for the current DV Quick Run plan.";
+
+  await vscode.window.showInformationMessage(message, "OK");
+  return false;
+}
 
 async function pickEntity(defs: readonly EntityDef[]): Promise<EntityDef | undefined> {
   const picked = await vscode.window.showQuickPick(
@@ -55,28 +77,79 @@ async function resolveEntity(
 
 function toSafeProfileFileName(entityLogicalName: string): string {
   const safeEntity = entityLogicalName.replace(/[^a-zA-Z0-9_-]/g, "-") || "entity";
-  return `dv-quick-run-profile-${safeEntity}-${Date.now()}.md`;
+  return `dv-quick-run-profile-${safeEntity}-${Date.now()}.dvqrsnapshot.json`;
 }
 
-async function openProfilePreviewOnly(
-  ext: vscode.ExtensionContext,
-  entityLogicalName: string,
-  markdown: string
-): Promise<void> {
-  const directory = vscode.Uri.joinPath(ext.globalStorageUri, "operational-profile-snapshots");
-  await vscode.workspace.fs.createDirectory(directory);
+async function writeOperationalProfileSnapshotFile(args: {
+  readonly ctx: CommandContext;
+  readonly entityLogicalName: string;
+  readonly profile: ReturnType<typeof buildOperationalProfile>;
+}): Promise<vscode.Uri | undefined> {
+  const defaultUri = vscode.Uri.file(toSafeProfileFileName(args.entityLogicalName));
+  const saveUri = await vscode.window.showSaveDialog({
+    defaultUri,
+    filters: {
+      "DVQR comparison snapshots": ["json"]
+    },
+    saveLabel: "Save Comparison Snapshot",
+    title: "Save Operational Profile Comparison Snapshot"
+  });
 
-  const uri = vscode.Uri.joinPath(directory, toSafeProfileFileName(entityLogicalName));
-  await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(markdown));
+  if (!saveUri) {
+    return undefined;
+  }
 
-  await vscode.commands.executeCommand("markdown.showPreviewToSide", uri);
+  const activeEnvironment = args.ctx.envContext.getActiveEnvironment();
+  const environment = {
+    label: activeEnvironment?.name ?? args.ctx.envContext.getEnvironmentName(),
+    environmentUrl: activeEnvironment?.url
+  };
+
+  const capturedAt = new Date();
+  const evidenceSnapshots: ComparisonEvidenceSnapshot[] = [
+    createComparisonEvidenceSnapshot({
+      environment,
+      evidenceType: "OperationalProfile",
+      evidence: args.profile,
+      capturedAt,
+      sourceFeature: "Operational Profile"
+    })
+  ];
+
+  const identityParticipation = buildIdentityParticipationSnapshotPayloadFromProfile(args.profile);
+  if (identityParticipation) {
+    evidenceSnapshots.push(createComparisonEvidenceSnapshot({
+      environment,
+      evidenceType: "IdentityParticipation",
+      evidence: identityParticipation,
+      capturedAt,
+      sourceFeature: "Operational Profile / Operational Context"
+    }));
+  }
+
+  const jsonSnapshot = createOperationalComparisonSnapshotDocument({
+    environment,
+    evidenceSnapshots,
+    capturedAt,
+    sourceFeature: "Operational Profile"
+  });
+
+  await vscode.workspace.fs.writeFile(saveUri, new TextEncoder().encode(`${JSON.stringify(jsonSnapshot, null, 2)}\n`));
+  await registerComparisonSnapshot(args.ctx.ext, buildSnapshotRegistryEntry({
+    document: jsonSnapshot,
+    fileUri: saveUri
+  }));
+  return saveUri;
 }
 
 async function exportOperationalProfileSnapshot(
-  ext: vscode.ExtensionContext,
   ctx: CommandContext,
   entityLogicalName?: string
 ): Promise<void> {
+  if (!(await promptForSnapshotExportProAccess())) {
+    return;
+  }
+
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
@@ -115,7 +188,24 @@ async function exportOperationalProfileSnapshot(
         operationalContext
       });
 
-      await openProfilePreviewOnly(ext, entity.logicalName, renderOperationalProfileMarkdown(profile));
+      const file = await writeOperationalProfileSnapshotFile({
+        ctx,
+        entityLogicalName: entity.logicalName,
+        profile
+      });
+
+      if (!file) {
+        return;
+      }
+
+      const action = await vscode.window.showInformationMessage(
+        "DV Quick Run: Operational Profile comparison snapshot saved.",
+        "Open Snapshot"
+      );
+
+      if (action === "Open Snapshot") {
+        await vscode.commands.executeCommand("vscode.open", file);
+      }
     }
   );
 }
@@ -127,14 +217,14 @@ export function registerShowOperationalProfileCommand(
   const exportDisposable = vscode.commands.registerCommand(
     "dvQuickRun.exportOperationalProfileSnapshot",
     async (entityLogicalName?: string) => {
-      await exportOperationalProfileSnapshot(ext, ctx, entityLogicalName);
+      await exportOperationalProfileSnapshot(ctx, entityLogicalName);
     }
   );
 
   const legacyDisposable = vscode.commands.registerCommand(
     "dvQuickRun.showOperationalProfile",
     async (entityLogicalName?: string) => {
-      await exportOperationalProfileSnapshot(ext, ctx, entityLogicalName);
+      await exportOperationalProfileSnapshot(ctx, entityLogicalName);
     }
   );
 

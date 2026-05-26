@@ -12,6 +12,7 @@ import { registerInternalSupportCommands } from "./runtime/internalSupportComman
 import { registerSelectionContext } from "./runtime/selectionContext.js";
 import { ensureDvQuickRunSettingsExist } from "./runtime/configMigration.js";
 import { maybeOpenQuickStartOnFirstRun } from "./runtime/quickStartLifecycle.js";
+import { canRunCrossEnvironmentDiff, shouldShowComparisonTeaser } from "./product/capabilities/capabilityResolver.js";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerVirtualJsonProvider(context);
@@ -34,6 +35,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerInternalSupportCommands(context);
   registerEditorIntelligence(context, ctx);
   registerSelectionContext(context, ctx);
+  await vscode.commands.executeCommand("setContext", "dvQuickRun.crossEnvironmentDiffAvailable", canRunCrossEnvironmentDiff());
+  await vscode.commands.executeCommand("setContext", "dvQuickRun.crossEnvironmentDiffTeaserAvailable", shouldShowComparisonTeaser());
   await maybeOpenQuickStartOnFirstRun(ctx);
 }
 

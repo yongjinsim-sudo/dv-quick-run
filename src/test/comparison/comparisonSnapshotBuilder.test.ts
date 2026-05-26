@@ -1,5 +1,10 @@
 import * as assert from "assert";
-import { createComparisonEvidenceSnapshot, normalizeComparisonEnvironmentIdentity } from "../../product/comparison/index.js";
+import {
+  createComparisonEvidenceSnapshot,
+  createOperationalComparisonSnapshotDocument,
+  normalizeComparisonEnvironmentIdentity,
+  validateComparisonSnapshotDocument
+} from "../../product/comparison/index.js";
 
 suite("comparisonSnapshotBuilder", () => {
   test("normalizes environment identity without implying live authority", () => {
@@ -25,4 +30,28 @@ suite("comparisonSnapshotBuilder", () => {
     assert.strictEqual(snapshot.evidenceType, "IdentityParticipation");
     assert.deepStrictEqual(snapshot.evidence, { users: 3, teams: 2 });
   });
+  test("wraps evidence snapshots in a comparison document and validates them", () => {
+    const evidence = createComparisonEvidenceSnapshot({
+      environment: { label: "DEV" },
+      evidenceType: "OperationalProfile",
+      evidence: { entityLogicalName: "account" },
+      capturedAt: new Date("2026-05-24T00:00:00.000Z"),
+      sourceFeature: "Operational Profile"
+    });
+
+    const document = createOperationalComparisonSnapshotDocument({
+      environment: { label: "DEV" },
+      evidenceSnapshots: [evidence],
+      capturedAt: new Date("2026-05-24T00:00:00.000Z"),
+      sourceFeature: "Operational Profile"
+    });
+
+    const validation = validateComparisonSnapshotDocument(document);
+
+    assert.strictEqual(document.kind, "dvqr-operational-comparison-snapshot");
+    assert.strictEqual(validation.valid, true);
+    assert.strictEqual(validation.snapshots.length, 1);
+    assert.strictEqual(validation.snapshots[0].evidenceType, "OperationalProfile");
+  });
+
 });

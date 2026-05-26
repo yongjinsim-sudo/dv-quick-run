@@ -14,21 +14,21 @@ suite("dvQuickRunHubContext", () => {
     const enriched = applyCapabilityContextStates(capabilities, emptyContext);
     const launchable = enriched.filter((capability) => capability.contextState?.launchable).map((capability) => capability.id);
 
-    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer"]);
+    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer", "cross-environment-comparison", "community-discussions"]);
     assert.strictEqual(enriched.find((capability) => capability.id === "explain-query-doctor")?.contextState?.kind, "requiresContext");
     assert.strictEqual(enriched.find((capability) => capability.id === "batch-workflows")?.contextState?.kind, "requiresContext");
   });
 
 
-  test("marks future comparison workflow as planned rather than available", () => {
+  test("surfaces comparison workflow as a Pro Preview entry point", () => {
     const enriched = applyCapabilityContextStates(capabilities, emptyContext);
     const comparison = enriched.find((capability) => capability.id === "cross-environment-comparison");
 
-    assert.strictEqual(comparison?.status, "future");
-    assert.strictEqual(comparison?.contextState?.kind, "informational");
-    assert.strictEqual(comparison?.contextState?.label, "Planned");
-    assert.strictEqual(comparison?.contextState?.launchable, false);
-    assert.ok(comparison?.contextState?.detail.includes("not available in the current release"));
+    assert.strictEqual(comparison?.status, "preview");
+    assert.strictEqual(comparison?.contextState?.kind, "launchable");
+    assert.strictEqual(comparison?.contextState?.label, "Pro Preview");
+    assert.strictEqual(comparison?.contextState?.launchable, true);
+    assert.strictEqual(comparison?.commandId, "dvQuickRun.openSnapshotLibrary");
   });
 
   test("surfaces active query context without making context-dependent workflows directly launchable", () => {

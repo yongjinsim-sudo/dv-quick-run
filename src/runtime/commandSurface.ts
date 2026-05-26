@@ -44,6 +44,7 @@ import { registerDiscoverCustomApisCommand } from "../commands/discoverCustomApi
 import { registerOpenCapabilityExplorerCommand } from "../commands/capabilityExplorer/openCapabilityExplorerCommand.js";
 import { registerOpenCapabilityExecutionInsightsCommand } from "../commands/capabilityExplorer/openCapabilityExecutionInsightsCommand.js";
 import { registerInvestigateAccessContextCommand } from "../commands/investigateAccessContext.js";
+import { registerOpenCrossEnvironmentDiffCommand } from "../commands/comparison/openCrossEnvironmentDiffCommand.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -87,7 +88,8 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerDiscoverCustomApisCommand,
   registerOpenCapabilityExplorerCommand,
   registerOpenCapabilityExecutionInsightsCommand,
-  registerInvestigateAccessContextCommand
+  registerInvestigateAccessContextCommand,
+  registerOpenCrossEnvironmentDiffCommand
 ];
 
 const diagnosticsRegistrations = (

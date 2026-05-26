@@ -54,7 +54,7 @@ suite("open-core boundaries", () => {
       const repoRoot = path.join(__dirname, "..", "..", "..");
 
       const allowedFilesByFolder: Record<string, string[]> = {
-          pro: ["index.ts", "providers"],
+          pro: ["comparison", "index.ts", "providers"],
           team: ["index.ts"],
           enterprise: ["index.ts"]
       };

@@ -36,7 +36,7 @@ suite("dvQuickRunHubViewModel", () => {
     const model = buildDvQuickRunHubViewModel();
     const launchable = model.capabilities.filter((capability) => capability.contextState?.launchable).map((capability) => capability.id);
 
-    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer"]);
+    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer", "cross-environment-comparison", "community-discussions"]);
   });
 
   test("groups capabilities by operational use", () => {
@@ -68,7 +68,8 @@ suite("dvQuickRunHubViewModel", () => {
     assert.strictEqual(copy.includes("future premium"), false);
     assert.strictEqual(copy.includes("v0.11.6 only prepares"), false);
     assert.strictEqual(copy.includes("ahead of v0.12.0"), false);
-    assert.strictEqual(copy.includes("Cross-Environment Diff"), false);
+    assert.ok(copy.includes("Cross-Environment Diff"));
+    assert.ok(copy.includes("Snapshot Library"));
   });
 
   test("renders hub HTML with CSP and required sections", () => {
@@ -87,17 +88,30 @@ suite("dvQuickRunHubViewModel", () => {
   });
 
 
-  test("renders future capabilities as planned rather than available", () => {
+  test("renders comparison as a Pro Preview rather than a hidden future workflow", () => {
     const model = buildDvQuickRunHubViewModel();
     const html = renderDvQuickRunHubHtml({ cspSource: "vscode-resource:" } as never, model);
 
-    assert.ok(html.includes("Planned v0.12.0"));
-    assert.ok(html.includes("Planned future workflow."));
+    assert.ok(html.includes("🔒 Cross-Environment Diff"));
+    assert.ok(html.includes("Pro Preview"));
+    assert.ok(html.includes("Open Pro Preview"));
     assert.ok(html.includes("Future Workflows"));
-    assert.ok(html.includes("Use this as future product orientation for operational drift investigation."));
+    assert.strictEqual(html.includes("Planned future workflow."), false);
     assert.strictEqual(html.includes("v0.11.6 only prepares"), false);
     assert.strictEqual(html.includes("v0.12.0 will introduce"), false);
     assert.strictEqual(html.includes("Since v0.12.0 planned"), false);
+  });
+
+
+
+  test("renders comparison as an operational workflow for Pro", () => {
+    const model = buildDvQuickRunHubViewModel(undefined, { plan: "pro" });
+    const html = renderDvQuickRunHubHtml({ cspSource: "vscode-resource:" } as never, model);
+
+    assert.ok(html.includes("Operational Comparison Workflows"));
+    assert.ok(html.includes("Open Snapshot Library"));
+    assert.strictEqual(html.includes("Open Pro Preview"), false);
+    assert.strictEqual(html.includes("Free can explore mock snapshots"), false);
   });
 
   test("renders continuation actions without duplicating guided traversal launch wording", () => {

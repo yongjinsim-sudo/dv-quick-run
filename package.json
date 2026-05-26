@@ -1,7 +1,7 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Metadata-aware Dataverse query, operational investigation, identity participation, and governed execution workbench for OData, FetchXML, and $batch in VS Code.",
+  "description": "Metadata-aware Dataverse query, investigation, execution, and comparison workbench for OData, FetchXML, and $batch in VS Code.",
   "version": "0.11.6",
   "publisher": "dv-forgelab",
   "repository": {
@@ -48,7 +48,9 @@
     "query workflow",
     "dataverse tooling vscode"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:dvQuickRun.openSnapshotLibrary"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -213,6 +215,11 @@
         "title": "DV Quick Run: Export Operational Profile Snapshot"
       },
       {
+        "command": "dvQuickRun.openSnapshotLibrary",
+        "title": "DV Quick Run: Open Snapshot Library",
+        "category": "DV Quick Run"
+      },
+      {
         "command": "dvQuickRun.runBatchQueries",
         "title": "DV Quick Run: Run Queries as $batch"
       }
@@ -242,6 +249,10 @@
         {
           "command": "dvQuickRun.smartPatchEditLast",
           "when": "false"
+        },
+        {
+          "command": "dvQuickRun.openSnapshotLibrary",
+          "when": "dvQuickRun.crossEnvironmentDiffAvailable || dvQuickRun.crossEnvironmentDiffTeaserAvailable"
         }
       ],
       "editor/context": [

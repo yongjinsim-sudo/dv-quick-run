@@ -3,6 +3,7 @@ import { ResultViewerDisplayModel } from "../services/resultViewModelBuilder.js"
 import { getResultViewerMarkup } from "./resultViewer/markup.js";
 import { getResultViewerScript } from "./resultViewer/script.js";
 import { RESULT_VIEWER_STYLES } from "./resultViewer/styles.js";
+import { canExportComparison } from "../product/capabilities/capabilityResolver.js";
 
 function getNonce(): string {
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -24,7 +25,14 @@ export function getResultViewerHtml(
         vscode.Uri.joinPath(extensionUri, "images", "icon32.png")
     );
 
-    const initialModelJson = JSON.stringify(JSON.stringify(model));
+    const modelWithCapabilities = {
+        ...model,
+        comparisonCapabilities: {
+            canExportSnapshot: canExportComparison()
+        }
+    };
+
+    const initialModelJson = JSON.stringify(JSON.stringify(modelWithCapabilities));
     const script = getResultViewerScript(initialModelJson);
     const nonce = getNonce();
 
