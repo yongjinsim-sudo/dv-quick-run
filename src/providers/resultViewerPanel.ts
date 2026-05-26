@@ -960,6 +960,11 @@ export class ResultViewerPanel {
             return;
         }
 
+        if (actionId === "exportComparisonSnapshot") {
+            await vscode.commands.executeCommand("dvQuickRun.exportOperationalProfileSnapshot", entityLogicalName);
+            return;
+        }
+
         ResultViewerPanel.lastOperationalProfileNavigationContext = {
             entityLogicalName,
             entitySetName: entitySetName || undefined,

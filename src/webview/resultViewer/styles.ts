@@ -202,6 +202,14 @@ export const RESULT_VIEWER_STYLES = `
             opacity: 0.86;
         }
 
+        .profile-summary-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
         .profile-why-link,
         .profile-evidence-action {
             background: transparent;
@@ -1848,6 +1856,18 @@ export const RESULT_VIEWER_STYLES = `
 .profile-why-link {
     font-weight: 600;
     color: var(--vscode-textLink-foreground);
+}
+
+.profile-summary-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-export-snapshot-link {
+    border-color: color-mix(in srgb, var(--vscode-textLink-foreground) 45%, transparent 55%);
 }
 
 .profile-metrics {

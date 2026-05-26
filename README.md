@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -22,6 +22,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * understand entity operational footprint with Operational Profiles
 * inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
 * investigate bounded Access Context for users, application users, teams, roles, and business units
+* compare operational snapshots through Snapshot Library, Timeline Diff, and Cross-Environment Diff
 * discover and execute supported Custom API capabilities through Capability Explorer
 * use the Hub to stay oriented across investigation workflows
 
@@ -57,18 +58,21 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.11.6
+## 🆕 What's New in v0.12.0
 
-v0.11.6 focuses on platform stabilisation, operational continuity refinement, and preparation for future bounded comparison workflows.
+v0.12.0 introduces DV Quick Run’s first operational comparison workflow foundations.
 
 Highlights include:
 
-* refined Hub and Quickstart operational guidance
-* improved Access Context onboarding and investigation continuity
-* calmer product-direction wording and workflow orientation
-* strengthened operational rendering consistency
-* foundational work for future cross-environment comparison workflows
-* additional regression coverage and architecture hardening
+* **Operational Snapshot Library** for coordinating saved investigation snapshots
+* **Cross-Environment Diff** for comparing operational drift across environments
+* **Timeline Diff** for comparing snapshots from the same environment over time
+* provider-backed drift groups for Operational Profile, Solution Participation, Workflow / Automation, and Identity Participation evidence
+* clearer Pro Preview vs Pro capability wording
+* locked continuation teasers for future evidence-query workflows
+* Snapshot Library as the central console for comparison workflows
+* GitHub Discussions links for feedback, bug reports, workflow ideas, and roadmap discussion
+* stronger open-core boundaries around comparison acceleration
 
 DV Quick Run continues to prioritise:
 
@@ -77,6 +81,8 @@ understanding
 before
 automation
 ```
+
+DVQR observes operational drift. DVQR does not fix operational drift.
 
 ## 🎬 Result Viewer
 
@@ -122,6 +128,8 @@ It helps you:
 * reopen recoverable Result Viewer sessions
 * track selected `$batch` sub-results
 * pivot to related investigation surfaces
+* discover Snapshot Library and operational comparison workflows
+* open DVQR GitHub Discussions for feedback, bugs, workflow ideas, and roadmap conversation
 * avoid stale context after environment switches
 
 The Hub is optional. It does not take over the workflow; it helps you recover orientation when you need it.
@@ -283,6 +291,7 @@ Profiles can surface:
 * Power Automate involvement
 * workflow participation
 * managed-state context
+* comparison-ready snapshot evidence for future operational diff workflows
 
 ![Operational Profile](docs/entity-profile-card.png)
 
@@ -295,6 +304,57 @@ Operational Profiles are:
 * advisory-only
 
 They help identify good investigation starting points without implying speculative root cause.
+
+Operational Profile snapshot export is capability-aware: Free keeps operational understanding available, while Pro unlocks snapshot persistence and comparison workflows.
+
+---
+
+### 🔄 Snapshot Library, Timeline Diff & Cross-Environment Diff
+
+DV Quick Run includes Pro Preview foundations for operational comparison workflows.
+
+Snapshot Library coordinates saved operational investigation snapshots and acts as the central console for diffing.
+
+It supports:
+
+* source and target snapshot selection
+* grouping snapshots by environment and subject
+* latest-vs-previous snapshot comparison
+* snapshot search and filtering
+* mock snapshot exploration in Free / Pro Preview mode
+* real snapshot workflows in Pro
+
+DV Quick Run automatically chooses the comparison mode:
+
+```text
+same environment       → Timeline Diff
+different environments → Cross-Environment Diff
+```
+
+Comparison surfaces can show provider-backed operational drift across:
+
+* Operational Profiles
+* Solution Participation
+* Workflow / Automation Participation
+* Identity Participation
+
+The comparison model is intentionally observational:
+
+```text
+DVQR observes operational drift.
+DVQR does not fix operational drift.
+```
+
+Operational comparison is not deployment tooling, remediation automation, root-cause certainty, or environment authority.
+
+It is designed to help you understand:
+
+* what changed
+* where operational density shifted
+* which providers contributed evidence
+* which drift signals may deserve follow-up investigation
+
+Free users can explore mock snapshots and sample drift. Pro unlocks real snapshot import, management, comparison, export, and snapshot continuity workflows.
 
 ---
 
@@ -525,6 +585,9 @@ It detects or guards against risky situations such as:
 * operational-context overclaiming beyond bounded evidence
 * effective-access claims from Access Context participation evidence
 * causal claims from solution, ownership, access, or actor participation
+* treating operational comparison as deployment authority
+* treating snapshot evidence as remediation instruction
+* hidden cross-environment scans or automatic drift verification
 
 Execution-capable workflows are designed around:
 
@@ -533,6 +596,27 @@ preview → explicit confirmation → execution → inspect result → investiga
 ```
 
 DV Quick Run does not treat generated or AI-assisted responses as operational truth. AI-related output should be reviewed before being used for operational decisions.
+
+---
+
+## 💬 Community & Feedback
+
+DV Quick Run includes GitHub Discussions entry points from the Hub and operational comparison surfaces.
+
+Use DVQR Discussions to:
+
+* report bugs
+* suggest features
+* share workflow feedback
+* discuss operational investigation patterns
+* propose comparison providers
+* follow roadmap direction
+
+GitHub Discussions:
+
+```text
+https://github.com/yongjinsim-sudo/dv-quick-run/discussions
+```
 
 ---
 

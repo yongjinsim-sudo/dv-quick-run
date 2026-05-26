@@ -1,7 +1,8 @@
-import { capabilities, investigationPlaybooks, philosophy, productDirection, whatsNew } from "./dvQuickRunHubContent.js";
+import { getHubCapabilities, investigationPlaybooks, philosophy, productDirection, whatsNew } from "./dvQuickRunHubContent.js";
 import { applyCapabilityContextStates, buildInvestigationContinuationModel } from "./dvQuickRunHubContext.js";
 import type { DvQuickRunHubViewModel } from "./dvQuickRunHubTypes.js";
 import type { InvestigationContext } from "../../investigation/context/investigationContextTypes.js";
+import type { EntitlementContext } from "../../product/capabilities/entitlementTypes.js";
 
 const emptyInvestigationContext: InvestigationContext = {
   id: "hub-empty-context",
@@ -9,7 +10,10 @@ const emptyInvestigationContext: InvestigationContext = {
   lastUpdatedUtc: ""
 };
 
-export function buildDvQuickRunHubViewModel(context: InvestigationContext = emptyInvestigationContext): DvQuickRunHubViewModel {
+export function buildDvQuickRunHubViewModel(
+  context: InvestigationContext = emptyInvestigationContext,
+  entitlement: EntitlementContext = { plan: "free" }
+): DvQuickRunHubViewModel {
   return {
     title: "DV Quick Run Hub",
     subtitle: "Operational investigation playbooks, capability discovery, and calm product direction inside VS Code.",
@@ -24,7 +28,7 @@ export function buildDvQuickRunHubViewModel(context: InvestigationContext = empt
     ],
     investigationContinuation: buildInvestigationContinuationModel(context),
     playbooks: [...investigationPlaybooks],
-    capabilities: applyCapabilityContextStates(capabilities, context),
+    capabilities: applyCapabilityContextStates(getHubCapabilities(entitlement.plan), context),
     whatsNew: [...whatsNew],
     productDirection: [...productDirection],
     philosophy: [...philosophy]

@@ -6,6 +6,445 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.12.0 — Cross-Environment Diff, Snapshot Library & Operational Comparison Foundations
+
+This release introduces the first full operational comparison workflow inside DV Quick Run.
+
+DV Quick Run can now:
+
+* capture operational investigation snapshots
+* compare snapshots across environments
+* compare historical snapshots within the same environment
+* investigate operational drift using evidence-backed providers
+* preserve investigation continuity through snapshot workflows
+* coordinate comparison workflows through Snapshot Library
+* distinguish Timeline Diff vs Cross-Environment Diff automatically
+
+This release establishes the first production-ready version of:
+
+```text
+Operational Comparison Workflows
+```
+
+The goal is not deployment automation, remediation, or topology governance.
+
+It is:
+
+* operational drift understanding
+* evidence-backed comparison
+* calmer investigation continuity
+* bounded operational comparison
+* explainable operational change visibility
+* investigation replay foundations
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR observes operational drift.
+DVQR does not fix operational drift.
+```
+
+---
+
+## 🔄 Cross-Environment Diff (Major)
+
+Introduced the first complete Cross-Environment Diff workflow.
+
+DV Quick Run can now compare operational investigation snapshots across environments.
+
+Examples include:
+
+* DEV → SIT
+* SIT → PROD
+* DEV → PROD
+* mocked operational baselines
+* operational drift snapshots
+
+Cross-Environment Diff surfaces:
+
+* operational drift providers
+* grouped operational differences
+* significance classification
+* evidence-backed comparison summaries
+* provider-specific operational interpretation
+* exportable operational comparison evidence
+
+Operational comparison providers currently include:
+
+* Operational Profile Drift
+* Solution Participation Drift
+* Workflow / Automation Participation Drift
+* Identity Participation Drift
+
+Behaviour:
+
+* comparisons remain bounded and observational
+* provider semantics remain explainable
+* comparison surfaces preserve evidence continuity
+* operational interpretation remains advisory-only
+* no deployment recommendation is generated
+* no automatic remediation semantics exist
+
+Results:
+
+* clearer operational drift visibility
+* stronger environment comparison understanding
+* calmer operational investigation workflows
+* reduced manual comparison effort
+* stronger operational continuity across environments
+
+---
+
+## ⏱️ Timeline Diff (NEW)
+
+Introduced Timeline Diff for same-environment historical comparison.
+
+When snapshots originate from the same environment, DV Quick Run now automatically opens:
+
+```text
+Timeline Diff
+```
+
+instead of:
+
+```text
+Cross-Environment Diff
+```
+
+Timeline Diff focuses on:
+
+* historical operational change
+* investigation continuity
+* orchestration drift over time
+* operational density evolution
+* operational participation changes
+
+Behaviour:
+
+* environment-aware comparison naming is automatic
+* same-environment snapshots preserve timeline semantics
+* different-environment snapshots preserve cross-environment semantics
+* operational comparison providers remain reusable across both modes
+
+Results:
+
+* clearer comparison intent
+* stronger historical investigation semantics
+* calmer operational terminology
+* improved operational mental model consistency
+
+---
+
+## 📚 Operational Snapshot Library (Major)
+
+Introduced Snapshot Library — a dedicated operational comparison coordination surface.
+
+Snapshot Library can now:
+
+* store operational investigation snapshots locally
+* group snapshots by environment
+* group snapshots by subject/entity
+* coordinate source/target comparison workflows
+* launch Timeline Diff and Cross-Environment Diff workflows
+* support operational snapshot comparison continuity
+
+Snapshot Library surfaces:
+
+* saved snapshot counts
+* environment grouping
+* subject grouping
+* snapshot recency
+* source/target selection
+* latest vs previous comparison actions
+* snapshot search and filtering
+
+Behaviour:
+
+* snapshots remain local operational investigation artifacts
+* snapshots are not deployment authority
+* comparisons remain explicit and user-triggered
+* workflows preserve investigation continuity semantics
+
+Results:
+
+* stronger operational replay workflows
+* easier comparison coordination
+* calmer operational investigation continuity
+* improved operational comparison discoverability
+
+---
+
+## 🧠 Operational Drift Providers (NEW)
+
+Introduced provider-driven operational comparison semantics.
+
+Comparison providers now own:
+
+* domain-specific operational meaning
+* significance interpretation
+* grouped drift summaries
+* evidence-backed operational interpretation
+* operational comparison rendering
+
+Examples include:
+
+* DVQR Score changes
+* orchestration participation drift
+* workflow participation changes
+* relationship density changes
+* solution participation differences
+* operational identity participation drift
+
+Behaviour:
+
+* providers remain bounded and explainable
+* strongest operational signals surface first
+* grouped summaries appear before raw evidence
+* provider semantics remain reusable across comparison modes
+
+Results:
+
+* calmer operational comparison UX
+* stronger operational readability
+* improved signal-to-noise ratio
+* foundation for future comparison providers
+
+---
+
+## 🏷️ Significance Classification & Operational Drift Semantics
+
+Operational comparison surfaces now classify drift using bounded significance semantics.
+
+Current classifications include:
+
+* Low significance
+* Medium significance
+* High significance
+
+Behaviour:
+
+* significance remains heuristic and advisory-only
+* operational drift is evidence-backed
+* significance does not imply outage severity
+* strongest operational changes surface first
+
+Comparison summaries now surface:
+
+* provider contribution counts
+* grouped operational drift categories
+* operational density changes
+* orchestration participation drift
+* evidence-backed operational summaries
+
+Results:
+
+* clearer operational prioritisation
+* calmer operational interpretation
+* improved investigation readability
+* stronger comparison trustworthiness
+
+---
+
+## 🔒 Pro Preview & Capability Awareness Foundations
+
+Introduced the first operational comparison capability-awareness flows.
+
+Free workflows now support:
+
+* mock snapshot exploration
+* sample operational drift investigation
+* Timeline Diff preview exploration
+* Cross-Environment Diff preview exploration
+
+Pro workflows unlock:
+
+* real snapshot imports
+* saved snapshot management
+* full comparison workflows
+* operational comparison exports
+* operational snapshot continuity
+
+Behaviour:
+
+* capability awareness remains calm and contextual
+* understanding remains visible in Free
+* acceleration workflows remain capability-gated
+* operational terminology remains subtle and non-disruptive
+
+Examples include:
+
+* `PRO PREVIEW · SNAPSHOT LIBRARY`
+* `PRO PREVIEW · CROSS-ENVIRONMENT DIFF`
+* `PRO · TIMELINE DIFF`
+* `PRO · CROSS-ENVIRONMENT DIFF`
+
+Results:
+
+* stronger open-core consistency
+* clearer workflow progression
+* calmer capability awareness semantics
+* preserved “never gate understanding” philosophy
+
+---
+
+## 🌐 DVQR GitHub Discussions Integration (NEW)
+
+Added DV Quick Run GitHub Discussions integration into operational comparison workflows.
+
+Operational comparison surfaces now include contextual community entry points.
+
+Examples include:
+
+* Snapshot Library footer links
+* comparison workflow discussion prompts
+* Hub community surfaces
+
+Discussion guidance now supports:
+
+* feature feedback
+* operational drift workflow discussion
+* bug reporting
+* comparison-provider suggestions
+* investigation workflow ideas
+* roadmap discussion
+
+Behaviour:
+
+* community prompts remain lightweight
+* operational workflows remain primary
+* links appear contextually near comparison workflows
+
+Results:
+
+* stronger community discoverability
+* improved operational feedback loops
+* clearer roadmap participation pathways
+* easier comparison-workflow discussion continuity
+
+---
+
+## 🎨 Operational Comparison UX Refinement
+
+Refined operational comparison rendering and workflow presentation.
+
+Improvements include:
+
+* calmer comparison terminology
+* stronger workflow hierarchy
+* grouped operational drift presentation
+* clearer source/target semantics
+* provider grouping refinement
+* snapshot comparison spacing improvements
+* cleaner significance presentation
+* reduced visual noise
+* stronger operational readability
+
+Additional refinements:
+
+* Timeline Diff wording for same-environment workflows
+* comparison subject semantics refinement
+* improved operational grouping consistency
+* cleaner operational evidence hierarchy
+* calmer provider-card presentation
+
+Results:
+
+* more professional operational comparison UX
+* reduced cognitive overload
+* stronger operational investigation continuity
+* clearer comparison readability
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Snapshot Library workflows
+* source/target snapshot selection
+* Timeline Diff workflows
+* Cross-Environment Diff workflows
+* provider grouping behaviour
+* significance classification rendering
+* operational drift summaries
+* mock snapshot workflows
+* Pro Preview capability-awareness behaviour
+* snapshot search/filter behaviour
+* GitHub Discussions integration
+* export workflows
+
+Validated against:
+
+* DEV/SIT operational drift scenarios
+* mocked orchestration drift datasets
+* workflow participation drift
+* operational density changes
+* historical timeline comparison scenarios
+* environment-aware comparison semantics
+
+No regression in:
+
+* Operational Profiles
+* Access Context
+* Result Viewer
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* Query Doctor
+* `$batch` execution
+* Hub workflows
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DV Quick Run operational comparison invariants:
+
+* operational comparison remains observational
+* providers own domain-specific comparison semantics
+* operational drift does not imply root cause
+* evidence remains inspectable and explainable
+* strongest operational signals surface first
+* comparison workflows remain bounded
+* snapshot workflows preserve operational continuity
+* capability awareness remains calm and contextual
+* understanding remains available before acceleration
+
+Operational comparison continues to prioritise:
+
+```text
+understanding
+before
+automation
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* capture and coordinate operational investigation snapshots
+* compare operational drift across environments
+* investigate timeline-based operational change
+* group operational drift into provider-backed investigation surfaces
+* preserve operational investigation continuity across comparison workflows
+* distinguish Timeline Diff vs Cross-Environment Diff automatically
+* surface explainable operational comparison semantics
+* coordinate operational comparison workflows through Snapshot Library
+* integrate community feedback pathways directly into operational comparison workflows
+
+This establishes the foundation for:
+
+* richer operational drift providers
+* historical operational replay workflows
+* future operational comparison evolution
+* comparison export/import continuity
+* evidence-backed operational topology comparison
+* broader DVQR comparison-platform capabilities
+
+---
+
 # v0.11.6 — Platform Stabilisation, Open-Core Foundations & Pre-Comparison Hardening
 
 This release stabilises the v0.11.5 identity-context expansion and prepares DV Quick Run for the v0.12.x comparison arc.

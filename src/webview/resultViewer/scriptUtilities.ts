@@ -1413,12 +1413,20 @@ function showCopyStatus(message) {
 
         function buildProfileCardHtml(profile) {
             const dimensions = Array.isArray(profile?.dimensions) ? profile.dimensions : [];
+            const canExportSnapshot = model?.comparisonCapabilities?.canExportSnapshot === true;
+            const exportSnapshotLabel = canExportSnapshot ? "Export Snapshot" : "Export Snapshot 🔒";
+            const exportSnapshotTitle = canExportSnapshot
+                ? "Export a comparison snapshot JSON for operational diff workflows"
+                : "Export Snapshot is a DVQR Pro workflow";
             return '<div class="profile-card">' +
                 '<div class="profile-card-heading">' +
                 '<div class="profile-title-row"><span class="profile-entity-icon">' + profileIconSvg("entity", "Entity") + '</span><span>' + escapeHtml(profile?.entityDisplayName || profile?.entityLogicalName || "Entity") + ' (' + escapeHtml(profile?.entityLogicalName || "") + ') — Operational Profile</span></div>' +
                 '<div class="profile-summary-row">' +
                 '<div class="profile-summary">' + escapeHtml(profile?.summary || "Operational profile evidence is unavailable.") + '</div>' +
+                '<div class="profile-summary-actions">' +
                 '<button class="profile-why-link" type="button" data-profile-action="viewMetadata" data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '" data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '">Why is this?</button>' +
+                '<button class="profile-why-link profile-export-snapshot-link" type="button" data-profile-action="exportComparisonSnapshot" data-entity-logical-name="' + escapeAttribute(profile?.entityLogicalName || "") + '" data-entity-set-name="' + escapeAttribute(model.entitySetName || "") + '" title="' + escapeAttribute(exportSnapshotTitle) + '">' + escapeHtml(exportSnapshotLabel) + '</button>' +
+                '</div>' +
                 '</div>' +
                 buildProfileDvqrScoreHtml(profile) +
                 '</div>' +

@@ -1,5 +1,6 @@
 
 import type { CapabilityInfo, InvestigationPlaybook, ProductDirectionInfo } from "./dvQuickRunHubTypes.js";
+import type { EntitlementPlan } from "../../product/capabilities/entitlementTypes.js";
 
 export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
   {
@@ -267,18 +268,47 @@ export const capabilities: readonly CapabilityInfo[] = [
 
   {
     id: "cross-environment-comparison",
-    title: "Cross-environment comparison",
+    title: "🔒 Cross-Environment Diff & Snapshot Library Preview",
     group: "Future Workflows",
-    summary: "Future workflow for bounded operational drift comparison across environments.",
-    operationalUseCase: "Use later when you need to understand how two environments differ operationally without turning DVQR into deployment or remediation tooling.",
+    summary: "Observe operational drift between environments using evidence-backed comparison providers and Snapshot Library workflows.",
+    operationalUseCase: "Use this preview to understand operational drift investigation before unlocking real snapshot comparison workflows.",
     howToUse: [
-      "Use this as future product orientation for operational drift investigation.",
-      "Comparison remains observational: DVQR observes operational drift, it does not fix drift."
+      "Open the Snapshot Library preview from the Hub.",
+      "Compare DEV-MOCK and SIT-MOCK snapshots to inspect the Pro comparison surface.",
+      "Upgrade to Pro to import, manage, compare, and export real operational snapshots.",
+      "Join the DV Quick Run GitHub Discussions community to share operational drift ideas and workflow feedback."
     ],
     relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
-    status: "future",
+    commandId: "dvQuickRun.openSnapshotLibrary",
+    actionLabel: "Open Pro Preview",
+    contextRequirement: {
+      kind: "selfContained",
+      label: "Pro Preview",
+      unavailableReason: "Free can explore mock snapshots; Pro unlocks real operational snapshot workflows.",
+      recommendedSurface: "Snapshot Library"
+    },
+    status: "preview",
     sinceVersion: "v0.12.0"
   },
+
+  {
+    id: "community-discussions",
+    title: "DV Quick Run GitHub Discussions",
+    group: "Community",
+    summary: "Share feedback, report bugs, suggest features, discuss workflows, and help shape DV Quick Run direction with the community.",
+    operationalUseCase: "Use when you want to share feedback, report issues, suggest improvements, or discuss DVQ Quick Run workflows and product direction.",
+    howToUse: [
+      "Open the DV Quick Run GitHub Discussions board.",
+      "Share bugs, feature ideas, workflow feedback, and operational investigation suggestions.",
+      "Follow upcoming operational comparison and investigation roadmap discussions."
+    ],
+    relatedPlaybooks: [],
+    commandId: "dvQuickRun.openDiscussions",
+    actionLabel: "Open Discussions",
+    status: "available",
+    sinceVersion: "v0.12.0"
+  },
+
   {
     id: "batch-workflows",
     title: "$batch workflows",
@@ -309,8 +339,44 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
-  { title: "Comparison foundations", summary: "Cross-environment comparison is planned as a bounded future workflow for understanding operational drift without turning DVQR into deployment or remediation tooling." }
+  { title: "Future operational comparison", summary: "Operational comparison is emerging as a bounded product direction for drift investigation without remediation or deployment tooling." }
 ];
+
+
+function buildProComparisonCapability(): CapabilityInfo {
+  return {
+    id: "cross-environment-comparison",
+    title: "Cross-Environment Diff & Snapshot Library",
+    group: "Operational Comparison Workflows",
+    summary: "Compare operational snapshots across environments and timelines using evidence-backed drift providers and Snapshot Library workflows.",
+    operationalUseCase: "Use Snapshot Library, Timeline Diff, and Cross-Environment Diff to investigate operational drift, compare topology changes, and preserve investigation continuity.",
+    howToUse: [
+      "Open Snapshot Library from the Hub.",
+      "Select source and target snapshots, or compare latest and previous snapshots from the library.",
+      "Use Timeline Diff for same-environment history and Cross-Environment Diff for different-environment comparison.",
+      "Export comparison evidence when you need to preserve or share investigation context."
+    ],
+    relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
+    commandId: "dvQuickRun.openSnapshotLibrary",
+    actionLabel: "Open Snapshot Library",
+    contextRequirement: {
+      kind: "selfContained",
+      label: "Snapshot Library",
+      unavailableReason: "Snapshot Library can start from the Hub and coordinates operational comparison workflows.",
+      recommendedSurface: "Snapshot Library"
+    },
+    status: "available",
+    sinceVersion: "v0.12.0"
+  };
+}
+
+export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityInfo[] {
+  const isProEnabled = plan === "pro" || plan === "dev";
+
+  return capabilities.map((capability) => capability.id === "cross-environment-comparison" && isProEnabled
+    ? buildProComparisonCapability()
+    : { ...capability });
+}
 
 export const whatsNew: readonly string[] = [
   "Platform stabilisation and operational continuity refinements.",

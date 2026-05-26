@@ -23,3 +23,19 @@ export interface ComparisonEvidenceSnapshot<TPayload = unknown> {
   readonly metadata: ComparisonSnapshotMetadata;
   readonly evidence: TPayload;
 }
+
+export interface OperationalComparisonSnapshotDocument {
+  readonly kind: "dvqr-operational-comparison-snapshot";
+  readonly schemaVersion?: "1.0";
+  readonly snapshotVersion: "comparison-snapshot-v1";
+  readonly environment: ComparisonEnvironmentIdentity;
+  readonly capturedAtIso: string;
+  readonly sourceFeature: string;
+  readonly evidenceSnapshots: readonly ComparisonEvidenceSnapshot[];
+}
+
+export interface ComparisonSnapshotValidationResult {
+  readonly valid: boolean;
+  readonly reason?: string;
+  readonly snapshots: readonly ComparisonEvidenceSnapshot[];
+}
