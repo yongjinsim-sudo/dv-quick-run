@@ -31,8 +31,10 @@ export class CrossEnvironmentComparisonEngine {
     const groups = sortComparisonGroups(providerResults.flatMap((result) => result.groups));
     const differences = groups.flatMap((group) => group.differences);
 
+    const subjectTitlePart = context.subjectLabel ? `${context.subjectLabel} · ` : "";
+
     return {
-      title: `Cross-Environment Diff: ${context.source.label} → ${context.target.label}`,
+      title: `Cross-Environment Diff: ${subjectTitlePart}${context.source.label} → ${context.target.label}`,
       summary: {
         sourceLabel: context.source.label,
         targetLabel: context.target.label,
@@ -42,7 +44,8 @@ export class CrossEnvironmentComparisonEngine {
         mediumCount: differences.filter((difference) => difference.significance === "Medium").length,
         lowCount: differences.filter((difference) => difference.significance === "Low").length,
         providerCount: providerResults.length,
-        differenceCount: differences.length
+        differenceCount: differences.length,
+        subjectLabel: context.subjectLabel ?? context.entityLogicalName
       },
       groups,
       providerResults

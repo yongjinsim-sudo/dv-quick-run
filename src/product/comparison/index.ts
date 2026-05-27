@@ -9,7 +9,9 @@ export type {
   ComparisonEnvironmentIdentity,
   ComparisonEvidenceSnapshot,
   ComparisonSnapshotEvidenceType,
+  ComparisonSnapshotIntegrity,
   ComparisonSnapshotMetadata,
+  ComparisonSnapshotTrustState,
   ComparisonSnapshotValidationResult,
   OperationalComparisonSnapshotDocument
 } from "./comparisonSnapshotTypes.js";
@@ -26,3 +28,10 @@ export {
   setComparisonSnapshotLabel
 } from "./comparisonSnapshotRegistry.js";
 export type { ComparisonSnapshotRegistryEntry } from "./comparisonSnapshotRegistry.js";
+
+export {
+  calculateOperationalComparisonSnapshotHash,
+  COMPARISON_SNAPSHOT_CANONICALIZATION,
+  COMPARISON_SNAPSHOT_INTEGRITY_ALGORITHM,
+  verifyOperationalComparisonSnapshotIntegrity
+} from "./comparisonSnapshotIntegrity.js";

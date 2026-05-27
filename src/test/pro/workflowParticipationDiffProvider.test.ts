@@ -66,9 +66,10 @@ suite("WorkflowParticipationDiffProvider", () => {
     assert.strictEqual(result.providerId, "workflow-participation-diff");
     assert.strictEqual(result.groups.length, 1);
     assert.strictEqual(result.groups[0].title, "Workflow / Automation Participation Drift");
-    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("Automation state changed")));
-    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("only in source")));
-    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("only in target")));
+    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("Contoso Account Sync state changed (Active → Inactive)")));
+    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("Contoso Legacy Workflow removed in SIT")));
+    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("Contoso New Flow added in SIT")));
+    assert.ok(result.groups[0].summary.includes("activation or state change"));
     assert.ok(result.groups[0].differences.every((difference) => !difference.summary.includes("caused runtime behaviour")));
   });
 

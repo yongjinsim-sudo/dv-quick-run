@@ -5,6 +5,12 @@ import type {
   ComparisonSnapshotValidationResult,
   OperationalComparisonSnapshotDocument
 } from "./comparisonSnapshotTypes.js";
+import {
+  calculateOperationalComparisonSnapshotHash,
+  COMPARISON_SNAPSHOT_CANONICALIZATION,
+  COMPARISON_SNAPSHOT_INTEGRITY_ALGORITHM,
+  verifyOperationalComparisonSnapshotIntegrity
+} from "./comparisonSnapshotIntegrity.js";
 
 export function normalizeComparisonEnvironmentIdentity(identity: ComparisonEnvironmentIdentity): ComparisonEnvironmentIdentity {
   return {
@@ -42,7 +48,7 @@ export function createOperationalComparisonSnapshotDocument(args: {
   const capturedAtIso = (args.capturedAt ?? new Date()).toISOString();
   const environment = normalizeComparisonEnvironmentIdentity(args.environment);
 
-  return {
+  const document: OperationalComparisonSnapshotDocument = {
     kind: "dvqr-operational-comparison-snapshot",
     schemaVersion: "1.0",
     snapshotVersion: "comparison-snapshot-v1",
@@ -59,6 +65,15 @@ export function createOperationalComparisonSnapshotDocument(args: {
       }
     }))
   };
+
+  return {
+    ...document,
+    integrity: {
+      algorithm: COMPARISON_SNAPSHOT_INTEGRITY_ALGORITHM,
+      canonicalization: COMPARISON_SNAPSHOT_CANONICALIZATION,
+      contentHash: calculateOperationalComparisonSnapshotHash(document)
+    }
+  };
 }
 
 export function validateComparisonSnapshotDocument(input: unknown): ComparisonSnapshotValidationResult {
@@ -67,6 +82,7 @@ export function validateComparisonSnapshotDocument(input: unknown): ComparisonSn
     return {
       valid: false,
       reason: "No DVQR comparison evidence snapshots were found in the selected file.",
+      trustState: "Invalid",
       snapshots: []
     };
   }
@@ -76,11 +92,12 @@ export function validateComparisonSnapshotDocument(input: unknown): ComparisonSn
     return {
       valid: false,
       reason: "Snapshot version is not supported by this DVQR build.",
+      trustState: "Invalid",
       snapshots: []
     };
   }
 
-  return { valid: true, snapshots };
+  return { valid: true, trustState: determineSnapshotTrustState(input), snapshots };
 }
 
 export function flattenComparisonSnapshotDocuments(inputs: readonly unknown[]): readonly ComparisonEvidenceSnapshot[] {
@@ -103,6 +120,44 @@ export function flattenComparisonSnapshotDocuments(inputs: readonly unknown[]): 
   }
 
   return snapshots;
+}
+
+function determineSnapshotTrustState(input: unknown): "Verified" | "Modified" | "Legacy / Unverified" | "Invalid" {
+  const documents = flattenOperationalComparisonSnapshotDocuments([input]);
+  if (!documents.length) {
+    return "Legacy / Unverified";
+  }
+
+  let sawLegacy = false;
+  for (const document of documents) {
+    if (!document.integrity?.contentHash) {
+      sawLegacy = true;
+      continue;
+    }
+
+    if (!verifyOperationalComparisonSnapshotIntegrity(document)) {
+      return "Modified";
+    }
+  }
+
+  return sawLegacy ? "Legacy / Unverified" : "Verified";
+}
+
+function flattenOperationalComparisonSnapshotDocuments(inputs: readonly unknown[]): readonly OperationalComparisonSnapshotDocument[] {
+  const documents: OperationalComparisonSnapshotDocument[] = [];
+
+  for (const input of inputs) {
+    if (Array.isArray(input)) {
+      documents.push(...flattenOperationalComparisonSnapshotDocuments(input));
+      continue;
+    }
+
+    if (isOperationalComparisonSnapshotDocument(input)) {
+      documents.push(input);
+    }
+  }
+
+  return documents;
 }
 
 function isOperationalComparisonSnapshotDocument(input: unknown): input is OperationalComparisonSnapshotDocument {

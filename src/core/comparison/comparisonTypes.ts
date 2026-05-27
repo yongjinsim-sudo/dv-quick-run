@@ -2,11 +2,42 @@ export type ComparisonDifferenceKind =
   | "Added"
   | "Removed"
   | "Changed"
+  | "Participation Drift"
+  | "Configuration Drift"
+  | "State Drift"
   | "DensityChanged"
   | "OnlyInSource"
   | "OnlyInTarget";
 
 export type ComparisonOperationalSignificance = "Low" | "Medium" | "High";
+
+export type ComparisonSnapshotTrustStatus =
+  | "Verified"
+  | "Modified"
+  | "Legacy / Unverified"
+  | "Invalid";
+
+export interface ComparisonSnapshotTrustSummary {
+  readonly sourceTrustState?: ComparisonSnapshotTrustStatus;
+  readonly targetTrustState?: ComparisonSnapshotTrustStatus;
+}
+
+export interface ComparisonSessionSnapshotRef {
+  readonly label: string;
+  readonly environmentLabel: string;
+  readonly subjectLabel?: string;
+  readonly capturedAtIso?: string;
+  readonly trustState?: ComparisonSnapshotTrustStatus;
+  readonly fileUri?: string;
+}
+
+export interface ComparisonSessionMetadata {
+  readonly generatedAtIso: string;
+  readonly mode: "Cross-Environment Diff" | "Timeline Diff";
+  readonly sourceSnapshot: ComparisonSessionSnapshotRef;
+  readonly targetSnapshot: ComparisonSessionSnapshotRef;
+  readonly unalignedSubjects?: boolean;
+}
 
 export interface ComparisonEnvironmentRef {
   readonly label: string;
@@ -44,6 +75,7 @@ export interface ComparisonProviderContext {
   readonly source: ComparisonEnvironmentRef;
   readonly target: ComparisonEnvironmentRef;
   readonly entityLogicalName?: string;
+  readonly subjectLabel?: string;
   readonly snapshots?: readonly unknown[];
 }
 
@@ -69,11 +101,14 @@ export interface ComparisonSummary {
   readonly lowCount: number;
   readonly providerCount: number;
   readonly differenceCount: number;
+  readonly subjectLabel?: string;
 }
 
 export interface ComparisonViewModel {
   readonly title: string;
   readonly summary: ComparisonSummary;
+  readonly snapshotTrust?: ComparisonSnapshotTrustSummary;
+  readonly session?: ComparisonSessionMetadata;
   readonly groups: readonly ComparisonDriftGroup[];
   readonly providerResults: readonly ComparisonProviderResult[];
 }

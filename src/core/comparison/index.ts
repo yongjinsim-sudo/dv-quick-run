@@ -15,6 +15,8 @@ export type {
   ComparisonProviderContext,
   ComparisonProviderResult,
   ComparisonSummary,
+  ComparisonSnapshotTrustStatus,
+  ComparisonSnapshotTrustSummary,
   ComparisonViewModel
 } from "./comparisonTypes.js";
 export { defaultEnvironmentIdentityTokens, normalizeIdentityName } from "./identity/identityNormalization.js";

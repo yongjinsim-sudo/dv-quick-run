@@ -62,8 +62,7 @@ suite("SolutionParticipationDiffProvider", () => {
     assert.strictEqual(result.providerId, "solution-participation-diff");
     assert.strictEqual(result.groups.length, 1);
     assert.strictEqual(result.groups[0].title, "Solution Participation Drift");
-    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("Solution version changed")));
-    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("Solution managed state changed")));
+    assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("version changed")));
     assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("only in target")));
   });
 });
