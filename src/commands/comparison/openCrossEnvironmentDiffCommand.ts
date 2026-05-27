@@ -9,7 +9,7 @@ import {
   setComparisonSnapshotLabel,
   validateComparisonSnapshotDocument
 } from "../../product/comparison/index.js";
-import type { ComparisonSnapshotRegistryEntry, OperationalComparisonSnapshotDocument } from "../../product/comparison/index.js";
+import type { ComparisonSnapshotRegistryEntry, OperationalComparisonSnapshotDocument, ComparisonSnapshotTrustState } from "../../product/comparison/index.js";
 import type { ComparisonEnvironmentRef, ComparisonProvider, ComparisonViewModel } from "../../core/comparison/index.js";
 import { renderComparisonSurfaceHtml, renderStandaloneComparisonSurfaceHtml } from "../../webview/comparisonSurface/renderComparisonSurfaceHtml.js";
 import type { CommandContext } from "../context/commandContext.js";
@@ -29,6 +29,26 @@ let comparisonPanel: vscode.WebviewPanel | undefined;
 let comparisonPanelMessageDisposable: vscode.Disposable | undefined;
 let snapshotLibraryPanel: vscode.WebviewPanel | undefined;
 let snapshotLibraryMessageDisposable: vscode.Disposable | undefined;
+
+const RECENT_COMPARISONS_KEY = "dvQuickRun.comparison.recentComparisons.v1";
+const MAX_RECENT_COMPARISONS = 12;
+
+interface RecentComparisonEntry {
+  readonly comparisonId: string;
+  readonly sourceSnapshotId: string;
+  readonly targetSnapshotId: string;
+  readonly sourceLabel: string;
+  readonly targetLabel: string;
+  readonly sourceEnvironmentLabel: string;
+  readonly targetEnvironmentLabel: string;
+  readonly subjectLabel: string;
+  readonly generatedAtIso: string;
+  readonly differenceCount: number;
+  readonly highCount: number;
+  readonly mediumCount: number;
+  readonly lowCount: number;
+  readonly unalignedSubjects?: boolean;
+}
 
 const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
   {
@@ -91,6 +111,53 @@ const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
         band: "Moderate",
         summary: "Moderate operational density."
       },
+      pluginSteps: [
+        {
+          sdkMessageProcessingStepId: "mock-account-create-preoperation-dev",
+          name: "Account Create Validation",
+          pluginTypeName: "Dvqr.Mock.Plugins.AccountValidationPlugin",
+          messageName: "Create",
+          primaryEntityName: "account",
+          stage: 20,
+          mode: 0,
+          rank: 10,
+          filteringAttributes: ["name", "accountnumber"],
+          state: "Enabled",
+          isManaged: false,
+          secureConfigurationPresent: true,
+          unsecureConfigurationPresent: true
+        },
+        {
+          sdkMessageProcessingStepId: "mock-account-update-postoperation-shared",
+          name: "Account Update Integration Dispatch",
+          pluginTypeName: "Dvqr.Mock.Plugins.AccountIntegrationPlugin",
+          messageName: "Update",
+          primaryEntityName: "account",
+          stage: 40,
+          mode: 0,
+          rank: 20,
+          filteringAttributes: ["name", "telephone1"],
+          state: "Enabled",
+          isManaged: false,
+          secureConfigurationPresent: false,
+          unsecureConfigurationPresent: true
+        },
+        {
+          sdkMessageProcessingStepId: "mock-account-legacy-background-dev-only",
+          name: "Legacy Account Background Sync",
+          pluginTypeName: "Dvqr.Mock.Plugins.LegacyAccountSyncPlugin",
+          messageName: "Update",
+          primaryEntityName: "account",
+          stage: 40,
+          mode: 1,
+          rank: 30,
+          filteringAttributes: ["address1_city"],
+          state: "Enabled",
+          isManaged: false,
+          secureConfigurationPresent: false,
+          unsecureConfigurationPresent: false
+        }
+      ],
       dimensions: [
         {
           id: "automation",
@@ -108,6 +175,8 @@ const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
         }
       ],
       workflows: [
+        { name: "Account Sync Realtime", category: "workflow", mode: "realtime", state: "Deactivated", isManaged: true, owner: "Legacy" },
+        { name: "Account Notify Flow", category: "flow", mode: "cloudFlow", state: "Activated", isManaged: false, owner: "Operations" },
         { name: "Legacy Account Workflow", category: "workflow", mode: "background", state: "Activated", isManaged: false, owner: "Legacy" }
       ],
       operationalContext: {
@@ -148,6 +217,53 @@ const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
         band: "High",
         summary: "High operational density."
       },
+      pluginSteps: [
+        {
+          sdkMessageProcessingStepId: "mock-account-create-preoperation-dev",
+          name: "Account Create Validation",
+          pluginTypeName: "Dvqr.Mock.Plugins.AccountValidationPlugin",
+          messageName: "Create",
+          primaryEntityName: "account",
+          stage: 20,
+          mode: 0,
+          rank: 10,
+          filteringAttributes: ["name", "accountnumber"],
+          state: "Disabled",
+          isManaged: false,
+          secureConfigurationPresent: true,
+          unsecureConfigurationPresent: true
+        },
+        {
+          sdkMessageProcessingStepId: "mock-account-update-postoperation-shared",
+          name: "Account Update Integration Dispatch",
+          pluginTypeName: "Dvqr.Mock.Plugins.AccountIntegrationPlugin",
+          messageName: "Update",
+          primaryEntityName: "account",
+          stage: 20,
+          mode: 0,
+          rank: 5,
+          filteringAttributes: ["name", "telephone1", "emailaddress1"],
+          state: "Enabled",
+          isManaged: false,
+          secureConfigurationPresent: false,
+          unsecureConfigurationPresent: true
+        },
+        {
+          sdkMessageProcessingStepId: "mock-account-sit-only-enrichment",
+          name: "Account SIT Enrichment Dispatch",
+          pluginTypeName: "Dvqr.Mock.Plugins.AccountEnrichmentPlugin",
+          messageName: "Update",
+          primaryEntityName: "account",
+          stage: 40,
+          mode: 1,
+          rank: 40,
+          filteringAttributes: ["msemr_azurefhirid"],
+          state: "Enabled",
+          isManaged: true,
+          secureConfigurationPresent: true,
+          unsecureConfigurationPresent: false
+        }
+      ],
       dimensions: [
         {
           id: "automation",
@@ -200,6 +316,130 @@ const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
   }
 ];
 
+
+const mockDevPluginStepSnapshot: ComparisonSnapshotFile = {
+  environment: {
+    label: "DEV",
+    capturedAtIso: "2026-05-24T00:00:00.000Z"
+  },
+  evidenceType: "PluginStep",
+  metadata: {
+    capturedAtIso: "2026-05-24T00:00:00.000Z"
+  },
+  evidence: {
+    entityLogicalName: "account",
+    pluginSteps: [
+      {
+        sdkMessageProcessingStepId: "mock-account-create-preoperation-shared",
+        name: "Account Create Validation",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountValidationPlugin",
+        messageName: "Create",
+        primaryEntityName: "account",
+        stage: 20,
+        mode: 0,
+        rank: 10,
+        filteringAttributes: ["name", "accountnumber"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: true,
+        unsecureConfigurationPresent: true
+      },
+      {
+        sdkMessageProcessingStepId: "mock-account-update-integration-shared",
+        name: "Account Update Integration Dispatch",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountIntegrationPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 40,
+        mode: 0,
+        rank: 20,
+        filteringAttributes: ["name", "telephone1"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: false,
+        unsecureConfigurationPresent: true
+      },
+      {
+        sdkMessageProcessingStepId: "mock-account-legacy-background-dev-only",
+        name: "Legacy Account Background Sync",
+        pluginTypeName: "Dvqr.Mock.Plugins.LegacyAccountSyncPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 40,
+        mode: 1,
+        rank: 30,
+        filteringAttributes: ["address1_city"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: false,
+        unsecureConfigurationPresent: false
+      }
+    ]
+  }
+};
+
+const mockSitPluginStepSnapshot: ComparisonSnapshotFile = {
+  environment: {
+    label: "SIT",
+    capturedAtIso: "2026-05-24T01:30:00.000Z"
+  },
+  evidenceType: "PluginStep",
+  metadata: {
+    capturedAtIso: "2026-05-24T01:30:00.000Z"
+  },
+  evidence: {
+    entityLogicalName: "account",
+    pluginSteps: [
+      {
+        sdkMessageProcessingStepId: "mock-account-create-preoperation-shared",
+        name: "Account Create Validation",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountValidationPlugin",
+        messageName: "Create",
+        primaryEntityName: "account",
+        stage: 20,
+        mode: 0,
+        rank: 10,
+        filteringAttributes: ["name", "accountnumber"],
+        state: "Disabled",
+        isManaged: false,
+        secureConfigurationPresent: true,
+        unsecureConfigurationPresent: true
+      },
+      {
+        sdkMessageProcessingStepId: "mock-account-update-integration-shared",
+        name: "Account Update Integration Dispatch",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountIntegrationPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 20,
+        mode: 0,
+        rank: 5,
+        filteringAttributes: ["name", "telephone1", "emailaddress1"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: false,
+        unsecureConfigurationPresent: true
+      },
+      {
+        sdkMessageProcessingStepId: "mock-account-sit-only-enrichment",
+        name: "Account SIT Enrichment Dispatch",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountEnrichmentPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 40,
+        mode: 1,
+        rank: 40,
+        filteringAttributes: ["msemr_azurefhirid"],
+        state: "Enabled",
+        isManaged: true,
+        secureConfigurationPresent: true,
+        unsecureConfigurationPresent: false
+      }
+    ]
+  }
+};
+
+
 const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEntry[] = [
   {
     snapshotId: "dvqr-mock-dev-account-baseline",
@@ -210,7 +450,7 @@ const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEntry[] = 
     entityDisplayName: "Account",
     capturedAtIso: "2026-05-25T00:05:25.000Z",
     sourceFeature: "Mock Operational Profile",
-    evidenceTypes: ["OperationalProfile", "IdentityParticipation"]
+    evidenceTypes: ["OperationalProfile", "IdentityParticipation", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-sit-account-drifted",
@@ -221,7 +461,7 @@ const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEntry[] = 
     entityDisplayName: "Account",
     capturedAtIso: "2026-05-25T01:30:00.000Z",
     sourceFeature: "Mock Operational Profile",
-    evidenceTypes: ["OperationalProfile", "IdentityParticipation"]
+    evidenceTypes: ["OperationalProfile", "IdentityParticipation", "PluginStep"]
   }
 ];
 
@@ -233,8 +473,98 @@ function canOpenSnapshotLibrarySurface(): boolean {
   return canRunCrossEnvironmentDiff() || shouldShowComparisonTeaser();
 }
 
+function isMockComparisonRegistryEntry(entry: ComparisonSnapshotRegistryEntry): boolean {
+  const environmentLabel = entry.environmentLabel.toUpperCase();
+  const subject = (entry.entityLogicalName ?? entry.entityDisplayName ?? entry.label).toLowerCase();
+  return entry.fileUri.startsWith("dvqr-mock://")
+    || ((environmentLabel === "DEV-MOCK" || environmentLabel === "SIT-MOCK")
+      && subject.includes("account"));
+}
+
+function normalizeMockComparisonRegistryEntry(entry: ComparisonSnapshotRegistryEntry): ComparisonSnapshotRegistryEntry {
+  if (!isMockComparisonRegistryEntry(entry)) {
+    return entry;
+  }
+
+  return {
+    ...entry,
+    sourceFeature: entry.sourceFeature || "Mock Operational Profile",
+    evidenceTypes: [...new Set([...entry.evidenceTypes, "PluginStep"])].sort()
+  };
+}
+
+function getMockComparisonSnapshotsForEntry(entry: ComparisonSnapshotRegistryEntry): ReadComparisonSnapshotResult | undefined {
+  if (!isMockComparisonRegistryEntry(entry)) {
+    return undefined;
+  }
+
+  const environmentLabel = entry.environmentLabel.toUpperCase();
+  if (environmentLabel === "DEV-MOCK" || entry.fileUri.includes("dev-account-baseline")) {
+    return {
+      snapshots: cloneSnapshotsForComparison([
+        ...sampleSnapshots.filter((snapshot) => snapshot.environment?.label === "DEV"),
+        mockDevPluginStepSnapshot
+      ], entry.environmentLabel),
+      trustState: "Verified"
+    };
+  }
+
+  if (environmentLabel === "SIT-MOCK" || entry.fileUri.includes("sit-account-drifted")) {
+    return {
+      snapshots: cloneSnapshotsForComparison([
+        ...sampleSnapshots.filter((snapshot) => snapshot.environment?.label === "SIT"),
+        mockSitPluginStepSnapshot
+      ], entry.environmentLabel),
+      trustState: "Verified"
+    };
+  }
+
+  return undefined;
+}
+
 function getSnapshotLibraryEntries(context: vscode.ExtensionContext): readonly ComparisonSnapshotRegistryEntry[] {
-  return isCrossEnvironmentDiffPreviewMode() ? mockSnapshotRegistryEntries : getRegisteredComparisonSnapshots(context);
+  const entries = isCrossEnvironmentDiffPreviewMode() ? mockSnapshotRegistryEntries : getRegisteredComparisonSnapshots(context);
+  return entries.map(normalizeMockComparisonRegistryEntry);
+}
+
+function getRecentComparisons(context: vscode.ExtensionContext): readonly RecentComparisonEntry[] {
+  const entries = context.globalState.get<readonly RecentComparisonEntry[]>(RECENT_COMPARISONS_KEY, []);
+  return entries
+    .filter((entry: RecentComparisonEntry) => Boolean(entry.sourceSnapshotId && entry.targetSnapshotId && entry.generatedAtIso))
+    .sort((left: RecentComparisonEntry, right: RecentComparisonEntry) => right.generatedAtIso.localeCompare(left.generatedAtIso));
+}
+
+async function recordRecentComparison(
+  context: vscode.ExtensionContext,
+  entry: RecentComparisonEntry
+): Promise<void> {
+  const current = getRecentComparisons(context)
+    .filter((candidate) => !(candidate.sourceSnapshotId === entry.sourceSnapshotId && candidate.targetSnapshotId === entry.targetSnapshotId));
+  await context.globalState.update(RECENT_COMPARISONS_KEY, [entry, ...current].slice(0, MAX_RECENT_COMPARISONS));
+}
+
+async function removeRecentComparison(
+  context: vscode.ExtensionContext,
+  comparisonId: string
+): Promise<void> {
+  const current = getRecentComparisons(context)
+    .filter((candidate) => candidate.comparisonId !== comparisonId);
+  await context.globalState.update(RECENT_COMPARISONS_KEY, current);
+}
+
+function getVisibleRecentComparisons(
+  recentComparisons: readonly RecentComparisonEntry[],
+  entries: readonly ComparisonSnapshotRegistryEntry[],
+  isProPreview: boolean
+): readonly RecentComparisonEntry[] {
+  if (!isProPreview) {
+    return recentComparisons;
+  }
+
+  const visibleSnapshotIds = new Set(entries.map((entry) => entry.snapshotId));
+  return recentComparisons.filter((entry) =>
+    visibleSnapshotIds.has(entry.sourceSnapshotId) && visibleSnapshotIds.has(entry.targetSnapshotId)
+  );
 }
 
 
@@ -247,6 +577,16 @@ interface ComparisonSnapshotSelection {
   readonly snapshots: readonly ComparisonSnapshotFile[];
   readonly sourceLabel?: string;
   readonly targetLabel?: string;
+  readonly subjectLabel?: string;
+  readonly snapshotTrust?: {
+    readonly sourceTrustState?: ComparisonSnapshotTrustState;
+    readonly targetTrustState?: ComparisonSnapshotTrustState;
+  };
+}
+
+interface ReadComparisonSnapshotResult {
+  readonly snapshots: readonly ComparisonSnapshotFile[];
+  readonly trustState: ComparisonSnapshotTrustState;
 }
 
 function asOperationalComparisonSnapshotDocument(input: unknown): OperationalComparisonSnapshotDocument | undefined {
@@ -277,7 +617,7 @@ function asOperationalComparisonSnapshotDocument(input: unknown): OperationalCom
   };
 }
 
-async function readSnapshotFile(kind: "source" | "target"): Promise<readonly ComparisonSnapshotFile[] | undefined> {
+async function readSnapshotFile(kind: "source" | "target"): Promise<ReadComparisonSnapshotResult | undefined> {
   const files = await vscode.window.showOpenDialog({
     canSelectFiles: true,
     canSelectFolders: false,
@@ -304,7 +644,10 @@ async function readSnapshotFile(kind: "source" | "target"): Promise<readonly Com
       return undefined;
     }
 
-    return validation.snapshots.map((snapshot) => snapshot as ComparisonSnapshotFile);
+    return {
+      snapshots: validation.snapshots.map((snapshot) => snapshot as ComparisonSnapshotFile),
+      trustState: validation.trustState
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showWarningMessage(`DV Quick Run: Could not read comparison snapshot ${file.fsPath}: ${message}`);
@@ -333,7 +676,7 @@ async function readSnapshotFiles(): Promise<ComparisonSnapshotSelection | undefi
     return undefined;
   }
 
-  const sourceLabel = getSingleEnvironmentLabel("source", sourceSnapshots);
+  const sourceLabel = getSingleEnvironmentLabel("source", sourceSnapshots.snapshots);
   if (!sourceLabel) {
     return undefined;
   }
@@ -343,7 +686,7 @@ async function readSnapshotFiles(): Promise<ComparisonSnapshotSelection | undefi
     return undefined;
   }
 
-  const targetLabel = getSingleEnvironmentLabel("target", targetSnapshots);
+  const targetLabel = getSingleEnvironmentLabel("target", targetSnapshots.snapshots);
   if (!targetLabel) {
     return undefined;
   }
@@ -356,13 +699,17 @@ async function readSnapshotFiles(): Promise<ComparisonSnapshotSelection | undefi
   }
 
   return {
-    snapshots: [...sourceSnapshots, ...targetSnapshots],
+    snapshots: [...sourceSnapshots.snapshots, ...targetSnapshots.snapshots],
     sourceLabel,
-    targetLabel
+    targetLabel,
+    snapshotTrust: {
+      sourceTrustState: sourceSnapshots.trustState,
+      targetTrustState: targetSnapshots.trustState
+    }
   };
 }
 
-async function readSnapshotUri(file: vscode.Uri): Promise<readonly ComparisonSnapshotFile[] | undefined> {
+async function readSnapshotUri(file: vscode.Uri): Promise<ReadComparisonSnapshotResult | undefined> {
   try {
     const bytes = await vscode.workspace.fs.readFile(file);
     const parsed = JSON.parse(Buffer.from(bytes).toString("utf8")) as unknown;
@@ -373,7 +720,10 @@ async function readSnapshotUri(file: vscode.Uri): Promise<readonly ComparisonSna
       return undefined;
     }
 
-    return validation.snapshots.map((snapshot) => snapshot as ComparisonSnapshotFile);
+    return {
+      snapshots: validation.snapshots.map((snapshot) => snapshot as ComparisonSnapshotFile),
+      trustState: validation.trustState
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showWarningMessage(`DV Quick Run: Could not read comparison snapshot ${file.fsPath}: ${message}`);
@@ -651,6 +1001,94 @@ h2 {
   font-size: 12px;
 }
 
+
+.dvqr-recent-comparisons {
+  border-left: 4px solid color-mix(in srgb, var(--vscode-button-background) 70%, var(--vscode-panel-border));
+  margin-bottom: 5px;
+}
+
+.dvqr-recent-comparisons h2 {
+  margin-bottom: 4px;
+}
+
+.dvqr-recent-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.dvqr-recent-scope-group {
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.dvqr-recent-scope-group summary {
+  align-items: center;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  list-style: none;
+  padding: 8px 10px;
+}
+
+.dvqr-recent-scope-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.dvqr-recent-scope-toggle {
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+}
+
+.dvqr-recent-scope-group[open] .dvqr-recent-scope-toggle::before {
+  content: "▾";
+}
+
+.dvqr-recent-scope-group:not([open]) .dvqr-recent-scope-toggle::before {
+  content: "▸";
+}
+
+.dvqr-recent-scope-count {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+.dvqr-recent-scope-body {
+  display: grid;
+  gap: 4px;
+  padding: 0 6px 6px;
+}
+
+.dvqr-recent-comparison-row {
+  align-items: center;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  padding: 6px 8px;
+}
+
+.dvqr-recent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.dvqr-remove-recent-button {
+  color: var(--vscode-descriptionForeground);
+}
+
+.dvqr-remove-recent-button:hover {
+  color: var(--vscode-errorForeground);
+}
+
 .dvqr-selection-card {
   border-left: 4px solid var(--vscode-button-background);
   margin-bottom: 5px;
@@ -883,6 +1321,7 @@ h2 {
 function renderSnapshotLibraryHtml(
   webview: vscode.Webview,
   entries: readonly ComparisonSnapshotRegistryEntry[],
+  recentComparisons: readonly RecentComparisonEntry[],
   isProPreview: boolean
 ): string {
   const cspSource = webview.cspSource;
@@ -951,6 +1390,8 @@ function renderSnapshotLibraryHtml(
       </div>
     </section>
 
+    ${renderRecentComparisons(getVisibleRecentComparisons(recentComparisons, entries, isProPreview), isProPreview)}
+
     <section class="dvqr-card dvqr-selection-card">
       <h2>Build comparison</h2>
       <p class="dvqr-selection-summary">Select one source snapshot and one target snapshot. Then compare them in the operational diff surface. Different environments open as Cross-Environment Diff; same-environment snapshots open as Timeline Diff.</p>
@@ -980,6 +1421,75 @@ function renderSnapshotLibraryHtml(
   <script nonce="${nonce}">${getSnapshotLibraryScript()}</script>
 </body>
 </html>`;
+}
+
+function renderRecentComparisons(recentComparisons: readonly RecentComparisonEntry[], isProPreview: boolean): string {
+  if (!recentComparisons.length) {
+    return "";
+  }
+
+  const groups = groupRecentComparisonsBySubject(recentComparisons);
+  const heading = isProPreview ? "Recent sample comparisons" : "Recent comparisons";
+  const description = isProPreview
+    ? "Replay sample operational drift investigations from mock snapshot history. These are preview continuations, not deployment records."
+    : "Replay recent operational drift investigations from local snapshot history. These are investigation continuations, not deployment records.";
+
+  const markup = groups.map((group, index) => {
+    const rows = group.entries.map((entry) => {
+      const significance = [
+        entry.highCount > 0 ? `${entry.highCount} high` : undefined,
+        entry.mediumCount > 0 ? `${entry.mediumCount} medium` : undefined,
+        entry.lowCount > 0 ? `${entry.lowCount} low` : undefined
+      ].filter(Boolean).join(" · ");
+
+      return `<div class="dvqr-recent-comparison-row" data-recent-comparison-id="${escapeHtml(entry.comparisonId)}">
+      <div>
+        <div class="dvqr-card-title">${escapeHtml(entry.sourceEnvironmentLabel)} → ${escapeHtml(entry.targetEnvironmentLabel)}</div>
+        <div class="dvqr-row-meta">${escapeHtml(formatSnapshotPickerTime(entry.generatedAtIso))} · ${entry.differenceCount} difference${entry.differenceCount === 1 ? "" : "s"}${significance ? ` · ${escapeHtml(significance)}` : ""}${entry.unalignedSubjects ? " · Unaligned scope" : ""}</div>
+      </div>
+      <div class="dvqr-recent-actions">
+        <button type="button" class="dvqr-button" data-action="replayComparison" data-source-snapshot-id="${escapeHtml(entry.sourceSnapshotId)}" data-target-snapshot-id="${escapeHtml(entry.targetSnapshotId)}">Replay comparison</button>
+        <button type="button" class="dvqr-button dvqr-remove-recent-button" data-action="removeRecentComparison" data-comparison-id="${escapeHtml(entry.comparisonId)}">Remove</button>
+      </div>
+    </div>`;
+    }).join("");
+
+    const countLabel = `${group.entries.length} ${isProPreview ? "sample " : ""}comparison${group.entries.length === 1 ? "" : "s"}`;
+    return `<details class="dvqr-recent-scope-group" ${index === 0 ? "open" : ""}>
+      <summary>
+        <strong>${escapeHtml(group.subjectLabel)}</strong>
+        <span class="dvqr-recent-scope-count">${escapeHtml(countLabel)}</span>
+        <span class="dvqr-recent-scope-toggle" aria-hidden="true"></span>
+      </summary>
+      <div class="dvqr-recent-scope-body">${rows}</div>
+    </details>`;
+  }).join("");
+
+  return `<section class="dvqr-card dvqr-recent-comparisons">
+    <div class="dvqr-recent-header">
+      <div>
+        <h2>${escapeHtml(heading)}</h2>
+        <p class="dvqr-muted">${escapeHtml(description)}</p>
+      </div>
+    </div>
+    <div class="dvqr-recent-list">${markup}</div>
+  </section>`;
+}
+
+function groupRecentComparisonsBySubject(recentComparisons: readonly RecentComparisonEntry[]): readonly { readonly subjectLabel: string; readonly entries: readonly RecentComparisonEntry[] }[] {
+  const groups = new Map<string, RecentComparisonEntry[]>();
+  for (const entry of recentComparisons.slice(0, MAX_RECENT_COMPARISONS)) {
+    const subjectLabel = entry.subjectLabel || "Operational comparison";
+    const key = subjectLabel.trim().toLowerCase();
+    const existing = groups.get(key) ?? [];
+    existing.push(entry);
+    groups.set(key, existing);
+  }
+
+  return Array.from(groups.values()).map((entries) => ({
+    subjectLabel: entries[0]?.subjectLabel || "Operational comparison",
+    entries
+  }));
 }
 
 function renderSnapshotSubjectGroup(group: SnapshotSubjectGroup): string {
@@ -1143,6 +1653,23 @@ function getSnapshotLibraryScript(): string {
     event.preventDefault();
     event.stopPropagation();
 
+    if (action === 'replayComparison') {
+      const sourceSnapshotId = target.getAttribute('data-source-snapshot-id');
+      const targetSnapshotId = target.getAttribute('data-target-snapshot-id');
+      if (sourceSnapshotId && targetSnapshotId && !isComparing) {
+        sourceId = sourceSnapshotId;
+        targetId = targetSnapshotId;
+        const sourceRow = getRow(sourceSnapshotId);
+        const targetRow = getRow(targetSnapshotId);
+        sourceLabel = sourceRow ? (sourceRow.getAttribute('data-environment-label') || 'Source') + ' · ' + (sourceRow.getAttribute('data-subject-label') || 'Snapshot') : 'Source snapshot';
+        targetLabel = targetRow ? (targetRow.getAttribute('data-environment-label') || 'Target') + ' · ' + (targetRow.getAttribute('data-subject-label') || 'Snapshot') : 'Target snapshot';
+        isComparing = true;
+        updateSelection();
+        vscode && vscode.postMessage({ type: 'replayComparison', sourceSnapshotId, targetSnapshotId });
+      }
+      return;
+    }
+
     if (action === 'compareLatestPrevious') {
       const sourceSnapshotId = target.getAttribute('data-previous-snapshot-id');
       const targetSnapshotId = target.getAttribute('data-latest-snapshot-id');
@@ -1162,6 +1689,14 @@ function getSnapshotLibraryScript(): string {
 
     if (action === 'lockedAction') {
       vscode && vscode.postMessage({ type: 'lockedAction', surface: target.getAttribute('data-locked-surface') || 'Cross-Environment Diff' });
+      return;
+    }
+
+    if (action === 'removeRecentComparison') {
+      const comparisonId = target.getAttribute('data-comparison-id');
+      if (comparisonId) {
+        vscode && vscode.postMessage({ type: 'removeRecentComparison', comparisonId });
+      }
       return;
     }
 
@@ -1340,6 +1875,19 @@ function getSnapshotLibraryScript(): string {
       }
     }
 
+    if (message.type === 'recentComparisonRemoved' && message.comparisonId) {
+      document.querySelector('[data-recent-comparison-id="' + message.comparisonId + '"]')?.remove();
+      document.querySelectorAll('.dvqr-recent-scope-group').forEach((group) => {
+        if (!group.querySelector('.dvqr-recent-comparison-row')) {
+          group.remove();
+        }
+      });
+      const recentSection = document.querySelector('.dvqr-recent-comparisons');
+      if (recentSection && !recentSection.querySelector('.dvqr-recent-comparison-row')) {
+        recentSection.remove();
+      }
+    }
+
     if (message.type === 'snapshotDeleted' && message.snapshotId) {
       const row = getRow(message.snapshotId);
       if (row) {
@@ -1377,26 +1925,97 @@ function cloneSnapshotsForComparison(
   }));
 }
 
+function getSnapshotSubjectLabel(entry: ComparisonSnapshotRegistryEntry): string {
+  return entry.entityDisplayName ?? entry.entityLogicalName ?? entry.label;
+}
+
+function getSnapshotSubjectKey(entry: ComparisonSnapshotRegistryEntry): string {
+  return (entry.entityLogicalName ?? entry.entityDisplayName ?? entry.label).trim().toLowerCase();
+}
+
+async function confirmCompatibleComparisonSubjects(
+  source: ComparisonSnapshotRegistryEntry,
+  target: ComparisonSnapshotRegistryEntry
+): Promise<boolean> {
+  const sourceSubject = getSnapshotSubjectLabel(source);
+  const targetSubject = getSnapshotSubjectLabel(target);
+
+  if (getSnapshotSubjectKey(source) === getSnapshotSubjectKey(target)) {
+    return true;
+  }
+
+  const action = await vscode.window.showWarningMessage(
+    `DV Quick Run: These snapshots represent different operational subjects.\n\nCross-Environment Diff is designed to compare the same operational subject across environments so drift signals remain meaningful and evidence-aligned.\n\nSource: ${sourceSubject}\nTarget: ${targetSubject}`,
+    { modal: true },
+    "Compare Anyway"
+  );
+
+  return action === "Compare Anyway";
+}
+
 function buildComparisonSurfaceTitle(source: ComparisonSnapshotRegistryEntry, target: ComparisonSnapshotRegistryEntry): string {
   const sameEnvironment = source.environmentLabel === target.environmentLabel;
-  const sourceSubject = source.entityDisplayName ?? source.entityLogicalName ?? source.label;
-  const targetSubject = target.entityDisplayName ?? target.entityLogicalName ?? target.label;
+  const sourceSubject = getSnapshotSubjectLabel(source);
+  const targetSubject = getSnapshotSubjectLabel(target);
+  const sameSubject = getSnapshotSubjectKey(source) === getSnapshotSubjectKey(target);
 
   if (sameEnvironment) {
-    const sameSubject = (source.entityLogicalName ?? source.entityDisplayName ?? source.label).toLowerCase()
-      === (target.entityLogicalName ?? target.entityDisplayName ?? target.label).toLowerCase();
     return sameSubject
       ? `Timeline Diff: ${source.environmentLabel} · ${sourceSubject}`
       : `Timeline Diff: ${source.environmentLabel} · ${sourceSubject} → ${targetSubject}`;
   }
 
-  return `Cross-Environment Diff: ${source.environmentLabel} → ${target.environmentLabel}`;
+  return sameSubject
+    ? `Cross-Environment Diff: ${sourceSubject} · ${source.environmentLabel} → ${target.environmentLabel}`
+    : `Cross-Environment Diff: ${sourceSubject} → ${targetSubject} · ${source.environmentLabel} → ${target.environmentLabel}`;
 }
 
 function retitleComparisonViewModel(model: ComparisonViewModel, title: string): ComparisonViewModel {
   return {
     ...model,
     title
+  };
+}
+
+function getSnapshotDisplayLabel(entry: ComparisonSnapshotRegistryEntry): string {
+  const subject = getSnapshotSubjectLabel(entry);
+  const customLabel = entry.label && entry.label !== `${subject} · ${entry.environmentLabel}` ? entry.label : undefined;
+  return customLabel ? `${customLabel} · ${subject}` : `${entry.environmentLabel} · ${subject}`;
+}
+
+function withComparisonSessionMetadata(
+  model: ComparisonViewModel,
+  source: ComparisonSnapshotRegistryEntry,
+  target: ComparisonSnapshotRegistryEntry,
+  sourceTrustState: ComparisonSnapshotTrustState,
+  targetTrustState: ComparisonSnapshotTrustState
+): ComparisonViewModel {
+  const sameEnvironment = source.environmentLabel === target.environmentLabel;
+  const sameSubject = getSnapshotSubjectKey(source) === getSnapshotSubjectKey(target);
+
+  return {
+    ...model,
+    session: {
+      generatedAtIso: new Date().toISOString(),
+      mode: sameEnvironment ? "Timeline Diff" : "Cross-Environment Diff",
+      unalignedSubjects: !sameSubject,
+      sourceSnapshot: {
+        label: getSnapshotDisplayLabel(source),
+        environmentLabel: source.environmentLabel,
+        subjectLabel: getSnapshotSubjectLabel(source),
+        capturedAtIso: source.capturedAtIso,
+        trustState: sourceTrustState,
+        fileUri: source.fileUri
+      },
+      targetSnapshot: {
+        label: getSnapshotDisplayLabel(target),
+        environmentLabel: target.environmentLabel,
+        subjectLabel: getSnapshotSubjectLabel(target),
+        capturedAtIso: target.capturedAtIso,
+        trustState: targetTrustState,
+        fileUri: target.fileUri
+      }
+    }
   };
 }
 
@@ -1426,37 +2045,66 @@ async function compareRegisteredSnapshotEntries(
       return;
     }
 
-    const sourceSnapshots = source.fileUri.startsWith("dvqr-mock://")
-      ? cloneSnapshotsForComparison(sampleSnapshots.filter((snapshot) => snapshot.environment?.label === "DEV"), source.environmentLabel)
-      : await readSnapshotUri(vscode.Uri.parse(source.fileUri));
-    const targetSnapshots = target.fileUri.startsWith("dvqr-mock://")
-      ? cloneSnapshotsForComparison(sampleSnapshots.filter((snapshot) => snapshot.environment?.label === "SIT"), target.environmentLabel)
-      : await readSnapshotUri(vscode.Uri.parse(target.fileUri));
+    if (!(await confirmCompatibleComparisonSubjects(source, target))) {
+      return;
+    }
+
+    const sourceSnapshots = getMockComparisonSnapshotsForEntry(source)
+      ?? await readSnapshotUri(vscode.Uri.parse(source.fileUri));
+    const targetSnapshots = getMockComparisonSnapshotsForEntry(target)
+      ?? await readSnapshotUri(vscode.Uri.parse(target.fileUri));
     if (!sourceSnapshots || !targetSnapshots) {
       return;
     }
 
-    const sourceSubject = source.entityDisplayName ?? source.entityLogicalName ?? source.label;
-    const targetSubject = target.entityDisplayName ?? target.entityLogicalName ?? target.label;
+    const sourceSubject = getSnapshotSubjectLabel(source);
+    const targetSubject = getSnapshotSubjectLabel(target);
     const sameEnvironment = source.environmentLabel === target.environmentLabel;
     const sourceLabel = sameEnvironment ? `${source.environmentLabel} · ${sourceSubject} source` : source.environmentLabel;
     const targetLabel = sameEnvironment ? `${target.environmentLabel} · ${targetSubject} target` : target.environmentLabel;
 
     progress.report({ message: "Running comparison providers" });
 
+    const sourceTrustState = isMockComparisonRegistryEntry(source) ? "Verified" : sourceSnapshots.trustState;
+    const targetTrustState = isMockComparisonRegistryEntry(target) ? "Verified" : targetSnapshots.trustState;
+    const sameSubject = getSnapshotSubjectKey(source) === getSnapshotSubjectKey(target);
+
     const model = await buildComparisonViewModelFromSnapshots({
       snapshots: [
-        ...cloneSnapshotsForComparison(sourceSnapshots, sourceLabel),
-        ...cloneSnapshotsForComparison(targetSnapshots, targetLabel)
+        ...cloneSnapshotsForComparison(sourceSnapshots.snapshots, sourceLabel),
+        ...cloneSnapshotsForComparison(targetSnapshots.snapshots, targetLabel)
       ],
       sourceLabel,
-      targetLabel
+      targetLabel,
+      subjectLabel: sameSubject ? sourceSubject : `${sourceSubject} → ${targetSubject}`,
+      snapshotTrust: {
+        sourceTrustState,
+        targetTrustState
+      }
     });
 
     progress.report({ message: sameEnvironment ? "Rendering Timeline Diff" : "Rendering Cross-Environment Diff" });
 
     if (model) {
-      revealComparisonSurface(ctx, retitleComparisonViewModel(model, buildComparisonSurfaceTitle(source, target)));
+      const titledModel = retitleComparisonViewModel(model, buildComparisonSurfaceTitle(source, target));
+      const sessionModel = withComparisonSessionMetadata(titledModel, source, target, sourceTrustState, targetTrustState);
+      await recordRecentComparison(ctx.ext, {
+        comparisonId: `${source.snapshotId}::${target.snapshotId}::${Date.now()}`,
+        sourceSnapshotId: source.snapshotId,
+        targetSnapshotId: target.snapshotId,
+        sourceLabel: getSnapshotDisplayLabel(source),
+        targetLabel: getSnapshotDisplayLabel(target),
+        sourceEnvironmentLabel: source.environmentLabel,
+        targetEnvironmentLabel: target.environmentLabel,
+        subjectLabel: sameSubject ? sourceSubject : `${sourceSubject} → ${targetSubject}`,
+        generatedAtIso: new Date().toISOString(),
+        differenceCount: sessionModel.summary.differenceCount,
+        highCount: sessionModel.summary.highCount,
+        mediumCount: sessionModel.summary.mediumCount,
+        lowCount: sessionModel.summary.lowCount,
+        unalignedSubjects: !sameSubject
+      });
+      revealComparisonSurface(ctx, sessionModel);
     }
   });
 }
@@ -1627,7 +2275,7 @@ function revealSnapshotLibrarySurface(ctx: CommandContext): void {
   }
 
   snapshotLibraryMessageDisposable?.dispose();
-  snapshotLibraryMessageDisposable = snapshotLibraryPanel.webview.onDidReceiveMessage((message: unknown) => {
+  snapshotLibraryMessageDisposable = snapshotLibraryPanel.webview.onDidReceiveMessage(async (message: unknown) => {
     const request = message as {
       readonly type?: string;
       readonly sourceSnapshotId?: string;
@@ -1635,6 +2283,7 @@ function revealSnapshotLibrarySurface(ctx: CommandContext): void {
       readonly snapshotId?: string;
       readonly isFavourite?: boolean;
       readonly surface?: string;
+      readonly comparisonId?: string;
     };
 
     if (request.type === "refresh") {
@@ -1667,6 +2316,19 @@ function revealSnapshotLibrarySurface(ctx: CommandContext): void {
       return;
     }
 
+    if (request.type === "removeRecentComparison" && request.comparisonId) {
+      const choice = await vscode.window.showWarningMessage(
+        "Remove this recent comparison from history? Snapshots will not be deleted.",
+        { modal: true },
+        "Remove"
+      );
+      if (choice === "Remove") {
+        void removeRecentComparison(ctx.ext, request.comparisonId)
+          .then(() => snapshotLibraryPanel?.webview.postMessage({ type: "recentComparisonRemoved", comparisonId: request.comparisonId }));
+      }
+      return;
+    }
+
     if (request.type === "revealFile" && request.snapshotId) {
       void revealRegisteredSnapshotFile(ctx, request.snapshotId);
       return;
@@ -1692,7 +2354,7 @@ function revealSnapshotLibrarySurface(ctx: CommandContext): void {
       return;
     }
 
-    if (request.type === "compareSnapshots" && request.sourceSnapshotId && request.targetSnapshotId) {
+    if ((request.type === "compareSnapshots" || request.type === "replayComparison") && request.sourceSnapshotId && request.targetSnapshotId) {
       void compareRegisteredSnapshotEntries(ctx, request.sourceSnapshotId, request.targetSnapshotId)
         .then(() => snapshotLibraryPanel?.webview.postMessage({ type: "compareComplete" }))
         .catch((error: unknown) => {
@@ -1703,7 +2365,7 @@ function revealSnapshotLibrarySurface(ctx: CommandContext): void {
     }
   }, null, ctx.ext.subscriptions);
 
-  snapshotLibraryPanel.webview.html = renderSnapshotLibraryHtml(snapshotLibraryPanel.webview, entries, isCrossEnvironmentDiffPreviewMode());
+  snapshotLibraryPanel.webview.html = renderSnapshotLibraryHtml(snapshotLibraryPanel.webview, entries, getRecentComparisons(ctx.ext), isCrossEnvironmentDiffPreviewMode());
 }
 
 export async function openSnapshotLibrary(ctx: CommandContext): Promise<void> {
@@ -1745,6 +2407,40 @@ async function pickRegisteredSnapshot(context: vscode.ExtensionContext, kind: "s
   };
 }
 
+function getTrustLimitedSnapshotStates(selection: ComparisonSnapshotSelection): readonly ComparisonSnapshotTrustState[] {
+  return [selection.snapshotTrust?.sourceTrustState, selection.snapshotTrust?.targetTrustState]
+    .filter((state): state is ComparisonSnapshotTrustState => state === "Modified" || state === "Invalid");
+}
+
+function summarizeTrustLimitedSnapshotStates(states: readonly ComparisonSnapshotTrustState[]): string {
+  const uniqueStates = [...new Set(states)];
+  if (uniqueStates.includes("Invalid") && uniqueStates.includes("Modified")) {
+    return "modified or invalid integrity metadata";
+  }
+
+  if (uniqueStates.includes("Invalid")) {
+    return "invalid integrity metadata";
+  }
+
+  return "content that no longer matches its DVQR integrity hash";
+}
+
+async function confirmTrustLimitedSnapshotComparison(selection: ComparisonSnapshotSelection): Promise<boolean> {
+  const trustLimitedStates = getTrustLimitedSnapshotStates(selection);
+  if (!trustLimitedStates.length) {
+    return true;
+  }
+
+  const detail = summarizeTrustLimitedSnapshotStates(trustLimitedStates);
+  const action = await vscode.window.showWarningMessage(
+    `DV Quick Run: One or more selected snapshots have ${detail}. DVQR can keep the comparison inspectable, but the evidence is trust-limited and should not be treated as verified snapshot truth.`,
+    { modal: true },
+    "Compare Untrusted"
+  );
+
+  return action === "Compare Untrusted";
+}
+
 async function readRegisteredSnapshotFiles(context: vscode.ExtensionContext): Promise<ComparisonSnapshotSelection | undefined> {
   const source = await pickRegisteredSnapshot(context, "source");
   if (!source) {
@@ -1767,8 +2463,8 @@ async function readRegisteredSnapshotFiles(context: vscode.ExtensionContext): Pr
     return undefined;
   }
 
-  const sourceLabel = getSingleEnvironmentLabel("source", sourceSnapshots) ?? source.label;
-  const targetLabel = getSingleEnvironmentLabel("target", targetSnapshots) ?? target.label;
+  const sourceLabel = getSingleEnvironmentLabel("source", sourceSnapshots.snapshots) ?? source.label;
+  const targetLabel = getSingleEnvironmentLabel("target", targetSnapshots.snapshots) ?? target.label;
 
   if (sourceLabel === targetLabel) {
     const action = await vscode.window.showWarningMessage(
@@ -1782,9 +2478,13 @@ async function readRegisteredSnapshotFiles(context: vscode.ExtensionContext): Pr
   }
 
   return {
-    snapshots: [...sourceSnapshots, ...targetSnapshots],
+    snapshots: [...sourceSnapshots.snapshots, ...targetSnapshots.snapshots],
     sourceLabel,
-    targetLabel
+    targetLabel,
+    snapshotTrust: {
+      sourceTrustState: sourceSnapshots.trustState,
+      targetTrustState: targetSnapshots.trustState
+    }
   };
 }
 
@@ -1845,14 +2545,32 @@ async function buildComparisonViewModelFromSnapshots(
     return undefined;
   }
 
+  if (!(await confirmTrustLimitedSnapshotComparison(selection))) {
+    return undefined;
+  }
+
   const providers = await loadProComparisonProviders();
   const engine = createCrossEnvironmentComparisonEngine(providers);
 
-  return engine.compare({
+  const model = await engine.compare({
     source: buildEnvironmentRef(selection.snapshots, sourceLabel),
     target: buildEnvironmentRef(selection.snapshots, targetLabel),
+    subjectLabel: selection.subjectLabel,
     snapshots: selection.snapshots
   });
+
+  const modelWithSubject = selection.subjectLabel ? {
+    ...model,
+    summary: {
+      ...model.summary,
+      subjectLabel: selection.subjectLabel
+    }
+  } : model;
+
+  return selection.snapshotTrust ? {
+    ...modelWithSubject,
+    snapshotTrust: selection.snapshotTrust
+  } : modelWithSubject;
 }
 
 
@@ -1863,9 +2581,27 @@ function slugFilePart(value: string): string {
     .replace(/^-+|-+$/g, "") || "comparison";
 }
 
+function normalizeExportScopeLabel(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  return normalized
+    .replace(/\s+·\s+/g, " ")
+    .replace(/\s*→\s*/g, " to ");
+}
+
+function formatExportTimestamp(date = new Date()): string {
+  const pad = (value: number): string => value.toString().padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+}
+
 function buildDefaultExportUri(model: ComparisonViewModel, extension: "json" | "md" | "html"): vscode.Uri | undefined {
   const prefix = model.title.startsWith("Timeline Diff") ? "dvqr-timeline-diff" : "dvqr-cross-environment-diff";
-  const fileName = `${prefix}-${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${Date.now()}.${extension}`;
+  const scope = normalizeExportScopeLabel(model.summary.subjectLabel);
+  const scopePart = scope ? `${slugFilePart(scope)}-` : "";
+  const fileName = `${prefix}-${scopePart}${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${formatExportTimestamp()}.${extension}`;
   const folders = vscode.workspace.workspaceFolders;
   if (folders && folders.length > 0) {
     return vscode.Uri.joinPath(folders[0].uri, fileName);
@@ -1902,7 +2638,16 @@ function describeBandMovement(sourceValue: string | undefined, targetValue: stri
 
 function extractMarkdownOnlyInName(title: string): string {
   const parts = title.split(":");
-  return (parts.length > 1 ? parts.slice(1).join(":") : title).trim();
+  return (parts.length > 1 ? parts.slice(1).join(":") : title)
+    .replace(/\s+present only in (source|target)$/i, "")
+    .replace(/\s+changed from .+$/i, "")
+    .trim();
+}
+
+function isMarkdownEnvironmentScopedPresenceTitle(title: string, targetLabel: string): boolean {
+  const normalized = title.toLowerCase();
+  const target = targetLabel.toLowerCase();
+  return normalized.endsWith(` added in ${target}`) || normalized.endsWith(` removed in ${target}`);
 }
 
 function describeDirection(source: string | undefined, target: string | undefined): string {
@@ -1931,11 +2676,31 @@ function getMarkdownDensitySubjectTitle(subject: string, sourceValue: string | u
   }
 
   if (subject === "Automation (Plugin Steps)") {
-    return direction === "appeared" ? "Plugin Steps participation appeared" : direction === "was no longer observed" ? "Plugin Steps participation removed" : "Plugin Steps participation changed";
+    if (direction === "appeared") {
+      return "Plugin Steps participation appeared";
+    }
+
+    if (direction === "was no longer observed") {
+      return "Plugin Steps participation removed";
+    }
+
+    return sourceValue && targetValue
+      ? `Plugin Steps count ${describeBandMovement(sourceValue, targetValue)} (${sourceValue} → ${targetValue})`
+      : "Plugin Steps count changed";
   }
 
   if (subject === "Real-time Workflows") {
-    return direction === "appeared" ? "Real-time workflow participation appeared" : direction === "was no longer observed" ? "Real-time workflow participation removed" : "Real-time workflow participation changed";
+    if (direction === "appeared") {
+      return "Real-time workflow participation appeared";
+    }
+
+    if (direction === "was no longer observed") {
+      return "Real-time workflow participation removed";
+    }
+
+    return sourceValue && targetValue
+      ? `Real-time workflow participation ${describeBandMovement(sourceValue, targetValue)} (${sourceValue} → ${targetValue})`
+      : "Real-time workflow participation changed";
   }
 
   if (subject === "Relationships") {
@@ -1949,11 +2714,51 @@ function getMarkdownDensitySubjectTitle(subject: string, sourceValue: string | u
   return `${subject} ${direction}`;
 }
 
+function simplifyMarkdownPluginDifferenceTitle(title: string, targetLabel: string): string | undefined {
+  const modernState = title.match(/^(.+) plugin state changed \((.+)\)$/i);
+  if (modernState?.[1] && modernState[2]) {
+    return `${modernState[1].trim()} plugin state changed (${modernState[2].trim()})`;
+  }
+
+  const removed = title.match(/^(.+) removed from target$/i);
+  if (removed?.[1]) {
+    return `${removed[1].trim()} removed in ${targetLabel}`;
+  }
+
+  const added = title.match(/^(.+) added in target$/i);
+  if (added?.[1]) {
+    return `${added[1].trim()} added in ${targetLabel}`;
+  }
+
+  const patterns: readonly [RegExp, string][] = [
+    [/^Plugin step state changed:\s*(.+)$/i, "$1 plugin state changed"],
+    [/^Plugin step execution pipeline changed:\s*(.+)$/i, "$1 execution pipeline changed"],
+    [/^Plugin step configuration changed:\s*(.+)$/i, "$1 configuration changed"],
+    [/^Plugin step changed:\s*(.+)$/i, "$1 changed"],
+    [/^Plugin step removed from target:\s*(.+)$/i, `$1 removed in ${targetLabel}`],
+    [/^Plugin step added in target:\s*(.+)$/i, `$1 added in ${targetLabel}`]
+  ];
+
+  for (const [pattern, replacement] of patterns) {
+    const match = title.match(pattern);
+    if (match?.[1]) {
+      return replacement.replace("$1", match[1].trim());
+    }
+  }
+
+  return undefined;
+}
+
 function getMarkdownDifferenceTitle(
   difference: ComparisonViewModel["groups"][number]["differences"][number],
   sourceLabel: string,
   targetLabel: string
 ): string {
+  const pluginTitle = simplifyMarkdownPluginDifferenceTitle(difference.title, targetLabel);
+  if (pluginTitle) {
+    return pluginTitle;
+  }
+
   if (difference.title.startsWith("DVQR Score density changed")) {
     const source = difference.sourceValue ?? "source";
     const target = difference.targetValue ?? "target";
@@ -1966,21 +2771,39 @@ function getMarkdownDifferenceTitle(
   }
 
   if (difference.kind === "OnlyInSource") {
+    if (isMarkdownEnvironmentScopedPresenceTitle(difference.title, targetLabel)) {
+      return difference.title;
+    }
+
     return `${extractMarkdownOnlyInName(difference.title)} present only in ${sourceLabel}`;
   }
 
   if (difference.kind === "OnlyInTarget") {
+    if (isMarkdownEnvironmentScopedPresenceTitle(difference.title, targetLabel)) {
+      return difference.title;
+    }
+
     return `${extractMarkdownOnlyInName(difference.title)} present only in ${targetLabel}`;
   }
 
   if (difference.kind === "Changed") {
-    const name = extractMarkdownOnlyInName(difference.title);
-    if (difference.title.toLowerCase().includes("managed state")) {
-      return `${name} managed state changed`;
+    if (/ changed from .+ → .+$/i.test(difference.title)) {
+      return difference.title;
     }
 
-    if (difference.title.toLowerCase().includes("version")) {
-      return `${name} version drift`;
+    const name = extractMarkdownOnlyInName(difference.title);
+    const managedState = difference.evidence.find((item) => item.label.toLowerCase().includes("managed state"));
+    if (managedState?.value) {
+      return `${name} changed from ${managedState.value}`;
+    }
+
+    const version = difference.evidence.find((item) => item.label.toLowerCase().includes("version"));
+    if (version?.value) {
+      if (difference.title.toLowerCase().includes("version changed")) {
+        return /\([^)]*→[^)]*\)\s*$/u.test(difference.title) ? difference.title : `${difference.title} (${version.value})`;
+      }
+
+      return `${name} version changed (${version.value})`;
     }
 
     return `${name} changed`;
@@ -2005,11 +2828,11 @@ function getMarkdownDifferenceSummary(
   }
 
   if (difference.kind === "OnlyInSource") {
-    return `Present only in ${sourceLabel}.`;
+    return `Only observed in ${sourceLabel}.`;
   }
 
   if (difference.kind === "OnlyInTarget") {
-    return `Present only in ${targetLabel}.`;
+    return `Only observed in ${targetLabel}.`;
   }
 
   if (difference.kind === "DensityChanged") {
@@ -2036,6 +2859,10 @@ function getMarkdownGroupSummary(group: ComparisonViewModel["groups"][number]): 
   if (group.id === "operational-profile-drift") {
     const match = group.summary.match(/for ([^.]+)\./);
     return match?.[1] ? `${match[1]} operational profile differs between snapshots.` : "Operational profile differs between snapshots.";
+  }
+
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return "Plugin step registrations differ between snapshots.";
   }
 
   if (group.id === "solution-participation-drift") {
@@ -2067,18 +2894,93 @@ function getMarkdownGroupNarrative(
   targetLabel: string
 ): string {
   if (group.id === "operational-profile-drift") {
-    return `Operational profile changes are concentrated in ${targetLabel}.`;
+    return `Operational profile density shifted between ${sourceLabel} and ${targetLabel}. Review the strongest contributor changes before treating the environments as operationally equivalent.`;
+  }
+
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return `Plugin runtime behaviour differs between ${sourceLabel} and ${targetLabel}. Review changed step state, pipeline placement, and environment-specific registrations before comparing runtime outcomes.`;
   }
 
   if (group.id === "solution-participation-drift") {
-    return `Solution layering differs between ${sourceLabel} and ${targetLabel}.`;
+    return `Solution layering differs between ${sourceLabel} and ${targetLabel}. Review package presence, version, and managed-state drift as operational context, not deployment validation.`;
+  }
+
+  if (group.id === "identity-participation-drift") {
+    return `Identity participation differs between ${sourceLabel} and ${targetLabel}. Matching is confidence-based and should be treated as participation orientation, not authority certainty.`;
   }
 
   if (group.id === "workflow-automation-participation-drift") {
-    return `Automation participation differs between ${sourceLabel} and ${targetLabel}.`;
+    return `Workflow and flow participation differs between ${sourceLabel} and ${targetLabel}. Review added, removed, or changed orchestration before comparing environment behaviour.`;
   }
 
   return `${group.title} contains ${group.differences.length} drift signal${group.differences.length === 1 ? "" : "s"}.`;
+}
+
+function getMarkdownOperationalImpactSummary(
+  difference: ComparisonViewModel["groups"][number]["differences"][number],
+  sourceLabel: string,
+  targetLabel: string
+): string {
+  const title = getMarkdownDifferenceTitle(difference, sourceLabel, targetLabel);
+  const normalizedTitle = title.toLowerCase();
+  const normalizedKind = difference.kind.toLowerCase();
+
+  if (normalizedTitle.includes("dvqr score")) {
+    return "Operational density changed between snapshots.";
+  }
+
+  if (normalizedTitle.includes("plugin") && normalizedTitle.includes("state changed")) {
+    return "Plugin execution availability differs between environments.";
+  }
+
+  if (normalizedTitle.includes("execution pipeline")) {
+    return "Request-time plugin sequencing or stage placement differs.";
+  }
+
+  if (normalizedTitle.includes("added in") || normalizedKind.includes("added") || difference.kind === "OnlyInTarget") {
+    return `Additional operational participation is visible in ${targetLabel}.`;
+  }
+
+  if (normalizedTitle.includes("removed in") || normalizedKind.includes("removed") || difference.kind === "OnlyInSource") {
+    return `Operational participation is only visible in ${sourceLabel}.`;
+  }
+
+  if (normalizedTitle.includes("state changed")) {
+    return "Activation or runtime participation state differs.";
+  }
+
+  if (normalizedTitle.includes("owner changed")) {
+    return "Ownership metadata differs; treat this as context, not execution causality.";
+  }
+
+  if (normalizedTitle.includes("managed") || normalizedTitle.includes("version")) {
+    return "Solution packaging evidence differs between snapshots.";
+  }
+
+  return "Review the underlying evidence before comparing runtime behaviour.";
+}
+
+function getTopMarkdownOperationalSignals(model: ComparisonViewModel): readonly string[] {
+  const rankSignificance = (value: string): number => value === "High" ? 3 : value === "Medium" ? 2 : 1;
+
+  return model.groups
+    .flatMap((group) => group.differences.map((difference) => ({
+      groupTitle: group.title,
+      title: getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel),
+      significance: difference.significance,
+      kind: difference.kind,
+      impact: getMarkdownOperationalImpactSummary(difference, model.summary.sourceLabel, model.summary.targetLabel)
+    })))
+    .sort((left, right) => {
+      const rank = rankSignificance(right.significance) - rankSignificance(left.significance);
+      if (rank !== 0) {
+        return rank;
+      }
+
+      return left.title.localeCompare(right.title);
+    })
+    .slice(0, 5)
+    .map((signal) => `${signal.title} — ${signal.groupTitle} · ${signal.significance} · ${signal.kind}. ${signal.impact}`);
 }
 
 function renderComparisonMarkdown(model: ComparisonViewModel): string {
@@ -2094,6 +2996,30 @@ function renderComparisonMarkdown(model: ComparisonViewModel): string {
   lines.push(`- Low significance: ${model.summary.lowCount}`);
   lines.push(`- Differences: ${model.summary.differenceCount}`);
   lines.push(`- Providers: ${model.summary.providerCount}`);
+  if (model.session) {
+    lines.push(`- Generated: ${formatSnapshotPickerTime(model.session.generatedAtIso)}`);
+    lines.push(`- Source snapshot: ${model.session.sourceSnapshot.label} (${formatSnapshotPickerTime(model.session.sourceSnapshot.capturedAtIso)})`);
+    lines.push(`- Target snapshot: ${model.session.targetSnapshot.label} (${formatSnapshotPickerTime(model.session.targetSnapshot.capturedAtIso)})`);
+    if (model.session.unalignedSubjects) {
+      lines.push("- Scope note: source and target snapshots represent different operational subjects.");
+    }
+  }
+  lines.push("");
+  lines.push("## Top Operational Drift Signals");
+  lines.push("");
+  const topSignals = getTopMarkdownOperationalSignals(model);
+  if (topSignals.length === 0) {
+    lines.push("No top operational drift signals were produced by the selected providers.");
+  } else {
+    if (model.summary.highCount > topSignals.length) {
+      lines.push(`Showing ${topSignals.length} of ${model.summary.highCount} high-significance drift signals.`);
+      lines.push("");
+    }
+
+    for (const signal of topSignals) {
+      lines.push(`- ${signal}`);
+    }
+  }
   lines.push("");
   lines.push("## Operational Drift");
   lines.push("");

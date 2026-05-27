@@ -1,4 +1,4 @@
-import type { ComparisonDifference, ComparisonDriftGroup, ComparisonOperationalSignificance, ComparisonViewModel } from "../../core/comparison/index.js";
+import type { ComparisonDifference, ComparisonDriftGroup, ComparisonOperationalSignificance, ComparisonSnapshotTrustStatus, ComparisonViewModel } from "../../core/comparison/index.js";
 
 function escapeHtml(value: string): string {
   return value
@@ -61,6 +61,10 @@ function getPrimaryDriftDomain(model: ComparisonViewModel): string {
   return group?.title ?? "None observed";
 }
 
+function getComparisonScope(model: ComparisonViewModel): string {
+  return model.summary.subjectLabel?.trim() || getPrimaryDriftDomain(model);
+}
+
 function getComparedSubject(model: ComparisonViewModel): string {
   const cleanSubjectLabel = (value: string): string => {
     const label = value.split("·").pop()?.trim() ?? value;
@@ -77,32 +81,149 @@ function renderSummary(model: ComparisonViewModel): string {
     { label: "Low significance", value: String(model.summary.lowCount) },
     { label: "Differences", value: String(model.summary.differenceCount) },
     { label: "Providers", value: String(model.summary.providerCount) },
-    { label: "Primary domain", value: getPrimaryDriftDomain(model) },
+    { label: "Comparison scope", value: getComparisonScope(model) },
     { label: "Comparison", value: getComparedSubject(model) }
   ];
 
   return `<div class="dvqr-summary-grid">${items.map((item) => {
-    const textClass = item.label === "Primary domain" || item.label === "Comparison" ? " is-text" : "";
+    const textClass = item.label === "Comparison scope" || item.label === "Comparison" ? " is-text" : "";
     return `<div class="dvqr-summary-item${textClass}"><span class="dvqr-summary-value">${escapeHtml(item.value)}</span><span class="dvqr-summary-label">${escapeHtml(item.label)}</span></div>`;
   }).join("")}</div>`;
 }
 
+
+function renderComparisonSessionMetadata(model: ComparisonViewModel): string {
+  const session = model.session;
+  if (!session) {
+    return "";
+  }
+
+  const sourceTrust = session.sourceSnapshot.trustState ? describeSnapshotTrustState(session.sourceSnapshot.trustState).label : "Not available";
+  const targetTrust = session.targetSnapshot.trustState ? describeSnapshotTrustState(session.targetSnapshot.trustState).label : "Not available";
+  const scopeNote = session.unalignedSubjects
+    ? `<p class="dvqr-session-warning">Unaligned comparison scope: source and target snapshots represent different operational subjects.</p>`
+    : "";
+
+  return `<section class="dvqr-session-card" aria-label="Comparison session metadata">
+    <div class="dvqr-session-title">Comparison session</div>
+    <p class="dvqr-session-summary">Generated ${escapeHtml(formatCapturedAt(session.generatedAtIso))}. Snapshot evidence remains local investigation context, not deployment authority.</p>
+    ${scopeNote}
+    <div class="dvqr-session-grid">
+      <div class="dvqr-session-item">
+        <span class="dvqr-value-label">Source snapshot</span>
+        <strong>${escapeHtml(session.sourceSnapshot.label)}</strong>
+        <span>${escapeHtml(formatCapturedAt(session.sourceSnapshot.capturedAtIso))} · ${escapeHtml(sourceTrust)}</span>
+      </div>
+      <div class="dvqr-session-item">
+        <span class="dvqr-value-label">Target snapshot</span>
+        <strong>${escapeHtml(session.targetSnapshot.label)}</strong>
+        <span>${escapeHtml(formatCapturedAt(session.targetSnapshot.capturedAtIso))} · ${escapeHtml(targetTrust)}</span>
+      </div>
+    </div>
+  </section>`;
+}
+
 function renderEnvironmentPanel(model: ComparisonViewModel): string {
+  const sourceTrust = model.snapshotTrust?.sourceTrustState;
+  const targetTrust = model.snapshotTrust?.targetTrustState;
+
   return `<aside class="dvqr-environment-card" aria-label="Comparison environments">
     <div class="dvqr-environment-title">Environments</div>
     <div class="dvqr-environment-grid">
       <div class="dvqr-environment-item">
         <span class="dvqr-value-label">Source</span>
-        <strong>${escapeHtml(model.summary.sourceLabel)}</strong>
+        <strong class="dvqr-environment-name"><span>${escapeHtml(model.summary.sourceLabel)}</span>${renderInlineSnapshotTrustIcon(sourceTrust)}</strong>
         <span>${escapeHtml(formatCapturedAt(model.summary.sourceCapturedAtIso))}</span>
       </div>
       <div class="dvqr-environment-item">
         <span class="dvqr-value-label">Target</span>
-        <strong>${escapeHtml(model.summary.targetLabel)}</strong>
+        <strong class="dvqr-environment-name"><span>${escapeHtml(model.summary.targetLabel)}</span>${renderInlineSnapshotTrustIcon(targetTrust)}</strong>
         <span>${escapeHtml(formatCapturedAt(model.summary.targetCapturedAtIso))}</span>
       </div>
     </div>
   </aside>`;
+}
+
+function getSnapshotTrustRank(value: ComparisonSnapshotTrustStatus | undefined): number {
+  switch (value) {
+    case "Invalid":
+      return 4;
+    case "Modified":
+      return 3;
+    case "Legacy / Unverified":
+      return 2;
+    case "Verified":
+      return 0;
+    default:
+      return 1;
+  }
+}
+
+function getOverallSnapshotTrustStatus(model: ComparisonViewModel): ComparisonSnapshotTrustStatus | undefined {
+  const states = [model.snapshotTrust?.sourceTrustState, model.snapshotTrust?.targetTrustState];
+  return states.sort((left, right) => getSnapshotTrustRank(right) - getSnapshotTrustRank(left))[0];
+}
+
+function renderInlineSnapshotTrustIcon(state: ComparisonSnapshotTrustStatus | undefined): string {
+  const trust = describeSnapshotTrustState(state);
+  return `<span class="dvqr-inline-trust-icon dvqr-inline-trust-${escapeHtml(trust.kind)}" title="${escapeHtml(trust.label)} snapshot trust — ${escapeHtml(trust.detail)}" aria-label="${escapeHtml(trust.label)} snapshot trust">${escapeHtml(trust.icon)}</span>`;
+}
+
+function renderSnapshotTrustBanner(model: ComparisonViewModel): string {
+  const overallTrust = getOverallSnapshotTrustStatus(model);
+  if (!overallTrust || overallTrust === "Verified" || overallTrust === "Legacy / Unverified") {
+    return "";
+  }
+
+  const trust = describeSnapshotTrustState(overallTrust);
+  const message = overallTrust === "Modified"
+    ? "One or more snapshots appear to have changed after capture. DVQR keeps the comparison inspectable, but treat drift evidence as trust-limited until the snapshot is reviewed."
+    : "One or more snapshots have invalid integrity metadata. Use this comparison for inspection only until trusted snapshot evidence is available.";
+
+  return `<div class="dvqr-snapshot-trust-banner dvqr-snapshot-trust-banner-${escapeHtml(trust.kind)}" role="note">
+    <strong>${escapeHtml(trust.label)} snapshot evidence</strong>
+    <span>${escapeHtml(message)}</span>
+  </div>`;
+}
+
+function describeSnapshotTrustState(value: ComparisonSnapshotTrustStatus | undefined): { readonly label: string; readonly detail: string; readonly kind: string; readonly icon: string } {
+  switch (value) {
+    case "Verified":
+      return {
+        label: "Verified",
+        detail: "Snapshot content matches its DVQR integrity hash.",
+        kind: "verified",
+        icon: "✓"
+      };
+    case "Modified":
+      return {
+        label: "Modified",
+        detail: "Snapshot content no longer matches its DVQR integrity hash. Treat comparison output as untrusted evidence until reviewed.",
+        kind: "modified",
+        icon: "◉"
+      };
+    case "Legacy / Unverified":
+      return {
+        label: "Legacy / Unverified",
+        detail: "Snapshot was captured before integrity hashes were available. It remains inspectable, but cannot be verified.",
+        kind: "legacy",
+        icon: "◌"
+      };
+    case "Invalid":
+      return {
+        label: "Invalid",
+        detail: "Snapshot integrity metadata is invalid. Comparison should be used for inspection only.",
+        kind: "invalid",
+        icon: "⚠"
+      };
+    default:
+      return {
+        label: "Not available",
+        detail: "Snapshot trust metadata was not supplied for this comparison.",
+        kind: "unknown",
+        icon: "?"
+      };
+  }
 }
 
 function renderValues(difference: ComparisonDifference): string {
@@ -137,6 +258,10 @@ function simplifyGroupSummary(group: ComparisonDriftGroup): string {
   if (group.id === "operational-profile-drift") {
     const match = group.summary.match(/for ([^.]+)\./);
     return match?.[1] ? `${match[1]} operational profile differs between snapshots.` : "Operational profile differs between snapshots.";
+  }
+
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return "Plugin step registrations differ between snapshots.";
   }
 
   if (group.id === "solution-participation-drift") {
@@ -196,7 +321,16 @@ function describeBandMovement(sourceValue: string | undefined, targetValue: stri
 
 function extractOnlyInName(title: string): string {
   const parts = title.split(":");
-  return (parts.length > 1 ? parts.slice(1).join(":") : title).trim();
+  return (parts.length > 1 ? parts.slice(1).join(":") : title)
+    .replace(/\s+present only in (source|target)$/i, "")
+    .replace(/\s+changed from .+$/i, "")
+    .trim();
+}
+
+function isEnvironmentScopedPresenceTitle(title: string, targetLabel: string): boolean {
+  const normalized = title.toLowerCase();
+  const target = targetLabel.toLowerCase();
+  return normalized.endsWith(` added in ${target}`) || normalized.endsWith(` removed in ${target}`);
 }
 
 function getDensitySubjectTitle(subject: string, sourceValue: string | undefined, targetValue: string | undefined): string {
@@ -207,11 +341,31 @@ function getDensitySubjectTitle(subject: string, sourceValue: string | undefined
   }
 
   if (subject === "Automation (Plugin Steps)") {
-    return direction === "appeared" ? "Plugin Steps participation appeared" : direction === "was no longer observed" ? "Plugin Steps participation removed" : "Plugin Steps participation changed";
+    if (direction === "appeared") {
+      return "Plugin Steps participation appeared";
+    }
+
+    if (direction === "was no longer observed") {
+      return "Plugin Steps participation removed";
+    }
+
+    return sourceValue && targetValue
+      ? `Plugin Steps count ${describeBandMovement(sourceValue, targetValue)} (${sourceValue} → ${targetValue})`
+      : "Plugin Steps count changed";
   }
 
   if (subject === "Real-time Workflows") {
-    return direction === "appeared" ? "Real-time workflow participation appeared" : direction === "was no longer observed" ? "Real-time workflow participation removed" : "Real-time workflow participation changed";
+    if (direction === "appeared") {
+      return "Real-time workflow participation appeared";
+    }
+
+    if (direction === "was no longer observed") {
+      return "Real-time workflow participation removed";
+    }
+
+    return sourceValue && targetValue
+      ? `Real-time workflow participation ${describeBandMovement(sourceValue, targetValue)} (${sourceValue} → ${targetValue})`
+      : "Real-time workflow participation changed";
   }
 
   if (subject === "Relationships") {
@@ -225,11 +379,51 @@ function getDensitySubjectTitle(subject: string, sourceValue: string | undefined
   return `${subject} ${direction}`;
 }
 
+function simplifyPluginDifferenceTitle(title: string, targetLabel: string): string | undefined {
+  const modernState = title.match(/^(.+) plugin state changed \((.+)\)$/i);
+  if (modernState?.[1] && modernState[2]) {
+    return `${modernState[1].trim()} plugin state changed (${modernState[2].trim()})`;
+  }
+
+  const removed = title.match(/^(.+) removed from target$/i);
+  if (removed?.[1]) {
+    return `${removed[1].trim()} removed in ${targetLabel}`;
+  }
+
+  const added = title.match(/^(.+) added in target$/i);
+  if (added?.[1]) {
+    return `${added[1].trim()} added in ${targetLabel}`;
+  }
+
+  const patterns: readonly [RegExp, string][] = [
+    [/^Plugin step state changed:\s*(.+)$/i, "$1 plugin state changed"],
+    [/^Plugin step execution pipeline changed:\s*(.+)$/i, "$1 execution pipeline changed"],
+    [/^Plugin step configuration changed:\s*(.+)$/i, "$1 configuration changed"],
+    [/^Plugin step changed:\s*(.+)$/i, "$1 changed"],
+    [/^Plugin step removed from target:\s*(.+)$/i, `$1 removed in ${targetLabel}`],
+    [/^Plugin step added in target:\s*(.+)$/i, `$1 added in ${targetLabel}`]
+  ];
+
+  for (const [pattern, replacement] of patterns) {
+    const match = title.match(pattern);
+    if (match?.[1]) {
+      return replacement.replace("$1", match[1].trim());
+    }
+  }
+
+  return undefined;
+}
+
 function simplifyDifferenceTitle(
   difference: ComparisonDifference,
   sourceLabel: string,
   targetLabel: string
 ): string {
+  const pluginTitle = simplifyPluginDifferenceTitle(difference.title, targetLabel);
+  if (pluginTitle) {
+    return pluginTitle;
+  }
+
   if (difference.title.startsWith("DVQR Score density changed")) {
     const source = difference.sourceValue ?? "source";
     const target = difference.targetValue ?? "target";
@@ -242,21 +436,39 @@ function simplifyDifferenceTitle(
   }
 
   if (difference.kind === "OnlyInSource") {
+    if (isEnvironmentScopedPresenceTitle(difference.title, targetLabel)) {
+      return difference.title;
+    }
+
     return `${extractOnlyInName(difference.title)} present only in ${sourceLabel}`;
   }
 
   if (difference.kind === "OnlyInTarget") {
+    if (isEnvironmentScopedPresenceTitle(difference.title, targetLabel)) {
+      return difference.title;
+    }
+
     return `${extractOnlyInName(difference.title)} present only in ${targetLabel}`;
   }
 
   if (difference.kind === "Changed") {
-    const name = extractOnlyInName(difference.title);
-    if (difference.title.toLowerCase().includes("managed state")) {
-      return `${name} managed state changed`;
+    if (/ changed from .+ → .+$/i.test(difference.title)) {
+      return difference.title;
     }
 
-    if (difference.title.toLowerCase().includes("version")) {
-      return `${name} version drift`;
+    const name = extractOnlyInName(difference.title);
+    const managedState = difference.evidence.find((item) => item.label.toLowerCase().includes("managed state"));
+    if (managedState?.value) {
+      return `${name} changed from ${managedState.value}`;
+    }
+
+    const version = difference.evidence.find((item) => item.label.toLowerCase().includes("version"));
+    if (version?.value) {
+      if (difference.title.toLowerCase().includes("version changed")) {
+        return /\([^)]*→[^)]*\)\s*$/u.test(difference.title) ? difference.title : `${difference.title} (${version.value})`;
+      }
+
+      return `${name} version changed (${version.value})`;
     }
 
     return `${name} changed`;
@@ -287,11 +499,11 @@ function simplifyDifferenceSummary(
   }
 
   if (difference.kind === "OnlyInSource") {
-    return `Present only in ${sourceLabel}.`;
+    return `Only observed in ${sourceLabel}.`;
   }
 
   if (difference.kind === "OnlyInTarget") {
-    return `Present only in ${targetLabel}.`;
+    return `Only observed in ${targetLabel}.`;
   }
 
   if (difference.kind === "Changed") {
@@ -319,6 +531,26 @@ function getEvidenceStrengthLabel(difference: ComparisonDifference): string {
   }
 
   return "Summary signal";
+}
+
+function shouldExpandDifferenceByDefault(
+  difference: ComparisonDifference,
+  groupDifferences: readonly ComparisonDifference[],
+  differenceIndex: number
+): boolean {
+  if (difference.significance !== "High") {
+    return false;
+  }
+
+  if (groupDifferences.length >= 6) {
+    const earlierHighCount = groupDifferences
+      .slice(0, differenceIndex)
+      .filter((item) => item.significance === "High")
+      .length;
+    return earlierHighCount < 2;
+  }
+
+  return true;
 }
 
 function getEvidenceContinuationLabel(item: ComparisonDifference["evidence"][number]): string {
@@ -351,13 +583,32 @@ function getEvidenceContinuationLabel(item: ComparisonDifference["evidence"][num
   return "Query evidence";
 }
 
+function getEvidenceContinuationTooltip(item: ComparisonDifference["evidence"][number]): string {
+  const label = item.label.toLowerCase();
+
+  if (label.includes("plugin") || label.includes("automation") || label.includes("workflow")) {
+    return "Available in DVQR Pro — view raw Dataverse automation evidence.";
+  }
+
+  if (label.includes("solution")) {
+    return "Available in DVQR Pro — view raw Dataverse solution evidence.";
+  }
+
+  if (label.includes("identity") || label.includes("role") || label.includes("team")) {
+    return "Available in DVQR Pro — view raw Dataverse identity participation evidence.";
+  }
+
+  return "Available in DVQR Pro — view raw Dataverse evidence.";
+}
+
 function renderEvidenceItem(item: ComparisonDifference["evidence"][number]): string {
   const value = item.value ? ` — ${escapeHtml(item.value)}` : "";
   const continuationLabel = getEvidenceContinuationLabel(item);
+  const continuationTooltip = getEvidenceContinuationTooltip(item);
 
   return `<li>
     <span><strong>${escapeHtml(item.label)}</strong>${value}</span>
-    <span class="dvqr-evidence-continuation-pill" title="Future Pro continuation: open the Dataverse evidence behind this drift signal.">
+    <span class="dvqr-evidence-continuation-pill" title="${escapeHtml(continuationTooltip)}">
       ${escapeHtml(continuationLabel)} ›
     </span>
   </li>`;
@@ -366,13 +617,15 @@ function renderEvidenceItem(item: ComparisonDifference["evidence"][number]): str
 function renderDifference(
   difference: ComparisonDifference,
   sourceLabel: string,
-  targetLabel: string
+  targetLabel: string,
+  groupDifferences: readonly ComparisonDifference[],
+  differenceIndex: number
 ): string {
   const evidence = difference.evidence.length > 0
-    ? `<details class="dvqr-evidence-details"><summary>Show evidence <span>${difference.evidence.length}</span></summary><ul class="dvqr-evidence">${difference.evidence.map((item) => renderEvidenceItem(item)).join("")}</ul></details>`
+    ? `<details class="dvqr-evidence-details"><summary>Show full evidence <span>${difference.evidence.length}</span></summary><ul class="dvqr-evidence">${difference.evidence.map((item) => renderEvidenceItem(item)).join("")}</ul></details>`
     : "";
 
-  const openAttribute = difference.significance === "High" ? " open" : "";
+  const openAttribute = shouldExpandDifferenceByDefault(difference, groupDifferences, differenceIndex) ? " open" : "";
 
   return `<details class="dvqr-difference-card" data-difference-kind="${escapeHtml(difference.kind)}" data-significance="${escapeHtml(difference.significance)}"${openAttribute}>
     <summary class="dvqr-difference-heading">
@@ -429,21 +682,35 @@ function getGroupNarrative(group: ComparisonDriftGroup, sourceLabel: string, tar
 
   if (group.id === "operational-profile-drift") {
     return buildNarrativeBlock(
-      `Operational profile changes are concentrated in ${targetLabel}.`,
+      `Operational profile density shifted between ${sourceLabel} and ${targetLabel}. Review the strongest contributor changes before treating the environments as operationally equivalent.`,
+      highlights
+    );
+  }
+
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return buildNarrativeBlock(
+      `Plugin runtime behaviour differs between ${sourceLabel} and ${targetLabel}. Review changed step state, pipeline placement, and environment-specific registrations before comparing runtime outcomes.`,
       highlights
     );
   }
 
   if (group.id === "solution-participation-drift") {
     return buildNarrativeBlock(
-      `Solution layering differs between ${sourceLabel} and ${targetLabel}.`,
+      `Solution layering differs between ${sourceLabel} and ${targetLabel}. Review package presence, version, and managed-state drift as operational context, not deployment validation.`,
+      highlights
+    );
+  }
+
+  if (group.id === "identity-participation-drift") {
+    return buildNarrativeBlock(
+      `Identity participation differs between ${sourceLabel} and ${targetLabel}. Matching is confidence-based and should be treated as participation orientation, not authority certainty.`,
       highlights
     );
   }
 
   if (group.id === "workflow-automation-participation-drift") {
     return buildNarrativeBlock(
-      `Automation participation differs between ${sourceLabel} and ${targetLabel}.`,
+      `Workflow and flow participation differs between ${sourceLabel} and ${targetLabel}. Review added, removed, or changed orchestration before comparing environment behaviour.`,
       highlights
     );
   }
@@ -457,6 +724,132 @@ function buildNarrativeBlock(summary: string, highlights: readonly string[]): st
   }
 
   return `<div class="dvqr-group-narrative"><p>${escapeHtml(summary)}</p><ul>${highlights.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>`;
+}
+
+interface TopOperationalSignal {
+  readonly groupTitle: string;
+  readonly groupId: string;
+  readonly title: string;
+  readonly significance: ComparisonOperationalSignificance;
+  readonly kind: string;
+  readonly impact: string;
+}
+
+function getOperationalImpactSummary(difference: ComparisonDifference, sourceLabel: string, targetLabel: string): string {
+  const title = simplifyDifferenceTitle(difference, sourceLabel, targetLabel);
+  const normalizedTitle = title.toLowerCase();
+  const normalizedKind = difference.kind.toLowerCase();
+
+  if (normalizedTitle.includes("dvqr score")) {
+    return "Operational density changed between snapshots.";
+  }
+
+  if (normalizedTitle.includes("plugin") && normalizedTitle.includes("state changed")) {
+    return "Plugin execution availability differs between environments.";
+  }
+
+  if (normalizedTitle.includes("execution pipeline")) {
+    return "Request-time plugin sequencing or stage placement differs.";
+  }
+
+  if (normalizedTitle.includes("added in") || normalizedKind.includes("added") || difference.kind === "OnlyInTarget") {
+    return `Additional operational participation is visible in ${targetLabel}.`;
+  }
+
+  if (normalizedTitle.includes("removed in") || normalizedKind.includes("removed") || difference.kind === "OnlyInSource") {
+    return `Operational participation is only visible in ${sourceLabel}.`;
+  }
+
+  if (normalizedTitle.includes("state changed")) {
+    return "Activation or runtime participation state differs.";
+  }
+
+  if (normalizedTitle.includes("owner changed")) {
+    return "Ownership metadata differs; treat this as context, not execution causality.";
+  }
+
+  if (normalizedTitle.includes("managed") || normalizedTitle.includes("version")) {
+    return "Solution packaging evidence differs between snapshots.";
+  }
+
+  return "Review the underlying evidence before comparing runtime behaviour.";
+}
+
+function getTopOperationalSignals(model: ComparisonViewModel): readonly TopOperationalSignal[] {
+  return model.groups
+    .flatMap((group) => group.differences.map((difference) => ({
+      groupTitle: shortGroupTitle(group.title),
+      groupId: group.id,
+      title: simplifyDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel),
+      significance: difference.significance,
+      kind: difference.kind,
+      impact: getOperationalImpactSummary(difference, model.summary.sourceLabel, model.summary.targetLabel)
+    })))
+    .sort((left, right) => {
+      const rank = significanceRank(right.significance) - significanceRank(left.significance);
+      if (rank !== 0) {
+        return rank;
+      }
+
+      return left.title.localeCompare(right.title);
+    })
+    .slice(0, 5);
+}
+
+function renderTopOperationalSignals(model: ComparisonViewModel): string {
+  const signals = getTopOperationalSignals(model);
+  if (signals.length === 0) {
+    return "";
+  }
+
+  const items = signals.map((signal) => `<li data-significance="${escapeHtml(signal.significance)}">
+    <a href="#${escapeHtml(slug(signal.groupId))}">
+      <span class="dvqr-top-signal-title">${escapeHtml(signal.title)}</span>
+      <span class="dvqr-top-signal-impact">${escapeHtml(signal.impact)}</span>
+      <span class="dvqr-top-signal-meta">${escapeHtml(signal.groupTitle)} · ${escapeHtml(signal.significance)} · ${escapeHtml(signal.kind)}</span>
+    </a>
+  </li>`);
+
+  const highSignals = model.groups.reduce((count, group) => count + group.differences.filter((difference) => difference.significance === "High").length, 0);
+  const curationNote = highSignals > signals.length
+    ? `<p class="dvqr-top-signal-note">Showing ${signals.length} of ${highSignals} high-significance drift signals.</p>`
+    : "";
+
+  return `<section class="dvqr-card dvqr-top-signals" aria-label="Top operational drift signals">
+    <div class="dvqr-section-heading-row">
+      <div>
+        <h2>Top Operational Drift Signals</h2>
+        <p class="dvqr-muted">Fast orientation across the strongest evidence-backed drift signals. These are investigation cues, not remediation instructions.</p>
+        ${curationNote}
+      </div>
+    </div>
+    <ol>${items.join("")}</ol>
+  </section>`;
+}
+
+function renderGroupNavigation(model: ComparisonViewModel): string {
+  if (model.groups.length <= 1) {
+    return "";
+  }
+
+  const links = model.groups.map((group) => {
+    const highCount = group.differences.filter((difference) => difference.significance === "High").length;
+    const mediumCount = group.differences.filter((difference) => difference.significance === "Medium").length;
+    const significanceLabel = highCount > 0
+      ? `${highCount} high`
+      : mediumCount > 0
+        ? `${mediumCount} medium`
+        : `${group.differences.length} low`;
+    return `<a class="dvqr-group-nav-link" href="#${escapeHtml(slug(group.id))}">
+      <span>${escapeHtml(shortGroupTitle(group.title))} <em>(${escapeHtml(significanceLabel)})</em></span>
+      <strong>${group.differences.length}</strong>
+    </a>`;
+  });
+
+  return `<nav class="dvqr-group-nav" aria-label="Provider group navigation">
+    <span class="dvqr-group-nav-label">Jump to</span>
+    ${links.join("")}
+  </nav>`;
 }
 
 function renderGroup(
@@ -477,13 +870,15 @@ function renderGroup(
       </div>
     </div>
     ${getGroupNarrative(group, sourceLabel, targetLabel)}
-    <div class="dvqr-difference-list">${group.differences.map((difference) => renderDifference(difference, sourceLabel, targetLabel)).join("")}</div>
+    <div class="dvqr-difference-list">${group.differences.map((difference, index) => renderDifference(difference, sourceLabel, targetLabel, group.differences, index)).join("")}</div>
+    <a class="dvqr-back-top" href="#dvqr-comparison-top">Back to top ↑</a>
   </article>`;
 }
 
 function shortGroupTitle(title: string): string {
   return title
     .replace("Operational Profile Drift", "Operational Profile")
+    .replace("Plugin Step Runtime Behaviour Drift", "Plugin Runtime")
     .replace("Solution Participation Drift", "Solution Participation")
     .replace("Workflow / Automation Participation Drift", "Workflow / Automation")
     .replace("Identity Participation Drift", "Identity Participation");
@@ -514,16 +909,20 @@ export function getComparisonSurfaceMarkup(model: ComparisonViewModel, options: 
     ? `<section class="dvqr-card dvqr-empty dvqr-empty-success"><h2>✓ No operational drift detected</h2><p class="dvqr-muted">The selected providers did not return evidence-backed operational differences for the supplied snapshots.</p></section>`
     : "";
 
-  return `<main class="dvqr-comparison">
+  return `<main id="dvqr-comparison-top" class="dvqr-comparison">
     <section class="dvqr-hero">
       <div class="dvqr-hero-topline">
         <div>
           <div class="dvqr-eyebrow">${escapeHtml(getComparisonSurfaceEyebrow(model, options))}</div>
-          <h1>${escapeHtml(model.title)}</h1>
+          <div class="dvqr-title-row">
+            <h1>${escapeHtml(model.title)}</h1>
+          </div>
         </div>
         ${renderToolbar(options)}
       </div>
       <p class="dvqr-muted">DVQR observes operational drift. DVQR does not fix operational drift.</p>
+      ${renderSnapshotTrustBanner(model)}
+      ${renderComparisonSessionMetadata(model)}
       <div class="dvqr-hero-detail-grid">
         <div>
           <p><strong>Source:</strong> ${escapeHtml(model.summary.sourceLabel)} · <strong>Target:</strong> ${escapeHtml(model.summary.targetLabel)}</p>
@@ -533,9 +932,12 @@ export function getComparisonSurfaceMarkup(model: ComparisonViewModel, options: 
       </div>
     </section>
 
+    ${renderTopOperationalSignals(model)}
+
     <section>
       <h2>Operational Drift</h2>
       <p class="dvqr-section-note">Grouped, evidence-backed differences from comparison providers. These are investigation signals, not remediation instructions.</p>
+      ${renderGroupNavigation(model)}
       ${renderGroupTabs(model)}
       <div class="dvqr-group-list">${model.groups.map((group) => renderGroup(group, model.summary.sourceLabel, model.summary.targetLabel)).join("")}</div>
       ${empty}

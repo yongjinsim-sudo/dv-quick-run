@@ -6,6 +6,532 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.12.1 — Runtime Behaviour Drift, Investigation Replay & Operational Comparison Maturity
+
+This release evolves DV Quick Run’s comparison platform from:
+
+```text
+comparison foundations
+```
+
+→ into:
+
+```text
+runtime-aware operational drift investigation
+```
+
+DV Quick Run can now:
+
+* investigate runtime behaviour drift more meaningfully
+* replay operational comparisons from Snapshot Library
+* preserve investigation continuity across comparison sessions
+* compare operational subjects with stronger scope awareness
+* surface curated operational drift signals
+* coordinate comparison workflows more calmly at enterprise scale
+* preserve bounded operational semantics under dense drift scenarios
+
+This release focuses heavily on:
+
+* runtime behaviour drift
+* operational replayability
+* comparison continuity
+* evidence compression
+* operational readability
+* investigation scalability
+* calmer enterprise comparison UX
+
+The goal is not deployment validation or remediation.
+
+It is:
+
+* operational drift understanding
+* runtime-aware investigation
+* replayable operational continuity
+* explainable drift interpretation
+* bounded comparison semantics
+* scalable operational investigation workflows
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR observes operational drift.
+DVQR does not fix operational drift.
+```
+
+---
+
+## ⚙️ Plugin Step Runtime Behaviour Drift (Major)
+
+Introduced dedicated Plugin Step Runtime Behaviour Drift comparison support.
+
+DV Quick Run can now compare:
+
+* plugin step registration drift
+* plugin step enable/disable state drift
+* pipeline/stage drift
+* synchronous vs asynchronous execution drift
+* execution order drift
+* managed/unmanaged drift
+* plugin step participation additions/removals
+
+Examples include:
+
+* step enabled in DEV but disabled in SIT
+* synchronous → asynchronous execution drift
+* stage migration (Pre-operation → Post-operation)
+* missing runtime participation in target environments
+* newly introduced orchestration participation
+
+Behaviour:
+
+* runtime semantics remain observational
+* plugin registration evidence remains explainable
+* runtime interpretation remains bounded
+* drift does not imply outage certainty
+* provider semantics remain operationally contextual
+
+Results:
+
+* stronger runtime orchestration visibility
+* clearer plugin execution understanding
+* improved operational investigation continuity
+* reduced manual registration comparison effort
+
+---
+
+## 🔄 Workflow / Automation Runtime Drift Expansion
+
+Expanded Workflow / Automation comparison semantics.
+
+Workflow comparison now surfaces:
+
+* workflow additions/removals
+* activation-state drift
+* owner drift
+* orchestration participation drift
+* category/type drift
+* operational automation participation changes
+
+Examples include:
+
+* disabled workflow in target
+* orchestration ownership changes
+* automation participation drift between environments
+* missing automation participation
+
+Behaviour:
+
+* workflow comparison remains bounded
+* no deep clientdata/designer payload diffing
+* no deployment recommendation semantics
+* orchestration interpretation remains advisory-only
+
+Results:
+
+* stronger orchestration visibility
+* calmer workflow comparison semantics
+* improved automation investigation readability
+* clearer operational participation understanding
+
+---
+
+## 🧠 Curated Operational Drift Signals (NEW)
+
+Introduced Top Operational Drift Signals.
+
+Comparison surfaces now prioritise:
+
+* highest-significance operational drift
+* strongest runtime differences
+* orchestration-impacting participation changes
+* operationally meaningful comparison summaries
+
+Behaviour:
+
+* strongest signals surface first
+* lower-priority evidence remains progressively explorable
+* summaries remain provider-owned and explainable
+* operational interpretation precedes raw evidence
+
+Examples include:
+
+* managed → unmanaged drift
+* plugin execution pipeline drift
+* orchestration participation changes
+* broad operational density changes
+
+Results:
+
+* significantly improved scanability
+* reduced operational cognitive overload
+* stronger enterprise-scale comparison readability
+* calmer operational prioritisation
+
+---
+
+## 📚 Investigation Replay & Recent Comparison History (Major)
+
+Expanded Snapshot Library into a replayable operational investigation workspace.
+
+Snapshot Library now supports:
+
+* recent comparison replay
+* grouped comparison history
+* comparison replay continuity
+* comparison-history cleanup
+* comparison-scope grouping
+* bounded replay history rendering
+
+Recent comparisons are now grouped by:
+
+* operational subject
+* comparison scope
+* environment comparison stream
+
+Examples include:
+
+```text
+Account
+├─ DEV → SIT
+├─ DEV → DEV
+└─ DEV → SIT
+```
+
+Behaviour:
+
+* replay remains lightweight and explicit
+* history cleanup does not delete snapshots
+* replay history remains bounded and scrollable
+* operational continuity remains preserved
+
+Results:
+
+* dramatically improved comparison replay UX
+* stronger operational continuity
+* calmer enterprise-scale history management
+* reduced Snapshot Library clutter
+
+---
+
+### 🎭 Replayable Operational Workflow Preview (Expanded)
+
+Refined Free Preview comparison workflows to support replayable mock operational investigations.
+
+Free Preview now supports:
+
+* replayable mock comparison sessions
+* mock snapshot source/target selection
+* sample operational drift exploration
+* grouped sample replay history
+* bounded replay-history rendering
+* replay-history cleanup for sample investigations
+
+Behaviour:
+
+* mock/sample investigations remain explorable in Free Preview
+* real operational comparison continuity remains Pro-only
+* understanding remains visible before acceleration workflows
+* replay history remains grouped and operationally scoped
+
+Results:
+
+* stronger operational workflow preview semantics
+* more believable Free Preview experience
+* clearer comparison mental-model onboarding
+* improved operational continuity discoverability
+
+---
+
+## 🧭 Comparison Scope Awareness & Subject Validation (Major)
+
+Introduced explicit operational comparison scope semantics.
+
+Cross-Environment Diff now surfaces:
+
+* operational comparison subject
+* source/target comparison scope
+* scope-aware comparison session identity
+* scope-aware export naming
+
+Examples include:
+
+```text
+Cross-Environment Diff: Contact • DEV → SIT
+```
+
+DV Quick Run now also detects:
+
+* mismatched comparison subjects
+* unrelated operational comparison scopes
+
+Examples include:
+
+```text
+Appointment → Contact
+```
+
+Behaviour:
+
+* mismatched scopes surface warnings before comparison
+* users may still explicitly continue comparison
+* operational scope remains visually reinforced during investigation
+
+Results:
+
+* safer operational comparison semantics
+* reduced accidental invalid comparisons
+* clearer investigation trust
+* stronger comparison coherence
+
+---
+
+## 🏷️ Runtime Drift Title Tightening & Narrative Refinement
+
+Refined operational drift wording throughout comparison providers.
+
+Improvements include:
+
+* tighter operational titles
+* stronger actionability
+* reduced wording redundancy
+* clearer runtime drift summaries
+* calmer provider descriptions
+
+Examples:
+
+Before:
+
+```text
+Plugin step state changed: Account Create Validation
+```
+
+After:
+
+```text
+Account Create Validation plugin state changed (Enabled → Disabled)
+```
+
+Before:
+
+```text
+Power Pages Runtime Core managed state changed
+```
+
+After:
+
+```text
+Power Pages Runtime Core changed from Managed → Unmanaged
+```
+
+Behaviour:
+
+* strongest operational fact appears first
+* evidence detail remains secondary
+* summaries remain concise and scannable
+
+Results:
+
+* significantly improved operational readability
+* stronger comparison scanability
+* cleaner enterprise reporting UX
+* reduced visual fatigue
+
+---
+
+## 🧩 Progressive Disclosure & Density Handling Refinement
+
+Refined operational comparison rendering under dense drift scenarios.
+
+Added/refined:
+
+* default collapse behaviour for large result sets
+* High-significance-first expansion
+* grouped operational summaries
+* back-to-top investigation anchors
+* bounded comparison density rendering
+* calmer provider-card spacing
+
+Behaviour:
+
+* High significance drift expands automatically
+* Medium/Low drift remains collapsed by default
+* provider summaries appear before detailed evidence
+* dense comparison sessions remain navigable
+
+Results:
+
+* dramatically improved scalability
+* calmer operational investigation flow
+* reduced enterprise comparison overload
+* stronger operational readability under 30–60+ drift scenarios
+
+---
+
+## 🔒 Snapshot Trust & Comparison Session Refinement
+
+Expanded comparison session rendering and trust visibility.
+
+Comparison sessions now surface:
+
+* source snapshot identity
+* target snapshot identity
+* snapshot trust state
+* comparison generation timestamps
+* comparison continuity semantics
+
+Examples include:
+
+* Verified
+* Modified
+* Legacy / Unverified
+* Invalid
+
+Behaviour:
+
+* modified snapshots remain inspectable
+* trust state remains explicit
+* operational continuity remains explainable
+
+Results:
+
+* stronger operational trustworthiness
+* safer replay semantics
+* clearer investigation provenance
+* improved comparison transparency
+
+---
+
+## 🎨 Operational Comparison UX Maturity
+
+Refined operational comparison UX across:
+
+* Cross-Environment Diff
+* Timeline Diff
+* Snapshot Library
+* provider rendering
+* replay workflows
+* operational summaries
+
+Improvements include:
+
+* calmer operational hierarchy
+* cleaner provider grouping
+* stronger significance readability
+* improved runtime evidence compression
+* bounded scroll regions
+* cleaner replay workflow presentation
+* reduced operational visual noise
+* improved enterprise-scale comparison scanability
+* grouped replay-history scalability improvements
+
+Additional refinements:
+
+* grouped replay continuity
+* quieter replay-history cleanup semantics
+* stronger operational summary framing
+* cleaner provider-navigation labelling
+
+Results:
+
+* more mature enterprise operational UX
+* stronger psychological trust
+* calmer operational comparison experience
+* clearer runtime investigation flow
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* plugin runtime drift workflows
+* workflow/automation runtime drift
+* replay comparison workflows
+* grouped recent comparison history
+* comparison-history removal
+* comparison-scope mismatch warnings
+* scope-aware export naming
+* provider significance rendering
+* dense comparison rendering
+* default collapse behaviour
+* top operational drift signal rendering
+* back-to-top navigation
+* snapshot trust rendering
+
+Validated against:
+
+* DEV/SIT orchestration drift
+* plugin registration drift
+* managed/unmanaged solution drift
+* workflow participation drift
+* mocked operational baselines
+* historical replay workflows
+* dense enterprise-scale comparison scenarios
+
+No regression in:
+
+* Snapshot Library
+* Timeline Diff
+* Cross-Environment Diff
+* Operational Profiles
+* Access Context
+* Result Viewer
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* `$batch` execution
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DV Quick Run operational comparison invariants:
+
+* operational drift remains observational
+* runtime participation does not imply root cause
+* providers own operational comparison semantics
+* strongest operational meaning surfaces first
+* evidence remains inspectable and explainable
+* operational comparison remains bounded
+* replay workflows preserve operational continuity
+* dense operational evidence must remain navigable
+* understanding remains available before acceleration
+
+Operational comparison continues to prioritise:
+
+```text
+understanding
+before
+automation
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* compare runtime plugin behaviour operationally
+* replay operational investigations from Snapshot Library
+* preserve comparison continuity across operational workflows
+* detect mismatched comparison subjects safely
+* surface curated runtime drift signals
+* compress dense operational evidence more calmly
+* preserve enterprise-scale comparison readability
+* coordinate operational replay workflows more coherently
+
+This release establishes the foundation for:
+
+* plugin image drift comparison
+* secure/unsecure configuration participation drift
+* environment variable drift
+* connection reference participation drift
+* richer orchestration runtime comparison
+* deeper operational replay workflows
+* enterprise-scale operational investigation continuity
+
+---
+
 # DV Quick Run v0.12.0 — Cross-Environment Diff, Snapshot Library & Operational Comparison Foundations
 
 This release introduces the first full operational comparison workflow inside DV Quick Run.

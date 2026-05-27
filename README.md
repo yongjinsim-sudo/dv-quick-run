@@ -58,21 +58,20 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.12.0
+## 🆕 What's New in v0.12.1
 
-v0.12.0 introduces DV Quick Run’s first operational comparison workflow foundations.
+v0.12.1 matures DV Quick Run’s comparison platform from operational comparison foundations into runtime-aware operational drift investigation.
 
 Highlights include:
 
-* **Operational Snapshot Library** for coordinating saved investigation snapshots
-* **Cross-Environment Diff** for comparing operational drift across environments
-* **Timeline Diff** for comparing snapshots from the same environment over time
-* provider-backed drift groups for Operational Profile, Solution Participation, Workflow / Automation, and Identity Participation evidence
-* clearer Pro Preview vs Pro capability wording
-* locked continuation teasers for future evidence-query workflows
-* Snapshot Library as the central console for comparison workflows
-* GitHub Discussions links for feedback, bug reports, workflow ideas, and roadmap discussion
-* stronger open-core boundaries around comparison acceleration
+* **Plugin Step Runtime Behaviour Drift** for comparing plugin registration, state, stage, mode, execution order, and participation drift
+* **Workflow / Automation Runtime Drift** for activation, owner, and orchestration participation changes
+* **Top Operational Drift Signals** for fast orientation across the strongest evidence-backed differences
+* **Replayable Recent Comparisons** in Snapshot Library, grouped by operational subject and bounded for calmer history management
+* **Comparison Scope Awareness** so reports and exports clearly identify the entity or operational subject being compared
+* **Different-subject guardrails** to warn before comparing unrelated operational subjects such as Contact ↔ Care Plan
+* **Free Preview replay improvements** so sample/mock comparison workflows remain explorable without unlocking real snapshot workflows
+* tighter runtime drift titles, calmer summaries, back-to-top navigation, grouped evidence, and stronger dense-report readability
 
 DV Quick Run continues to prioritise:
 
@@ -321,7 +320,12 @@ It supports:
 * grouping snapshots by environment and subject
 * latest-vs-previous snapshot comparison
 * snapshot search and filtering
+* grouped recent comparison history
+* replayable recent comparisons
+* bounded comparison-history rendering
+* comparison-history cleanup without deleting snapshots
 * mock snapshot exploration in Free / Pro Preview mode
+* replayable sample/mock comparison workflows in Free Preview
 * real snapshot workflows in Pro
 
 DV Quick Run automatically chooses the comparison mode:
@@ -334,9 +338,18 @@ different environments → Cross-Environment Diff
 Comparison surfaces can show provider-backed operational drift across:
 
 * Operational Profiles
+* Plugin Step Runtime Behaviour
 * Solution Participation
 * Workflow / Automation Participation
 * Identity Participation
+
+Comparison reports now preserve scope awareness so exported artifacts clearly identify the operational subject being compared, for example:
+
+```text
+Cross-Environment Diff: Contact • DEV → SIT
+```
+
+When snapshots represent different operational subjects, DV Quick Run warns before continuing so users do not accidentally treat unrelated subjects as meaningful operational drift.
 
 The comparison model is intentionally observational:
 
@@ -353,8 +366,10 @@ It is designed to help you understand:
 * where operational density shifted
 * which providers contributed evidence
 * which drift signals may deserve follow-up investigation
+* whether runtime plugin or automation participation differs between snapshots
+* whether a comparison is scope-aligned before treating drift as meaningful
 
-Free users can explore mock snapshots and sample drift. Pro unlocks real snapshot import, management, comparison, export, and snapshot continuity workflows.
+Free users can explore mock snapshots, replay sample comparison workflows, and inspect sample drift. Pro unlocks real snapshot import, management, comparison, export, replay, and snapshot continuity workflows.
 
 ---
 
@@ -587,6 +602,8 @@ It detects or guards against risky situations such as:
 * causal claims from solution, ownership, access, or actor participation
 * treating operational comparison as deployment authority
 * treating snapshot evidence as remediation instruction
+* treating mismatched comparison subjects as equivalent operational drift without explicit user awareness
+* replay-history cleanup deleting underlying snapshots
 * hidden cross-environment scans or automatic drift verification
 
 Execution-capable workflows are designed around:

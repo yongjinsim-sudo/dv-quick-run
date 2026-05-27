@@ -24,6 +24,18 @@ export interface ComparisonEvidenceSnapshot<TPayload = unknown> {
   readonly evidence: TPayload;
 }
 
+export type ComparisonSnapshotTrustState =
+  | "Verified"
+  | "Modified"
+  | "Legacy / Unverified"
+  | "Invalid";
+
+export interface ComparisonSnapshotIntegrity {
+  readonly algorithm: "sha256";
+  readonly canonicalization: "dvqr-snapshot-core-v1";
+  readonly contentHash: string;
+}
+
 export interface OperationalComparisonSnapshotDocument {
   readonly kind: "dvqr-operational-comparison-snapshot";
   readonly schemaVersion?: "1.0";
@@ -32,10 +44,12 @@ export interface OperationalComparisonSnapshotDocument {
   readonly capturedAtIso: string;
   readonly sourceFeature: string;
   readonly evidenceSnapshots: readonly ComparisonEvidenceSnapshot[];
+  readonly integrity?: ComparisonSnapshotIntegrity;
 }
 
 export interface ComparisonSnapshotValidationResult {
   readonly valid: boolean;
   readonly reason?: string;
+  readonly trustState: ComparisonSnapshotTrustState;
   readonly snapshots: readonly ComparisonEvidenceSnapshot[];
 }
