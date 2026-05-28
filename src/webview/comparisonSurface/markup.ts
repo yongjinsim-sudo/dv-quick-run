@@ -74,6 +74,51 @@ function getComparedSubject(model: ComparisonViewModel): string {
   return `${cleanSubjectLabel(model.summary.sourceLabel)} → ${cleanSubjectLabel(model.summary.targetLabel)}`;
 }
 
+function getComparisonDensityLevel(model: ComparisonViewModel): "quiet" | "focused" | "dense" | "very-dense" {
+  if (model.summary.differenceCount >= 75 || model.groups.some((group) => group.differences.length >= 50)) {
+    return "very-dense";
+  }
+
+  if (model.summary.differenceCount >= 40 || model.groups.some((group) => group.differences.length >= 30)) {
+    return "dense";
+  }
+
+  if (model.summary.differenceCount >= 8) {
+    return "focused";
+  }
+
+  return "quiet";
+}
+
+function renderComparisonPostureNote(model: ComparisonViewModel): string {
+  const density = getComparisonDensityLevel(model);
+  if (density === "quiet") {
+    return `<div class="dvqr-investigation-posture dvqr-investigation-posture-quiet">
+      <strong>Quiet comparison surface</strong>
+      <span>Few operational drift signals were observed. Review the available evidence, but avoid inferring parity beyond the selected providers and snapshots.</span>
+    </div>`;
+  }
+
+  if (density === "very-dense") {
+    return `<div class="dvqr-investigation-posture dvqr-investigation-posture-dense">
+      <strong>Very dense grouped operational surface</strong>
+      <span>${model.summary.differenceCount} drift signals across ${model.summary.providerCount} provider${model.summary.providerCount === 1 ? "" : "s"}. DVQR groups lower-priority platform and matching details so the comparison remains investigable rather than becoming a raw diff wall.</span>
+    </div>`;
+  }
+
+  if (density === "dense") {
+    return `<div class="dvqr-investigation-posture dvqr-investigation-posture-dense">
+      <strong>Grouped operational surface</strong>
+      <span>${model.summary.differenceCount} drift signals were observed. Start with top signals and provider summaries; lower-priority platform and matching details are grouped for readability.</span>
+    </div>`;
+  }
+
+  return `<div class="dvqr-investigation-posture">
+    <strong>Focused operational surface</strong>
+    <span>Multiple drift signals were observed. Use grouped provider sections to preserve operational context before drilling into individual evidence.</span>
+  </div>`;
+}
+
 function renderSummary(model: ComparisonViewModel): string {
   const items = [
     { label: "High significance", value: String(model.summary.highCount) },
@@ -92,6 +137,23 @@ function renderSummary(model: ComparisonViewModel): string {
 }
 
 
+
+function formatSnapshotLineage(origin: string | undefined, createdAtIso: string | undefined): string | undefined {
+  if (!origin) {
+    return undefined;
+  }
+
+  const label = origin === "captured"
+    ? "Captured lineage"
+    : origin === "derivedComparison"
+      ? "Derived comparison lineage"
+      : origin === "imported"
+        ? "Imported lineage"
+        : "Legacy lineage";
+  const createdAt = createdAtIso ? formatCapturedAt(createdAtIso) : undefined;
+  return createdAt ? `${label}: ${createdAt}` : label;
+}
+
 function renderComparisonSessionMetadata(model: ComparisonViewModel): string {
   const session = model.session;
   if (!session) {
@@ -100,6 +162,8 @@ function renderComparisonSessionMetadata(model: ComparisonViewModel): string {
 
   const sourceTrust = session.sourceSnapshot.trustState ? describeSnapshotTrustState(session.sourceSnapshot.trustState).label : "Not available";
   const targetTrust = session.targetSnapshot.trustState ? describeSnapshotTrustState(session.targetSnapshot.trustState).label : "Not available";
+  const sourceLineage = formatSnapshotLineage(session.sourceSnapshot.lineageOrigin, session.sourceSnapshot.lineageCreatedAtIso);
+  const targetLineage = formatSnapshotLineage(session.targetSnapshot.lineageOrigin, session.targetSnapshot.lineageCreatedAtIso);
   const scopeNote = session.unalignedSubjects
     ? `<p class="dvqr-session-warning">Unaligned comparison scope: source and target snapshots represent different operational subjects.</p>`
     : "";
@@ -112,12 +176,12 @@ function renderComparisonSessionMetadata(model: ComparisonViewModel): string {
       <div class="dvqr-session-item">
         <span class="dvqr-value-label">Source snapshot</span>
         <strong>${escapeHtml(session.sourceSnapshot.label)}</strong>
-        <span>${escapeHtml(formatCapturedAt(session.sourceSnapshot.capturedAtIso))} · ${escapeHtml(sourceTrust)}</span>
+        <span>${escapeHtml(formatCapturedAt(session.sourceSnapshot.capturedAtIso))} · ${escapeHtml(sourceTrust)}${sourceLineage ? ` · ${escapeHtml(sourceLineage)}` : ""}</span>
       </div>
       <div class="dvqr-session-item">
         <span class="dvqr-value-label">Target snapshot</span>
         <strong>${escapeHtml(session.targetSnapshot.label)}</strong>
-        <span>${escapeHtml(formatCapturedAt(session.targetSnapshot.capturedAtIso))} · ${escapeHtml(targetTrust)}</span>
+        <span>${escapeHtml(formatCapturedAt(session.targetSnapshot.capturedAtIso))} · ${escapeHtml(targetTrust)}${targetLineage ? ` · ${escapeHtml(targetLineage)}` : ""}</span>
       </div>
     </div>
   </section>`;
@@ -171,14 +235,16 @@ function renderInlineSnapshotTrustIcon(state: ComparisonSnapshotTrustStatus | un
 
 function renderSnapshotTrustBanner(model: ComparisonViewModel): string {
   const overallTrust = getOverallSnapshotTrustStatus(model);
-  if (!overallTrust || overallTrust === "Verified" || overallTrust === "Legacy / Unverified") {
+  if (!overallTrust || overallTrust === "Verified") {
     return "";
   }
 
   const trust = describeSnapshotTrustState(overallTrust);
   const message = overallTrust === "Modified"
     ? "One or more snapshots appear to have changed after capture. DVQR keeps the comparison inspectable, but treat drift evidence as trust-limited until the snapshot is reviewed."
-    : "One or more snapshots have invalid integrity metadata. Use this comparison for inspection only until trusted snapshot evidence is available.";
+    : overallTrust === "Legacy / Unverified"
+      ? "One or more snapshots were captured before DVQR integrity metadata was available. DVQR keeps the comparison inspectable, but replay trust is limited."
+      : "One or more snapshots have invalid integrity metadata. Use this comparison for inspection only until trusted snapshot evidence is available.";
 
   return `<div class="dvqr-snapshot-trust-banner dvqr-snapshot-trust-banner-${escapeHtml(trust.kind)}" role="note">
     <strong>${escapeHtml(trust.label)} snapshot evidence</strong>
@@ -303,10 +369,21 @@ function describeDirection(source: string | undefined, target: string | undefine
 function describeBandMovement(sourceValue: string | undefined, targetValue: string | undefined): string {
   const rank = (value: string | undefined): number | undefined => {
     const normalized = (value ?? "").toLowerCase();
-    if (normalized.includes("none") || normalized.includes("no evidence")) return 0;
-    if (normalized.includes("low")) return 1;
-    if (normalized.includes("moderate")) return 2;
-    if (normalized.includes("high")) return 3;
+    if (normalized.includes("none") || normalized.includes("no evidence")) {
+      return 0;
+    }
+
+    if (normalized.includes("low")) {
+      return 1;
+    }
+
+    if (normalized.includes("moderate")) {
+      return 2;
+    }
+
+    if (normalized.includes("high")) {
+      return 3;
+    }
     return undefined;
   };
 
@@ -320,8 +397,12 @@ function describeBandMovement(sourceValue: string | undefined, targetValue: stri
 }
 
 function extractOnlyInName(title: string): string {
-  const parts = title.split(":");
-  return (parts.length > 1 ? parts.slice(1).join(":") : title)
+  const withKnownPrefixRemoved = title.replace(
+    /^(plugin step|workflow|flow|identity|team participation|user participation|business unit participation|solution participation|operational profile)\s*:\s*/i,
+    ""
+  );
+
+  return withKnownPrefixRemoved
     .replace(/\s+present only in (source|target)$/i, "")
     .replace(/\s+changed from .+$/i, "")
     .trim();
@@ -648,6 +729,32 @@ function renderDifference(
   </details>`;
 }
 
+function renderNearbyOperationalDrift(group: ComparisonDriftGroup): string {
+  const nearby = group.nearbyOperationalDrift ?? [];
+  if (!nearby.length) {
+    return "";
+  }
+
+  const items = nearby.map((item) => {
+    const evidence = item.evidence.length > 0
+      ? `<ul>${item.evidence.map((evidence) => `<li><strong>${escapeHtml(evidence.label)}</strong>${evidence.value ? ` — ${escapeHtml(evidence.value)}` : ""}</li>`).join("")}</ul>`
+      : "";
+
+    return `<li>
+      <a href="#${escapeHtml(slug(item.relatedGroupId))}">${escapeHtml(item.title)}</a>
+      <span>${escapeHtml(item.summary)}</span>
+      <em>${escapeHtml(item.significance)} · ${item.differenceCount} drift signal${item.differenceCount === 1 ? "" : "s"}</em>
+      ${evidence}
+    </li>`;
+  });
+
+  return `<details class="dvqr-nearby-drift">
+    <summary>Other observed drift surfaces <span>${nearby.length}</span></summary>
+    <p>Additional drift surfaces observed in this bounded comparison only. This does not imply chronology, causality, remediation, or root-cause certainty.</p>
+    <ol>${items.join("")}</ol>
+  </details>`;
+}
+
 function getProviderInsight(group: ComparisonDriftGroup): string {
   const highCount = group.differences.filter((difference) => difference.significance === "High").length;
   const mediumCount = group.differences.filter((difference) => difference.significance === "Medium").length;
@@ -673,12 +780,183 @@ function getProviderInsight(group: ComparisonDriftGroup): string {
   return `${group.differences.length} drift signal${group.differences.length === 1 ? "" : "s"}${parts.length > 0 ? ` · ${parts.join(", ")}` : ""}`;
 }
 
+
+
+function getIdentitySubjectFromDifference(difference: ComparisonDifference): string | undefined {
+  const subjectEvidence = difference.evidence.find((item) => item.label === "Identity subject")?.value?.toLowerCase();
+  if (subjectEvidence?.includes("applicationuser") || subjectEvidence?.includes("application user")) {
+    return "Application users";
+  }
+  if (subjectEvidence?.includes("businessunit") || subjectEvidence?.includes("business unit")) {
+    return "Business units";
+  }
+  if (subjectEvidence?.includes("team")) {
+    return "Teams";
+  }
+  if (subjectEvidence?.includes("role")) {
+    return "Roles";
+  }
+  if (subjectEvidence?.includes("user")) {
+    return "Users";
+  }
+
+  const title = difference.title.toLowerCase();
+  if (title.includes("application user")) {
+    return "Application users";
+  }
+  if (title.includes("business unit")) {
+    return "Business units";
+  }
+  if (title.includes("team participation")) {
+    return "Teams";
+  }
+  if (title.includes("role participation")) {
+    return "Roles";
+  }
+  if (title.includes("user participation")) {
+    return "Users";
+  }
+
+  return undefined;
+}
+
+function renderCountBreakdown(counts: ReadonlyMap<string, number>): string {
+  return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .map(([label, count]) => `${label}: ${count}`)
+    .join(" · ");
+}
+
+function getIdentityTypeBreakdown(group: ComparisonDriftGroup): string | undefined {
+  if (group.id !== "identity-participation-drift") {
+    return undefined;
+  }
+
+  const counts = new Map<string, number>();
+  for (const difference of group.differences) {
+    const subject = getIdentitySubjectFromDifference(difference) ?? "Additional identity drift signals";
+    counts.set(subject, (counts.get(subject) ?? 0) + 1);
+  }
+
+  return counts.size > 0 ? renderCountBreakdown(counts) : undefined;
+}
+
+function getParticipationDensityHighlights(group: ComparisonDriftGroup): readonly string[] {
+  if (group.id !== "identity-participation-drift") {
+    return [];
+  }
+
+  return group.differences
+    .flatMap((difference) => difference.evidence
+      .filter((item) => item.label === "Participation density")
+      .map((item) => `${simplifyDifferenceTitle(difference, "source", "target")} — ${item.value}`))
+    .slice(0, 3);
+}
+
+function getSolutionClassification(difference: ComparisonDifference): string {
+  const classification = difference.evidence.find((item) => item.label === "Solution classification")?.value;
+  if (classification) {
+    return classification.includes("→") ? "Mixed solution classification" : classification;
+  }
+
+  const value = `${difference.title} ${difference.sourceValue ?? ""} ${difference.targetValue ?? ""}`.toLowerCase();
+  if (/\b(bkp|backup|archived?|archive)\b/u.test(value)) {
+    return "Backup / archived solution";
+  }
+  if (/\b(patch|cumulative|hotfix)\b/u.test(value)) {
+    return "Platform patch layer";
+  }
+  if (value.includes("msdyn") || value.includes("microsoftdynamics") || value.includes("powerpages") || value.includes("power pages") || value.includes("dynamics 365") || value.includes("system solution") || value.includes("default solution")) {
+    return "Microsoft platform solution";
+  }
+  if (value.includes("syncagent") || value.includes("sync admin")) {
+    return "Infrastructure solution";
+  }
+
+  return "Custom solution";
+}
+
+function getSolutionClassificationBreakdown(group: ComparisonDriftGroup): string | undefined {
+  if (group.id !== "solution-participation-drift") {
+    return undefined;
+  }
+
+  const counts = new Map<string, number>();
+  for (const difference of group.differences) {
+    const classification = getSolutionClassification(difference);
+    counts.set(classification, (counts.get(classification) ?? 0) + 1);
+  }
+
+  return counts.size > 0 ? renderCountBreakdown(counts) : undefined;
+}
+
+function renderGroupErgonomicsSummary(group: ComparisonDriftGroup): string {
+  const identityBreakdown = getIdentityTypeBreakdown(group);
+  const densityHighlights = getParticipationDensityHighlights(group);
+  const solutionBreakdown = getSolutionClassificationBreakdown(group);
+
+  if (!identityBreakdown && densityHighlights.length === 0 && !solutionBreakdown) {
+    return "";
+  }
+
+  const items = [
+    identityBreakdown ? `<li><strong>Identity drift by type</strong> — ${escapeHtml(identityBreakdown)}</li>` : undefined,
+    ...densityHighlights.map((item) => `<li><strong>Participation density</strong> — ${escapeHtml(item)}</li>`),
+    solutionBreakdown ? `<li><strong>Solution classification</strong> — ${escapeHtml(solutionBreakdown)}</li>` : undefined
+  ].filter((item): item is string => Boolean(item));
+
+  return `<div class="dvqr-ergonomics-summary"><p>Density-first orientation keeps evidence visible while reducing scan noise.</p><ul>${items.join("")}</ul></div>`;
+}
+
+function getGroupDensityLevel(group: ComparisonDriftGroup): "normal" | "dense" | "very-dense" {
+  if (group.differences.length >= 30) {
+    return "very-dense";
+  }
+
+  if (group.differences.length >= 12) {
+    return "dense";
+  }
+
+  return "normal";
+}
+
+function renderGroupDensityNote(group: ComparisonDriftGroup): string {
+  const level = getGroupDensityLevel(group);
+  if (level === "normal") {
+    return "";
+  }
+
+  const mediumCount = group.differences.filter((difference) => difference.significance === "Medium").length;
+  const lowCount = group.differences.filter((difference) => difference.significance === "Low").length;
+  const highCount = group.differences.filter((difference) => difference.significance === "High").length;
+  const countParts = [
+    highCount > 0 ? `${highCount} high` : undefined,
+    mediumCount > 0 ? `${mediumCount} medium` : undefined,
+    lowCount > 0 ? `${lowCount} low` : undefined
+  ].filter((part): part is string => Boolean(part));
+  const label = level === "very-dense" ? "Large drift surface" : "Dense drift surface";
+
+  return `<div class="dvqr-density-note">
+    <strong>${escapeHtml(label)}</strong>
+    <span>${group.differences.length} drift signal${group.differences.length === 1 ? "" : "s"}${countParts.length > 0 ? ` · ${escapeHtml(countParts.join(", "))}` : ""}. Summary-first rendering is intentional; expand individual evidence only where it helps the investigation.</span>
+  </div>`;
+}
+
 function getGroupNarrative(group: ComparisonDriftGroup, sourceLabel: string, targetLabel: string): string {
-  const high = group.differences.filter((difference) => difference.significance === "High");
-  const strongest = high.length > 0 ? high : group.differences.slice(0, 3);
+  const strongest = [...group.differences].sort((left, right) => {
+    const priority = getSignalPriority(right) - getSignalPriority(left);
+    if (priority !== 0) {
+      return priority;
+    }
+    const significance = significanceRank(right.significance) - significanceRank(left.significance);
+    if (significance !== 0) {
+      return significance;
+    }
+    return left.title.localeCompare(right.title);
+  });
   const highlights = strongest
     .slice(0, 3)
-    .map((difference) => simplifyDifferenceTitle(difference, sourceLabel, targetLabel));
+    .map((difference) => getParticipationDensitySignalTitle(difference, sourceLabel, targetLabel) ?? simplifyDifferenceTitle(difference, sourceLabel, targetLabel));
 
   if (group.id === "operational-profile-drift") {
     return buildNarrativeBlock(
@@ -733,6 +1011,54 @@ interface TopOperationalSignal {
   readonly significance: ComparisonOperationalSignificance;
   readonly kind: string;
   readonly impact: string;
+  readonly priority: number;
+}
+
+function parseParticipationDensity(value: string | undefined): { readonly source: number; readonly target: number } | undefined {
+  const match = value?.match(/(\d+)\s*→\s*(\d+)/u);
+  if (!match?.[1] || !match[2]) {
+    return undefined;
+  }
+
+  return { source: Number.parseInt(match[1], 10), target: Number.parseInt(match[2], 10) };
+}
+
+function getParticipationDensitySignalTitle(difference: ComparisonDifference, sourceLabel: string, targetLabel: string): string | undefined {
+  const density = difference.evidence.find((item) => item.label === "Participation density")?.value;
+  const parsed = parseParticipationDensity(density);
+  if (!parsed) {
+    return undefined;
+  }
+
+  const title = simplifyDifferenceTitle(difference, sourceLabel, targetLabel);
+  const direction = parsed.target > parsed.source ? "expanded" : parsed.target < parsed.source ? "reduced" : "changed";
+  return `${title} participation footprint ${direction}: ${parsed.source} → ${parsed.target}`;
+}
+
+function getSignalPriority(difference: ComparisonDifference): number {
+  const hasDensity = difference.evidence.some((item) => item.label === "Participation density");
+  if (hasDensity) {
+    return 100;
+  }
+
+  const classification = difference.evidence.find((item) => item.label === "Solution classification")?.value;
+  if (classification === "Custom solution" || classification === "Infrastructure solution") {
+    return 80;
+  }
+
+  if (difference.kind === "Assignment Drift" || difference.kind === "Inheritance Drift") {
+    return 70;
+  }
+
+  if (classification === "Backup / archived solution") {
+    return 45;
+  }
+
+  if (classification === "Platform patch layer" || classification === "Microsoft platform solution") {
+    return 20;
+  }
+
+  return 50;
 }
 
 function getOperationalImpactSummary(difference: ComparisonDifference, sourceLabel: string, targetLabel: string): string {
@@ -775,25 +1101,71 @@ function getOperationalImpactSummary(difference: ComparisonDifference, sourceLab
   return "Review the underlying evidence before comparing runtime behaviour.";
 }
 
+function normalizeSignalKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gu, "guid")
+    .replace(/\b(dev|sit|uat|test|tst|perf|preprod|pre-prod|prod|production|sandbox|sbx)\b/gu, "env")
+    .replace(/[^a-z0-9]+/gu, " ")
+    .trim();
+}
+
 function getTopOperationalSignals(model: ComparisonViewModel): readonly TopOperationalSignal[] {
-  return model.groups
+  const sorted = model.groups
     .flatMap((group) => group.differences.map((difference) => ({
       groupTitle: shortGroupTitle(group.title),
       groupId: group.id,
-      title: simplifyDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel),
+      title: getParticipationDensitySignalTitle(difference, model.summary.sourceLabel, model.summary.targetLabel)
+        ?? simplifyDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel),
       significance: difference.significance,
       kind: difference.kind,
-      impact: getOperationalImpactSummary(difference, model.summary.sourceLabel, model.summary.targetLabel)
+      impact: getOperationalImpactSummary(difference, model.summary.sourceLabel, model.summary.targetLabel),
+      priority: getSignalPriority(difference)
     })))
     .sort((left, right) => {
+      const priority = right.priority - left.priority;
+      if (priority !== 0) {
+        return priority;
+      }
+
       const rank = significanceRank(right.significance) - significanceRank(left.significance);
       if (rank !== 0) {
         return rank;
       }
 
+      const groupRank = shortGroupTitle(left.groupTitle).localeCompare(shortGroupTitle(right.groupTitle));
+      if (groupRank !== 0) {
+        return groupRank;
+      }
+
       return left.title.localeCompare(right.title);
-    })
-    .slice(0, 5);
+    });
+
+  const selected: TopOperationalSignal[] = [];
+  const seen = new Set<string>();
+  const perGroup = new Map<string, number>();
+
+  for (const signal of sorted) {
+    const key = `${signal.groupId}:${normalizeSignalKey(signal.title)}`;
+    if (seen.has(key)) {
+      continue;
+    }
+
+    const groupCount = perGroup.get(signal.groupId) ?? 0;
+    if (groupCount >= 3 && selected.length < 4) {
+      continue;
+    }
+
+    seen.add(key);
+    perGroup.set(signal.groupId, groupCount + 1);
+    selected.push(signal);
+
+    if (selected.length >= 5) {
+      break;
+    }
+  }
+
+  return selected;
 }
 
 function renderTopOperationalSignals(model: ComparisonViewModel): string {
@@ -810,10 +1182,13 @@ function renderTopOperationalSignals(model: ComparisonViewModel): string {
     </a>
   </li>`);
 
+  const totalSignals = model.summary.differenceCount;
   const highSignals = model.groups.reduce((count, group) => count + group.differences.filter((difference) => difference.significance === "High").length, 0);
   const curationNote = highSignals > signals.length
-    ? `<p class="dvqr-top-signal-note">Showing ${signals.length} of ${highSignals} high-significance drift signals.</p>`
-    : "";
+    ? `<p class="dvqr-top-signal-note">Showing ${signals.length} of ${highSignals} high-significance drift signals. Additional signals remain available in provider sections.</p>`
+    : totalSignals > signals.length
+      ? `<p class="dvqr-top-signal-note">Showing the strongest ${signals.length} of ${totalSignals} drift signals. Provider sections keep the full evidence available.</p>`
+      : "";
 
   return `<section class="dvqr-card dvqr-top-signals" aria-label="Top operational drift signals">
     <div class="dvqr-section-heading-row">
@@ -852,6 +1227,483 @@ function renderGroupNavigation(model: ComparisonViewModel): string {
   </nav>`;
 }
 
+function getVisibleDifferenceLimit(group: ComparisonDriftGroup): number {
+  const level = getGroupDensityLevel(group);
+  if (level === "very-dense") {
+    return 12;
+  }
+
+  if (level === "dense") {
+    return 16;
+  }
+
+  return group.differences.length;
+}
+
+function getOrderedGroupDifferences(group: ComparisonDriftGroup): readonly ComparisonDifference[] {
+  return [...group.differences].sort((left, right) => {
+    const priority = getSignalPriority(right) - getSignalPriority(left);
+    if (priority !== 0) {
+      return priority;
+    }
+
+    const significance = significanceRank(right.significance) - significanceRank(left.significance);
+    if (significance !== 0) {
+      return significance;
+    }
+
+    return left.title.localeCompare(right.title);
+  });
+}
+
+
+
+function isMinorIdentityMatchingSignal(difference: ComparisonDifference): boolean {
+  if (difference.kind !== "Changed") {
+    return false;
+  }
+
+  if (difference.evidence.some((item) => item.label === "Participation density")) {
+    return false;
+  }
+
+  const title = difference.title.toLowerCase();
+  const confidenceBasedTitle = title.startsWith("likely corresponding identity:")
+    || title.startsWith("possible corresponding identity:");
+  if (!confidenceBasedTitle) {
+    return false;
+  }
+
+  const subject = getIdentitySubjectFromDifference(difference);
+  return subject === "Teams" || subject === "Roles" || subject === undefined;
+}
+
+function getMinorIdentityGroupedCardIntro(count: number): string {
+  return `${count} lower-priority team/role matching signal${count === 1 ? "" : "s"} observed. These are grouped to reduce repetitive identity matching noise while preserving evidence continuity.`;
+}
+
+function getMinorIdentityGroupedDirectionSummary(differences: readonly ComparisonDifference[]): string {
+  const likely = differences.filter((difference) => difference.title.toLowerCase().startsWith("likely corresponding identity:")).length;
+  const possible = differences.filter((difference) => difference.title.toLowerCase().startsWith("possible corresponding identity:")).length;
+  const parts = [
+    likely > 0 ? `${likely} likely match${likely === 1 ? "" : "es"}` : undefined,
+    possible > 0 ? `${possible} possible match${possible === 1 ? "" : "es"}` : undefined
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(" · ") : "Confidence-based team/role matching signals";
+}
+
+function renderGroupedIdentityEvidenceSummary(
+  groupedDifferences: readonly ComparisonDifference[],
+  totalDifferenceCount: number
+): string {
+  const counts = new Map<string, number>();
+  for (const difference of groupedDifferences) {
+    const subject = getIdentitySubjectFromDifference(difference) ?? "Additional identity drift signals";
+    counts.set(subject, (counts.get(subject) ?? 0) + 1);
+  }
+
+  const rows: readonly [string, string][] = [
+    ["Grouped classification", `${groupedDifferences.length} of ${totalDifferenceCount} identity drift signals`],
+    ["Classification rationale", "Grouped because these are lower-priority confidence-based team/role matching signals without participation-density evidence."],
+    ["Match posture", getMinorIdentityGroupedDirectionSummary(groupedDifferences)],
+    ["Identity subjects", renderCountBreakdown(counts)],
+    ["Operational priority", "Lower-priority topology matching context by default; review when team or role equivalence is part of the investigation."],
+    ["Evidence continuity", "Representative signals are listed below; full per-signal evidence remains available in JSON/HTML export."]
+  ];
+
+  return `<div class="dvqr-grouped-evidence-summary">${rows
+    .map(([label, value]) => `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`)
+    .join("")}</div>`;
+}
+
+function renderGroupedIdentityDetails(
+  differences: readonly ComparisonDifference[],
+  sourceLabel: string,
+  targetLabel: string,
+  totalDifferenceCount: number
+): string {
+  if (differences.length === 0) {
+    return "";
+  }
+
+  const preview = differences
+    .slice(0, 8)
+    .map((difference) => `<li><span class="dvqr-classified-drift-main"><strong>${escapeHtml(simplifyDifferenceTitle(difference, sourceLabel, targetLabel))}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span><span class="dvqr-evidence-continuation-pill" title="Representative grouped identity evidence remains available in the full JSON/HTML export.">Query evidence ›</span></li>`)
+    .join("");
+  const overflow = differences.length > 8
+    ? `<li class="dvqr-classified-drift-overflow"><em>${differences.length - 8} additional signal${differences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.</em></li>`
+    : "";
+
+  return `<details class="dvqr-deferred-differences dvqr-classified-drift-card">
+        <summary>Minor identity matching signals (${differences.length})</summary>
+        <p>${escapeHtml(getMinorIdentityGroupedCardIntro(differences.length))}</p>
+        ${renderGroupedIdentityEvidenceSummary(differences, totalDifferenceCount)}
+        <ul class="dvqr-classified-drift-list">${preview}${overflow}</ul>
+      </details>`;
+}
+
+function getProviderMinorGroupingLabel(group: ComparisonDriftGroup): string {
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return "Minor plugin configuration signals";
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return "Minor workflow metadata signals";
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return "Minor operational profile detail signals";
+  }
+
+  return "Additional provider detail signals";
+}
+
+function getProviderMinorGroupingIntro(group: ComparisonDriftGroup, count: number): string {
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return `${count} lower-priority plugin configuration signal${count === 1 ? "" : "s"} observed. These are grouped to keep runtime-behaviour drift focused on execution-impacting changes while preserving evidence continuity.`;
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return `${count} lower-priority workflow metadata signal${count === 1 ? "" : "s"} observed. These are grouped so activation, presence, and orchestration participation remain easier to scan.`;
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return `${count} lower-priority operational profile detail signal${count === 1 ? "" : "s"} observed. These are grouped so headline density shifts remain prominent.`;
+  }
+
+  return `${count} lower-priority provider signal${count === 1 ? "" : "s"} observed. These are grouped to preserve readability while keeping evidence inspectable.`;
+}
+
+function getProviderMinorGroupingRationale(group: ComparisonDriftGroup): string {
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return "Grouped because these are plugin configuration or metadata changes rather than added/removed steps or state changes.";
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return "Grouped because these are lower-priority workflow metadata changes rather than activation or presence drift.";
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return "Grouped because these are profile dimension detail changes rather than the primary operational-density score shift.";
+  }
+
+  return "Grouped because these are lower-priority provider details in a dense comparison surface.";
+}
+
+function getProviderMinorDirectionSummary(differences: readonly ComparisonDifference[]): string {
+  const counts = new Map<string, number>();
+  for (const difference of differences) {
+    counts.set(difference.kind, (counts.get(difference.kind) ?? 0) + 1);
+  }
+
+  return counts.size > 0 ? renderCountBreakdown(counts) : "Grouped provider detail signals";
+}
+
+function isMinorProviderDetailSignal(group: ComparisonDriftGroup, difference: ComparisonDifference): boolean {
+  if (group.id === "solution-participation-drift" || group.id === "identity-participation-drift") {
+    return false;
+  }
+
+  if (group.differences.length <= 5 || difference.significance === "High" || getSignalPriority(difference) >= 70) {
+    return false;
+  }
+
+  const text = `${difference.title} ${difference.summary} ${difference.evidence.map((item) => item.label).join(" ")}`.toLowerCase();
+
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return text.includes("configuration")
+      || text.includes("filtering")
+      || text.includes("secure")
+      || text.includes("unsecure")
+      || text.includes("managed");
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return text.includes("owner")
+      || text.includes("managed")
+      || text.includes("category")
+      || text.includes("type");
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return difference.kind === "Changed" || difference.significance === "Low";
+  }
+
+  return difference.significance === "Low";
+}
+
+function renderGroupedProviderEvidenceSummary(
+  group: ComparisonDriftGroup,
+  groupedDifferences: readonly ComparisonDifference[],
+  totalDifferenceCount: number
+): string {
+  const rows: readonly [string, string][] = [
+    ["Grouped classification", `${groupedDifferences.length} of ${totalDifferenceCount} ${shortGroupTitle(group.title).toLowerCase()} drift signals`],
+    ["Classification rationale", getProviderMinorGroupingRationale(group)],
+    ["Direction summary", getProviderMinorDirectionSummary(groupedDifferences)],
+    ["Operational priority", "Lower-priority provider detail by default; review when these details are part of the investigation path."],
+    ["Evidence continuity", "Representative signals are listed below; full per-signal evidence remains available in JSON/HTML export."]
+  ];
+
+  return `<div class="dvqr-grouped-evidence-summary">${rows
+    .map(([label, value]) => `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`)
+    .join("")}</div>`;
+}
+
+function renderGroupedProviderDetails(
+  group: ComparisonDriftGroup,
+  differences: readonly ComparisonDifference[],
+  sourceLabel: string,
+  targetLabel: string
+): string {
+  if (differences.length === 0) {
+    return "";
+  }
+
+  const preview = differences
+    .slice(0, 8)
+    .map((difference) => `<li><span class="dvqr-classified-drift-main"><strong>${escapeHtml(simplifyDifferenceTitle(difference, sourceLabel, targetLabel))}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span><span class="dvqr-evidence-continuation-pill" title="Representative grouped provider evidence remains available in the full JSON/HTML export.">Query evidence ›</span></li>`)
+    .join("");
+  const overflow = differences.length > 8
+    ? `<li class="dvqr-classified-drift-overflow"><em>${differences.length - 8} additional signal${differences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.</em></li>`
+    : "";
+
+  return `<details class="dvqr-deferred-differences dvqr-classified-drift-card">
+        <summary>${escapeHtml(getProviderMinorGroupingLabel(group))} (${differences.length})</summary>
+        <p>${escapeHtml(getProviderMinorGroupingIntro(group, differences.length))}</p>
+        ${renderGroupedProviderEvidenceSummary(group, differences, group.differences.length)}
+        <ul class="dvqr-classified-drift-list">${preview}${overflow}</ul>
+      </details>`;
+}
+
+function isGroupedSolutionClassification(classification: string): boolean {
+  return classification === "Microsoft platform solution"
+    || classification === "Platform patch layer"
+    || classification === "Backup / archived solution";
+}
+
+function shouldRenderSolutionAsGroupedCard(difference: ComparisonDifference): boolean {
+  return isGroupedSolutionClassification(getSolutionClassification(difference));
+}
+
+function getSolutionGroupedCardIntro(classification: string, count: number): string {
+  if (classification === "Microsoft platform solution") {
+    return `${count} Microsoft/platform solution drift signal${count === 1 ? "" : "s"} observed. These are grouped as low-priority platform-layering context; expand only if platform package alignment is relevant.`;
+  }
+
+  if (classification === "Platform patch layer") {
+    return `${count} patch or cumulative-layer drift signal${count === 1 ? "" : "s"} observed. These are grouped as servicing-layer context rather than primary customisation drift.`;
+  }
+
+  if (classification === "Backup / archived solution") {
+    return `${count} backup/archive-like solution drift signal${count === 1 ? "" : "s"} observed. This remains visible as evidence but is treated as lower-priority investigation context.`;
+  }
+
+  return `${count} grouped drift signal${count === 1 ? "" : "s"} observed.`;
+}
+
+function getSolutionGroupedEvidenceRationale(classification: string): string {
+  if (classification === "Microsoft platform solution") {
+    return "Grouped because the observed solutions match Microsoft/platform package naming or baseline platform-layer evidence.";
+  }
+
+  if (classification === "Platform patch layer") {
+    return "Grouped because the observed solutions look like patch, cumulative, servicing, or hotfix layers.";
+  }
+
+  if (classification === "Backup / archived solution") {
+    return "Grouped because the observed solution name suggests backup, archive, or preserved-copy context.";
+  }
+
+  return "Grouped to preserve readability while keeping the underlying drift signals inspectable.";
+}
+
+function getSolutionGroupedSignificancePosture(classification: string): string {
+  if (classification === "Microsoft platform solution" || classification === "Platform patch layer") {
+    return "Low operational priority by default; review when platform package alignment is part of the investigation.";
+  }
+
+  if (classification === "Backup / archived solution") {
+    return "Lower-priority investigation context by default; review when archived or backup layers may explain local customisation history.";
+  }
+
+  return "Grouped evidence remains advisory; review representative signals before expanding the full evidence set.";
+}
+
+function getSolutionGroupedDirectionSummary(differences: readonly ComparisonDifference[]): string {
+  const sourceOnly = differences.filter((difference) => difference.kind === "OnlyInSource").length;
+  const targetOnly = differences.filter((difference) => difference.kind === "OnlyInTarget").length;
+  const changed = differences.filter((difference) => difference.kind !== "OnlyInSource" && difference.kind !== "OnlyInTarget").length;
+  const parts = [
+    sourceOnly > 0 ? `${sourceOnly} source-only` : undefined,
+    targetOnly > 0 ? `${targetOnly} target-only` : undefined,
+    changed > 0 ? `${changed} changed` : undefined
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(" · ") : "No direction summary available";
+}
+
+function renderGroupedSolutionEvidenceSummary(
+  classification: string,
+  groupedDifferences: readonly ComparisonDifference[],
+  totalDifferenceCount: number
+): string {
+  const rows: readonly [string, string][] = [
+    ["Grouped classification", `${groupedDifferences.length} of ${totalDifferenceCount} solution drift signals`],
+    ["Classification rationale", getSolutionGroupedEvidenceRationale(classification)],
+    ["Direction summary", getSolutionGroupedDirectionSummary(groupedDifferences)],
+    ["Operational priority", getSolutionGroupedSignificancePosture(classification)],
+    ["Evidence continuity", "Representative signals are listed below; full per-signal evidence remains available in JSON/HTML export."]
+  ];
+
+  return `<div class="dvqr-grouped-evidence-summary">${rows
+    .map(([label, value]) => `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`)
+    .join("")}</div>`;
+}
+
+function groupSolutionDifferencesByClassification(differences: readonly ComparisonDifference[]): readonly [string, readonly ComparisonDifference[]][] {
+  const grouped = new Map<string, ComparisonDifference[]>();
+  for (const difference of differences) {
+    const classification = getSolutionClassification(difference);
+    const current = grouped.get(classification) ?? [];
+    current.push(difference);
+    grouped.set(classification, current);
+  }
+
+  return [...grouped.entries()].sort((left, right) => {
+    const priority = getSolutionClassificationGroupPriority(left[0]) - getSolutionClassificationGroupPriority(right[0]);
+    if (priority !== 0) {
+      return priority;
+    }
+
+    return right[1].length - left[1].length || left[0].localeCompare(right[0]);
+  });
+}
+
+function getSolutionClassificationGroupPriority(classification: string): number {
+  if (classification === "Microsoft platform solution") {
+    return 0;
+  }
+
+  if (classification === "Platform patch layer") {
+    return 1;
+  }
+
+  if (classification === "Backup / archived solution") {
+    return 2;
+  }
+
+  return 3;
+}
+
+function renderDifferenceList(
+  group: ComparisonDriftGroup,
+  sourceLabel: string,
+  targetLabel: string
+): string {
+  const orderedDifferences = getOrderedGroupDifferences(group);
+  const groupedSolutionCards = group.id === "solution-participation-drift"
+    ? orderedDifferences.filter(shouldRenderSolutionAsGroupedCard)
+    : [];
+  const groupedIdentityCards = group.id === "identity-participation-drift"
+    ? orderedDifferences.filter(isMinorIdentityMatchingSignal)
+    : [];
+  const groupedProviderCards = orderedDifferences.filter((difference) => isMinorProviderDetailSignal(group, difference));
+  const primaryDifferences = group.id === "solution-participation-drift"
+    ? orderedDifferences.filter((difference) => !shouldRenderSolutionAsGroupedCard(difference))
+    : group.id === "identity-participation-drift"
+      ? orderedDifferences.filter((difference) => !isMinorIdentityMatchingSignal(difference))
+      : orderedDifferences.filter((difference) => !isMinorProviderDetailSignal(group, difference));
+  const visibleLimit = getVisibleDifferenceLimit({ ...group, differences: primaryDifferences });
+  const visible = primaryDifferences.slice(0, visibleLimit);
+  const deferred = primaryDifferences.slice(visibleLimit);
+  const renderedVisible = visible
+    .map((difference, index) => renderDifference(difference, sourceLabel, targetLabel, group.differences, index))
+    .join("");
+
+  const groupedSolutionDetails = renderGroupedSolutionDetails(groupedSolutionCards, sourceLabel, targetLabel, group.differences.length);
+  const groupedIdentityDetails = renderGroupedIdentityDetails(groupedIdentityCards, sourceLabel, targetLabel, group.differences.length);
+  const groupedProviderDetails = renderGroupedProviderDetails(group, groupedProviderCards, sourceLabel, targetLabel);
+  const groupedDetails = `${groupedSolutionDetails}${groupedIdentityDetails}${groupedProviderDetails}`;
+
+  if (deferred.length === 0) {
+    return `<div class="dvqr-difference-list">${renderedVisible}</div>${groupedDetails}`;
+  }
+
+  const renderedDeferred = deferred
+    .map((difference, index) => renderDifference(difference, sourceLabel, targetLabel, group.differences, visibleLimit + index))
+    .join("");
+  const deferredSummary = renderDeferredSummary(group, deferred);
+
+  return `<div class="dvqr-difference-list">${renderedVisible}</div>
+    ${groupedDetails}
+    <details class="dvqr-deferred-differences">
+      <summary>Show ${deferred.length} additional drift signal${deferred.length === 1 ? "" : "s"}</summary>
+      <p>Lower-ranked signals are grouped to keep dense comparisons readable. They remain available as evidence-backed investigation context.</p>
+      ${deferredSummary}
+      <div class="dvqr-difference-list">${renderedDeferred}</div>
+    </details>`;
+}
+
+function renderGroupedSolutionDetails(
+  differences: readonly ComparisonDifference[],
+  sourceLabel: string,
+  targetLabel: string,
+  totalDifferenceCount: number
+): string {
+  if (differences.length === 0) {
+    return "";
+  }
+
+  return groupSolutionDifferencesByClassification(differences)
+    .map(([classification, groupedDifferences]) => {
+      const preview = groupedDifferences
+        .slice(0, 8)
+        .map((difference) => `<li><span class="dvqr-classified-drift-main"><strong>${escapeHtml(simplifyDifferenceTitle(difference, sourceLabel, targetLabel))}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span><span class="dvqr-evidence-continuation-pill" title="Representative grouped evidence remains available in the full JSON/HTML export.">Query evidence ›</span></li>`)
+        .join("");
+      const overflow = groupedDifferences.length > 8
+        ? `<li class="dvqr-classified-drift-overflow"><em>${groupedDifferences.length - 8} additional signal${groupedDifferences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.</em></li>`
+        : "";
+
+      return `<details class="dvqr-deferred-differences dvqr-classified-drift-card">
+        <summary>${escapeHtml(classification)} (${groupedDifferences.length})</summary>
+        <p>${escapeHtml(getSolutionGroupedCardIntro(classification, groupedDifferences.length))}</p>
+        ${renderGroupedSolutionEvidenceSummary(classification, groupedDifferences, totalDifferenceCount)}
+        <ul class="dvqr-classified-drift-list">${preview}${overflow}</ul>
+      </details>`;
+    })
+    .join("");
+}
+
+function renderDeferredSummary(group: ComparisonDriftGroup, deferred: readonly ComparisonDifference[]): string {
+  if (!deferred.length) {
+    return "";
+  }
+
+  if (group.id === "solution-participation-drift") {
+    const counts = new Map<string, number>();
+    for (const difference of deferred) {
+      const classification = getSolutionClassification(difference);
+      counts.set(classification, (counts.get(classification) ?? 0) + 1);
+    }
+
+    return `<div class="dvqr-deferred-summary"><strong>Grouped solution drift</strong><span>${escapeHtml(renderCountBreakdown(counts))}</span></div>`;
+  }
+
+  if (group.id === "identity-participation-drift") {
+    const counts = new Map<string, number>();
+    for (const difference of deferred) {
+      const subject = getIdentitySubjectFromDifference(difference) ?? "Additional identity drift signals";
+      counts.set(subject, (counts.get(subject) ?? 0) + 1);
+    }
+
+    return `<div class="dvqr-deferred-summary"><strong>Grouped identity drift</strong><span>${escapeHtml(renderCountBreakdown(counts))}</span></div>`;
+  }
+
+  return "";
+}
+
 function renderGroup(
   group: ComparisonDriftGroup,
   sourceLabel: string,
@@ -870,7 +1722,10 @@ function renderGroup(
       </div>
     </div>
     ${getGroupNarrative(group, sourceLabel, targetLabel)}
-    <div class="dvqr-difference-list">${group.differences.map((difference, index) => renderDifference(difference, sourceLabel, targetLabel, group.differences, index)).join("")}</div>
+    ${renderGroupErgonomicsSummary(group)}
+    ${renderGroupDensityNote(group)}
+    ${renderNearbyOperationalDrift(group)}
+    ${renderDifferenceList(group, sourceLabel, targetLabel)}
     <a class="dvqr-back-top" href="#dvqr-comparison-top">Back to top ↑</a>
   </article>`;
 }
@@ -927,6 +1782,7 @@ export function getComparisonSurfaceMarkup(model: ComparisonViewModel, options: 
         <div>
           <p><strong>Source:</strong> ${escapeHtml(model.summary.sourceLabel)} · <strong>Target:</strong> ${escapeHtml(model.summary.targetLabel)}</p>
           ${renderSummary(model)}
+          ${renderComparisonPostureNote(model)}
         </div>
         ${renderEnvironmentPanel(model)}
       </div>

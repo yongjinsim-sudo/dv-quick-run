@@ -36,6 +36,17 @@ export interface ComparisonSnapshotIntegrity {
   readonly contentHash: string;
 }
 
+export type ComparisonSnapshotLineageOrigin = "captured" | "imported" | "derivedComparison" | "legacy";
+
+export interface ComparisonSnapshotLineage {
+  readonly lineageVersion: "comparison-lineage-v1";
+  readonly origin: ComparisonSnapshotLineageOrigin;
+  readonly createdAtIso: string;
+  readonly sourceFeature?: string;
+  readonly parentSnapshotIds?: readonly string[];
+  readonly note?: string;
+}
+
 export interface OperationalComparisonSnapshotDocument {
   readonly kind: "dvqr-operational-comparison-snapshot";
   readonly schemaVersion?: "1.0";
@@ -44,6 +55,7 @@ export interface OperationalComparisonSnapshotDocument {
   readonly capturedAtIso: string;
   readonly sourceFeature: string;
   readonly evidenceSnapshots: readonly ComparisonEvidenceSnapshot[];
+  readonly lineage?: ComparisonSnapshotLineage;
   readonly integrity?: ComparisonSnapshotIntegrity;
 }
 

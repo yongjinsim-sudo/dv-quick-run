@@ -6,6 +6,237 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.12.2 — Operational Drift Triage, Evidence Compression & Dense Investigation Readability
+
+This release matures DV Quick Run’s operational comparison platform from:
+
+```text
+runtime-aware operational drift investigation
+```
+
+→ into:
+
+```text
+calm, evidence-backed operational drift triage
+```
+
+DV Quick Run can now:
+
+* group dense operational drift surfaces more coherently
+* compress lower-priority evidence without hiding it
+* preserve evidence continuity under large comparison workloads
+* prioritise operationally meaningful drift more intelligently
+* reduce Microsoft/platform-layer comparison noise
+* scale comparison readability more safely at enterprise density
+* preserve bounded operational semantics during evidence compression
+
+---
+
+## 🧠 Grouped Operational Surface & Dense Investigation Continuity (Major)
+
+Introduced grouped operational surface rendering for dense comparison scenarios.
+
+Comparison providers can now:
+
+* surface highest-priority operational drift first
+* progressively group lower-priority evidence
+* preserve representative evidence visibility
+* retain export continuity for grouped drift
+* reduce repetitive operational rendering noise
+
+Behaviour:
+
+* strongest operational signals remain expanded
+* lower-priority evidence becomes progressively grouped
+* grouped evidence remains inspectable and explainable
+* JSON/HTML export preserves full operational continuity
+* provider semantics remain bounded and provider-owned
+
+Results:
+
+* dramatically improved enterprise-scale readability
+* calmer operational triage workflows
+* reduced operational cognitive overload
+* stronger signal-to-noise ratio
+
+---
+
+## 🏷️ Operational Significance Tuning & Platform Noise Reduction
+
+Refined comparison significance semantics across dense operational providers.
+
+DV Quick Run now more intelligently distinguishes:
+
+* Microsoft/platform package drift
+* patch/cumulative-layer drift
+* backup/archive-oriented package drift
+* custom operational solution drift
+* runtime-impacting orchestration drift
+
+Behaviour:
+
+* Microsoft/platform-layer drift defaults lower operational priority
+* patch/cumulative-layer evidence becomes progressively grouped
+* custom operational drift remains visually prioritised
+* runtime orchestration changes remain high visibility
+
+Results:
+
+* calmer operational comparison surfaces
+* reduced false operational urgency
+* clearer custom/runtime signal visibility
+
+---
+
+## 📦 Evidence-Backed Grouped Drift Cards (NEW)
+
+Introduced evidence-backed grouped operational drift cards.
+
+Grouped operational sections now surface:
+
+* classification rationale
+* grouped evidence summaries
+* operational-priority explanation
+* representative evidence signals
+* grouped direction summaries
+* evidence continuity semantics
+
+Examples include:
+
+```text
+Microsoft Platform Solutions (18)
+```
+
+```text
+Minor workflow metadata signals (3)
+```
+
+```text
+Minor plugin configuration signals (2)
+```
+
+Behaviour:
+
+* grouped cards remain evidence-backed
+* grouped summaries remain explainable
+* representative signals remain visible
+* grouped evidence never silently disappears
+
+---
+
+## 👥 Identity Participation Drift Grouping Refinement
+
+Expanded Identity Participation Drift rendering semantics.
+
+Identity comparison workflows now support:
+
+* lighter-touch grouped identity evidence
+* grouped minor team/role matching drift
+* representative identity continuity summaries
+* calmer participation-density rendering
+
+Behaviour:
+
+* meaningful participation-density changes remain expanded
+* lower-confidence/minor identity matching becomes grouped
+* matching remains confidence-based and advisory-only
+
+Results:
+
+* cleaner operational identity comparison UX
+* reduced repetitive identity rendering
+* stronger participation-topology understanding
+
+---
+
+## ⚙️ Provider-Owned Dense Drift Semantics (Major)
+
+Expanded provider-owned operational grouping semantics.
+
+Dense rendering is now provider-specific across:
+
+* Plugin Step Runtime Behaviour Drift
+* Workflow / Automation Participation Drift
+* Solution Participation Drift
+* Identity Participation Drift
+* Operational Profile Drift
+
+Behaviour:
+
+* providers own their own grouping thresholds
+* sparse comparisons remain fully expanded
+* dense comparisons become progressively curated
+
+Results:
+
+* stronger provider-level operational coherence
+* calmer comparison scalability
+* improved dense-report consistency
+
+---
+
+## 🎨 Operational Comparison UX & Spacing Refinement
+
+Refined dense operational comparison presentation and grouped-card readability.
+
+Improvements include:
+
+* calmer grouped-card spacing
+* stronger operational hierarchy
+* improved grouped metadata readability
+* cleaner evidence rhythm
+* softer grouped investigation posture wording
+
+Results:
+
+* significantly improved operational readability
+* calmer enterprise investigation UX
+* stronger psychological trust
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DV Quick Run operational comparison invariants:
+
+* grouped evidence remains evidence-backed
+* operational drift remains observational
+* providers own operational comparison semantics
+* strongest operational meaning surfaces first
+* evidence remains inspectable and explainable
+* dense operational evidence must remain navigable
+
+Operational comparison continues to prioritise:
+
+```text
+understanding
+before
+automation
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* group dense operational drift more coherently
+* preserve evidence continuity under grouped rendering
+* reduce Microsoft/platform comparison noise safely
+* prioritise runtime-impacting operational drift more intelligently
+* scale enterprise comparison readability more calmly
+* compress dense evidence without hiding operational context
+
+This release further matures DV Quick Run’s evolution into:
+
+```text
+an operational investigation and drift triage workbench
+```
+
+for enterprise Dataverse environments.
+
+---
+
 # DV Quick Run v0.12.1 — Runtime Behaviour Drift, Investigation Replay & Operational Comparison Maturity
 
 This release evolves DV Quick Run’s comparison platform from:

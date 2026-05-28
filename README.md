@@ -58,20 +58,20 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.12.1
+## 🆕 What's New in v0.12.2
 
-v0.12.1 matures DV Quick Run’s comparison platform from operational comparison foundations into runtime-aware operational drift investigation.
+v0.12.2 matures DV Quick Run’s comparison platform from runtime-aware drift investigation into calmer, evidence-backed operational drift triage.
 
 Highlights include:
 
-* **Plugin Step Runtime Behaviour Drift** for comparing plugin registration, state, stage, mode, execution order, and participation drift
-* **Workflow / Automation Runtime Drift** for activation, owner, and orchestration participation changes
-* **Top Operational Drift Signals** for fast orientation across the strongest evidence-backed differences
-* **Replayable Recent Comparisons** in Snapshot Library, grouped by operational subject and bounded for calmer history management
-* **Comparison Scope Awareness** so reports and exports clearly identify the entity or operational subject being compared
-* **Different-subject guardrails** to warn before comparing unrelated operational subjects such as Contact ↔ Care Plan
-* **Free Preview replay improvements** so sample/mock comparison workflows remain explorable without unlocking real snapshot workflows
-* tighter runtime drift titles, calmer summaries, back-to-top navigation, grouped evidence, and stronger dense-report readability
+* **Grouped Operational Surfaces** for dense comparison reports, so high-signal drift stays visible while lower-priority evidence is grouped for readability
+* **Evidence-Backed Grouped Cards** with classification rationale, evidence summaries, representative signals, and export continuity
+* **Platform Noise Reduction** so Microsoft/platform, patch, cumulative, and backup/archive-like solution drift is grouped and deprioritised without being hidden
+* **Provider-Owned Dense Drift Semantics** across Plugin Step Runtime Behaviour, Workflow / Automation, Solution Participation, Identity Participation, and Operational Profile drift
+* **Identity Participation Grouping** for minor team/role matching signals while preserving meaningful participation-density changes
+* **Operational Significance Tuning** so runtime-impacting and custom operational drift remains prominent while low-priority platform-layer context remains inspectable
+* **Mock Comparison Refinements** to make Free / Pro Preview sample workflows better demonstrate realistic operational drift without artificial overload
+* calmer spacing, grouped-card readability, softer investigation posture wording, and stronger dense-report scanability
 
 DV Quick Run continues to prioritise:
 
@@ -343,13 +343,29 @@ Comparison surfaces can show provider-backed operational drift across:
 * Workflow / Automation Participation
 * Identity Participation
 
-Comparison reports now preserve scope awareness so exported artifacts clearly identify the operational subject being compared, for example:
+Comparison reports preserve scope awareness so exported artifacts clearly identify the operational subject being compared, for example:
 
 ```text
 Cross-Environment Diff: Contact • DEV → SIT
 ```
 
 When snapshots represent different operational subjects, DV Quick Run warns before continuing so users do not accidentally treat unrelated subjects as meaningful operational drift.
+
+Dense comparison reports now use grouped operational surfaces so investigations remain readable at enterprise scale. High-signal drift remains visible first, while lower-priority evidence is grouped with:
+
+* classification rationale
+* evidence summaries
+* representative drift signals
+* operational-priority explanation
+* full JSON/HTML evidence continuity
+
+Examples include:
+
+* Microsoft/platform solution drift grouped as platform-layer context
+* patch and cumulative solution drift grouped as servicing-layer context
+* minor workflow metadata drift grouped below activation and presence changes
+* minor plugin configuration drift grouped below state, stage, mode, and registration changes
+* lower-priority identity matching signals grouped below participation-density changes
 
 The comparison model is intentionally observational:
 
@@ -367,6 +383,7 @@ It is designed to help you understand:
 * which providers contributed evidence
 * which drift signals may deserve follow-up investigation
 * whether runtime plugin or automation participation differs between snapshots
+* whether platform-layer drift is low-priority context or relevant to the investigation
 * whether a comparison is scope-aligned before treating drift as meaningful
 
 Free users can explore mock snapshots, replay sample comparison workflows, and inspect sample drift. Pro unlocks real snapshot import, management, comparison, export, replay, and snapshot continuity workflows.

@@ -216,6 +216,119 @@ body {
 }
 
 
+.dvqr-investigation-posture {
+  background: color-mix(in srgb, var(--vscode-editorWidget-background) 76%, var(--vscode-editor-background));
+  border: 1px solid var(--vscode-panel-border);
+  border-left: 4px solid var(--vscode-descriptionForeground);
+  border-radius: 10px;
+  display: grid;
+  gap: 4px;
+  line-height: 1.45;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+}
+
+.dvqr-investigation-posture span {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+.dvqr-investigation-posture-dense {
+  border-left-color: var(--vscode-testing-iconQueued);
+}
+
+.dvqr-investigation-posture-quiet {
+  border-left-color: color-mix(in srgb, var(--vscode-descriptionForeground) 70%, #2ea043 30%);
+}
+
+.dvqr-deferred-differences {
+  background: color-mix(in srgb, var(--vscode-editorWidget-background) 72%, var(--vscode-editor-background));
+  border: 1px dashed var(--vscode-panel-border);
+  border-radius: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+}
+
+.dvqr-deferred-differences > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dvqr-deferred-differences > p {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 8px 0 12px;
+}
+
+
+.dvqr-grouped-evidence-summary {
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 14px;
+  padding: 10px 12px;
+}
+
+.dvqr-grouped-evidence-summary div {
+  align-items: baseline;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+}
+
+.dvqr-grouped-evidence-summary strong {
+  color: var(--vscode-foreground);
+  font-size: 12px;
+}
+
+.dvqr-grouped-evidence-summary span {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dvqr-classified-drift-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-left: 18px;
+}
+
+.dvqr-classified-drift-list li {
+  align-items: center;
+  column-gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  line-height: 1.45;
+  row-gap: 4px;
+}
+
+.dvqr-classified-drift-main {
+  align-items: baseline;
+  column-gap: 8px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.dvqr-classified-drift-meta {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dvqr-classified-drift-overflow {
+  color: var(--vscode-descriptionForeground);
+}
+
+@media (max-width: 720px) {
+  .dvqr-grouped-evidence-summary div {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dvqr-session-card {
   background: color-mix(in srgb, var(--vscode-editorWidget-background) 72%, var(--vscode-editor-background));
   border: 1px solid var(--vscode-panel-border);
@@ -750,6 +863,86 @@ h3 {
 .dvqr-evidence-continuation-pill:hover {
   background: color-mix(in srgb, var(--vscode-button-background) 16%, transparent);
   color: var(--vscode-foreground);
+}
+
+
+.dvqr-density-note {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--vscode-editorWidget-background) 74%, var(--vscode-testing-iconQueued) 8%);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 10px;
+  color: var(--vscode-descriptionForeground);
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
+.dvqr-density-note strong {
+  color: var(--vscode-foreground);
+}
+
+.dvqr-nearby-drift {
+  background: color-mix(in srgb, var(--vscode-editorWidget-background) 78%, var(--vscode-button-background) 8%);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
+.dvqr-nearby-drift summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dvqr-nearby-drift summary span {
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+.dvqr-nearby-drift p {
+  color: var(--vscode-descriptionForeground);
+  margin: 8px 0;
+}
+
+.dvqr-nearby-drift ol {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.dvqr-nearby-drift li {
+  background: color-mix(in srgb, var(--vscode-editorWidget-background) 78%, var(--vscode-editor-background));
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+}
+
+.dvqr-nearby-drift a {
+  color: var(--vscode-textLink-foreground, var(--vscode-button-background));
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dvqr-nearby-drift a:hover {
+  text-decoration: underline;
+}
+
+.dvqr-nearby-drift li span,
+.dvqr-nearby-drift li em {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+.dvqr-nearby-drift li ul {
+  color: var(--vscode-descriptionForeground);
+  margin: 4px 0 0;
+  padding-left: 18px;
 }
 
 .dvqr-empty {

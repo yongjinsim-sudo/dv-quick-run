@@ -10,6 +10,8 @@ export type {
   ComparisonEvidenceSnapshot,
   ComparisonSnapshotEvidenceType,
   ComparisonSnapshotIntegrity,
+  ComparisonSnapshotLineage,
+  ComparisonSnapshotLineageOrigin,
   ComparisonSnapshotMetadata,
   ComparisonSnapshotTrustState,
   ComparisonSnapshotValidationResult,

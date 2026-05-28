@@ -44,10 +44,22 @@ export function calibrateSignificance(difference: ComparisonDifference): Compari
   }
 
   if (difference.kind === "OnlyInSource" || difference.kind === "OnlyInTarget") {
+    if (isLowerPrioritySolutionPresence(difference)) {
+      return difference.significance;
+    }
+
     return maxComparisonSignificance(difference.significance, "Medium");
   }
 
   return difference.significance;
+}
+
+function isLowerPrioritySolutionPresence(difference: ComparisonDifference): boolean {
+  const classification = difference.evidence.find((item) => item.label === "Solution classification")?.value?.toLowerCase();
+
+  return classification === "microsoft platform solution"
+    || classification === "platform patch layer"
+    || classification === "backup / archived solution";
 }
 
 function appeared(difference: ComparisonDifference): boolean {

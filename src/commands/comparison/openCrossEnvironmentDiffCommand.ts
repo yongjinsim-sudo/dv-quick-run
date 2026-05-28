@@ -177,7 +177,9 @@ const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
       workflows: [
         { name: "Account Sync Realtime", category: "workflow", mode: "realtime", state: "Deactivated", isManaged: true, owner: "Legacy" },
         { name: "Account Notify Flow", category: "flow", mode: "cloudFlow", state: "Activated", isManaged: false, owner: "Operations" },
-        { name: "Legacy Account Workflow", category: "workflow", mode: "background", state: "Activated", isManaged: false, owner: "Legacy" }
+        { name: "Legacy Account Workflow", category: "workflow", mode: "background", state: "Activated", isManaged: false, owner: "Legacy" },
+        { name: "Account Consent Reminder", category: "flow", mode: "cloudFlow", state: "Activated", isManaged: false, owner: "Operations" },
+        { name: "Account Address Normalisation", category: "workflow", mode: "background", state: "Activated", isManaged: false, owner: "Operations" }
       ],
       operationalContext: {
         sections: [
@@ -290,7 +292,9 @@ const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
       workflows: [
         { name: "Account Sync Realtime", category: "workflow", mode: "realtime", state: "Activated", isManaged: true, owner: "System" },
         { name: "Account Notify Flow", category: "flow", mode: "cloudFlow", state: "Activated", isManaged: false, owner: "Integration" },
-        { name: "Account Enrichment Background", category: "workflow", mode: "background", state: "Activated", isManaged: false, owner: "Integration" }
+        { name: "Account Enrichment Background", category: "workflow", mode: "background", state: "Activated", isManaged: false, owner: "Integration" },
+        { name: "Account Consent Reminder", category: "flow", mode: "cloudFlow", state: "Activated", isManaged: false, owner: "Integration" },
+        { name: "Account Address Normalisation", category: "workflow", mode: "background", state: "Activated", isManaged: false, owner: "Integration" }
       ],
       operationalContext: {
         sections: [
@@ -360,6 +364,36 @@ const mockDevPluginStepSnapshot: ComparisonSnapshotFile = {
         unsecureConfigurationPresent: true
       },
       {
+        sdkMessageProcessingStepId: "mock-account-consent-reminder-shared",
+        name: "Account Consent Reminder Dispatch",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountConsentPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 40,
+        mode: 0,
+        rank: 35,
+        filteringAttributes: ["emailaddress1"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: false,
+        unsecureConfigurationPresent: true
+      },
+      {
+        sdkMessageProcessingStepId: "mock-account-address-normaliser-shared",
+        name: "Account Address Normalisation",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountAddressPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 40,
+        mode: 0,
+        rank: 45,
+        filteringAttributes: ["address1_city"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: false,
+        unsecureConfigurationPresent: true
+      },
+      {
         sdkMessageProcessingStepId: "mock-account-legacy-background-dev-only",
         name: "Legacy Account Background Sync",
         pluginTypeName: "Dvqr.Mock.Plugins.LegacyAccountSyncPlugin",
@@ -415,6 +449,36 @@ const mockSitPluginStepSnapshot: ComparisonSnapshotFile = {
         mode: 0,
         rank: 5,
         filteringAttributes: ["name", "telephone1", "emailaddress1"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: false,
+        unsecureConfigurationPresent: true
+      },
+      {
+        sdkMessageProcessingStepId: "mock-account-consent-reminder-shared",
+        name: "Account Consent Reminder Dispatch",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountConsentPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 40,
+        mode: 0,
+        rank: 35,
+        filteringAttributes: ["emailaddress1", "telephone1"],
+        state: "Enabled",
+        isManaged: false,
+        secureConfigurationPresent: false,
+        unsecureConfigurationPresent: true
+      },
+      {
+        sdkMessageProcessingStepId: "mock-account-address-normaliser-shared",
+        name: "Account Address Normalisation",
+        pluginTypeName: "Dvqr.Mock.Plugins.AccountAddressPlugin",
+        messageName: "Update",
+        primaryEntityName: "account",
+        stage: 40,
+        mode: 0,
+        rank: 45,
+        filteringAttributes: ["address1_city", "address1_postalcode"],
         state: "Enabled",
         isManaged: false,
         secureConfigurationPresent: false,
@@ -2005,7 +2069,10 @@ function withComparisonSessionMetadata(
         subjectLabel: getSnapshotSubjectLabel(source),
         capturedAtIso: source.capturedAtIso,
         trustState: sourceTrustState,
-        fileUri: source.fileUri
+        fileUri: source.fileUri,
+        lineageOrigin: source.lineage?.origin,
+        lineageCreatedAtIso: source.lineage?.createdAtIso,
+        lineageNote: source.lineage?.note
       },
       targetSnapshot: {
         label: getSnapshotDisplayLabel(target),
@@ -2013,7 +2080,10 @@ function withComparisonSessionMetadata(
         subjectLabel: getSnapshotSubjectLabel(target),
         capturedAtIso: target.capturedAtIso,
         trustState: targetTrustState,
-        fileUri: target.fileUri
+        fileUri: target.fileUri,
+        lineageOrigin: target.lineage?.origin,
+        lineageCreatedAtIso: target.lineage?.createdAtIso,
+        lineageNote: target.lineage?.note
       }
     }
   };
@@ -2620,10 +2690,21 @@ function extractScoreBandFromEvidence(value: string | undefined): string | undef
 function describeBandMovement(sourceValue: string | undefined, targetValue: string | undefined): string {
   const rank = (value: string | undefined): number | undefined => {
     const normalized = (value ?? "").toLowerCase();
-    if (normalized.includes("none") || normalized.includes("no evidence")) return 0;
-    if (normalized.includes("low")) return 1;
-    if (normalized.includes("moderate")) return 2;
-    if (normalized.includes("high")) return 3;
+    if (normalized.includes("none") || normalized.includes("no evidence")) {
+      return 0;
+    }
+
+    if (normalized.includes("low")) {
+      return 1;
+    }
+
+    if (normalized.includes("moderate")) {
+      return 2;
+    }
+
+    if (normalized.includes("high")) {
+      return 3;
+    }
     return undefined;
   };
 
@@ -2637,8 +2718,12 @@ function describeBandMovement(sourceValue: string | undefined, targetValue: stri
 }
 
 function extractMarkdownOnlyInName(title: string): string {
-  const parts = title.split(":");
-  return (parts.length > 1 ? parts.slice(1).join(":") : title)
+  const withKnownPrefixRemoved = title.replace(
+    /^(plugin step|workflow|flow|identity|team participation|user participation|business unit participation|solution participation|operational profile)\s*:\s*/i,
+    ""
+  );
+
+  return withKnownPrefixRemoved
     .replace(/\s+present only in (source|target)$/i, "")
     .replace(/\s+changed from .+$/i, "")
     .trim();
@@ -2876,16 +2961,188 @@ function getMarkdownGroupSummary(group: ComparisonViewModel["groups"][number]): 
   return group.summary;
 }
 
+
+function getMarkdownIdentitySubjectFromDifference(difference: ComparisonViewModel["groups"][number]["differences"][number]): string | undefined {
+  const subjectEvidence = difference.evidence.find((item) => item.label === "Identity subject")?.value?.toLowerCase();
+  if (subjectEvidence?.includes("applicationuser") || subjectEvidence?.includes("application user")) {
+    return "Application users";
+  }
+  if (subjectEvidence?.includes("businessunit") || subjectEvidence?.includes("business unit")) {
+    return "Business units";
+  }
+  if (subjectEvidence?.includes("team")) {
+    return "Teams";
+  }
+  if (subjectEvidence?.includes("role")) {
+    return "Roles";
+  }
+  if (subjectEvidence?.includes("user")) {
+    return "Users";
+  }
+
+  const title = difference.title.toLowerCase();
+  if (title.includes("application user")) {
+    return "Application users";
+  }
+  if (title.includes("business unit")) {
+    return "Business units";
+  }
+  if (title.includes("team participation")) {
+    return "Teams";
+  }
+  if (title.includes("role participation")) {
+    return "Roles";
+  }
+  if (title.includes("user participation")) {
+    return "Users";
+  }
+
+  return undefined;
+}
+
+function renderMarkdownCountBreakdown(counts: ReadonlyMap<string, number>): string {
+  return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .map(([label, count]) => `${label}: ${count}`)
+    .join(" · ");
+}
+
+function getMarkdownIdentityTypeBreakdown(group: ComparisonViewModel["groups"][number]): string | undefined {
+  if (group.id !== "identity-participation-drift") {
+    return undefined;
+  }
+
+  const counts = new Map<string, number>();
+  for (const difference of group.differences) {
+    const subject = getMarkdownIdentitySubjectFromDifference(difference) ?? "Additional identity drift signals";
+    counts.set(subject, (counts.get(subject) ?? 0) + 1);
+  }
+
+  return counts.size > 0 ? renderMarkdownCountBreakdown(counts) : undefined;
+}
+
+function getMarkdownParticipationDensityHighlights(group: ComparisonViewModel["groups"][number], sourceLabel: string, targetLabel: string): readonly string[] {
+  if (group.id !== "identity-participation-drift") {
+    return [];
+  }
+
+  return group.differences
+    .flatMap((difference) => difference.evidence
+      .filter((item) => item.label === "Participation density")
+      .map((item) => `${getMarkdownDifferenceTitle(difference, sourceLabel, targetLabel)} — ${item.value}`))
+    .slice(0, 3);
+}
+
+function parseMarkdownParticipationDensity(value: string | undefined): { readonly source: number; readonly target: number } | undefined {
+  const match = value?.match(/(\d+)\s*→\s*(\d+)/u);
+  if (!match?.[1] || !match[2]) {
+    return undefined;
+  }
+
+  return { source: Number.parseInt(match[1], 10), target: Number.parseInt(match[2], 10) };
+}
+
+function getMarkdownParticipationDensitySignalTitle(
+  difference: ComparisonViewModel["groups"][number]["differences"][number],
+  sourceLabel: string,
+  targetLabel: string
+): string | undefined {
+  const density = difference.evidence.find((item) => item.label === "Participation density")?.value;
+  const parsed = parseMarkdownParticipationDensity(density);
+  if (!parsed) {
+    return undefined;
+  }
+
+  const title = getMarkdownDifferenceTitle(difference, sourceLabel, targetLabel);
+  const direction = parsed.target > parsed.source ? "expanded" : parsed.target < parsed.source ? "reduced" : "changed";
+  return `${title} participation footprint ${direction}: ${parsed.source} → ${parsed.target}`;
+}
+
+function getMarkdownSignalPriority(difference: ComparisonViewModel["groups"][number]["differences"][number]): number {
+  const hasDensity = difference.evidence.some((item) => item.label === "Participation density");
+  if (hasDensity) {
+    return 100;
+  }
+
+  const classification = difference.evidence.find((item) => item.label === "Solution classification")?.value;
+  if (classification === "Custom solution" || classification === "Infrastructure solution") {
+    return 80;
+  }
+
+  if (difference.kind === "Assignment Drift" || difference.kind === "Inheritance Drift") {
+    return 70;
+  }
+
+  if (classification === "Backup / archived solution") {
+    return 45;
+  }
+
+  if (classification === "Platform patch layer" || classification === "Microsoft platform solution") {
+    return 20;
+  }
+
+  return 50;
+}
+
+function getMarkdownSolutionClassification(difference: ComparisonViewModel["groups"][number]["differences"][number]): string {
+  const classification = difference.evidence.find((item) => item.label === "Solution classification")?.value;
+  if (classification) {
+    return classification.includes("→") ? "Mixed solution classification" : classification;
+  }
+
+  const value = `${difference.title} ${difference.sourceValue ?? ""} ${difference.targetValue ?? ""}`.toLowerCase();
+  if (/\b(bkp|backup|archived?|archive)\b/u.test(value)) {
+    return "Backup / archived solution";
+  }
+  if (/\b(patch|cumulative|hotfix)\b/u.test(value)) {
+    return "Platform patch layer";
+  }
+  if (value.includes("msdyn") || value.includes("microsoftdynamics") || value.includes("powerpages") || value.includes("power pages") || value.includes("dynamics 365") || value.includes("system solution") || value.includes("default solution")) {
+    return "Microsoft platform solution";
+  }
+  if (value.includes("syncagent") || value.includes("sync admin")) {
+    return "Infrastructure solution";
+  }
+
+  return "Custom solution";
+}
+
+function getMarkdownSolutionClassificationBreakdown(group: ComparisonViewModel["groups"][number]): string | undefined {
+  if (group.id !== "solution-participation-drift") {
+    return undefined;
+  }
+
+  const counts = new Map<string, number>();
+  for (const difference of group.differences) {
+    const classification = getMarkdownSolutionClassification(difference);
+    counts.set(classification, (counts.get(classification) ?? 0) + 1);
+  }
+
+  return counts.size > 0 ? renderMarkdownCountBreakdown(counts) : undefined;
+}
+
 function getMarkdownGroupHighlights(
   group: ComparisonViewModel["groups"][number],
   sourceLabel: string,
   targetLabel: string
 ): readonly string[] {
-  const high = group.differences.filter((difference) => difference.significance === "High");
-  const strongest = high.length > 0 ? high : group.differences.slice(0, 3);
+  const strongest = [...group.differences].sort((left, right) => {
+    const priority = getMarkdownSignalPriority(right) - getMarkdownSignalPriority(left);
+    if (priority !== 0) {
+      return priority;
+    }
+
+    const significance = (right.significance === "High" ? 3 : right.significance === "Medium" ? 2 : 1)
+      - (left.significance === "High" ? 3 : left.significance === "Medium" ? 2 : 1);
+    if (significance !== 0) {
+      return significance;
+    }
+
+    return left.title.localeCompare(right.title);
+  });
   return strongest
     .slice(0, 3)
-    .map((difference) => getMarkdownDifferenceTitle(difference, sourceLabel, targetLabel));
+    .map((difference) => getMarkdownParticipationDensitySignalTitle(difference, sourceLabel, targetLabel) ?? getMarkdownDifferenceTitle(difference, sourceLabel, targetLabel));
 }
 
 function getMarkdownGroupNarrative(
@@ -2960,27 +3217,354 @@ function getMarkdownOperationalImpactSummary(
   return "Review the underlying evidence before comparing runtime behaviour.";
 }
 
+function normalizeMarkdownSignalKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gu, "guid")
+    .replace(/\b(dev|sit|uat|test|tst|perf|preprod|pre-prod|prod|production|sandbox|sbx)\b/gu, "env")
+    .replace(/[^a-z0-9]+/gu, " ")
+    .trim();
+}
+
 function getTopMarkdownOperationalSignals(model: ComparisonViewModel): readonly string[] {
   const rankSignificance = (value: string): number => value === "High" ? 3 : value === "Medium" ? 2 : 1;
-
-  return model.groups
+  const sorted = model.groups
     .flatMap((group) => group.differences.map((difference) => ({
       groupTitle: group.title,
-      title: getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel),
+      groupId: group.id,
+      title: getMarkdownParticipationDensitySignalTitle(difference, model.summary.sourceLabel, model.summary.targetLabel)
+        ?? getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel),
       significance: difference.significance,
       kind: difference.kind,
-      impact: getMarkdownOperationalImpactSummary(difference, model.summary.sourceLabel, model.summary.targetLabel)
+      impact: getMarkdownOperationalImpactSummary(difference, model.summary.sourceLabel, model.summary.targetLabel),
+      priority: getMarkdownSignalPriority(difference)
     })))
     .sort((left, right) => {
+      const priority = right.priority - left.priority;
+      if (priority !== 0) {
+        return priority;
+      }
+
       const rank = rankSignificance(right.significance) - rankSignificance(left.significance);
       if (rank !== 0) {
         return rank;
       }
 
+      const groupRank = left.groupTitle.localeCompare(right.groupTitle);
+      if (groupRank !== 0) {
+        return groupRank;
+      }
+
       return left.title.localeCompare(right.title);
-    })
-    .slice(0, 5)
-    .map((signal) => `${signal.title} — ${signal.groupTitle} · ${signal.significance} · ${signal.kind}. ${signal.impact}`);
+    });
+
+  const selected: typeof sorted = [];
+  const seen = new Set<string>();
+  const perGroup = new Map<string, number>();
+
+  for (const signal of sorted) {
+    const key = `${signal.groupId}:${normalizeMarkdownSignalKey(signal.title)}`;
+    if (seen.has(key)) {
+      continue;
+    }
+
+    const groupCount = perGroup.get(signal.groupId) ?? 0;
+    if (groupCount >= 3 && selected.length < 4) {
+      continue;
+    }
+
+    seen.add(key);
+    perGroup.set(signal.groupId, groupCount + 1);
+    selected.push(signal);
+
+    if (selected.length >= 5) {
+      break;
+    }
+  }
+
+  return selected.map((signal) => `${signal.title} — ${signal.groupTitle} · ${signal.significance} · ${signal.kind}. ${signal.impact}`);
+}
+
+function getMarkdownComparisonDensityLabel(model: ComparisonViewModel): string | undefined {
+  if (model.summary.differenceCount >= 75 || model.groups.some((group) => group.differences.length >= 50)) {
+    return `Very dense grouped operational surface — ${model.summary.differenceCount} drift signals across ${model.summary.providerCount} provider${model.summary.providerCount === 1 ? "" : "s"}. Review top signals and provider summaries before drilling into grouped evidence.`;
+  }
+
+  if (model.summary.differenceCount >= 40 || model.groups.some((group) => group.differences.length >= 30)) {
+    return `Grouped operational surface — ${model.summary.differenceCount} drift signals observed. Summary-first review is recommended; lower-priority platform and matching details are grouped for readability.`;
+  }
+
+  if (model.summary.differenceCount >= 8) {
+    return `Focused operational surface — multiple drift signals observed across the selected providers.`;
+  }
+
+  if (model.summary.differenceCount > 0) {
+    return `Quiet comparison surface — few drift signals observed; avoid inferring parity beyond the selected providers and snapshots.`;
+  }
+
+  return undefined;
+}
+
+
+
+
+function isMinorMarkdownIdentityMatchingSignal(
+  difference: ComparisonViewModel["groups"][number]["differences"][number]
+): boolean {
+  if (difference.kind !== "Changed") {
+    return false;
+  }
+
+  if (difference.evidence.some((item) => item.label === "Participation density")) {
+    return false;
+  }
+
+  const title = difference.title.toLowerCase();
+  const confidenceBasedTitle = title.startsWith("likely corresponding identity:")
+    || title.startsWith("possible corresponding identity:");
+  if (!confidenceBasedTitle) {
+    return false;
+  }
+
+  const subject = getMarkdownIdentitySubjectFromDifference(difference);
+  return subject === "Teams" || subject === "Roles" || subject === undefined;
+}
+
+function getMarkdownMinorIdentityGroupedDirectionSummary(
+  differences: readonly ComparisonViewModel["groups"][number]["differences"][number][]
+): string {
+  const likely = differences.filter((difference) => difference.title.toLowerCase().startsWith("likely corresponding identity:")).length;
+  const possible = differences.filter((difference) => difference.title.toLowerCase().startsWith("possible corresponding identity:")).length;
+  const parts = [
+    likely > 0 ? `${likely} likely match${likely === 1 ? "" : "es"}` : undefined,
+    possible > 0 ? `${possible} possible match${possible === 1 ? "" : "es"}` : undefined
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(" · ") : "Confidence-based team/role matching signals";
+}
+
+function getMarkdownMinorIdentitySubjectBreakdown(
+  differences: readonly ComparisonViewModel["groups"][number]["differences"][number][]
+): string {
+  const counts = new Map<string, number>();
+  for (const difference of differences) {
+    const subject = getMarkdownIdentitySubjectFromDifference(difference) ?? "Additional identity drift signals";
+    counts.set(subject, (counts.get(subject) ?? 0) + 1);
+  }
+
+  return renderMarkdownCountBreakdown(counts);
+}
+
+function getMarkdownProviderMinorGroupingLabel(group: ComparisonViewModel["groups"][number]): string {
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return "Minor plugin configuration signals";
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return "Minor workflow metadata signals";
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return "Minor operational profile detail signals";
+  }
+
+  return "Additional provider detail signals";
+}
+
+function getMarkdownProviderMinorGroupingIntro(group: ComparisonViewModel["groups"][number], count: number): string {
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return `${count} lower-priority plugin configuration signal${count === 1 ? "" : "s"} observed. These are grouped to keep runtime-behaviour drift focused on execution-impacting changes while preserving evidence continuity.`;
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return `${count} lower-priority workflow metadata signal${count === 1 ? "" : "s"} observed. These are grouped so activation, presence, and orchestration participation remain easier to scan.`;
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return `${count} lower-priority operational profile detail signal${count === 1 ? "" : "s"} observed. These are grouped so headline density shifts remain prominent.`;
+  }
+
+  return `${count} lower-priority provider signal${count === 1 ? "" : "s"} observed. These are grouped to preserve readability while keeping evidence inspectable.`;
+}
+
+function getMarkdownProviderMinorGroupingRationale(group: ComparisonViewModel["groups"][number]): string {
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return "Grouped because these are plugin configuration or metadata changes rather than added/removed steps or state changes.";
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return "Grouped because these are lower-priority workflow metadata changes rather than activation or presence drift.";
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return "Grouped because these are profile dimension detail changes rather than the primary operational-density score shift.";
+  }
+
+  return "Grouped because these are lower-priority provider details in a dense comparison surface.";
+}
+
+function getMarkdownProviderMinorDirectionSummary(
+  differences: readonly ComparisonViewModel["groups"][number]["differences"][number][]
+): string {
+  const counts = new Map<string, number>();
+  for (const difference of differences) {
+    counts.set(difference.kind, (counts.get(difference.kind) ?? 0) + 1);
+  }
+
+  return counts.size > 0 ? renderMarkdownCountBreakdown(counts) : "Grouped provider detail signals";
+}
+
+function isMinorMarkdownProviderDetailSignal(
+  group: ComparisonViewModel["groups"][number],
+  difference: ComparisonViewModel["groups"][number]["differences"][number]
+): boolean {
+  if (group.id === "solution-participation-drift" || group.id === "identity-participation-drift") {
+    return false;
+  }
+
+  if (group.differences.length <= 5 || difference.significance === "High" || getMarkdownSignalPriority(difference) >= 70) {
+    return false;
+  }
+
+  const text = `${difference.title} ${difference.summary} ${difference.evidence.map((item) => item.label).join(" ")}`.toLowerCase();
+
+  if (group.id === "plugin-step-runtime-behaviour-drift") {
+    return text.includes("configuration")
+      || text.includes("filtering")
+      || text.includes("secure")
+      || text.includes("unsecure")
+      || text.includes("managed");
+  }
+
+  if (group.id === "workflow-automation-participation-drift") {
+    return text.includes("owner")
+      || text.includes("managed")
+      || text.includes("category")
+      || text.includes("type");
+  }
+
+  if (group.id === "operational-profile-drift") {
+    return difference.kind === "Changed" || difference.significance === "Low";
+  }
+
+  return difference.significance === "Low";
+}
+
+function isGroupedMarkdownSolutionClassification(classification: string): boolean {
+  return classification === "Microsoft platform solution"
+    || classification === "Platform patch layer"
+    || classification === "Backup / archived solution";
+}
+
+function shouldRenderMarkdownSolutionAsGroupedCard(difference: ComparisonViewModel["groups"][number]["differences"][number]): boolean {
+  return isGroupedMarkdownSolutionClassification(getMarkdownSolutionClassification(difference));
+}
+
+function getMarkdownSolutionGroupedCardIntro(classification: string, count: number): string {
+  if (classification === "Microsoft platform solution") {
+    return `${count} Microsoft/platform solution drift signal${count === 1 ? "" : "s"} observed. These are grouped as low-priority platform-layering context; expand only if platform package alignment is relevant.`;
+  }
+
+  if (classification === "Platform patch layer") {
+    return `${count} patch or cumulative-layer drift signal${count === 1 ? "" : "s"} observed. These are grouped as servicing-layer context rather than primary customisation drift.`;
+  }
+
+  if (classification === "Backup / archived solution") {
+    return `${count} backup/archive-like solution drift signal${count === 1 ? "" : "s"} observed. This remains visible as evidence but is treated as lower-priority investigation context.`;
+  }
+
+  return `${count} grouped drift signal${count === 1 ? "" : "s"} observed.`;
+}
+
+function getMarkdownSolutionGroupedEvidenceRationale(classification: string): string {
+  if (classification === "Microsoft platform solution") {
+    return "Grouped because the observed solutions match Microsoft/platform package naming or baseline platform-layer evidence.";
+  }
+
+  if (classification === "Platform patch layer") {
+    return "Grouped because the observed solutions look like patch, cumulative, servicing, or hotfix layers.";
+  }
+
+  if (classification === "Backup / archived solution") {
+    return "Grouped because the observed solution name suggests backup, archive, or preserved-copy context.";
+  }
+
+  return "Grouped to preserve readability while keeping the underlying drift signals inspectable.";
+}
+
+function getMarkdownSolutionGroupedSignificancePosture(classification: string): string {
+  if (classification === "Microsoft platform solution" || classification === "Platform patch layer") {
+    return "Low operational priority by default; review when platform package alignment is part of the investigation.";
+  }
+
+  if (classification === "Backup / archived solution") {
+    return "Lower-priority investigation context by default; review when archived or backup layers may explain local customisation history.";
+  }
+
+  return "Grouped evidence remains advisory; review representative signals before expanding the full evidence set.";
+}
+
+function getMarkdownSolutionGroupedDirectionSummary(differences: readonly ComparisonViewModel["groups"][number]["differences"][number][]): string {
+  const sourceOnly = differences.filter((difference) => difference.kind === "OnlyInSource").length;
+  const targetOnly = differences.filter((difference) => difference.kind === "OnlyInTarget").length;
+  const changed = differences.filter((difference) => difference.kind !== "OnlyInSource" && difference.kind !== "OnlyInTarget").length;
+  const parts = [
+    sourceOnly > 0 ? `${sourceOnly} source-only` : undefined,
+    targetOnly > 0 ? `${targetOnly} target-only` : undefined,
+    changed > 0 ? `${changed} changed` : undefined
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.length > 0 ? parts.join(" · ") : "No direction summary available";
+}
+
+function groupDeferredMarkdownSignals(
+  group: ComparisonViewModel["groups"][number],
+  differences: readonly ComparisonViewModel["groups"][number]["differences"][number][]
+): readonly [string, readonly ComparisonViewModel["groups"][number]["differences"][number][]][] {
+  const grouped = new Map<string, ComparisonViewModel["groups"][number]["differences"][number][]>();
+
+  for (const difference of differences) {
+    const key = group.id === "solution-participation-drift"
+      ? getMarkdownSolutionClassification(difference)
+      : group.id === "identity-participation-drift"
+        ? getMarkdownIdentitySubjectFromDifference(difference) ?? "Additional identity drift signals"
+        : "Additional drift signals";
+    const current = grouped.get(key) ?? [];
+    current.push(difference);
+    grouped.set(key, current);
+  }
+
+  return [...grouped.entries()].sort((left, right) => right[1].length - left[1].length || left[0].localeCompare(right[0]));
+}
+
+function getOrderedMarkdownGroupDifferences(group: ComparisonViewModel["groups"][number]): readonly ComparisonViewModel["groups"][number]["differences"][number][] {
+  return [...group.differences].sort((left, right) => {
+    const priority = getMarkdownSignalPriority(right) - getMarkdownSignalPriority(left);
+    if (priority !== 0) {
+      return priority;
+    }
+
+    const leftSignificance = left.significance === "High" ? 3 : left.significance === "Medium" ? 2 : 1;
+    const rightSignificance = right.significance === "High" ? 3 : right.significance === "Medium" ? 2 : 1;
+    const significance = rightSignificance - leftSignificance;
+    if (significance !== 0) {
+      return significance;
+    }
+
+    return left.title.localeCompare(right.title);
+  });
+}
+
+function getMarkdownVisibleDifferenceLimit(group: ComparisonViewModel["groups"][number]): number {
+  if (group.differences.length >= 30) {
+    return 12;
+  }
+
+  if (group.differences.length >= 12) {
+    return 16;
+  }
+
+  return group.differences.length;
 }
 
 function renderComparisonMarkdown(model: ComparisonViewModel): string {
@@ -2996,6 +3580,10 @@ function renderComparisonMarkdown(model: ComparisonViewModel): string {
   lines.push(`- Low significance: ${model.summary.lowCount}`);
   lines.push(`- Differences: ${model.summary.differenceCount}`);
   lines.push(`- Providers: ${model.summary.providerCount}`);
+  const densityLabel = getMarkdownComparisonDensityLabel(model);
+  if (densityLabel) {
+    lines.push(`- Investigation posture: ${densityLabel}`);
+  }
   if (model.session) {
     lines.push(`- Generated: ${formatSnapshotPickerTime(model.session.generatedAtIso)}`);
     lines.push(`- Source snapshot: ${model.session.sourceSnapshot.label} (${formatSnapshotPickerTime(model.session.sourceSnapshot.capturedAtIso)})`);
@@ -3012,7 +3600,10 @@ function renderComparisonMarkdown(model: ComparisonViewModel): string {
     lines.push("No top operational drift signals were produced by the selected providers.");
   } else {
     if (model.summary.highCount > topSignals.length) {
-      lines.push(`Showing ${topSignals.length} of ${model.summary.highCount} high-significance drift signals.`);
+      lines.push(`Showing ${topSignals.length} of ${model.summary.highCount} high-significance drift signals. Additional signals remain available in provider sections.`);
+      lines.push("");
+    } else if (model.summary.differenceCount > topSignals.length) {
+      lines.push(`Showing the strongest ${topSignals.length} of ${model.summary.differenceCount} drift signals. Provider sections keep the full evidence available.`);
       lines.push("");
     }
 
@@ -3045,9 +3636,53 @@ function renderComparisonMarkdown(model: ComparisonViewModel): string {
     }
     lines.push(`- Significance: ${group.significance}`);
     lines.push(`- Differences: ${group.differences.length}`);
+    if (group.differences.length >= 12) {
+      lines.push(`- Density note: ${group.differences.length >= 30 ? "Large" : "Dense"} drift surface. Summary-first review is recommended; expand individual evidence only where it helps the investigation.`);
+    }
+    const identityBreakdown = getMarkdownIdentityTypeBreakdown(group);
+    if (identityBreakdown) {
+      lines.push(`- Identity drift by type: ${identityBreakdown}`);
+    }
+    const solutionBreakdown = getMarkdownSolutionClassificationBreakdown(group);
+    if (solutionBreakdown) {
+      lines.push(`- Solution classification: ${solutionBreakdown}`);
+    }
+    const densityHighlights = getMarkdownParticipationDensityHighlights(group, model.summary.sourceLabel, model.summary.targetLabel);
+    for (const densityHighlight of densityHighlights) {
+      lines.push(`- Participation density: ${densityHighlight}`);
+    }
+    if ((group.nearbyOperationalDrift ?? []).length > 0) {
+      lines.push("- Other observed drift surfaces:");
+      lines.push("  - Additional drift surfaces observed in this bounded comparison only; this does not imply chronology, causality, remediation, or root-cause certainty.");
+      for (const nearby of group.nearbyOperationalDrift ?? []) {
+        lines.push(`  - ${nearby.title} — ${nearby.significance}; ${nearby.differenceCount} drift signal${nearby.differenceCount === 1 ? "" : "s"}. ${nearby.summary}`);
+      }
+    }
     lines.push("");
 
-    for (const difference of group.differences) {
+    const orderedDifferences = getOrderedMarkdownGroupDifferences(group);
+    const groupedSolutionCards = group.id === "solution-participation-drift"
+      ? orderedDifferences.filter(shouldRenderMarkdownSolutionAsGroupedCard)
+      : [];
+    const groupedIdentityCards = group.id === "identity-participation-drift"
+      ? orderedDifferences.filter(isMinorMarkdownIdentityMatchingSignal)
+      : [];
+    const groupedProviderCards = orderedDifferences.filter((difference) => isMinorMarkdownProviderDetailSignal(group, difference));
+    const primaryDifferences = group.id === "solution-participation-drift"
+      ? orderedDifferences.filter((difference) => !shouldRenderMarkdownSolutionAsGroupedCard(difference))
+      : group.id === "identity-participation-drift"
+        ? orderedDifferences.filter((difference) => !isMinorMarkdownIdentityMatchingSignal(difference))
+        : orderedDifferences.filter((difference) => !isMinorMarkdownProviderDetailSignal(group, difference));
+    const visibleLimit = getMarkdownVisibleDifferenceLimit({ ...group, differences: primaryDifferences });
+    const visible = primaryDifferences.slice(0, visibleLimit);
+    const deferred = primaryDifferences.slice(visibleLimit);
+    const groupedCount = groupedSolutionCards.length + groupedIdentityCards.length + groupedProviderCards.length + deferred.length;
+    if (groupedCount > 0) {
+      lines.push(`Showing ${visible.length} primary drift signal${visible.length === 1 ? "" : "s"} in detail. ${groupedCount} additional signal${groupedCount === 1 ? "" : "s"} are grouped below for dense investigation continuity.`);
+      lines.push("");
+    }
+
+    for (const difference of visible) {
       lines.push(`#### ${getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel)}`);
       lines.push("");
       lines.push(getMarkdownDifferenceSummary(difference, model.summary.sourceLabel, model.summary.targetLabel));
@@ -3064,6 +3699,91 @@ function renderComparisonMarkdown(model: ComparisonViewModel): string {
         lines.push("- Evidence:");
         for (const evidence of difference.evidence) {
           lines.push(`  - ${evidence.label}${evidence.value ? ` — ${evidence.value}` : ""}`);
+        }
+      }
+      lines.push("");
+    }
+
+    if (groupedSolutionCards.length > 0) {
+      const solutionGroups = groupDeferredMarkdownSignals(group, groupedSolutionCards);
+      for (const [label, differences] of solutionGroups) {
+        lines.push(`#### ${label} (${differences.length})`);
+        lines.push("");
+        lines.push(getMarkdownSolutionGroupedCardIntro(label, differences.length));
+        lines.push("");
+        lines.push("Evidence summary:");
+        lines.push(`- Classification rationale — ${getMarkdownSolutionGroupedEvidenceRationale(label)}`);
+        lines.push(`- Direction summary — ${getMarkdownSolutionGroupedDirectionSummary(differences)}`);
+        lines.push(`- Operational priority — ${getMarkdownSolutionGroupedSignificancePosture(label)}`);
+        lines.push("- Evidence continuity — Representative signals are listed below; full per-signal evidence remains available in JSON/HTML export.");
+        lines.push("");
+        lines.push("Observed solution signals:");
+        for (const difference of differences.slice(0, 8)) {
+          lines.push(`- ${getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel)} — ${difference.significance} · ${difference.kind}`);
+        }
+        if (differences.length > 8) {
+          lines.push(`- ${differences.length - 8} additional signal${differences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.`);
+        }
+        lines.push("");
+      }
+    }
+
+    if (groupedIdentityCards.length > 0) {
+      lines.push(`#### Minor identity matching signals (${groupedIdentityCards.length})`);
+      lines.push("");
+      lines.push(`${groupedIdentityCards.length} lower-priority team/role matching signal${groupedIdentityCards.length === 1 ? "" : "s"} observed. These are grouped to reduce repetitive identity matching noise while preserving evidence continuity.`);
+      lines.push("");
+      lines.push("Evidence summary:");
+      lines.push(`- Classification rationale — Grouped because these are lower-priority confidence-based team/role matching signals without participation-density evidence.`);
+      lines.push(`- Match posture — ${getMarkdownMinorIdentityGroupedDirectionSummary(groupedIdentityCards)}`);
+      lines.push(`- Identity subjects — ${getMarkdownMinorIdentitySubjectBreakdown(groupedIdentityCards)}`);
+      lines.push("- Operational priority — Lower-priority topology matching context by default; review when team or role equivalence is part of the investigation.");
+      lines.push("- Evidence continuity — Representative signals are listed below; full per-signal evidence remains available in JSON/HTML export.");
+      lines.push("");
+      lines.push("Observed identity matching signals:");
+      for (const difference of groupedIdentityCards.slice(0, 8)) {
+        lines.push(`- ${getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel)} — ${difference.significance} · ${difference.kind}`);
+      }
+      if (groupedIdentityCards.length > 8) {
+        lines.push(`- ${groupedIdentityCards.length - 8} additional signal${groupedIdentityCards.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.`);
+      }
+      lines.push("");
+    }
+
+    if (groupedProviderCards.length > 0) {
+      lines.push(`#### ${getMarkdownProviderMinorGroupingLabel(group)} (${groupedProviderCards.length})`);
+      lines.push("");
+      lines.push(getMarkdownProviderMinorGroupingIntro(group, groupedProviderCards.length));
+      lines.push("");
+      lines.push("Evidence summary:");
+      lines.push(`- Classification rationale — ${getMarkdownProviderMinorGroupingRationale(group)}`);
+      lines.push(`- Direction summary — ${getMarkdownProviderMinorDirectionSummary(groupedProviderCards)}`);
+      lines.push("- Operational priority — Lower-priority provider detail by default; review when these details are part of the investigation path.");
+      lines.push("- Evidence continuity — Representative signals are listed below; full per-signal evidence remains available in JSON/HTML export.");
+      lines.push("");
+      lines.push("Observed provider detail signals:");
+      for (const difference of groupedProviderCards.slice(0, 8)) {
+        lines.push(`- ${getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel)} — ${difference.significance} · ${difference.kind}`);
+      }
+      if (groupedProviderCards.length > 8) {
+        lines.push(`- ${groupedProviderCards.length - 8} additional signal${groupedProviderCards.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.`);
+      }
+      lines.push("");
+    }
+
+    if (deferred.length > 0) {
+      lines.push("#### Additional drift signals grouped for readability");
+      lines.push("");
+      lines.push("These lower-ranked signals are grouped to keep the Markdown report readable. Use JSON/HTML export when full per-signal expansion is needed.");
+      lines.push("");
+      const deferredGroups = groupDeferredMarkdownSignals(group, deferred);
+      for (const [label, differences] of deferredGroups) {
+        lines.push(`- ${label} (${differences.length})`);
+        for (const difference of differences.slice(0, 8)) {
+          lines.push(`  - ${getMarkdownDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel)} — ${difference.significance} · ${difference.kind}`);
+        }
+        if (differences.length > 8) {
+          lines.push(`  - ${differences.length - 8} additional signal${differences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.`);
         }
       }
       lines.push("");
