@@ -74,8 +74,8 @@ suite("SolutionParticipationDiffProvider", () => {
       sourceFeature: "Operational Profile",
       capturedAt: new Date("2026-05-24T00:00:00.000Z"),
       evidence: buildProfileEvidence([
-        { uniqueName: "BupaEntities", friendlyName: "Bupa Entities (BKP)", version: "1.0.0.0", isManaged: false },
-        { uniqueName: "Sprint2519Solution", friendlyName: "Sprint 2519 Solution", version: "1.0.0.0", isManaged: false }
+        { uniqueName: "ContosoEntities", friendlyName: "Contoso Entities (BKP)", version: "1.0.0.0", isManaged: false },
+        { uniqueName: "SprintSolution", friendlyName: "Sprint Solution", version: "1.0.0.0", isManaged: false }
       ])
     });
     const targetSnapshot = createComparisonEvidenceSnapshot({
@@ -96,9 +96,9 @@ suite("SolutionParticipationDiffProvider", () => {
     });
 
     const differences = result.groups[0].differences;
-    const backup = differences.find((difference) => difference.title.includes("Bupa Entities"));
+    const backup = differences.find((difference) => difference.title.includes("Contoso Entities"));
     const platform = differences.find((difference) => difference.title.includes("Application Common"));
-    const custom = differences.find((difference) => difference.title.includes("Sprint 2519"));
+    const custom = differences.find((difference) => difference.title.includes("Sprint"));
 
     assert.ok(backup);
     assert.ok(platform);
