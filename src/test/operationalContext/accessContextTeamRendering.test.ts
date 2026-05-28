@@ -9,7 +9,7 @@ suite("Access Context team rendering", () => {
         type: "principal",
         logicalName: "team",
         id: "11111111-1111-1111-1111-111111111111",
-        displayName: "HEKA - Data Admin"
+        displayName: "CONTOSO - Data Admin"
       },
       sections: [{
         id: "accessContext",
@@ -20,11 +20,11 @@ suite("Access Context team rendering", () => {
             type: "principal",
             logicalName: "team",
             id: "11111111-1111-1111-1111-111111111111",
-            displayName: "HEKA - Data Admin"
+            displayName: "CONTOSO - Data Admin"
           },
           evidenceType: "AccessTopology",
           title: "Observed access topology participation",
-          summary: "HEKA - Data Admin is shown as Team Context with observed role participation.",
+          summary: "CONTOSO - Data Admin is shown as Team Context with observed role participation.",
           source: "dataverse",
           scope: "currentSubject",
           confidence: "direct",
@@ -33,11 +33,11 @@ suite("Access Context team rendering", () => {
               subjectKind: "team",
               principalSummary: {
                 id: "11111111-1111-1111-1111-111111111111",
-                displayName: "HEKA - Data Admin",
+                displayName: "CONTOSO - Data Admin",
                 principalType: "Team Context",
                 businessUnitName: "Contoso Health Services"
               },
-              directRoles: [{ roleName: "Data Admin", source: "team", sourceTeamName: "HEKA - Data Admin" }],
+              directRoles: [{ roleName: "Data Admin", source: "team", sourceTeamName: "CONTOSO - Data Admin" }],
               teamMemberships: [],
               teamMembers: [{
                 displayName: "Jane Smith",
@@ -54,7 +54,7 @@ suite("Access Context team rendering", () => {
               }],
               inheritedRoles: [],
               evidence: [{
-                sourceDisplayName: "HEKA - Data Admin",
+                sourceDisplayName: "CONTOSO - Data Admin",
                 relationshipType: "principal summary",
                 evidenceDescription: "Team Context identity observed."
               }, {
@@ -66,7 +66,7 @@ suite("Access Context team rendering", () => {
                 relationshipType: "team member participation",
                 evidenceDescription: "Observed Application User participation in the selected team."
               }],
-              operationalSignificance: "HEKA - Data Admin provides team access-topology orientation without proving effective access.",
+              operationalSignificance: "CONTOSO - Data Admin provides team access-topology orientation without proving effective access.",
               topologySummary: "Observed team access topology includes one direct team role and one bounded member participation record.",
               queryLog: ["/teams(11111111-1111-1111-1111-111111111111)"],
               searchHint: "Search is local to the Team Access Context evidence currently loaded."
