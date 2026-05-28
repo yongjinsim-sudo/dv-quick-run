@@ -65,6 +65,51 @@ suite("SolutionParticipationDiffProvider", () => {
     assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("version changed")));
     assert.ok(result.groups[0].differences.some((difference) => difference.title.includes("only in target")));
   });
+
+  test("classifies platform and backup solution drift as lower-priority visible evidence", async () => {
+    const provider = new SolutionParticipationDiffProvider();
+    const sourceSnapshot = createComparisonEvidenceSnapshot({
+      environment: { label: "DEV" },
+      evidenceType: "OperationalProfile",
+      sourceFeature: "Operational Profile",
+      capturedAt: new Date("2026-05-24T00:00:00.000Z"),
+      evidence: buildProfileEvidence([
+        { uniqueName: "ContosoEntities", friendlyName: "Contoso Entities (BKP)", version: "1.0.0.0", isManaged: false },
+        { uniqueName: "SprintSolution", friendlyName: "Sprint Solution", version: "1.0.0.0", isManaged: false }
+      ])
+    });
+    const targetSnapshot = createComparisonEvidenceSnapshot({
+      environment: { label: "SIT" },
+      evidenceType: "OperationalProfile",
+      sourceFeature: "Operational Profile",
+      capturedAt: new Date("2026-05-24T00:00:00.000Z"),
+      evidence: buildProfileEvidence([
+        { uniqueName: "msdynce_AppCommon", friendlyName: "Application Common", version: "9.0.4.0066", isManaged: true }
+      ])
+    });
+
+    const result = await provider.compare({
+      source: { label: "DEV" },
+      target: { label: "SIT" },
+      entityLogicalName: "account",
+      snapshots: [sourceSnapshot, targetSnapshot]
+    });
+
+    const differences = result.groups[0].differences;
+    const backup = differences.find((difference) => difference.title.includes("Contoso Entities"));
+    const platform = differences.find((difference) => difference.title.includes("Application Common"));
+    const custom = differences.find((difference) => difference.title.includes("Sprint"));
+
+    assert.ok(backup);
+    assert.ok(platform);
+    assert.ok(custom);
+    assert.strictEqual(backup.significance, "Low");
+    assert.strictEqual(platform.significance, "Low");
+    assert.strictEqual(custom.significance, "Medium");
+    assert.ok(backup.evidence.some((item) => item.label === "Solution classification" && item.value === "Backup / archived solution"));
+    assert.ok(platform.evidence.some((item) => item.label === "Solution classification" && item.value === "Microsoft platform solution"));
+  });
+
 });
 
 function buildProfileEvidence(solutions: readonly unknown[]) {

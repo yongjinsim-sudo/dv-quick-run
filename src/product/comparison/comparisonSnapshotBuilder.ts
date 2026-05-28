@@ -2,6 +2,7 @@ import type {
   ComparisonEnvironmentIdentity,
   ComparisonEvidenceSnapshot,
   ComparisonSnapshotEvidenceType,
+  ComparisonSnapshotLineage,
   ComparisonSnapshotValidationResult,
   OperationalComparisonSnapshotDocument
 } from "./comparisonSnapshotTypes.js";
@@ -44,9 +45,15 @@ export function createOperationalComparisonSnapshotDocument(args: {
   sourceFeature: string;
   evidenceSnapshots: readonly ComparisonEvidenceSnapshot[];
   capturedAt?: Date;
+  lineage?: Partial<ComparisonSnapshotLineage>;
 }): OperationalComparisonSnapshotDocument {
   const capturedAtIso = (args.capturedAt ?? new Date()).toISOString();
   const environment = normalizeComparisonEnvironmentIdentity(args.environment);
+  const lineage = normalizeSnapshotLineage({
+    capturedAtIso,
+    sourceFeature: args.sourceFeature,
+    lineage: args.lineage
+  });
 
   const document: OperationalComparisonSnapshotDocument = {
     kind: "dvqr-operational-comparison-snapshot",
@@ -63,7 +70,8 @@ export function createOperationalComparisonSnapshotDocument(args: {
         snapshotVersion: "comparison-snapshot-v1",
         capturedAtIso: snapshot.metadata.capturedAtIso || capturedAtIso
       }
-    }))
+    })),
+    lineage
   };
 
   return {
@@ -73,6 +81,26 @@ export function createOperationalComparisonSnapshotDocument(args: {
       canonicalization: COMPARISON_SNAPSHOT_CANONICALIZATION,
       contentHash: calculateOperationalComparisonSnapshotHash(document)
     }
+  };
+}
+
+
+function normalizeSnapshotLineage(args: {
+  readonly capturedAtIso: string;
+  readonly sourceFeature: string;
+  readonly lineage?: Partial<ComparisonSnapshotLineage>;
+}): ComparisonSnapshotLineage {
+  const parentSnapshotIds = args.lineage?.parentSnapshotIds
+    ?.map((id) => id.trim())
+    .filter((id) => id.length > 0);
+
+  return {
+    lineageVersion: "comparison-lineage-v1",
+    origin: args.lineage?.origin ?? "captured",
+    createdAtIso: args.lineage?.createdAtIso ?? args.capturedAtIso,
+    sourceFeature: args.lineage?.sourceFeature ?? args.sourceFeature,
+    parentSnapshotIds: parentSnapshotIds && parentSnapshotIds.length > 0 ? parentSnapshotIds : undefined,
+    note: normalizeOptional(args.lineage?.note)
   };
 }
 

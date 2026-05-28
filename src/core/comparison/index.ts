@@ -12,8 +12,10 @@ export type {
   ComparisonEvidenceRef,
   ComparisonOperationalSignificance,
   ComparisonProvider,
+  ComparisonProviderCapabilities,
   ComparisonProviderContext,
   ComparisonProviderResult,
+  ComparisonSubjectType,
   ComparisonSummary,
   ComparisonSnapshotTrustStatus,
   ComparisonSnapshotTrustSummary,
@@ -23,9 +25,11 @@ export { defaultEnvironmentIdentityTokens, normalizeIdentityName } from "./ident
 export { matchIdentityParticipation } from "./identity/identityMatcher.js";
 export type {
   ComparableIdentity,
+  ComparableIdentitySubjectType,
   IdentityMatchCandidate,
   IdentityMatchConfidence,
-  IdentityMatchEvidence
+  IdentityMatchEvidence,
+  IdentityMatchEvidenceStrength
 } from "./identity/identityMatchTypes.js";
 
 export { calibrateComparisonDifference, calibrateSignificance, maxComparisonSignificance } from "./comparisonSignificance.js";

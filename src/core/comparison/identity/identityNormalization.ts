@@ -3,6 +3,7 @@ export const defaultEnvironmentIdentityTokens = [
   "sit",
   "uat",
   "test",
+  "tst",
   "perf",
   "preprod",
   "pre-prod",
@@ -10,7 +11,10 @@ export const defaultEnvironmentIdentityTokens = [
   "nonprod",
   "non-prod",
   "prod",
-  "production"
+  "production",
+  "qa",
+  "sandbox",
+  "sbx"
 ] as const;
 
 export interface IdentityNormalizationResult {
@@ -28,26 +32,43 @@ export function normalizeIdentityName(
     return undefined;
   }
 
-  const tokenSet = new Set(environmentTokens.map((token) => token.toLowerCase()));
+  const tokenSet = new Set(environmentTokens.map(normalizeEnvironmentToken).filter(Boolean));
   const parts = original
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .split("_")
     .filter(Boolean);
 
-  const removedTokens: string[] = [];
-  const normalizedParts = parts.filter((part) => {
-    const shouldRemove = tokenSet.has(part);
-    if (shouldRemove) {
-      removedTokens.push(part);
-    }
-
-    return !shouldRemove;
-  });
+  const { remainingParts, removedTokens } = removeBoundaryEnvironmentTokens(parts, tokenSet);
 
   return {
     original,
-    normalized: normalizedParts.join("_"),
+    normalized: remainingParts.join("_"),
     removedTokens
   };
+}
+
+function removeBoundaryEnvironmentTokens(
+  parts: readonly string[],
+  tokenSet: ReadonlySet<string>
+): { readonly remainingParts: readonly string[]; readonly removedTokens: readonly string[] } {
+  const remainingParts = [...parts];
+  const removedTokens: string[] = [];
+
+  while (remainingParts.length > 0 && tokenSet.has(remainingParts[0])) {
+    removedTokens.push(remainingParts.shift() ?? "");
+  }
+
+  while (remainingParts.length > 0 && tokenSet.has(remainingParts[remainingParts.length - 1])) {
+    removedTokens.push(remainingParts.pop() ?? "");
+  }
+
+  return {
+    remainingParts,
+    removedTokens: removedTokens.filter(Boolean)
+  };
+}
+
+function normalizeEnvironmentToken(token: string): string {
+  return token.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }

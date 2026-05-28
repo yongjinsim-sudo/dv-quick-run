@@ -2,13 +2,13 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, investigation, execution, and comparison workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
     "url": "https://github.com/yongjinsim-sudo/dv-quick-run"
   },
-  "homepage": "https://github.com/yongjinsim-sudo/dv-quick-run",
+  "homepage": "https://www.dvquickrun.com/",
   "bugs": {
     "url": "https://github.com/yongjinsim-sudo/dv-quick-run/issues"
   },

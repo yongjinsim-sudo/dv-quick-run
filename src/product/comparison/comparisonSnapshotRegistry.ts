@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { randomUUID } from "crypto";
-import type { OperationalComparisonSnapshotDocument } from "./comparisonSnapshotTypes.js";
+import type { ComparisonSnapshotLineage, OperationalComparisonSnapshotDocument } from "./comparisonSnapshotTypes.js";
 
 const SNAPSHOT_REGISTRY_KEY = "dvQuickRun.comparison.snapshotRegistry.v1";
 const SNAPSHOT_FAVOURITES_KEY = "dvQuickRun.comparison.snapshotFavourites.v1";
@@ -17,6 +17,7 @@ export interface ComparisonSnapshotRegistryEntry {
   readonly capturedAtIso: string;
   readonly sourceFeature: string;
   readonly evidenceTypes: readonly string[];
+  readonly lineage?: ComparisonSnapshotLineage;
   readonly isFavourite?: boolean;
 }
 
@@ -50,7 +51,8 @@ export function buildSnapshotRegistryEntry(args: {
     entityDisplayName,
     capturedAtIso: args.document.capturedAtIso,
     sourceFeature: args.document.sourceFeature,
-    evidenceTypes
+    evidenceTypes,
+    lineage: args.document.lineage
   };
 }
 

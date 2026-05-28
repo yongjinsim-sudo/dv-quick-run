@@ -3,8 +3,12 @@ export type ComparisonDifferenceKind =
   | "Removed"
   | "Changed"
   | "Participation Drift"
+  | "Inheritance Drift"
+  | "Assignment Drift"
+  | "Runtime Participation Drift"
   | "Configuration Drift"
   | "State Drift"
+  | "Density Drift"
   | "DensityChanged"
   | "OnlyInSource"
   | "OnlyInTarget";
@@ -29,6 +33,9 @@ export interface ComparisonSessionSnapshotRef {
   readonly capturedAtIso?: string;
   readonly trustState?: ComparisonSnapshotTrustStatus;
   readonly fileUri?: string;
+  readonly lineageOrigin?: string;
+  readonly lineageCreatedAtIso?: string;
+  readonly lineageNote?: string;
 }
 
 export interface ComparisonSessionMetadata {
@@ -52,6 +59,17 @@ export interface ComparisonEvidenceRef {
   readonly source?: "source" | "target" | "both";
 }
 
+export interface ComparisonNearbyOperationalDrift {
+  readonly id: string;
+  readonly relatedGroupId: string;
+  readonly relatedGroupTitle: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly significance: ComparisonOperationalSignificance;
+  readonly differenceCount: number;
+  readonly evidence: readonly ComparisonEvidenceRef[];
+}
+
 export interface ComparisonDifference {
   readonly id: string;
   readonly title: string;
@@ -69,6 +87,7 @@ export interface ComparisonDriftGroup {
   readonly summary: string;
   readonly significance: ComparisonOperationalSignificance;
   readonly differences: readonly ComparisonDifference[];
+  readonly nearbyOperationalDrift?: readonly ComparisonNearbyOperationalDrift[];
 }
 
 export interface ComparisonProviderContext {
@@ -85,9 +104,30 @@ export interface ComparisonProviderResult {
   readonly groups: readonly ComparisonDriftGroup[];
 }
 
+export type ComparisonSubjectType =
+  | "entity"
+  | "user"
+  | "team"
+  | "role"
+  | "applicationUser"
+  | "businessUnit"
+  | "solution"
+  | "workflow"
+  | "pluginStep";
+
+export interface ComparisonProviderCapabilities {
+  readonly supportedSubjectTypes?: readonly ComparisonSubjectType[];
+  readonly supportedDifferenceKinds?: readonly ComparisonDifferenceKind[];
+  readonly supportsReplay?: boolean;
+  readonly supportsExport?: boolean;
+  readonly supportsNearbyCorrelation?: boolean;
+  readonly significanceOwnership?: "provider";
+}
+
 export interface ComparisonProvider {
   readonly id: string;
   readonly title: string;
+  readonly capabilities?: ComparisonProviderCapabilities;
   compare(context: ComparisonProviderContext): Promise<ComparisonProviderResult>;
 }
 

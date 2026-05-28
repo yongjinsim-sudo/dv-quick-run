@@ -50,6 +50,9 @@ suite("comparisonSnapshotBuilder", () => {
     const validation = validateComparisonSnapshotDocument(document);
 
     assert.strictEqual(document.kind, "dvqr-operational-comparison-snapshot");
+    assert.strictEqual(document.lineage?.lineageVersion, "comparison-lineage-v1");
+    assert.strictEqual(document.lineage?.origin, "captured");
+    assert.strictEqual(document.lineage?.createdAtIso, "2026-05-24T00:00:00.000Z");
     assert.strictEqual(validation.valid, true);
     assert.strictEqual(validation.trustState, "Verified");
     assert.strictEqual(verifyOperationalComparisonSnapshotIntegrity(document), true);
@@ -117,5 +120,44 @@ suite("comparisonSnapshotBuilder", () => {
     assert.strictEqual(validation.trustState, "Legacy / Unverified");
     assert.strictEqual(validation.snapshots.length, 1);
   });
+
+  test("includes snapshot lineage in integrity verification", () => {
+    const evidence = createComparisonEvidenceSnapshot({
+      environment: { label: "DEV" },
+      evidenceType: "OperationalProfile",
+      evidence: { entityLogicalName: "account" },
+      capturedAt: new Date("2026-05-24T00:00:00.000Z"),
+      sourceFeature: "Operational Profile"
+    });
+
+    const document = createOperationalComparisonSnapshotDocument({
+      environment: { label: "DEV" },
+      evidenceSnapshots: [evidence],
+      capturedAt: new Date("2026-05-24T00:00:00.000Z"),
+      sourceFeature: "Operational Profile",
+      lineage: {
+        origin: "imported",
+        createdAtIso: "2026-05-25T00:00:00.000Z",
+        parentSnapshotIds: [" parent-one ", ""],
+        note: " Imported for replay validation "
+      }
+    });
+
+    assert.strictEqual(document.lineage?.origin, "imported");
+    assert.deepStrictEqual(document.lineage?.parentSnapshotIds, ["parent-one"]);
+    assert.strictEqual(document.lineage?.note, "Imported for replay validation");
+    assert.strictEqual(verifyOperationalComparisonSnapshotIntegrity(document), true);
+
+    const tampered = {
+      ...document,
+      lineage: {
+        ...document.lineage,
+        note: "Changed replay lineage"
+      }
+    };
+
+    assert.strictEqual(validateComparisonSnapshotDocument(tampered).trustState, "Modified");
+  });
+
 
 });
