@@ -59,8 +59,16 @@ export interface ComparisonEvidenceRef {
   readonly source?: "source" | "target" | "both";
 }
 
+export interface ComparisonNearbyRepresentativeSignal {
+  readonly title: string;
+  readonly kind: ComparisonDifferenceKind;
+  readonly significance: ComparisonOperationalSignificance;
+}
+
 export interface ComparisonNearbyOperationalDrift {
   readonly id: string;
+  readonly orientationCue: string;
+  readonly orientationSummary: string;
   readonly relatedGroupId: string;
   readonly relatedGroupTitle: string;
   readonly title: string;
@@ -68,6 +76,28 @@ export interface ComparisonNearbyOperationalDrift {
   readonly significance: ComparisonOperationalSignificance;
   readonly differenceCount: number;
   readonly evidence: readonly ComparisonEvidenceRef[];
+  readonly representativeSignals?: readonly ComparisonNearbyRepresentativeSignal[];
+  readonly continuations?: readonly ComparisonInvestigationContinuation[];
+}
+
+export type ComparisonInvestigationContinuationKind =
+  | "IdentityParticipation"
+  | "RuntimeBehaviour"
+  | "WorkflowAutomation"
+  | "SolutionParticipation"
+  | "OperationalProfile"
+  | "RawEvidence";
+
+export type ComparisonInvestigationContinuationState = "Available" | "Deferred" | "InspectOnly";
+
+export interface ComparisonInvestigationContinuation {
+  readonly id: string;
+  readonly title: string;
+  readonly summary: string;
+  readonly kind: ComparisonInvestigationContinuationKind;
+  readonly state: ComparisonInvestigationContinuationState;
+  readonly evidence: readonly ComparisonEvidenceRef[];
+  readonly children?: readonly ComparisonInvestigationContinuation[];
 }
 
 export interface ComparisonDifference {
@@ -79,6 +109,7 @@ export interface ComparisonDifference {
   readonly sourceValue?: string;
   readonly targetValue?: string;
   readonly evidence: readonly ComparisonEvidenceRef[];
+  readonly continuations?: readonly ComparisonInvestigationContinuation[];
 }
 
 export interface ComparisonDriftGroup {
@@ -88,6 +119,7 @@ export interface ComparisonDriftGroup {
   readonly significance: ComparisonOperationalSignificance;
   readonly differences: readonly ComparisonDifference[];
   readonly nearbyOperationalDrift?: readonly ComparisonNearbyOperationalDrift[];
+  readonly continuations?: readonly ComparisonInvestigationContinuation[];
 }
 
 export interface ComparisonProviderContext {
@@ -142,6 +174,7 @@ export interface ComparisonSummary {
   readonly providerCount: number;
   readonly differenceCount: number;
   readonly subjectLabel?: string;
+  readonly entityLogicalName?: string;
 }
 
 export interface ComparisonViewModel {

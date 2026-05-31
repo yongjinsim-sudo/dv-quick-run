@@ -2,7 +2,37 @@
 
 A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, verify drift evidence, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, inline evidence continuation, and the DV Quick Run Hub — without leaving your editor.**
+
+---
+
+## 🌐 Website & Interactive Demo
+
+Official website:
+
+```text
+https://www.dvquickrun.com
+```
+
+The website includes:
+
+* product overview
+* roadmap direction
+* operational investigation philosophy
+* feature walkthroughs
+* marketplace/install links
+* interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
+
+The interactive HTML demo helps illustrate:
+
+* grouped operational drift investigation
+* inline evidence continuation
+* operational verification workflows
+* Findings / Verification / Handoff investigation flow
+* dense enterprise comparison readability
+* operational investigation continuity
+
+without requiring a live Dataverse environment.
 
 ---
 
@@ -23,13 +53,15 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
 * investigate bounded Access Context for users, application users, teams, roles, and business units
 * compare operational snapshots through Snapshot Library, Timeline Diff, and Cross-Environment Diff
+* continue investigation from comparison evidence using bounded inline pivots
+* review, verify, comment on, and hand off operational drift findings
 * discover and execute supported Custom API capabilities through Capability Explorer
 * use the Hub to stay oriented across investigation workflows
 
 DV Quick Run is designed around a simple loop:
 
 ```text
-write → run → explore → refine → investigate → act safely → verify
+write → run → explore → refine → investigate → verify → hand off
 ```
 
 ---
@@ -58,20 +90,19 @@ write → run → explore → refine → investigate → act safely → verify
 
 ---
 
-## 🆕 What's New in v0.12.2
+## 🆕 What's New in v0.12.3
 
-v0.12.2 matures DV Quick Run’s comparison platform from runtime-aware drift investigation into calmer, evidence-backed operational drift triage.
+v0.12.3 evolves DV Quick Run’s comparison platform from calm operational drift triage into an interactive operational verification and investigation workspace.
 
 Highlights include:
 
-* **Grouped Operational Surfaces** for dense comparison reports, so high-signal drift stays visible while lower-priority evidence is grouped for readability
-* **Evidence-Backed Grouped Cards** with classification rationale, evidence summaries, representative signals, and export continuity
-* **Platform Noise Reduction** so Microsoft/platform, patch, cumulative, and backup/archive-like solution drift is grouped and deprioritised without being hidden
-* **Provider-Owned Dense Drift Semantics** across Plugin Step Runtime Behaviour, Workflow / Automation, Solution Participation, Identity Participation, and Operational Profile drift
-* **Identity Participation Grouping** for minor team/role matching signals while preserving meaningful participation-density changes
-* **Operational Significance Tuning** so runtime-impacting and custom operational drift remains prominent while low-priority platform-layer context remains inspectable
-* **Mock Comparison Refinements** to make Free / Pro Preview sample workflows better demonstrate realistic operational drift without artificial overload
-* calmer spacing, grouped-card readability, softer investigation posture wording, and stronger dense-report scanability
+* **Inline Evidence Continuation** so drift evidence can open bounded live investigation context directly inside the comparison report
+* **Grouped Evidence Pivots** so representative signals inside dense grouped sections remain clickable, inspectable, and evidence-backed
+* **Operational Review & Verification Workspace** with Findings, Verification, and Handoff surfaces for calmer investigation progress tracking
+* **Review State Persistence** for reviewed drift, verification items, reviewer comments, and reset workflows across reopened comparison reports
+* **Safer Live Continuation Semantics** where real Dataverse evidence can be queried live, while captured/classification-only evidence explains itself instead of hanging
+* **Grouped Identity Evidence Continuity** for minor identity/team/role matching signals, preserving investigation continuity without overwhelming dense reports
+* **Operational Handoff Refinement** so comparison evidence, review posture, verification notes, and external follow-up context remain clearer for human review
 
 DV Quick Run continues to prioritise:
 
@@ -359,6 +390,25 @@ Dense comparison reports now use grouped operational surfaces so investigations 
 * operational-priority explanation
 * full JSON/HTML evidence continuity
 
+Comparison reports now also support interactive operational verification workflows. Evidence rows can open inline investigation context directly from the report, including bounded live pivots where DV Quick Run can safely query the active Dataverse environment.
+
+Inline evidence continuation supports:
+
+* solution participation evidence
+* identity/team/role participation evidence
+* workflow and automation participation evidence
+* grouped representative signals
+* custom/publisher-prefixed entity metadata context
+* captured context-only evidence with explanatory fallback wording
+
+The comparison workspace is organised around:
+
+* **Findings** — review the operational drift evidence
+* **Verification** — track what has been reviewed, externally checked, or still needs follow-up
+* **Handoff** — preserve operational notes and review posture for human investigation continuity
+
+Review and verification state is local to the comparison workflow and remains investigation-oriented. Marking something reviewed does not imply remediation, correctness, access authority, or root-cause certainty.
+
 Examples include:
 
 * Microsoft/platform solution drift grouped as platform-layer context
@@ -387,6 +437,8 @@ It is designed to help you understand:
 * whether a comparison is scope-aligned before treating drift as meaningful
 
 Free users can explore mock snapshots, replay sample comparison workflows, and inspect sample drift. Pro unlocks real snapshot import, management, comparison, export, replay, and snapshot continuity workflows.
+
+Future roadmap direction includes **Entity Access Participation Context**: a wider bounded access-topology report for an entity/table that can be launched from diff evidence to understand role, team, user, app-user, and business-unit participation around that entity. This remains operational participation orientation, not RBAC simulation or authoritative effective-access calculation.
 
 ---
 
@@ -622,6 +674,8 @@ It detects or guards against risky situations such as:
 * treating mismatched comparison subjects as equivalent operational drift without explicit user awareness
 * replay-history cleanup deleting underlying snapshots
 * hidden cross-environment scans or automatic drift verification
+* treating inline evidence continuation as remediation or proof of root cause
+* treating review-state completion as operational correctness
 
 Execution-capable workflows are designed around:
 
@@ -650,6 +704,12 @@ GitHub Discussions:
 
 ```text
 https://github.com/yongjinsim-sudo/dv-quick-run/discussions
+```
+
+Official website:
+
+```text
+https://www.dvquickrun.com
 ```
 
 ---

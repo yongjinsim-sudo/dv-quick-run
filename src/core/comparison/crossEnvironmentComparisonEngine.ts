@@ -49,7 +49,8 @@ export class CrossEnvironmentComparisonEngine {
         lowCount: differences.filter((difference) => difference.significance === "Low").length,
         providerCount: providerResults.length,
         differenceCount: differences.length,
-        subjectLabel: context.subjectLabel ?? context.entityLogicalName
+        subjectLabel: context.subjectLabel ?? context.entityLogicalName,
+        entityLogicalName: context.entityLogicalName
       },
       groups,
       providerResults
@@ -174,27 +175,53 @@ function classifyGroupDomain(groupId: string): "identity" | "workflow" | "plugin
   return "other";
 }
 
+function getOperationalSignificanceWeight(significance: string): number {
+  if (significance === "High") {
+    return 3;
+  }
+
+  if (significance === "Medium") {
+    return 2;
+  }
+
+  return 1;
+}
+
+function buildRepresentativeSignals(group: ComparisonDriftGroup) {
+  return [...group.differences]
+    .sort((left, right) => {
+      const significanceDelta = getOperationalSignificanceWeight(right.significance) - getOperationalSignificanceWeight(left.significance);
+      if (significanceDelta !== 0) {
+        return significanceDelta;
+      }
+
+      return left.title.localeCompare(right.title);
+    })
+    .slice(0, 3)
+    .map((difference) => ({
+      title: difference.title,
+      kind: difference.kind,
+      significance: difference.significance
+    }));
+}
+
 function toNearbyOperationalDrift(
   sourceGroup: ComparisonDriftGroup,
   relatedGroup: ComparisonDriftGroup,
-  shared: readonly string[],
+  _shared: readonly string[],
   index: number
 ): ComparisonNearbyOperationalDrift {
-  const title = `${relatedGroup.title} additional drift also observed`;
+  const orientation = buildNearbyOrientationCue(sourceGroup.id, relatedGroup.id);
+  const title = `${orientation.label}: ${relatedGroup.title}`;
   const evidence = [
     {
-      label: "Additional drift surface",
+      label: "Related provider",
       value: `${relatedGroup.title} contains ${relatedGroup.differences.length} drift signal${relatedGroup.differences.length === 1 ? "" : "s"}.`,
       source: "both" as const
     },
-    ...(shared.length > 0 ? [{
-      label: "Shared observed terms",
-      value: shared.slice(0, 6).join(", "),
-      source: "both" as const
-    }] : []),
     {
       label: "Operational boundary",
-      value: "Additional observed drift means present in the same bounded comparison scope. It does not imply chronology, causality, remediation, or root-cause certainty.",
+      value: "Nearby drift is adjacency context in the same bounded comparison. It does not imply chronology, causality, remediation, or root-cause certainty.",
       source: "both" as const
     }
   ];
@@ -203,11 +230,62 @@ function toNearbyOperationalDrift(
     id: `${sourceGroup.id}-nearby-${relatedGroup.id}-${index}`,
     relatedGroupId: relatedGroup.id,
     relatedGroupTitle: relatedGroup.title,
+    orientationCue: orientation.label,
+    orientationSummary: orientation.summary,
     title,
-    summary: `${relatedGroup.title} is also observed in this bounded comparison. Treat this as additional operational context for investigation orientation only.`,
+    summary: orientation.summary,
     significance: relatedGroup.significance,
     differenceCount: relatedGroup.differences.length,
-    evidence
+    evidence,
+    representativeSignals: buildRepresentativeSignals(relatedGroup)
+  };
+}
+
+function buildNearbyOrientationCue(
+  sourceGroupId: string,
+  relatedGroupId: string
+): { readonly label: string; readonly summary: string } {
+  const source = classifyGroupDomain(sourceGroupId);
+  const related = classifyGroupDomain(relatedGroupId);
+
+  if (related === "workflow") {
+    return {
+      label: "Adjacent orchestration drift",
+      summary: "Review activation, owner, real-time/background, and orchestration participation differences outside the plugin pipeline."
+    };
+  }
+
+  if (related === "plugin") {
+    return {
+      label: "Adjacent runtime drift",
+      summary: "Review enablement, execution stage, mode, order, and filtering-attribute drift that can change runtime behaviour."
+    };
+  }
+
+  if (related === "identity") {
+    return {
+      label: source === "workflow" || source === "plugin" ? "Adjacent identity participation" : "Identity participation context",
+      summary: "Review user, team, role, or app-user participation differences that may affect operational participation."
+    };
+  }
+
+  if (related === "solution") {
+    return {
+      label: "Package participation context",
+      summary: "Review managed state, version, and package presence differences that may explain component-layering changes."
+    };
+  }
+
+  if (related === "profile") {
+    return {
+      label: "Operational density context",
+      summary: "Review density changes to understand which operational dimensions became more or less complex."
+    };
+  }
+
+  return {
+    label: "Additional bounded context",
+    summary: "Review this provider when its signals answer a distinct operational verification question."
   };
 }
 
