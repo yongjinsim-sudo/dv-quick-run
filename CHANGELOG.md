@@ -6,6 +6,362 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.12.3 — Operational Verification Guidance, Evidence Continuation & Investigation Handoff
+
+This release evolves DV Quick Run’s operational comparison platform from:
+
+```text
+calm operational drift triage
+```
+
+→ into:
+
+```text
+interactive operational verification and investigation continuity
+```
+
+DV Quick Run can now:
+
+* investigate operational drift inline without losing comparison context
+* continue investigation directly from evidence signals
+* preserve grouped evidence continuity under dense enterprise comparisons
+* capture operational review state across investigation workflows
+* support calmer verification-oriented operational reasoning
+* provide bounded live evidence continuation from comparison surfaces
+* support investigation handoff semantics more coherently
+* preserve explainable operational context during replay and export workflows
+
+This release focuses heavily on:
+
+* operational verification workflows
+* inline evidence continuation
+* grouped evidence continuity
+* review-state persistence
+* operational investigation handoff
+* enterprise-scale comparison readability
+* bounded live operational continuation
+* calmer operational UX under dense comparison scenarios
+
+The goal is not remediation, deployment automation, or authoritative security analysis.
+
+It is:
+
+* operational verification
+* investigation continuity
+* explainable operational drift reasoning
+* bounded live operational exploration
+* calmer review workflows
+* evidence-backed investigation guidance
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR observes operational drift.
+DVQR does not fix operational drift.
+```
+
+---
+
+## 🔎 Inline Evidence Continuation & Operational Verification (Major)
+
+Introduced inline operational evidence continuation directly inside comparison workflows.
+
+Operational drift evidence can now:
+
+* continue into bounded live Dataverse investigation
+* surface operational context inline
+* preserve comparison continuity during exploration
+* avoid disconnected investigation workflows
+* retain operational evidence anchors during live continuation
+
+Examples include:
+
+* solution participation evidence
+* workflow/runtime participation evidence
+* identity participation evidence
+* grouped operational drift evidence
+* metadata-oriented operational evidence
+
+Behaviour:
+
+* inline continuation remains bounded and evidence-backed
+* live continuation never replaces captured comparison evidence
+* unavailable continuation paths degrade calmly
+* investigation continuity remains local to the comparison workflow
+
+Results:
+
+* dramatically improved operational investigation flow
+* reduced context switching
+* stronger operational verification continuity
+* clearer operational drift understanding
+
+---
+
+## 🧠 Grouped Evidence Continuation & Dense Drift Investigation (Major)
+
+Expanded grouped operational drift rendering into interactive investigation surfaces.
+
+Grouped operational sections can now:
+
+* preserve representative evidence continuity
+* continue investigation from grouped operational signals
+* surface representative operational context inline
+* retain grouped operational explainability under dense comparison scenarios
+
+Examples include:
+
+```text
+Minor identity matching signals
+```
+
+```text
+Microsoft Platform Solutions
+```
+
+```text
+Minor workflow metadata signals
+```
+
+Behaviour:
+
+* grouped operational evidence remains explainable
+* representative operational signals remain inspectable
+* grouped operational evidence never silently disappears
+* grouped investigation remains bounded and provider-owned
+
+Results:
+
+* significantly improved dense enterprise investigation UX
+* calmer operational triage workflows
+* stronger grouped evidence trustworthiness
+* improved operational continuity under high-density comparison scenarios
+
+---
+
+## 👥 Identity Participation Investigation Continuation Expansion
+
+Expanded Identity Participation Drift into deeper operational investigation continuity workflows.
+
+Identity participation evidence can now:
+
+* continue into bounded live operational identity pivots
+* preserve grouped identity continuity
+* surface representative operational participation context inline
+* support calmer identity-oriented verification workflows
+
+Behaviour:
+
+* identity continuation remains observational and advisory-only
+* participation does not imply effective access
+* operational identity context remains bounded
+* grouped identity rendering remains progressively explorable
+
+Results:
+
+* clearer operational participation understanding
+* calmer identity-oriented investigation workflows
+* reduced repetitive identity evidence rendering
+* stronger operational access-topology orientation
+
+---
+
+## ✅ Operational Review State & Verification Workflow Foundations (Major)
+
+Introduced operational review-state semantics for comparison workflows.
+
+Comparison investigations now support:
+
+* reviewed operational drift tracking
+* verification-oriented operational workflows
+* review-state continuity
+* grouped review persistence
+* investigation reset workflows
+* calmer operational review coordination
+
+Behaviour:
+
+* review state remains investigation-oriented only
+* reviewed drift does not imply operational correctness
+* operational verification remains advisory-only
+* comparison evidence remains fully inspectable after review
+
+Results:
+
+* stronger operational review workflows
+* clearer investigation progress visibility
+* calmer verification-oriented UX
+* improved investigation handoff readiness
+
+---
+
+## 🧭 Investigation Workspace Continuity & Handoff Refinement
+
+Expanded operational comparison workflows into a more coherent investigation workspace model.
+
+Comparison workflows now better support:
+
+* Findings
+* Verification
+* Handoff
+* operational investigation continuity
+* review-oriented comparison coordination
+* operational evidence portability
+
+Behaviour:
+
+* operational investigation remains evidence-first
+* strongest operational meaning surfaces before raw evidence
+* comparison continuity remains preserved during live pivots
+* operational review context remains local and explainable
+
+Results:
+
+* stronger operational investigation coherence
+* calmer enterprise-scale review workflows
+* improved operational readability
+* clearer investigation handoff semantics
+
+---
+
+## ⚙️ Live Evidence Continuation Hardening & Operational Stability
+
+Refined live operational evidence continuation behaviour across dense comparison scenarios.
+
+Improvements include:
+
+* bounded live continuation routing
+* calmer unavailable-state handling
+* grouped evidence continuation hardening
+* prefixed entity logical-name handling
+* repeated evidence-row identity isolation
+* inline result routing stabilisation
+* grouped evidence interaction consistency
+
+Behaviour:
+
+* unavailable live pivots degrade calmly
+* captured comparison evidence always remains available
+* operational continuation never blocks comparison readability
+* repeated evidence signals remain independently addressable
+
+Results:
+
+* significantly improved investigation reliability
+* calmer operational UX under enterprise-scale comparisons
+* stronger live-continuation trustworthiness
+* reduced operational investigation ambiguity
+
+---
+
+## 🎨 Operational Verification UX Refinement
+
+Refined operational comparison and verification presentation throughout comparison workflows.
+
+Improvements include:
+
+* calmer operational continuation wording
+* stronger inline evidence readability
+* improved grouped investigation hierarchy
+* cleaner operational verification spacing
+* refined review-state presentation
+* softer operational investigation posture wording
+* improved enterprise-scale comparison scanability
+
+Results:
+
+* stronger psychological trust
+* calmer verification-oriented investigation UX
+* improved operational readability
+* clearer operational investigation flow
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* inline evidence continuation workflows
+* grouped evidence continuation workflows
+* live Dataverse continuation behaviour
+* grouped identity investigation continuity
+* operational review-state persistence
+* review reset workflows
+* Findings / Verification / Handoff workspace continuity
+* repeated grouped evidence interaction
+* prefixed entity logical-name continuation handling
+* dense enterprise comparison rendering
+
+Validated against:
+
+* large enterprise solution drift datasets
+* grouped identity participation drift
+* workflow/runtime orchestration drift
+* Microsoft/platform-layer comparison grouping
+* dense operational comparison scenarios
+* replayed snapshot investigation workflows
+* real Dataverse dogfooding environments
+
+No regression in:
+
+* Snapshot Library
+* Timeline Diff
+* Cross-Environment Diff
+* Operational Profiles
+* Access Context
+* Result Viewer
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* `$batch` execution
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DV Quick Run operational investigation invariants:
+
+* operational drift remains observational
+* verification does not imply remediation authority
+* participation does not imply causality or effective access
+* grouped evidence remains explainable and inspectable
+* providers own operational comparison semantics
+* live continuation remains bounded
+* strongest operational meaning surfaces first
+* operational investigation continuity must remain calm and navigable
+
+Operational investigation continues to prioritise:
+
+```text
+understanding
+before
+automation
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* continue operational investigations directly from comparison evidence
+* preserve grouped evidence continuity under dense enterprise comparison workloads
+* support calmer verification-oriented operational workflows
+* coordinate operational review-state continuity
+* maintain inline operational context during live investigation pivots
+* preserve explainable operational drift semantics during investigation handoff workflows
+* scale enterprise operational comparison workflows more coherently
+
+This release further matures DV Quick Run’s evolution into:
+
+```text
+an operational investigation, verification and drift-triage workbench
+```
+
+for enterprise Dataverse environments.
+
+---
+
 # DV Quick Run v0.12.2 — Operational Drift Triage, Evidence Compression & Dense Investigation Readability
 
 This release matures DV Quick Run’s operational comparison platform from:

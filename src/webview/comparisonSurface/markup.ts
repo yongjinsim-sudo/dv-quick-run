@@ -1,4 +1,4 @@
-import type { ComparisonDifference, ComparisonDriftGroup, ComparisonOperationalSignificance, ComparisonSnapshotTrustStatus, ComparisonViewModel } from "../../core/comparison/index.js";
+import type { ComparisonDifference, ComparisonDriftGroup, ComparisonInvestigationContinuation, ComparisonOperationalSignificance, ComparisonSnapshotTrustStatus, ComparisonViewModel } from "../../core/comparison/index.js";
 
 function escapeHtml(value: string): string {
   return value
@@ -28,6 +28,7 @@ function renderToolbar(options: ComparisonSurfaceRenderOptions = {}): string {
     <button type="button" class="dvqr-action-button" data-export-kind="json">Save JSON${suffix}</button>
     <button type="button" class="dvqr-action-button" data-export-kind="md">Save MD${suffix}</button>
     <button type="button" class="dvqr-action-button" data-export-kind="html">Save HTML${suffix}</button>
+    <button type="button" class="dvqr-action-button dvqr-action-button-muted" data-reset-investigation-state>Reset Review State</button>
   </div>`;
 }
 
@@ -638,30 +639,30 @@ function getEvidenceContinuationLabel(item: ComparisonDifference["evidence"][num
   const label = item.label.toLowerCase();
 
   if (label.includes("solution")) {
-    return "Query solution";
+    return "Investigate solution";
   }
 
   if (label.includes("automation") || label.includes("workflow") || label.includes("plugin")) {
-    return "Query automation";
+    return "Investigate automation";
   }
 
   if (label.includes("role")) {
-    return "Query role";
+    return "Investigate role";
   }
 
   if (label.includes("team")) {
-    return "Query team";
+    return "Investigate team";
   }
 
-  if (label.includes("identity") || label.includes("user")) {
-    return "Query identity";
+  if (label.includes("identity") || label.includes("user") || label.includes("only in source") || label.includes("only in target") || label.includes("normalized name") || label.includes("normalised name")) {
+    return "Investigate identity";
   }
 
   if (label.includes("score") || label.includes("signal") || label.includes("delta")) {
-    return "Query evidence";
+    return "Investigate evidence";
   }
 
-  return "Query evidence";
+  return "Investigate evidence";
 }
 
 function getEvidenceContinuationTooltip(item: ComparisonDifference["evidence"][number]): string {
@@ -679,20 +680,130 @@ function getEvidenceContinuationTooltip(item: ComparisonDifference["evidence"][n
     return "Available in DVQR Pro — view raw Dataverse identity participation evidence.";
   }
 
-  return "Available in DVQR Pro — view raw Dataverse evidence.";
+  return "Available in DVQR Pro — investigate the raw evidence behind this drift signal.";
 }
 
-function renderEvidenceItem(item: ComparisonDifference["evidence"][number]): string {
+function renderEvidenceItem(
+  item: ComparisonDifference["evidence"][number],
+  difference: ComparisonDifference,
+  sourceLabel: string,
+  targetLabel: string
+): string {
   const value = item.value ? ` — ${escapeHtml(item.value)}` : "";
   const continuationLabel = getEvidenceContinuationLabel(item);
   const continuationTooltip = getEvidenceContinuationTooltip(item);
+  const evidenceId = slug(`${difference.id}-${difference.kind}-${item.label}-${item.value ?? ""}`);
+  const evidenceKind = item.label.toLowerCase().includes("solution classification")
+    ? "solution-classification"
+    : getEvidenceContinuationLabel(item).replace(/^Investigate\s+/i, "").toLowerCase();
+  const parentTitle = simplifyDifferenceTitle(difference, sourceLabel, targetLabel);
+  const parentSummary = simplifyDifferenceSummary(difference, sourceLabel, targetLabel);
+  const parentEvidence = difference.evidence
+    .map((evidence) => `${evidence.label}: ${evidence.value ?? ""}`)
+    .join(" · ");
 
-  return `<li>
+  return `<li class="dvqr-evidence-item" data-evidence-label="${escapeHtml(item.label)}" data-evidence-value="${escapeHtml(item.value ?? "")}" data-evidence-kind="${escapeHtml(evidenceKind)}" data-parent-title="${escapeHtml(parentTitle)}" data-parent-summary="${escapeHtml(parentSummary)}" data-parent-kind="${escapeHtml(difference.kind)}" data-parent-provider="" data-parent-evidence="${escapeHtml(parentEvidence)}">
     <span><strong>${escapeHtml(item.label)}</strong>${value}</span>
-    <span class="dvqr-evidence-continuation-pill" title="${escapeHtml(continuationTooltip)}">
+    <button type="button" class="dvqr-evidence-continuation-pill" data-evidence-inspect="${escapeHtml(evidenceId)}" data-evidence-label-collapsed="${escapeHtml(continuationLabel)} ›" aria-expanded="false" title="${escapeHtml(continuationTooltip)}">
       ${escapeHtml(continuationLabel)} ›
-    </span>
+    </button>
+    <div class="dvqr-inline-evidence-context" data-evidence-context="${escapeHtml(evidenceId)}" hidden>
+      <strong>Inline evidence context</strong>
+      <span>This opens the rendered evidence payload already captured in this comparison. Use it to verify the drift signal before continuing investigation outside DVQR.</span>
+      <dl>
+        <dt>Evidence label</dt>
+        <dd>${escapeHtml(item.label)}</dd>
+        <dt>Observed value</dt>
+        <dd>${escapeHtml(item.value ?? "No value captured")}</dd>
+        <dt>Operational boundary</dt>
+        <dd>Captured evidence opens in exported HTML. In the VS Code webview, DVQR can continue into bounded live investigation pivots without losing comparison context.</dd>
+        <dt>Live evidence pivot</dt>
+        <dd data-evidence-live-result="${escapeHtml(evidenceId)}">Not queried yet.</dd>
+      </dl>
+    </div>
   </li>`;
+}
+
+function getContinuationKindLabel(kind: ComparisonInvestigationContinuation["kind"]): string {
+  switch (kind) {
+    case "IdentityParticipation":
+      return "Identity participation";
+    case "RuntimeBehaviour":
+      return "Runtime behaviour";
+    case "WorkflowAutomation":
+      return "Workflow / automation";
+    case "SolutionParticipation":
+      return "Solution participation";
+    case "OperationalProfile":
+      return "Operational profile";
+    case "RawEvidence":
+      return "Raw evidence";
+  }
+}
+
+function getContinuationStateLabel(state: ComparisonInvestigationContinuation["state"]): string {
+  switch (state) {
+    case "Available":
+      return "Available inline";
+    case "Deferred":
+      return "Deferred";
+    case "InspectOnly":
+      return "Inspect only";
+  }
+}
+
+function renderContinuationEvidence(evidence: readonly ComparisonDifference["evidence"][number][]): string {
+  if (evidence.length === 0) {
+    return "";
+  }
+
+  return `<ul class="dvqr-continuation-evidence">${evidence
+    .map((item) => `<li><strong>${escapeHtml(item.label)}</strong>${item.value ? ` — ${escapeHtml(item.value)}` : ""}</li>`)
+    .join("")}</ul>`;
+}
+
+function renderInvestigationContinuation(
+  continuation: ComparisonInvestigationContinuation,
+  depth: number
+): string {
+  const boundedDepth = Math.min(depth, 3);
+  const childContinuations = continuation.children ?? [];
+  const children = childContinuations.length > 0 && boundedDepth < 3
+    ? `<div class="dvqr-continuation-children">${childContinuations.map((child) => renderInvestigationContinuation(child, boundedDepth + 1)).join("")}</div>`
+    : childContinuations.length > 0
+      ? `<div class="dvqr-continuation-depth-limit"><strong>Continuation depth limit reached</strong><span>Open a dedicated investigation surface before expanding ${childContinuations.length} additional continuation${childContinuations.length === 1 ? "" : "s"}.</span></div>`
+      : "";
+
+  return `<article class="dvqr-investigation-continuation" data-continuation-state="${escapeHtml(continuation.state)}" data-continuation-depth="${boundedDepth}">
+    <div class="dvqr-continuation-heading">
+      <div>
+        <span class="dvqr-continuation-eyebrow">Continue investigation</span>
+        <h4>${escapeHtml(continuation.title)}</h4>
+      </div>
+      <div class="dvqr-meta dvqr-continuation-meta">
+        <span class="dvqr-chip">${escapeHtml(getContinuationKindLabel(continuation.kind))}</span>
+        <span class="dvqr-chip dvqr-chip-muted">${escapeHtml(getContinuationStateLabel(continuation.state))}</span>
+      </div>
+    </div>
+    <p>${escapeHtml(continuation.summary)}</p>
+    ${renderContinuationEvidence(continuation.evidence)}
+    ${children}
+  </article>`;
+}
+
+function renderInvestigationContinuations(
+  continuations: readonly ComparisonInvestigationContinuation[] | undefined,
+  label = "Investigation continuations"
+): string {
+  if (!continuations?.length) {
+    return "";
+  }
+
+  return `<details class="dvqr-investigation-continuations" open>
+    <summary>${escapeHtml(label)} <span>${continuations.length}</span></summary>
+    <p>Replay-safe, provider-owned continuations preserve nearby operational context without implying causality, remediation, or authority certainty.</p>
+    <div class="dvqr-continuation-list">${continuations.map((continuation) => renderInvestigationContinuation(continuation, 1)).join("")}</div>
+  </details>`;
 }
 
 function renderDifference(
@@ -703,7 +814,7 @@ function renderDifference(
   differenceIndex: number
 ): string {
   const evidence = difference.evidence.length > 0
-    ? `<details class="dvqr-evidence-details"><summary>Show full evidence <span>${difference.evidence.length}</span></summary><ul class="dvqr-evidence">${difference.evidence.map((item) => renderEvidenceItem(item)).join("")}</ul></details>`
+    ? `<details class="dvqr-evidence-details"><summary>Show full evidence <span>${difference.evidence.length}</span></summary><ul class="dvqr-evidence">${difference.evidence.map((item) => renderEvidenceItem(item, difference, sourceLabel, targetLabel)).join("")}</ul></details>`
     : "";
 
   const openAttribute = shouldExpandDifferenceByDefault(difference, groupDifferences, differenceIndex) ? " open" : "";
@@ -725,8 +836,318 @@ function renderDifference(
         <span class="dvqr-chip dvqr-chip-muted">${escapeHtml(getEvidenceStrengthLabel(difference))}</span>
       </div>
       ${evidence}
+      ${renderInvestigationContinuations(difference.continuations, "Inline investigation continuations")}
     </div>
   </details>`;
+}
+
+function getVerificationCategoryLabel(item: NonNullable<ComparisonDriftGroup["nearbyOperationalDrift"]>[number]): string {
+  const cue = item.orientationCue.toLowerCase();
+  const title = item.relatedGroupTitle.toLowerCase();
+
+  if (cue.includes("runtime") || title.includes("plugin")) {
+    return "Runtime behaviour verification";
+  }
+
+  if (cue.includes("orchestration") || title.includes("workflow") || title.includes("automation")) {
+    return "Workflow / orchestration verification";
+  }
+
+  if (cue.includes("package") || title.includes("solution")) {
+    return "Package / solution verification";
+  }
+
+  if (cue.includes("density") || title.includes("profile")) {
+    return "Operational density verification";
+  }
+
+  if (cue.includes("identity") || title.includes("identity")) {
+    return "Identity participation verification";
+  }
+
+  return "Operational verification";
+}
+
+function getVerificationChecklistAnchor(category: string): string {
+  return `verification-${slug(category)}`;
+}
+
+function renderNearbyVerificationChecklistPivot(item: NonNullable<ComparisonDriftGroup["nearbyOperationalDrift"]>[number]): string {
+  if (!(item.representativeSignals ?? []).length) {
+    return "";
+  }
+
+  const category = getVerificationCategoryLabel(item);
+  return `<div class="dvqr-nearby-drift-pivots" aria-label="Investigation handoff">
+        <span>Investigation handoff</span>
+        <a class="dvqr-nearby-drift-pill" href="#${escapeHtml(getVerificationChecklistAnchor(category))}">Included in verification checklist ↓</a>
+      </div>`;
+}
+
+interface VerificationChecklistItem {
+  readonly title: string;
+  readonly kind: string;
+  readonly significance: ComparisonOperationalSignificance;
+  readonly sourceProvider: string;
+  readonly purpose: string;
+}
+
+interface VerificationChecklistGroup {
+  readonly category: string;
+  readonly items: readonly VerificationChecklistItem[];
+}
+
+function getVerificationCategoryLabelFromGroup(group: ComparisonDriftGroup): string {
+  const title = group.title.toLowerCase();
+
+  if (title.includes("plugin") || title.includes("runtime")) {
+    return "Runtime behaviour verification";
+  }
+
+  if (title.includes("workflow") || title.includes("automation") || title.includes("orchestration")) {
+    return "Workflow / orchestration verification";
+  }
+
+  if (title.includes("solution") || title.includes("package")) {
+    return "Package / solution verification";
+  }
+
+  if (title.includes("profile") || title.includes("density") || title.includes("score")) {
+    return "Operational density verification";
+  }
+
+  if (title.includes("identity") || title.includes("user") || title.includes("team") || title.includes("role")) {
+    return "Identity participation verification";
+  }
+
+  return "Operational verification";
+}
+
+function collectVerificationChecklist(model: ComparisonViewModel): readonly VerificationChecklistGroup[] {
+  const categories = new Map<string, Map<string, VerificationChecklistItem>>();
+
+  const addItem = (category: string, item: VerificationChecklistItem): void => {
+    const bucket = categories.get(category) ?? new Map<string, VerificationChecklistItem>();
+    const key = `${category}::${item.title}::${item.kind}::${item.sourceProvider}`;
+    if (!bucket.has(key)) {
+      bucket.set(key, item);
+    }
+
+    categories.set(category, bucket);
+  };
+
+  for (const group of model.groups) {
+    const groupCategory = getVerificationCategoryLabelFromGroup(group);
+
+    for (const difference of group.differences) {
+      addItem(groupCategory, {
+        title: simplifyDifferenceTitle(difference, model.summary.sourceLabel, model.summary.targetLabel),
+        kind: difference.kind,
+        significance: difference.significance,
+        sourceProvider: group.title,
+        purpose: simplifyDifferenceSummary(difference, model.summary.sourceLabel, model.summary.targetLabel)
+      });
+    }
+
+    for (const nearby of group.nearbyOperationalDrift ?? []) {
+      const category = getVerificationCategoryLabel(nearby);
+      for (const signal of nearby.representativeSignals ?? []) {
+        addItem(category, {
+          title: signal.title,
+          kind: signal.kind,
+          significance: signal.significance,
+          sourceProvider: nearby.relatedGroupTitle,
+          purpose: nearby.summary
+        });
+      }
+    }
+  }
+
+  const categoryOrder = [
+    "Runtime behaviour verification",
+    "Workflow / orchestration verification",
+    "Package / solution verification",
+    "Operational density verification",
+    "Identity participation verification",
+    "Operational verification"
+  ];
+
+  return [...categories.entries()]
+    .map(([category, items]) => ({
+      category,
+      items: [...items.values()].sort((left, right) => significanceRank(right.significance) - significanceRank(left.significance) || left.title.localeCompare(right.title))
+    }))
+    .filter((group) => group.items.length > 0)
+    .sort((left, right) => {
+      const leftIndex = categoryOrder.indexOf(left.category);
+      const rightIndex = categoryOrder.indexOf(right.category);
+      return (leftIndex === -1 ? categoryOrder.length : leftIndex) - (rightIndex === -1 ? categoryOrder.length : rightIndex);
+    });
+}
+
+function getGroupById(model: ComparisonViewModel, id: string): ComparisonDriftGroup | undefined {
+  return model.groups.find((group) => group.id === id);
+}
+
+function getStrongestDifferenceTitle(group: ComparisonDriftGroup | undefined, sourceLabel: string, targetLabel: string): string | undefined {
+  const strongest = group?.differences
+    .slice()
+    .sort((left, right) => {
+      const priority = getSignalPriority(right) - getSignalPriority(left);
+      if (priority !== 0) {
+        return priority;
+      }
+
+      const significance = significanceRank(right.significance) - significanceRank(left.significance);
+      if (significance !== 0) {
+        return significance;
+      }
+
+      return left.title.localeCompare(right.title);
+    })[0];
+
+  return strongest
+    ? getParticipationDensitySignalTitle(strongest, sourceLabel, targetLabel) ?? simplifyDifferenceTitle(strongest, sourceLabel, targetLabel)
+    : undefined;
+}
+
+function buildConsiderationItem(label: string, detail: string): string {
+  return `<li><strong>${escapeHtml(label)}</strong><span>${escapeHtml(detail)}</span></li>`;
+}
+
+function renderObservedOperationalStoryline(model: ComparisonViewModel): string {
+  if (!model.groups.length) {
+    return "";
+  }
+
+  const sourceLabel = model.summary.sourceLabel;
+  const targetLabel = model.summary.targetLabel;
+  const runtime = getGroupById(model, "plugin-step-runtime-behaviour-drift");
+  const workflow = getGroupById(model, "workflow-automation-participation-drift");
+  const solution = getGroupById(model, "solution-participation-drift");
+  const profile = getGroupById(model, "operational-profile-drift");
+  const identity = getGroupById(model, "identity-participation-drift");
+
+  const reviewedContexts = [
+    runtime ? "runtime behaviour" : undefined,
+    workflow ? "workflow / orchestration" : undefined,
+    solution ? "solution / package participation" : undefined,
+    profile ? "operational density" : undefined,
+    identity ? "identity participation" : undefined
+  ].filter((item): item is string => Boolean(item));
+
+  const considerations = [
+    runtime ? buildConsiderationItem(
+      "Runtime behaviour",
+      getStrongestDifferenceTitle(runtime, sourceLabel, targetLabel) ?? "Plugin step registration drift was observed."
+    ) : undefined,
+    workflow ? buildConsiderationItem(
+      "Workflow / orchestration",
+      getStrongestDifferenceTitle(workflow, sourceLabel, targetLabel) ?? "Workflow or automation participation drift was observed."
+    ) : undefined,
+    solution ? buildConsiderationItem(
+      "Package / solution context",
+      getStrongestDifferenceTitle(solution, sourceLabel, targetLabel) ?? "Solution participation or managed-state drift was observed."
+    ) : undefined,
+    profile ? buildConsiderationItem(
+      "Operational density",
+      getStrongestDifferenceTitle(profile, sourceLabel, targetLabel) ?? "Operational profile density changed between snapshots."
+    ) : undefined,
+    identity ? buildConsiderationItem(
+      "Identity participation",
+      getStrongestDifferenceTitle(identity, sourceLabel, targetLabel) ?? "Identity participation drift was observed with confidence-based matching."
+    ) : undefined
+  ].filter((item): item is string => Boolean(item));
+
+  const reviewed = reviewedContexts.length
+    ? reviewedContexts.join(", ")
+    : "available provider evidence";
+
+  return `<section class="dvqr-card dvqr-operational-storyline dvqr-workspace-mode-section" id="dvqr-operational-storyline" data-workspace-section="investigation" aria-label="Observed operational storyline">
+    <div class="dvqr-section-heading-row">
+      <div>
+        <h2>Observed Operational Storyline</h2>
+        <p class="dvqr-muted">Bounded synthesis of what this comparison collectively observed. This is investigation guidance, not RCA certainty or remediation instruction.</p>
+      </div>
+    </div>
+    <div class="dvqr-storyline-panel">
+      <strong>Operational comparison narrative</strong>
+      <p>Observed operational differences were found between ${escapeHtml(sourceLabel)} and ${escapeHtml(targetLabel)} across ${escapeHtml(reviewed)}.</p>
+      <p>These observations may warrant external verification before treating the environments as operationally equivalent. DVQR preserves evidence-backed context; humans retain operational authority and corrective-action ownership.</p>
+    </div>
+    <div class="dvqr-consideration-grid">
+      <article class="dvqr-consideration-card">
+        <h3>Potential operational considerations</h3>
+        <p>Use these as verification-oriented prompts. They are not root-cause findings, blame statements, or corrective instructions.</p>
+        <ul>${considerations.join("")}</ul>
+        <div class="dvqr-storyline-actions">
+          <a class="dvqr-inline-investigation-action" href="#plugin-step-runtime-behaviour-drift" data-continuation-target="runtime">Investigate runtime context</a>
+          <a class="dvqr-inline-investigation-action" href="#workflow-automation-participation-drift" data-continuation-target="orchestration">Review orchestration drift</a>
+          <a class="dvqr-inline-investigation-action" href="#operational-profile-drift" data-continuation-target="density">Inspect operational density</a>
+        </div>
+      </article>
+      <article class="dvqr-consideration-card">
+        <h3>Investigation handoff posture</h3>
+        <p>The checklist below converts representative drift signals into handoff-ready validation prompts for people or teams outside DVQR.</p>
+        <ul>
+          <li><strong>External verification recommended</strong><span>Confirm expectations in Dataverse, Power Platform admin surfaces, ALM pipelines, or owner/team channels as appropriate.</span></li>
+          <li><strong>Authority remains human</strong><span>DVQR narrows the operational problem space; it does not determine corrective action.</span></li>
+        </ul>
+      </article>
+    </div>
+  </section>`;
+}
+
+
+function renderOperationalVerificationChecklist(model: ComparisonViewModel): string {
+  const checklist = collectVerificationChecklist(model);
+  if (!checklist.length) {
+    return "";
+  }
+
+  const groups = checklist.map((group) => `<article class="dvqr-verification-checklist-group" id="${escapeHtml(getVerificationChecklistAnchor(group.category))}">
+      <h3>${escapeHtml(group.category)}</h3>
+      <p>Use these evidence-backed prompts for external validation. They are not root-cause findings, blame statements, or corrective instructions.</p>
+      <ul>${group.items.map((item) => `<li data-verification-item-id="${escapeHtml(slug(`${group.category}-${item.title}`))}" data-verification-title="${escapeHtml(item.title)}" data-verification-provider="${escapeHtml(item.sourceProvider)}">
+          <button type="button" class="dvqr-verification-checkbox" data-verification-toggle aria-label="Mark verification item reviewed">□</button>
+          <div class="dvqr-verification-item-body">
+            <span>
+              <strong>Verify:</strong> ${escapeHtml(item.title)}
+              <em>${escapeHtml(item.significance)} · ${escapeHtml(item.kind)} · from ${escapeHtml(item.sourceProvider)}</em>
+            </span>
+            <div class="dvqr-verification-review-controls">
+              <label>
+                <span>Status</span>
+                <select class="dvqr-verification-status-select" data-verification-status>
+                  <option value="NotReviewed">Not reviewed</option>
+                  <option value="VerifiedExternally">Verified externally</option>
+                  <option value="RecheckedCurrent">Rechecked against current</option>
+                  <option value="ResolvedOutsideDvqr">Resolved outside DVQR</option>
+                  <option value="NeedsFollowUp">Needs follow-up</option>
+                </select>
+              </label>
+              <label class="dvqr-verification-note-label">
+                <span>Reviewer note</span>
+                <textarea class="dvqr-verification-note" data-verification-note rows="2" placeholder="Add external validation note, owner/team context, or follow-up reminder..."></textarea>
+              </label>
+            </div>
+          </div>
+        </li>`).join("")}</ul>
+    </article>`).join("");
+
+  return `<section class="dvqr-card dvqr-verification-checklist dvqr-workspace-mode-section" id="dvqr-verification-checklist" data-workspace-section="verification" aria-label="Operational verification checklist">
+    <div class="dvqr-section-heading-row">
+      <div>
+        <h2>Operational Verification Checklist</h2>
+        <p class="dvqr-muted">Consolidated review prompts from all rendered operational drift surfaces. Use this checklist to decide what needs human validation outside DVQR before treating environments as operationally equivalent.</p>
+      </div>
+    </div>
+    <div class="dvqr-verification-checklist-note">
+      <strong>External verification recommended</strong>
+      <span>DVQR observes drift and supports verification. Humans retain operational authority and decide any corrective action.</span>
+    </div>
+    <div class="dvqr-verification-checklist-grid">${groups}</div>
+  </section>`;
 }
 
 function renderNearbyOperationalDrift(group: ComparisonDriftGroup): string {
@@ -735,22 +1156,19 @@ function renderNearbyOperationalDrift(group: ComparisonDriftGroup): string {
     return "";
   }
 
-  const items = nearby.map((item) => {
-    const evidence = item.evidence.length > 0
-      ? `<ul>${item.evidence.map((evidence) => `<li><strong>${escapeHtml(evidence.label)}</strong>${evidence.value ? ` — ${escapeHtml(evidence.value)}` : ""}</li>`).join("")}</ul>`
-      : "";
-
-    return `<li>
-      <a href="#${escapeHtml(slug(item.relatedGroupId))}">${escapeHtml(item.title)}</a>
+  const items = nearby.map((item) => `<li data-significance="${escapeHtml(item.significance)}">
+      <div class="dvqr-nearby-drift-cue">${escapeHtml(item.orientationCue)}</div>
+      <a href="#${escapeHtml(slug(item.relatedGroupId))}">${escapeHtml(item.relatedGroupTitle)}</a>
       <span>${escapeHtml(item.summary)}</span>
-      <em>${escapeHtml(item.significance)} · ${item.differenceCount} drift signal${item.differenceCount === 1 ? "" : "s"}</em>
-      ${evidence}
-    </li>`;
-  });
+      <div class="dvqr-nearby-drift-meta">
+        <em>${escapeHtml(item.significance)} · ${item.differenceCount} drift signal${item.differenceCount === 1 ? "" : "s"}</em>
+      </div>
+      ${renderNearbyVerificationChecklistPivot(item)}
+    </li>`);
 
   return `<details class="dvqr-nearby-drift">
     <summary>Other observed drift surfaces <span>${nearby.length}</span></summary>
-    <p>Additional drift surfaces observed in this bounded comparison only. This does not imply chronology, causality, remediation, or root-cause certainty.</p>
+    <p>Use these cues to decide which neighbouring evidence may deserve external verification. They indicate adjacency only, not chronology, causality, remediation, or root-cause certainty.</p>
     <ol>${items.join("")}</ol>
   </details>`;
 }
@@ -1190,7 +1608,7 @@ function renderTopOperationalSignals(model: ComparisonViewModel): string {
       ? `<p class="dvqr-top-signal-note">Showing the strongest ${signals.length} of ${totalSignals} drift signals. Provider sections keep the full evidence available.</p>`
       : "";
 
-  return `<section class="dvqr-card dvqr-top-signals" aria-label="Top operational drift signals">
+  return `<section class="dvqr-card dvqr-top-signals dvqr-workspace-mode-section" aria-label="Top operational drift signals" data-workspace-section="investigation findings" data-workspace-section="investigation findings verification handoff">
     <div class="dvqr-section-heading-row">
       <div>
         <h2>Top Operational Drift Signals</h2>
@@ -1329,7 +1747,34 @@ function renderGroupedIdentityDetails(
 
   const preview = differences
     .slice(0, 8)
-    .map((difference) => `<li><span class="dvqr-classified-drift-main"><strong>${escapeHtml(simplifyDifferenceTitle(difference, sourceLabel, targetLabel))}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span><span class="dvqr-evidence-continuation-pill" title="Representative grouped identity evidence remains available in the full JSON/HTML export.">Query evidence ›</span></li>`)
+    .map((difference) => {
+      const title = simplifyDifferenceTitle(difference, sourceLabel, targetLabel);
+      const summary = simplifyDifferenceSummary(difference, sourceLabel, targetLabel);
+      const evidenceValue = difference.evidence
+        .map((evidence) => `${evidence.label}: ${evidence.value ?? ""}`)
+        .join(" · ");
+      const evidenceId = slug(`${difference.id}-${difference.kind}-grouped-identity-evidence-${title}`);
+      return `<li class="dvqr-evidence-item" data-evidence-label="Grouped identity signal" data-evidence-value="${escapeHtml(title)}" data-evidence-kind="identity" data-parent-title="${escapeHtml(title)}" data-parent-summary="${escapeHtml(summary)}" data-parent-kind="${escapeHtml(difference.kind)}" data-parent-provider="identity-participation-drift" data-parent-evidence="${escapeHtml(evidenceValue)}">
+        <span class="dvqr-classified-drift-main"><strong>${escapeHtml(title)}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span>
+        <button type="button" class="dvqr-evidence-continuation-pill" data-evidence-inspect="${escapeHtml(evidenceId)}" data-evidence-label-collapsed="Investigate evidence ›" aria-expanded="false" title="Open representative grouped identity evidence context.">
+          Investigate evidence ›
+        </button>
+        <div class="dvqr-inline-evidence-context" data-evidence-context="${escapeHtml(evidenceId)}" hidden>
+          <strong>Inline evidence context</strong>
+          <span>This grouped identity signal preserves representative evidence from a dense identity section. Use it to verify the drift signal before continuing investigation outside DVQR.</span>
+          <dl>
+            <dt>Evidence label</dt>
+            <dd>Grouped identity signal</dd>
+            <dt>Observed value</dt>
+            <dd>${escapeHtml(title)}</dd>
+            <dt>Operational boundary</dt>
+            <dd>Grouped evidence opens captured comparison context. In the VS Code webview, DVQR can continue into bounded live identity/team/role pivots without losing comparison context.</dd>
+            <dt>Live evidence pivot</dt>
+            <dd data-evidence-live-result="${escapeHtml(evidenceId)}">Not queried yet.</dd>
+          </dl>
+        </div>
+      </li>`;
+    })
     .join("");
   const overflow = differences.length > 8
     ? `<li class="dvqr-classified-drift-overflow"><em>${differences.length - 8} additional signal${differences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.</em></li>`
@@ -1463,7 +1908,37 @@ function renderGroupedProviderDetails(
 
   const preview = differences
     .slice(0, 8)
-    .map((difference) => `<li><span class="dvqr-classified-drift-main"><strong>${escapeHtml(simplifyDifferenceTitle(difference, sourceLabel, targetLabel))}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span><span class="dvqr-evidence-continuation-pill" title="Representative grouped provider evidence remains available in the full JSON/HTML export.">Query evidence ›</span></li>`)
+    .map((difference) => {
+      const title = simplifyDifferenceTitle(difference, sourceLabel, targetLabel);
+      const evidenceValue = difference.evidence.length > 0
+        ? difference.evidence.map((item) => `${item.label}: ${item.value ?? ""}`).join(" · ")
+        : difference.summary;
+      const evidenceId = slug(`grouped-${group.id}-${difference.id}-${title}`);
+      const evidenceKind = group.id === "workflow-automation-participation-drift"
+        ? "workflow"
+        : group.id === "plugin-step-runtime-behaviour-drift"
+          ? "plugin"
+          : "evidence";
+
+      return `<li class="dvqr-evidence-item dvqr-classified-drift-evidence-item" data-evidence-label="${escapeHtml(title)}" data-evidence-value="${escapeHtml(evidenceValue)}" data-evidence-kind="${escapeHtml(evidenceKind)}" data-parent-title="${escapeHtml(title)}" data-parent-summary="${escapeHtml(difference.summary)}" data-parent-kind="${escapeHtml(difference.kind)}" data-parent-provider="${escapeHtml(group.id)}" data-parent-evidence="${escapeHtml(evidenceValue)}">
+        <span class="dvqr-classified-drift-main"><strong>${escapeHtml(title)}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span>
+        <button type="button" class="dvqr-evidence-continuation-pill" data-evidence-inspect="${escapeHtml(evidenceId)}" data-evidence-label-collapsed="Investigate evidence ›" aria-expanded="false" title="Investigate representative grouped provider evidence inline.">Investigate evidence ›</button>
+        <div class="dvqr-inline-evidence-context" data-evidence-context="${escapeHtml(evidenceId)}" hidden>
+          <strong>Inline evidence context</strong>
+          <span>This grouped signal preserves representative evidence from a dense provider section. Use it to verify the signal before continuing investigation outside DVQR.</span>
+          <dl>
+            <dt>Evidence label</dt>
+            <dd>${escapeHtml(title)}</dd>
+            <dt>Observed value</dt>
+            <dd>${escapeHtml(evidenceValue || "No value captured")}</dd>
+            <dt>Operational boundary</dt>
+            <dd>Grouped evidence opens captured comparison context. In the VS Code webview, DVQR can request a bounded live evidence pivot for supported evidence types.</dd>
+            <dt>Live evidence pivot</dt>
+            <dd data-evidence-live-result="${escapeHtml(evidenceId)}">Not queried yet.</dd>
+          </dl>
+        </div>
+      </li>`;
+    })
     .join("");
   const overflow = differences.length > 8
     ? `<li class="dvqr-classified-drift-overflow"><em>${differences.length - 8} additional signal${differences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.</em></li>`
@@ -1660,7 +2135,34 @@ function renderGroupedSolutionDetails(
     .map(([classification, groupedDifferences]) => {
       const preview = groupedDifferences
         .slice(0, 8)
-        .map((difference) => `<li><span class="dvqr-classified-drift-main"><strong>${escapeHtml(simplifyDifferenceTitle(difference, sourceLabel, targetLabel))}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span><span class="dvqr-evidence-continuation-pill" title="Representative grouped evidence remains available in the full JSON/HTML export.">Query evidence ›</span></li>`)
+        .map((difference) => {
+          const title = simplifyDifferenceTitle(difference, sourceLabel, targetLabel);
+          const summary = simplifyDifferenceSummary(difference, sourceLabel, targetLabel);
+          const evidenceValue = difference.evidence.length > 0
+            ? difference.evidence.map((item) => `${item.label}: ${item.value ?? ""}`).join(" · ")
+            : `${summary} · ${difference.sourceValue ?? ""} · ${difference.targetValue ?? ""}`;
+          const evidenceId = slug(`grouped-solution-${classification}-${difference.id}-${title}`);
+          const evidenceKind = "solution";
+
+          return `<li class="dvqr-evidence-item dvqr-classified-drift-evidence-item" data-evidence-label="${escapeHtml(title)}" data-evidence-value="${escapeHtml(evidenceValue)}" data-evidence-kind="${escapeHtml(evidenceKind)}" data-parent-title="${escapeHtml(title)}" data-parent-summary="${escapeHtml(summary)}" data-parent-kind="${escapeHtml(difference.kind)}" data-parent-provider="solution-participation-drift" data-parent-evidence="${escapeHtml(evidenceValue)}">
+            <span class="dvqr-classified-drift-main"><strong>${escapeHtml(title)}</strong><span class="dvqr-classified-drift-meta">${escapeHtml(difference.significance)} · ${escapeHtml(difference.kind)}</span></span>
+            <button type="button" class="dvqr-evidence-continuation-pill" data-evidence-inspect="${escapeHtml(evidenceId)}" data-evidence-label-collapsed="Investigate evidence ›" aria-expanded="false" title="Investigate representative grouped solution evidence inline.">Investigate evidence ›</button>
+            <div class="dvqr-inline-evidence-context" data-evidence-context="${escapeHtml(evidenceId)}" hidden>
+              <strong>Inline evidence context</strong>
+              <span>This grouped solution signal preserves representative evidence from a dense solution section. Use it to verify the signal before continuing investigation outside DVQR.</span>
+              <dl>
+                <dt>Evidence label</dt>
+                <dd>${escapeHtml(title)}</dd>
+                <dt>Observed value</dt>
+                <dd>${escapeHtml(evidenceValue || "No value captured")}</dd>
+                <dt>Operational boundary</dt>
+                <dd>Grouped solution evidence opens captured comparison context. In the VS Code webview, DVQR can request a bounded live solution evidence pivot.</dd>
+                <dt>Live evidence pivot</dt>
+                <dd data-evidence-live-result="${escapeHtml(evidenceId)}">Not queried yet.</dd>
+              </dl>
+            </div>
+          </li>`;
+        })
         .join("");
       const overflow = groupedDifferences.length > 8
         ? `<li class="dvqr-classified-drift-overflow"><em>${groupedDifferences.length - 8} additional signal${groupedDifferences.length - 8 === 1 ? "" : "s"} preserved in JSON/HTML export.</em></li>`
@@ -1724,6 +2226,7 @@ function renderGroup(
     ${getGroupNarrative(group, sourceLabel, targetLabel)}
     ${renderGroupErgonomicsSummary(group)}
     ${renderGroupDensityNote(group)}
+    ${renderInvestigationContinuations(group.continuations, "Provider investigation continuations")}
     ${renderNearbyOperationalDrift(group)}
     ${renderDifferenceList(group, sourceLabel, targetLabel)}
     <a class="dvqr-back-top" href="#dvqr-comparison-top">Back to top ↑</a>
@@ -1737,6 +2240,28 @@ function shortGroupTitle(title: string): string {
     .replace("Solution Participation Drift", "Solution Participation")
     .replace("Workflow / Automation Participation Drift", "Workflow / Automation")
     .replace("Identity Participation Drift", "Identity Participation");
+}
+
+
+function renderComparisonSearchNavigation(): string {
+  return `<section class="dvqr-search-nav" aria-label="Search comparison evidence">
+    <div class="dvqr-search-nav-row">
+      <label class="dvqr-search-label" for="dvqr-comparison-search">Search comparison evidence</label>
+      <div class="dvqr-search-input-wrap">
+        <input id="dvqr-comparison-search" class="dvqr-search-input" type="search" placeholder="Search plugins, workflows, solutions, identities, checklist items..." autocomplete="off" spellcheck="false" />
+        <div class="dvqr-search-actions">
+          <div class="dvqr-search-navigation" aria-label="Search match navigation">
+            <button type="button" class="dvqr-search-nav-button" data-search-prev aria-label="Previous search match" disabled>&lt;</button>
+            <span class="dvqr-search-count" data-search-count>0 / 0</span>
+            <button type="button" class="dvqr-search-nav-button" data-search-next aria-label="Next search match" disabled>&gt;</button>
+          </div>
+          <button type="button" class="dvqr-search-clear" data-search-clear aria-label="Clear comparison search">Clear</button>
+          <div class="dvqr-search-status" aria-live="polite" data-search-status>Search is local to this comparison.</div>
+        </div>
+      </div>
+    </div>
+    <p class="dvqr-search-note">Local search only. DVQR searches rendered evidence in this workspace; it does not query Dataverse or retrieve additional evidence.</p>
+  </section>`;
 }
 
 function renderGroupTabs(model: ComparisonViewModel): string {
@@ -1764,7 +2289,7 @@ export function getComparisonSurfaceMarkup(model: ComparisonViewModel, options: 
     ? `<section class="dvqr-card dvqr-empty dvqr-empty-success"><h2>✓ No operational drift detected</h2><p class="dvqr-muted">The selected providers did not return evidence-backed operational differences for the supplied snapshots.</p></section>`
     : "";
 
-  return `<main id="dvqr-comparison-top" class="dvqr-comparison">
+  return `<main id="dvqr-comparison-top" class="dvqr-comparison" data-entity-logical-name="${escapeHtml(model.summary.entityLogicalName ?? "")}">
     <section class="dvqr-hero">
       <div class="dvqr-hero-topline">
         <div>
@@ -1776,30 +2301,365 @@ export function getComparisonSurfaceMarkup(model: ComparisonViewModel, options: 
         ${renderToolbar(options)}
       </div>
       <p class="dvqr-muted">DVQR observes operational drift. DVQR does not fix operational drift.</p>
+      <div class="dvqr-toolbar dvqr-baseline-toolbar" role="toolbar" aria-label="Baseline export action"></div>
       ${renderSnapshotTrustBanner(model)}
       ${renderComparisonSessionMetadata(model)}
+      
+      <section class="dvqr-baseline-export-status" aria-label="Pre-investigation baseline export status">
+        <div>
+          <span class="dvqr-baseline-export-label">Pre-investigation baseline</span>
+          <strong data-baseline-status-label>Baseline not exported</strong>
+          <p data-baseline-status-description>Export the untouched comparison evidence before review state, checklist ticks, notes, or handoff decisions are captured.</p>
+        </div>
+        <button type="button" class="dvqr-baseline-export-button" data-export-kind="baseline">Export Baseline Diff</button>
+      </section>
       <div class="dvqr-hero-detail-grid">
         <div>
           <p><strong>Source:</strong> ${escapeHtml(model.summary.sourceLabel)} · <strong>Target:</strong> ${escapeHtml(model.summary.targetLabel)}</p>
           ${renderSummary(model)}
-          ${renderComparisonPostureNote(model)}
         </div>
         ${renderEnvironmentPanel(model)}
+      </div>
+      ${renderComparisonPostureNote(model)}
+    </section>
+
+    <section class="dvqr-card dvqr-investigation-mode-surface" id="dvqr-investigation-workspace">
+      <div class="dvqr-section-heading-row">
+        <div>
+          <h2>Investigation Workspace</h2>
+          <p class="dvqr-muted">Switch workspace modes to focus investigation synthesis, detailed findings, verification tasks, or handoff readiness without losing the underlying comparison evidence.</p>
+        </div>
+      </div>
+
+      <div class="dvqr-investigation-mode-tabs" role="tablist" aria-label="Investigation workspace modes">
+        <button type="button" class="dvqr-investigation-mode-tab dvqr-investigation-mode-tab-active" data-workspace-mode="investigation" aria-pressed="true">
+          <strong>Investigation</strong>
+          <span>Operational storyline, continuity, and active investigation review.</span>
+        </button>
+
+        <button type="button" class="dvqr-investigation-mode-tab" data-workspace-mode="findings" aria-pressed="false">
+          <strong>Findings</strong>
+          <span>Provider drift evidence, runtime participation, and operational density.</span>
+        </button>
+
+        <button type="button" class="dvqr-investigation-mode-tab" data-workspace-mode="verification" aria-pressed="false">
+          <strong>Verification</strong>
+          <span>External validation, unresolved operational review items, and verification posture.</span>
+        </button>
+
+        <button type="button" class="dvqr-investigation-mode-tab" data-workspace-mode="handoff" aria-pressed="false">
+          <strong>Handoff</strong>
+          <span>Operational review packaging, unresolved drift summary, and investigation transfer context.</span>
+        </button>
+      </div>
+
+      <div class="dvqr-mode-content-summary" aria-live="polite">
+        <strong data-workspace-mode-summary-title>Investigation view active</strong>
+        <span data-workspace-mode-summary-copy>Showing storyline, session continuity, top operational signals, and investigation continuations. Switch to Findings for the full diff evidence browser.</span>
+      </div>
+
+      <div class="dvqr-workspace-state-strip" aria-live="polite">
+        <div>
+          <span class="dvqr-workspace-state-label">Active mode</span>
+          <strong data-workspace-active-label>Investigation</strong>
+        </div>
+        <div>
+          <span class="dvqr-workspace-state-label">Workspace focus</span>
+          <span data-workspace-active-description>Storyline, continuity, current posture, and investigation progression.</span>
+        </div>
+        <div>
+          <span class="dvqr-workspace-state-label">Mode behaviour</span>
+          <span>Mode-focused workspace view. Use Findings to inspect provider drift evidence.</span>
+        </div>
+      </div>
+    </section>
+
+
+
+    <section class="dvqr-card dvqr-investigation-observation-briefing dvqr-workspace-mode-section" id="dvqr-investigation-observation-briefing" data-workspace-section="investigation">
+      <div class="dvqr-section-heading-row">
+        <div>
+          <h2>Investigation Briefing</h2>
+          <p class="dvqr-muted">Observation-first summary of what DVQR detected before moving into detailed findings or external verification.</p>
+        </div>
+      </div>
+
+      <div class="dvqr-observation-briefing-grid">
+        <article class="dvqr-observation-briefing-card dvqr-observation-briefing-card-primary">
+          <span class="dvqr-observation-briefing-label">Observed comparison pattern</span>
+          <strong>Multiple operational drift surfaces were detected</strong>
+          <p>DVQR observed differences across runtime behaviour, workflow / orchestration, solution participation, operational density, and identity participation. Treat this as investigation orientation, not RCA certainty.</p>
+        </article>
+
+        <article class="dvqr-observation-briefing-card">
+          <span class="dvqr-observation-briefing-label">Strongest review cue</span>
+          <strong>Runtime and orchestration differences need attention first</strong>
+          <p>Review high-significance plugin/runtime changes and workflow participation before treating the compared environments as operationally equivalent.</p>
+        </article>
+
+        <article class="dvqr-observation-briefing-card">
+          <span class="dvqr-observation-briefing-label">Human verification boundary</span>
+          <strong>External validation remains required</strong>
+          <p>Use Findings to inspect evidence, Verification to track external validation prompts, and Handoff to package unresolved observations for another reviewer or team.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="dvqr-card dvqr-investigation-session dvqr-workspace-mode-section" id="dvqr-investigation-session" data-workspace-section="investigation">
+      <div class="dvqr-section-heading-row">
+        <div>
+          <h2>Investigation Session</h2>
+          <p class="dvqr-muted">Operational investigation continuity for this comparison workspace. Investigation guidance remains evidence-backed and externally verifiable.</p>
+        </div>
+      </div>
+
+      <div class="dvqr-investigation-session-grid">
+        <article class="dvqr-investigation-session-panel">
+          <div class="dvqr-investigation-session-panel-label">Session continuity</div>
+          <div class="dvqr-baseline-session-note" data-baseline-session-note>
+            <strong>Baseline boundary pending</strong>
+            <span>Export the pre-investigation baseline before marking evidence reviewed so later handoff state can be compared against the original observed diff.</span>
+          </div>
+
+          <div class="dvqr-investigation-metric-grid">
+            <div class="dvqr-investigation-metric">
+              <div class="dvqr-investigation-metric-value" data-reviewed-surface-progress>0 / 0</div>
+              <div class="dvqr-investigation-metric-label">Reviewed drift surfaces</div>
+            </div>
+
+            <div class="dvqr-investigation-metric">
+              <div class="dvqr-investigation-metric-value" data-verification-coverage>0%</div>
+              <div class="dvqr-investigation-metric-label">Operational verification coverage</div>
+            </div>
+
+            <div class="dvqr-investigation-metric">
+              <div class="dvqr-investigation-metric-value dvqr-investigation-alert-value" data-outstanding-high-count>0</div>
+              <div class="dvqr-investigation-metric-label">Outstanding high-significance signals</div>
+            </div>
+          </div>
+
+          <div class="dvqr-investigation-status-row">
+            <span class="dvqr-investigation-status-pill">Snapshot trust: Verified</span>
+            <span class="dvqr-investigation-status-pill dvqr-investigation-status-pill-warning" data-verification-posture-pill>Verification posture: In Progress</span>
+            <span class="dvqr-investigation-status-pill">Replay source: Cross-environment comparison</span>
+          </div>
+        </article>
+
+        <article class="dvqr-investigation-session-panel">
+          <div class="dvqr-investigation-session-panel-label">Outstanding operational verification</div>
+
+          <ul class="dvqr-outstanding-verification-list" data-outstanding-verification-list>
+            <li>
+              <strong>Account Create Validation plugin disabled</strong>
+              <span>High-significance runtime verification still requires external validation.</span>
+            </li>
+
+            <li>
+              <strong>Workflow orchestration participation changed</strong>
+              <span>Observed automation/runtime adjacency should be reviewed externally before corrective action.</span>
+            </li>
+          </ul>
+
+          <div class="dvqr-investigation-notes-placeholder" data-review-notes-panel>
+            <strong>Operational review notes</strong>
+            <span data-review-notes-summary>No reviewer notes captured in this investigation session.</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+${renderObservedOperationalStoryline(model)}
+
+<section class="dvqr-card dvqr-investigation-continuations dvqr-workspace-mode-section" id="dvqr-investigation-continuations" data-workspace-section="investigation verification">
+      <div class="dvqr-section-heading-row">
+        <div>
+          
+<h2>Investigation Continuations</h2>
+
+      
+      <div class="dvqr-investigation-phase-strip">
+        <div class="dvqr-investigation-phase-step dvqr-investigation-phase-step-complete">
+          <span class="dvqr-investigation-phase-index">1</span>
+          <div class="dvqr-investigation-phase-copy">
+            <strong>Observed drift</strong>
+            <span>Comparison evidence collected</span>
+          </div>
+        </div>
+
+        <div class="dvqr-investigation-phase-connector"></div>
+
+        <div class="dvqr-investigation-phase-step dvqr-investigation-phase-step-active">
+          <span class="dvqr-investigation-phase-index">2</span>
+          <div class="dvqr-investigation-phase-copy">
+            <strong>Operational verification</strong>
+            <span>External validation in progress</span>
+          </div>
+        </div>
+
+        <div class="dvqr-investigation-phase-connector"></div>
+
+        <div class="dvqr-investigation-phase-step">
+          <span class="dvqr-investigation-phase-index">3</span>
+          <div class="dvqr-investigation-phase-copy">
+            <strong>Operational conclusion</strong>
+            <span>Awaiting reviewer confirmation</span>
+          </div>
+        </div>
+      </div>
+
+<div class="dvqr-investigation-review-banner">
+        <div class="dvqr-investigation-review-banner-state">
+          <strong>Operational verification in progress</strong>
+          <span>High-significance operational drift still requires external validation before operational equivalence should be assumed.</span>
+        </div>
+
+        <div class="dvqr-investigation-review-banner-progress">
+          <div class="dvqr-investigation-review-progress-label">Verification completion</div>
+          <div class="dvqr-investigation-review-progress-track">
+            <div class="dvqr-investigation-review-progress-fill" data-verification-progress-fill style="width:0%"></div>
+          </div>
+          <div class="dvqr-investigation-review-progress-caption" data-verification-progress-caption>0 of 0 operational verification items reviewed in this session</div>
+        </div>
+      </div>
+
+
+          <div class="dvqr-investigation-session-summary">
+            <div class="dvqr-investigation-session-card">
+              <div class="dvqr-investigation-session-value" data-reviewed-count>0</div>
+              <div class="dvqr-investigation-session-label">Reviewed externally</div>
+            </div>
+
+            <div class="dvqr-investigation-session-card">
+              <div class="dvqr-investigation-session-value" data-outstanding-count>6</div>
+              <div class="dvqr-investigation-session-label">Outstanding verification items</div>
+            </div>
+          </div>
+          <p class="dvqr-muted">Continue investigation directly from evidence-backed operational drift signals. These continuations preserve investigation locality and comparison context.</p>
+        </div>
+      </div>
+
+      <div class="dvqr-continuation-grid">
+        <article class="dvqr-continuation-card dvqr-reviewable-surface" data-review-surface-id="runtime-continuation">
+          <div class="dvqr-continuation-label">Runtime continuation</div>
+          <h3>Plugin runtime investigation</h3>
+          <p>Continue reviewing execution ordering, stage placement, filtering attributes, and runtime participation context.</p>
+          <div class="dvqr-continuation-actions">
+            <a class="dvqr-inline-investigation-action" href="#plugin-step-runtime-behaviour-drift" data-continuation-target="plugin-runtime">Inspect plugin step drift</a>
+            <a class="dvqr-inline-investigation-action" href="#plugin-step-runtime-behaviour-drift" data-continuation-target="execution-pipeline">Review execution pipeline</a>
+          </div>
+
+          <div class="dvqr-review-state-row">
+            <button type="button" class="dvqr-review-toggle" data-review-toggle>Mark reviewed</button>
+          </div>
+        </article>
+
+        <article class="dvqr-continuation-card dvqr-reviewable-surface" data-review-surface-id="orchestration-continuation">
+          <div class="dvqr-continuation-label">Orchestration continuation</div>
+          <h3>Workflow / automation investigation</h3>
+          <p>Continue reviewing workflow participation, activation changes, orchestration topology, and automation alignment.</p>
+          <div class="dvqr-continuation-actions">
+            <a class="dvqr-inline-investigation-action" href="#workflow-automation-participation-drift" data-continuation-target="workflow">Inspect workflow participation</a>
+            <a class="dvqr-inline-investigation-action" href="#workflow-automation-participation-drift" data-continuation-target="orchestration-evidence">Review orchestration evidence</a>
+          </div>
+
+          <div class="dvqr-review-state-row">
+            <button type="button" class="dvqr-review-toggle" data-review-toggle>Mark reviewed</button>
+          </div>
+        </article>
+
+        <article class="dvqr-continuation-card dvqr-reviewable-surface" data-review-surface-id="handoff-continuation">
+          <div class="dvqr-continuation-label">Operational handoff</div>
+          <h3>Verification-oriented continuation</h3>
+          <p>Convert representative evidence into externally verifiable operational review tasks before corrective action is considered.</p>
+          <div class="dvqr-continuation-actions">
+            <a class="dvqr-inline-investigation-action" href="#dvqr-verification-checklist" data-continuation-target="verification-checklist">Open verification checklist</a>
+            <a class="dvqr-inline-investigation-action" href="#dvqr-operational-storyline" data-continuation-target="storyline">Review operational storyline</a>
+          </div>
+
+          <div class="dvqr-review-state-row">
+            <button type="button" class="dvqr-review-toggle" data-review-toggle>Mark reviewed</button>
+          </div>
+        </article>
       </div>
     </section>
 
     ${renderTopOperationalSignals(model)}
 
-    <section>
+    <section class="dvqr-workspace-mode-section dvqr-findings-mode" id="dvqr-findings-mode" data-workspace-section="findings">
       <h2>Operational Drift</h2>
       <p class="dvqr-section-note">Grouped, evidence-backed differences from comparison providers. These are investigation signals, not remediation instructions.</p>
       ${renderGroupNavigation(model)}
+      ${renderComparisonSearchNavigation()}
       ${renderGroupTabs(model)}
       <div class="dvqr-group-list">${model.groups.map((group) => renderGroup(group, model.summary.sourceLabel, model.summary.targetLabel)).join("")}</div>
       ${empty}
     </section>
+<section class="dvqr-card dvqr-handoff-readiness dvqr-workspace-mode-section" id="dvqr-handoff-readiness" data-workspace-section="handoff">
+      <div class="dvqr-section-heading-row">
+        <div>
+          <h2>Operational Handoff Readiness</h2>
+          <p class="dvqr-muted">Review-ready summary for transferring this investigation to another human or team. This is not remediation authority or RCA certainty.</p>
+        </div>
+      </div>
+
+      <div class="dvqr-handoff-grid">
+        <article class="dvqr-handoff-card dvqr-handoff-card-primary">
+          <div class="dvqr-handoff-label">Handoff posture</div>
+          <h3>Ready for external operational verification</h3>
+          <p>DVQR has narrowed the operational problem space and identified unresolved validation prompts. Human reviewers should confirm expectations in Dataverse, Power Platform admin surfaces, ALM pipelines, or owner/team channels before corrective action is considered.</p>
+          <div class="dvqr-handoff-review-summary" aria-label="Investigation review summary">
+            <span><strong data-handoff-verified-count>0</strong> externally verified / resolved</span>
+            <span><strong data-handoff-followup-count>0</strong> need follow-up</span>
+            <span><strong data-handoff-note-count>0</strong> reviewer notes</span>
+          </div>
+        </article>
+
+        <article class="dvqr-handoff-card">
+          <div class="dvqr-handoff-label">Include in handoff</div>
+          <ul class="dvqr-handoff-list">
+            <li>Observed operational storyline</li>
+            <li>Outstanding high-significance signals</li>
+            <li>Verification checklist and reviewed-state summary</li>
+            <li>Snapshot trust and comparison context</li>
+          </ul>
+        </article>
+
+        <article class="dvqr-handoff-card">
+          <div class="dvqr-handoff-label">Do not imply</div>
+          <ul class="dvqr-handoff-list">
+            <li>Root cause certainty</li>
+            <li>Remediation instruction</li>
+            <li>Blame or ownership assignment</li>
+            <li>Effective-access or runtime causality certainty</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    ${renderOperationalVerificationChecklist(model)}
     ${renderCommunityFooter()}
   </main>`;
+}
+
+
+function renderReviewAwareEvidenceSurface(reviewStatus?: string, reviewNote?: string): string {
+  if (!reviewStatus && !reviewNote) {
+    return "";
+  }
+
+  const statusLabelMap: Record<string, string> = {
+    VerifiedExternally: "Verified externally",
+    RecheckedCurrent: "Rechecked against current",
+    ResolvedOutsideDvqr: "Resolved outside DVQR",
+    NeedsFollowUp: "Needs follow-up"
+  };
+
+  const statusLabel = reviewStatus ? (statusLabelMap[reviewStatus] ?? reviewStatus) : undefined;
+
+  return `<div class="dvqr-review-aware-surface">
+    ${reviewStatus && statusLabel ? `<span class="dvqr-review-pill" data-review-status="${escapeHtml(reviewStatus)}"><strong>Review status</strong> ${escapeHtml(statusLabel)}</span>` : ""}
+    ${reviewNote ? `<span class="dvqr-review-pill"><strong>Reviewer note</strong> ${escapeHtml(reviewNote)}</span>` : ""}
+  </div>`;
 }
 
 function renderCommunityFooter(): string {
@@ -1808,3 +2668,4 @@ function renderCommunityFooter(): string {
     <a href="https://github.com/yongjinsim-sudo/dv-quick-run/discussions">Join DVQR Discussions</a>
   </footer>`;
 }
+

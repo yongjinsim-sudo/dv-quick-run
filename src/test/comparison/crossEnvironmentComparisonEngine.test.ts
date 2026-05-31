@@ -140,9 +140,12 @@ test("adds bounded additional observed drift surfaces without causality semantic
   const nearby = identityGroup.nearbyOperationalDrift?.[0];
   assert.ok(nearby);
   assert.strictEqual(nearby.relatedGroupId, "workflow-automation-participation-drift");
-  assert.match(nearby.summary, /additional operational context/);
+  assert.strictEqual(nearby.orientationCue, "Adjacent orchestration drift");
+  assert.match(nearby.orientationSummary, /Review activation, owner, real-time\/background/);
+  assert.match(nearby.summary, /Review activation, owner, real-time\/background/);
   assert.doesNotMatch(nearby.summary, /caused|triggered|root cause/i);
   assert.ok(nearby.evidence.some((item) => item.label === "Operational boundary"));
+  assert.deepStrictEqual(nearby.representativeSignals?.map((signal) => signal.title), ["Integration workflow owner changed"]);
 });
 
 test("preserves low-priority solution presence significance during engine calibration", async () => {
