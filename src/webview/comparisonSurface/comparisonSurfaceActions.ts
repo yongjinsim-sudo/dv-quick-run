@@ -3,6 +3,7 @@ import { type ComparisonSurfaceRenderOptions } from "./comparisonSurfacePrimitiv
 export function renderToolbar(options: ComparisonSurfaceRenderOptions = {}): string {
   const locked = options.canExport === false;
   const suffix = locked ? " 🔒" : "";
+  const reportSuffix = "";
   return `<div class="dvqr-toolbar" role="toolbar" aria-label="Comparison export actions">
     <button type="button" class="dvqr-action-button" data-export-kind="json">Save JSON${suffix}</button>
     <button type="button" class="dvqr-action-button" data-export-kind="md">Save MD${suffix}</button>
@@ -11,10 +12,10 @@ export function renderToolbar(options: ComparisonSurfaceRenderOptions = {}): str
       <summary class="dvqr-action-button dvqr-report-menu-trigger">Reports ▾</summary>
       <div class="dvqr-report-menu-panel" role="menu" aria-label="Export reports">
         <span class="dvqr-report-menu-heading">Export reports</span>
-        <button type="button" class="dvqr-report-menu-item" data-export-kind="summary-html" role="menuitem">Diff Findings Summary <span>HTML${suffix}</span></button>
-        <button type="button" class="dvqr-report-menu-item" data-export-kind="summary-pdf" role="menuitem">Diff Findings Summary <span>PDF${suffix}</span></button>
-        <button type="button" class="dvqr-report-menu-item" data-export-kind="handoff-html" role="menuitem">Investigation Handoff <span>HTML${suffix}</span></button>
-        <button type="button" class="dvqr-report-menu-item" data-export-kind="handoff-pdf" role="menuitem">Investigation Handoff <span>PDF${suffix}</span></button>
+        <button type="button" class="dvqr-report-menu-item" data-export-kind="summary-html" role="menuitem">Diff Findings Summary <span>HTML${reportSuffix}</span></button>
+        <button type="button" class="dvqr-report-menu-item" data-export-kind="summary-pdf" role="menuitem">Diff Findings Summary <span>PDF${reportSuffix}</span></button>
+        <button type="button" class="dvqr-report-menu-item" data-export-kind="handoff-html" role="menuitem">Investigation Handoff <span>HTML${reportSuffix}</span></button>
+        <button type="button" class="dvqr-report-menu-item" data-export-kind="handoff-pdf" role="menuitem">Investigation Handoff <span>PDF${reportSuffix}</span></button>
       </div>
     </details>
     <button type="button" class="dvqr-action-button dvqr-action-button-muted" data-reset-investigation-state>Reset Review State</button>

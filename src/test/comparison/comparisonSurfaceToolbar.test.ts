@@ -14,4 +14,16 @@ suite("comparison surface toolbar", () => {
     assert.doesNotMatch(html, /data-export-kind="summary-html">Diff Findings Summary/);
     assert.doesNotMatch(html, /data-export-kind="handoff-pdf">Handoff PDF/);
   });
+
+  test("keeps report exports unlocked when comparison exports are locked", () => {
+    const html = renderToolbar({ canExport: false });
+
+    assert.match(html, /Save JSON🔒|Save JSON 🔒/);
+    assert.match(html, /Save MD🔒|Save MD 🔒/);
+    assert.match(html, /Save HTML🔒|Save HTML 🔒/);
+    assert.match(html, /Diff Findings Summary <span>HTML<\/span>/);
+    assert.match(html, /Diff Findings Summary <span>PDF<\/span>/);
+    assert.match(html, /Investigation Handoff <span>HTML<\/span>/);
+    assert.match(html, /Investigation Handoff <span>PDF<\/span>/);
+  });
 });

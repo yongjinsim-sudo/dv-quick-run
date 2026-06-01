@@ -35,6 +35,10 @@ function appendEvidencePivotDiagnostic(ctx: CommandContext, stage: string, detai
 
 type ComparisonExportKind = "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf";
 
+function isReportExportKind(kind: ComparisonExportKind): boolean {
+  return kind === "summary-html" || kind === "summary-pdf" || kind === "handoff-html" || kind === "handoff-pdf";
+}
+
 async function readWatermarkLogoDataUri(ctx: CommandContext): Promise<string | undefined> {
   const logoUri = vscode.Uri.joinPath(ctx.ext.extensionUri, "images", "icon.png");
   try {
@@ -159,7 +163,7 @@ function getSavedExportLabel(model: ComparisonViewModel, kind: ComparisonExportK
 }
 
 async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewModel, kind: ComparisonExportKind): Promise<vscode.Uri | undefined> {
-  if (!canRunCrossEnvironmentDiff()) {
+  if (!canRunCrossEnvironmentDiff() && !isReportExportKind(kind)) {
     await promptForCrossEnvironmentDiffProAccess("Comparison export");
     return undefined;
   }
