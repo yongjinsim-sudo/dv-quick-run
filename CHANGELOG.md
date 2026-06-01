@@ -6,6 +6,392 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.12.4 — Investigation Report Export Maturity, Verification Handoff UX & Operational Evidence Presentation
+
+This release matures DV Quick Run’s operational comparison platform from:
+
+```text
+interactive operational verification
+```
+
+→ into:
+
+```text
+investigation-ready operational reporting and verification handoff
+```
+
+DV Quick Run can now:
+
+* export calmer, investigation-oriented operational reports
+* generate verification-ready PDF handoff packs
+* preserve grouped evidence continuity across exported workflows
+* support cleaner operational review coordination
+* standardise operational evidence presentation across export surfaces
+* separate operational investigation exports more coherently
+* improve export discoverability without cluttering the comparison workspace
+
+This release focuses heavily on:
+
+* operational report maturity
+* export workflow refinement
+* PDF handoff readability
+* evidence continuity presentation
+* calmer enterprise verification UX
+* operational report consistency
+* investigation export discoverability
+
+The goal is not static reporting or deployment certification.
+
+It is:
+
+* operational verification continuity
+* explainable investigation exports
+* calmer review workflows
+* evidence-backed handoff semantics
+* portable operational investigation context
+* enterprise-scale investigation readability
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR observes operational drift.
+DVQR does not fix operational drift.
+```
+
+---
+
+## 📄 Diff Findings Summary Report (Major)
+
+Introduced a dedicated:
+
+```text
+Diff Findings Summary
+```
+
+operational export workflow.
+
+The Diff Findings Summary provides:
+
+* concise operational drift orientation
+* grouped provider-backed findings
+* significance breakdown summaries
+* executive operational summaries
+* verification-oriented operational interpretation
+* calmer operational review readability
+
+The report intentionally focuses on:
+
+* strongest operational signals first
+* grouped operational understanding
+* review-oriented readability
+* bounded operational evidence summaries
+
+—not:
+
+* exhaustive raw evidence dumping
+* deployment certification
+* remediation guidance
+* authoritative root-cause claims
+
+Behaviour:
+
+* strongest operational meaning surfaces first
+* grouped evidence remains explainable
+* significance remains advisory-only
+* operational interpretation remains evidence-backed
+
+Results:
+
+* dramatically improved executive review readability
+* calmer operational triage workflows
+* cleaner stakeholder-facing exports
+* improved enterprise investigation portability
+
+---
+
+## 📦 Investigation Handoff Export Workflow (Major)
+
+Expanded investigation export semantics into a dedicated:
+
+```text
+Investigation Handoff
+```
+
+workflow.
+
+Investigation Handoff exports now better support:
+
+* operational verification coordination
+* escalation-oriented investigation continuity
+* CAB/review-oriented workflows
+* operational review checkpoints
+* grouped operational evidence portability
+* investigation replay context
+
+Exports now preserve:
+
+* grouped operational drift
+* provider-backed evidence hierarchy
+* operational significance interpretation
+* verification boundary wording
+* investigation continuity semantics
+
+Behaviour:
+
+* handoff remains advisory-only
+* review state does not imply correctness
+* operational evidence remains bounded and explainable
+* strongest operational meaning remains prioritised
+
+Results:
+
+* stronger enterprise-scale review readiness
+* improved investigation portability
+* clearer operational verification workflows
+* calmer operational escalation semantics
+
+---
+
+## 🧭 Export Workflow Consolidation & Toolbar Refinement
+
+Refined export workflow discoverability throughout Cross-Environment Diff.
+
+Previous export actions were:
+
+* visually noisy
+* operationally fragmented
+* increasingly difficult to scale
+
+Export workflows are now consolidated into:
+
+```text
+Reports
+```
+
+with structured export categories including:
+
+* Diff Findings Summary
+* Investigation Handoff
+* HTML export
+* PDF export
+
+Behaviour:
+
+* export workflows remain grouped and discoverable
+* comparison workspace remains calmer
+* report actions scale more coherently for future exports
+* capability-aware export semantics remain preserved
+
+Results:
+
+* significantly cleaner comparison-toolbar UX
+* reduced operational clutter
+* improved export discoverability
+* stronger enterprise polish
+
+---
+
+## 🧠 Operational Report Presentation Standardisation (Major)
+
+Standardised operational evidence-card presentation across exported reports.
+
+Refinements include:
+
+* tighter grouped-card stacking
+* consistent operational spacing
+* standardised evidence rhythm
+* calmer section separation
+* compressed low-density card whitespace
+* improved provider-title hierarchy
+* cleaner representative evidence presentation
+
+Operational report cards now render more consistently across:
+
+* HTML exports
+* PDF exports
+* grouped provider sections
+* representative evidence summaries
+* high/medium/low significance rendering
+
+Behaviour:
+
+* grouped evidence remains visually coherent
+* representative evidence remains readable under dense export scenarios
+* strongest operational signals remain visually prioritised
+
+Results:
+
+* dramatically improved export readability
+* cleaner enterprise report presentation
+* calmer operational scanning
+* stronger psychological trust
+
+---
+
+## 🖨️ PDF Layout & Pagination Refinement
+
+Refined PDF export rendering behaviour throughout operational handoff workflows.
+
+Improvements include:
+
+* tighter evidence-card pagination
+* reduced orphaned provider sections
+* cleaner card-flow continuity
+* improved section-break spacing
+* more consistent footer positioning
+* refined provider-summary spacing
+* calmer operational print rhythm
+* reduced visual dead-space
+
+Behaviour:
+
+* grouped operational evidence remains readable under print workflows
+* representative evidence remains visually connected
+* exported investigations preserve operational continuity more coherently
+
+Results:
+
+* significantly improved PDF readability
+* cleaner printed investigation packs
+* improved CAB/review usability
+* stronger enterprise export quality
+
+---
+
+## 🎨 Operational Verification UX Refinement
+
+Refined operational wording and export semantics throughout comparison-report workflows.
+
+Improvements include:
+
+* calmer export naming
+* clearer report semantics
+* improved verification-boundary wording
+* refined executive-summary hierarchy
+* cleaner comparison-scope visibility
+* stronger operational evidence readability
+* softer operational review posture wording
+
+Additional refinements:
+
+* operational interpretation remains visually prioritised
+* grouped evidence summaries remain concise and explainable
+* export workflows remain investigation-oriented rather than compliance-oriented
+
+Results:
+
+* stronger operational trust
+* calmer enterprise verification UX
+* improved report readability
+* cleaner operational investigation flow
+
+---
+
+## 🔒 Capability-Aware Export Semantics Refinement
+
+Refined export capability-awareness semantics for Free Preview and Pro workflows.
+
+Behaviour:
+
+* Free Preview can continue exporting mock/sample operational reports
+* real operational export continuity remains capability-aware
+* understanding remains visible before acceleration workflows
+* operational export semantics remain calm and contextual
+
+Results:
+
+* stronger open-core consistency
+* clearer workflow progression
+* improved preview believability
+* preserved DVQR investigation philosophy
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Diff Findings Summary exports
+* Investigation Handoff exports
+* HTML report rendering
+* PDF report rendering
+* grouped evidence stacking
+* provider spacing consistency
+* export toolbar workflows
+* report-menu interaction behaviour
+* operational pagination continuity
+* representative evidence rendering
+* significance-card presentation
+* export workflow consistency
+
+Validated against:
+
+* dense enterprise comparison datasets
+* grouped operational drift scenarios
+* replayed snapshot workflows
+* long-form PDF exports
+* multi-provider operational comparisons
+* investigation-handoff review workflows
+
+No regression in:
+
+* Cross-Environment Diff
+* Timeline Diff
+* Snapshot Library
+* Operational Profiles
+* Access Context
+* Result Viewer
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* `$batch` execution
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces critical DV Quick Run operational investigation invariants:
+
+* operational reporting remains observational
+* exports preserve evidence continuity
+* grouped evidence remains explainable
+* strongest operational meaning surfaces first
+* verification does not imply remediation authority
+* exported evidence remains bounded and inspectable
+* operational investigation continuity must remain calm and navigable
+
+Operational reporting continues to prioritise:
+
+```text
+understanding
+before
+automation
+```
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* export calmer operational investigation summaries
+* generate enterprise-grade investigation handoff reports
+* preserve grouped operational evidence continuity across exports
+* standardise operational report presentation more coherently
+* coordinate operational verification workflows more cleanly
+* improve enterprise-scale PDF readability
+* consolidate export workflows into calmer comparison UX
+
+This release further matures DV Quick Run’s evolution into:
+
+```text
+an operational investigation, verification and evidence-handoff workbench
+```
+
+for enterprise Dataverse environments.
+
+---
+
 # DV Quick Run v0.12.3 — Operational Verification Guidance, Evidence Continuation & Investigation Handoff
 
 This release evolves DV Quick Run’s operational comparison platform from:

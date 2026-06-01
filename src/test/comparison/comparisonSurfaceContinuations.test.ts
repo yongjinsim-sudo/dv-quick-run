@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import type { ComparisonViewModel } from "../../core/comparison/index.js";
 import { getComparisonSurfaceMarkup } from "../../webview/comparisonSurface/markup.js";
+import { renderComparisonSurfaceHtml, sanitizeComparisonInvestigationStateForRenderedVerificationItems } from "../../webview/comparisonSurface/renderComparisonSurfaceHtml.js";
 
 suite("comparisonSurface continuations", () => {
   test("renders replay-safe inline investigation continuations without remediation wording", () => {
@@ -77,4 +78,113 @@ suite("comparisonSurface continuations", () => {
     assert.match(markup, /without implying causality, remediation, or authority certainty/);
     assert.doesNotMatch(markup, /root cause confirmed|fix recommendation|immediate remediation required|authoritative fix/i);
   });
+
+  test("renders no-verification posture wording for comparisons without verification items", () => {
+    const model: ComparisonViewModel = {
+      title: "Timeline Diff: DEV · Task",
+      summary: {
+        sourceLabel: "DEV · Task source",
+        targetLabel: "DEV · Task target",
+        highCount: 0,
+        mediumCount: 0,
+        lowCount: 0,
+        providerCount: 5,
+        differenceCount: 0,
+        subjectLabel: "Task"
+      },
+      groups: [],
+      providerResults: []
+    };
+
+    const markup = getComparisonSurfaceMarkup(model);
+
+    assert.match(markup, /No rendered operational verification items/);
+    assert.match(markup, /Verification posture: No verification items/);
+    assert.match(markup, /data-reviewed-surface-progress>0 \/ 0/);
+    assert.doesNotMatch(markup, /totalReviewSurfaceCount = totalProviderSet\.size \|\| 5/);
+    assert.doesNotMatch(markup, /reviewedProviderSet\.size \|\| investigationState\.reviewedSurfaces\.length/);
+  });
+
+
+  test("clears stale verification state before rendering comparisons without verification items", () => {
+    const sanitized = sanitizeComparisonInvestigationStateForRenderedVerificationItems({
+      activeMode: "verification",
+      baselineExportedAt: "2026-05-31T00:00:00.000Z",
+      reviewedSurfaces: ["runtime-continuation", "handoff-continuation"],
+      verifiedItems: ["stale-verification-item-1", "stale-verification-item-2"],
+      verificationStatusByItem: {
+        "stale-verification-item-1": "VerifiedExternally",
+        "stale-verification-item-2": "ResolvedOutsideDvqr"
+      },
+      verificationNotesByItem: {
+        "stale-verification-item-1": "Old note that must not leak into a no-drift report"
+      }
+    }, []);
+
+    assert.deepStrictEqual(sanitized.verifiedItems, []);
+    assert.deepStrictEqual(sanitized.verificationStatusByItem, {});
+    assert.deepStrictEqual(sanitized.verificationNotesByItem, {});
+    assert.deepStrictEqual(sanitized.reviewedSurfaces, ["runtime-continuation", "handoff-continuation"]);
+  });
+
+  test("preserves current rendered verification state and drops stale items", () => {
+    const sanitized = sanitizeComparisonInvestigationStateForRenderedVerificationItems({
+      verifiedItems: ["rendered-item", "stale-item"],
+      verificationStatusByItem: {
+        "rendered-item": "NeedsFollowUp",
+        "auto-complete-item": "VerifiedExternally",
+        "stale-item": "VerifiedExternally"
+      },
+      verificationNotesByItem: {
+        "rendered-item": "Current note",
+        "stale-item": "Stale note"
+      }
+    }, ["rendered-item", "auto-complete-item"]);
+
+    assert.deepStrictEqual([...(sanitized.verifiedItems ?? [])].sort(), ["auto-complete-item", "rendered-item"]);
+    assert.deepStrictEqual(sanitized.verificationStatusByItem, {
+      "rendered-item": "NeedsFollowUp",
+      "auto-complete-item": "VerifiedExternally"
+    });
+    assert.deepStrictEqual(sanitized.verificationNotesByItem, {
+      "rendered-item": "Current note"
+    });
+  });
+
+  test("does not serialize stale verification progress into no-drift timeline reports", () => {
+    const model: ComparisonViewModel = {
+      title: "Timeline Diff: DEV · Task",
+      summary: {
+        sourceLabel: "DEV · Task source",
+        targetLabel: "DEV · Task target",
+        highCount: 0,
+        mediumCount: 0,
+        lowCount: 0,
+        providerCount: 5,
+        differenceCount: 0,
+        subjectLabel: "Task"
+      },
+      groups: [],
+      providerResults: []
+    };
+    const webview = { cspSource: "vscode-webview://test" };
+
+    const html = renderComparisonSurfaceHtml(webview as never, model, {
+      investigationState: {
+        verifiedItems: Array.from({ length: 31 }, (_, index) => `stale-verification-item-${index + 1}`),
+        verificationStatusByItem: Object.fromEntries(Array.from({ length: 31 }, (_, index) => [`stale-verification-item-${index + 1}`, "VerifiedExternally"])),
+        verificationNotesByItem: {
+          "stale-verification-item-1": "Stale note"
+        }
+      }
+    });
+
+    assert.match(html, /No rendered operational verification items/);
+    assert.match(html, /0 of 0 operational verification items reviewed in this session/);
+    assert.match(html, /Verification posture: No verification items/);
+    assert.doesNotMatch(html, /31 of 31/);
+    assert.doesNotMatch(html, /stale-verification-item-1/);
+    assert.doesNotMatch(html, /Stale note/);
+  });
+
 });

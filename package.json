@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, investigation, execution, and comparison workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -216,8 +216,7 @@
       },
       {
         "command": "dvQuickRun.openSnapshotLibrary",
-        "title": "DV Quick Run: Open Snapshot Library",
-        "category": "DV Quick Run"
+        "title": "DV Quick Run: Open Snapshot Library"
       },
       {
         "command": "dvQuickRun.runBatchQueries",
@@ -249,10 +248,6 @@
         {
           "command": "dvQuickRun.smartPatchEditLast",
           "when": "false"
-        },
-        {
-          "command": "dvQuickRun.openSnapshotLibrary",
-          "when": "dvQuickRun.crossEnvironmentDiffAvailable || dvQuickRun.crossEnvironmentDiffTeaserAvailable"
         }
       ],
       "editor/context": [
@@ -489,6 +484,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.15",
+    "@types/pdfkit": "^0.17.6",
     "@types/vscode": "^1.109.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
@@ -497,6 +493,7 @@
     "typescript-eslint": "^8.56.1"
   },
   "dependencies": {
-    "cytoscape": "^3.33.1"
+    "cytoscape": "^3.33.1",
+    "pdfkit": "^0.18.0"
   }
 }
