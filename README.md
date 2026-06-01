@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, verify drift evidence, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, inline evidence continuation, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, verify drift evidence, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, inline evidence continuation, report exports, investigation handoff PDFs, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -22,6 +22,7 @@ The website includes:
 * feature walkthroughs
 * marketplace/install links
 * interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
+* sample Diff Findings Summary and Investigation Handoff report flows
 
 The interactive HTML demo helps illustrate:
 
@@ -31,6 +32,7 @@ The interactive HTML demo helps illustrate:
 * Findings / Verification / Handoff investigation flow
 * dense enterprise comparison readability
 * operational investigation continuity
+* report export mental models for Diff Findings Summary and Investigation Handoff workflows
 
 without requiring a live Dataverse environment.
 
@@ -55,6 +57,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * compare operational snapshots through Snapshot Library, Timeline Diff, and Cross-Environment Diff
 * continue investigation from comparison evidence using bounded inline pivots
 * review, verify, comment on, and hand off operational drift findings
+* export Diff Findings Summary and Investigation Handoff reports as HTML/PDF artifacts
 * discover and execute supported Custom API capabilities through Capability Explorer
 * use the Hub to stay oriented across investigation workflows
 
@@ -90,19 +93,19 @@ write → run → explore → refine → investigate → verify → hand off
 
 ---
 
-## 🆕 What's New in v0.12.3
+## 🆕 What's New in v0.12.4
 
-v0.12.3 evolves DV Quick Run’s comparison platform from calm operational drift triage into an interactive operational verification and investigation workspace.
+v0.12.4 matures DV Quick Run’s comparison platform from interactive operational verification into investigation-ready operational reporting and verification handoff.
 
 Highlights include:
 
-* **Inline Evidence Continuation** so drift evidence can open bounded live investigation context directly inside the comparison report
-* **Grouped Evidence Pivots** so representative signals inside dense grouped sections remain clickable, inspectable, and evidence-backed
-* **Operational Review & Verification Workspace** with Findings, Verification, and Handoff surfaces for calmer investigation progress tracking
-* **Review State Persistence** for reviewed drift, verification items, reviewer comments, and reset workflows across reopened comparison reports
-* **Safer Live Continuation Semantics** where real Dataverse evidence can be queried live, while captured/classification-only evidence explains itself instead of hanging
-* **Grouped Identity Evidence Continuity** for minor identity/team/role matching signals, preserving investigation continuity without overwhelming dense reports
-* **Operational Handoff Refinement** so comparison evidence, review posture, verification notes, and external follow-up context remain clearer for human review
+* **Diff Findings Summary reports** for concise, executive-friendly operational drift orientation
+* **Investigation Handoff reports** for verification continuity, escalation, and follow-on human review
+* **PDF report exports** with DVQR branding, watermarking, page footers, calmer pagination, and print-friendly evidence presentation
+* **Report-focused HTML exports** that preserve evidence-backed operational summaries and grouped investigation context
+* **Consolidated Reports menu** so comparison export actions are grouped cleanly without cluttering the workspace toolbar
+* **Standardised report evidence cards** so grouped evidence, representative findings, and verification sections remain readable across dense reports
+* **Capability-aware export semantics** where Free Preview can export mock/sample reports, while real operational report exports remain Pro capability-aware
 
 DV Quick Run continues to prioritise:
 
@@ -417,6 +420,27 @@ Examples include:
 * minor plugin configuration drift grouped below state, stage, mode, and registration changes
 * lower-priority identity matching signals grouped below participation-density changes
 
+Comparison reports can now be exported as dedicated operational artifacts:
+
+* **Diff Findings Summary** — a concise one-page style operational briefing focused on strongest drift signals, executive summary, significance distribution, provider distribution, snapshot trust, and top operational findings
+* **Investigation Handoff** — a verification-oriented handoff package focused on outstanding operational review, grouped evidence continuity, review posture, and external follow-up context
+* **HTML reports** — readable, branded report exports that preserve operational hierarchy and evidence-backed summaries
+* **PDF reports** — branded, watermarked, print-friendly exports for review packs, CAB discussions, handoff, escalation, and stakeholder communication
+
+The comparison toolbar now groups report exports under:
+
+```text
+Reports
+```
+
+so standard evidence exports and report artifacts stay distinct:
+
+```text
+Save JSON / Save MD / Save HTML / Reports / Reset Review State
+```
+
+Free users can export mock/sample report artifacts from Free Preview workflows. Real operational snapshot report exports remain Pro capability-aware.
+
 The comparison model is intentionally observational:
 
 ```text
@@ -436,7 +460,7 @@ It is designed to help you understand:
 * whether platform-layer drift is low-priority context or relevant to the investigation
 * whether a comparison is scope-aligned before treating drift as meaningful
 
-Free users can explore mock snapshots, replay sample comparison workflows, and inspect sample drift. Pro unlocks real snapshot import, management, comparison, export, replay, and snapshot continuity workflows.
+Free users can explore mock snapshots, replay sample comparison workflows, inspect sample drift, and export mock/sample HTML/PDF report artifacts. Pro unlocks real snapshot import, management, comparison, report export, replay, and snapshot continuity workflows.
 
 Future roadmap direction includes **Entity Access Participation Context**: a wider bounded access-topology report for an entity/table that can be launched from diff evidence to understand role, team, user, app-user, and business-unit participation around that entity. This remains operational participation orientation, not RBAC simulation or authoritative effective-access calculation.
 
@@ -676,6 +700,7 @@ It detects or guards against risky situations such as:
 * hidden cross-environment scans or automatic drift verification
 * treating inline evidence continuation as remediation or proof of root cause
 * treating review-state completion as operational correctness
+* treating exported reports or PDFs as approval, certification, root-cause proof, or remediation authority
 
 Execution-capable workflows are designed around:
 
