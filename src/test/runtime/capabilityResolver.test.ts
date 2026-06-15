@@ -1,6 +1,8 @@
 import * as assert from "assert";
-import { canApplyActionableInsight, canApplyQueryDoctorFix, canExportComparison, canRunCrossEnvironmentDiff, canRunTraversalBatch, getActionableInsightCapabilities, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel, shouldShowComparisonTeaser } from "../../product/capabilities/capabilityResolver.js";
-import { normalizeEntitlementPlan } from "../../product/capabilities/entitlementTypes.js";
+import { capabilityIds } from "../../product/capabilities/capabilityIds.js";
+import { getAllCapabilityDefinitions, getDefaultEnabledCapabilityIds } from "../../product/capabilities/capabilityRegistry.js";
+import { canApplyActionableInsight, canApplyQueryDoctorFix, canExportComparison, canExportDvburArtifact, canRunCrossEnvironmentDiff, canRunTraversalBatch, canUse, getActionableInsightCapabilities, getCapabilityProfile, getCurrentProductPlan, getQueryDoctorCapabilities, getQueryDoctorInsightLevel, resolveCapabilityManifest, resolveCapabilityState, shouldShowComparisonTeaser } from "../../product/capabilities/capabilityResolver.js";
+import { normalizeEntitlementPlan, type EntitlementContext } from "../../product/capabilities/entitlementTypes.js";
 
 suite("capabilityResolver", () => {
   test("resolves free capability profile", () => {
@@ -21,6 +23,9 @@ suite("capabilityResolver", () => {
         canRunCrossEnvironmentDiff: false,
         canExportComparison: false,
         showWhatIsComingTeaser: true
+      },
+      resultViewer: {
+        canExportDvburArtifact: false
       }
     });
   });
@@ -43,6 +48,9 @@ suite("capabilityResolver", () => {
         canRunCrossEnvironmentDiff: true,
         canExportComparison: true,
         showWhatIsComingTeaser: false
+      },
+      resultViewer: {
+        canExportDvburArtifact: true
       }
     });
   });
@@ -66,16 +74,107 @@ suite("capabilityResolver", () => {
     assert.strictEqual(canExportComparison("pro"), true);
     assert.strictEqual(shouldShowComparisonTeaser("free"), true);
     assert.strictEqual(shouldShowComparisonTeaser("pro"), false);
+    assert.strictEqual(canExportDvburArtifact("free"), false);
+    assert.strictEqual(canExportDvburArtifact("pro"), true);
   });
 
   test("getCurrentProductPlan uses normalized configuration plan", () => {
     assert.strictEqual(typeof getCurrentProductPlan(), "string");
   });
 
-  test("normalizes unknown and premature tier values to dev", () => {
-    assert.strictEqual(normalizeEntitlementPlan("mystery"), "dev");
-    assert.strictEqual(normalizeEntitlementPlan(undefined), "dev");
-    assert.strictEqual(normalizeEntitlementPlan("team"), "dev");
-    assert.strictEqual(normalizeEntitlementPlan("enterprise"), "dev");
+  test("normalizes unknown and premature tier values to free", () => {
+    assert.strictEqual(normalizeEntitlementPlan("mystery"), "free");
+    assert.strictEqual(normalizeEntitlementPlan(undefined), "free");
+    assert.strictEqual(normalizeEntitlementPlan("team"), "free");
+    assert.strictEqual(normalizeEntitlementPlan("enterprise"), "free");
+    assert.strictEqual(normalizeEntitlementPlan("dev"), "free");
+  });
+
+  test("declares stable canonical capability ids", () => {
+    assert.deepStrictEqual(capabilityIds, [
+      "queryDoctorInsights",
+      "actionableInsightApply",
+      "traversalBatch",
+      "traversalOptimizedBatch",
+      "crossEnvironmentDiff",
+      "timelineDiff",
+      "comparisonReportExport",
+      "investigationHandoffExport",
+      "snapshotReplay",
+      "runtimeBehaviourDrift",
+      "identityParticipationDrift",
+      "exportDvburArtifact"
+    ]);
+  });
+
+  test("registers every capability id exactly once", () => {
+    const definitions = getAllCapabilityDefinitions();
+
+    assert.strictEqual(definitions.length, capabilityIds.length);
+    assert.deepStrictEqual(definitions.map((definition) => definition.id), [...capabilityIds]);
+  });
+
+  test("uses capability-aware checks for commercial acceleration", () => {
+    const validPro: EntitlementContext = {
+      plan: "pro",
+      status: "valid"
+    };
+
+    const validFree: EntitlementContext = {
+      plan: "free",
+      status: "valid"
+    };
+
+    assert.strictEqual(canUse("crossEnvironmentDiff", validFree), false);
+    assert.strictEqual(canUse("crossEnvironmentDiff", validPro), true);
+    assert.strictEqual(canUse("comparisonReportExport", validFree), false);
+    assert.strictEqual(canUse("comparisonReportExport", validPro), true);
+    assert.strictEqual(canUse("exportDvburArtifact", validFree), false);
+    assert.strictEqual(canUse("exportDvburArtifact", validPro), true);
+  });
+
+  test("treats existing Pro entitlements as eligible for newly introduced default Pro capabilities", () => {
+    const legacyPro: EntitlementContext = {
+      plan: "pro",
+      status: "valid",
+      manifest: {
+        edition: "pro",
+        grants: [
+          { capabilityId: "crossEnvironmentDiff", enabled: true, source: "entitlement" }
+        ]
+      }
+    };
+
+    const manifest = resolveCapabilityManifest(legacyPro);
+
+    assert.strictEqual(manifest.edition, "pro");
+    assert.strictEqual(resolveCapabilityState("exportDvburArtifact", legacyPro).enabled, true);
+    assert.ok(manifest.grants.some((grant) => grant.capabilityId === "exportDvburArtifact" && grant.enabled === true));
+  });
+
+  test("degrades non-valid entitlement states to free manifest", () => {
+    const states: EntitlementContext["status"][] = ["unknown", "invalid", "corrupted", "expired", "unavailable"];
+
+    for (const status of states) {
+      const entitlement: EntitlementContext = {
+        plan: "pro",
+        status
+      };
+
+      assert.strictEqual(resolveCapabilityManifest(entitlement).edition, "free");
+      assert.strictEqual(resolveCapabilityState("crossEnvironmentDiff", entitlement).enabled, false);
+      assert.strictEqual(resolveCapabilityState("crossEnvironmentDiff", entitlement).reason, "Pro capability unavailable. DVQR has continued in Free mode.");
+    }
+  });
+
+  test("keeps free understanding capabilities separate from pro acceleration", () => {
+    assert.deepStrictEqual(getDefaultEnabledCapabilityIds("free"), [
+      "queryDoctorInsights",
+      "traversalBatch"
+    ]);
+
+    assert.ok(getDefaultEnabledCapabilityIds("pro").includes("crossEnvironmentDiff"));
+    assert.ok(getDefaultEnabledCapabilityIds("pro").includes("investigationHandoffExport"));
+    assert.ok(getDefaultEnabledCapabilityIds("pro").includes("exportDvburArtifact"));
   });
 });

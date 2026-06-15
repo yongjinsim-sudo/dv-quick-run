@@ -15,6 +15,9 @@ import type { ResultViewerActionPayload } from "./resultViewerActions/types.js";
 import { getResultViewerHtml } from "../webview/resultViewerHtml.js";
 import { PreviewSurfacePanel } from "./previewSurfacePanel.js";
 import { ResultViewerSessionStore } from "./resultViewerSessionStore.js";
+import { canExportDvburArtifact } from "../product/capabilities/capabilityResolver.js";
+import { exportDvburArtifactFromResultViewer } from "./dvburArtifactExport.js";
+import { promptForProAccelerationAccess } from "../commands/commercial/proPricingPrompt.js";
 import type { DataverseClient } from "../services/dataverseClient.js";
 import { buildManualResultViewerInsightSuggestions } from "../product/binder/buildBinderSuggestion.js";
 import { buildExecutionInsightSuggestions } from "../product/executionInsights/executionInsightsOrchestrator.js";
@@ -148,6 +151,12 @@ type ResultViewerMessage =
         payload: {
             fileName?: string;
             json?: string;
+            sessionId?: string;
+        };
+    }
+    | {
+        type: "exportDvburArtifact";
+        payload: {
             sessionId?: string;
         };
     }
@@ -472,6 +481,10 @@ export class ResultViewerPanel {
                     message.payload.json,
                     message.payload.sessionId
                 );
+                return;
+
+            case "exportDvburArtifact":
+                await ResultViewerPanel.handleExportDvburArtifact(ctx);
                 return;
 
             case "requestRows":
@@ -1027,6 +1040,32 @@ export class ResultViewerPanel {
         }
 
         await vscode.env.openExternal(vscode.Uri.parse(url));
+    }
+
+
+    private static async handleExportDvburArtifact(ctx: CommandContext): Promise<void> {
+        const model = ResultViewerPanel.currentModel;
+        if (!model || isBatchResultViewerModel(model)) {
+            void vscode.window.showWarningMessage("DV Quick Run: Export DVBUR Artifact requires a single Result Viewer result.");
+            return;
+        }
+
+        if (!canExportDvburArtifact()) {
+            await promptForProAccelerationAccess("Export Upsert Artifact (DVBUR)");
+            return;
+        }
+
+        try {
+            await exportDvburArtifactFromResultViewer(ctx, model);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (message === "cancelled") {
+                void vscode.window.showInformationMessage("DV Quick Run: DVBUR export cancelled. No artifact was written.");
+                return;
+            }
+            void vscode.window.showWarningMessage(`DV Quick Run: DVBUR export failed. ${message}`);
+            ctx.output.appendLine(`[DVBUR Export] ${message}`);
+        }
     }
 
     private static async handleRequestRows(payload: { sessionId?: string; offset?: number; limit?: number }): Promise<void> {

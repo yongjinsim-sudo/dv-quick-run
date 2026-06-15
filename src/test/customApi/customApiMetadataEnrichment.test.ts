@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { suite, test } from "mocha";
 import { getCustomApiTypeMetadata, isCustomApiTypePreviewReady } from "../../customApi/metadata/customApiMetadataEnrichment.js";
 
 suite("customApiMetadataEnrichment", () => {

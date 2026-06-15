@@ -20,3 +20,25 @@ GLOBAL-AGENTS.template.md
 !/src/enterprise/
 !/src/enterprise/.gitkeep
 
+
+/src/internal/**
+!/src/internal/
+!/src/internal/.gitkeep
+
+# DVQR internal license generator: keep local/private artifacts out of git.
+/tools/license-generator/**
+/tools/license-generator/keys/*.pem
+/tools/license-generator/output/**
+!/tools/license-generator/output/.gitkeep
+!/tools/license-generator/keys/.gitkeep
+# Local environment / build artifacts
+.env
+.env.*
+*.tsbuildinfo
+.next/
+next.config.js.map
+# Local/license safety fallback
+*.dvqr-license.json
+*.pem
+*.key
+*.secret

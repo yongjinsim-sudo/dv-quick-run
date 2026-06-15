@@ -521,5 +521,11 @@ export function revealSnapshotLibrarySurface(
     }
   }, null, ctx.ext.subscriptions);
 
-  snapshotLibraryPanel.webview.html = renderSnapshotLibraryHtml(snapshotLibraryPanel.webview, entries, getRecentComparisons(ctx.ext), isCrossEnvironmentDiffPreviewMode());
+  snapshotLibraryPanel.webview.html = renderSnapshotLibraryHtml(
+    snapshotLibraryPanel.webview,
+    entries,
+    getRecentComparisons(ctx.ext),
+    isCrossEnvironmentDiffPreviewMode(),
+    typeof ctx.ext.extension.packageJSON?.version === "string" ? ctx.ext.extension.packageJSON.version : "unknown"
+  );
 }

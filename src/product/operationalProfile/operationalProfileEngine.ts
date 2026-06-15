@@ -271,33 +271,33 @@ function buildOperationalProfileNavigationActions(
 function buildOperationalProfileFutureSurfaces(): OperationalProfileFutureSurface[] {
   return [
     {
-      id: "executionInsightsExpansion",
-      label: "Execution Insights Expansion",
-      description: "Expand operational investigation visibility across audits, solutions, security roles, flows, automation participation, and runtime evidence surfaces.",
-      availability: "freeRoadmap"
-    },
-    {
-      id: "crossSurfaceInvestigationPivots",
-      label: "Cross-surface investigation pivots",
-      description: "Move between related DV Quick Run investigation surfaces while preserving the current operational context.",
-      availability: "freeRoadmap"
-    },
-    {
-      id: "operationalProfileDriftComparison",
-      label: "Operational Profile drift comparison",
-      description: "Compare operational profile changes across deployments, environments, or snapshots to identify investigation-impacting drift.",
+      id: "timelineInvestigation",
+      label: "Timeline investigation",
+      description: "Compare same-environment snapshots over time to observe operational state changes without treating the timeline as root-cause proof.",
       availability: "proRoadmap"
     },
     {
-      id: "crossEnvironmentOperationalComparison",
-      label: "Cross-environment operational comparison",
-      description: "Compare operational density, automation participation, and investigation surfaces between environments.",
+      id: "auditInvestigation",
+      label: "Audit investigation",
+      description: "Use available audit evidence to inspect historical change context while preserving human verification boundaries.",
       availability: "proRoadmap"
     },
     {
-      id: "deploymentOperationalImpactAnalysis",
-      label: "Deployment operational impact analysis",
-      description: "Review how deployments may change operational investigation surfaces, orchestration participation, or automation density.",
+      id: "runtimeCorrelationInvestigation",
+      label: "Runtime correlation investigation",
+      description: "Correlate nearby runtime evidence across plugin, workflow, async, and automation participation where captured evidence supports it.",
+      availability: "proRoadmap"
+    },
+    {
+      id: "deploymentReadinessInvestigation",
+      label: "Deployment readiness investigation",
+      description: "Surface readiness signals, missing dependencies, and operational follow-up context without becoming deployment execution tooling.",
+      availability: "proRoadmap"
+    },
+    {
+      id: "operationalBaselineInvestigation",
+      label: "Operational baseline investigation",
+      description: "Compare current operational state against known baselines to preserve verification continuity and highlight drift for review.",
       availability: "proRoadmap"
     }
   ];

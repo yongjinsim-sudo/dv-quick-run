@@ -5,6 +5,7 @@ import { buildDvQuickRunHubViewModel } from "./dvQuickRunHubViewModel.js";
 import { renderDvQuickRunHubHtml } from "../../webview/hub/renderDvQuickRunHubHtml.js";
 import { investigationContextStore } from "../../investigation/context/investigationContextStore.js";
 import { resolveEntitlement } from "../../product/capabilities/entitlementResolver.js";
+import { openDvQuickRunPricing } from "../commercial/proPricingPrompt.js";
 
 let hubPanel: vscode.WebviewPanel | undefined;
 let hubContextChangeSubscription: { dispose: () => void } | undefined;
@@ -86,8 +87,31 @@ export async function openDvQuickRunHub(ctx: CommandContext): Promise<void> {
   }, null, ctx.ext.subscriptions);
 }
 
+function getDvQuickRunFeedbackUrl(ctx: CommandContext): string {
+  const version = typeof ctx.ext.extension.packageJSON?.version === "string"
+    ? ctx.ext.extension.packageJSON.version
+    : "unknown";
+  return `https://www.dvquickrun.com/feedback?version=${encodeURIComponent(version)}`;
+}
+
+async function openDvQuickRunFeedback(ctx: CommandContext): Promise<void> {
+  await vscode.env.openExternal(vscode.Uri.parse(getDvQuickRunFeedbackUrl(ctx)));
+}
+
 async function openDvQuickRunDiscussions(): Promise<void> {
   await vscode.env.openExternal(vscode.Uri.parse("https://github.com/yongjinsim-sudo/dv-quick-run/discussions"));
+}
+
+async function openDvForgeLabProducts(): Promise<void> {
+  await vscode.env.openExternal(vscode.Uri.parse("https://dvforgelab.com/products"));
+}
+
+async function openDvQuickRunWebsite(): Promise<void> {
+  await vscode.env.openExternal(vscode.Uri.parse("https://www.dvquickrun.com"));
+}
+
+async function openDvForgeLabWebsite(): Promise<void> {
+  await vscode.env.openExternal(vscode.Uri.parse("https://www.dvforgelab.com"));
 }
 
 export function registerOpenDvQuickRunHubCommand(
@@ -95,5 +119,10 @@ export function registerOpenDvQuickRunHubCommand(
   ctx: CommandContext
 ): void {
   registerCommand(context, "dvQuickRun.openHub", openDvQuickRunHub, ctx);
+  registerCommand(context, "dvQuickRun.openFeedback", openDvQuickRunFeedback, ctx);
   registerCommand(context, "dvQuickRun.openDiscussions", openDvQuickRunDiscussions, ctx);
+  registerCommand(context, "dvQuickRun.openDvForgeLabProducts", openDvForgeLabProducts, ctx);
+  registerCommand(context, "dvQuickRun.openDvQuickRunWebsite", openDvQuickRunWebsite, ctx);
+  registerCommand(context, "dvQuickRun.openDvQuickRunPricing", openDvQuickRunPricing, ctx);
+  registerCommand(context, "dvQuickRun.openDvForgeLabWebsite", openDvForgeLabWebsite, ctx);
 }

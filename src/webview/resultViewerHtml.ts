@@ -3,7 +3,7 @@ import { ResultViewerDisplayModel } from "../services/resultViewModelBuilder.js"
 import { getResultViewerMarkup } from "./resultViewer/markup.js";
 import { getResultViewerScript } from "./resultViewer/script.js";
 import { RESULT_VIEWER_STYLES } from "./resultViewer/styles.js";
-import { canExportComparison } from "../product/capabilities/capabilityResolver.js";
+import { canExportComparison, canExportDvburArtifact } from "../product/capabilities/capabilityResolver.js";
 
 function getNonce(): string {
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -29,6 +29,9 @@ export function getResultViewerHtml(
         ...model,
         comparisonCapabilities: {
             canExportSnapshot: canExportComparison()
+        },
+        resultViewerCapabilities: {
+            canExportDvburArtifact: canExportDvburArtifact()
         }
     };
 

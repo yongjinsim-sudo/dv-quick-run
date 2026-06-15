@@ -13,6 +13,7 @@ suite("dvQuickRunHubViewModel", () => {
       "access-context",
       "playbooks",
       "capabilities",
+      "dvforgelab-ecosystem",
       "whats-new",
       "direction",
       "philosophy"
@@ -36,7 +37,7 @@ suite("dvQuickRunHubViewModel", () => {
     const model = buildDvQuickRunHubViewModel();
     const launchable = model.capabilities.filter((capability) => capability.contextState?.launchable).map((capability) => capability.id);
 
-    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer", "cross-environment-comparison", "community-discussions"]);
+    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer", "cross-environment-comparison", "community-feedback", "community-discussions"]);
   });
 
   test("groups capabilities by operational use", () => {
@@ -112,6 +113,15 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes("Open Snapshot Library"));
     assert.strictEqual(html.includes("Open Pro Preview"), false);
     assert.strictEqual(html.includes("Free can explore mock snapshots"), false);
+  });
+
+
+  test("renders Pathfinder early supporter recognition when present", () => {
+    const model = buildDvQuickRunHubViewModel(undefined, { plan: "pro", supporterTags: ["Pathfinder"] });
+    const html = renderDvQuickRunHubHtml({ cspSource: "vscode-resource:" } as never, model);
+
+    assert.deepStrictEqual(model.supporterBadges, ["DVQR Pathfinder • Early Supporter"]);
+    assert.ok(html.includes("DVQR Pathfinder • Early Supporter"));
   });
 
   test("renders continuation actions without duplicating guided traversal launch wording", () => {

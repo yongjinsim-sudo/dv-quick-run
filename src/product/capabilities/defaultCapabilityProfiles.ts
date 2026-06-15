@@ -17,6 +17,9 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
       canRunCrossEnvironmentDiff: false,
       canExportComparison: false,
       showWhatIsComingTeaser: true
+    },
+    resultViewer: {
+      canExportDvburArtifact: false
     }
   },
   pro: {
@@ -34,23 +37,9 @@ export const defaultCapabilityProfiles: Record<EntitlementPlan, CapabilityProfil
       canRunCrossEnvironmentDiff: true,
       canExportComparison: true,
       showWhatIsComingTeaser: false
-    }
-  },
-  dev: {
-    queryDoctor: {
-      insightLevel: 3
     },
-    actionableInsights: {
-      canApply: true
-    },
-    traversal: {
-      canRunBatch: true,
-      canRunOptimizedBatch: true
-    },
-    comparison: {
-      canRunCrossEnvironmentDiff: true,
-      canExportComparison: true,
-      showWhatIsComingTeaser: false
+    resultViewer: {
+      canExportDvburArtifact: true
     }
   }
 };

@@ -274,6 +274,11 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
     }
 
     if (request.kind === "json" || request.kind === "md" || request.kind === "html" || request.kind === "baseline" || request.kind === "summary-html" || request.kind === "handoff-html" || request.kind === "summary-pdf" || request.kind === "handoff-pdf") {
+      if (!isReportExportKind(request.kind) && !canRunCrossEnvironmentDiff()) {
+        void promptForCrossEnvironmentDiffProAccess(getExportSaveLabel(request.kind));
+        return;
+      }
+
       void saveComparisonExport(ctx, model, request.kind).then((savedUri) => {
         if (request.kind === "baseline" && savedUri) {
           const exportedAt = new Date().toLocaleString();

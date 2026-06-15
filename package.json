@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, investigation, execution, and comparison workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.12.4",
+  "version": "0.12.5",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -20,7 +20,6 @@
   "categories": [
     "Other",
     "Debuggers",
-    "Data Science",
     "Testing"
   ],
   "extensionKind": [
@@ -46,10 +45,25 @@
     "dataverse batch",
     "odata batch",
     "query workflow",
-    "dataverse tooling vscode"
+    "dataverse tooling vscode",
+    "bulk upsert",
+    "dataverse bulk upsert",
+    "dataverse migration",
+    "dataverse import",
+    "dataverse export",
+    "dataverse investigation",
+    "dataverse comparison",
+    "dataverse diff",
+    "dataverse snapshot",
+    "dataverse operational investigation"
   ],
   "activationEvents": [
-    "onCommand:dvQuickRun.openSnapshotLibrary"
+    "onCommand:dvQuickRun.openSnapshotLibrary",
+    "onCommand:dvQuickRun.activateProLicense",
+    "onCommand:dvQuickRun.licenseStatus",
+    "onCommand:dvQuickRun.deactivateProLicense",
+    "onCommand:dvQuickRun.importOfflineLicense",
+    "onCommand:dvQuickRun.showWelcomeScreen"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -221,6 +235,26 @@
       {
         "command": "dvQuickRun.runBatchQueries",
         "title": "DV Quick Run: Run Queries as $batch"
+      },
+      {
+        "command": "dvQuickRun.activateProLicense",
+        "title": "DV Quick Run: Activate Pro License"
+      },
+      {
+        "command": "dvQuickRun.licenseStatus",
+        "title": "DV Quick Run: License Status"
+      },
+      {
+        "command": "dvQuickRun.deactivateProLicense",
+        "title": "DV Quick Run: Deactivate Pro License"
+      },
+      {
+        "command": "dvQuickRun.importOfflineLicense",
+        "title": "DV Quick Run: Import Offline License"
+      },
+      {
+        "command": "dvQuickRun.showWelcomeScreen",
+        "title": "DV Quick Run: Show Welcome Screen"
       }
     ],
     "menus": {
@@ -333,10 +367,9 @@
           "default": "free",
           "enum": [
             "free",
-            "pro",
-            "dev"
+            "pro"
           ],
-          "description": "Controls DV Quick Run capability level for Query Doctor and future gated features."
+          "description": "Controls DV Quick Run capability level. Unknown or unavailable entitlement states degrade to Free."
         },
         "dvQuickRun.environments": {
           "type": "array",
@@ -495,5 +528,9 @@
   "dependencies": {
     "cytoscape": "^3.33.1",
     "pdfkit": "^0.18.0"
+  },
+  "galleryBanner": {
+    "color": "#0b1220",
+    "theme": "dark"
   }
 }

@@ -104,6 +104,7 @@ export interface InvestigationContinuationModel {
 
 export interface DvQuickRunHubViewModel {
   title: string;
+  supporterBadges: string[];
   subtitle: string;
   sectionLinks: HubSectionLink[];
   investigationContinuation: InvestigationContinuationModel;

@@ -1,5 +1,4 @@
 import * as assert from "assert";
-import { suite, test } from "mocha";
 import { runDiagnostics } from "../../commands/router/actions/shared/diagnostics/diagnosticRuleEngine.js";
 import { getDiagnosticActionability, isActionableDiagnosticFinding } from "../../commands/router/actions/shared/diagnostics/diagnosticTypes.js";
 

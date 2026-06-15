@@ -129,10 +129,39 @@ function renderCapability(capability: CapabilityInfo): string {
   </article>`;
 }
 
+
+function renderDvForgeLabEcosystem(): string {
+  return `<section id="dvforgelab-ecosystem">
+    <h2>DV ForgeLab Ecosystem</h2>
+    <p class="dvqr-section-note">DV Quick Run is part of the DV ForgeLab ecosystem of focused Dataverse engineering tools.</p>
+    <div class="dvqr-direction-grid">
+      <article class="dvqr-card"><h3>DV Quick Run</h3><p>Investigate operational drift, runtime behaviour, identity participation, and cross-environment evidence.</p></article>
+      <article class="dvqr-card"><h3>DV Bulk Upsert Runner</h3><p>Bulk import and upsert Dataverse records using reusable data packages.</p></article>
+      <article class="dvqr-card"><h3>DV Choice Editor</h3><p>Manage Dataverse global and local choices with confidence.</p></article>
+      <article class="dvqr-card"><h3>DV Environment Variable Manager</h3><p>Review and manage environment configuration values.</p></article>
+      <article class="dvqr-card"><h3>DV Identity Manager</h3><p>Investigate and administer application users and identities.</p></article>
+      <article class="dvqr-card"><h3>DV Attribute Factory</h3><p>Accelerate Dataverse attribute creation and metadata construction.</p></article>
+    </div>
+    <div class="dvqr-card dvqr-ecosystem-handoff">
+      <h3>First ecosystem handoff</h3>
+      <p>Result Viewer can export a Pro Upsert Artifact for DV Bulk Upsert Runner, preserving operational context while keeping execution in the companion utility.</p>
+      <div class="dvqr-meta"><span class="dvqr-chip">DVQR observes</span><span class="dvqr-chip">DVBUR executes</span><span class="dvqr-chip">No orchestration</span></div>
+      <div class="dvqr-continuation-actions">
+        <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabProducts">View DV ForgeLab Utilities</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openDvQuickRunWebsite">Open dvquickrun.com</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabWebsite">Open dvforgelab.com</button>
+      </div>
+    </div>
+  </section>`;
+}
+
 export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: string): string {
   const capabilityGroups = Array.from(groupCapabilities(model.capabilities).entries());
   const heroIcon = iconUri
     ? `<div class="dvqr-hero-icon-frame" aria-hidden="true"><img class="dvqr-hero-icon" src="${escapeHtml(iconUri)}" alt="" /></div>`
+    : "";
+  const supporterBadges = model.supporterBadges.length > 0
+    ? `<div class="dvqr-supporter-badges">${model.supporterBadges.map((badge) => `<span class="dvqr-supporter-badge">${escapeHtml(badge)}</span>`).join("")}</div>`
     : "";
 
   return `<main class="dvqr-hub">
@@ -141,6 +170,7 @@ export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: 
         <div class="dvqr-eyebrow">Operational Investigation Fluency</div>
         <h1>${escapeHtml(model.title)}</h1>
         <p class="dvqr-subtitle">${escapeHtml(model.subtitle)}</p>
+        ${supporterBadges}
         <nav class="dvqr-nav" aria-label="Hub sections">
           ${model.sectionLinks.map((link) => `<a class="dvqr-chip" href="#${escapeHtml(link.anchor)}">${escapeHtml(link.label)}</a>`).join("")}
         </nav>
@@ -163,6 +193,8 @@ export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: 
       <p class="dvqr-section-note">Current capabilities grouped by the operational problem they help solve.</p>
       ${capabilityGroups.map(([group, capabilities]) => `<div class="dvqr-group"><h3>${escapeHtml(group)}</h3><div class="dvqr-capability-grid">${capabilities.map(renderCapability).join("")}</div></div>`).join("")}
     </section>
+
+    ${renderDvForgeLabEcosystem()}
 
     <section id="whats-new">
       <h2>What's New</h2>

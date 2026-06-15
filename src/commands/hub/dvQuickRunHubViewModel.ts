@@ -2,7 +2,7 @@ import { getHubCapabilities, investigationPlaybooks, philosophy, productDirectio
 import { applyCapabilityContextStates, buildInvestigationContinuationModel } from "./dvQuickRunHubContext.js";
 import type { DvQuickRunHubViewModel } from "./dvQuickRunHubTypes.js";
 import type { InvestigationContext } from "../../investigation/context/investigationContextTypes.js";
-import type { EntitlementContext } from "../../product/capabilities/entitlementTypes.js";
+import { formatEntitlementSupporterTag, type EntitlementContext } from "../../product/capabilities/entitlementTypes.js";
 
 const emptyInvestigationContext: InvestigationContext = {
   id: "hub-empty-context",
@@ -14,14 +14,18 @@ export function buildDvQuickRunHubViewModel(
   context: InvestigationContext = emptyInvestigationContext,
   entitlement: EntitlementContext = { plan: "free" }
 ): DvQuickRunHubViewModel {
+  const supporterBadges = entitlement.supporterTags?.map(formatEntitlementSupporterTag) ?? [];
+
   return {
     title: "DV Quick Run Hub",
+    supporterBadges,
     subtitle: "Operational investigation playbooks, capability discovery, and calm product direction inside VS Code.",
     sectionLinks: [
       { label: "Current Context", anchor: "current-context" },
       { label: "Access Context", anchor: "access-context" },
       { label: "Investigation Playbooks", anchor: "playbooks" },
       { label: "Capabilities", anchor: "capabilities" },
+      { label: "DV ForgeLab", anchor: "dvforgelab-ecosystem" },
       { label: "What's New", anchor: "whats-new" },
       { label: "Product Direction", anchor: "direction" },
       { label: "Why It Works This Way", anchor: "philosophy" }

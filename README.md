@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, verify drift evidence, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, inline evidence continuation, report exports, investigation handoff PDFs, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, verify drift evidence, export DVBUR artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, inline evidence continuation, report exports, investigation handoff PDFs, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -21,6 +21,7 @@ The website includes:
 * operational investigation philosophy
 * feature walkthroughs
 * marketplace/install links
+* Free / Pro / Offline pricing and activation guidance
 * interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
 * sample Diff Findings Summary and Investigation Handoff report flows
 
@@ -58,7 +59,9 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * continue investigation from comparison evidence using bounded inline pivots
 * review, verify, comment on, and hand off operational drift findings
 * export Diff Findings Summary and Investigation Handoff reports as HTML/PDF artifacts
+* export DVBUR artifacts from Result Viewer records for downstream DV Bulk Upsert Runner workflows
 * discover and execute supported Custom API capabilities through Capability Explorer
+* activate Online Pro, import Offline Pro licenses, and inspect capability status
 * use the Hub to stay oriented across investigation workflows
 
 DV Quick Run is designed around a simple loop:
@@ -93,19 +96,79 @@ write → run → explore → refine → investigate → verify → hand off
 
 ---
 
-## 🆕 What's New in v0.12.4
+## 🔐 DV Quick Run Pro Activation
 
-v0.12.4 matures DV Quick Run’s comparison platform from interactive operational verification into investigation-ready operational reporting and verification handoff.
+DV Quick Run is available in Free and Pro editions.
+
+Free preserves foundational operational understanding workflows. Pro accelerates advanced operational investigation workflows such as real snapshot comparison, replay continuity, report exports, and investigation handoff workflows.
+
+Learn more:
+
+```text
+https://www.dvquickrun.com/pricing
+```
+
+To activate Online Pro:
+
+1. Purchase a DV Quick Run Pro subscription.
+2. Open Visual Studio Code.
+3. Run:
+
+   ```text
+   DV Quick Run: Activate Pro License
+   ```
+
+4. Paste the license key from your Lemon Squeezy purchase.
+
+To inspect your current entitlement:
+
+```text
+DV Quick Run: License Status
+```
+
+Online recurring subscriptions display as:
+
+```text
+Subscription: Active
+```
+
+Eligible Pathfinder licenses show:
+
+```text
+DVQR Pathfinder • Early Supporter
+```
+
+Offline Pro customers can import a signed offline license using:
+
+```text
+DV Quick Run: Import Offline License
+```
+
+Offline Pro is designed for restricted, disconnected, and air-gapped environments where recurring online validation is not suitable.
+
+---
+
+## 🆕 What's New in v0.12.5
+
+v0.12.5 prepares DV Quick Run for commercial Pro activation while preserving the core product boundary:
+
+```text
+Operational understanding remains accessible.
+Operational acceleration may be premium.
+```
 
 Highlights include:
 
-* **Diff Findings Summary reports** for concise, executive-friendly operational drift orientation
-* **Investigation Handoff reports** for verification continuity, escalation, and follow-on human review
-* **PDF report exports** with DVQR branding, watermarking, page footers, calmer pagination, and print-friendly evidence presentation
-* **Report-focused HTML exports** that preserve evidence-backed operational summaries and grouped investigation context
-* **Consolidated Reports menu** so comparison export actions are grouped cleanly without cluttering the workspace toolbar
-* **Standardised report evidence cards** so grouped evidence, representative findings, and verification sections remain readable across dense reports
-* **Capability-aware export semantics** where Free Preview can export mock/sample reports, while real operational report exports remain Pro capability-aware
+* **Online Pro activation** through `DV Quick Run: Activate Pro License`
+* **License status inspection** with subscription state, refresh timing, grace period, capability list, and Pathfinder recognition
+* **Offline Pro signed-license import** for restricted, disconnected, and air-gapped environments
+* **Capability runtime foundations** so accelerated workflows resolve through entitlement manifests instead of scattered plan checks
+* **Pathfinder Early Supporter recognition** for eligible Early Bird licenses
+* **Fail-closed entitlement behaviour** that calmly falls back to Free when entitlement state is unavailable, invalid, expired, or unknown
+* **Product guard validation** so only DV Quick Run Pro license keys activate DVQR Pro capabilities
+* **Result Viewer → DVBUR artifact export** for downstream DV Bulk Upsert Runner execution workflows
+* **Commercial boundary hardening** across Free, Pathfinder, Pro, and Offline Pro workflows
+* **Production Command Palette cleanup** so internal entitlement seed/cache commands are not exposed as public commands
 
 DV Quick Run continues to prioritise:
 
@@ -136,6 +199,24 @@ The Result Viewer only supplies target row context. Execution still flows throug
 ```text
 row → bound Action preview → explicit confirmation → execution result → investigation context
 ```
+
+---
+
+### 📦 Result Viewer → DVBUR Artifact Export
+
+DV Quick Run can export Result Viewer records as DVBUR-compatible artifacts for DV ForgeLab's **DV Bulk Upsert Runner**.
+
+This supports a focused ecosystem workflow:
+
+```text
+DVQR investigates
+→ exports a DVBUR artifact
+→ DVBUR performs focused bulk upsert execution
+```
+
+The export remains explicit and user-triggered.
+
+DV Quick Run does not perform automatic remediation or hidden bulk updates. It prepares an artifact from observed Result Viewer data so the execution workflow can remain separated in DV Bulk Upsert Runner.
 
 ---
 
@@ -777,3 +858,39 @@ Press **F5** to run the extension.
 ## 📜 License
 
 MIT License
+
+## Open-Core Model
+
+DV Quick Run follows an open-core model.
+
+The MIT-licensed core preserves foundational operational understanding workflows for Dataverse.
+
+Commercial Pro capabilities focus on advanced operational acceleration workflows such as:
+
+- Cross-Environment Diff
+- Timeline Diff
+- Runtime Behaviour Drift
+- Identity Participation Drift
+- Snapshot Replay
+- Comparison Report Export Workflows
+- Investigation Handoff Exports
+- Result Viewer → DVBUR Artifact Export
+- Online Pro Activation
+- Offline Pro Licensing
+- Capability-Aware Acceleration Workflows
+
+The public repository intentionally excludes proprietary Pro implementation modules.
+
+Foundational operational understanding remains accessible.  
+Commercial acceleration funds continued development.
+
+### Repository Structure
+
+```text
+/src/core
+MIT open-core functionality
+
+/src/pro
+Private proprietary acceleration modules
+Not included in the public repository or MIT grant
+```

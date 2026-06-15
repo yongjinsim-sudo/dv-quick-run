@@ -276,7 +276,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       "Open the Snapshot Library preview from the Hub.",
       "Compare DEV-MOCK and SIT-MOCK snapshots to inspect the Pro comparison surface.",
       "Upgrade to Pro to import, manage, compare, and export real operational snapshots.",
-      "Join the DV Quick Run GitHub Discussions community to share operational drift ideas and workflow feedback."
+      "Use Share Feedback when you want to send private product feedback, bugs, or workflow ideas."
     ],
     relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
     commandId: "dvQuickRun.openSnapshotLibrary",
@@ -292,15 +292,33 @@ export const capabilities: readonly CapabilityInfo[] = [
   },
 
   {
+    id: "community-feedback",
+    title: "Share Feedback",
+    group: "Community",
+    summary: "Send private feedback, bug reports, feature requests, commercial questions, or workflow suggestions through the DV Quick Run feedback form.",
+    operationalUseCase: "Use when you want to send product feedback without opening a public GitHub discussion.",
+    howToUse: [
+      "Open the DV Quick Run feedback form.",
+      "Share bugs, feature ideas, workflow feedback, or commercial questions.",
+      "The form includes DV Quick Run and the current extension version for easier follow-up."
+    ],
+    relatedPlaybooks: [],
+    commandId: "dvQuickRun.openFeedback",
+    actionLabel: "Share Feedback",
+    status: "available",
+    sinceVersion: "v0.12.5"
+  },
+
+  {
     id: "community-discussions",
     title: "DV Quick Run GitHub Discussions",
     group: "Community",
-    summary: "Share feedback, report bugs, suggest features, discuss workflows, and help shape DV Quick Run direction with the community.",
-    operationalUseCase: "Use when you want to share feedback, report issues, suggest improvements, or discuss DVQ Quick Run workflows and product direction.",
+    summary: "Open the public GitHub Discussions board for community questions, workflow discussion, and broader DVQR roadmap conversation.",
+    operationalUseCase: "Use when you want to discuss DV Quick Run publicly with the community.",
     howToUse: [
       "Open the DV Quick Run GitHub Discussions board.",
-      "Share bugs, feature ideas, workflow feedback, and operational investigation suggestions.",
-      "Follow upcoming operational comparison and investigation roadmap discussions."
+      "Ask questions, share workflow ideas, or follow upcoming roadmap discussions.",
+      "Use Share Feedback instead when you want to send private product feedback."
     ],
     relatedPlaybooks: [],
     commandId: "dvQuickRun.openDiscussions",
@@ -338,6 +356,7 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Runtime and Power Platform visibility", summary: "Continue bridging Dataverse execution evidence with orchestration participation where evidence supports it." },
   { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
+  { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded artifacts to focused companion utilities, starting with Upsert Artifact handoff to DV Bulk Upsert Runner." },
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
   { title: "Future operational comparison", summary: "Operational comparison is emerging as a bounded product direction for drift investigation without remediation or deployment tooling." }
 ];
@@ -371,7 +390,7 @@ function buildProComparisonCapability(): CapabilityInfo {
 }
 
 export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityInfo[] {
-  const isProEnabled = plan === "pro" || plan === "dev";
+  const isProEnabled = plan === "pro";
 
   return capabilities.map((capability) => capability.id === "cross-environment-comparison" && isProEnabled
     ? buildProComparisonCapability()
@@ -379,6 +398,9 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
+  "Export dropdown consolidates CSV, JSON, and Pro Upsert Artifact export actions in Result Viewer.",
+  "Pro Upsert Artifact export creates .dvbur.json packages for DV Bulk Upsert Runner from flat single-entity Result Viewer results.",
+  "DV ForgeLab ecosystem orientation now links DV Quick Run with companion Dataverse utilities at dvforgelab.com/products.",
   "Platform stabilisation and operational continuity refinements.",
   "Foundations for future operational comparison workflows.",
   "DV Quick Run Hub for in-app operational guidance.",
