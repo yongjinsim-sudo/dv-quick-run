@@ -18,7 +18,8 @@ import {
 } from "../product/comparison/index.js";
 import type { ComparisonEvidenceSnapshot } from "../product/comparison/index.js";
 import { buildIdentityParticipationSnapshotPayloadFromProfile } from "../product/comparison/comparisonSnapshotExtraction.js";
-import { canExportComparison, shouldShowComparisonTeaser } from "../product/capabilities/capabilityResolver.js";
+import { canExportComparison } from "../product/capabilities/capabilityResolver.js";
+import { promptForProAccelerationAccess } from "./commercial/proPricingPrompt.js";
 
 
 async function promptForSnapshotExportProAccess(): Promise<boolean> {
@@ -26,12 +27,7 @@ async function promptForSnapshotExportProAccess(): Promise<boolean> {
     return true;
   }
 
-  const message = shouldShowComparisonTeaser()
-    ? "Export Snapshot is a DV Quick Run Pro workflow. Free keeps operational understanding available; Pro unlocks snapshot persistence, Snapshot Library, Timeline Diff, and Cross-Environment Diff workflows."
-    : "Export Snapshot is not available for the current DV Quick Run plan.";
-
-  await vscode.window.showInformationMessage(message, "OK");
-  return false;
+  return await promptForProAccelerationAccess("Export Snapshot");
 }
 
 async function pickEntity(defs: readonly EntityDef[]): Promise<EntityDef | undefined> {

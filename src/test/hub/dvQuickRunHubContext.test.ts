@@ -14,7 +14,7 @@ suite("dvQuickRunHubContext", () => {
     const enriched = applyCapabilityContextStates(capabilities, emptyContext);
     const launchable = enriched.filter((capability) => capability.contextState?.launchable).map((capability) => capability.id);
 
-    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer", "cross-environment-comparison", "community-discussions"]);
+    assert.deepStrictEqual(launchable, ["guided-traversal", "capability-explorer", "cross-environment-comparison", "community-feedback", "community-discussions"]);
     assert.strictEqual(enriched.find((capability) => capability.id === "explain-query-doctor")?.contextState?.kind, "requiresContext");
     assert.strictEqual(enriched.find((capability) => capability.id === "batch-workflows")?.contextState?.kind, "requiresContext");
   });

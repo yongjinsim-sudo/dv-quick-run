@@ -25,9 +25,14 @@ export interface ComparisonCapabilityProfile {
   showWhatIsComingTeaser: boolean;
 }
 
+export interface ResultViewerCapabilityProfile {
+  canExportDvburArtifact: boolean;
+}
+
 export interface CapabilityProfile {
   queryDoctor: QueryDoctorCapabilityProfile;
   actionableInsights: ActionableInsightCapabilityProfile;
   traversal: TraversalCapabilityProfile;
   comparison: ComparisonCapabilityProfile;
+  resultViewer: ResultViewerCapabilityProfile;
 }

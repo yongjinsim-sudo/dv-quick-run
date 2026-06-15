@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { suite, setup, test } from "mocha";
 import type { CommandContext } from "../../commands/context/commandContext.js";
 import type { DataverseClient } from "../../services/dataverseClient.js";
 import { ODataOperationRegistryService } from "../../customApi/odata/odataOperationRegistryService.js";

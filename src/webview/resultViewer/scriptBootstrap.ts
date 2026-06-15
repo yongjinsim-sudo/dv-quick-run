@@ -19,8 +19,13 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         const showProfileBtn = document.getElementById("showProfileBtn");
         const showRelationshipsBtn = document.getElementById("showRelationshipsBtn");
         const showMetadataBtn = document.getElementById("showMetadataBtn");
+        const exportMenu = document.getElementById("exportMenu");
+        const exportMenuBtn = document.getElementById("exportMenuBtn");
+        const exportMenuPanel = document.getElementById("exportMenuPanel");
         const exportCsvBtn = document.getElementById("exportCsvBtn");
         const saveJsonBtn = document.getElementById("saveJsonBtn");
+        const exportDvburBtn = document.getElementById("exportDvburBtn");
+        const exportDvburLock = document.getElementById("exportDvburLock");
         const previousPageBtn = document.getElementById("previousPageBtn");
         const nextPageBtn = document.getElementById("nextPageBtn");
         const siblingExpandBtn = document.getElementById("siblingExpandBtn");
@@ -676,6 +681,19 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
             if (exportCsvBtn instanceof HTMLButtonElement) {
                 exportCsvBtn.disabled = isBatchSummarySelected();
             }
+            if (saveJsonBtn instanceof HTMLButtonElement) {
+                saveJsonBtn.disabled = isBatchSummarySelected();
+            }
+            if (exportDvburBtn instanceof HTMLButtonElement) {
+                const canExportDvbur = model?.resultViewerCapabilities?.canExportDvburArtifact === true;
+                exportDvburBtn.disabled = isBatchSummarySelected();
+                exportDvburBtn.title = canExportDvbur
+                    ? "Export the full flat single-entity result as an Upsert Artifact for DV Bulk Upsert Runner"
+                    : "Export Upsert Artifact (DVBUR) is available with Pro acceleration";
+                if (exportDvburLock instanceof HTMLElement) {
+                    exportDvburLock.hidden = canExportDvbur;
+                }
+            }
 
             if (isBatchSummarySelected()) {
                 rowCount.textContent = "";
@@ -1070,6 +1088,47 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         });
 
 
+
+        function closeExportMenu() {
+            if (exportMenuPanel instanceof HTMLElement) {
+                exportMenuPanel.hidden = true;
+            }
+            if (exportMenuBtn instanceof HTMLButtonElement) {
+                exportMenuBtn.setAttribute("aria-expanded", "false");
+            }
+        }
+
+        function toggleExportMenu() {
+            if (!(exportMenuPanel instanceof HTMLElement)) {
+                return;
+            }
+            const nextOpen = exportMenuPanel.hidden;
+            exportMenuPanel.hidden = !nextOpen;
+            if (exportMenuBtn instanceof HTMLButtonElement) {
+                exportMenuBtn.setAttribute("aria-expanded", nextOpen ? "true" : "false");
+            }
+        }
+
+        if (exportMenuBtn instanceof HTMLButtonElement) {
+            exportMenuBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                toggleExportMenu();
+            });
+        }
+
+        document.addEventListener("click", (event) => {
+            if (exportMenu instanceof HTMLElement && event.target instanceof Node && exportMenu.contains(event.target)) {
+                return;
+            }
+            closeExportMenu();
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                closeExportMenu();
+            }
+        });
+
         function sanitizeFileName(value) {
             return String(value || "dv-quick-run-results")
                 .replace(/[<>:"/\\\\|?*\\x00-\\x1F]+/g, "_")
@@ -1079,6 +1138,7 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         }
 
         exportCsvBtn.addEventListener("click", () => {
+            closeExportMenu();
             const csv = model.session
                 ? ""
                 : buildCsv(model.columns, applySorting(applyFilter(model.rows, model.columns), model.columns));
@@ -1165,7 +1225,18 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
         }
 
         saveJsonBtn.addEventListener("click", () => {
+            closeExportMenu();
             postSaveJson();
+        });
+
+        exportDvburBtn.addEventListener("click", () => {
+            closeExportMenu();
+            vscodeApi.postMessage({
+                type: "exportDvburArtifact",
+                payload: {
+                    sessionId: model.session && model.session.id ? model.session.id : undefined
+                }
+            });
         });
 
 

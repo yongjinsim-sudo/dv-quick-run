@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { suite, test } from "mocha";
 import { buildCustomApiExecutionPreview, buildCustomApiExecutionPreviewSurfaceSections } from "../../customApi/execution/customApiExecutionPreviewBuilder.js";
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
 

@@ -92,6 +92,23 @@ h3 {
   margin-top: 16px;
 }
 
+.dvqr-supporter-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dvqr-supporter-badge {
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 999px;
+  color: var(--vscode-descriptionForeground);
+  display: inline-flex;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  padding: 4px 10px;
+}
+
 .dvqr-chip, .dvqr-status {
   border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
   border-radius: 999px;
@@ -131,6 +148,10 @@ h3 {
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 16px;
   align-items: start;
+}
+
+.dvqr-ecosystem-handoff {
+  margin-top: 20px;
 }
 
 .dvqr-playbook-card {

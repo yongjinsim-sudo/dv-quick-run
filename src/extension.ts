@@ -13,9 +13,21 @@ import { registerSelectionContext } from "./runtime/selectionContext.js";
 import { ensureDvQuickRunSettingsExist } from "./runtime/configMigration.js";
 import { maybeOpenQuickStartOnFirstRun } from "./runtime/quickStartLifecycle.js";
 import { canRunCrossEnvironmentDiff, shouldShowComparisonTeaser } from "./product/capabilities/capabilityResolver.js";
+import { initializeEntitlementRuntime } from "./product/capabilities/entitlementResolver.js";
+import { registerImportOfflineLicenseCommand } from "./commands/commercial/importOfflineLicenseCommand.js";
+import { registerOnlineProLicenseCommands } from "./commands/commercial/onlineProLicenseCommands.js";
+import { scheduleOnlineEntitlementRefresh } from "./product/capabilities/onlineActivation/onlineEntitlementRefresh.js";
+import { maybeShowV0125Welcome, registerShowWelcomeCommand } from "./runtime/proWelcomeLifecycle.js";
 
 export async function activate(context: vscode.ExtensionContext) {
-  registerVirtualJsonProvider(context);
+  
+    void vscode.commands.executeCommand(
+        "setContext",
+        "dvQuickRun.devMode",
+        context.extensionMode === vscode.ExtensionMode.Development
+    );
+registerVirtualJsonProvider(context);
+  initializeEntitlementRuntime(context);
 
   const envContext = new EnvironmentContext(context);
   const ctx = createCommandContext(context, envContext);
@@ -32,12 +44,19 @@ export async function activate(context: vscode.ExtensionContext) {
   initializeMetadataRuntime(ctx);
   registerCommandSurface(context, ctx);
   registerEnvironmentLifecycle(context, ctx, envContext, environmentStatusBar);
-  registerInternalSupportCommands(context);
+  if (context.extensionMode === vscode.ExtensionMode.Development) {
+    registerInternalSupportCommands(context);
+  }
+  registerImportOfflineLicenseCommand(context);
+  registerOnlineProLicenseCommands(context);
+  scheduleOnlineEntitlementRefresh(context);
+  registerShowWelcomeCommand(context);
   registerEditorIntelligence(context, ctx);
   registerSelectionContext(context, ctx);
   await vscode.commands.executeCommand("setContext", "dvQuickRun.crossEnvironmentDiffAvailable", canRunCrossEnvironmentDiff());
   await vscode.commands.executeCommand("setContext", "dvQuickRun.crossEnvironmentDiffTeaserAvailable", shouldShowComparisonTeaser());
   await maybeOpenQuickStartOnFirstRun(ctx);
+  await maybeShowV0125Welcome(context);
 }
 
 export function deactivate() {}

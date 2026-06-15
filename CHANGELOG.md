@@ -1,10 +1,307 @@
 # Change Log
+- Hid internal developer entitlement seed/cache commands from the production Command Palette behind a development-mode context gate.
 
 All notable changes to the **DV Quick Run** extension will be documented in this file.
 
 This project follows the principles of [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+
+# DV Quick Run v0.12.5 — Commercial Boundary Hardening, Pro Activation & Capability Foundations
+
+This release prepares DV Quick Run for commercial Pro activation while preserving the core product invariant:
+
+```text
+Operational understanding remains accessible.
+Operational acceleration may be premium.
+```
+
+DVQR now supports Online Pro activation, Offline Pro signed-license import, Pathfinder recognition, capability-aware workflow gating, and calmer fallback-to-Free behaviour.
+
+The goal is not aggressive monetisation.
+
+It is:
+
+* sustainable operational tooling
+* explicit capability activation
+* local-first trust
+* Free understanding / Pro acceleration boundaries
+* online and offline licensing readiness
+* safer Marketplace commercial release foundations
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR observes operational drift.
+DVQR does not fix operational drift.
+```
+
+---
+
+## 🔐 Online Pro Activation
+
+Added Online Pro activation through:
+
+```text
+DV Quick Run: Activate Pro License
+```
+
+Users can now activate DVQR Pro by entering a DV Quick Run Pro license key.
+
+Online activation supports:
+
+* license-key activation
+* device/instance naming
+* local entitlement caching
+* periodic validation
+* graceful unavailable-state handling
+* deactivation from the Command Palette
+* license status inspection
+
+Marketplace builds do not require embedded Lemon Squeezy Store API keys or local operator secret files.
+
+---
+
+## 🧭 License Status & Subscription Display
+
+Added:
+
+```text
+DV Quick Run: License Status
+```
+
+The status command now shows:
+
+* plan
+* entitlement state
+* activation source
+* subscription status
+* last verification
+* refresh due date
+* grace period
+* enabled capabilities
+* Pathfinder recognition where applicable
+
+Online recurring subscriptions now display:
+
+```text
+Subscription: Active
+```
+
+instead of a misleading unspecified expiry date.
+
+---
+
+## 🟦 Pathfinder Early Supporter Recognition
+
+Added Pathfinder recognition for eligible Early Bird licenses.
+
+Eligible activations display:
+
+```text
+DVQR Pathfinder • Early Supporter
+```
+
+Pathfinder is recognition only.
+
+It does not change operational evidence, investigation authority, or capability semantics.
+
+---
+
+## 📴 Offline Pro License Import
+
+Added Offline Pro signed-license support through:
+
+```text
+DV Quick Run: Import Offline License
+```
+
+Offline Pro supports restricted, disconnected, and air-gapped environments through signed local license validation.
+
+Offline licensing:
+
+* validates locally
+* does not require runtime internet access
+* grants capability manifests from signed license payloads
+* degrades calmly to Free if invalid or expired
+
+---
+
+## 🧩 Capability Runtime Foundations
+
+Introduced capability-driven runtime foundations for Pro acceleration.
+
+DVQR now resolves workflow availability through capability IDs such as:
+
+* `crossEnvironmentDiff`
+* `timelineDiff`
+* `comparisonReportExport`
+* `investigationHandoffExport`
+* `snapshotReplay`
+* `runtimeBehaviourDrift`
+* `identityParticipationDrift`
+* `exportDvburArtifact`
+
+This reinforces the architecture:
+
+```text
+entitlement
+→ capability manifest
+→ runtime capability checks
+```
+
+instead of scattered plan checks.
+
+---
+
+## 🔒 Commercial Boundary Hardening
+
+Strengthened Free vs Pro behaviour across commercial workflows.
+
+Free remains focused on foundational operational understanding.
+
+Pro enables accelerated workflows such as:
+
+* real Cross-Environment Diff
+* Timeline Diff
+* Snapshot replay
+* comparison report exports
+* Investigation Handoff exports
+* runtime behaviour drift
+* identity participation drift
+* DV Bulk Upsert Runner artifact export
+
+Capability boundaries now use calmer wording and preserve Free investigation continuity.
+
+---
+
+## 📦 Result Viewer → DVBUR Artifact Export
+
+Added a new Result Viewer export workflow for generating DV Bulk Upsert Runner artifacts from query results.
+
+Result Viewer can now export selected/query result records into a DVBUR-compatible artifact for downstream bulk upsert workflows.
+
+This supports the emerging DV ForgeLab ecosystem pattern:
+
+```text
+DVQR investigates
+→ DVBUR executes focused bulk upsert workflows
+```
+
+The export remains explicit and user-triggered.
+
+It does not perform bulk updates directly from DVQR.
+
+Behaviour:
+
+* export starts from Result Viewer evidence/results
+* generated artifact is intended for DV Bulk Upsert Runner
+* DVQR remains investigation-first
+* DVBUR remains the focused execution utility
+* no automatic remediation or hidden data mutation occurs
+
+This reinforces the product boundary:
+
+```text
+DVQR observes and prepares.
+DVBUR performs focused bulk upsert execution.
+```
+
+---
+
+## 🧯 Fail-Closed Entitlement Behaviour
+
+Improved entitlement failure handling.
+
+Invalid, expired, unreadable, unavailable, or unknown entitlement states now degrade safely to Free behaviour.
+
+DVQR avoids:
+
+* fail-open Pro capability leakage
+* aggressive lockout wording
+* operational evidence loss
+* subscription panic messaging
+* hidden commercial branching
+
+Foundational workflows remain available.
+
+---
+
+## 🛡️ Product Guard for License Activation
+
+Online activation now validates that the license belongs to:
+
+```text
+DV Quick Run Pro
+```
+
+This prevents unrelated Lemon Squeezy license keys from unlocking DVQR Pro capabilities.
+
+---
+
+## 🧪 Internal Development Command Hardening
+
+Internal entitlement seed/cache commands are no longer exposed as normal production Command Palette entries.
+
+Developer support commands remain development-only and are not part of the public commercial activation surface.
+
+---
+
+## 🌐 Website & Pricing Readiness
+
+Aligned extension commercial surfaces with the public DVQR pricing model:
+
+* Free
+* Pathfinder Early Bird
+* Pro Monthly
+* Pro Annual
+* Offline Annual
+
+Pricing links now point to the DV Quick Run pricing page rather than embedding payment-provider details throughout the extension.
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces:
+
+* Free preserves operational understanding
+* Pro accelerates serious workflows
+* Pathfinder recognises support, not authority
+* Offline Pro keeps restricted environments first-class
+* entitlement failure must not become operational failure
+* commercial activation governs acceleration, not operational truth
+* DVQR observes operational drift and does not fix operational drift
+
+---
+
+## 🎯 Summary
+
+DV Quick Run v0.12.5 establishes the commercial activation foundation for DVQR Pro.
+
+DVQR can now:
+
+* activate Online Pro licenses
+* import Offline Pro signed licenses
+* recognise Pathfinder early supporters
+* resolve capabilities through entitlement manifests
+* safely degrade to Free when entitlement state is unavailable
+* preserve commercial boundaries without compromising operational trust
+* export DVBUR artifacts for downstream DV Bulk Upsert Runner execution workflows
+
+This release moves DVQR from:
+
+```text
+operational comparison and report maturity
+```
+
+toward:
+
+```text
+commercially sustainable operational acceleration
+```
+
+while preserving the core DVQR trust model.
 
 # DV Quick Run v0.12.4 — Investigation Report Export Maturity, Verification Handoff UX & Operational Evidence Presentation
 

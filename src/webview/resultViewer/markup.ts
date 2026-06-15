@@ -9,8 +9,15 @@ export function getResultViewerMarkup(iconUri: string): string {
                 <button id="showProfileBtn" type="button" title="View Operational Profile">Profile</button>
                 <button id="showRelationshipsBtn" title="View Relationships">🔗</button>
                 <button id="showMetadataBtn" title="View Entity Metadata">📘</button>
-                <button id="exportCsvBtn" title="Export current view to CSV">⬇️</button>
-                <button id="saveJsonBtn" title="Save current page JSON">💾</button>
+                <div class="export-menu" id="exportMenu">
+                    <button id="exportMenuBtn" type="button" class="export-menu-button" title="Export result data and artifacts" aria-haspopup="true" aria-expanded="false">⬇️ Export ▾</button>
+                    <div id="exportMenuPanel" class="export-menu-panel" role="menu" hidden>
+                        <button id="exportCsvBtn" type="button" role="menuitem" title="Export current view to CSV"><span class="export-menu-icon">📄</span><span>CSV</span></button>
+                        <button id="saveJsonBtn" type="button" role="menuitem" title="Save current page JSON"><span class="export-menu-icon">📋</span><span>JSON</span></button>
+                        <div class="export-menu-separator" role="separator"></div>
+                        <button id="exportDvburBtn" type="button" role="menuitem" title="Export Upsert Artifact (DVBUR) (Pro)"><span class="export-menu-icon">📦</span><span>Upsert Artifact (DVBUR)</span><span id="exportDvburLock" class="export-menu-lock">🔒</span></button>
+                    </div>
+                </div>
                 <button id="previousPageBtn" title="Load previous page" hidden>⬅️</button>
                 <button id="nextPageBtn" title="Load next page" hidden>➡️</button>
                 <button id="siblingExpandBtn" title="Sibling expand current traversal leg" hidden>✨</button>

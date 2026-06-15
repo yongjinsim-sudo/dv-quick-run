@@ -593,7 +593,8 @@ export function renderSnapshotLibraryHtml(
   webview: vscode.Webview,
   entries: readonly ComparisonSnapshotRegistryEntry[],
   recentComparisons: readonly RecentComparisonEntry[],
-  isProPreview: boolean
+  isProPreview: boolean,
+  extensionVersion = "unknown"
 ): string {
   const cspSource = webview.cspSource;
   const nonce = String(Date.now());
@@ -687,7 +688,7 @@ export function renderSnapshotLibraryHtml(
     <div class="dvqr-group-list">
       ${entries.length ? cards : emptyState}
     </div>
-    ${renderSnapshotLibraryCommunityFooter()}
+    ${renderSnapshotLibraryCommunityFooter(extensionVersion)}
   </main>
   <script nonce="${nonce}">${getSnapshotLibraryScript()}</script>
 </body>
@@ -825,10 +826,11 @@ function renderSnapshotLibraryRow(entry: ComparisonSnapshotRegistryEntry, isLate
   </div>`;
 }
 
-function renderSnapshotLibraryCommunityFooter(): string {
+function renderSnapshotLibraryCommunityFooter(extensionVersion: string): string {
+  const feedbackUrl = `https://www.dvquickrun.com/feedback?version=${encodeURIComponent(extensionVersion)}`;
   return `<footer class="dvqr-community-footer">
     <span>Have feedback on Snapshot Library, Timeline Diff, or Cross-Environment Diff?</span>
-    <a href="https://github.com/yongjinsim-sudo/dv-quick-run/discussions">Join DVQR Discussions</a>
+    <a href="${escapeHtml(feedbackUrl)}">Share Feedback</a>
   </footer>`;
 }
 

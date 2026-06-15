@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { suite, test } from "mocha";
 import { resolveCapabilityExecutionSafetyLock, resolveCapabilityRunEnvironmentLock } from "../../customApi/execution/capabilityExecutionEnvironmentGuard.js";
 import type { CustomApiDefinition } from "../../customApi/models/customApiTypes.js";
 

@@ -57,6 +57,74 @@ export const RESULT_VIEWER_STYLES = `
         }
 
 
+        .export-menu {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .export-menu-button {
+            min-width: 88px !important;
+        }
+
+        .export-menu-panel {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            z-index: 10030;
+            min-width: 240px;
+            padding: 6px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+            color: var(--vscode-editorWidget-foreground, var(--vscode-editor-foreground));
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42);
+        }
+
+        .export-menu-panel button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            min-width: 0 !important;
+            padding: 6px 8px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .export-menu-panel button:hover:not(:disabled),
+        .export-menu-panel button:focus-visible:not(:disabled) {
+            background: var(--vscode-toolbar-hoverBackground);
+            outline: none;
+        }
+
+        .export-menu-panel button:disabled {
+            cursor: not-allowed;
+            opacity: 0.62;
+        }
+
+        .export-menu-icon {
+            width: 18px;
+            display: inline-flex;
+            justify-content: center;
+        }
+
+        .export-menu-lock {
+            margin-left: auto;
+            opacity: 0.9;
+        }
+
+        .export-menu-separator {
+            height: 1px;
+            margin: 6px 4px;
+            background: var(--vscode-panel-border);
+        }
+
+
         .binder-suggestion-btn {
             padding: 4px 10px;
             border-radius: 999px;
