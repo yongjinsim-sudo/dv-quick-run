@@ -148,27 +148,31 @@ Offline Pro is designed for restricted, disconnected, and air-gapped environment
 
 ---
 
-## 🆕 What's New in v0.12.5
+## 🆕 What's New in v0.12.6
 
-v0.12.5 prepares DV Quick Run for commercial Pro activation while preserving the core product boundary:
+v0.12.6 focuses on everyday investigation usability and production reliability.
 
-```text
-Operational understanding remains accessible.
-Operational acceleration may be premium.
-```
+This release introduces a dedicated Relationship Graph workspace, improves relationship navigation for large metadata surfaces, and resolves a production-only CodeLens registration issue affecting Marketplace and VSIX installations.
+
+The goal is not new investigation authority.
+
+It is:
+
+* smoother metadata exploration
+* stronger investigation continuity
+* improved relationship readability
+* faster operational navigation
+* calmer user experience
+* better production reliability
 
 Highlights include:
 
-* **Online Pro activation** through `DV Quick Run: Activate Pro License`
-* **License status inspection** with subscription state, refresh timing, grace period, capability list, and Pathfinder recognition
-* **Offline Pro signed-license import** for restricted, disconnected, and air-gapped environments
-* **Capability runtime foundations** so accelerated workflows resolve through entitlement manifests instead of scattered plan checks
-* **Pathfinder Early Supporter recognition** for eligible Early Bird licenses
-* **Fail-closed entitlement behaviour** that calmly falls back to Free when entitlement state is unavailable, invalid, expired, or unknown
-* **Product guard validation** so only DV Quick Run Pro license keys activate DVQR Pro capabilities
-* **Result Viewer → DVBUR artifact export** for downstream DV Bulk Upsert Runner execution workflows
-* **Commercial boundary hardening** across Free, Pathfinder, Pro, and Offline Pro workflows
-* **Production Command Palette cleanup** so internal entitlement seed/cache commands are not exposed as public commands
+* **Relationship Graph Workspace** for exploring entity relationships inside a dedicated webview
+* **Result Viewer → Relationship Graph continuation** replacing the previous text-export-first workflow
+* **Relationship search and navigation** with highlighting, next/previous match navigation, automatic focus, and match counts
+* **Save Exact Text** and **Copy Exact Text** actions for preserving the original relationship artifact
+* **Production CodeLens command registration fix** restoring Run Query and Explain Query functionality in Marketplace and VSIX installations
+* **Command registration hardening** separating public editor-support commands from development-only commands
 
 DV Quick Run continues to prioritise:
 
@@ -178,7 +182,10 @@ before
 automation
 ```
 
-DVQR observes operational drift. DVQR does not fix operational drift.
+DVQR investigates and explains.
+
+DVQR does not perform hidden execution.
+
 
 ## 🎬 Result Viewer
 
@@ -339,6 +346,51 @@ Use it to:
 * continue exploration step-by-step
 * understand relationship routes visually
 * replay traversal flows as `$batch`
+
+---
+
+### 🕸️ Relationship Graph
+
+DV Quick Run includes a dedicated Relationship Graph workspace for exploring Dataverse entity relationships.
+
+Relationship Graph can surface:
+
+* relationship counts by type
+* Many-to-One relationships
+* One-to-Many relationships
+* Many-to-Many relationships
+* navigation properties
+* target entities
+* relationship schema names
+
+The workspace supports:
+
+* live search
+* match highlighting
+* next/previous navigation
+* automatic match focus
+* exact text export
+* exact text copy
+
+Relationship Graph is designed for operational metadata understanding.
+
+It does not perform recursive graph analysis, dependency impact analysis, or deployment validation.
+
+Relationship Graph can be launched directly from:
+
+```text
+Result Viewer
+→ View Relationships
+```
+
+The original relationship artifact remains available through:
+
+```text
+Save Exact Text
+Copy Exact Text
+```
+
+so visual exploration and exported evidence remain consistent.
 
 ---
 

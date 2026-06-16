@@ -145,7 +145,7 @@ async function showEntitlementStateForDev(): Promise<void> {
   );
 }
 
-export function registerInternalSupportCommands(context: vscode.ExtensionContext): void {
+export function registerEditorSupportCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "dvQuickRun.runQueryAtLine",
@@ -184,7 +184,9 @@ export function registerInternalSupportCommands(context: vscode.ExtensionContext
       }
     )
   );
+}
 
+export function registerDevSupportCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("dvQuickRun.dev.seedValidProEntitlement", seedValidProEntitlementForDev)
   );
