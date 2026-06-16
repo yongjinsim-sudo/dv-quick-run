@@ -154,7 +154,7 @@ function renderReportBody(report: ComparisonReportModel): string {
 
     <section class="dvqr-report-hero">
       <p class="dvqr-report-eyebrow">${escapeHtml(report.sourceLabel)} → ${escapeHtml(report.targetLabel)}</p>
-      <h1>${escapeHtml(report.title)}</h1>
+      <h1>${escapeHtml(isSummary ? "Diff Findings Summary" : "Investigation Handoff")}</h1>
       <p>${escapeHtml(report.subjectLabel ? `Comparison scope: ${report.subjectLabel}` : "Comparison scope not specified")}</p>
       <div class="dvqr-report-metrics">
         ${renderMetric(report.highCount, "High significance")}
@@ -203,9 +203,10 @@ body { margin: 0; background: #f7f8fa; }
 .dvqr-report-brand { align-items: center; display: flex; gap: 12px; }
 .dvqr-report-brand img { border-radius: 9px; height: 40px; width: 40px; }
 .dvqr-report-brand-copy { display: grid; gap: 2px; line-height: 1.15; }
-.dvqr-report-brand-copy strong { font-size: 16px; }
+.dvqr-report-brand-copy strong { font-size: 16px; overflow-wrap: anywhere; }
 .dvqr-report-brand span, .dvqr-report-eyebrow, .dvqr-report-generated, .dvqr-report-metric span, .dvqr-report-context-grid span, .dvqr-report-difference-meta, .dvqr-report-evidence em, .dvqr-report-empty span, .dvqr-report-muted { color: #57606a; font-size: 12px; }
-h1 { font-size: 28px; line-height: 1.15; margin: 6px 0 8px; }
+.dvqr-report-eyebrow { line-height: 1.35; overflow-wrap: anywhere; }
+h1 { font-size: 28px; line-height: 1.15; margin: 6px 0 8px; overflow-wrap: anywhere; word-break: normal; }
 h2 { font-size: 18px; margin: 0 0 12px; }
 h3 { font-size: 16px; margin: 0 0 10px; }
 h4 { font-size: 14px; margin: 0 0 6px; }

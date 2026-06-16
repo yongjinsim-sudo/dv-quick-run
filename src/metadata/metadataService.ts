@@ -14,6 +14,98 @@ async function getList<T>(client: DataverseClient, token: string, path: string):
   return Array.isArray(response?.value) ? response.value : [];
 }
 
+async function getItem<T>(client: DataverseClient, token: string, path: string): Promise<T | undefined> {
+  const response = (await client.get(path, token)) as T | undefined;
+  return response && typeof response === "object" ? response : undefined;
+}
+
+function normalizeODataStringLiteral(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+function getChoiceAttributeCast(attributeType: string | undefined): string | undefined {
+  const normalized = (attributeType ?? "").trim().toLowerCase();
+
+  if (normalized === "picklist") {
+    return "Microsoft.Dynamics.CRM.PicklistAttributeMetadata";
+  }
+
+  if (normalized === "multipicklist" || normalized === "multiselectpicklist") {
+    return "Microsoft.Dynamics.CRM.MultiSelectPicklistAttributeMetadata";
+  }
+
+  if (normalized === "state") {
+    return "Microsoft.Dynamics.CRM.StateAttributeMetadata";
+  }
+
+  if (normalized === "status") {
+    return "Microsoft.Dynamics.CRM.StatusAttributeMetadata";
+  }
+
+  if (normalized === "boolean") {
+    return "Microsoft.Dynamics.CRM.BooleanAttributeMetadata";
+  }
+
+  return undefined;
+}
+
+function getChoiceOptionCount(choice: ChoiceMetadata): number {
+  return Array.isArray(choice.options) ? choice.options.length : 0;
+}
+
+function mergeChoiceMetadataByBestOptionCoverage(choices: readonly ChoiceMetadata[]): ChoiceMetadata[] {
+  const byField = new Map<string, ChoiceMetadata>();
+
+  for (const choice of choices) {
+    const key = choice.fieldLogicalName.trim().toLowerCase();
+    if (!key) {
+      continue;
+    }
+
+    const existing = byField.get(key);
+    if (!existing || getChoiceOptionCount(choice) > getChoiceOptionCount(existing)) {
+      byField.set(key, choice);
+    }
+  }
+
+  return Array.from(byField.values()).sort((a, b) =>
+    a.fieldLogicalName.localeCompare(b.fieldLogicalName, undefined, { sensitivity: "base" })
+  );
+}
+
+async function hydrateChoiceAttributesDirectly(
+  client: DataverseClient,
+  token: string,
+  entityLogicalName: string,
+  attributes: readonly ChoiceMetadata[]
+): Promise<ChoiceMetadata[]> {
+  const safeEntityLogicalName = normalizeODataStringLiteral(entityLogicalName);
+  const hydrated: ChoiceMetadata[] = [];
+
+  for (const attribute of attributes) {
+    const cast = getChoiceAttributeCast(attribute.attributeType ?? attribute.kind);
+    if (!cast) {
+      hydrated.push(attribute);
+      continue;
+    }
+
+    const safeAttributeLogicalName = normalizeODataStringLiteral(attribute.fieldLogicalName);
+    const path =
+      `/EntityDefinitions(LogicalName='${safeEntityLogicalName}')/Attributes(LogicalName='${safeAttributeLogicalName}')/${cast}` +
+      "?$select=LogicalName,AttributeType&$expand=OptionSet,GlobalOptionSet";
+
+    try {
+      const row = await getItem<any>(client, token, path);
+      const normalized = normalizeChoiceMetadataList(row ? [row] : [], entityLogicalName);
+      hydrated.push(normalized[0] ?? attribute);
+    } catch {
+      hydrated.push(attribute);
+    }
+  }
+
+  return hydrated;
+}
+
 export async function fetchNormalizedEntityMetadata(
   client: DataverseClient,
   token: string
@@ -49,7 +141,7 @@ export async function fetchNormalizedFieldMetadata(
   const safeLogicalName = logicalName.replace(/'/g, "''");
   const path =
     `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes` +
-    "?$select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName&$top=5000";
+    "?$select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName,RequiredLevel,IsSearchable,IsAuditEnabled,Description&$top=5000";
 
   try {
     const rows = await getList<any>(client, token, path);
@@ -62,7 +154,7 @@ export async function fetchNormalizedFieldMetadata(
   }
 
   const response = await client.get(
-    `/EntityDefinitions(LogicalName='${safeLogicalName}')?$select=LogicalName&$expand=Attributes($select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName)`,
+    `/EntityDefinitions(LogicalName='${safeLogicalName}')?$select=LogicalName&$expand=Attributes($select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName,RequiredLevel,IsSearchable,IsAuditEnabled,Description)`,
     token
   );
 
@@ -83,7 +175,7 @@ export async function fetchNormalizedChoiceMetadata(
   token: string,
   logicalName: string
 ): Promise<ChoiceMetadata[]> {
-  const safeLogicalName = logicalName.replace(/'/g, "''");
+  const safeLogicalName = normalizeODataStringLiteral(logicalName);
 
   const attempts: Array<{ path: string; isExpandedEntity?: boolean }> = [
     {
@@ -129,7 +221,8 @@ export async function fetchNormalizedChoiceMetadata(
 
   const normalized = normalizeChoiceMetadataList(allRows, logicalName);
   if (normalized.length) {
-    return normalized;
+    const hydrated = await hydrateChoiceAttributesDirectly(client, token, logicalName, normalized);
+    return mergeChoiceMetadataByBestOptionCoverage([...normalized, ...hydrated]);
   }
 
   if (lastError) {
@@ -151,17 +244,17 @@ export async function fetchNormalizedNavigationProperties(
     getList<any>(
       client,
       token,
-      `/EntityDefinitions(LogicalName='${safeLogicalName}')/ManyToOneRelationships?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencingEntityNavigationPropertyName`
+      `/EntityDefinitions(LogicalName='${safeLogicalName}')/ManyToOneRelationships?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencedAttribute,ReferencingEntityNavigationPropertyName,CascadeConfiguration,AssociatedMenuConfiguration`
     ).catch(() => []),
     getList<any>(
       client,
       token,
-      `/EntityDefinitions(LogicalName='${safeLogicalName}')/OneToManyRelationships?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencedEntityNavigationPropertyName`
+      `/EntityDefinitions(LogicalName='${safeLogicalName}')/OneToManyRelationships?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencedAttribute,ReferencedEntityNavigationPropertyName,CascadeConfiguration,AssociatedMenuConfiguration`
     ).catch(() => []),
     getList<any>(
       client,
       token,
-      `/EntityDefinitions(LogicalName='${safeLogicalName}')/ManyToManyRelationships?$select=SchemaName,Entity1LogicalName,Entity2LogicalName,Entity1NavigationPropertyName,Entity2NavigationPropertyName`
+      `/EntityDefinitions(LogicalName='${safeLogicalName}')/ManyToManyRelationships?$select=SchemaName,Entity1LogicalName,Entity2LogicalName,Entity1NavigationPropertyName,Entity2NavigationPropertyName,IntersectEntityName`
     ).catch(() => [])
   ]);
 

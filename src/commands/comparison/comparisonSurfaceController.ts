@@ -12,7 +12,7 @@ import {
   writeInvestigationSessionState
 } from "../../product/investigationWorkspace/investigationSessionState.js";
 import type { InvestigationSessionState } from "../../product/investigationWorkspace/investigationSessionState.js";
-import { canRunCrossEnvironmentDiff } from "../../product/capabilities/capabilityResolver.js";
+import { canExportComparison, canRunCrossEnvironmentDiff } from "../../product/capabilities/capabilityResolver.js";
 import { renderComparisonSurfaceHtml, renderStandaloneComparisonSurfaceHtml } from "../../webview/comparisonSurface/renderComparisonSurfaceHtml.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { promptForCrossEnvironmentDiffProAccess } from "./comparisonCapabilityPrompt.js";
@@ -37,6 +37,14 @@ type ComparisonExportKind = "json" | "md" | "html" | "baseline" | "summary-html"
 
 function isReportExportKind(kind: ComparisonExportKind): boolean {
   return kind === "summary-html" || kind === "summary-pdf" || kind === "handoff-html" || kind === "handoff-pdf";
+}
+
+function canSaveStandardComparisonExport(model: ComparisonViewModel): boolean {
+  // Timeline Diff and Cross-Environment Diff can both produce real comparison models.
+  // Standard exports should follow the resolved comparison/export capability, but
+  // fall back to real comparison availability so toolbar actions do not become
+  // inert when entitlement state and the rendered model get out of sync.
+  return canExportComparison() || canRunCrossEnvironmentDiff() || model.title.startsWith("Timeline Diff");
 }
 
 async function readWatermarkLogoDataUri(ctx: CommandContext): Promise<string | undefined> {
@@ -163,7 +171,7 @@ function getSavedExportLabel(model: ComparisonViewModel, kind: ComparisonExportK
 }
 
 async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewModel, kind: ComparisonExportKind): Promise<vscode.Uri | undefined> {
-  if (!canRunCrossEnvironmentDiff() && !isReportExportKind(kind)) {
+  if (!canSaveStandardComparisonExport(model) && !isReportExportKind(kind)) {
     await promptForCrossEnvironmentDiffProAccess("Comparison export");
     return undefined;
   }
@@ -274,7 +282,7 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
     }
 
     if (request.kind === "json" || request.kind === "md" || request.kind === "html" || request.kind === "baseline" || request.kind === "summary-html" || request.kind === "handoff-html" || request.kind === "summary-pdf" || request.kind === "handoff-pdf") {
-      if (!isReportExportKind(request.kind) && !canRunCrossEnvironmentDiff()) {
+      if (!isReportExportKind(request.kind) && !canSaveStandardComparisonExport(model)) {
         void promptForCrossEnvironmentDiffProAccess(getExportSaveLabel(request.kind));
         return;
       }
@@ -291,10 +299,14 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
             exportedAt
           });
         }
+      }).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        ctx.output.appendLine(`[DV Quick Run] Comparison export failed: ${message}`);
+        void vscode.window.showErrorMessage(`DV Quick Run: Comparison export failed. ${message}`);
       });
     }
   }, null, ctx.ext.subscriptions);
 
   comparisonPanel.title = model.title.startsWith("Timeline Diff") ? "DV Quick Run: Timeline Diff" : "DV Quick Run: Cross-Environment Diff";
-  comparisonPanel.webview.html = renderComparisonSurfaceHtml(comparisonPanel.webview, model, { canExport: canRunCrossEnvironmentDiff(), isProPreview: !canRunCrossEnvironmentDiff(), investigationState: persistedInvestigationState });
+  comparisonPanel.webview.html = renderComparisonSurfaceHtml(comparisonPanel.webview, model, { canExport: canSaveStandardComparisonExport(model), isProPreview: !canRunCrossEnvironmentDiff(), investigationState: persistedInvestigationState });
 }

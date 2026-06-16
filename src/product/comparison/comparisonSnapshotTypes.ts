@@ -3,7 +3,86 @@ export type ComparisonSnapshotEvidenceType =
   | "PluginStep"
   | "WorkflowParticipation"
   | "IdentityParticipation"
+  | "EntityMetadata"
   | "Unknown";
+
+
+export interface SnapshotOptionMetadata {
+  readonly value: number | boolean;
+  readonly label?: string;
+  readonly normalizedLabel?: string;
+  readonly color?: string;
+  readonly externalValue?: string;
+}
+
+export interface SnapshotOptionSetMetadata {
+  readonly name?: string;
+  readonly isGlobal?: boolean;
+  readonly isMultiSelect?: boolean;
+  readonly defaultValue?: number | boolean;
+  readonly options: readonly SnapshotOptionMetadata[];
+}
+
+export interface SnapshotAttributeMetadata {
+  readonly logicalName: string;
+  readonly schemaName?: string;
+  readonly displayName?: string;
+  readonly attributeType?: string;
+  readonly requiredLevel?: string;
+  readonly isValidForCreate?: boolean;
+  readonly isValidForUpdate?: boolean;
+  readonly isValidForRead?: boolean;
+  readonly isValidForAdvancedFind?: boolean;
+  readonly maxLength?: number;
+  readonly precision?: number;
+  readonly scale?: number;
+  readonly format?: string;
+  readonly targets?: readonly string[];
+  readonly isSearchable?: boolean;
+  readonly isAuditEnabled?: boolean;
+  readonly description?: string;
+  readonly optionSet?: SnapshotOptionSetMetadata;
+}
+
+export interface SnapshotRelationshipMetadata {
+  readonly schemaName: string;
+  readonly relationshipType: "ManyToOne" | "OneToMany" | "ManyToMany";
+  readonly referencingEntity?: string;
+  readonly referencedEntity?: string;
+  readonly referencingAttribute?: string;
+  readonly referencedAttribute?: string;
+  readonly navigationPropertyName?: string;
+  readonly cascadeConfiguration?: Readonly<Record<string, string>>;
+  readonly intersectEntityName?: string;
+  readonly associatedMenuConfiguration?: Readonly<Record<string, unknown>>;
+}
+
+export interface SnapshotEntityConfigurationMetadata {
+  readonly entitySetName?: string;
+  readonly ownershipType?: string;
+  readonly isAuditEnabled?: boolean;
+  readonly changeTrackingEnabled?: boolean;
+  readonly isActivity?: boolean;
+  readonly isCustomEntity?: boolean;
+  readonly isManaged?: boolean;
+  readonly isValidForAdvancedFind?: boolean;
+}
+
+export interface SnapshotEntityMetadata {
+  readonly metadataVersion: "entity-metadata-v1";
+  readonly logicalName: string;
+  readonly schemaName?: string;
+  readonly displayName?: string;
+  readonly capturedAtIso: string;
+  readonly configuration?: SnapshotEntityConfigurationMetadata;
+  readonly attributes: readonly SnapshotAttributeMetadata[];
+  readonly relationships: readonly SnapshotRelationshipMetadata[];
+}
+
+export interface EntityMetadataSnapshotPayload {
+  readonly metadataVersion: "entity-metadata-payload-v1";
+  readonly entities: readonly SnapshotEntityMetadata[];
+}
 
 export interface ComparisonEnvironmentIdentity {
   readonly environmentId?: string;

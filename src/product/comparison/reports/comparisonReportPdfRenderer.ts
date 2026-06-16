@@ -43,8 +43,13 @@ function stripDataUri(value: string | undefined): Buffer | undefined {
 
 function normalizePdfText(value: string): string {
   return value
-    .replace(/→/g, "->")
-    .replace(/=>/g, "->")
+    // Preserve the DVQR report typography invariant: report-facing direction/change
+    // text uses the real arrow glyph. Earlier PDF wrapping work normalized arrows
+    // to ASCII `->` to avoid inline glyph drawing in wrapped text, but that leaked
+    // into visible report output. Keep ASCII compatibility inputs, but normalize
+    // them back to the canonical report arrow.
+    .replace(/\s*=>\s*/g, " → ")
+    .replace(/\s*->\s*/g, " → ")
     .replace(/’/g, "'")
     .replace(/“|”/g, '"')
     .replace(/–|—/g, "-");
@@ -75,7 +80,7 @@ function pdfText(
   options?: PDFKit.Mixins.TextOptions & { readonly arrowSize?: number; readonly arrowYOffset?: number }
 ): PDFKit.PDFDocument {
   const normalized = normalizePdfText(text);
-  const arrowToken = "->";
+  const arrowToken = "→";
 
   if (!normalized.includes(arrowToken)) {
     return doc.text(normalized, x, y, options);
@@ -84,8 +89,55 @@ function pdfText(
   const arrowSize = options?.arrowSize ?? 10;
   const arrowYOffset = options?.arrowYOffset ?? 0;
   const arrowAdvance = Math.max(14, arrowSize * 1.12);
-  const parts = normalized.split(arrowToken);
 
+  // PDFKit's built-in Helvetica encoding does not reliably render the Unicode
+  // arrow glyph. Draw arrows as vector glyphs instead of relying on font support.
+  // The first implementation only did this for no-width labels; wrapped report
+  // cards still fell back to visible ASCII `->`. This lightweight wrapper keeps
+  // the arrow typography invariant while still allowing report text to wrap.
+  if (options?.width !== undefined && options.lineBreak !== false) {
+    const width = options.width;
+    const lineGap = options.lineGap ?? 0;
+    const lineHeight = doc.currentLineHeight(true) + lineGap;
+    const tokens = normalized.split(/(→|\s+)/).filter((token) => token.length > 0);
+    let currentX = x;
+    let currentY = y;
+
+    const moveToNextLine = () => {
+      currentX = x;
+      currentY += lineHeight;
+    };
+
+    for (const token of tokens) {
+      if (token === arrowToken) {
+        if (currentX + arrowAdvance > x + width) {
+          moveToNextLine();
+        }
+        drawArrowGlyph(doc, currentX + 4, currentY + arrowYOffset - 1.25, arrowSize, "#1f2328");
+        currentX += arrowAdvance;
+        continue;
+      }
+
+      if (/^\s+$/.test(token)) {
+        const spaceWidth = doc.widthOfString(" ");
+        if (currentX + spaceWidth <= x + width) {
+          currentX += spaceWidth;
+        }
+        continue;
+      }
+
+      const tokenWidth = doc.widthOfString(token);
+      if (currentX > x && currentX + tokenWidth > x + width) {
+        moveToNextLine();
+      }
+      doc.text(token, currentX, currentY, { lineBreak: false });
+      currentX += tokenWidth;
+    }
+
+    return doc;
+  }
+
+  const parts = normalized.split(arrowToken);
   let currentX = x;
   parts.forEach((part, index) => {
     if (part.length > 0) {
@@ -103,34 +155,14 @@ function pdfText(
 }
 
 function pdfTitleText(doc: PDFKit.PDFDocument, text: string, x: number, y: number, options?: PDFKit.Mixins.TextOptions): PDFKit.PDFDocument {
-  void options;
-
   const normalized = normalizePdfText(text);
-  const arrowToken = "->";
-
-  if (!normalized.includes(arrowToken)) {
-    return doc.text(normalized, x, y, { lineBreak: false });
-  }
-
-  const arrowSize = 19;
-  const arrowAdvance = 31;
-  const parts = normalized.split(arrowToken);
-
-  let currentX = x;
-  parts.forEach((part, index) => {
-    if (part.length > 0) {
-      doc.text(part, currentX, y, { lineBreak: false });
-      currentX += doc.widthOfString(part);
-    }
-
-    if (index < parts.length - 1) {
-      drawArrowGlyph(doc, currentX + 8, y + 0.1, arrowSize, "#1f2328");
-      currentX += arrowAdvance;
-    }
+  return doc.text(normalized, x, y, {
+    width: contentWidth - ((x - margin) * 2),
+    lineBreak: true,
+    ...options
   });
-
-  return doc;
 }
+
 
 function collectPdf(doc: PDFKit.PDFDocument): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -253,9 +285,9 @@ function renderHeader(cursor: PdfCursor, report: ComparisonReportModel, logoBuff
 function renderHero(cursor: PdfCursor, report: ComparisonReportModel, logoBuffer: Buffer | undefined, footerText: string): void {
   roundedCard(cursor, 122, logoBuffer, footerText);
   cursor.doc.fillColor("#57606a").font("Helvetica").fontSize(8.5);
-  pdfText(cursor.doc, `${report.sourceLabel} -> ${report.targetLabel}`, margin + 12, cursor.y + 15, { width: contentWidth - 24, arrowSize: 8, arrowYOffset: 0.25 });
+  pdfText(cursor.doc, `${report.sourceLabel} → ${report.targetLabel}`, margin + 12, cursor.y + 15, { width: contentWidth - 24, arrowSize: 8, arrowYOffset: 0.25 });
   cursor.doc.fillColor("#1f2328").font("Helvetica-Bold").fontSize(20);
-  pdfTitleText(cursor.doc, report.title, margin + 12, cursor.y + 32);
+  pdfTitleText(cursor.doc, report.kind === "DiffFindingsSummary" ? "Diff Findings Summary" : "Investigation Handoff", margin + 12, cursor.y + 32, { width: contentWidth - 24 });
   cursor.doc.fillColor("#1f2328").font("Helvetica").fontSize(10);
   pdfText(cursor.doc, report.subjectLabel ? `Comparison scope: ${report.subjectLabel}` : "Comparison scope not specified", margin + 12, cursor.y + 70, { width: contentWidth - 24 });
   cursor.y += 86;
@@ -366,6 +398,126 @@ function selectRepresentativeDifferences(differences: readonly ComparisonDiffere
     .slice(0, 2);
 }
 
+function parseRelationshipFindingTitle(title: string): { readonly action: string; readonly schemaName: string; readonly direction: string; readonly relationshipType: string } | undefined {
+  const match = /^Relationship\s+([^:]+):\s+([^()]+?)\s*\(([^,]+),\s*([^)]+)\)/i.exec(title.trim());
+  if (!match) {
+    return undefined;
+  }
+
+  return {
+    action: `Relationship ${match[1].trim()}`,
+    schemaName: match[2].trim(),
+    direction: match[3].trim(),
+    relationshipType: match[4].trim()
+  };
+}
+
+function compactRelationshipFindingSummary(finding: ComparisonReportFinding): string {
+  const kind = finding.kind.toLowerCase();
+  if (kind.includes("removed")) {
+    return "Observed only in the source snapshot. Missing in the target snapshot. External verification recommended.";
+  }
+
+  if (kind.includes("added")) {
+    return "Observed only in the target snapshot. Missing in the source snapshot. External verification recommended.";
+  }
+
+  return "Relationship metadata differs across snapshots. Review the captured schema evidence externally before drawing deployment or remediation conclusions.";
+}
+
+function drawFindingCardBackground(cursor: PdfCursor, height: number, significance: ComparisonReportFinding["significance"], logoBuffer: Buffer | undefined, footerText: string): void {
+  roundedCard(cursor, height, logoBuffer, footerText);
+  const color = significance === "High" ? "#cf222e" : significance === "Medium" ? "#bf8700" : "#57606a";
+  cursor.doc.rect(margin, cursor.y, 4, height).fill(color);
+}
+
+function renderRelationshipFinding(cursor: PdfCursor, finding: ComparisonReportFinding, relationship: NonNullable<ReturnType<typeof parseRelationshipFindingTitle>>, logoBuffer: Buffer | undefined, footerText: string): void {
+  const innerX = margin + 12;
+  const innerWidth = contentWidth - 24;
+  const summary = compactRelationshipFindingSummary(finding);
+
+  cursor.doc.font("Helvetica-Bold").fontSize(9.7);
+  const actionHeight = cursor.doc.heightOfString(normalizePdfText(relationship.action), { width: innerWidth, lineGap: 1 });
+  cursor.doc.font("Helvetica-Bold").fontSize(9.3);
+  const schemaHeight = cursor.doc.heightOfString(normalizePdfText(relationship.schemaName), { width: innerWidth, lineGap: 1 });
+  cursor.doc.font("Helvetica").fontSize(8.5);
+  const metaHeight = cursor.doc.heightOfString(normalizePdfText(`${finding.groupTitle} · ${finding.kind} · ${finding.significance}`), { width: innerWidth, lineGap: 1 });
+  const detailGap = 8;
+  const detailColumnWidth = (innerWidth - detailGap) / 2;
+  cursor.doc.font("Helvetica").fontSize(8.4);
+  const directionLabelHeight = cursor.doc.heightOfString("Direction", { width: detailColumnWidth, lineGap: 1 });
+  cursor.doc.font("Helvetica-Bold").fontSize(8.5);
+  const directionValueHeight = cursor.doc.heightOfString(normalizePdfText(relationship.direction), { width: detailColumnWidth, lineGap: 1 });
+  cursor.doc.font("Helvetica").fontSize(8.4);
+  const typeLabelHeight = cursor.doc.heightOfString("Type", { width: detailColumnWidth, lineGap: 1 });
+  cursor.doc.font("Helvetica-Bold").fontSize(8.5);
+  const typeValueHeight = cursor.doc.heightOfString(normalizePdfText(relationship.relationshipType), { width: detailColumnWidth, lineGap: 1 });
+  const detailHeight = Math.max(directionLabelHeight + directionValueHeight, typeLabelHeight + typeValueHeight) + 2;
+  cursor.doc.font("Helvetica").fontSize(8.7);
+  const summaryHeight = cursor.doc.heightOfString(normalizePdfText(summary), { width: innerWidth, lineGap: 1 });
+  const height = Math.max(68, actionHeight + schemaHeight + metaHeight + detailHeight + summaryHeight + 30);
+
+  drawFindingCardBackground(cursor, height, finding.significance, logoBuffer, footerText);
+
+  let y = cursor.y + 8;
+  cursor.doc.fillColor("#1f2328").font("Helvetica-Bold").fontSize(9.7);
+  pdfText(cursor.doc, relationship.action, innerX, y, { width: innerWidth, lineGap: 1 });
+  y += actionHeight + 2;
+
+  cursor.doc.fillColor("#1f2328").font("Helvetica-Bold").fontSize(9.3);
+  pdfText(cursor.doc, relationship.schemaName, innerX, y, { width: innerWidth, lineGap: 1 });
+  y += schemaHeight + 3;
+
+  cursor.doc.fillColor("#57606a").font("Helvetica").fontSize(8.5);
+  pdfText(cursor.doc, `${finding.groupTitle} · ${finding.kind} · ${finding.significance}`, innerX, y, { width: innerWidth, lineGap: 1 });
+  y += metaHeight + 6;
+
+  const detailY = y;
+  const details: Array<[string, string]> = [["Direction", relationship.direction], ["Type", relationship.relationshipType]];
+  details.forEach(([label, value], index) => {
+    const x = innerX + (index * (detailColumnWidth + detailGap));
+    cursor.doc.fillColor("#57606a").font("Helvetica").fontSize(8.0);
+    pdfText(cursor.doc, label, x, detailY, { width: detailColumnWidth, lineGap: 1 });
+    cursor.doc.fillColor("#1f2328").font("Helvetica-Bold").fontSize(8.5);
+    pdfText(cursor.doc, value, x, detailY + 9, { width: detailColumnWidth, lineGap: 1 });
+  });
+  y += detailHeight + 5;
+
+  cursor.doc.fillColor("#1f2328").font("Helvetica").fontSize(8.7);
+  pdfText(cursor.doc, summary, innerX, y, { width: innerWidth, lineGap: 1 });
+
+  cursor.y += height + 6;
+}
+
+function renderGenericFinding(cursor: PdfCursor, finding: ComparisonReportFinding, logoBuffer: Buffer | undefined, footerText: string): void {
+  const innerX = margin + 12;
+  const innerWidth = contentWidth - 24;
+
+  cursor.doc.font("Helvetica-Bold").fontSize(9.5);
+  const titleHeight = cursor.doc.heightOfString(normalizePdfText(finding.title), { width: innerWidth, lineGap: 1 });
+  cursor.doc.font("Helvetica").fontSize(8.4);
+  const metaHeight = cursor.doc.heightOfString(normalizePdfText(`${finding.groupTitle} · ${finding.kind} · ${finding.significance}`), { width: innerWidth, lineGap: 1 });
+  cursor.doc.font("Helvetica").fontSize(8.7);
+  const summaryHeight = cursor.doc.heightOfString(normalizePdfText(finding.summary), { width: innerWidth, lineGap: 1 });
+  const height = Math.max(58, titleHeight + metaHeight + summaryHeight + 30);
+
+  drawFindingCardBackground(cursor, height, finding.significance, logoBuffer, footerText);
+
+  let y = cursor.y + 9;
+  cursor.doc.fillColor("#1f2328").font("Helvetica-Bold").fontSize(9.5);
+  pdfText(cursor.doc, finding.title, innerX, y, { width: innerWidth, lineGap: 1 });
+  y += titleHeight + 4;
+
+  cursor.doc.fillColor("#57606a").font("Helvetica").fontSize(8.4);
+  pdfText(cursor.doc, `${finding.groupTitle} · ${finding.kind} · ${finding.significance}`, innerX, y, { width: innerWidth, lineGap: 1 });
+  y += metaHeight + 5;
+
+  cursor.doc.fillColor("#1f2328").font("Helvetica").fontSize(8.7);
+  pdfText(cursor.doc, finding.summary, innerX, y, { width: innerWidth, lineGap: 1 });
+
+  cursor.y += height + 6;
+}
+
 function renderFindings(cursor: PdfCursor, title: string, findings: readonly ComparisonReportFinding[], logoBuffer: Buffer | undefined, footerText: string): void {
   if (title.trim().length > 0) {
     section(cursor, title, logoBuffer, footerText, 96);
@@ -377,24 +529,13 @@ function renderFindings(cursor: PdfCursor, title: string, findings: readonly Com
   }
 
   for (const finding of findings) {
-    cursor.doc.font("Helvetica").fontSize(8.7);
-    const summaryHeight = cursor.doc.heightOfString(normalizePdfText(finding.summary), { width: contentWidth - 26, lineGap: 1 });
-    const height = Math.max(50, summaryHeight + 34);
-    roundedCard(cursor, height, logoBuffer, footerText);
+    const relationship = parseRelationshipFindingTitle(finding.title);
+    if (relationship) {
+      renderRelationshipFinding(cursor, finding, relationship, logoBuffer, footerText);
+      continue;
+    }
 
-    const color = finding.significance === "High" ? "#cf222e" : finding.significance === "Medium" ? "#bf8700" : "#57606a";
-    cursor.doc.rect(margin, cursor.y, 4, height).fill(color);
-
-    cursor.doc.fillColor("#1f2328").font("Helvetica-Bold").fontSize(9.5);
-    pdfText(cursor.doc, finding.title, margin + 12, cursor.y + 9, { width: contentWidth - 24 });
-
-    cursor.doc.fillColor("#57606a").font("Helvetica").fontSize(8.4);
-    pdfText(cursor.doc, `${finding.groupTitle} · ${finding.kind} · ${finding.significance}`, margin + 12, cursor.y + 23, { width: contentWidth - 24 });
-
-    cursor.doc.fillColor("#1f2328").font("Helvetica").fontSize(8.7);
-    pdfText(cursor.doc, finding.summary, margin + 12, cursor.y + 35, { width: contentWidth - 24, lineGap: 1 });
-
-    cursor.y += height + 5;
+    renderGenericFinding(cursor, finding, logoBuffer, footerText);
   }
 }
 
@@ -469,6 +610,10 @@ export async function renderComparisonReportPdf(report: ComparisonReportModel): 
   renderExecutiveSummary(cursor, report, logoBuffer, footerText);
   renderCharts(cursor, report, logoBuffer, footerText);
   renderContext(cursor, report, logoBuffer, footerText);
+  if (report.kind === "DiffFindingsSummary" && report.topFindings.length > 0) {
+    cursor.doc.addPage();
+    cursor.y = margin;
+  }
   renderFindings(cursor, report.kind === "DiffFindingsSummary" ? "Top operational drift findings" : "Outstanding operational verification", report.topFindings, logoBuffer, footerText);
   cursor.y += report.kind === "DiffFindingsSummary" ? 14 : 8;
   renderBoundary(cursor, logoBuffer, footerText);

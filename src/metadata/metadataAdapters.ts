@@ -47,7 +47,9 @@ function normalizeChoiceOption(option: any): ChoiceOptionMetadata | undefined {
   return {
     value,
     label,
-    normalizedLabel: normalizeChoiceLabel(label)
+    normalizedLabel: normalizeChoiceLabel(label),
+    color: normalizeMetadataName(option?.Color ?? option?.color),
+    externalValue: normalizeMetadataName(option?.ExternalValue ?? option?.externalValue)
   };
 }
 
@@ -74,7 +76,9 @@ function normalizeBooleanChoiceOption(option: any): ChoiceOptionMetadata | undef
   return {
     value,
     label,
-    normalizedLabel: normalizeChoiceLabel(label)
+    normalizedLabel: normalizeChoiceLabel(label),
+    color: normalizeMetadataName(option?.Color ?? option?.color),
+    externalValue: normalizeMetadataName(option?.ExternalValue ?? option?.externalValue)
   };
 }
 
@@ -133,9 +137,9 @@ function buildChoiceMetadata(
     fieldLogicalName,
     attributeType: normalizeMetadataName(attribute?.AttributeType ?? attribute?.attributetype),
     kind,
+    optionSetName: normalizeMetadataName(attribute?.OptionSet?.Name ?? attribute?.OptionSetName),
     globalChoiceName: normalizeMetadataName(
       attribute?.GlobalOptionSet?.Name
-      ?? attribute?.OptionSet?.Name
       ?? attribute?.GlobalOptionSetName
     ),
     options
@@ -201,7 +205,28 @@ export function normalizeFieldMetadataList(value: any[]): FieldMetadata[] {
           attribute?.IsValidForAdvancedFind ?? attribute?.isvalidforadvancedfind,
           true
         ),
-        lookupTargets: normalizeMetadataStringArray(attribute?.Targets ?? attribute?.targets)
+        lookupTargets: normalizeMetadataStringArray(attribute?.Targets ?? attribute?.targets),
+        requiredLevel: normalizeMetadataName(
+          attribute?.RequiredLevel?.Value
+          ?? attribute?.RequiredLevel
+          ?? attribute?.requiredLevel?.value
+          ?? attribute?.requiredlevel
+        ),
+        maxLength: normalizeMetadataNumber(attribute?.MaxLength ?? attribute?.maxlength),
+        precision: normalizeMetadataNumber(attribute?.Precision ?? attribute?.precision),
+        scale: normalizeMetadataNumber(attribute?.Scale ?? attribute?.scale),
+        format: normalizeMetadataName(attribute?.Format ?? attribute?.format),
+        isSearchable: normalizeMetadataBool(
+          attribute?.IsSearchable ?? attribute?.issearchable,
+          true
+        ),
+        isAuditEnabled: normalizeMetadataBool(
+          attribute?.IsAuditEnabled?.Value ?? attribute?.IsAuditEnabled ?? attribute?.isauditenabled,
+          false
+        ),
+        description:
+          normalizeMetadataName(attribute?.Description?.UserLocalizedLabel?.Label) ??
+          normalizeMetadataName(attribute?.description?.userlocalizedlabel?.label)
       };
     })
     .filter((item): item is FieldMetadata => !!item);
@@ -241,7 +266,9 @@ export function normalizeRelationshipMetadataList(value: any[], logicalName: str
         referencingAttribute: normalizeMetadataName(item?.ReferencingAttribute),
         referencedEntity: normalizeMetadataName(item?.ReferencedEntity),
         referencingEntity: normalizeMetadataName(item?.ReferencingEntity),
-        schemaName: normalizeMetadataName(item?.SchemaName)
+        schemaName: normalizeMetadataName(item?.SchemaName),
+        cascadeConfiguration: normalizeStringRecord(item?.CascadeConfiguration),
+        associatedMenuConfiguration: normalizeRecord(item?.AssociatedMenuConfiguration)
       });
       continue;
     }
@@ -254,7 +281,9 @@ export function normalizeRelationshipMetadataList(value: any[], logicalName: str
         referencingAttribute: normalizeMetadataName(item?.ReferencingAttribute),
         referencedEntity: normalizeMetadataName(item?.ReferencedEntity),
         referencingEntity: normalizeMetadataName(item?.ReferencingEntity),
-        schemaName: normalizeMetadataName(item?.SchemaName)
+        schemaName: normalizeMetadataName(item?.SchemaName),
+        cascadeConfiguration: normalizeStringRecord(item?.CascadeConfiguration),
+        associatedMenuConfiguration: normalizeRecord(item?.AssociatedMenuConfiguration)
       });
       continue;
     }
@@ -271,7 +300,8 @@ export function normalizeRelationshipMetadataList(value: any[], logicalName: str
         relationshipType: "ManyToMany",
         referencingEntity: entity1LogicalName,
         referencedEntity: entity2LogicalName,
-        schemaName
+        schemaName,
+        intersectEntityName: normalizeMetadataName(item?.IntersectEntityName)
       });
     }
 
@@ -281,7 +311,8 @@ export function normalizeRelationshipMetadataList(value: any[], logicalName: str
         relationshipType: "ManyToMany",
         referencingEntity: entity2LogicalName,
         referencedEntity: entity1LogicalName,
-        schemaName
+        schemaName,
+        intersectEntityName: normalizeMetadataName(item?.IntersectEntityName)
       });
     }
   }
@@ -289,4 +320,30 @@ export function normalizeRelationshipMetadataList(value: any[], logicalName: str
   return distinctBy(normalized, (item) => item.navigationPropertyName).sort((a, b) =>
     a.navigationPropertyName.localeCompare(b.navigationPropertyName, undefined, { sensitivity: "base" })
   );
+}
+
+
+function normalizeRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function normalizeStringRecord(value: unknown): Record<string, string> | undefined {
+  const record = normalizeRecord(value);
+  if (!record) {
+    return undefined;
+  }
+
+  const normalized: Record<string, string> = {};
+  for (const [key, item] of Object.entries(record)) {
+    const text = normalizeMetadataName(item);
+    if (text) {
+      normalized[key] = text;
+    }
+  }
+
+  return Object.keys(normalized).length ? normalized : undefined;
 }
