@@ -22,9 +22,9 @@ export function registerRouterCommand(
   ctx: CommandContext
 ) {
   context.subscriptions.push(
-    vscode.commands.registerCommand(commandId, async () => {
+    vscode.commands.registerCommand(commandId, async (...args: any[]) => {
       const { runDvQuickRunAction } = await import("./router/dataverseRouter.js");
-      await runDvQuickRunAction(actionName, ctx);
+      await runDvQuickRunAction(actionName, ctx, ...args);
     })
   );
 }

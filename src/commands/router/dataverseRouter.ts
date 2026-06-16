@@ -55,7 +55,7 @@ export type DvQuickRunAction = "get"
   | "runBatchQueries"
   | "discoverCustomApis";
 
-export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext): Promise<void> {
+export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: CommandContext, ...args: any[]): Promise<void> {
   switch (action) {
     case "get":
       return await runGetAction(ctx);
@@ -118,7 +118,7 @@ export async function runDvQuickRunAction(action: DvQuickRunAction, ctx: Command
       return await runRelationshipExplorerAction(ctx);
 
     case "relationshipGraphView":
-      return await runRelationshipGraphViewAction(ctx);
+      return await runRelationshipGraphViewAction(ctx, args[0]);
 
     case "investigateRecord":
       return investigateRecordAction(ctx);

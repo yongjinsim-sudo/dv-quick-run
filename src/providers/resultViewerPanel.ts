@@ -1469,7 +1469,7 @@ export class ResultViewerPanel {
         }
 
         await vscode.commands.executeCommand(
-            "dvQuickRun.relationshipExplorer",
+            "dvQuickRun.relationshipGraphView",
             entitySetName
         );
     }

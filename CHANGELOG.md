@@ -7,6 +7,224 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.12.6 — Relationship Graph Workspace & Command Palette Hardening
+
+This release focuses on a small but meaningful usability improvement to everyday investigation workflows.
+
+DV Quick Run now presents relationship exploration through a dedicated Relationship Graph workspace and resolves production-only command registration issues affecting editor CodeLens actions.
+
+The goal is not new investigation authority.
+
+It is:
+
+* smoother metadata exploration
+* improved relationship readability
+* faster operational navigation
+* calmer investigation continuity
+* stronger production reliability
+* reduced workflow friction
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR investigates and explains.
+DVQR does not perform hidden execution.
+```
+
+---
+
+## 🕸️ Relationship Graph Workspace (Major)
+
+Relationship exploration now opens in a dedicated Relationship Graph workspace.
+
+Previously:
+
+```text
+View Relationships
+→ Save .txt
+→ Open externally
+```
+
+Now:
+
+```text
+View Relationships
+→ Relationship Graph
+```
+
+The new workspace provides:
+
+* relationship summary cards
+* relationship counts by type
+* Many-to-One exploration
+* One-to-Many exploration
+* Many-to-Many exploration
+* cleaner relationship readability
+* improved investigation continuity
+
+Relationship information remains metadata-based and observational.
+
+No relationship analysis or authority inference is performed.
+
+Results:
+
+* significantly improved relationship discoverability
+* faster metadata exploration
+* reduced context switching
+* stronger investigation flow
+
+---
+
+## 🔍 Relationship Search & Navigation
+
+Added dedicated relationship search inside the Relationship Graph workspace.
+
+Capabilities include:
+
+* live search
+* match highlighting
+* next match navigation
+* previous match navigation
+* automatic match focus
+* match count visibility
+* clear-search actions
+
+Behaviour:
+
+* search remains local to the current relationship graph
+* no environment-wide metadata crawling
+* no hidden relationship expansion
+
+Results:
+
+* faster navigation of large metadata surfaces
+* improved enterprise-scale usability
+* calmer relationship investigation workflows
+* reduced scrolling fatigue
+
+---
+
+## 💾 Exact Artifact Preservation
+
+Relationship Graph now preserves the original relationship export artifact.
+
+Added:
+
+* Save Exact Text
+* Copy Exact Text
+
+Behaviour:
+
+* exported text remains identical to the underlying generated artifact
+* relationship presentation does not alter exported evidence
+* visual exploration and evidence export remain separate concerns
+
+Results:
+
+* stronger evidence continuity
+* improved portability
+* safer investigation sharing
+* preserved trust in exported metadata
+
+---
+
+## ⚡ Result Viewer → Relationship Graph Continuation
+
+Refined Result Viewer investigation continuity.
+
+The Result Viewer action:
+
+```text
+View Relationships
+```
+
+now launches the Relationship Graph workspace directly.
+
+Behaviour:
+
+* investigation context remains preserved
+* relationship exploration remains inside DVQR
+* metadata understanding becomes more discoverable
+* workflow continuity improves
+
+Results:
+
+* reduced workflow interruption
+* improved operational investigation flow
+* stronger Result Viewer continuity
+* cleaner metadata exploration experience
+
+---
+
+## 🧯 Production CodeLens Command Registration Fix
+
+Resolved an issue affecting Marketplace/VSIX builds where editor CodeLens actions could fail to execute.
+
+Affected commands included:
+
+* Run Query
+* Explain Query
+
+Behaviour:
+
+* editor-support commands are now registered correctly in production builds
+* development-only commands remain development-only
+* public editor workflows remain available outside F5 sessions
+
+Results:
+
+* restored CodeLens reliability
+* consistent behaviour between development and Marketplace installations
+* improved production stability
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Relationship Graph workspace rendering
+* relationship search behaviour
+* next/previous match navigation
+* exact text export workflows
+* Result Viewer relationship continuation
+* Marketplace command registration
+* VSIX command registration
+* CodeLens execution behaviour
+
+No regression in:
+
+* Result Viewer
+* Operational Profiles
+* Access Context
+* Execution Insights
+* Guided Traversal
+* Capability Explorer
+* Cross-Environment Diff
+* Timeline Diff
+* DVBUR artifact export workflows
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* explore entity relationships through a dedicated workspace
+* search and navigate large relationship surfaces more efficiently
+* preserve exact relationship artifacts while improving readability
+* launch relationship exploration directly from Result Viewer
+* execute CodeLens actions reliably in Marketplace and VSIX installations
+
+This release continues DVQR's focus on:
+
+```text
+operational understanding
+through calmer investigation workflows
+```
+
+---
+
 # DV Quick Run v0.12.5 — Commercial Boundary Hardening, Pro Activation & Capability Foundations
 
 This release prepares DV Quick Run for commercial Pro activation while preserving the core product invariant:

@@ -8,7 +8,7 @@ import { initializeMetadataRuntime } from "./runtime/metadataRuntime.js";
 import { registerCommandSurface } from "./runtime/commandSurface.js";
 import { registerEnvironmentLifecycle } from "./runtime/environmentLifecycle.js";
 import { registerEditorIntelligence } from "./runtime/editorIntelligence.js";
-import { registerInternalSupportCommands } from "./runtime/internalSupportCommands.js";
+import { registerDevSupportCommands, registerEditorSupportCommands } from "./runtime/internalSupportCommands.js";
 import { registerSelectionContext } from "./runtime/selectionContext.js";
 import { ensureDvQuickRunSettingsExist } from "./runtime/configMigration.js";
 import { maybeOpenQuickStartOnFirstRun } from "./runtime/quickStartLifecycle.js";
@@ -44,8 +44,9 @@ registerVirtualJsonProvider(context);
   initializeMetadataRuntime(ctx);
   registerCommandSurface(context, ctx);
   registerEnvironmentLifecycle(context, ctx, envContext, environmentStatusBar);
+  registerEditorSupportCommands(context);
   if (context.extensionMode === vscode.ExtensionMode.Development) {
-    registerInternalSupportCommands(context);
+    registerDevSupportCommands(context);
   }
   registerImportOfflineLicenseCommand(context);
   registerOnlineProLicenseCommands(context);
