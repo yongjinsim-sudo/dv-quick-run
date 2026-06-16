@@ -25,12 +25,22 @@ export interface FieldMetadata {
   isValidForUpdate?: boolean;
   isValidForAdvancedFind?: boolean;
   lookupTargets?: string[];
+  requiredLevel?: string;
+  maxLength?: number;
+  precision?: number;
+  scale?: number;
+  format?: string;
+  isSearchable?: boolean;
+  isAuditEnabled?: boolean;
+  description?: string;
 }
 
 export interface ChoiceOptionMetadata {
   value: number | boolean;
   label: string;
   normalizedLabel: string;
+  color?: string;
+  externalValue?: string;
 }
 
 export interface ChoiceMetadata {
@@ -38,6 +48,7 @@ export interface ChoiceMetadata {
   fieldLogicalName: string;
   attributeType?: string;
   kind: ChoiceMetadataKind;
+  optionSetName?: string;
   globalChoiceName?: string;
   options: ChoiceOptionMetadata[];
 }
@@ -49,6 +60,9 @@ export interface RelationshipMetadata {
   referencedEntity?: string;
   referencingEntity?: string;
   schemaName?: string;
+  cascadeConfiguration?: Record<string, string>;
+  intersectEntityName?: string;
+  associatedMenuConfiguration?: Record<string, unknown>;
 }
 
 export function normalizeMetadataName(value: unknown): string | undefined {

@@ -6,6 +6,8 @@ export type ManyToOneRelationshipDef = {
   referencingAttribute?: string;
   referencingEntity?: string;
   referencedEntity?: string;
+  cascadeConfiguration?: Record<string, string>;
+  associatedMenuConfiguration?: Record<string, unknown>;
 };
 
 export type OneToManyRelationshipDef = {
@@ -14,6 +16,8 @@ export type OneToManyRelationshipDef = {
   referencingAttribute?: string;
   referencingEntity?: string;
   referencedEntity?: string;
+  cascadeConfiguration?: Record<string, string>;
+  associatedMenuConfiguration?: Record<string, unknown>;
 };
 
 export type ManyToManyRelationshipDef = {
@@ -22,6 +26,8 @@ export type ManyToManyRelationshipDef = {
   entity1LogicalName?: string;
   entity2LogicalName?: string;
   targetEntity?: string;
+  intersectEntityName?: string;
+  associatedMenuConfiguration?: Record<string, unknown>;
 };
 
 export type EntityRelationshipExplorerResult = {
@@ -36,6 +42,31 @@ type ODataList<T> = { value?: T[] };
 function asTrimmed(value: unknown): string | undefined {
   const s = String(value ?? "").trim();
   return s || undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function asStringRecord(value: unknown): Record<string, string> | undefined {
+  const record = asRecord(value);
+  if (!record) {
+    return undefined;
+  }
+
+  const normalized: Record<string, string> = {};
+  for (const [key, item] of Object.entries(record)) {
+    const text = asTrimmed(item);
+    if (text) {
+      normalized[key] = text;
+    }
+  }
+
+  return Object.keys(normalized).length ? normalized : undefined;
 }
 
 function sortByNavName<T extends { navigationPropertyName: string }>(items: T[]): T[] {
@@ -56,17 +87,17 @@ export async function fetchEntityRelationships(
   const [m2oRes, o2mRes, m2mRes] = await Promise.all([
     client.get(
       `/EntityDefinitions(LogicalName='${safeLogicalName}')/ManyToOneRelationships` +
-        `?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencingEntityNavigationPropertyName`,
+        `?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencingEntityNavigationPropertyName,CascadeConfiguration,AssociatedMenuConfiguration`,
       token
     ) as Promise<ODataList<any>>,
     client.get(
       `/EntityDefinitions(LogicalName='${safeLogicalName}')/OneToManyRelationships` +
-        `?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencedEntityNavigationPropertyName`,
+        `?$select=SchemaName,ReferencingAttribute,ReferencedEntity,ReferencingEntity,ReferencedEntityNavigationPropertyName,CascadeConfiguration,AssociatedMenuConfiguration`,
       token
     ) as Promise<ODataList<any>>,
     client.get(
       `/EntityDefinitions(LogicalName='${safeLogicalName}')/ManyToManyRelationships` +
-        `?$select=SchemaName,Entity1LogicalName,Entity2LogicalName,Entity1NavigationPropertyName,Entity2NavigationPropertyName`,
+        `?$select=SchemaName,Entity1LogicalName,Entity2LogicalName,Entity1NavigationPropertyName,Entity2NavigationPropertyName,IntersectEntityName`,
       token
     ) as Promise<ODataList<any>>
   ]);
@@ -77,7 +108,9 @@ export async function fetchEntityRelationships(
       schemaName: asTrimmed(x?.SchemaName),
       referencingAttribute: asTrimmed(x?.ReferencingAttribute),
       referencingEntity: asTrimmed(x?.ReferencingEntity),
-      referencedEntity: asTrimmed(x?.ReferencedEntity)
+      referencedEntity: asTrimmed(x?.ReferencedEntity),
+      cascadeConfiguration: asStringRecord(x?.CascadeConfiguration),
+      associatedMenuConfiguration: asRecord(x?.AssociatedMenuConfiguration)
     }))
     .filter((x) => !!x.navigationPropertyName);
 
@@ -87,7 +120,9 @@ export async function fetchEntityRelationships(
       schemaName: asTrimmed(x?.SchemaName),
       referencingAttribute: asTrimmed(x?.ReferencingAttribute),
       referencingEntity: asTrimmed(x?.ReferencingEntity),
-      referencedEntity: asTrimmed(x?.ReferencedEntity)
+      referencedEntity: asTrimmed(x?.ReferencedEntity),
+      cascadeConfiguration: asStringRecord(x?.CascadeConfiguration),
+      associatedMenuConfiguration: asRecord(x?.AssociatedMenuConfiguration)
     }))
     .filter((x) => !!x.navigationPropertyName);
 
@@ -99,6 +134,7 @@ export async function fetchEntityRelationships(
     const entity1NavigationPropertyName = asTrimmed(x?.Entity1NavigationPropertyName);
     const entity2NavigationPropertyName = asTrimmed(x?.Entity2NavigationPropertyName);
     const schemaName = asTrimmed(x?.SchemaName);
+    const intersectEntityName = asTrimmed(x?.IntersectEntityName);
 
     if (entity1LogicalName?.toLowerCase() === logicalName.toLowerCase() && entity1NavigationPropertyName) {
       manyToMany.push({
@@ -106,7 +142,8 @@ export async function fetchEntityRelationships(
         schemaName,
         entity1LogicalName,
         entity2LogicalName,
-        targetEntity: entity2LogicalName
+        targetEntity: entity2LogicalName,
+        intersectEntityName
       });
     }
 
@@ -116,7 +153,8 @@ export async function fetchEntityRelationships(
         schemaName,
         entity1LogicalName,
         entity2LogicalName,
-        targetEntity: entity1LogicalName
+        targetEntity: entity1LogicalName,
+        intersectEntityName
       });
     }
   }

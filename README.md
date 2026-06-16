@@ -148,43 +148,56 @@ Offline Pro is designed for restricted, disconnected, and air-gapped environment
 
 ---
 
-## 🆕 What's New in v0.12.6
+## 🆕 What's New in v0.12.7
 
-v0.12.6 focuses on everyday investigation usability and production reliability.
+v0.12.7 expands Cross-Environment Diff beyond runtime behaviour and participation analysis into broader metadata-aware operational investigation.
 
-This release introduces a dedicated Relationship Graph workspace, improves relationship navigation for large metadata surfaces, and resolves a production-only CodeLens registration issue affecting Marketplace and VSIX installations.
+This release introduces:
 
-The goal is not new investigation authority.
+* **Relationship Metadata Drift** comparison support
+* **Column Metadata Drift** comparison support
+* **Entity Configuration Drift** comparison support
+* expanded schema-level operational comparison coverage
+* metadata-focused investigation readability improvements
+* refined report exports, PDF layouts, and evidence presentation
+* richer mock comparison scenarios demonstrating metadata drift workflows
+
+DV Quick Run can now investigate:
+
+* relationship additions and removals
+* relationship topology evolution
+* column metadata changes
+* option set / choice evolution
+* audit configuration drift
+* change tracking drift
+* entity configuration differences
+* structural Dataverse changes alongside runtime behaviour drift
+
+The goal is not deployment validation or schema governance.
 
 It is:
 
-* smoother metadata exploration
+* metadata-aware operational investigation
+* explainable schema evolution visibility
+* broader comparison coverage
+* calmer structural drift understanding
 * stronger investigation continuity
-* improved relationship readability
-* faster operational navigation
-* calmer user experience
-* better production reliability
 
 Highlights include:
 
-* **Relationship Graph Workspace** for exploring entity relationships inside a dedicated webview
-* **Result Viewer → Relationship Graph continuation** replacing the previous text-export-first workflow
-* **Relationship search and navigation** with highlighting, next/previous match navigation, automatic focus, and match counts
-* **Save Exact Text** and **Copy Exact Text** actions for preserving the original relationship artifact
-* **Production CodeLens command registration fix** restoring Run Query and Explain Query functionality in Marketplace and VSIX installations
-* **Command registration hardening** separating public editor-support commands from development-only commands
+* **Relationship Metadata Drift** with direction, type, significance, and representative evidence
+* **Column Metadata Drift** covering configuration and schema-level changes
+* **Entity Configuration Drift** covering audit, change tracking, ownership, and entity settings
+* **Improved metadata readability** across Findings, Verification, Handoff, HTML, and PDF reports
+* **Enhanced report exports** with refined pagination, typography, and metadata presentation
+* **Expanded mock comparison coverage** demonstrating metadata and runtime drift together
 
 DV Quick Run continues to prioritise:
 
 ```text
-understanding
-before
-automation
+DVQR observes operational drift.
+DVQR does not fix operational drift.
 ```
-
-DVQR investigates and explains.
-
-DVQR does not perform hidden execution.
 
 
 ## 🎬 Result Viewer
@@ -509,6 +522,10 @@ Comparison surfaces can show provider-backed operational drift across:
 * Solution Participation
 * Workflow / Automation Participation
 * Identity Participation
+* Relationship Metadata Drift
+* Column Metadata Drift
+* Choice Metadata Drift
+* Entity Configuration Drift
 
 Comparison reports preserve scope awareness so exported artifacts clearly identify the operational subject being compared, for example:
 

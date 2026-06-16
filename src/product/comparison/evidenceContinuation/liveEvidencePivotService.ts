@@ -938,6 +938,14 @@ export async function buildEvidencePivotResult(
     return withEvidencePivotTimeout(queryLiveWorkflowEvidencePivot(ctx, parentTitle ?? label, parentEvidence ?? value), label);
   }
 
+  if (kind.includes("relationship") || parentText.includes("relationship metadata drift")) {
+    diagnostics.append?.("route.relationshipMetadataSnapshot", { label, value, parentTitle, entityLogicalName: comparisonEntityLogicalName });
+    return {
+      status: "available",
+      summary: "Relationship metadata drift is captured snapshot evidence. Use the inline relationship evidence and Relationship Graph continuation for bounded metadata review; DVQR does not treat relationship schema names as entity logical names for live lookup."
+    };
+  }
+
   const customEntityLogicalNames = extractCustomEntityLogicalNames(label, value, parentTitle, parentSummary, parentAwareEvidence);
   if (customEntityLogicalNames.length > 0) {
     diagnostics.append?.("route.entityMetadata", { label, value, parentTitle, entityLogicalName: comparisonEntityLogicalName, customEntityLogicalNames });

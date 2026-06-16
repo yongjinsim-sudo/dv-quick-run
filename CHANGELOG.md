@@ -7,6 +7,251 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.12.7 — Metadata Drift Expansion, Schema Investigation & Comparison Coverage
+
+This release expands Cross-Environment Diff beyond operational participation and runtime behaviour into broader schema-level operational understanding.
+
+DV Quick Run can now investigate:
+
+* relationship metadata drift
+* column metadata drift
+* entity configuration drift
+* schema-level operational evolution
+* metadata configuration differences
+* structural Dataverse changes alongside runtime changes
+
+The goal is not deployment validation or schema governance.
+
+It is:
+
+* metadata-aware operational investigation
+* explainable schema evolution visibility
+* broader comparison coverage
+* calmer structural drift understanding
+* stronger investigation continuity
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR observes operational drift.
+DVQR does not fix operational drift.
+```
+
+---
+
+## 🕸️ Relationship Metadata Drift (Major)
+
+Introduced dedicated Relationship Metadata Drift comparison support.
+
+DV Quick Run can now compare:
+
+* relationship additions
+* relationship removals
+* relationship type changes
+* relationship schema changes
+* relationship navigation drift
+* relationship participation differences
+
+Examples include:
+
+* Many-to-One relationships added
+* One-to-Many relationships removed
+* relationship schema name changes
+* relationship topology evolution between environments
+
+Relationship drift now surfaces:
+
+* relationship name
+* source entity
+* target entity
+* relationship type
+* operational significance
+* representative evidence
+
+Behaviour:
+
+* relationship interpretation remains observational
+* topology changes remain evidence-backed
+* relationship drift does not imply application failure
+* strongest structural signals surface first
+
+Results:
+
+* clearer metadata topology visibility
+* improved schema investigation continuity
+* reduced manual metadata comparison effort
+* broader operational comparison coverage
+
+---
+
+## 🧱 Column Metadata Drift (Major)
+
+Introduced dedicated Column Metadata Drift comparison support.
+
+DV Quick Run can now compare:
+
+* column additions
+* column removals
+* datatype changes
+* requirement-level changes
+* display-name changes
+* option-set evolution
+* metadata configuration drift
+
+Examples include:
+
+* text → memo conversions
+* optional → required changes
+* new columns introduced
+* choice metadata evolution
+* renamed metadata surfaces
+
+Behaviour:
+
+* comparison remains metadata-focused
+* no deployment recommendation is generated
+* operational interpretation remains bounded
+* evidence remains inspectable and explainable
+
+Results:
+
+* stronger schema-change visibility
+* improved investigation readiness
+* reduced manual metadata review effort
+* broader comparison platform maturity
+
+---
+
+## ⚙️ Entity Configuration Drift (Major)
+
+Introduced Entity Configuration Drift comparison support.
+
+DV Quick Run can now compare:
+
+* audit configuration
+* change tracking
+* ownership semantics
+* activity enablement
+* duplicate detection
+* entity-level operational settings
+
+Examples include:
+
+* Audit Enabled: false → true
+* Change Tracking: false → true
+* configuration alignment differences
+* operational capability changes between environments
+
+Behaviour:
+
+* configuration interpretation remains advisory-only
+* configuration drift does not imply operational issues
+* strongest operationally meaningful differences surface first
+
+Results:
+
+* clearer operational configuration visibility
+* improved environment-alignment investigation
+* stronger metadata coverage
+* reduced configuration-review effort
+
+---
+
+## 📊 Comparison Coverage Expansion
+
+Cross-Environment Diff now spans a broader set of operational investigation dimensions.
+
+Comparison providers now include:
+
+* Operational Profile Drift
+* Solution Participation Drift
+* Workflow / Automation Drift
+* Plugin Runtime Behaviour Drift
+* Identity Participation Drift
+* Relationship Metadata Drift
+* Column Metadata Drift
+* Entity Configuration Drift
+
+Results:
+
+* broader operational understanding
+* stronger comparison completeness
+* improved investigation confidence
+* richer evidence-backed drift interpretation
+
+---
+
+## 🎨 Metadata Investigation Readability Refinement
+
+Refined metadata-oriented comparison rendering throughout Cross-Environment Diff.
+
+Improvements include:
+
+* clearer schema-oriented titles
+* stronger metadata context visibility
+* improved relationship readability
+* cleaner configuration presentation
+* refined metadata evidence summaries
+
+Results:
+
+* calmer schema investigation workflows
+* stronger metadata scanability
+* reduced structural-comparison fatigue
+* improved enterprise readability
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* relationship drift rendering
+* column metadata comparison
+* entity configuration comparison
+* export compatibility
+* HTML report rendering
+* PDF report rendering
+* grouped metadata evidence
+* significance classification
+* mock comparison coverage
+
+No regression in:
+
+* Cross-Environment Diff
+* Timeline Diff
+* Snapshot Library
+* Investigation Handoff
+* Report Exports
+* Access Context
+* Result Viewer
+* Relationship Graph Workspace
+* DVBUR artifact workflows
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* investigate relationship topology drift
+* compare schema-level metadata evolution
+* surface entity configuration differences
+* understand structural Dataverse changes alongside runtime drift
+* broaden operational comparison coverage across metadata and runtime dimensions
+* preserve evidence-backed metadata investigation workflows
+
+This release continues DVQR's evolution into:
+
+```text
+a metadata-aware operational investigation,
+comparison and evidence-handoff workbench
+```
+
+for enterprise Dataverse environments.
+
+---
+
 # DV Quick Run v0.12.6 — Relationship Graph Workspace & Command Palette Hardening
 
 This release focuses on a small but meaningful usability improvement to everyday investigation workflows.

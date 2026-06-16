@@ -55,36 +55,42 @@ async function readSnapshotFile(kind: "source" | "target"): Promise<ReadComparis
   return readSnapshotUri(file);
 }
 
+function normalizeSnapshotLogicalName(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim().toLowerCase()
+    : undefined;
+}
+
+function readSnapshotEvidenceRecord(snapshot: ComparisonSnapshotFile): Record<string, unknown> | undefined {
+  return snapshot.evidence && typeof snapshot.evidence === "object"
+    ? snapshot.evidence as Record<string, unknown>
+    : undefined;
+}
+
 function getSnapshotEntityLogicalName(snapshot: ComparisonSnapshotFile): string | undefined {
-  const seen = new Set<unknown>();
-  const candidates: string[] = [];
+  const evidence = readSnapshotEvidenceRecord(snapshot);
 
-  const visit = (value: unknown): void => {
-    if (!value || typeof value !== "object" || seen.has(value)) {
-      return;
+  if (snapshot.evidenceType === "OperationalProfile") {
+    const operationalProfileEntity = normalizeSnapshotLogicalName(evidence?.entityLogicalName);
+    if (operationalProfileEntity) {
+      return operationalProfileEntity;
     }
+  }
 
-    seen.add(value);
-    const record = value as Record<string, unknown>;
-    const direct = record.entityLogicalName ?? record.logicalName;
-    if (typeof direct === "string") {
-      candidates.push(direct);
+  if (snapshot.evidenceType === "EntityMetadata") {
+    const entities = Array.isArray(evidence?.entities) ? evidence.entities : [];
+    const entityLogicalNames = [...new Set(entities
+      .map((entity) => entity && typeof entity === "object"
+        ? normalizeSnapshotLogicalName((entity as Record<string, unknown>).logicalName)
+        : undefined)
+      .filter((logicalName): logicalName is string => Boolean(logicalName)))];
+
+    if (entityLogicalNames.length === 1) {
+      return entityLogicalNames[0];
     }
+  }
 
-    for (const child of Object.values(record)) {
-      if (Array.isArray(child)) {
-        child.forEach(visit);
-      } else if (child && typeof child === "object") {
-        visit(child);
-      }
-    }
-  };
-
-  visit(snapshot);
-
-  return candidates
-    .map((candidate) => candidate.toLowerCase())
-    .find((candidate) => /^[a-z][a-z0-9]{1,20}_[a-z0-9_]{2,80}$/i.test(candidate));
+  return normalizeSnapshotLogicalName(evidence?.entityLogicalName);
 }
 
 export function getComparisonEntityLogicalName(snapshots: readonly ComparisonSnapshotFile[]): string | undefined {
@@ -364,14 +370,16 @@ export async function buildComparisonViewModelFromSnapshots(
   const providers = await loadProComparisonProviders();
   const engine = createCrossEnvironmentComparisonEngine(providers);
 
+  const comparisonEntityLogicalName = selection.entityLogicalName ?? getComparisonEntityLogicalName(selection.snapshots);
+
   const model = await engine.compare({
     source: buildEnvironmentRef(selection.snapshots, sourceLabel),
     target: buildEnvironmentRef(selection.snapshots, targetLabel),
+    entityLogicalName: comparisonEntityLogicalName,
     subjectLabel: selection.subjectLabel,
     snapshots: selection.snapshots
   });
 
-  const comparisonEntityLogicalName = selection.entityLogicalName ?? getComparisonEntityLogicalName(selection.snapshots);
   const modelWithSubject = selection.subjectLabel || comparisonEntityLogicalName ? {
     ...model,
     summary: {

@@ -4,10 +4,11 @@ import { buildOperationalProfile } from "../product/operationalProfile/operation
 import { buildOperationalContextViewModel } from "../product/operationalContext/operationalContextEngine.js";
 import { createDefaultOperationalContextProviders } from "../product/operationalContext/defaultOperationalContextProviders.js";
 import {
+  loadChoiceMetadata,
   loadEntityDefByLogicalName,
   loadEntityDefs,
-  loadFields,
-  loadNavigationProperties
+  loadEntityRelationships,
+  loadFields
 } from "./router/actions/shared/metadataAccess.js";
 import type { EntityDef } from "../utils/entitySetCache.js";
 import {
@@ -17,7 +18,9 @@ import {
   registerComparisonSnapshot
 } from "../product/comparison/index.js";
 import type { ComparisonEvidenceSnapshot } from "../product/comparison/index.js";
+import type { SnapshotEntityConfigurationMetadata } from "../product/comparison/comparisonSnapshotTypes.js";
 import { buildIdentityParticipationSnapshotPayloadFromProfile } from "../product/comparison/comparisonSnapshotExtraction.js";
+import { buildEntityMetadataSnapshotPayload } from "../product/comparison/comparisonSnapshotMetadataPayload.js";
 import { canExportComparison } from "../product/capabilities/capabilityResolver.js";
 import { promptForProAccelerationAccess } from "./commercial/proPricingPrompt.js";
 
@@ -76,10 +79,83 @@ function toSafeProfileFileName(entityLogicalName: string): string {
   return `dv-quick-run-profile-${safeEntity}-${Date.now()}.dvqrsnapshot.json`;
 }
 
+
+function normalizeEntityConfigString(value: unknown): string | undefined {
+  const text = String(value ?? "").trim();
+  return text || undefined;
+}
+
+function normalizeEntityConfigBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (value && typeof value === "object" && "Value" in value) {
+    const wrapped = (value as { readonly Value?: unknown }).Value;
+    return typeof wrapped === "boolean" ? wrapped : undefined;
+  }
+  return undefined;
+}
+
+async function loadEntityConfigurationSnapshot(
+  ctx: CommandContext,
+  logicalName: string,
+  token: string
+): Promise<SnapshotEntityConfigurationMetadata | undefined> {
+  const safeLogicalName = logicalName.replace(/'/g, "''");
+  const client = ctx.getClient();
+  const selectAttempts = [
+    [
+      "EntitySetName",
+      "OwnershipType",
+      "IsAuditEnabled",
+      "ChangeTrackingEnabled",
+      "IsActivity",
+      "IsCustomEntity",
+      "IsManaged",
+      "IsValidForAdvancedFind"
+    ],
+    [
+      "EntitySetName",
+      "OwnershipType",
+      "IsAuditEnabled",
+      "IsActivity",
+      "IsCustomEntity",
+      "IsManaged",
+      "IsValidForAdvancedFind"
+    ]
+  ];
+
+  for (const selectFields of selectAttempts) {
+    try {
+      const row = await client.get(
+        `/EntityDefinitions(LogicalName='${safeLogicalName}')?$select=${selectFields.join(",")}`,
+        token
+      );
+      const rowData = row as Record<string, unknown>;
+
+      return {
+        entitySetName: normalizeEntityConfigString(rowData.EntitySetName),
+        ownershipType: normalizeEntityConfigString(rowData.OwnershipType),
+        isAuditEnabled: normalizeEntityConfigBoolean(rowData.IsAuditEnabled),
+        changeTrackingEnabled: normalizeEntityConfigBoolean(rowData.ChangeTrackingEnabled),
+        isActivity: normalizeEntityConfigBoolean(rowData.IsActivity),
+        isCustomEntity: normalizeEntityConfigBoolean(rowData.IsCustomEntity),
+        isManaged: normalizeEntityConfigBoolean(rowData.IsManaged),
+        isValidForAdvancedFind: normalizeEntityConfigBoolean(rowData.IsValidForAdvancedFind)
+      };
+    } catch {
+      // Try a smaller EntityDefinitions projection for older/limited metadata surfaces.
+    }
+  }
+
+  return undefined;
+}
+
 async function writeOperationalProfileSnapshotFile(args: {
   readonly ctx: CommandContext;
   readonly entityLogicalName: string;
   readonly profile: ReturnType<typeof buildOperationalProfile>;
+  readonly entityMetadata?: ReturnType<typeof buildEntityMetadataSnapshotPayload>;
 }): Promise<vscode.Uri | undefined> {
   const defaultUri = vscode.Uri.file(toSafeProfileFileName(args.entityLogicalName));
   const saveUri = await vscode.window.showSaveDialog({
@@ -111,6 +187,16 @@ async function writeOperationalProfileSnapshotFile(args: {
       sourceFeature: "Operational Profile"
     })
   ];
+
+  if (args.entityMetadata) {
+    evidenceSnapshots.push(createComparisonEvidenceSnapshot({
+      environment,
+      evidenceType: "EntityMetadata",
+      evidence: args.entityMetadata,
+      capturedAt,
+      sourceFeature: "Operational Profile / Metadata"
+    }));
+  }
 
   const identityParticipation = buildIdentityParticipationSnapshotPayloadFromProfile(args.profile);
   if (identityParticipation) {
@@ -161,9 +247,11 @@ async function exportOperationalProfileSnapshot(
         return;
       }
 
-      const [fields, relationships] = await Promise.all([
+      const [fields, choices, relationships, entityConfiguration] = await Promise.all([
         loadFields(ctx, client, token, entity.logicalName, { silent: true }).catch(() => []),
-        loadNavigationProperties(ctx, client, token, entity.logicalName, { silent: true }).catch(() => [])
+        loadChoiceMetadata(ctx, client, token, entity.logicalName, { silent: true }).catch(() => []),
+        loadEntityRelationships(ctx, client, token, entity.logicalName, { silent: true }).catch(() => undefined),
+        loadEntityConfigurationSnapshot(ctx, entity.logicalName, token).catch(() => undefined)
       ]);
 
       const operationalContext = await buildOperationalContextViewModel({
@@ -180,14 +268,24 @@ async function exportOperationalProfileSnapshot(
         entityLogicalName: entity.logicalName,
         entityDisplayName: entity.displayName ?? entity.logicalName,
         attributeCount: fields.length,
-        relationshipCount: relationships.length,
+        relationshipCount: (relationships?.manyToOne.length ?? 0) + (relationships?.oneToMany.length ?? 0) + (relationships?.manyToMany.length ?? 0),
         operationalContext
+      });
+
+      const entityMetadata = buildEntityMetadataSnapshotPayload({
+        entityLogicalName: entity.logicalName,
+        entityDisplayName: entity.displayName ?? entity.logicalName,
+        fields,
+        choices,
+        relationships,
+        configuration: entityConfiguration
       });
 
       const file = await writeOperationalProfileSnapshotFile({
         ctx,
         entityLogicalName: entity.logicalName,
-        profile
+        profile,
+        entityMetadata
       });
 
       if (!file) {

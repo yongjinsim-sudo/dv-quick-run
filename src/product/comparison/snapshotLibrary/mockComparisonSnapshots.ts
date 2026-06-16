@@ -283,6 +283,193 @@ export const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
         ]
       }
     }
+  },
+  {
+    environment: {
+      label: "DEV",
+      capturedAtIso: "2026-05-24T00:00:00.000Z"
+    },
+    evidenceType: "EntityMetadata",
+    metadata: {
+      capturedAtIso: "2026-05-24T00:00:00.000Z"
+    },
+    evidence: {
+      metadataVersion: "entity-metadata-payload-v1",
+      entities: [
+        {
+          metadataVersion: "entity-metadata-v1",
+          logicalName: "account",
+          schemaName: "Account",
+          displayName: "Account",
+          capturedAtIso: "2026-05-24T00:00:00.000Z",
+          configuration: {
+            entitySetName: "accounts",
+            ownershipType: "UserOwned",
+            isAuditEnabled: false,
+            changeTrackingEnabled: false,
+            isActivity: false,
+            isCustomEntity: false,
+            isManaged: true,
+            isValidForAdvancedFind: true
+          },
+          attributes: [
+            {
+              logicalName: "accountcategorycode",
+              schemaName: "AccountCategoryCode",
+              displayName: "Category",
+              attributeType: "Picklist",
+              requiredLevel: "None",
+              isValidForCreate: true,
+              isValidForUpdate: true,
+              isValidForRead: true,
+              isValidForAdvancedFind: true,
+              isAuditEnabled: false,
+              optionSet: {
+                name: "account_accountcategorycode",
+                isGlobal: false,
+                isMultiSelect: false,
+                options: [
+                  { value: 1, label: "Preferred Customer", normalizedLabel: "preferred customer" },
+                  { value: 2, label: "Standard", normalizedLabel: "standard" }
+                ]
+              }
+            },
+            {
+              logicalName: "customersizecode",
+              schemaName: "CustomerSizeCode",
+              displayName: "Customer Size",
+              attributeType: "Picklist",
+              requiredLevel: "None",
+              isValidForCreate: true,
+              isValidForUpdate: true,
+              isValidForRead: true,
+              isValidForAdvancedFind: false,
+              isAuditEnabled: true,
+              optionSet: {
+                name: "account_customersizecode",
+                isGlobal: false,
+                isMultiSelect: false,
+                options: [
+                  { value: 1, label: "Default Value", normalizedLabel: "default value" }
+                ]
+              }
+            }
+          ],
+          relationships: [
+            {
+              schemaName: "lk_accountbase_modifiedby",
+              relationshipType: "ManyToOne",
+              referencingEntity: "account",
+              referencedEntity: "systemuser",
+              referencingAttribute: "modifiedby",
+              navigationPropertyName: "modifiedby"
+            },
+            {
+              schemaName: "account_primary_contact",
+              relationshipType: "ManyToOne",
+              referencingEntity: "account",
+              referencedEntity: "contact",
+              referencingAttribute: "primarycontactid",
+              navigationPropertyName: "primarycontactid"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    environment: {
+      label: "SIT",
+      capturedAtIso: "2026-05-24T01:30:00.000Z"
+    },
+    evidenceType: "EntityMetadata",
+    metadata: {
+      capturedAtIso: "2026-05-24T01:30:00.000Z"
+    },
+    evidence: {
+      metadataVersion: "entity-metadata-payload-v1",
+      entities: [
+        {
+          metadataVersion: "entity-metadata-v1",
+          logicalName: "account",
+          schemaName: "Account",
+          displayName: "Account",
+          capturedAtIso: "2026-05-24T01:30:00.000Z",
+          configuration: {
+            entitySetName: "accounts",
+            ownershipType: "UserOwned",
+            isAuditEnabled: true,
+            changeTrackingEnabled: true,
+            isActivity: false,
+            isCustomEntity: false,
+            isManaged: true,
+            isValidForAdvancedFind: true
+          },
+          attributes: [
+            {
+              logicalName: "accountcategorycode",
+              schemaName: "AccountCategoryCode",
+              displayName: "Category",
+              attributeType: "Picklist",
+              requiredLevel: "None",
+              isValidForCreate: true,
+              isValidForUpdate: true,
+              isValidForRead: true,
+              isValidForAdvancedFind: true,
+              isAuditEnabled: true,
+              optionSet: {
+                name: "account_accountcategorycode",
+                isGlobal: false,
+                isMultiSelect: false,
+                options: [
+                  { value: 1, label: "Preferred Customer", normalizedLabel: "preferred customer" },
+                  { value: 2, label: "Standard", normalizedLabel: "standard" }
+                ]
+              }
+            },
+            {
+              logicalName: "customersizecode",
+              schemaName: "CustomerSizeCode",
+              displayName: "Customer Size",
+              attributeType: "Picklist",
+              requiredLevel: "None",
+              isValidForCreate: true,
+              isValidForUpdate: true,
+              isValidForRead: true,
+              isValidForAdvancedFind: false,
+              isAuditEnabled: true,
+              optionSet: {
+                name: "account_customersizecode",
+                isGlobal: false,
+                isMultiSelect: false,
+                options: [
+                  { value: 1, label: "Default Value", normalizedLabel: "default value" },
+                  { value: 1000000, label: "Enterprise", normalizedLabel: "enterprise" }
+                ]
+              }
+            }
+          ],
+          relationships: [
+            {
+              schemaName: "account_primary_contact",
+              relationshipType: "ManyToOne",
+              referencingEntity: "account",
+              referencedEntity: "contact",
+              referencingAttribute: "primarycontactid",
+              navigationPropertyName: "primarycontactid"
+            },
+            {
+              schemaName: "new_account_customersegment",
+              relationshipType: "ManyToOne",
+              referencingEntity: "account",
+              referencedEntity: "new_customersegment",
+              referencingAttribute: "new_customersegmentid",
+              navigationPropertyName: "new_customersegmentid"
+            }
+          ]
+        }
+      ]
+    }
   }
 ];
 
@@ -480,7 +667,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-05-25T00:05:25.000Z",
     sourceFeature: "Mock Operational Profile",
-    evidenceTypes: ["OperationalProfile", "IdentityParticipation", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-sit-account-drifted",
@@ -491,7 +678,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-05-25T01:30:00.000Z",
     sourceFeature: "Mock Operational Profile",
-    evidenceTypes: ["OperationalProfile", "IdentityParticipation", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   }
 ];
 
@@ -511,7 +698,7 @@ export function normalizeMockComparisonRegistryEntry(entry: ComparisonSnapshotRe
   return {
     ...entry,
     sourceFeature: entry.sourceFeature || "Mock Operational Profile",
-    evidenceTypes: [...new Set([...entry.evidenceTypes, "PluginStep"])].sort()
+    evidenceTypes: [...new Set([...entry.evidenceTypes, "EntityMetadata", "PluginStep"])].sort()
   };
 }
 

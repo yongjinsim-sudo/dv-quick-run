@@ -25,6 +25,7 @@ export function renderToolbar(options: ComparisonSurfaceRenderOptions = {}): str
 export function renderCommunityFooter(): string {
   return `<footer class="dvqr-community-footer">
     <span>Have feedback on drift providers or snapshot workflows?</span>
+    <a href="https://www.dvquickrun.com/feedback">Share Feedback</a>
     <a href="https://github.com/yongjinsim-sudo/dv-quick-run/discussions">Join DVQR Discussions</a>
   </footer>`;
 }
