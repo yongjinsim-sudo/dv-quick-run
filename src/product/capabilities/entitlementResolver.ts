@@ -39,18 +39,33 @@ function withDefaultProCapabilities(entitlement: EntitlementContext): Entitlemen
   };
 }
 
+export function resolveConfiguredEntitlementForTests(configuredPlan: string): EntitlementContext {
+  // v0.12.8 hardening: workspace configuration is a legacy Free fallback only.
+  // Pro acceleration must come from a valid persisted online/offline entitlement cache
+  // or development-only seed commands that write that cache explicitly.
+  const normalizedPlan = normalizeEntitlementPlan(configuredPlan);
+
+  if (normalizedPlan !== "free") {
+    return {
+      plan: "free",
+      status: "valid",
+      source: "configuration"
+    };
+  }
+
+  return {
+    plan: "free",
+    status: "valid",
+    source: "configuration"
+  };
+}
+
 function resolveConfiguredEntitlement(): EntitlementContext {
   const configuredPlan = vscode.workspace
     .getConfiguration("dvQuickRun")
     .get<string>("productPlan", "free");
 
-  const normalizedPlan = normalizeEntitlementPlan(configuredPlan);
-
-  return {
-    plan: normalizedPlan,
-    status: "valid",
-    source: "configuration"
-  };
+  return resolveConfiguredEntitlementForTests(configuredPlan);
 }
 
 export function resolveEntitlement(now: Date = new Date()): EntitlementContext {

@@ -1,7 +1,9 @@
+import { randomUUID } from "crypto";
 import type {
   ComparisonEnvironmentIdentity,
   ComparisonEvidenceSnapshot,
   ComparisonSnapshotEvidenceType,
+  ComparisonSnapshotIdentity,
   ComparisonSnapshotLineage,
   ComparisonSnapshotValidationResult,
   OperationalComparisonSnapshotDocument
@@ -46,13 +48,31 @@ export function createOperationalComparisonSnapshotDocument(args: {
   evidenceSnapshots: readonly ComparisonEvidenceSnapshot[];
   capturedAt?: Date;
   lineage?: Partial<ComparisonSnapshotLineage>;
+  snapshotId?: string;
+  snapshotLineageId?: string;
+  label?: string;
+  entityLogicalName?: string;
+  entityDisplayName?: string;
 }): OperationalComparisonSnapshotDocument {
   const capturedAtIso = (args.capturedAt ?? new Date()).toISOString();
   const environment = normalizeComparisonEnvironmentIdentity(args.environment);
+  const snapshotId = normalizeOptional(args.snapshotId) ?? randomUUID();
+  const snapshotLineageId = normalizeOptional(args.snapshotLineageId) ?? normalizeOptional(args.lineage?.snapshotLineageId) ?? snapshotId;
   const lineage = normalizeSnapshotLineage({
     capturedAtIso,
     sourceFeature: args.sourceFeature,
+    snapshotLineageId,
     lineage: args.lineage
+  });
+  const snapshotIdentity = normalizeSnapshotIdentity({
+    capturedAtIso,
+    environment,
+    sourceFeature: args.sourceFeature,
+    snapshotId,
+    snapshotLineageId,
+    label: args.label,
+    entityLogicalName: args.entityLogicalName,
+    entityDisplayName: args.entityDisplayName
   });
 
   const document: OperationalComparisonSnapshotDocument = {
@@ -62,6 +82,7 @@ export function createOperationalComparisonSnapshotDocument(args: {
     environment,
     capturedAtIso,
     sourceFeature: args.sourceFeature,
+    snapshotIdentity,
     evidenceSnapshots: args.evidenceSnapshots.map((snapshot) => ({
       ...snapshot,
       environment: normalizeComparisonEnvironmentIdentity(snapshot.environment.label ? snapshot.environment : environment),
@@ -85,9 +106,34 @@ export function createOperationalComparisonSnapshotDocument(args: {
 }
 
 
+function normalizeSnapshotIdentity(args: {
+  readonly capturedAtIso: string;
+  readonly environment: ComparisonEnvironmentIdentity;
+  readonly sourceFeature: string;
+  readonly snapshotId: string;
+  readonly snapshotLineageId: string;
+  readonly label?: string;
+  readonly entityLogicalName?: string;
+  readonly entityDisplayName?: string;
+}): ComparisonSnapshotIdentity {
+  return {
+    identityVersion: "comparison-snapshot-identity-v1",
+    snapshotId: args.snapshotId,
+    snapshotLineageId: args.snapshotLineageId,
+    label: normalizeOptional(args.label),
+    entityLogicalName: normalizeOptional(args.entityLogicalName),
+    entityDisplayName: normalizeOptional(args.entityDisplayName),
+    environmentLabel: args.environment.label,
+    environmentUrl: normalizeOptional(args.environment.environmentUrl),
+    capturedAtIso: args.capturedAtIso,
+    sourceFeature: args.sourceFeature
+  };
+}
+
 function normalizeSnapshotLineage(args: {
   readonly capturedAtIso: string;
   readonly sourceFeature: string;
+  readonly snapshotLineageId: string;
   readonly lineage?: Partial<ComparisonSnapshotLineage>;
 }): ComparisonSnapshotLineage {
   const parentSnapshotIds = args.lineage?.parentSnapshotIds
@@ -96,6 +142,7 @@ function normalizeSnapshotLineage(args: {
 
   return {
     lineageVersion: "comparison-lineage-v1",
+    snapshotLineageId: normalizeOptional(args.lineage?.snapshotLineageId) ?? args.snapshotLineageId,
     origin: args.lineage?.origin ?? "captured",
     createdAtIso: args.lineage?.createdAtIso ?? args.capturedAtIso,
     sourceFeature: args.lineage?.sourceFeature ?? args.sourceFeature,

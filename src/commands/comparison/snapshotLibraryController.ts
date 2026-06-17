@@ -2,11 +2,19 @@ import * as vscode from "vscode";
 import type { ComparisonViewModel } from "../../core/comparison/index.js";
 import {
   buildSnapshotRegistryEntry,
+  createEvidenceWorkspace,
   deleteComparisonSnapshot,
   getRegisteredComparisonSnapshots,
   registerComparisonSnapshot,
   setComparisonSnapshotFavourite,
   setComparisonSnapshotLabel,
+  copySnapshotFilePath,
+  copySnapshotWorkspacePath,
+  openComparisonWorkspaceFolder,
+  openReportWorkspaceFolder,
+  openSnapshotWorkspaceFolder,
+  revealSnapshotFileInExplorer,
+  resolveSnapshotWorkspace,
   validateComparisonSnapshotDocument
 } from "../../product/comparison/index.js";
 import type { ComparisonSnapshotRegistryEntry, ComparisonSnapshotTrustState, OperationalComparisonSnapshotDocument } from "../../product/comparison/index.js";
@@ -34,6 +42,21 @@ export function canOpenSnapshotLibrarySurface(): boolean {
 function getSnapshotLibraryEntries(context: vscode.ExtensionContext): readonly ComparisonSnapshotRegistryEntry[] {
   const entries = isCrossEnvironmentDiffPreviewMode() ? mockSnapshotRegistryEntries : getRegisteredComparisonSnapshots(context);
   return entries.map(normalizeMockComparisonRegistryEntry);
+}
+
+function refreshSnapshotLibraryWebview(ctx: CommandContext): void {
+  if (!snapshotLibraryPanel) {
+    return;
+  }
+
+  snapshotLibraryPanel.webview.html = renderSnapshotLibraryHtml(
+    snapshotLibraryPanel.webview,
+    getSnapshotLibraryEntries(ctx.ext),
+    getRecentComparisons(ctx.ext),
+    isCrossEnvironmentDiffPreviewMode(),
+    typeof ctx.ext.extension.packageJSON?.version === "string" ? ctx.ext.extension.packageJSON.version : "unknown",
+    resolveSnapshotWorkspace()
+  );
 }
 
 function asOperationalComparisonSnapshotDocument(input: unknown): OperationalComparisonSnapshotDocument | undefined {
@@ -230,6 +253,7 @@ async function compareRegisteredSnapshotEntries(
       ],
       sourceLabel,
       targetLabel,
+      comparisonMode: sameEnvironment ? "timeline" : "crossEnvironment",
       subjectLabel: sameSubject ? sourceSubject : `${sourceSubject} → ${targetSubject}`,
       snapshotTrust: {
         sourceTrustState,
@@ -275,6 +299,77 @@ async function revealRegisteredSnapshotFile(
 
   const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(entry.fileUri));
   await vscode.window.showTextDocument(document, vscode.ViewColumn.Beside);
+}
+
+async function revealRegisteredSnapshotInExplorer(
+  ctx: CommandContext,
+  snapshotId: string
+): Promise<void> {
+  const entry = getRegisteredComparisonSnapshots(ctx.ext).find((candidate) => candidate.snapshotId === snapshotId);
+  if (!entry) {
+    void vscode.window.showWarningMessage("DV Quick Run: The selected snapshot is no longer available in the snapshot registry.");
+    return;
+  }
+
+  await revealSnapshotFileInExplorer(vscode.Uri.parse(entry.fileUri));
+}
+
+async function copyRegisteredSnapshotPath(
+  ctx: CommandContext,
+  snapshotId: string
+): Promise<void> {
+  const entry = getRegisteredComparisonSnapshots(ctx.ext).find((candidate) => candidate.snapshotId === snapshotId);
+  if (!entry) {
+    void vscode.window.showWarningMessage("DV Quick Run: The selected snapshot is no longer available in the snapshot registry.");
+    return;
+  }
+
+  await copySnapshotFilePath(vscode.Uri.parse(entry.fileUri));
+  void vscode.window.showInformationMessage("DV Quick Run: Snapshot path copied.");
+}
+
+async function createEvidenceWorkspaceFromSnapshotLibrary(ctx?: CommandContext): Promise<void> {
+  const created = await createEvidenceWorkspace();
+  if (!created) {
+    return;
+  }
+
+  void vscode.window.showInformationMessage(`DV Quick Run: Evidence Workspace ready at ${created.dvqrRoot.fsPath}`);
+
+  if (ctx) {
+    refreshSnapshotLibraryWebview(ctx);
+  }
+}
+
+async function openWorkspaceSnapshotFolder(): Promise<void> {
+  const resolution = await openSnapshotWorkspaceFolder();
+  if (!resolution.available) {
+    void vscode.window.showWarningMessage(`DV Quick Run: ${resolution.reason ?? "Snapshot workspace is unavailable."}`);
+  }
+}
+
+async function openWorkspaceComparisonFolder(): Promise<void> {
+  const resolution = await openComparisonWorkspaceFolder();
+  if (!resolution.available) {
+    void vscode.window.showWarningMessage(`DV Quick Run: ${resolution.reason ?? "Snapshot workspace is unavailable."}`);
+  }
+}
+
+async function openWorkspaceReportFolder(): Promise<void> {
+  const resolution = await openReportWorkspaceFolder();
+  if (!resolution.available) {
+    void vscode.window.showWarningMessage(`DV Quick Run: ${resolution.reason ?? "Snapshot workspace is unavailable."}`);
+  }
+}
+
+async function copyWorkspaceSnapshotFolderPath(): Promise<void> {
+  const resolution = await copySnapshotWorkspacePath();
+  if (!resolution.available) {
+    void vscode.window.showWarningMessage(`DV Quick Run: ${resolution.reason ?? "Snapshot workspace is unavailable."}`);
+    return;
+  }
+
+  void vscode.window.showInformationMessage("DV Quick Run: Snapshot workspace path copied.");
 }
 
 function describeSnapshotForPrompt(entry: ComparisonSnapshotRegistryEntry): string {
@@ -472,6 +567,17 @@ export function revealSnapshotLibrarySurface(
       return;
     }
 
+    if (request.type === "captureSnapshot") {
+      if (!canRunCrossEnvironmentDiff()) {
+        void promptForCrossEnvironmentDiffProAccess("Capture Snapshot");
+        return;
+      }
+
+      void vscode.commands.executeCommand("dvQuickRun.captureOperationalProfileSnapshot")
+        .then(() => refreshSnapshotLibraryWebview(ctx));
+      return;
+    }
+
     if (request.type === "removeRecentComparison" && request.comparisonId) {
       const choice = await vscode.window.showWarningMessage(
         "Remove this recent comparison from history? Snapshots will not be deleted.",
@@ -487,6 +593,41 @@ export function revealSnapshotLibrarySurface(
 
     if (request.type === "revealFile" && request.snapshotId) {
       void revealRegisteredSnapshotFile(ctx, request.snapshotId);
+      return;
+    }
+
+    if (request.type === "revealSnapshotInExplorer" && request.snapshotId) {
+      void revealRegisteredSnapshotInExplorer(ctx, request.snapshotId);
+      return;
+    }
+
+    if (request.type === "copySnapshotPath" && request.snapshotId) {
+      void copyRegisteredSnapshotPath(ctx, request.snapshotId);
+      return;
+    }
+
+    if (request.type === "createEvidenceWorkspace") {
+      void createEvidenceWorkspaceFromSnapshotLibrary(ctx);
+      return;
+    }
+
+    if (request.type === "openSnapshotWorkspace") {
+      void openWorkspaceSnapshotFolder();
+      return;
+    }
+
+    if (request.type === "openComparisonWorkspace") {
+      void openWorkspaceComparisonFolder();
+      return;
+    }
+
+    if (request.type === "openReportWorkspace") {
+      void openWorkspaceReportFolder();
+      return;
+    }
+
+    if (request.type === "copySnapshotWorkspacePath") {
+      void copyWorkspaceSnapshotFolderPath();
       return;
     }
 
@@ -526,6 +667,7 @@ export function revealSnapshotLibrarySurface(
     entries,
     getRecentComparisons(ctx.ext),
     isCrossEnvironmentDiffPreviewMode(),
-    typeof ctx.ext.extension.packageJSON?.version === "string" ? ctx.ext.extension.packageJSON.version : "unknown"
+    typeof ctx.ext.extension.packageJSON?.version === "string" ? ctx.ext.extension.packageJSON.version : "unknown",
+    resolveSnapshotWorkspace()
   );
 }

@@ -3,6 +3,7 @@ import { canRunCrossEnvironmentDiff } from "../../product/capabilities/capabilit
 import { sampleSnapshots } from "../../product/comparison/snapshotLibrary/mockComparisonSnapshots.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { registerCommand } from "../registerCommandHelpers.js";
+import { createEvidenceWorkspace, openComparisonWorkspaceFolder, openReportWorkspaceFolder, openSnapshotWorkspaceFolder } from "../../product/comparison/index.js";
 import { promptForCrossEnvironmentDiffProAccess } from "./comparisonCapabilityPrompt.js";
 import { revealComparisonSurface } from "./comparisonSurfaceController.js";
 import { buildComparisonViewModelFromSnapshots, readRegisteredSnapshotFiles, readSnapshotFiles } from "./comparisonSnapshotSelection.js";
@@ -70,4 +71,23 @@ export function registerOpenCrossEnvironmentDiffCommand(
   ctx: CommandContext
 ): void {
   registerCommand(context, "dvQuickRun.openSnapshotLibrary", openSnapshotLibrary, ctx);
+  context.subscriptions.push(vscode.commands.registerCommand("dvQuickRun.createEvidenceWorkspace", createEvidenceWorkspace));
+  context.subscriptions.push(vscode.commands.registerCommand("dvQuickRun.openSnapshotWorkspaceFolder", async () => {
+    const resolution = await openSnapshotWorkspaceFolder();
+    if (!resolution.available) {
+      void vscode.window.showWarningMessage(`DV Quick Run: ${resolution.reason ?? "Snapshot workspace is unavailable."}`);
+    }
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand("dvQuickRun.openComparisonWorkspaceFolder", async () => {
+    const resolution = await openComparisonWorkspaceFolder();
+    if (!resolution.available) {
+      void vscode.window.showWarningMessage(`DV Quick Run: ${resolution.reason ?? "Comparison workspace is unavailable."}`);
+    }
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand("dvQuickRun.openReportWorkspaceFolder", async () => {
+    const resolution = await openReportWorkspaceFolder();
+    if (!resolution.available) {
+      void vscode.window.showWarningMessage(`DV Quick Run: ${resolution.reason ?? "Report workspace is unavailable."}`);
+    }
+  }));
 }

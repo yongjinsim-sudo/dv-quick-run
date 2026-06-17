@@ -119,11 +119,30 @@ export type ComparisonSnapshotLineageOrigin = "captured" | "imported" | "derived
 
 export interface ComparisonSnapshotLineage {
   readonly lineageVersion: "comparison-lineage-v1";
+  /**
+   * Stable evidence-lineage identifier used to group snapshots that belong to the
+   * same future timeline investigation. Legacy/imported snapshots may not have
+   * one; callers should treat the document snapshot id as the safe fallback.
+   */
+  readonly snapshotLineageId?: string;
   readonly origin: ComparisonSnapshotLineageOrigin;
   readonly createdAtIso: string;
   readonly sourceFeature?: string;
   readonly parentSnapshotIds?: readonly string[];
   readonly note?: string;
+}
+
+export interface ComparisonSnapshotIdentity {
+  readonly identityVersion: "comparison-snapshot-identity-v1";
+  readonly snapshotId: string;
+  readonly snapshotLineageId: string;
+  readonly label?: string;
+  readonly entityLogicalName?: string;
+  readonly entityDisplayName?: string;
+  readonly environmentLabel: string;
+  readonly environmentUrl?: string;
+  readonly capturedAtIso: string;
+  readonly sourceFeature: string;
 }
 
 export interface OperationalComparisonSnapshotDocument {
@@ -133,6 +152,7 @@ export interface OperationalComparisonSnapshotDocument {
   readonly environment: ComparisonEnvironmentIdentity;
   readonly capturedAtIso: string;
   readonly sourceFeature: string;
+  readonly snapshotIdentity?: ComparisonSnapshotIdentity;
   readonly evidenceSnapshots: readonly ComparisonEvidenceSnapshot[];
   readonly lineage?: ComparisonSnapshotLineage;
   readonly integrity?: ComparisonSnapshotIntegrity;

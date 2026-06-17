@@ -63,6 +63,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * discover and execute supported Custom API capabilities through Capability Explorer
 * activate Online Pro, import Offline Pro licenses, and inspect capability status
 * use the Hub to stay oriented across investigation workflows
+* capture and organise operational snapshots in a local Evidence Workspace
 
 DV Quick Run is designed around a simple loop:
 
@@ -148,49 +149,171 @@ Offline Pro is designed for restricted, disconnected, and air-gapped environment
 
 ---
 
-## 🆕 What's New in v0.12.7
 
-v0.12.7 expands Cross-Environment Diff beyond runtime behaviour and participation analysis into broader metadata-aware operational investigation.
+## 🆕 What's New in v0.12.8
 
-This release introduces:
+v0.12.8 introduces Evidence Workspace and Snapshot Capture foundations.
 
-* **Relationship Metadata Drift** comparison support
-* **Column Metadata Drift** comparison support
-* **Entity Configuration Drift** comparison support
-* expanded schema-level operational comparison coverage
-* metadata-focused investigation readability improvements
-* refined report exports, PDF layouts, and evidence presentation
-* richer mock comparison scenarios demonstrating metadata drift workflows
-
-DV Quick Run can now investigate:
-
-* relationship additions and removals
-* relationship topology evolution
-* column metadata changes
-* option set / choice evolution
-* audit configuration drift
-* change tracking drift
-* entity configuration differences
-* structural Dataverse changes alongside runtime behaviour drift
-
-The goal is not deployment validation or schema governance.
-
-It is:
-
-* metadata-aware operational investigation
-* explainable schema evolution visibility
-* broader comparison coverage
-* calmer structural drift understanding
-* stronger investigation continuity
+This release evolves Snapshot Library from saved snapshot management into a dedicated Evidence Workspace for operational investigation continuity.
 
 Highlights include:
 
-* **Relationship Metadata Drift** with direction, type, significance, and representative evidence
-* **Column Metadata Drift** covering configuration and schema-level changes
-* **Entity Configuration Drift** covering audit, change tracking, ownership, and entity settings
-* **Improved metadata readability** across Findings, Verification, Handoff, HTML, and PDF reports
-* **Enhanced report exports** with refined pagination, typography, and metadata presentation
-* **Expanded mock comparison coverage** demonstrating metadata and runtime drift together
+* Evidence Workspace foundations
+* Guided Evidence Workspace creation
+* Snapshot Capture directly from Snapshot Library
+* Metadata-backed snapshot identity
+* Compare Selected workflows
+* Compact evidence-selection mode
+* Timeline-ready multi-snapshot preparation
+* Expanded search and workspace navigation
+* Git-friendly investigation artifact organisation
+
+Evidence Workspace introduces:
+
+```text
+.dvqr
+├─ snapshots
+├─ comparisons
+└─ reports
+```
+
+DV Quick Run can now:
+
+* create Evidence Workspaces automatically
+* capture Operational Profile snapshots directly into the active workspace
+* organise evidence by environment, entity, and subject
+* compare selected snapshots directly from Snapshot Library
+* prepare future timeline reconstruction workflows
+* manage investigation artifacts more effectively
+
+The release intentionally does not implement timeline reconstruction.
+
+```text
+v0.12.8 organises evidence.
+v0.13.x reconstructs timelines.
+```
+
+### Evidence Workspace
+
+Evidence Workspace provides:
+
+* local-first evidence storage
+* Git-friendly investigation artifacts
+* comparison continuity
+* report continuity
+* investigation replay foundations
+* clearer evidence ownership
+
+Evidence remains:
+
+* local
+* portable
+* inspectable
+* user-controlled
+
+### Snapshot Capture
+
+Snapshot Library now supports direct Operational Profile capture workflows.
+
+Users can:
+
+* select an environment
+* select an entity
+* optionally provide a label
+* capture evidence directly into the active Evidence Workspace
+
+Results:
+
+* reduced snapshot capture friction
+* improved investigation continuity
+* stronger evidence organisation
+* faster comparison preparation
+
+### Evidence Selection & Comparison
+
+Snapshot Library now supports richer evidence-selection workflows.
+
+Added:
+
+* multi-select snapshot workflows
+* comparison-ready selection states
+* compact selection mode
+* detailed review mode
+* clickable compact selection rows
+* selection counters
+* scrollable evidence-selection panels
+* scrollable snapshot groups
+
+Behaviour:
+
+```text
+2 selected snapshots
+→ Compare
+
+3+ selected snapshots
+→ Timeline Ready
+```
+
+Timeline reconstruction remains deferred to v0.13.x.
+
+### Search & Navigation Improvements
+
+Snapshot Library search now supports:
+
+* labels
+* entities
+* environments
+* providers
+* capture dates
+* favourites
+* snapshot identifiers
+* file paths
+
+Additional improvements include:
+
+* active search visibility
+* filtered-result counts
+* improved large-workspace usability
+* calmer evidence-management workflows
+
+### Evidence Workspace Navigation
+
+Evidence Workspace now includes:
+
+* Open Snapshot Folder
+* Open Comparisons Folder
+* Open Reports Folder
+* Copy Workspace Path
+
+This improves:
+
+* artifact discoverability
+* Git-based workflows
+* external evidence management
+* investigation transparency
+
+### Guided Evidence Workspace Creation
+
+Added:
+
+```text
+DV Quick Run: Create Evidence Workspace
+```
+
+DV Quick Run can now:
+
+* create recommended Evidence Workspace structures automatically
+* create snapshot, comparison, and report folders
+* generate VS Code workspace files
+* prompt users to open the workspace immediately
+* guide first-time users into Evidence Workspace workflows
+
+Results:
+
+* dramatically reduced setup friction
+* faster onboarding
+* improved discoverability
+* stronger Evidence Workspace adoption
 
 DV Quick Run continues to prioritise:
 
@@ -198,6 +321,8 @@ DV Quick Run continues to prioritise:
 DVQR observes operational drift.
 DVQR does not fix operational drift.
 ```
+
+---
 
 
 ## 🎬 Result Viewer
@@ -488,9 +613,17 @@ Operational Profile snapshot export is capability-aware: Free keeps operational 
 
 ---
 
-### 🔄 Snapshot Library, Timeline Diff & Cross-Environment Diff
+### 🔄 Evidence Workspace, Snapshot Library, Timeline Diff & Cross-Environment Diff
 
 DV Quick Run includes Pro Preview foundations for operational comparison workflows.
+
+Snapshot Library now works with a local Evidence Workspace for organising investigation artifacts:
+
+```text
+.dvqr
+├─ snapshots
+├─ comparisons
+└─ reports
 
 Snapshot Library coordinates saved operational investigation snapshots and acts as the central console for diffing.
 

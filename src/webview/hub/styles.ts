@@ -208,6 +208,34 @@ h3 {
 }
 
 
+.dvqr-evidence-workspace-card {
+  align-items: flex-start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+}
+
+.dvqr-evidence-workspace-card p {
+  color: var(--vscode-descriptionForeground);
+}
+
+.dvqr-evidence-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr;
+}
+
+.dvqr-evidence-actions .dvqr-action-button {
+  justify-content: center;
+  width: 100%;
+}
+
+@media (max-width: 840px) {
+  .dvqr-evidence-workspace-card {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dvqr-card {
   border: 1px solid var(--vscode-panel-border);
   border-radius: 10px;

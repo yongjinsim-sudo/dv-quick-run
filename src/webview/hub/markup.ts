@@ -74,6 +74,47 @@ function renderInvestigationContinuation(model: DvQuickRunHubViewModel): string 
   </section>`;
 }
 
+
+function renderEvidenceWorkspaceLauncher(model: DvQuickRunHubViewModel): string {
+  const workspace = model.evidenceWorkspace;
+  const statusTitle = workspace.available ? "Evidence Workspace Ready" : "Evidence Workspace not configured";
+  const statusDetail = workspace.available
+    ? `Workspace${workspace.workspaceName ? `: ${escapeHtml(workspace.workspaceName)}` : " is available"}`
+    : escapeHtml(workspace.reason ?? "Create a Git-friendly workspace for DVQR investigation artifacts.");
+  const createAction = workspace.available
+    ? ""
+    : `<button class="dvqr-action-button" data-command="dvQuickRun.createEvidenceWorkspace">Create Evidence Workspace</button>`;
+  const folderActions = workspace.available
+    ? `<button class="dvqr-action-button" data-command="dvQuickRun.openSnapshotWorkspaceFolder">Open Snapshot Folder</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openComparisonWorkspaceFolder">Open Comparisons Folder</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openReportWorkspaceFolder">Open Reports Folder</button>`
+    : "";
+
+  return `<section id="evidence-workspace">
+    <h2>Evidence Workspace</h2>
+    <p class="dvqr-section-note">Capture, organise, search, compare, and preserve investigation evidence across environments and time.</p>
+    <div class="dvqr-card dvqr-evidence-workspace-card">
+      <div>
+        <h3>${statusTitle}</h3>
+        <p>${statusDetail}</p>
+        <p>Use Evidence Workspace, Snapshot Library, Timeline Diff, and Cross-Environment Diff to investigate operational drift and preserve investigation continuity.</p>
+        <div class="dvqr-meta">
+          <span class="dvqr-chip">.dvqr/snapshots</span>
+          <span class="dvqr-chip">.dvqr/comparisons</span>
+          <span class="dvqr-chip">.dvqr/reports</span>
+          <span class="dvqr-chip">Timeline ready</span>
+        </div>
+      </div>
+      <div class="dvqr-evidence-actions">
+        <button class="dvqr-action-button" data-command="dvQuickRun.openSnapshotLibrary">Open Snapshot Library</button>
+        ${createAction}
+        <button class="dvqr-action-button" data-command="dvQuickRun.captureOperationalProfileSnapshot">Capture Snapshot</button>
+        ${folderActions}
+      </div>
+    </div>
+  </section>`;
+}
+
 function renderAccessContextLauncher(): string {
   return `<section id="access-context">
     <h2>Access Context</h2>
@@ -179,6 +220,8 @@ export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: 
     </section>
 
     ${renderInvestigationContinuation(model)}
+
+    ${renderEvidenceWorkspaceLauncher(model)}
 
     ${renderAccessContextLauncher()}
 

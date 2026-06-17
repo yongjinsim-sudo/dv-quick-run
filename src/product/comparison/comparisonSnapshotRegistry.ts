@@ -35,22 +35,24 @@ export function buildSnapshotRegistryEntry(args: {
     readonly entityDisplayName?: string;
   } | undefined;
 
-  const entityLogicalName = operationalProfile?.entityLogicalName;
-  const entityDisplayName = operationalProfile?.entityDisplayName;
+  const identity = args.document.snapshotIdentity;
+  const entityLogicalName = identity?.entityLogicalName ?? operationalProfile?.entityLogicalName;
+  const entityDisplayName = identity?.entityDisplayName ?? operationalProfile?.entityDisplayName;
   const evidenceTypes = [...new Set(args.document.evidenceSnapshots.map((snapshot) => snapshot.evidenceType))].sort();
   const entityLabel = entityDisplayName ?? entityLogicalName ?? "Operational snapshot";
-  const environmentLabel = args.document.environment.label;
+  const environmentLabel = identity?.environmentLabel ?? args.document.environment.label;
+  const snapshotId = args.snapshotId ?? identity?.snapshotId ?? createSnapshotId();
 
   return {
-    snapshotId: args.snapshotId ?? createSnapshotId(),
+    snapshotId,
     fileUri: args.fileUri.toString(),
-    label: `${entityLabel} · ${environmentLabel}`,
+    label: identity?.label ?? `${entityLabel} · ${environmentLabel}`,
     environmentLabel,
-    environmentUrl: args.document.environment.environmentUrl,
+    environmentUrl: identity?.environmentUrl ?? args.document.environment.environmentUrl,
     entityLogicalName,
     entityDisplayName,
-    capturedAtIso: args.document.capturedAtIso,
-    sourceFeature: args.document.sourceFeature,
+    capturedAtIso: identity?.capturedAtIso ?? args.document.capturedAtIso,
+    sourceFeature: identity?.sourceFeature ?? args.document.sourceFeature,
     evidenceTypes,
     lineage: args.document.lineage
   };

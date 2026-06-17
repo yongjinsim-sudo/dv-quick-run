@@ -102,12 +102,22 @@ export interface InvestigationContinuationModel {
   context?: InvestigationContext;
 }
 
+export interface HubEvidenceWorkspaceInfo {
+  available: boolean;
+  workspaceName?: string;
+  snapshotsPath?: string;
+  comparisonsPath?: string;
+  reportsPath?: string;
+  reason?: string;
+}
+
 export interface DvQuickRunHubViewModel {
   title: string;
   supporterBadges: string[];
   subtitle: string;
   sectionLinks: HubSectionLink[];
   investigationContinuation: InvestigationContinuationModel;
+  evidenceWorkspace: HubEvidenceWorkspaceInfo;
   playbooks: InvestigationPlaybook[];
   capabilities: CapabilityInfo[];
   whatsNew: string[];
