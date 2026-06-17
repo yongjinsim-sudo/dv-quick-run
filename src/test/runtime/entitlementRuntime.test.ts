@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { createCapabilityManifest } from "../../product/capabilities/capabilityManifest.js";
 import { createStoredEntitlementCache, entitlementCacheKey, entitlementCacheSchemaVersion, normalizeStoredEntitlementCache, resolveStoredEntitlementCache, type StoredEntitlementCache } from "../../product/capabilities/entitlementCache.js";
-import { clearEntitlementCache, persistEntitlementCache, resolveEntitlement, setEntitlementStorageForTests, type EntitlementStorage } from "../../product/capabilities/entitlementResolver.js";
+import { clearEntitlementCache, persistEntitlementCache, resolveConfiguredEntitlementForTests, resolveEntitlement, setEntitlementStorageForTests, type EntitlementStorage } from "../../product/capabilities/entitlementResolver.js";
 import { canUse, resolveCapabilityManifest, resolveCapabilityState } from "../../product/capabilities/capabilityResolver.js";
 
 class MemoryEntitlementStorage implements EntitlementStorage {
@@ -168,6 +168,16 @@ suite("entitlementRuntime", () => {
 
     assert.strictEqual(entitlement.plan, "free");
     assert.strictEqual(entitlement.status, "corrupted");
+    assert.strictEqual(canUse("crossEnvironmentDiff", entitlement), false);
+  });
+
+
+  test("does not grant Pro from workspace configuration fallback", () => {
+    const entitlement = resolveConfiguredEntitlementForTests("pro");
+
+    assert.strictEqual(entitlement.plan, "free");
+    assert.strictEqual(entitlement.status, "valid");
+    assert.strictEqual(entitlement.source, "configuration");
     assert.strictEqual(canUse("crossEnvironmentDiff", entitlement), false);
   });
 

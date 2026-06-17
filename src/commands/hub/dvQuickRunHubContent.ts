@@ -268,12 +268,13 @@ export const capabilities: readonly CapabilityInfo[] = [
 
   {
     id: "cross-environment-comparison",
-    title: "🔒 Cross-Environment Diff & Snapshot Library Preview",
+    title: "🔒 Evidence Workspace & Snapshot Library Preview",
     group: "Future Workflows",
-    summary: "Observe operational drift between environments using evidence-backed comparison providers and Snapshot Library workflows.",
+    summary: "Capture, organise, and compare operational evidence using Snapshot Library and Evidence Workspace workflows.",
     operationalUseCase: "Use this preview to understand operational drift investigation before unlocking real snapshot comparison workflows.",
     howToUse: [
       "Open the Snapshot Library preview from the Hub.",
+      "Use Evidence Workspace orientation to understand capture, selection, and comparison workflows.",
       "Compare DEV-MOCK and SIT-MOCK snapshots to inspect the Pro comparison surface.",
       "Upgrade to Pro to import, manage, compare, and export real operational snapshots.",
       "Use Share Feedback when you want to send private product feedback, bugs, or workflow ideas."
@@ -358,6 +359,7 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
   { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded artifacts to focused companion utilities, starting with Upsert Artifact handoff to DV Bulk Upsert Runner." },
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
+  { title: "Evidence Workspace", summary: "Local workspace-backed evidence capture gives investigations a Git-friendly home without turning DVQR into Git tooling or hosted persistence." },
   { title: "Future operational comparison", summary: "Operational comparison is emerging as a bounded product direction for drift investigation without remediation or deployment tooling." }
 ];
 
@@ -365,12 +367,13 @@ export const productDirection: readonly ProductDirectionInfo[] = [
 function buildProComparisonCapability(): CapabilityInfo {
   return {
     id: "cross-environment-comparison",
-    title: "Cross-Environment Diff & Snapshot Library",
+    title: "Evidence Workspace, Snapshot Library & Cross-Environment Diff",
     group: "Operational Comparison Workflows",
-    summary: "Compare operational snapshots across environments and timelines using evidence-backed drift providers and Snapshot Library workflows.",
-    operationalUseCase: "Use Snapshot Library, Timeline Diff, and Cross-Environment Diff to investigate operational drift, compare topology changes, and preserve investigation continuity.",
+    summary: "Capture, organise, select, and compare operational evidence using Evidence Workspace and Snapshot Library workflows.",
+    operationalUseCase: "Use Evidence Workspace, Snapshot Library, Timeline Diff, and Cross-Environment Diff to investigate operational drift, compare topology changes, and preserve investigation continuity.",
     howToUse: [
-      "Open Snapshot Library from the Hub.",
+      "Create or open an Evidence Workspace from the Hub or Snapshot Library.",
+      "Capture Operational Profile snapshots into the workspace.",
       "Select source and target snapshots, or compare latest and previous snapshots from the library.",
       "Use Timeline Diff for same-environment history and Cross-Environment Diff for different-environment comparison.",
       "Export comparison evidence when you need to preserve or share investigation context."
@@ -398,6 +401,10 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
+  "Evidence Workspace creates a local .dvqr evidence tree for snapshots, comparisons, and reports.",
+  "Snapshot Library can capture Operational Profile snapshots directly into the active Evidence Workspace.",
+  "Evidence selection now supports compact multi-select, Compare Selected, search, and timeline-ready selection states.",
+  "Create Evidence Workspace guides first-time setup and opens the workspace in VS Code.",
   "Export dropdown consolidates CSV, JSON, and Pro Upsert Artifact export actions in Result Viewer.",
   "Pro Upsert Artifact export creates .dvbur.json packages for DV Bulk Upsert Runner from flat single-entity Result Viewer results.",
   "DV ForgeLab ecosystem orientation now links DV Quick Run with companion Dataverse utilities at dvforgelab.com/products.",

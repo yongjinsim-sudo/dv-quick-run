@@ -1,9 +1,285 @@
 # Change Log
-- Hid internal developer entitlement seed/cache commands from the production Command Palette behind a development-mode context gate.
+
+---
 
 All notable changes to the **DV Quick Run** extension will be documented in this file.
 
 This project follows the principles of [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+# DV Quick Run v0.12.8 — Evidence Workspace & Snapshot Capture
+
+This release evolves Snapshot Library from a saved-file list into a local Evidence Workspace for Dataverse investigation.
+
+DV Quick Run can now:
+
+* capture investigation snapshots directly from Snapshot Library
+* organise evidence into a Git-friendly workspace structure
+* manage snapshots by environment and subject
+* compare selected snapshots directly from Snapshot Library
+* prepare multi-snapshot investigation workflows
+* search, organise, and revisit evidence more efficiently
+* create Evidence Workspaces through a guided onboarding workflow
+
+The release intentionally does not implement timeline reconstruction. v0.12.8 organises and prepares evidence. v0.13.x reconstructs timelines.
+
+Core invariant:
+
+```text
+Snapshots are evidence artifacts.
+Snapshots are not operational authority.
+```
+
+---
+
+## 🏗️ Evidence Workspace Foundations (Major)
+
+Introduced the Evidence Workspace.
+
+DV Quick Run now organises investigation artifacts into a dedicated workspace structure:
+
+```text
+.dvqr
+├─ snapshots
+├─ comparisons
+└─ reports
+```
+
+Evidence Workspace provides:
+
+* local-first evidence storage
+* Git-friendly investigation artifacts
+* comparison continuity
+* report continuity
+* investigation replay foundations
+* clearer evidence ownership
+
+Behaviour:
+
+* evidence remains local
+* snapshots remain explicit artifacts
+* workspace contents remain user-controlled
+* evidence remains portable and inspectable
+
+Results:
+
+* stronger investigation continuity
+* improved evidence organisation
+* clearer operational workflows
+* improved long-term snapshot management
+
+---
+
+## 📸 Snapshot Capture Workflow (Major)
+
+Added Capture Snapshot directly inside Snapshot Library.
+
+Users can now:
+
+* select an environment
+* select a subject/entity
+* provide an optional label
+* capture evidence directly into the active Evidence Workspace
+
+Behaviour:
+
+* snapshots are stored automatically in workspace structure
+* environment and subject organisation is preserved
+* snapshot identity is metadata-backed
+* evidence remains replayable and comparable
+
+Results:
+
+* dramatically reduced snapshot capture friction
+* stronger evidence continuity
+* improved investigation repeatability
+* faster comparison preparation
+
+---
+
+## 🆔 Metadata-Backed Snapshot Identity
+
+Refined snapshot identity architecture.
+
+Snapshots now use:
+
+* deterministic short identifiers
+* explicit snapshot metadata
+* stable evidence identity
+* filename-independent snapshot tracking
+
+Behaviour:
+
+* identity no longer depends on verbose filenames
+* snapshot metadata remains authoritative
+* comparison workflows remain more resilient
+
+Results:
+
+* cleaner evidence storage
+* stronger long-term maintainability
+* safer snapshot lifecycle management
+
+---
+
+## 📋 Evidence Selection & Comparison Workflow
+
+Expanded Snapshot Library into a richer evidence-selection experience.
+
+Added:
+
+* multi-select snapshot workflows
+* comparison-ready selection states
+* compact selection mode
+* detailed evidence review mode
+* clickable compact selection rows
+* selection counters
+* scrollable evidence-selection panels
+
+Behaviour:
+
+* two selected snapshots become comparison-ready
+* source and target selection remain explicit
+* evidence remains visible during filtering and search
+
+Results:
+
+* reduced comparison setup effort
+* improved investigation usability
+* clearer comparison workflows
+* stronger evidence-management experience
+
+---
+
+## ⏳ Timeline Reconstruction Readiness
+
+Added timeline-oriented selection readiness.
+
+When three or more snapshots are selected, Snapshot Library now surfaces timeline readiness states.
+
+Behaviour:
+
+* two selected snapshots remain comparison-ready
+* three or more snapshots become timeline-ready
+* timeline reconstruction remains deferred to v0.13.x
+* no automatic timeline narrative is generated
+
+This reinforces the roadmap direction:
+
+```text
+v0.12.8 organises evidence.
+v0.13.x reconstructs timelines.
+```
+
+---
+
+## 🔍 Search, Navigation & Workspace Refinement
+
+Expanded Snapshot Library search and navigation capabilities.
+
+Search now supports:
+
+* labels
+* entities
+* environments
+* providers
+* capture dates
+* favourite state
+* snapshot identifiers
+* file paths
+
+Additional improvements include:
+
+* active search visibility
+* filtered-result counts
+* compact evidence browsing
+* scrollable evidence groups
+* improved large-workspace usability
+
+Results:
+
+* faster evidence discovery
+* calmer investigation workflows
+* improved scalability
+* stronger enterprise usability
+
+---
+
+## 🗂️ Evidence Workspace Navigation
+
+Added dedicated Evidence Workspace navigation actions.
+
+New capabilities include:
+
+* Open Snapshot Folder
+* Open Comparisons Folder
+* Open Reports Folder
+* Copy Workspace Path
+
+Behaviour:
+
+* investigation artifacts remain easy to locate
+* evidence remains externally accessible
+* Git-based workflows remain straightforward
+
+Results:
+
+* stronger workflow transparency
+* easier artifact management
+* improved integration with external tooling
+
+---
+
+## 🚀 Evidence Workspace Onboarding
+
+Introduced guided Evidence Workspace creation.
+
+Added:
+
+```text
+DV Quick Run: Create Evidence Workspace
+```
+
+DV Quick Run can now:
+
+* create Evidence Workspace structures automatically
+* create snapshot, comparison, and report folders
+* generate VS Code workspace files
+* prompt users to open the workspace immediately
+* guide first-time users into Evidence Workspace workflows
+
+Results:
+
+* dramatically reduced setup friction
+* faster onboarding
+* stronger Evidence Workspace discoverability
+* improved first-use experience
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* create Evidence Workspaces automatically
+* capture snapshots directly from Snapshot Library
+* organise investigation evidence more effectively
+* compare selected snapshots directly from Snapshot Library
+* prepare timeline-oriented workflows
+* search and manage evidence at larger scale
+* preserve investigation continuity through dedicated Evidence Workspaces
+
+This release establishes the foundation for:
+
+```text
+Evidence Workspace
+→ Snapshot Capture
+→ Comparison
+→ Timeline Reconstruction
+```
+
+while preserving DVQR's evidence-first investigation model.
 
 ---
 

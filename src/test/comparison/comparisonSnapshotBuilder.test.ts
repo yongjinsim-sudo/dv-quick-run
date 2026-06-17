@@ -60,6 +60,38 @@ suite("comparisonSnapshotBuilder", () => {
     assert.strictEqual(validation.snapshots[0].evidenceType, "OperationalProfile");
   });
 
+  test("creates metadata-owned snapshot identity for timeline-ready storage", () => {
+    const evidence = createComparisonEvidenceSnapshot({
+      environment: { label: "DEV", environmentUrl: "https://dev.crm.dynamics.com" },
+      evidenceType: "OperationalProfile",
+      evidence: { entityLogicalName: "account", entityDisplayName: "Account" },
+      capturedAt: new Date("2026-06-17T11:45:00.000Z"),
+      sourceFeature: "Operational Profile"
+    });
+
+    const document = createOperationalComparisonSnapshotDocument({
+      environment: { label: "DEV", environmentUrl: "https://dev.crm.dynamics.com" },
+      evidenceSnapshots: [evidence],
+      capturedAt: new Date("2026-06-17T11:45:00.000Z"),
+      sourceFeature: "Operational Profile",
+      snapshotId: "snapshot-account-dev-before",
+      snapshotLineageId: "lineage-account-dev",
+      label: "before-release",
+      entityLogicalName: "account",
+      entityDisplayName: "Account"
+    });
+
+    assert.strictEqual(document.snapshotIdentity?.identityVersion, "comparison-snapshot-identity-v1");
+    assert.strictEqual(document.snapshotIdentity?.snapshotId, "snapshot-account-dev-before");
+    assert.strictEqual(document.snapshotIdentity?.snapshotLineageId, "lineage-account-dev");
+    assert.strictEqual(document.snapshotIdentity?.label, "before-release");
+    assert.strictEqual(document.snapshotIdentity?.entityLogicalName, "account");
+    assert.strictEqual(document.snapshotIdentity?.entityDisplayName, "Account");
+    assert.strictEqual(document.snapshotIdentity?.environmentLabel, "DEV");
+    assert.strictEqual(document.lineage?.snapshotLineageId, "lineage-account-dev");
+    assert.strictEqual(verifyOperationalComparisonSnapshotIntegrity(document), true);
+  });
+
 
   test("marks tampered comparison documents as modified instead of silently trusting them", () => {
     const evidence = createComparisonEvidenceSnapshot({

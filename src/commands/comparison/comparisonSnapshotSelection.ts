@@ -13,10 +13,13 @@ export interface ComparisonSnapshotFile {
   readonly evidence?: unknown;
 }
 
+export type ComparisonSnapshotSelectionMode = "crossEnvironment" | "timeline";
+
 export interface ComparisonSnapshotSelection {
   readonly snapshots: readonly ComparisonSnapshotFile[];
   readonly sourceLabel?: string;
   readonly targetLabel?: string;
+  readonly comparisonMode?: ComparisonSnapshotSelectionMode;
   readonly subjectLabel?: string;
   readonly entityLogicalName?: string;
   readonly snapshotTrust?: {
@@ -28,6 +31,25 @@ export interface ComparisonSnapshotSelection {
 export interface ReadComparisonSnapshotResult {
   readonly snapshots: readonly ComparisonSnapshotFile[];
   readonly trustState: ComparisonSnapshotTrustState;
+}
+
+function cloneSnapshotsForComparisonLabel(
+  snapshots: readonly ComparisonSnapshotFile[],
+  label: string
+): readonly ComparisonSnapshotFile[] {
+  return snapshots.map((snapshot) => ({
+    ...snapshot,
+    environment: {
+      ...snapshot.environment,
+      label
+    }
+  }));
+}
+
+function buildTimelineComparisonLabel(baseLabel: string, kind: "source" | "target", snapshots: readonly ComparisonSnapshotFile[]): string {
+  const firstCapturedAt = snapshots.find((snapshot) => snapshot.metadata?.capturedAtIso)?.metadata?.capturedAtIso;
+  const capturedPart = firstCapturedAt ? ` · ${firstCapturedAt}` : "";
+  return `${baseLabel}${capturedPart} · ${kind}`;
 }
 
 async function loadProComparisonProviders(): Promise<readonly ComparisonProvider[]> {
@@ -144,19 +166,24 @@ export async function readSnapshotFiles(): Promise<ComparisonSnapshotSelection |
     return undefined;
   }
 
-  if (sourceLabel === targetLabel) {
-    void vscode.window.showWarningMessage(
-      `DV Quick Run: Source and target snapshots are both labelled ${sourceLabel}. Rename one environment label before comparing so source/target evidence remains unambiguous.`
-    );
-    return undefined;
-  }
+  const comparisonMode: ComparisonSnapshotSelectionMode = sourceLabel === targetLabel ? "timeline" : "crossEnvironment";
+  const comparisonSourceLabel = comparisonMode === "timeline"
+    ? buildTimelineComparisonLabel(sourceLabel, "source", sourceSnapshots.snapshots)
+    : sourceLabel;
+  const comparisonTargetLabel = comparisonMode === "timeline"
+    ? buildTimelineComparisonLabel(targetLabel, "target", targetSnapshots.snapshots)
+    : targetLabel;
 
-  const snapshots = [...sourceSnapshots.snapshots, ...targetSnapshots.snapshots];
+  const snapshots = [
+    ...cloneSnapshotsForComparisonLabel(sourceSnapshots.snapshots, comparisonSourceLabel),
+    ...cloneSnapshotsForComparisonLabel(targetSnapshots.snapshots, comparisonTargetLabel)
+  ];
 
   return {
     snapshots,
-    sourceLabel,
-    targetLabel,
+    sourceLabel: comparisonSourceLabel,
+    targetLabel: comparisonTargetLabel,
+    comparisonMode,
     entityLogicalName: getComparisonEntityLogicalName(snapshots),
     snapshotTrust: {
       sourceTrustState: sourceSnapshots.trustState,
@@ -287,6 +314,7 @@ export async function readRegisteredSnapshotFiles(context: vscode.ExtensionConte
 
   const sourceLabel = getSingleEnvironmentLabel("source", sourceSnapshots.snapshots) ?? source.label;
   const targetLabel = getSingleEnvironmentLabel("target", targetSnapshots.snapshots) ?? target.label;
+  const comparisonMode: ComparisonSnapshotSelectionMode = sourceLabel === targetLabel ? "timeline" : "crossEnvironment";
 
   if (sourceLabel === targetLabel) {
     const action = await vscode.window.showWarningMessage(
@@ -299,12 +327,23 @@ export async function readRegisteredSnapshotFiles(context: vscode.ExtensionConte
     }
   }
 
-  const snapshots = [...sourceSnapshots.snapshots, ...targetSnapshots.snapshots];
+  const comparisonSourceLabel = comparisonMode === "timeline"
+    ? buildTimelineComparisonLabel(sourceLabel, "source", sourceSnapshots.snapshots)
+    : sourceLabel;
+  const comparisonTargetLabel = comparisonMode === "timeline"
+    ? buildTimelineComparisonLabel(targetLabel, "target", targetSnapshots.snapshots)
+    : targetLabel;
+
+  const snapshots = [
+    ...cloneSnapshotsForComparisonLabel(sourceSnapshots.snapshots, comparisonSourceLabel),
+    ...cloneSnapshotsForComparisonLabel(targetSnapshots.snapshots, comparisonTargetLabel)
+  ];
 
   return {
     snapshots,
-    sourceLabel,
-    targetLabel,
+    sourceLabel: comparisonSourceLabel,
+    targetLabel: comparisonTargetLabel,
+    comparisonMode,
     entityLogicalName: getComparisonEntityLogicalName(snapshots),
     snapshotTrust: {
       sourceTrustState: sourceSnapshots.trustState,
@@ -343,20 +382,23 @@ export async function buildComparisonViewModelFromSnapshots(
     return undefined;
   }
 
-  const targetCandidates = environmentLabels.filter((label) => label !== sourceLabel);
+  const comparisonMode = selection.comparisonMode ?? "crossEnvironment";
+  const targetCandidates = comparisonMode === "timeline"
+    ? environmentLabels
+    : environmentLabels.filter((label) => label !== sourceLabel);
   const targetLabel = selection.targetLabel ?? await pickEnvironment("target", targetCandidates);
   if (!targetLabel) {
     return undefined;
   }
 
-  if (sourceLabel === targetLabel) {
+  if (sourceLabel === targetLabel && comparisonMode !== "timeline") {
     void vscode.window.showWarningMessage(
       `DV Quick Run: Source and target snapshots are both labelled ${sourceLabel}. Rename one environment label before comparing so source/target evidence remains unambiguous.`
     );
     return undefined;
   }
 
-  if (!selection.sourceLabel && !selection.targetLabel && environmentLabels.length < 2) {
+  if (comparisonMode !== "timeline" && !selection.sourceLabel && !selection.targetLabel && environmentLabels.length < 2) {
     void vscode.window.showWarningMessage(
       "Cross-Environment Diff needs a source snapshot and a target snapshot. Choose one file for Source, then one file for Target."
     );

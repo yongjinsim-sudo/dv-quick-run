@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, investigation, execution, and comparison workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.12.7",
+  "version": "0.12.8",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -59,6 +59,7 @@
   ],
   "activationEvents": [
     "onCommand:dvQuickRun.openSnapshotLibrary",
+    "onCommand:dvQuickRun.createEvidenceWorkspace",
     "onCommand:dvQuickRun.activateProLicense",
     "onCommand:dvQuickRun.licenseStatus",
     "onCommand:dvQuickRun.deactivateProLicense",
@@ -229,8 +230,16 @@
         "title": "DV Quick Run: Export Operational Profile Snapshot"
       },
       {
+        "command": "dvQuickRun.captureOperationalProfileSnapshot",
+        "title": "DV Quick Run: Capture Operational Profile Snapshot"
+      },
+      {
         "command": "dvQuickRun.openSnapshotLibrary",
         "title": "DV Quick Run: Open Snapshot Library"
+      },
+      {
+        "command": "dvQuickRun.createEvidenceWorkspace",
+        "title": "DV Quick Run: Create Evidence Workspace"
       },
       {
         "command": "dvQuickRun.runBatchQueries",
@@ -366,10 +375,9 @@
           "type": "string",
           "default": "free",
           "enum": [
-            "free",
-            "pro"
+            "free"
           ],
-          "description": "Controls DV Quick Run capability level. Unknown or unavailable entitlement states degrade to Free."
+          "description": "Legacy configuration fallback. DV Quick Run capability acceleration is resolved from signed/online entitlement state; unknown or unavailable entitlement states degrade to Free."
         },
         "dvQuickRun.environments": {
           "type": "array",
@@ -501,6 +509,11 @@
             "allow"
           ],
           "description": "Controls execution of AI-related Custom APIs discovered by Capability Explorer. Default deny keeps AI-related operations preview-only unless explicitly allowed."
+        },
+        "dvQuickRun.snapshotWorkspaceFolder": {
+          "type": "string",
+          "default": "",
+          "description": "Optional workspace-relative or absolute folder for DVQR workspace-backed snapshots. Empty uses .dvqr/snapshots in the current VS Code workspace."
         }
       }
     }
