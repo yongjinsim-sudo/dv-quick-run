@@ -97,12 +97,12 @@ function renderEvidenceWorkspaceLauncher(model: DvQuickRunHubViewModel): string 
       <div>
         <h3>${statusTitle}</h3>
         <p>${statusDetail}</p>
-        <p>Use Evidence Workspace, Snapshot Library, Timeline Diff, and Cross-Environment Diff to investigate operational drift and preserve investigation continuity.</p>
+        <p>Use Evidence Workspace and Snapshot Library to reconstruct same-environment timelines, run Timeline Diff, and reserve Cross-Environment Diff for environment comparison.</p>
         <div class="dvqr-meta">
           <span class="dvqr-chip">.dvqr/snapshots</span>
           <span class="dvqr-chip">.dvqr/comparisons</span>
           <span class="dvqr-chip">.dvqr/reports</span>
-          <span class="dvqr-chip">Timeline ready</span>
+          <span class="dvqr-chip">Timeline reconstruction</span>
         </div>
       </div>
       <div class="dvqr-evidence-actions">
@@ -189,6 +189,8 @@ function renderDvForgeLabEcosystem(): string {
       <div class="dvqr-meta"><span class="dvqr-chip">DVQR observes</span><span class="dvqr-chip">DVBUR executes</span><span class="dvqr-chip">No orchestration</span></div>
       <div class="dvqr-continuation-actions">
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabProducts">View DV ForgeLab Utilities</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openDvQuickRunPricing">Pricing</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabStore">Direct Purchase</button>
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvQuickRunWebsite">Open dvquickrun.com</button>
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabWebsite">Open dvforgelab.com</button>
       </div>

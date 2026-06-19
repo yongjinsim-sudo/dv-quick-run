@@ -44,7 +44,7 @@ function renderFutureSurfaces(surfaces: readonly OperationalProfileFutureSurface
 
   return surfaces
     .map((item) => {
-      const availability = item.availability === "proRoadmap" ? "Pro roadmap" : "Free roadmap";
+      const availability = item.id === "timelineInvestigation" ? "Available" : (item.availability === "proRoadmap" ? "Pro roadmap" : "Free roadmap");
       return `- **${escapeMarkdown(item.label)}** (${availability}): ${escapeMarkdown(item.description)}`;
     })
     .join("\n");

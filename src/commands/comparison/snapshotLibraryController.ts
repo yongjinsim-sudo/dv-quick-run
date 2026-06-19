@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { ComparisonViewModel } from "../../core/comparison/index.js";
+import type { ComparisonProviderContext, ComparisonViewModel } from "../../core/comparison/index.js";
 import {
   buildSnapshotRegistryEntry,
   createEvidenceWorkspace,
@@ -23,6 +23,9 @@ import { cloneSnapshotsForComparison } from "../../product/comparison/snapshotLi
 import { getMockComparisonSnapshotsForEntry, isMockComparisonRegistryEntry, mockSnapshotRegistryEntries, normalizeMockComparisonRegistryEntry } from "../../product/comparison/snapshotLibrary/mockComparisonSnapshots.js";
 import { getRecentComparisons, recordRecentComparison, removeRecentComparison } from "../../product/comparison/snapshotLibrary/recentComparisonService.js";
 import { renderSnapshotLibraryHtml } from "../../product/comparison/snapshotLibrary/snapshotLibraryRenderer.js";
+import { TimelineReconstructionService } from "../../pro/timeline/index.js";
+import type { TimelineComparisonExecutor, TimelineSnapshotRef } from "../../pro/timeline/index.js";
+import { openTimelineSurface } from "../timeline/timelineSurfaceController.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { promptForCrossEnvironmentDiffProAccess } from "./comparisonCapabilityPrompt.js";
 import { revealComparisonSurface } from "./comparisonSurfaceController.js";
@@ -194,6 +197,133 @@ function withComparisonSessionMetadata(
       }
     }
   };
+}
+
+
+interface LoadedTimelineSnapshot {
+  readonly entry: ComparisonSnapshotRegistryEntry;
+  readonly payload: Awaited<ReturnType<typeof readSnapshotUri>>;
+}
+
+function toTimelineSnapshotRef(
+  entry: ComparisonSnapshotRegistryEntry,
+  trustState: ComparisonSnapshotTrustState
+): TimelineSnapshotRef {
+  const subjectLabel = getSnapshotSubjectLabel(entry);
+  return {
+    snapshotId: entry.snapshotId,
+    label: getSnapshotDisplayLabel(entry),
+    environmentLabel: entry.environmentLabel,
+    environmentUrl: entry.environmentUrl,
+    subjectLabel,
+    subjectType: entry.entityLogicalName ? "entity" : "unknown",
+    entityLogicalName: entry.entityLogicalName,
+    capturedAtIso: entry.capturedAtIso,
+    trustState,
+    fileUri: entry.fileUri,
+    lineageId: entry.lineage?.origin
+  };
+}
+
+function buildTimelineComparisonLabel(entry: TimelineSnapshotRef, kind: "source" | "target"): string {
+  return `${entry.environmentLabel} · ${entry.subjectLabel ?? entry.entityLogicalName ?? "Snapshot"} · ${entry.capturedAtIso} · ${kind}`;
+}
+
+class SnapshotLibraryTimelineComparisonExecutor implements TimelineComparisonExecutor {
+  public constructor(private readonly loadedSnapshots: ReadonlyMap<string, LoadedTimelineSnapshot>) {}
+
+  public async compare(context: ComparisonProviderContext): Promise<ComparisonViewModel> {
+    const [fromRef, toRef] = (context.snapshots ?? []) as readonly TimelineSnapshotRef[];
+    const from = fromRef ? this.loadedSnapshots.get(fromRef.snapshotId) : undefined;
+    const to = toRef ? this.loadedSnapshots.get(toRef.snapshotId) : undefined;
+
+    if (!fromRef || !toRef || !from?.payload || !to?.payload) {
+      throw new Error("Timeline interval snapshot evidence is unavailable.");
+    }
+
+    const sourceLabel = buildTimelineComparisonLabel(fromRef, "source");
+    const targetLabel = buildTimelineComparisonLabel(toRef, "target");
+    const sameSubject = getSnapshotSubjectKey(from.entry) === getSnapshotSubjectKey(to.entry);
+
+    const model = await buildComparisonViewModelFromSnapshots({
+      snapshots: [
+        ...cloneSnapshotsForComparison(from.payload.snapshots, sourceLabel),
+        ...cloneSnapshotsForComparison(to.payload.snapshots, targetLabel)
+      ],
+      sourceLabel,
+      targetLabel,
+      comparisonMode: "timeline",
+      subjectLabel: sameSubject ? getSnapshotSubjectLabel(from.entry) : `${getSnapshotSubjectLabel(from.entry)} → ${getSnapshotSubjectLabel(to.entry)}`,
+      entityLogicalName: from.entry.entityLogicalName ?? to.entry.entityLogicalName,
+      snapshotTrust: {
+        sourceTrustState: from.payload.trustState,
+        targetTrustState: to.payload.trustState
+      }
+    });
+
+    if (!model) {
+      throw new Error("Timeline interval comparison did not return a view model.");
+    }
+
+    return model;
+  }
+}
+
+async function reconstructTimelineFromRegisteredSnapshotEntries(
+  ctx: CommandContext,
+  snapshotIds: readonly string[]
+): Promise<void> {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "DV Quick Run: Reconstructing operational timeline...",
+    cancellable: false
+  }, async (progress) => {
+    progress.report({ message: "Loading selected snapshots" });
+
+    const entries = getSnapshotLibraryEntries(ctx.ext);
+    const byId = new Map(entries.map((entry) => [entry.snapshotId, entry]));
+    const selectedEntries = Array.from(new Set(snapshotIds))
+      .map((snapshotId) => byId.get(snapshotId))
+      .filter((entry): entry is ComparisonSnapshotRegistryEntry => Boolean(entry));
+
+    if (selectedEntries.length < 3) {
+      void vscode.window.showWarningMessage("DV Quick Run: Select three or more snapshots to reconstruct an operational timeline.");
+      return;
+    }
+
+    const loadedPairs: Array<[string, LoadedTimelineSnapshot]> = [];
+    const refs: TimelineSnapshotRef[] = [];
+
+    for (const entry of selectedEntries) {
+      const payload = getMockComparisonSnapshotsForEntry(entry)
+        ?? await readSnapshotUri(vscode.Uri.parse(entry.fileUri));
+
+      if (!payload) {
+        void vscode.window.showWarningMessage(`DV Quick Run: Could not load selected snapshot ${getSnapshotDisplayLabel(entry)}.`);
+        return;
+      }
+
+      loadedPairs.push([entry.snapshotId, { entry, payload }]);
+      refs.push(toTimelineSnapshotRef(entry, payload.trustState));
+    }
+
+    const service = new TimelineReconstructionService(new SnapshotLibraryTimelineComparisonExecutor(new Map(loadedPairs)));
+
+    progress.report({ message: "Running adjacent interval comparisons" });
+    const timeline = await service.reconstruct(refs, {
+      dvqrVersion: typeof ctx.ext.extension.packageJSON?.version === "string" ? ctx.ext.extension.packageJSON.version : "unknown",
+      requireSameEnvironment: true
+    });
+
+    if (timeline.status === "Blocked") {
+      const detail = timeline.warnings.map((warning) => `• ${warning.message}`).join("\n");
+      void vscode.window.showWarningMessage(`DV Quick Run: Timeline reconstruction is not available for this selection.${detail ? `\n\n${detail}` : ""}`);
+      return;
+    }
+
+    progress.report({ message: "Opening Operational Timeline surface" });
+    openTimelineSurface(ctx, timeline);
+  });
 }
 
 async function compareRegisteredSnapshotEntries(
@@ -535,6 +665,7 @@ export function revealSnapshotLibrarySurface(
       readonly isFavourite?: boolean;
       readonly surface?: string;
       readonly comparisonId?: string;
+      readonly snapshotIds?: readonly string[];
     };
 
     if (request.type === "refresh") {
@@ -648,6 +779,17 @@ export function revealSnapshotLibrarySurface(
 
     if (request.type === "deleteSnapshot" && request.snapshotId) {
       void deleteRegisteredSnapshot(ctx, request.snapshotId);
+      return;
+    }
+
+    if (request.type === "reconstructTimeline" && request.snapshotIds?.length) {
+      void reconstructTimelineFromRegisteredSnapshotEntries(ctx, request.snapshotIds)
+        .then(() => snapshotLibraryPanel?.webview.postMessage({ type: "timelineReconstructionComplete" }))
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          void vscode.window.showWarningMessage(`DV Quick Run: Timeline reconstruction failed: ${message}`);
+          void snapshotLibraryPanel?.webview.postMessage({ type: "timelineReconstructionFailed" });
+        });
       return;
     }
 

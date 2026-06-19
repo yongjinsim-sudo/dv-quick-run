@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Metadata-aware Dataverse query, investigation, execution, and comparison workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.12.8",
+  "description": "Metadata-aware Dataverse query, investigation, execution, comparison, and operational timeline reconstruction workbench for OData, FetchXML, and $batch in VS Code.",
+  "version": "0.13.0",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -55,9 +55,16 @@
     "dataverse comparison",
     "dataverse diff",
     "dataverse snapshot",
-    "dataverse operational investigation"
+    "dataverse operational investigation",
+    "dataverse timeline",
+    "dataverse timeline reconstruction",
+    "dataverse investigation report",
+    "dataverse evidence workspace",
+    "dataverse snapshot timeline",
+    "dataverse drift investigation"
   ],
   "activationEvents": [
+    "onStartupFinished",
     "onCommand:dvQuickRun.openSnapshotLibrary",
     "onCommand:dvQuickRun.createEvidenceWorkspace",
     "onCommand:dvQuickRun.activateProLicense",

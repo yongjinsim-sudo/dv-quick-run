@@ -360,7 +360,7 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded artifacts to focused companion utilities, starting with Upsert Artifact handoff to DV Bulk Upsert Runner." },
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
   { title: "Evidence Workspace", summary: "Local workspace-backed evidence capture gives investigations a Git-friendly home without turning DVQR into Git tooling or hosted persistence." },
-  { title: "Future operational comparison", summary: "Operational comparison is emerging as a bounded product direction for drift investigation without remediation or deployment tooling." }
+  { title: "Timeline Reconstruction and operational comparison", summary: "Timeline Reconstruction is available for same-environment snapshot sequences, while broader comparison remains bounded to drift investigation without remediation or deployment tooling." }
 ];
 
 
@@ -375,7 +375,7 @@ function buildProComparisonCapability(): CapabilityInfo {
       "Create or open an Evidence Workspace from the Hub or Snapshot Library.",
       "Capture Operational Profile snapshots into the workspace.",
       "Select source and target snapshots, or compare latest and previous snapshots from the library.",
-      "Use Timeline Diff for same-environment history and Cross-Environment Diff for different-environment comparison.",
+      "Use Timeline Reconstruction for 3+ same-environment snapshots, Timeline Diff for two same-environment snapshots, and Cross-Environment Diff for different-environment comparison.",
       "Export comparison evidence when you need to preserve or share investigation context."
     ],
     relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
@@ -401,9 +401,11 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
+  "v0.13.0 introduces Timeline Reconstruction for 3+ same-environment snapshots, with timeline graph, first-observed windows, and Timeline Findings/Handoff reports.",
+  "Free users can try the timeline workflow with built-in TIMELINE-MOCK snapshots from Snapshot Library.",
   "Evidence Workspace creates a local .dvqr evidence tree for snapshots, comparisons, and reports.",
   "Snapshot Library can capture Operational Profile snapshots directly into the active Evidence Workspace.",
-  "Evidence selection now supports compact multi-select, Compare Selected, search, and timeline-ready selection states.",
+  "Evidence selection now supports compact multi-select, same-environment Timeline Reconstruction, Compare Selected, search, and timeline-ready selection states.",
   "Create Evidence Workspace guides first-time setup and opens the workspace in VS Code.",
   "Export dropdown consolidates CSV, JSON, and Pro Upsert Artifact export actions in Result Viewer.",
   "Pro Upsert Artifact export creates .dvbur.json packages for DV Bulk Upsert Runner from flat single-entity Result Viewer results.",

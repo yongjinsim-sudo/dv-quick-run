@@ -273,7 +273,7 @@ function buildOperationalProfileFutureSurfaces(): OperationalProfileFutureSurfac
     {
       id: "timelineInvestigation",
       label: "Timeline investigation",
-      description: "Compare same-environment snapshots over time to observe operational state changes without treating the timeline as root-cause proof.",
+      description: "Available from Snapshot Library for 3+ same-environment snapshots. Reconstruct first-observed drift windows and generate timeline investigation reports without treating the timeline as root-cause proof.",
       availability: "proRoadmap"
     },
     {
