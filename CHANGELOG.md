@@ -8,6 +8,438 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+
+## v0.13.0.1 — Purchase Path Consistency
+
+- Added Direct Purchase buttons throughout Pro upgrade flows.
+- Added Lemon Squeezy fallback purchase path for environments where dvquickrun.com is restricted.
+- Improved Pro upgrade messaging for Timeline Reconstruction.
+
+---
+
+# DV Quick Run v0.13.0 — Operational Timeline Reconstruction, Evidence Evolution & Investigation Handoff
+
+This release introduces the first complete **Operational Timeline Reconstruction** workflow inside DV Quick Run.
+
+DV Quick Run can now move beyond point-in-time comparison and reconstruct how operational evidence evolved across multiple snapshots.
+
+Investigators can now:
+
+* reconstruct operational timelines across 3+ snapshots
+* understand when drift was first observed
+* visualise evidence evolution across capture windows
+* generate timeline investigation reports
+* preserve timeline continuity through Evidence Workspace artifacts
+* coordinate historical operational investigations through Snapshot Library
+
+The goal is not historical certainty.
+
+It is:
+
+* evidence evolution visibility
+* bounded timeline reconstruction
+* explainable operational history
+* investigation continuity
+* evidence-first operational reasoning
+* calmer historical drift understanding
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR reconstructs observed evidence.
+
+DVQR does not reconstruct historical certainty.
+```
+
+---
+
+## ⏱️ Timeline Reconstruction (Major)
+
+Introduced the first complete Timeline Reconstruction workflow.
+
+Investigators can now select:
+
+```text
+3 or more compatible snapshots
+```
+
+from the same:
+
+* environment
+* subject/entity
+
+to reconstruct an operational timeline.
+
+Timeline Reconstruction surfaces:
+
+* snapshot-bounded intervals
+* first-observed drift windows
+* provider-owned timeline findings
+* significance distribution
+* evidence continuity
+* timeline trust state
+
+Behaviour:
+
+* timeline evidence remains snapshot-bound
+* no interpolation occurs
+* no hidden historical reconstruction occurs
+* operational authority is not inferred
+* exact change times are not claimed
+
+Results:
+
+* dramatically improved historical investigation capability
+* clearer operational evolution visibility
+* stronger evidence continuity
+* reduced manual timeline analysis effort
+
+---
+
+## 📈 Timeline Graph & Interval Analysis (Major)
+
+Added dedicated Timeline Graph visualisation.
+
+Timeline Graph displays:
+
+* ordered snapshot progression
+* interval boundaries
+* event density by interval
+* timeline range
+* drift concentration
+* evidence distribution
+
+Intervals are bounded by adjacent snapshots.
+
+Example:
+
+```text
+Snapshot A
+    ↓
+Interval 1
+    ↓
+Snapshot B
+    ↓
+Interval 2
+    ↓
+Snapshot C
+```
+
+Behaviour:
+
+* events belong to capture windows
+* findings are attributed to first-observed intervals
+* graph remains evidence-backed
+* no causality is inferred
+
+Results:
+
+* faster timeline orientation
+* improved operational readability
+* calmer investigation workflows
+* stronger historical understanding
+
+---
+
+## 🔍 First-Observed Drift Detection (Major)
+
+Timeline Reconstruction now identifies:
+
+```text
+When was this first observed?
+```
+
+for timeline-compatible providers.
+
+Supported providers include:
+
+* Operational Profile Drift
+* Solution Participation Drift
+* Workflow / Automation Participation Drift
+* Plugin Runtime Behaviour Drift
+* Identity Participation Drift
+* Column Metadata Drift
+* Relationship Metadata Drift
+* Choice / Option Set Drift
+* Entity Configuration Drift
+
+Timeline findings surface:
+
+* first observed interval
+* first observed snapshot window
+* provider context
+* representative evidence
+* significance classification
+
+Results:
+
+* stronger operational chronology
+* improved drift triage
+* clearer investigation narratives
+* reduced manual comparison effort
+
+---
+
+## 📄 Timeline Findings Summary Report (New)
+
+Added Timeline Findings Summary report generation.
+
+Reports include:
+
+* timeline overview
+* interval summaries
+* provider distribution
+* significance distribution
+* timeline trust state
+* first-observed findings
+
+Behaviour:
+
+* report remains investigation-oriented
+* strongest signals surface first
+* evidence remains bounded and explainable
+
+Results:
+
+* faster executive review
+* improved operational communication
+* clearer historical summaries
+* stronger investigation portability
+
+---
+
+## 📦 Timeline Investigation Handoff (Major)
+
+Introduced Timeline Investigation Handoff exports.
+
+Timeline handoff reports preserve:
+
+* reconstructed timeline context
+* interval evidence
+* provider findings
+* significance interpretation
+* timeline trust information
+* evidence continuity
+
+Behaviour:
+
+* timeline handoff remains advisory-only
+* no remediation guidance is generated
+* no operational authority is inferred
+
+Results:
+
+* stronger investigation continuity
+* improved escalation workflows
+* cleaner review handoffs
+* enterprise-ready timeline reporting
+
+---
+
+## 📚 Snapshot Library Timeline Workflows
+
+Expanded Snapshot Library into a timeline investigation workspace.
+
+Added:
+
+* timeline-ready selection states
+* multi-snapshot evidence selection
+* timeline reconstruction launch workflows
+* timeline readiness indicators
+* interval-aware investigation entry points
+* compatibility validation for timeline reconstruction
+
+Behaviour:
+
+```text
+2 snapshots
+→ Comparison
+
+3+ compatible snapshots
+→ Timeline Reconstruction
+```
+
+Additional safeguards:
+
+* timelines require snapshots from the same environment
+* timelines require the same entity/subject
+* incompatible snapshot combinations are blocked
+* cross-environment timelines are not permitted
+
+Results:
+
+* clearer workflow progression
+* stronger Evidence Workspace integration
+* improved discoverability
+* calmer operational UX
+
+---
+
+## 🎭 Free Timeline Preview
+
+Added built-in:
+
+```text
+TIMELINE-MOCK
+```
+
+sample evidence packs.
+
+Free users can now:
+
+* explore timeline workflows
+* generate sample timeline reports
+* understand interval-based investigation
+* preview Timeline Reconstruction before Pro activation
+
+Included mock history:
+
+* baseline operational profile
+* identity participation drift
+* column metadata drift
+* relationship metadata drift
+* choice metadata drift
+
+Behaviour:
+
+* mock timelines remain educational
+* real timeline reconstruction remains Pro
+* understanding remains visible before acceleration
+
+Results:
+
+* improved onboarding
+* stronger feature discoverability
+* clearer value demonstration
+* preserved open-core philosophy
+
+---
+
+## 🛡️ Timeline Trust & Verification
+
+Expanded Snapshot Trust into timeline workflows.
+
+Timeline Reconstruction now evaluates:
+
+* Verified snapshots
+* Modified snapshots
+* Legacy / Unverified snapshots
+* Invalid snapshots
+
+Timeline reports surface:
+
+```text
+Timeline Trust
+```
+
+including:
+
+* verification counts
+* modification counts
+* timeline confidence boundaries
+
+Behaviour:
+
+* unverified evidence remains visible
+* trust state remains explicit
+* timeline reconstruction remains inspectable
+
+Results:
+
+* stronger investigation transparency
+* improved evidence trustworthiness
+* safer historical interpretation
+
+---
+
+## 🎨 Timeline Investigation UX
+
+Added dedicated timeline investigation experiences across:
+
+* Snapshot Library
+* Timeline Graph
+* Timeline Findings Summary
+* Timeline Investigation Handoff
+* Welcome Experience
+* Operational Profile roadmap surfaces
+* Hub roadmap surfaces
+
+Improvements include:
+
+* interval visualisation
+* timeline-oriented terminology
+* evidence evolution summaries
+* first-observed narratives
+* stronger historical readability
+* calmer enterprise investigation workflows
+
+Results:
+
+* significantly improved historical investigation UX
+* stronger operational storytelling
+* clearer evidence evolution visibility
+* reduced cognitive load
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* timeline reconstruction workflows
+* interval generation
+* first-observed finding detection
+* timeline graph rendering
+* provider distribution summaries
+* significance distribution summaries
+* timeline PDF exports
+* timeline HTML exports
+* timeline handoff reports
+* mock timeline datasets
+* same-environment compatibility validation
+* same-entity compatibility validation
+
+No regression in:
+
+* Snapshot Library
+* Cross-Environment Diff
+* Operational Profiles
+* Access Context
+* Result Viewer
+* Relationship Graph
+* Capability Explorer
+* Execution Insights
+* Evidence Workspace workflows
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* reconstruct operational timelines across multiple snapshots
+* identify when drift was first observed
+* visualise evidence evolution through interval graphs
+* generate timeline-focused investigation reports
+* preserve evidence continuity across historical investigations
+* coordinate multi-snapshot investigations through Snapshot Library
+
+This release evolves DV Quick Run from:
+
+```text
+Operational Comparison
+```
+
+towards:
+
+```text
+Operational Timeline Investigation
+```
+
+while preserving DVQR's evidence-first investigation model.
+
+---
+
 # DV Quick Run v0.12.8 — Evidence Workspace & Snapshot Capture
 
 This release evolves Snapshot Library from a saved-file list into a local Evidence Workspace for Dataverse investigation.

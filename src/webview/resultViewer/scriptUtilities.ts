@@ -1117,10 +1117,11 @@ function showCopyStatus(message) {
             const renderSurface = (surface) => {
                 const availability = String(surface?.availability || "freeRoadmap");
                 const isPro = availability === "proRoadmap";
-                const badgeText = isPro ? "Pro roadmap" : "Free roadmap";
+                const isTimeline = String(surface?.id || "") === "timelineInvestigation";
+                const badgeText = isTimeline ? "Available" : (isPro ? "Pro roadmap" : "Free roadmap");
                 const tooltip = String(surface?.description || "Future investigation surface.");
                 return '<div class="profile-future-surface profile-future-surface-' + escapeAttribute(availability) + '" title="' + escapeAttribute(tooltip) + '" tabindex="0" aria-label="' + escapeAttribute((surface?.label || "Future investigation surface") + '. ' + tooltip) + '">' +
-                    '<span class="profile-future-lock" aria-hidden="true">' + (isPro ? '🔒' : '⏳') + '</span>' +
+                    '<span class="profile-future-lock" aria-hidden="true">' + (isTimeline ? '🕒' : (isPro ? '🔒' : '⏳')) + '</span>' +
                     '<span class="profile-future-main"><span class="profile-future-label">' + escapeHtml(surface?.label || "Future investigation surface") + '</span>' +
                     '<span class="profile-future-description">' + escapeHtml(tooltip) + '</span></span>' +
                     '<span class="profile-future-badge">' + escapeHtml(badgeText) + '</span>' +
@@ -1128,9 +1129,9 @@ function showCopyStatus(message) {
             };
 
             return '<details class="profile-future-surfaces">' +
-                '<summary><span class="profile-future-icon">' + profileIconSvg("target", "Future investigation surfaces") + '</span><span>Future investigation surfaces</span><span class="profile-guidance-count">' + escapeHtml(String(surfaces.length)) + ' items</span></summary>' +
+                '<summary><span class="profile-future-icon">' + profileIconSvg("target", "Operational investigation surfaces") + '</span><span>Operational investigation surfaces</span><span class="profile-guidance-count">' + escapeHtml(String(surfaces.length)) + ' items</span></summary>' +
                 '<div class="profile-future-surface-list">' +
-                '<div class="profile-future-surface-intro">Roadmap directions for deeper operational investigation and faster context switching.</div>' +
+                '<div class="profile-future-surface-intro">Timeline investigation is available from Snapshot Library for 3+ same-environment snapshots; audit, runtime, deployment, and baseline surfaces remain roadmap directions.</div>' +
                 surfaces.map(renderSurface).join("") + '</div>' +
                 '</details>';
         }

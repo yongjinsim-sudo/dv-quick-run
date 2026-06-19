@@ -43,7 +43,7 @@ export function resolveSnapshotSelection(
 
   if (selectedSnapshots.length === 2) {
     const [source, target] = selectedSnapshots;
-    const sameEnvironment = source?.environmentLabel === target?.environmentLabel;
+    const sameEnvironment = getSnapshotEnvironmentKey(source) === getSnapshotEnvironmentKey(target);
     return {
       selectedSnapshotIds: uniqueIds,
       selectedSnapshots,
@@ -56,12 +56,41 @@ export function resolveSnapshotSelection(
     };
   }
 
+  const sameTimelineEnvironment = hasSingleSnapshotEnvironment(selectedSnapshots);
+  const sameTimelineSubject = hasSingleSnapshotSubject(selectedSnapshots);
+  const canBuildTimeline = sameTimelineEnvironment && sameTimelineSubject;
+  const message = !sameTimelineSubject
+    ? "Timeline reconstruction requires snapshots for the same subject. Select one entity or subject only."
+    : !sameTimelineEnvironment
+      ? "Timeline reconstruction requires same-environment snapshots. Use Cross-Environment Diff for environment comparison."
+      : `${selectedSnapshots.length} compatible snapshots selected. Ready to reconstruct an operational timeline.`;
+
   return {
     selectedSnapshotIds: uniqueIds,
     selectedSnapshots,
-    mode: "timelineReady",
+    mode: canBuildTimeline ? "timelineReady" : "none",
     canCompare: false,
-    canBuildTimeline: true,
-    message: `${selectedSnapshots.length} snapshots selected. Timeline reconstruction is coming in v0.13.x.`
+    canBuildTimeline,
+    message
   };
+}
+
+function getSnapshotEnvironmentKey(entry: ComparisonSnapshotRegistryEntry | undefined): string | undefined {
+  const value = entry?.environmentUrl ?? entry?.environmentLabel;
+  return value?.trim().toLowerCase();
+}
+
+function getSnapshotSubjectKey(entry: ComparisonSnapshotRegistryEntry | undefined): string | undefined {
+  const value = entry?.entityLogicalName ?? entry?.entityDisplayName ?? entry?.label;
+  return value?.trim().toLowerCase();
+}
+
+function hasSingleSnapshotEnvironment(entries: readonly ComparisonSnapshotRegistryEntry[]): boolean {
+  const first = getSnapshotEnvironmentKey(entries[0]);
+  return Boolean(first) && entries.every((entry) => getSnapshotEnvironmentKey(entry) === first);
+}
+
+function hasSingleSnapshotSubject(entries: readonly ComparisonSnapshotRegistryEntry[]): boolean {
+  const first = getSnapshotSubjectKey(entries[0]);
+  return Boolean(first) && entries.every((entry) => getSnapshotSubjectKey(entry) === first);
 }

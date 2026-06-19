@@ -17,7 +17,7 @@ import { initializeEntitlementRuntime } from "./product/capabilities/entitlement
 import { registerImportOfflineLicenseCommand } from "./commands/commercial/importOfflineLicenseCommand.js";
 import { registerOnlineProLicenseCommands } from "./commands/commercial/onlineProLicenseCommands.js";
 import { scheduleOnlineEntitlementRefresh } from "./product/capabilities/onlineActivation/onlineEntitlementRefresh.js";
-import { maybeShowV0125Welcome, registerShowWelcomeCommand } from "./runtime/proWelcomeLifecycle.js";
+import { maybeShowV0130Welcome, registerShowWelcomeCommand } from "./runtime/proWelcomeLifecycle.js";
 
 export async function activate(context: vscode.ExtensionContext) {
   
@@ -57,7 +57,7 @@ registerVirtualJsonProvider(context);
   await vscode.commands.executeCommand("setContext", "dvQuickRun.crossEnvironmentDiffAvailable", canRunCrossEnvironmentDiff());
   await vscode.commands.executeCommand("setContext", "dvQuickRun.crossEnvironmentDiffTeaserAvailable", shouldShowComparisonTeaser());
   await maybeOpenQuickStartOnFirstRun(ctx);
-  await maybeShowV0125Welcome(context);
+  await maybeShowV0130Welcome(context);
 }
 
 export function deactivate() {}

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { DVFORGELAB_PRODUCTS_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
+import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_12_5.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_13_0.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.12.5</title>
+<title>DV Quick Run v0.13.0</title>
 <style>
   :root {
     color-scheme: dark;
@@ -98,6 +98,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
   button { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 9px 14px; cursor: pointer; font-weight: 800; }
   button.primary { background: var(--accent); color: var(--accentText); border-color: var(--accent); }
   button.gold { background: var(--gold); color: #1d1d1d; border-color: var(--gold); }
+  button.store { background: #5fbf7a; color: #07120a; border-color: #5fbf7a; }
   .footer { color: var(--muted); margin-top: 12px; font-size: 12px; }
   @media (max-width: 760px) {
     .hero { grid-template-columns: 1fr; }
@@ -111,50 +112,51 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.12.5</div>
-        <h1>DVQR Pathfinder • Early Supporter</h1>
-        <p class="subtitle"><strong>Observe operational drift. Investigate runtime behaviour.</strong><br>DV Quick Run keeps foundational Dataverse operational understanding accessible while Pro accelerates comparison, replay, reporting, and investigation continuity.</p>
+        <div class="eyebrow">What's new in v0.13.0</div>
+        <h1>Timeline Reconstruction is here</h1>
+        <p class="subtitle"><strong>Reconstruct operational evidence across 3+ same-environment snapshots.</strong><br>DV Quick Run v0.13.0 turns Snapshot Library evidence into timeline graphs, first-observed drift windows, and DVQR-flavoured investigation reports.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">Founder-era early supporter pricing</div>
-          <div class="price">$19 USD / month</div>
-          <div class="limit">Limited to the first 200 Pathfinder supporters.</div>
-          <p class="recognition">Pathfinder includes the complete DVQR Pro acceleration capability set at a founder-era price. Once Pathfinder closes, new Pro subscriptions will be available at the standard <strong>$29 USD / month</strong> rate.</p>
-          <span class="badge">DVQR Pathfinder • Early Supporter</span>
+          <div class="eyebrow">Released in v0.13.0</div>
+          <div class="price">Operational Timeline Reconstruction</div>
+          <div class="limit">Snapshot-bounded evidence evolution for Dataverse investigations.</div>
+          <p class="recognition">Select three or more compatible snapshots from the same entity and environment to reconstruct when drift was first observed. DVQR keeps the boundary clear: timeline evidence is inspect-only and does not claim exact change time, causality, remediation status, or operational authority.</p>
+          <span class="badge">Pro · Timeline Reconstruction</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Pathfinder</strong><span>First 200 · $19/month</span></div>
-        <div class="price-pill"><strong>Standard Pro</strong><span>$29/month after Pathfinder</span></div>
-        <div class="price-pill"><strong>Offline Pro</strong><span>$499/year · available separately</span></div>
+        <div class="price-pill"><strong>Timeline Graph</strong><span>Clickable interval graph in the timeline surface</span></div>
+        <div class="price-pill"><strong>Findings Summary</strong><span>DVQR PDF/HTML report for executive review</span></div>
+        <div class="price-pill"><strong>Investigation Handoff</strong><span>Evidence-first report for continuity and sharing</span></div>
       </div>
       <div class="actions">
-        <button class="gold" data-action="pricing">Join Pathfinder</button>
-        <button class="primary" data-action="pricing">View Pricing</button>
+        <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
+        <button class="gold" data-action="pricing">View Pro Pricing</button>
+        <button class="store" data-action="store">Direct Purchase</button>
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Free preview includes TIMELINE-MOCK snapshots for trying Timeline Reconstruction reports. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     </section>
 
     <section class="section">
       <div class="eyebrow">Available today</div>
       <div class="grid">
+        <div class="card"><h3>🕒 Timeline Reconstruction</h3><p>Reconstruct first-observed operational drift across 3+ same-environment snapshots, with timeline graph and interval grouping.</p></div>
+        <div class="card"><h3>📄 Timeline Reports</h3><p>Generate Timeline Findings Summary and Timeline Investigation Handoff reports in HTML/PDF.</p></div>
+        <div class="card"><h3>🧪 Free Mock Timeline</h3><p>Use built-in TIMELINE-MOCK snapshots to preview the full timeline investigation workflow without setup.</p></div>
         <div class="card"><h3>🔍 Cross-Environment Diff</h3><p>Compare environments and snapshots to investigate operational drift without remediation claims.</p></div>
-        <div class="card"><h3>📄 Investigation Reports</h3><p>Generate Diff Findings Summary and Investigation Handoff reports for verification and operational continuity.</p></div>
-        <div class="card"><h3>♻️ Snapshot Replay</h3><p>Preserve investigation context and compare operational state over time.</p></div>
-        <div class="card"><h3>📦 Upsert Artifact Export</h3><p>Export reusable .dvbur.json packages for DV Bulk Upsert Runner.</p></div>
       </div>
     </section>
 
     <section class="section future">
-      <div class="eyebrow">Future Pro direction</div>
+      <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🕒 Timeline Reconstruction</h3><p>Audit-aware chronology and operational state evolution across snapshots.</p></div>
+        <div class="card"><h3>🧾 Audit Enrichment</h3><p>Correlate available audit evidence into timeline windows to add who/when context while preserving verification boundaries.</p></div>
         <div class="card"><h3>🔬 Guided Operational Reasoning</h3><p>Evidence-backed mini-RCA style investigation guidance while preserving human verification boundaries.</p></div>
         <div class="card"><h3>🧩 Expanded Comparison Providers</h3><p>Environment variables, choices, metadata construction artifacts, and additional operational drift domains.</p></div>
         <div class="card"><h3>🔗 DV ForgeLab Utility Integration</h3><p>Bounded artifact handoffs across DV Bulk Upsert Runner, DV Choice Editor, DV Environment Variable Manager, DV Identity Manager, and DV Attribute Factory.</p></div>
@@ -180,10 +182,10 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 </html>`;
 }
 
-async function showV0125WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
+async function showV0130WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0125",
-    "DV Quick Run v0.12.5",
+    "dvQuickRunWelcomeV0130",
+    "DV Quick Run v0.13.0",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -205,8 +207,19 @@ async function showV0125WelcomePanel(context: vscode.ExtensionContext): Promise<
       return;
     }
 
+    if (message.action === "store") {
+      await vscode.env.openExternal(vscode.Uri.parse(DVFORGELAB_STORE_URL));
+      return;
+    }
+
     if (message.action === "products") {
       await vscode.env.openExternal(vscode.Uri.parse(DVFORGELAB_PRODUCTS_URL));
+      return;
+    }
+
+    if (message.action === "snapshotLibrary") {
+      await vscode.commands.executeCommand("dvQuickRun.openSnapshotLibrary");
+      panel.dispose();
       return;
     }
 
@@ -216,7 +229,7 @@ async function showV0125WelcomePanel(context: vscode.ExtensionContext): Promise<
   }, null, context.subscriptions);
 }
 
-export async function maybeShowV0125Welcome(context: vscode.ExtensionContext): Promise<void> {
+export async function maybeShowV0130Welcome(context: vscode.ExtensionContext): Promise<void> {
   if (context.extensionMode === vscode.ExtensionMode.Test) {
     return;
   }
@@ -226,17 +239,17 @@ export async function maybeShowV0125Welcome(context: vscode.ExtensionContext): P
   }
 
   await context.globalState.update(WELCOME_KEY, true);
-  await showV0125WelcomePanel(context);
+  await showV0130WelcomePanel(context);
 }
 
-export async function showV0125Welcome(context: vscode.ExtensionContext): Promise<void> {
-  await showV0125WelcomePanel(context);
+export async function showV0130Welcome(context: vscode.ExtensionContext): Promise<void> {
+  await showV0130WelcomePanel(context);
 }
 
 export function registerShowWelcomeCommand(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("dvQuickRun.showWelcomeScreen", async () => {
-      await showV0125Welcome(context);
+      await showV0130Welcome(context);
     })
   );
 }

@@ -5,7 +5,7 @@ import { buildDvQuickRunHubViewModel } from "./dvQuickRunHubViewModel.js";
 import { renderDvQuickRunHubHtml } from "../../webview/hub/renderDvQuickRunHubHtml.js";
 import { investigationContextStore } from "../../investigation/context/investigationContextStore.js";
 import { resolveEntitlement } from "../../product/capabilities/entitlementResolver.js";
-import { openDvQuickRunPricing } from "../commercial/proPricingPrompt.js";
+import { openDvForgeLabStore, openDvQuickRunPricing } from "../commercial/proPricingPrompt.js";
 
 let hubPanel: vscode.WebviewPanel | undefined;
 let hubContextChangeSubscription: { dispose: () => void } | undefined;
@@ -124,5 +124,6 @@ export function registerOpenDvQuickRunHubCommand(
   registerCommand(context, "dvQuickRun.openDvForgeLabProducts", openDvForgeLabProducts, ctx);
   registerCommand(context, "dvQuickRun.openDvQuickRunWebsite", openDvQuickRunWebsite, ctx);
   registerCommand(context, "dvQuickRun.openDvQuickRunPricing", openDvQuickRunPricing, ctx);
+  registerCommand(context, "dvQuickRun.openDvForgeLabStore", openDvForgeLabStore, ctx);
   registerCommand(context, "dvQuickRun.openDvForgeLabWebsite", openDvForgeLabWebsite, ctx);
 }

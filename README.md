@@ -1,8 +1,8 @@
 # DV Quick Run
 
-A fast, metadata-aware Dataverse query and operational investigation workbench for VS Code.
+A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, verify drift evidence, export DVBUR artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Snapshot Library, Timeline Diff, Cross-Environment Diff, inline evidence continuation, report exports, investigation handoff PDFs, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -23,7 +23,7 @@ The website includes:
 * marketplace/install links
 * Free / Pro / Offline pricing and activation guidance
 * interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
-* sample Diff Findings Summary and Investigation Handoff report flows
+* sample Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff report flows
 
 The interactive HTML demo helps illustrate:
 
@@ -31,9 +31,10 @@ The interactive HTML demo helps illustrate:
 * inline evidence continuation
 * operational verification workflows
 * Findings / Verification / Handoff investigation flow
+* Timeline Reconstruction, interval graph, and first-observed drift report flows
 * dense enterprise comparison readability
 * operational investigation continuity
-* report export mental models for Diff Findings Summary and Investigation Handoff workflows
+* report export mental models for Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff workflows
 
 without requiring a live Dataverse environment.
 
@@ -55,10 +56,11 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * understand entity operational footprint with Operational Profiles
 * inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
 * investigate bounded Access Context for users, application users, teams, roles, and business units
-* compare operational snapshots through Snapshot Library, Timeline Diff, and Cross-Environment Diff
+* compare operational snapshots through Snapshot Library, Timeline Reconstruction, and Cross-Environment Diff
 * continue investigation from comparison evidence using bounded inline pivots
+* reconstruct first-observed operational drift across 3+ same-environment snapshots
 * review, verify, comment on, and hand off operational drift findings
-* export Diff Findings Summary and Investigation Handoff reports as HTML/PDF artifacts
+* export Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff reports as HTML/PDF artifacts
 * export DVBUR artifacts from Result Viewer records for downstream DV Bulk Upsert Runner workflows
 * discover and execute supported Custom API capabilities through Capability Explorer
 * activate Online Pro, import Offline Pro licenses, and inspect capability status
@@ -68,7 +70,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 DV Quick Run is designed around a simple loop:
 
 ```text
-write → run → explore → refine → investigate → verify → hand off
+write → run → explore → refine → investigate → reconstruct → verify → hand off
 ```
 
 ---
@@ -107,6 +109,12 @@ Learn more:
 
 ```text
 https://www.dvquickrun.com/pricing
+```
+
+Direct purchase / checkout:
+
+```text
+https://dvforgelab.lemonsqueezy.com
 ```
 
 To activate Online Pro:
@@ -150,180 +158,158 @@ Offline Pro is designed for restricted, disconnected, and air-gapped environment
 ---
 
 
-## 🆕 What's New in v0.12.8
+## 🆕 What's New in v0.13.0
 
-v0.12.8 introduces Evidence Workspace and Snapshot Capture foundations.
+v0.13.0 introduces **Operational Timeline Reconstruction**.
 
-This release evolves Snapshot Library from saved snapshot management into a dedicated Evidence Workspace for operational investigation continuity.
+DV Quick Run can now move beyond point-in-time comparison and reconstruct how operational evidence evolved across multiple same-environment snapshots.
 
 Highlights include:
 
-* Evidence Workspace foundations
-* Guided Evidence Workspace creation
-* Snapshot Capture directly from Snapshot Library
-* Metadata-backed snapshot identity
-* Compare Selected workflows
-* Compact evidence-selection mode
-* Timeline-ready multi-snapshot preparation
-* Expanded search and workspace navigation
-* Git-friendly investigation artifact organisation
+* Operational Timeline Reconstruction across 3+ compatible snapshots
+* Snapshot-bounded interval generation
+* Timeline Graph with interval event density
+* first-observed drift windows
+* provider-owned timeline findings
+* Timeline Findings Summary reports
+* Timeline Investigation Handoff reports
+* timeline trust and snapshot verification summaries
+* same-environment / same-entity timeline validation
+* built-in `TIMELINE-MOCK` snapshots for Free preview workflows
+* v0.13.0 welcome announcement and Hub / Operational Insights wording updates
 
-Evidence Workspace introduces:
-
-```text
-.dvqr
-├─ snapshots
-├─ comparisons
-└─ reports
-```
-
-DV Quick Run can now:
-
-* create Evidence Workspaces automatically
-* capture Operational Profile snapshots directly into the active workspace
-* organise evidence by environment, entity, and subject
-* compare selected snapshots directly from Snapshot Library
-* prepare future timeline reconstruction workflows
-* manage investigation artifacts more effectively
-
-The release intentionally does not implement timeline reconstruction.
+Operational Timeline Reconstruction answers:
 
 ```text
-v0.12.8 organises evidence.
-v0.13.x reconstructs timelines.
+What changed?
+When was it first observed between snapshot captures?
+Which provider detected it?
+How strong was the signal?
+What evidence supports the finding?
 ```
 
-### Evidence Workspace
-
-Evidence Workspace provides:
-
-* local-first evidence storage
-* Git-friendly investigation artifacts
-* comparison continuity
-* report continuity
-* investigation replay foundations
-* clearer evidence ownership
-
-Evidence remains:
-
-* local
-* portable
-* inspectable
-* user-controlled
-
-### Snapshot Capture
-
-Snapshot Library now supports direct Operational Profile capture workflows.
-
-Users can:
-
-* select an environment
-* select an entity
-* optionally provide a label
-* capture evidence directly into the active Evidence Workspace
-
-Results:
-
-* reduced snapshot capture friction
-* improved investigation continuity
-* stronger evidence organisation
-* faster comparison preparation
-
-### Evidence Selection & Comparison
-
-Snapshot Library now supports richer evidence-selection workflows.
-
-Added:
-
-* multi-select snapshot workflows
-* comparison-ready selection states
-* compact selection mode
-* detailed review mode
-* clickable compact selection rows
-* selection counters
-* scrollable evidence-selection panels
-* scrollable snapshot groups
-
-Behaviour:
+It intentionally does **not** answer:
 
 ```text
-2 selected snapshots
-→ Compare
-
-3+ selected snapshots
-→ Timeline Ready
+Who definitely changed it?
+Exactly when did it happen?
+Was this the root cause?
+Was remediation completed?
+Is this operational authority?
 ```
-
-Timeline reconstruction remains deferred to v0.13.x.
-
-### Search & Navigation Improvements
-
-Snapshot Library search now supports:
-
-* labels
-* entities
-* environments
-* providers
-* capture dates
-* favourites
-* snapshot identifiers
-* file paths
-
-Additional improvements include:
-
-* active search visibility
-* filtered-result counts
-* improved large-workspace usability
-* calmer evidence-management workflows
-
-### Evidence Workspace Navigation
-
-Evidence Workspace now includes:
-
-* Open Snapshot Folder
-* Open Comparisons Folder
-* Open Reports Folder
-* Copy Workspace Path
-
-This improves:
-
-* artifact discoverability
-* Git-based workflows
-* external evidence management
-* investigation transparency
-
-### Guided Evidence Workspace Creation
-
-Added:
-
-```text
-DV Quick Run: Create Evidence Workspace
-```
-
-DV Quick Run can now:
-
-* create recommended Evidence Workspace structures automatically
-* create snapshot, comparison, and report folders
-* generate VS Code workspace files
-* prompt users to open the workspace immediately
-* guide first-time users into Evidence Workspace workflows
-
-Results:
-
-* dramatically reduced setup friction
-* faster onboarding
-* improved discoverability
-* stronger Evidence Workspace adoption
 
 DV Quick Run continues to prioritise:
 
 ```text
-DVQR observes operational drift.
-DVQR does not fix operational drift.
+DVQR reconstructs observed evidence.
+DVQR does not reconstruct historical certainty.
 ```
 
----
+### Operational Timeline Reconstruction
 
+Snapshot Library now supports multi-snapshot timeline reconstruction.
+
+Users can select:
+
+```text
+3+ compatible snapshots
+same environment
+same entity / subject
+```
+
+to reconstruct observed operational evidence evolution.
+
+Timeline Reconstruction surfaces:
+
+* ordered snapshot sequence
+* adjacent snapshot intervals
+* first-observed drift windows
+* provider-owned event counts
+* high / medium / low significance summaries
+* Timeline Trust indicators
+* supporting evidence references
+
+Behaviour:
+
+* events are attributed to the first interval where they are observed
+* timeline evidence remains snapshot-bounded
+* no interpolation is performed between captures
+* exact change time is not claimed
+* causality and remediation state are not inferred
+
+### Timeline Graph
+
+Added a dedicated Timeline Graph for timeline investigations.
+
+Timeline Graph provides:
+
+* linear snapshot progression
+* interval boundaries
+* event density by capture window
+* clickable interval navigation in the timeline surface
+* visual orientation before reading detailed findings
+
+This helps investigators quickly identify whether drift was concentrated in one capture window or spread across the selected timeline.
+
+### Timeline Reports
+
+Added branded timeline report exports:
+
+* **Timeline Findings Summary** — executive-style summary of interval drift, provider distribution, significance mix, timeline trust, and top first-observed events
+* **Timeline Investigation Handoff** — deeper evidence-first handoff report for operational continuity, review, sharing, and escalation
+
+Reports include:
+
+* DVQR-branded layout
+* timeline visual summary
+* snapshot-bounded interval timeline
+* provider distribution
+* significance distribution
+* timeline trust
+* top timeline events
+* evidence references
+* print-friendly HTML/PDF output
+
+### Timeline Compatibility Validation
+
+Timeline Reconstruction now blocks incompatible selections.
+
+Timelines require:
+
+* same environment
+* same entity / subject
+* three or more compatible snapshots
+
+Mixed-environment selections are not allowed because they represent environment comparison, not historical timeline reconstruction.
+
+Use Cross-Environment Diff for environment comparison scenarios.
+
+### Free Timeline Preview
+
+Added built-in `TIMELINE-MOCK` snapshots so Free users can preview the complete timeline workflow without connecting to a real Dataverse environment.
+
+Free users can:
+
+* select mock timeline snapshots
+* generate sample Timeline Graphs
+* produce Timeline Findings Summary reports
+* produce Timeline Investigation Handoff reports
+* understand first-observed drift analysis before Pro activation
+
+Real snapshot timeline reconstruction remains Pro capability-aware.
+
+### Welcome, Hub & Operational Insights Updates
+
+Updated product messaging across:
+
+* v0.13.0 welcome screen
+* DV Quick Run Hub
+* Operational Profile / Operational Insights roadmap surfaces
+* Snapshot Library timeline readiness messaging
+
+Timeline investigation is now an available v0.13.0 capability rather than a future-only roadmap item.
+
+---
 
 ## 🎬 Result Viewer
 
@@ -595,7 +581,7 @@ Profiles can surface:
 * Power Automate involvement
 * workflow participation
 * managed-state context
-* comparison-ready snapshot evidence for future operational diff workflows
+* comparison-ready snapshot evidence for operational comparison and Timeline Reconstruction workflows
 
 ![Operational Profile](docs/entity-profile-card.png)
 
@@ -609,27 +595,27 @@ Operational Profiles are:
 
 They help identify good investigation starting points without implying speculative root cause.
 
-Operational Profile snapshot export is capability-aware: Free keeps operational understanding available, while Pro unlocks snapshot persistence and comparison workflows.
+Operational Profile snapshot export is capability-aware: Free keeps operational understanding available, while Pro unlocks snapshot persistence, comparison workflows, and Timeline Reconstruction workflows.
 
 ---
 
-### 🔄 Evidence Workspace, Snapshot Library, Timeline Diff & Cross-Environment Diff
+### 🔄 Evidence Workspace, Snapshot Library, Timeline Reconstruction & Cross-Environment Diff
 
-DV Quick Run includes Pro Preview foundations for operational comparison workflows.
-
-Snapshot Library now works with a local Evidence Workspace for organising investigation artifacts:
+DV Quick Run includes a local Evidence Workspace for organising investigation artifacts:
 
 ```text
 .dvqr
 ├─ snapshots
 ├─ comparisons
 └─ reports
+```
 
-Snapshot Library coordinates saved operational investigation snapshots and acts as the central console for diffing.
+Snapshot Library coordinates saved operational investigation snapshots and acts as the central console for comparison and timeline reconstruction.
 
 It supports:
 
 * source and target snapshot selection
+* 3+ snapshot timeline reconstruction selection
 * grouping snapshots by environment and subject
 * latest-vs-previous snapshot comparison
 * snapshot search and filtering
@@ -638,17 +624,50 @@ It supports:
 * bounded comparison-history rendering
 * comparison-history cleanup without deleting snapshots
 * mock snapshot exploration in Free / Pro Preview mode
-* replayable sample/mock comparison workflows in Free Preview
+* built-in `TIMELINE-MOCK` snapshots for timeline preview
 * real snapshot workflows in Pro
 
-DV Quick Run automatically chooses the comparison mode:
+DV Quick Run uses the selected evidence shape to guide the workflow:
 
 ```text
-same environment       → Timeline Diff
-different environments → Cross-Environment Diff
+2 compatible snapshots
+→ Operational Comparison
+
+3+ compatible snapshots from the same environment and entity
+→ Operational Timeline Reconstruction
+
+different environments
+→ Cross-Environment Diff
 ```
 
-Comparison surfaces can show provider-backed operational drift across:
+Timeline Reconstruction is intentionally restricted to same-environment, same-entity snapshots.
+
+Cross-environment timelines are blocked because they would mix environment comparison with historical evidence reconstruction.
+
+### ⏱️ Operational Timeline Reconstruction
+
+Operational Timeline Reconstruction helps investigators understand how operational evidence evolved across multiple snapshots.
+
+Select:
+
+```text
+3+ snapshots
+same environment
+same entity / subject
+```
+
+DV Quick Run reconstructs:
+
+* snapshot-bounded intervals
+* first-observed drift windows
+* Timeline Graph
+* provider distributions
+* significance distributions
+* Timeline Trust
+* Timeline Findings Summary reports
+* Timeline Investigation Handoff reports
+
+Timeline Reconstruction can show provider-backed operational drift across:
 
 * Operational Profiles
 * Plugin Step Runtime Behaviour
@@ -660,6 +679,86 @@ Comparison surfaces can show provider-backed operational drift across:
 * Choice Metadata Drift
 * Entity Configuration Drift
 
+Timeline findings answer:
+
+```text
+What changed?
+When was it first observed between snapshot captures?
+Which evidence provider detected it?
+What supporting evidence exists?
+```
+
+Timeline findings do not claim:
+
+```text
+exact change time
+root cause
+human responsibility
+remediation status
+operational authority
+```
+
+### 📈 Timeline Graph
+
+Timeline Graph provides a visual reconstruction of selected snapshot intervals.
+
+It shows:
+
+* ordered snapshot progression
+* interval boundaries
+* event density by interval
+* first-observed drift concentration
+* clickable interval navigation in the timeline investigation surface
+
+This makes timeline investigations easier to scan before reviewing detailed findings.
+
+### 📄 Timeline Reports
+
+Timeline Reconstruction can export dedicated timeline artifacts:
+
+* **Timeline Findings Summary** — executive-style timeline summary focused on first-observed drift, interval distribution, provider contribution, significance mix, timeline trust, and top findings
+* **Timeline Investigation Handoff** — evidence-first handoff report for investigation continuity, sharing, escalation, and operational review
+
+Timeline reports are available as branded HTML/PDF artifacts.
+
+They preserve:
+
+* timeline range
+* snapshot count
+* interval count
+* event count
+* snapshot-bounded interval timeline
+* provider distribution
+* significance distribution
+* top timeline events
+* evidence references
+* trust and verification boundaries
+
+
+
+![Operational Snapshot Library](docs/snapshot-library.png)
+
+The Snapshot Library provides Evidence Workspace management, snapshot selection, timeline reconstruction, cross-environment comparison, and built-in TIMELINE-MOCK samples for free timeline previews.
+
+### 🎭 Free Timeline Preview
+
+DV Quick Run includes built-in `TIMELINE-MOCK` snapshots.
+
+Free users can:
+
+* explore timeline workflows
+* select mock timeline snapshots
+* generate sample Timeline Graphs
+* export sample Timeline Findings Summary reports
+* export sample Timeline Investigation Handoff reports
+* understand first-observed drift analysis without setup
+
+Real operational timeline reconstruction remains Pro capability-aware.
+
+### Cross-Environment Diff
+
+Cross-Environment Diff remains the workflow for comparing snapshots across different environments.
+
 Comparison reports preserve scope awareness so exported artifacts clearly identify the operational subject being compared, for example:
 
 ```text
@@ -668,7 +767,7 @@ Cross-Environment Diff: Contact • DEV → SIT
 
 When snapshots represent different operational subjects, DV Quick Run warns before continuing so users do not accidentally treat unrelated subjects as meaningful operational drift.
 
-Dense comparison reports now use grouped operational surfaces so investigations remain readable at enterprise scale. High-signal drift remains visible first, while lower-priority evidence is grouped with:
+Dense comparison reports use grouped operational surfaces so investigations remain readable at enterprise scale. High-signal drift remains visible first, while lower-priority evidence is grouped with:
 
 * classification rationale
 * evidence summaries
@@ -676,7 +775,7 @@ Dense comparison reports now use grouped operational surfaces so investigations 
 * operational-priority explanation
 * full JSON/HTML evidence continuity
 
-Comparison reports now also support interactive operational verification workflows. Evidence rows can open inline investigation context directly from the report, including bounded live pivots where DV Quick Run can safely query the active Dataverse environment.
+Comparison reports also support interactive operational verification workflows. Evidence rows can open inline investigation context directly from the report, including bounded live pivots where DV Quick Run can safely query the active Dataverse environment.
 
 Inline evidence continuation supports:
 
@@ -695,22 +794,14 @@ The comparison workspace is organised around:
 
 Review and verification state is local to the comparison workflow and remains investigation-oriented. Marking something reviewed does not imply remediation, correctness, access authority, or root-cause certainty.
 
-Examples include:
+Comparison reports can be exported as dedicated operational artifacts:
 
-* Microsoft/platform solution drift grouped as platform-layer context
-* patch and cumulative solution drift grouped as servicing-layer context
-* minor workflow metadata drift grouped below activation and presence changes
-* minor plugin configuration drift grouped below state, stage, mode, and registration changes
-* lower-priority identity matching signals grouped below participation-density changes
-
-Comparison reports can now be exported as dedicated operational artifacts:
-
-* **Diff Findings Summary** — a concise one-page style operational briefing focused on strongest drift signals, executive summary, significance distribution, provider distribution, snapshot trust, and top operational findings
-* **Investigation Handoff** — a verification-oriented handoff package focused on outstanding operational review, grouped evidence continuity, review posture, and external follow-up context
+* **Diff Findings Summary** — concise operational briefing focused on strongest drift signals, executive summary, significance distribution, provider distribution, snapshot trust, and top operational findings
+* **Investigation Handoff** — verification-oriented handoff package focused on outstanding operational review, grouped evidence continuity, review posture, and external follow-up context
 * **HTML reports** — readable, branded report exports that preserve operational hierarchy and evidence-backed summaries
 * **PDF reports** — branded, watermarked, print-friendly exports for review packs, CAB discussions, handoff, escalation, and stakeholder communication
 
-The comparison toolbar now groups report exports under:
+The comparison toolbar groups report exports under:
 
 ```text
 Reports
@@ -722,30 +813,30 @@ so standard evidence exports and report artifacts stay distinct:
 Save JSON / Save MD / Save HTML / Reports / Reset Review State
 ```
 
-Free users can export mock/sample report artifacts from Free Preview workflows. Real operational snapshot report exports remain Pro capability-aware.
-
-The comparison model is intentionally observational:
+The comparison and timeline models are intentionally observational:
 
 ```text
 DVQR observes operational drift.
 DVQR does not fix operational drift.
+
+DVQR reconstructs observed evidence.
+DVQR does not reconstruct historical certainty.
 ```
 
-Operational comparison is not deployment tooling, remediation automation, root-cause certainty, or environment authority.
+Operational comparison and timeline reconstruction are not deployment tooling, remediation automation, root-cause certainty, or environment authority.
 
-It is designed to help you understand:
+They are designed to help you understand:
 
 * what changed
+* when drift was first observed
 * where operational density shifted
 * which providers contributed evidence
 * which drift signals may deserve follow-up investigation
 * whether runtime plugin or automation participation differs between snapshots
 * whether platform-layer drift is low-priority context or relevant to the investigation
-* whether a comparison is scope-aligned before treating drift as meaningful
+* whether a comparison or timeline is scope-aligned before treating drift as meaningful
 
-Free users can explore mock snapshots, replay sample comparison workflows, inspect sample drift, and export mock/sample HTML/PDF report artifacts. Pro unlocks real snapshot import, management, comparison, report export, replay, and snapshot continuity workflows.
-
-Future roadmap direction includes **Entity Access Participation Context**: a wider bounded access-topology report for an entity/table that can be launched from diff evidence to understand role, team, user, app-user, and business-unit participation around that entity. This remains operational participation orientation, not RBAC simulation or authoritative effective-access calculation.
+Future roadmap direction includes **Audit Enrichment**: correlating available audit evidence into timeline windows to add who/when context while preserving human verification boundaries.
 
 ---
 
@@ -979,11 +1070,13 @@ It detects or guards against risky situations such as:
 * treating operational comparison as deployment authority
 * treating snapshot evidence as remediation instruction
 * treating mismatched comparison subjects as equivalent operational drift without explicit user awareness
+* reconstructing timelines from mixed-environment snapshots
+* treating first-observed timeline windows as exact historical change times
 * replay-history cleanup deleting underlying snapshots
 * hidden cross-environment scans or automatic drift verification
 * treating inline evidence continuation as remediation or proof of root cause
 * treating review-state completion as operational correctness
-* treating exported reports or PDFs as approval, certification, root-cause proof, or remediation authority
+* treating exported reports or PDFs as approval, certification, root-cause proof, timeline certainty, or remediation authority
 
 Execution-capable workflows are designed around:
 
@@ -1037,7 +1130,7 @@ https://www.dvquickrun.com
 Because the fastest Dataverse workflow is:
 
 ```text
-write → run → explore → refine → investigate → verify
+write → run → explore → refine → investigate → reconstruct → verify
 ```
 
 …without leaving your editor.
@@ -1070,7 +1163,9 @@ The MIT-licensed core preserves foundational operational understanding workflows
 Commercial Pro capabilities focus on advanced operational acceleration workflows such as:
 
 - Cross-Environment Diff
-- Timeline Diff
+- Timeline Reconstruction
+- Timeline Findings Summary Reports
+- Timeline Investigation Handoff Reports
 - Runtime Behaviour Drift
 - Identity Participation Drift
 - Snapshot Replay

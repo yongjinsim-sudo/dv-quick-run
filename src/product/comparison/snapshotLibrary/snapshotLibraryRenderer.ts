@@ -629,6 +629,11 @@ h2 {
   padding: 6px 8px;
 }
 
+.dvqr-timeline-placeholder.is-warning {
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fbbf24;
+}
+
 .dvqr-snapshot-row.is-latest {
   background: color-mix(in srgb, var(--vscode-editorWidget-background) 72%, var(--vscode-editor-background));
 }
@@ -887,7 +892,7 @@ export function renderSnapshotLibraryHtml(
 
     <section class="dvqr-card dvqr-selection-card">
       <h2>Evidence selection</h2>
-      <p class="dvqr-selection-summary">Select snapshots from the library. Two selected snapshots can be compared now. Three or more selected snapshots prepare the future v0.13.x timeline reconstruction workflow.</p>
+      <p class="dvqr-selection-summary">Select snapshots from the library. Two selected snapshots can be compared now. Three or more compatible snapshots can reconstruct an operational timeline.</p>
       <div class="dvqr-selection-grid">
         <div class="dvqr-selection-box">
           <span class="dvqr-summary-label">Selection</span>
@@ -899,7 +904,7 @@ export function renderSnapshotLibraryHtml(
         </div>
       </div>
       <div id="selectedSnapshotList" class="dvqr-selected-list"></div>
-      <div id="timelinePlaceholder" class="dvqr-timeline-placeholder" hidden>Timeline reconstruction is coming in v0.13.x. Keep selecting snapshots now; DVQR will use this same evidence selection model later.</div>
+      <div id="timelinePlaceholder" class="dvqr-timeline-placeholder" hidden>Ready to reconstruct an operational timeline from selected compatible snapshots. Changes are reported as first observed between snapshot captures.</div>
       <div class="dvqr-toolbar" style="justify-content:flex-start">
         <button type="button" class="dvqr-button dvqr-primary-button" data-action="compareSelected" disabled>Compare selected snapshots</button>
         <button type="button" class="dvqr-button" data-action="clearSelection">Clear selection</button>
@@ -1039,8 +1044,13 @@ function groupRecentComparisonsBySubject(recentComparisons: readonly RecentCompa
 }
 
 function renderSnapshotSubjectGroup(group: SnapshotSubjectGroup): string {
+  const isMockTimelineGroup = group.latest.environmentLabel === "TIMELINE-MOCK"
+    || group.latest.snapshotId.startsWith("timeline-mock-")
+    || group.latest.fileUri.startsWith("dvqr-mock://timeline");
+  const shouldOpenGroup = group.hasFavourite || isMockTimelineGroup;
+  const shouldOpenOlderSnapshots = isMockTimelineGroup;
   const olderMarkup = group.older.length
-    ? `<details class="dvqr-older-snapshots">
+    ? `<details class="dvqr-older-snapshots" ${shouldOpenOlderSnapshots ? "open" : ""}>
         <summary>${group.older.length} older snapshot${group.older.length === 1 ? "" : "s"}</summary>
         <div class="dvqr-older-snapshot-list">
           ${group.older.map((entry) => renderSnapshotLibraryRow(entry, false)).join("")}
@@ -1048,7 +1058,7 @@ function renderSnapshotSubjectGroup(group: SnapshotSubjectGroup): string {
       </details>`
     : "";
 
-  return `<details class="dvqr-card dvqr-subject-row" data-subject-key="${escapeHtml(group.groupKey)}" data-has-favourite="${group.hasFavourite ? "true" : "false"}" ${group.hasFavourite ? "open" : ""}>
+  return `<details class="dvqr-card dvqr-subject-row" data-subject-key="${escapeHtml(group.groupKey)}" data-has-favourite="${group.hasFavourite ? "true" : "false"}" ${shouldOpenGroup ? "open" : ""}>
     <summary>
       <div>
         <div class="dvqr-card-title">${escapeHtml(group.subjectLabel)}</div>
@@ -1057,7 +1067,7 @@ function renderSnapshotSubjectGroup(group: SnapshotSubjectGroup): string {
       <div class="dvqr-chip-row">
         ${group.hasFavourite ? `<span class="dvqr-chip dvqr-favourite-chip">★ Favourite</span>` : ""}
         <span class="dvqr-chip">${group.totalCount} snapshot${group.totalCount === 1 ? "" : "s"}</span>
-        ${group.totalCount >= 3 ? `<span class="dvqr-chip dvqr-timeline-ready-chip" title="This subject has 3+ snapshots and is ready for the future v0.13.x timeline reconstruction workflow.">Timeline Ready</span>` : ""}
+        ${group.totalCount >= 3 ? `<span class="dvqr-chip dvqr-timeline-ready-chip" title="This subject has 3+ snapshots. Select same-environment snapshots to reconstruct an operational timeline.">Timeline Ready</span>` : ""}
         <span class="dvqr-chip">Latest shown</span>
         ${group.older.length ? `<button type="button" class="dvqr-button dvqr-quick-compare-button" data-action="compareLatestPrevious" data-latest-snapshot-id="${escapeHtml(group.latest.snapshotId)}" data-previous-snapshot-id="${escapeHtml(group.older[0].snapshotId)}">Compare latest ↔ previous</button>` : ""}
       </div>
@@ -1074,7 +1084,7 @@ function renderSnapshotLibraryRow(entry: ComparisonSnapshotRegistryEntry, isLate
   const displayLabel = entry.label && entry.label !== `${subject} · ${entry.environmentLabel}` ? entry.label : undefined;
   const selectionLabel = `${entry.environmentLabel} · ${displayLabel ?? subject} · ${formatSnapshotPickerTime(entry.capturedAtIso)}`;
   const isMock = entry.fileUri.startsWith("dvqr-mock://");
-  const displayPath = isMock ? "Built-in Pro Preview snapshot" : vscode.Uri.parse(entry.fileUri).fsPath;
+  const displayPath = isMock ? "Built-in Free/Pro Preview snapshot" : vscode.Uri.parse(entry.fileUri).fsPath;
   const searchIndex = [
     entry.snapshotId,
     entry.label,
@@ -1090,7 +1100,9 @@ function renderSnapshotLibraryRow(entry: ComparisonSnapshotRegistryEntry, isLate
     ...entry.evidenceTypes
   ].filter(Boolean).join(" ");
   const lockedAction = (label: string, surface: string): string => `<button type="button" class="dvqr-button" data-action="lockedAction" data-locked-surface="${escapeHtml(surface)}">${label} 🔒</button>`;
-  return `<div class="dvqr-snapshot-row ${isLatest ? "is-latest" : ""} ${entry.isFavourite ? "is-favourite" : ""}" data-snapshot-id="${escapeHtml(entry.snapshotId)}" data-selection-label="${escapeHtml(selectionLabel)}" data-environment-label="${escapeHtml(entry.environmentLabel)}" data-subject-label="${escapeHtml(subject)}" data-file-path="${escapeHtml(displayPath)}" data-captured-at="${escapeHtml(formatSnapshotPickerTime(entry.capturedAtIso))}" data-search-index="${escapeHtml(searchIndex)}">
+  const environmentKey = (entry.environmentUrl ?? entry.environmentLabel).trim().toLowerCase();
+  const subjectKey = (entry.entityLogicalName ?? entry.entityDisplayName ?? subject).trim().toLowerCase();
+  return `<div class="dvqr-snapshot-row ${isLatest ? "is-latest" : ""} ${entry.isFavourite ? "is-favourite" : ""}" data-snapshot-id="${escapeHtml(entry.snapshotId)}" data-selection-label="${escapeHtml(selectionLabel)}" data-environment-label="${escapeHtml(entry.environmentLabel)}" data-environment-key="${escapeHtml(environmentKey)}" data-subject-key="${escapeHtml(subjectKey)}" data-subject-label="${escapeHtml(subject)}" data-file-path="${escapeHtml(displayPath)}" data-captured-at="${escapeHtml(formatSnapshotPickerTime(entry.capturedAtIso))}" data-search-index="${escapeHtml(searchIndex)}">
     <label class="dvqr-snapshot-select" title="Select snapshot for comparison or future timeline reconstruction">
       <input type="checkbox" data-action="toggleSnapshotSelection" data-snapshot-id="${escapeHtml(entry.snapshotId)}" data-label="${escapeHtml(selectionLabel)}" />
       <span>Select</span><span class="dvqr-selection-role" aria-hidden="true"></span>
@@ -1162,15 +1174,37 @@ function getSnapshotLibraryScript(): string {
     if (count === 2) {
       const first = getRow(selectedSnapshots[0].id);
       const second = getRow(selectedSnapshots[1].id);
-      const firstEnv = first && first.getAttribute('data-environment-label');
-      const secondEnv = second && second.getAttribute('data-environment-label');
+      const firstEnv = first && first.getAttribute('data-environment-key');
+      const secondEnv = second && second.getAttribute('data-environment-key');
       return firstEnv && secondEnv && firstEnv === secondEnv
         ? 'Two snapshots selected. Compare Selected will open Timeline Diff.'
         : 'Two snapshots selected. Compare Selected will open Cross-Environment Diff.';
     }
-    return count + ' snapshots selected. Timeline reconstruction is coming in v0.13.x.';
+    const compatibility = getTimelineSelectionCompatibility();
+    return compatibility.message;
   }
 
+
+
+  function getTimelineSelectionCompatibility() {
+    if (selectedSnapshots.length < 3) {
+      return { compatible: false, message: 'Select three or more compatible snapshots to reconstruct an operational timeline.' };
+    }
+
+    const rows = selectedSnapshots.map((item) => getRow(item.id)).filter(Boolean);
+    const envKeys = new Set(rows.map((row) => row.getAttribute('data-environment-key') || '').filter(Boolean));
+    const subjectKeys = new Set(rows.map((row) => row.getAttribute('data-subject-key') || '').filter(Boolean));
+
+    if (subjectKeys.size !== 1) {
+      return { compatible: false, message: 'Timeline reconstruction requires snapshots for the same subject. Select one entity or subject only.' };
+    }
+
+    if (envKeys.size !== 1) {
+      return { compatible: false, message: 'Timeline reconstruction requires same-environment snapshots. Use Cross-Environment Diff for environment comparison.' };
+    }
+
+    return { compatible: true, message: selectedSnapshots.length + ' compatible snapshots selected. Ready to reconstruct an operational timeline.' };
+  }
   function updateSelection() {
     uniqueSelectedSnapshots();
     const count = selectedSnapshots.length;
@@ -1185,8 +1219,11 @@ function getSnapshotLibraryScript(): string {
     if (mode) {
       mode.textContent = getSelectionModeText(count);
     }
+    const compatibility = getTimelineSelectionCompatibility();
     if (timelinePlaceholder) {
       timelinePlaceholder.hidden = count < 3;
+      timelinePlaceholder.textContent = compatibility.message;
+      timelinePlaceholder.classList.toggle('is-warning', count >= 3 && !compatibility.compatible);
     }
     if (list) {
       list.innerHTML = selectedSnapshots.length
@@ -1211,8 +1248,11 @@ function getSnapshotLibraryScript(): string {
 
     const button = document.querySelector('[data-action="compareSelected"]');
     if (button) {
-      button.disabled = isComparing || count !== 2;
-      button.textContent = isComparing ? 'Comparing snapshots...' : (count > 2 ? 'Timeline reconstruction coming in v0.13.x' : 'Compare selected snapshots');
+      button.disabled = isComparing || count < 2 || (count > 2 && !compatibility.compatible);
+      button.textContent = isComparing
+        ? (count > 2 ? 'Reconstructing timeline...' : 'Comparing snapshots...')
+        : (count > 2 ? 'Reconstruct Timeline' : 'Compare selected snapshots');
+      button.title = count > 2 && !compatibility.compatible ? compatibility.message : '';
     }
   }
 
@@ -1267,7 +1307,7 @@ function getSnapshotLibraryScript(): string {
       row.classList.toggle('is-hidden', !(visibleByEnvironment && rowMatchesSearch(row)));
     });
 
-    document.querySelectorAll('[data-subject-key]').forEach((row) => {
+    document.querySelectorAll('.dvqr-subject-row[data-subject-key]').forEach((row) => {
       const hasVisibleSnapshot = Boolean(row.querySelector('.dvqr-snapshot-row[data-snapshot-id]:not(.is-hidden)'));
       row.classList.toggle('is-hidden', !hasVisibleSnapshot);
     });
@@ -1446,6 +1486,16 @@ function getSnapshotLibraryScript(): string {
         updateSelection();
         vscode && vscode.postMessage({ type: 'compareSnapshots', sourceSnapshotId, targetSnapshotId });
       }
+      if (selectedSnapshots.length >= 3 && !isComparing) {
+        const compatibility = getTimelineSelectionCompatibility();
+        if (!compatibility.compatible) {
+          updateSelection();
+          return;
+        }
+        isComparing = true;
+        updateSelection();
+        vscode && vscode.postMessage({ type: 'reconstructTimeline', snapshotIds: selectedSnapshots.map((item) => item.id) });
+      }
       return;
     }
 
@@ -1537,7 +1587,7 @@ function getSnapshotLibraryScript(): string {
 
   window.addEventListener('message', (event) => {
     const message = event.data || {};
-    if (message.type === 'compareComplete' || message.type === 'compareFailed') {
+    if (message.type === 'compareComplete' || message.type === 'compareFailed' || message.type === 'timelineReconstructionComplete' || message.type === 'timelineReconstructionFailed') {
       isComparing = false;
       updateSelection();
     }

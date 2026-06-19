@@ -659,6 +659,66 @@ const mockSitPluginStepSnapshot: ComparisonSnapshotFile = {
 
 export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEntry[] = [
   {
+    snapshotId: "dvqr-mock-timeline-account-001-baseline",
+    fileUri: "dvqr-mock://timeline-account-001-baseline",
+    label: "Account · Timeline Mock baseline",
+    environmentLabel: "TIMELINE-MOCK",
+    environmentUrl: "https://timeline-mock.crm.dynamics.com",
+    entityLogicalName: "account",
+    entityDisplayName: "Account",
+    capturedAtIso: "2026-05-25T05:27:12.006Z",
+    sourceFeature: "Mock Timeline Snapshot",
+    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+  },
+  {
+    snapshotId: "dvqr-mock-timeline-account-002-identity",
+    fileUri: "dvqr-mock://timeline-account-002-identity",
+    label: "Account · Timeline Mock identity drift",
+    environmentLabel: "TIMELINE-MOCK",
+    environmentUrl: "https://timeline-mock.crm.dynamics.com",
+    entityLogicalName: "account",
+    entityDisplayName: "Account",
+    capturedAtIso: "2026-06-16T06:20:23.405Z",
+    sourceFeature: "Mock Timeline Snapshot",
+    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+  },
+  {
+    snapshotId: "dvqr-mock-timeline-account-003-column",
+    fileUri: "dvqr-mock://timeline-account-003-column",
+    label: "Account · Timeline Mock column drift",
+    environmentLabel: "TIMELINE-MOCK",
+    environmentUrl: "https://timeline-mock.crm.dynamics.com",
+    entityLogicalName: "account",
+    entityDisplayName: "Account",
+    capturedAtIso: "2026-06-16T06:31:26.106Z",
+    sourceFeature: "Mock Timeline Snapshot",
+    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+  },
+  {
+    snapshotId: "dvqr-mock-timeline-account-004-relationship",
+    fileUri: "dvqr-mock://timeline-account-004-relationship",
+    label: "Account · Timeline Mock relationship drift",
+    environmentLabel: "TIMELINE-MOCK",
+    environmentUrl: "https://timeline-mock.crm.dynamics.com",
+    entityLogicalName: "account",
+    entityDisplayName: "Account",
+    capturedAtIso: "2026-06-16T07:23:46.723Z",
+    sourceFeature: "Mock Timeline Snapshot",
+    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+  },
+  {
+    snapshotId: "dvqr-mock-timeline-account-005-choice",
+    fileUri: "dvqr-mock://timeline-account-005-choice",
+    label: "Account · Timeline Mock choice drift",
+    environmentLabel: "TIMELINE-MOCK",
+    environmentUrl: "https://timeline-mock.crm.dynamics.com",
+    entityLogicalName: "account",
+    entityDisplayName: "Account",
+    capturedAtIso: "2026-06-16T07:40:50.866Z",
+    sourceFeature: "Mock Timeline Snapshot",
+    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+  },
+  {
     snapshotId: "dvqr-mock-dev-account-baseline",
     fileUri: "dvqr-mock://dev-account-baseline",
     label: "Account · DEV-MOCK baseline",
@@ -686,7 +746,7 @@ export function isMockComparisonRegistryEntry(entry: ComparisonSnapshotRegistryE
   const environmentLabel = entry.environmentLabel.toUpperCase();
   const subject = (entry.entityLogicalName ?? entry.entityDisplayName ?? entry.label).toLowerCase();
   return entry.fileUri.startsWith("dvqr-mock://")
-    || ((environmentLabel === "DEV-MOCK" || environmentLabel === "SIT-MOCK")
+    || ((environmentLabel === "DEV-MOCK" || environmentLabel === "SIT-MOCK" || environmentLabel === "TIMELINE-MOCK")
       && subject.includes("account"));
 }
 
@@ -705,6 +765,18 @@ export function normalizeMockComparisonRegistryEntry(entry: ComparisonSnapshotRe
 export function getMockComparisonSnapshotsForEntry(entry: ComparisonSnapshotRegistryEntry): ReadComparisonSnapshotResult | undefined {
   if (!isMockComparisonRegistryEntry(entry)) {
     return undefined;
+  }
+
+  if (entry.fileUri.includes("timeline-account-")) {
+    const sequence = Number(entry.fileUri.match(/timeline-account-(\d+)/)?.[1] ?? "1");
+    const useDriftedShape = sequence >= 2;
+    return {
+      snapshots: cloneSnapshotsForComparison([
+        ...sampleSnapshots.filter((snapshot) => snapshot.environment?.label === (useDriftedShape ? "SIT" : "DEV")),
+        useDriftedShape ? mockSitPluginStepSnapshot : mockDevPluginStepSnapshot
+      ], entry.environmentLabel),
+      trustState: sequence === 1 ? "Legacy / Unverified" : sequence === 3 ? "Modified" : "Verified"
+    };
   }
 
   const environmentLabel = entry.environmentLabel.toUpperCase();
