@@ -391,6 +391,24 @@ function getEvidenceContinuationTooltip(item: ComparisonDifference["evidence"][n
   return "Available in DVQR Pro — investigate the raw evidence behind this drift signal.";
 }
 
+
+function isMetadataDifference(difference: ComparisonDifference): boolean {
+  const haystack = [
+    difference.title,
+    difference.summary,
+    difference.kind,
+    ...difference.evidence.map((item) => `${item.label} ${item.value ?? ""}`)
+  ].join(" ").toLowerCase();
+
+  return haystack.includes("metadata")
+    || haystack.includes("schema name")
+    || haystack.includes("column logical name")
+    || haystack.includes("choice set")
+    || haystack.includes("option value")
+    || haystack.includes("relationship schema")
+    || haystack.includes("entity configuration");
+}
+
 function renderEvidenceItem(
   item: ComparisonDifference["evidence"][number],
   difference: ComparisonDifference,
@@ -409,12 +427,24 @@ function renderEvidenceItem(
   const parentEvidence = difference.evidence
     .map((evidence) => `${evidence.label}: ${evidence.value ?? ""}`)
     .join(" · ");
+  const metadataDifference = isMetadataDifference(difference);
+  const auditTooltip = metadataDifference
+    ? "Check interval-bounded audit evidence. Metadata-only changes often do not have Dataverse audit rows."
+    : "Check audit evidence inside the snapshot-bounded interval.";
+  const auditIntro = metadataDifference
+    ? "Audit lookup is explicit and interval-bounded. Metadata-only changes may not have Dataverse audit rows; captured snapshot metadata remains the evidence source."
+    : "Audit lookup is explicit and interval-bounded. Audit evidence enriches this finding; it does not establish root cause.";
 
   return `<li class="dvqr-evidence-item" data-evidence-label="${escapeHtml(item.label)}" data-evidence-value="${escapeHtml(item.value ?? "")}" data-evidence-kind="${escapeHtml(evidenceKind)}" data-parent-title="${escapeHtml(parentTitle)}" data-parent-summary="${escapeHtml(parentSummary)}" data-parent-kind="${escapeHtml(difference.kind)}" data-parent-provider="" data-parent-evidence="${escapeHtml(parentEvidence)}">
     <span><strong>${escapeHtml(item.label)}</strong>${value}</span>
-    <button type="button" class="dvqr-evidence-continuation-pill" data-evidence-inspect="${escapeHtml(evidenceId)}" data-evidence-label-collapsed="${escapeHtml(continuationLabel)} ›" aria-expanded="false" title="${escapeHtml(continuationTooltip)}">
-      ${escapeHtml(continuationLabel)} ›
-    </button>
+    <div class="dvqr-evidence-actions">
+      <button type="button" class="dvqr-evidence-continuation-pill" data-evidence-inspect="${escapeHtml(evidenceId)}" data-evidence-label-collapsed="${escapeHtml(continuationLabel)} ›" aria-expanded="false" title="${escapeHtml(continuationTooltip)}">
+        ${escapeHtml(continuationLabel)} ›
+      </button>
+      <button type="button" class="dvqr-evidence-continuation-pill dvqr-audit-evidence-pill" data-audit-check="${escapeHtml(evidenceId)}" aria-expanded="false" title="${escapeHtml(auditTooltip)}">
+        Check audit evidence ›
+      </button>
+    </div>
     <div class="dvqr-inline-evidence-context" data-evidence-context="${escapeHtml(evidenceId)}" hidden>
       <strong>Inline evidence context</strong>
       <span>This opens the rendered evidence payload already captured in this comparison. Use it to verify the drift signal before continuing investigation outside DVQR.</span>
@@ -428,6 +458,11 @@ function renderEvidenceItem(
         <dt>Live evidence pivot</dt>
         <dd data-evidence-live-result="${escapeHtml(evidenceId)}">Not queried yet.</dd>
       </dl>
+    </div>
+    <div class="dvqr-inline-audit-context" data-audit-context="${escapeHtml(evidenceId)}" hidden>
+      <strong>Audit evidence</strong>
+      <span>${escapeHtml(auditIntro)}</span>
+      <div data-audit-result="${escapeHtml(evidenceId)}">Not queried yet.</div>
     </div>
   </li>`;
 }

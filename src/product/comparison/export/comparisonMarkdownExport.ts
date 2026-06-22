@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { ComparisonViewModel } from "../../../core/comparison/index.js";
+import { resolveSnapshotWorkspace } from "../snapshotWorkspaceService.js";
 
 function formatSnapshotPickerTime(value: string | undefined): string {
   if (!value) {
@@ -15,10 +16,8 @@ function formatSnapshotPickerTime(value: string | undefined): string {
 }
 
 function slugFilePart(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "comparison";
+  const withoutPublisherPrefix = value.trim().toLowerCase().replace(/^[a-z][a-z0-9]*_/, "");
+  return withoutPublisherPrefix.replace(/[^a-z0-9]+/g, "") || "comparison";
 }
 
 function normalizeExportScopeLabel(value: string | undefined): string | undefined {
@@ -34,19 +33,77 @@ function normalizeExportScopeLabel(value: string | undefined): string | undefine
 
 function formatExportTimestamp(date = new Date()): string {
   const pad = (value: number): string => value.toString().padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
+}
+
+function isReportExport(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf"): boolean {
+  return extension === "summary-html" || extension === "summary-pdf" || extension === "handoff-html" || extension === "handoff-pdf";
+}
+
+function getReportArtifactName(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf"): string | undefined {
+  if (extension === "summary-html" || extension === "summary-pdf") {
+    return "diff-findings-summary";
+  }
+
+  if (extension === "handoff-html" || extension === "handoff-pdf") {
+    return "investigation-handoff";
+  }
+
+  return undefined;
+}
+
+function getReportExtension(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf"): string {
+  if (extension === "summary-html" || extension === "handoff-html") {
+    return "html";
+  }
+
+  if (extension === "summary-pdf" || extension === "handoff-pdf") {
+    return "pdf";
+  }
+
+  return extension;
+}
+
+function extractEnvironmentLabel(model: ComparisonViewModel): string {
+  const candidates = [model.summary.sourceLabel, model.summary.targetLabel];
+  for (const candidate of candidates) {
+    const value = candidate?.split("·")[0]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+
+  return "environment";
+}
+
+function buildReportFileName(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf"): string | undefined {
+  const artifact = getReportArtifactName(extension);
+  if (!artifact) {
+    return undefined;
+  }
+
+  const scope = normalizeExportScopeLabel(model.summary.subjectLabel) ?? "comparison";
+  const environment = extractEnvironmentLabel(model);
+  return `${formatExportTimestamp()}-${slugFilePart(scope)}-${slugFilePart(environment)}-${artifact}.${getReportExtension(extension)}`;
 }
 
 export function buildDefaultExportUri(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf"): vscode.Uri | undefined {
-  const prefix = model.title.startsWith("Timeline Diff") ? "dvqr-timeline-diff" : "dvqr-cross-environment-diff";
-  const scope = normalizeExportScopeLabel(model.summary.subjectLabel);
-  const scopePart = scope ? `${slugFilePart(scope)}-` : "";
-  const extensionPart = extension === "summary-html" || extension === "handoff-html" ? "html" : extension === "summary-pdf" || extension === "handoff-pdf" ? "pdf" : extension;
-  const reportPart = extension === "summary-html" || extension === "summary-pdf" ? "diff-findings-summary-" : extension === "handoff-html" || extension === "handoff-pdf" ? "investigation-handoff-" : "";
-  const fileName = `${prefix}-${reportPart}${scopePart}${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${formatExportTimestamp()}.${extensionPart}`;
+  const reportExport = isReportExport(extension);
+  const reportFileName = buildReportFileName(model, extension);
+  const fileName = reportFileName ?? `${model.title.startsWith("Timeline Diff") ? "dvqr-timeline-diff" : "dvqr-cross-environment-diff"}-${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${formatExportTimestamp()}.${getReportExtension(extension)}`;
+
+  if (reportExport) {
+    const workspace = resolveSnapshotWorkspace();
+    if (workspace.available && workspace.reportsRoot) {
+      return vscode.Uri.joinPath(workspace.reportsRoot, fileName);
+    }
+  }
+
   const folders = vscode.workspace.workspaceFolders;
   if (folders && folders.length > 0) {
-    return vscode.Uri.joinPath(folders[0].uri, fileName);
+    return reportExport
+      ? vscode.Uri.joinPath(folders[0].uri, ".dvqr", "reports", fileName)
+      : vscode.Uri.joinPath(folders[0].uri, fileName);
   }
 
   return vscode.Uri.file(fileName);

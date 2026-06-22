@@ -357,7 +357,7 @@ async function exportOperationalProfileSnapshot(
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: mode === "workspaceCapture" ? "DV Quick Run: Capturing Operational Profile Snapshot..." : "DV Quick Run: Exporting Operational Profile Snapshot...",
+      title: mode === "workspaceCapture" ? "DV Quick Run: Capturing snapshot with fresh metadata..." : "DV Quick Run: Exporting Operational Profile Snapshot...",
       cancellable: false
     },
     async () => {
@@ -369,10 +369,11 @@ async function exportOperationalProfileSnapshot(
         return;
       }
 
+      const metadataLoadOptions = { silent: true, forceRefresh: true } as const;
       const [fields, choices, relationships, entityConfiguration] = await Promise.all([
-        loadFields(ctx, client, token, entity.logicalName, { silent: true }).catch(() => []),
-        loadChoiceMetadata(ctx, client, token, entity.logicalName, { silent: true }).catch(() => []),
-        loadEntityRelationships(ctx, client, token, entity.logicalName, { silent: true }).catch(() => undefined),
+        loadFields(ctx, client, token, entity.logicalName, metadataLoadOptions).catch(() => []),
+        loadChoiceMetadata(ctx, client, token, entity.logicalName, metadataLoadOptions).catch(() => []),
+        loadEntityRelationships(ctx, client, token, entity.logicalName, metadataLoadOptions).catch(() => undefined),
         loadEntityConfigurationSnapshot(ctx, entity.logicalName, token).catch(() => undefined)
       ]);
 

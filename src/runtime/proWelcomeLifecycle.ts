@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_13_0.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_13_1.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.13.0</title>
+<title>DV Quick Run v0.13.1</title>
 <style>
   :root {
     color-scheme: dark;
@@ -36,17 +36,27 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     --cyan: #8bd5ff;
   }
   * { box-sizing: border-box; }
+  html {
+    min-height: 100%;
+    background:
+      radial-gradient(circle at top left, rgba(14,99,156,.26), transparent 34%),
+      radial-gradient(circle at top right, rgba(126,87,194,.16), transparent 32%),
+      var(--bg);
+    background-attachment: fixed;
+  }
   body {
+    min-height: 100vh;
     margin: 0;
     padding: 28px;
     background:
       radial-gradient(circle at top left, rgba(14,99,156,.26), transparent 34%),
       radial-gradient(circle at top right, rgba(126,87,194,.16), transparent 32%),
       var(--bg);
+    background-attachment: fixed;
     color: var(--text);
     font-family: var(--vscode-font-family, Segoe UI, sans-serif);
   }
-  .shell { max-width: 980px; margin: 0 auto; }
+  .shell { max-width: 980px; min-height: calc(100vh - 56px); margin: 0 auto; }
   .hero {
     display: grid;
     grid-template-columns: 72px 1fr;
@@ -112,51 +122,50 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.13.0</div>
-        <h1>Timeline Reconstruction is here</h1>
-        <p class="subtitle"><strong>Reconstruct operational evidence across 3+ same-environment snapshots.</strong><br>DV Quick Run v0.13.0 turns Snapshot Library evidence into timeline graphs, first-observed drift windows, and DVQR-flavoured investigation reports.</p>
+        <div class="eyebrow">What's new in v0.13.1</div>
+        <h1>Audit Evidence Enrichment</h1>
+        <p class="subtitle"><strong>Timeline Reconstruction and Cross Environment Diff now support inline Audit Evidence enrichment.</strong><br>DV Quick Run can query Dataverse audit history inside snapshot-bounded investigation windows and surface matching audit evidence alongside observed operational drift.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">Released in v0.13.0</div>
-          <div class="price">Operational Timeline Reconstruction</div>
-          <div class="limit">Snapshot-bounded evidence evolution for Dataverse investigations.</div>
-          <p class="recognition">Select three or more compatible snapshots from the same entity and environment to reconstruct when drift was first observed. DVQR keeps the boundary clear: timeline evidence is inspect-only and does not claim exact change time, causality, remediation status, or operational authority.</p>
-          <span class="badge">Pro · Timeline Reconstruction</span>
+          <div class="eyebrow">Released in v0.13.1</div>
+          <div class="price">Audit Evidence Enrichment</div>
+          <div class="limit">Who/when audit context for snapshot-bounded investigations.</div>
+          <p class="recognition">Timeline Reconstruction and Cross Environment Diff can now query Dataverse audit history explicitly, render matching evidence inline, and include queried audit evidence in HTML/PDF reports. Audit evidence enriches investigation context; it does not establish causality, deployment correctness, remediation status, or operational authority.</p>
+          <span class="badge">Pro · Audit Evidence</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Timeline Graph</strong><span>Clickable interval graph in the timeline surface</span></div>
-        <div class="price-pill"><strong>Findings Summary</strong><span>DVQR PDF/HTML report for executive review</span></div>
-        <div class="price-pill"><strong>Investigation Handoff</strong><span>Evidence-first report for continuity and sharing</span></div>
+        <div class="price-pill"><strong>Inline Audit</strong><span>Check audit evidence from Timeline and Cross Diff findings</span></div>
+        <div class="price-pill"><strong>Audit Reports</strong><span>Queried audit evidence included in HTML/PDF exports</span></div>
+        <div class="price-pill"><strong>Edge Cases</strong><span>Raw payload preservation and feedback links for unknown audit shapes</span></div>
       </div>
       <div class="actions">
-        <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
+        <button class="primary" data-action="snapshotLibrary">Open Timeline Reconstruction</button>
         <button class="gold" data-action="pricing">View Pro Pricing</button>
         <button class="store" data-action="store">Direct Purchase</button>
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Free preview includes TIMELINE-MOCK snapshots for trying Timeline Reconstruction reports. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Audit payload interpretation is experimental. Unknown payloads are preserved as evidence and may be submitted through Feedback. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     </section>
 
     <section class="section">
       <div class="eyebrow">Available today</div>
       <div class="grid">
-        <div class="card"><h3>🕒 Timeline Reconstruction</h3><p>Reconstruct first-observed operational drift across 3+ same-environment snapshots, with timeline graph and interval grouping.</p></div>
-        <div class="card"><h3>📄 Timeline Reports</h3><p>Generate Timeline Findings Summary and Timeline Investigation Handoff reports in HTML/PDF.</p></div>
-        <div class="card"><h3>🧪 Free Mock Timeline</h3><p>Use built-in TIMELINE-MOCK snapshots to preview the full timeline investigation workflow without setup.</p></div>
-        <div class="card"><h3>🔍 Cross-Environment Diff</h3><p>Compare environments and snapshots to investigate operational drift without remediation claims.</p></div>
+        <div class="card"><h3>🧾 Inline Audit Evidence</h3><p>Query Dataverse audit history from Timeline Reconstruction and Cross Environment Diff findings.</p></div>
+        <div class="card"><h3>📄 Audit-Aware Reports</h3><p>Include queried audit evidence in Timeline and Cross Diff HTML/PDF reports for handoff continuity.</p></div>
+        <div class="card"><h3>🔐 Security Associations</h3><p>Interpret common security relationship audit payloads such as role/user association evidence.</p></div>
+        <div class="card"><h3>🧪 Experimental Decoder</h3><p>Preserve raw audit payloads and report edge cases when DVQR cannot confidently interpret a payload shape.</p></div>
       </div>
     </section>
 
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🧾 Audit Enrichment</h3><p>Correlate available audit evidence into timeline windows to add who/when context while preserving verification boundaries.</p></div>
         <div class="card"><h3>🔬 Guided Operational Reasoning</h3><p>Evidence-backed mini-RCA style investigation guidance while preserving human verification boundaries.</p></div>
         <div class="card"><h3>🧩 Expanded Comparison Providers</h3><p>Environment variables, choices, metadata construction artifacts, and additional operational drift domains.</p></div>
         <div class="card"><h3>🔗 DV ForgeLab Utility Integration</h3><p>Bounded artifact handoffs across DV Bulk Upsert Runner, DV Choice Editor, DV Environment Variable Manager, DV Identity Manager, and DV Attribute Factory.</p></div>
@@ -184,8 +193,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0130WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0130",
-    "DV Quick Run v0.13.0",
+    "dvQuickRunWelcomeV0131",
+    "DV Quick Run v0.13.1",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

@@ -1,5 +1,6 @@
 import type { ComparisonDifference, ComparisonEvidenceRef } from "../../../core/comparison/index.js";
 import type { ComparisonReportFinding, ComparisonReportModel } from "./comparisonReportTypes.js";
+import { renderAuditEvidenceReportSectionHtml } from "../../audit/auditEvidenceReportSummary.js";
 
 function escapeHtml(value: string | undefined): string {
   return (value ?? "")
@@ -181,6 +182,8 @@ function renderReportBody(report: ComparisonReportModel): string {
       ${topFindingList}
     </section>
 
+    ${renderAuditEvidenceReportSectionHtml(report.auditEvidenceResults ?? [], "Audit Evidence Summary")}
+
     <section class="dvqr-report-section dvqr-report-boundary">
       <h2>Verification boundary</h2>
       <p>DVQR observes operational drift and supports verification. This report does not certify root cause, assign blame, approve changes, or perform remediation. Human review remains required before corrective action.</p>
@@ -236,6 +239,12 @@ p { line-height: 1.5; margin: 0; }
 .dvqr-report-finding span { color: #57606a; display: block; font-size: 12px; margin-top: 2px; }
 .dvqr-report-group { margin-bottom: 14px; }
 .dvqr-report-evidence { color: #57606a; display: grid; font-size: 12px; gap: 4px; margin: 4px 0 0; padding-left: 18px; }
+.dvqr-report-audit-section { border-left: 4px solid #bf8700; }
+.dvqr-report-audit-result { background: #fff8dc; border: 1px solid #d29922; border-radius: 10px; display: grid; gap: 8px; margin: 10px 0; padding: 12px; }
+.dvqr-report-audit-records { display: grid; gap: 8px; margin: 8px 0 0; padding-left: 20px; }
+.dvqr-report-audit-records li { background: rgba(255,255,255,.76); border: 1px solid #d8dee4; border-radius: 8px; display: grid; gap: 3px; padding: 8px; }
+.dvqr-report-audit-records code, .dvqr-report-audit-result code { white-space: pre-wrap; word-break: break-word; }
+.dvqr-report-audit-experimental { border-top: 1px solid #d29922; color: #57606a; margin-top: 12px; padding-top: 10px; }
 .dvqr-report-boundary { border-left: 4px solid #0969da; }
 .dvqr-report-handoff .dvqr-report-chart-section { display: none; }
 .dvqr-report-footer { color: #57606a; font-size: 11px; line-height: 1.45; padding: 12px 4px 0; text-align: center; }

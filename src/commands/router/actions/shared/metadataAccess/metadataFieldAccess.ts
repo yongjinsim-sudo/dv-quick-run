@@ -14,31 +14,40 @@ export async function loadFields(
   logicalName: string,
   options?: MetadataLoadOptions
 ): Promise<FieldDef[]> {
+  const forceRefresh = options?.forceRefresh === true;
   const memory = getFieldsMemory<FieldDef>(logicalName);
-  if (memory?.length) {
+  if (!forceRefresh && memory?.length) {
     return memory;
   }
 
   const envName = ctx.envContext.getEnvironmentName();
-  const cached = getCachedFields(ctx.ext, envName, logicalName);
+  const cached = !forceRefresh ? getCachedFields(ctx.ext, envName, logicalName) : undefined;
   if (cached?.length) {
     setFieldsMemory(logicalName, cached);
     appendOutput(ctx, `Fields cache hit for ${logicalName}: ${cached.length} fields.`, options);
     return cached;
   }
 
-  return await getOrCreateFieldsInFlight<FieldDef>(logicalName, async () => {
+  const fetchAndCache = async () => {
     const fetched = await runMetadataLoad<FieldDef[]>(
-      `DV Quick Run: Loading fields for ${logicalName}...`,
+      forceRefresh
+        ? `DV Quick Run: Refreshing fields for ${logicalName}...`
+        : `DV Quick Run: Loading fields for ${logicalName}...`,
       async () => await fetchEntityFields(client, token, logicalName),
       options
     );
 
     await setCachedFields(ctx.ext, envName, logicalName, fetched);
     setFieldsMemory(logicalName, fetched);
-    appendOutput(ctx, `Fields fetched for ${logicalName}: ${fetched.length} fields.`, options);
+    appendOutput(ctx, `Fields ${forceRefresh ? "refreshed" : "fetched"} for ${logicalName}: ${fetched.length} fields.`, options);
     return fetched;
-  });
+  };
+
+  if (forceRefresh) {
+    return await fetchAndCache();
+  }
+
+  return await getOrCreateFieldsInFlight<FieldDef>(logicalName, fetchAndCache);
 }
 
 export async function loadSelectableFields(

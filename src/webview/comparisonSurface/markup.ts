@@ -76,7 +76,7 @@ export function getComparisonSurfaceMarkup(model: ComparisonViewModel, options: 
               <span>No provider drift evidence produced verification checklist items for this comparison.</span>
             </li>`;
 
-  return `<main id="dvqr-comparison-top" class="dvqr-comparison" data-entity-logical-name="${escapeHtml(model.summary.entityLogicalName ?? "")}">
+  return `<main id="dvqr-comparison-top" class="dvqr-comparison" data-entity-logical-name="${escapeHtml(model.summary.entityLogicalName ?? "")}" data-source-captured-at="${escapeHtml(model.session?.sourceSnapshot.capturedAtIso ?? model.summary.sourceCapturedAtIso ?? "")}" data-target-captured-at="${escapeHtml(model.session?.targetSnapshot.capturedAtIso ?? model.summary.targetCapturedAtIso ?? "")}">
     <section class="dvqr-hero">
       <div class="dvqr-hero-topline">
         <div>

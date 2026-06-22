@@ -369,14 +369,15 @@ function buildProComparisonCapability(): CapabilityInfo {
     id: "cross-environment-comparison",
     title: "Evidence Workspace, Snapshot Library & Cross-Environment Diff",
     group: "Operational Comparison Workflows",
-    summary: "Capture, organise, select, and compare operational evidence using Evidence Workspace and Snapshot Library workflows.",
-    operationalUseCase: "Use Evidence Workspace, Snapshot Library, Timeline Diff, and Cross-Environment Diff to investigate operational drift, compare topology changes, and preserve investigation continuity.",
+    summary: "Capture, organise, compare, reconstruct, and audit-enrich operational evidence using Evidence Workspace and Snapshot Library workflows.",
+    operationalUseCase: "Use Evidence Workspace, Snapshot Library, Timeline Reconstruction, Cross-Environment Diff, and inline Audit Evidence to investigate operational drift, compare topology changes, and preserve investigation continuity.",
     howToUse: [
       "Create or open an Evidence Workspace from the Hub or Snapshot Library.",
       "Capture Operational Profile snapshots into the workspace.",
       "Select source and target snapshots, or compare latest and previous snapshots from the library.",
       "Use Timeline Reconstruction for 3+ same-environment snapshots, Timeline Diff for two same-environment snapshots, and Cross-Environment Diff for different-environment comparison.",
-      "Export comparison evidence when you need to preserve or share investigation context."
+      "Query Audit Evidence on supported findings when you need snapshot-bounded who/when context.",
+      "Export HTML/PDF reports when you need to preserve or share investigation context, including any audit evidence explicitly queried before export."
     ],
     relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
     commandId: "dvQuickRun.openSnapshotLibrary",
@@ -401,24 +402,19 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.13.0 introduces Timeline Reconstruction for 3+ same-environment snapshots, with timeline graph, first-observed windows, and Timeline Findings/Handoff reports.",
+  "v0.13.1 introduces Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",
+  "Inline Check Audit Evidence actions query Dataverse audit history inside snapshot-bounded investigation windows.",
+  "Queried audit evidence is included in Timeline and Cross Diff HTML/PDF reports for investigation handoff continuity.",
+  "Security relationship association audit payloads, including user/role association evidence, are partially interpreted when available.",
+  "Unknown audit payloads are preserved as raw evidence and can be submitted through Feedback as audit edge cases.",
+  "Audit payload interpretation is experimental; audit evidence enriches investigation context but does not establish causality, deployment correctness, remediation status, or operational authority.",
+  "Reports now use the shared .dvqr/reports workspace and the Report Naming Standard v1.0 pattern: {timestamp}-{scope}-{environment}-{artifact}.{extension}.",
+  "v0.13.0 introduced Timeline Reconstruction for 3+ same-environment snapshots, with timeline graph, first-observed windows, and Timeline Findings/Handoff reports.",
   "Free users can try the timeline workflow with built-in TIMELINE-MOCK snapshots from Snapshot Library.",
   "Evidence Workspace creates a local .dvqr evidence tree for snapshots, comparisons, and reports.",
   "Snapshot Library can capture Operational Profile snapshots directly into the active Evidence Workspace.",
-  "Evidence selection now supports compact multi-select, same-environment Timeline Reconstruction, Compare Selected, search, and timeline-ready selection states.",
-  "Create Evidence Workspace guides first-time setup and opens the workspace in VS Code.",
-  "Export dropdown consolidates CSV, JSON, and Pro Upsert Artifact export actions in Result Viewer.",
-  "Pro Upsert Artifact export creates .dvbur.json packages for DV Bulk Upsert Runner from flat single-entity Result Viewer results.",
-  "DV ForgeLab ecosystem orientation now links DV Quick Run with companion Dataverse utilities at dvforgelab.com/products.",
-  "Platform stabilisation and operational continuity refinements.",
-  "Foundations for future operational comparison workflows.",
-  "DV Quick Run Hub for in-app operational guidance.",
-  "Workflow-oriented investigation playbooks.",
-  "Capability Explorer as a dedicated operational capability discovery and execution surface.",
-  "Custom API discovery now opens in Capability Explorer instead of using Result Viewer as the primary catalogue surface.",
-  "Metadata-aware Function execution with structured execution diagnostics and investigation-ready response surfaces.",
-  "Lightweight product direction and philosophy orientation.",
-  "Initial extension-session investigation context foundation."
+  "Evidence selection supports compact multi-select, same-environment Timeline Reconstruction, Compare Selected, search, and timeline-ready selection states.",
+  "DV ForgeLab ecosystem orientation links DV Quick Run with companion Dataverse utilities at dvforgelab.com/products."
 ];
 
 export const philosophy: readonly string[] = [
