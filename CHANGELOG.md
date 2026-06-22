@@ -8,6 +8,319 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.13.1 — Audit Evidence Enrichment, Timeline Context & Investigation Continuity
+
+This release introduces the first generation of **Audit Evidence Enrichment** for Timeline Reconstruction and Cross-Environment Diff.
+
+DV Quick Run can now query Dataverse audit history inside snapshot-bounded investigation windows and surface matching audit evidence directly alongside operational findings.
+
+The goal is not audit forensics or historical certainty.
+
+It is:
+
+* operational context enrichment
+* snapshot-bounded audit visibility
+* explainable investigation continuity
+* evidence-backed operational review
+* calmer historical investigation workflows
+
+DV Quick Run continues to reinforce:
+
+```text
+DVQR reconstructs observed evidence.
+
+DVQR does not reconstruct historical certainty.
+```
+
+---
+
+## 🔍 Audit Evidence Enrichment (Major)
+
+Introduced Audit Evidence Enrichment across:
+
+* Timeline Reconstruction
+* Cross-Environment Diff
+
+DV Quick Run can now:
+
+* query Dataverse audit history inside snapshot windows
+* correlate matching audit evidence
+* surface audit context inline
+* preserve captured snapshot evidence alongside audit observations
+
+Audit evidence is treated as:
+
+```text
+Investigation enrichment
+```
+
+and not:
+
+```text
+Root cause proof
+```
+
+Behaviour:
+
+* audit lookup remains explicitly bounded
+* evidence remains snapshot-window constrained
+* audit findings supplement captured evidence
+* causality is never inferred
+
+Results:
+
+* stronger investigation context
+* improved operational storytelling
+* reduced manual audit searches
+* richer historical review workflows
+
+---
+
+## ⏱️ Snapshot-Bounded Audit Queries
+
+Audit retrieval is now constrained to:
+
+```text
+Source Snapshot
+        ↓
+ Investigation Window
+        ↓
+Target Snapshot
+```
+
+DV Quick Run only searches audit history occurring within the selected reconstruction interval.
+
+Behaviour:
+
+* audit evidence remains time-bounded
+* unrelated historical records are excluded
+* timeline findings remain explainable
+* operational continuity is preserved
+
+Results:
+
+* reduced audit noise
+* stronger evidence relevance
+* improved timeline trustworthiness
+* calmer audit interpretation
+
+---
+
+## 👥 Security Role & Relationship Audit Interpretation
+
+Added first-generation support for interpreting common Dataverse security and relationship audit payloads.
+
+DV Quick Run can now recognise patterns such as:
+
+* role associations
+* user-role participation
+* security relationship changes
+* entity association operations
+* relationship-based audit activity
+
+Where interpretation is possible, DV Quick Run surfaces:
+
+* operation type
+* relationship name
+* related entity
+* related record
+* investigator context
+
+Results:
+
+* improved visibility into security-oriented changes
+* stronger participation investigation workflows
+* richer identity drift context
+
+---
+
+## 🧪 Experimental Audit Payload Decoder
+
+Dataverse audit payloads vary significantly across:
+
+* entity updates
+* relationship associations
+* security operations
+* ownership changes
+* platform-generated activity
+
+DV Quick Run now preserves raw evidence whenever payloads cannot be confidently interpreted.
+
+Behaviour:
+
+* raw payloads remain available
+* partial interpretations are explicitly marked
+* unknown payloads are never silently discarded
+* evidence preservation takes precedence over assumptions
+
+Results:
+
+* safer audit handling
+* stronger investigation transparency
+* improved future decoder evolution
+
+---
+
+## 📄 Audit-Aware HTML & PDF Reports
+
+Timeline Reconstruction and Cross-Environment Diff reports now support embedded audit evidence.
+
+Exports can now include:
+
+* audit summaries
+* audit windows
+* interpreted audit records
+* investigator-facing audit notes
+* experimental interpretation warnings
+
+Behaviour:
+
+* audit sections only appear when evidence exists
+* reports preserve investigation continuity
+* audit evidence remains advisory-only
+
+Results:
+
+* richer executive review reports
+* improved handoff quality
+* stronger investigation portability
+
+---
+
+## 🚩 Audit Edge Case Reporting
+
+Introduced audit edge-case reporting guidance.
+
+Some Dataverse audit payloads expose undocumented or inconsistent structures.
+
+DV Quick Run now surfaces:
+
+```text
+Report audit edge case
+```
+
+when unknown payloads are encountered.
+
+Behaviour:
+
+* raw evidence is preserved
+* interpretation confidence is disclosed
+* future releases can improve decoder coverage
+
+Results:
+
+* community-driven decoder evolution
+* improved audit compatibility
+* stronger long-term investigation accuracy
+
+---
+
+## 🗂️ Workspace Report Naming Standardisation
+
+Standardised report naming across:
+
+* Timeline Reconstruction
+* Cross-Environment Diff
+
+Reports now use consistent short-form identifiers:
+
+```text
+TR-{entity}-{timestamp}
+CD-{entity}-{timestamp}
+```
+
+Examples:
+
+```text
+TR-account-20260622-1150.html
+CD-contact-20260622-1430.pdf
+```
+
+Behaviour:
+
+* shorter filenames
+* improved workspace readability
+* consistent Evidence Workspace organisation
+* easier report navigation
+
+---
+
+## 🎨 Investigation & Audit UX Refinements
+
+Refined audit presentation throughout investigation workflows.
+
+Improvements include:
+
+* inline audit evidence cards
+* interval-aware audit summaries
+* clearer audit disclaimers
+* independent audit expand/collapse state
+* timeline audit continuity
+* audit interpretation warnings
+* report export consistency
+
+Results:
+
+* improved investigation readability
+* calmer audit review workflows
+* stronger evidence transparency
+
+---
+
+## 🧪 Stability & Validation
+
+Verified:
+
+* Timeline Reconstruction audit enrichment
+* Cross-Environment Diff audit enrichment
+* audit evidence export workflows
+* HTML audit rendering
+* PDF audit rendering
+* snapshot-window audit queries
+* security role association interpretation
+* relationship association interpretation
+* audit edge-case preservation
+* workspace report generation
+
+No regression in:
+
+* Timeline Reconstruction
+* Cross-Environment Diff
+* Snapshot Library
+* Operational Profiles
+* Evidence Workspace
+* Report Exports
+* Access Context
+* Result Viewer
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* enrich investigations with Dataverse audit history
+* surface audit evidence directly inside Timeline Reconstruction
+* provide audit-aware Cross-Environment Diff analysis
+* preserve unknown audit payloads safely
+* export audit-enriched HTML and PDF reports
+* standardise report naming across investigation workflows
+
+This release evolves DV Quick Run from:
+
+```text
+Observed Evidence Reconstruction
+```
+
+towards:
+
+```text
+Observed Evidence Reconstruction
++
+Audit Evidence Enrichment
+```
+
+while preserving DVQR's evidence-first investigation model.
 
 ## v0.13.0.1 — Purchase Path Consistency
 

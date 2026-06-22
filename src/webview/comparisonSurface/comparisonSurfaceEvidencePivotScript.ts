@@ -33,6 +33,24 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
     result.textContent = message.summary || 'Captured comparison context is available inline.';
   });
 
+  window.addEventListener('message', (event) => {
+    const message = event.data || {};
+    if (message.type !== 'auditEvidenceResult') {
+      return;
+    }
+
+    const evidenceId = message.evidenceId;
+    if (!evidenceId) {
+      return;
+    }
+
+    const result = document.querySelector('[data-audit-result="' + evidenceId + '"]');
+    if (!result) {
+      return;
+    }
+
+    result.innerHTML = message.html || '<p>Audit evidence result was returned without renderable content.</p>';
+  });
 
 
 
@@ -138,6 +156,85 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   }
 
 
+  function resolveAuditButton(target) {
+    if (!(target instanceof Element)) {
+      return undefined;
+    }
+
+    return target.closest('[data-audit-check]');
+  }
+
+  function ensureAuditContext(button, evidenceId) {
+    const item = button.closest('.dvqr-evidence-item');
+    let context = item?.querySelector('[data-audit-context="' + evidenceId + '"]')
+      ?? document.querySelector('[data-audit-context="' + evidenceId + '"]');
+
+    if (context) {
+      return context;
+    }
+
+    if (!item) {
+      return undefined;
+    }
+
+    const fallback = document.createElement('div');
+    fallback.className = 'dvqr-inline-audit-context';
+    fallback.setAttribute('data-audit-context', evidenceId);
+    fallback.setAttribute('hidden', '');
+    fallback.innerHTML = '<strong>Audit evidence</strong><span>Audit lookup is explicit and interval-bounded. Audit evidence enriches this finding; it does not establish root cause.</span><div data-audit-result="' + evidenceId + '">Not queried yet.</div>';
+    item.appendChild(fallback);
+    return fallback;
+  }
+
+  function activateAuditButton(button, event) {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const evidenceId = button.getAttribute('data-audit-check');
+    if (!evidenceId) {
+      return;
+    }
+
+    const context = ensureAuditContext(button, evidenceId);
+    if (!context) {
+      return;
+    }
+
+    const isHidden = context.hasAttribute('hidden');
+    context.toggleAttribute('hidden', !isHidden);
+    button.classList.toggle('is-active', isHidden);
+    button.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    button.textContent = isHidden ? 'Hide audit evidence ↑' : 'Check audit evidence ›';
+
+    if (!isHidden) {
+      return;
+    }
+
+    const evidenceItem = button.closest('.dvqr-evidence-item');
+    const result = evidenceItem?.querySelector('[data-audit-result="' + evidenceId + '"]')
+      ?? document.querySelector('[data-audit-result="' + evidenceId + '"]');
+
+    if (result && result.textContent === 'Not queried yet.') {
+      result.textContent = 'Checking audit evidence inside this snapshot-bounded interval...';
+    }
+
+    const comparisonTop = document.querySelector('#dvqr-comparison-top');
+    vscode?.postMessage?.({
+      type: 'auditEvidenceRequested',
+      evidenceId,
+      label: evidenceItem?.getAttribute('data-evidence-label') || '',
+      value: evidenceItem?.getAttribute('data-evidence-value') || '',
+      parentTitle: evidenceItem?.getAttribute('data-parent-title') || '',
+      parentSummary: evidenceItem?.getAttribute('data-parent-summary') || '',
+      parentProvider: evidenceItem?.getAttribute('data-parent-provider') || '',
+      parentEvidence: evidenceItem?.getAttribute('data-parent-evidence') || '',
+      entityLogicalName: comparisonTop?.getAttribute('data-entity-logical-name') || '',
+      fromCapturedAtIso: comparisonTop?.getAttribute('data-source-captured-at') || '',
+      toCapturedAtIso: comparisonTop?.getAttribute('data-target-captured-at') || ''
+    });
+  }
+
+
   document.addEventListener('pointerdown', (event) => {
     const button = resolveEvidenceButton(event.target);
     if (!button) {
@@ -152,6 +249,12 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   }, true);
 
   document.addEventListener('click', (event) => {
+    const auditButton = resolveAuditButton(event.target);
+    if (auditButton) {
+      activateAuditButton(auditButton, event);
+      return;
+    }
+
     const button = resolveEvidenceButton(event.target);
     if (!button) {
       return;
@@ -164,6 +267,10 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   evidenceButtons.forEach((button) => {
     button.addEventListener('click', (event) => activateEvidenceButton(button, event));
   });
-  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length });
+  const auditButtons = document.querySelectorAll('[data-audit-check]');
+  auditButtons.forEach((button) => {
+    button.addEventListener('click', (event) => activateAuditButton(button, event));
+  });
+  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length });
 `;
 }

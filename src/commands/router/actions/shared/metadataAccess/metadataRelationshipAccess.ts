@@ -43,31 +43,40 @@ export async function loadEntityRelationships(
   options?: MetadataLoadOptions
 ): Promise<EntityRelationshipExplorerResult> {
   const key = normalizeKey(logicalName);
+  const forceRefresh = options?.forceRefresh === true;
   const memory = relationshipMemory.get(key);
-  if (memory) {
+  if (!forceRefresh && memory) {
     return memory;
   }
 
   const envName = ctx.envContext.getEnvironmentName();
-  const cached = getCachedEntityRelationships(ctx.ext, envName, logicalName);
+  const cached = !forceRefresh ? getCachedEntityRelationships(ctx.ext, envName, logicalName) : undefined;
   if (cached) {
     relationshipMemory.set(key, cached);
     appendOutput(ctx, `Relationship metadata cache hit for ${logicalName}.`, options);
     return cached;
   }
 
-  return await getOrCreateRelationshipInFlight(logicalName, async () => {
+  const fetchAndCache = async () => {
     const fetched = await runMetadataLoad(
-      `DV Quick Run: Loading relationship metadata for ${logicalName}...`,
+      forceRefresh
+        ? `DV Quick Run: Refreshing relationship metadata for ${logicalName}...`
+        : `DV Quick Run: Loading relationship metadata for ${logicalName}...`,
       async () => await fetchEntityRelationships(client, token, logicalName),
       options
     );
 
     await setCachedEntityRelationships(ctx.ext, envName, logicalName, fetched);
     relationshipMemory.set(key, fetched);
-    appendOutput(ctx, `Relationship metadata fetched for ${logicalName}.`, options);
+    appendOutput(ctx, `Relationship metadata ${forceRefresh ? "refreshed" : "fetched"} for ${logicalName}.`, options);
     return fetched;
-  });
+  };
+
+  if (forceRefresh) {
+    return await fetchAndCache();
+  }
+
+  return await getOrCreateRelationshipInFlight(logicalName, fetchAndCache);
 }
 
 export function clearRelationshipMetadataMemory(): void {

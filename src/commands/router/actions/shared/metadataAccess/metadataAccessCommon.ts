@@ -5,6 +5,11 @@ import { logDebug } from "../../../../../utils/logger.js";
 export type MetadataLoadOptions = {
   silent?: boolean;
   suppressOutput?: boolean;
+  /**
+   * Bypass in-memory and persisted metadata caches for evidence capture paths.
+   * Snapshot evidence must prefer fresh Dataverse metadata over browsing caches.
+   */
+  forceRefresh?: boolean;
 };
 
 export function appendOutput(

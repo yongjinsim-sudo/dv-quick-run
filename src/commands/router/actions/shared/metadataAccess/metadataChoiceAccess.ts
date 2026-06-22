@@ -42,13 +42,14 @@ export async function loadChoiceMetadata(
   logicalName: string,
   options?: MetadataLoadOptions
 ): Promise<ChoiceMetadataDef[]> {
+  const forceRefresh = options?.forceRefresh === true;
   const memory = getChoiceMemory<ChoiceMetadataDef>(logicalName);
-  if (memory?.length) {
+  if (!forceRefresh && memory?.length) {
     return memory;
   }
 
   const envName = ctx.envContext.getEnvironmentName();
-  const cached = getCachedChoiceMetadata(ctx.ext, envName, logicalName);
+  const cached = !forceRefresh ? getCachedChoiceMetadata(ctx.ext, envName, logicalName) : undefined;
   if (cached?.length) {
     setChoiceMemory(logicalName, cached);
     appendOutput(
@@ -59,13 +60,15 @@ export async function loadChoiceMetadata(
     return cached;
   }
 
-  return await getOrCreateChoiceInFlight<ChoiceMetadataDef>(logicalName, async () => {
+  const fetchAndCache = async () => {
     const fetched = options?.silent
       ? await fetchEntityChoiceMetadata(client, token, logicalName)
       : await vscode.window.withProgress<ChoiceMetadataDef[]>(
           {
             location: vscode.ProgressLocation.Notification,
-            title: `DV Quick Run: Loading choice metadata for ${logicalName}...`,
+            title: forceRefresh
+              ? `DV Quick Run: Refreshing choice metadata for ${logicalName}...`
+              : `DV Quick Run: Loading choice metadata for ${logicalName}...`,
             cancellable: false
           },
           async () => await fetchEntityChoiceMetadata(client, token, logicalName)
@@ -75,10 +78,16 @@ export async function loadChoiceMetadata(
     setChoiceMemory(logicalName, fetched);
     appendOutput(
       ctx,
-      `Choice metadata fetched for ${logicalName}: ${fetched.length} fields.`,
+      `Choice metadata ${forceRefresh ? "refreshed" : "fetched"} for ${logicalName}: ${fetched.length} fields.`,
       options
     );
 
     return fetched;
-  });
+  };
+
+  if (forceRefresh) {
+    return await fetchAndCache();
+  }
+
+  return await getOrCreateChoiceInFlight<ChoiceMetadataDef>(logicalName, fetchAndCache);
 }

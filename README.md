@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Audit Evidence Enrichment, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -23,7 +23,7 @@ The website includes:
 * marketplace/install links
 * Free / Pro / Offline pricing and activation guidance
 * interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
-* sample Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff report flows
+* sample Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, Timeline Investigation Handoff, and audit-aware report flows
 
 The interactive HTML demo helps illustrate:
 
@@ -31,7 +31,7 @@ The interactive HTML demo helps illustrate:
 * inline evidence continuation
 * operational verification workflows
 * Findings / Verification / Handoff investigation flow
-* Timeline Reconstruction, interval graph, and first-observed drift report flows
+* Timeline Reconstruction, interval graph, first-observed drift, and audit evidence enrichment report flows
 * dense enterprise comparison readability
 * operational investigation continuity
 * report export mental models for Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff workflows
@@ -59,6 +59,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * compare operational snapshots through Snapshot Library, Timeline Reconstruction, and Cross-Environment Diff
 * continue investigation from comparison evidence using bounded inline pivots
 * reconstruct first-observed operational drift across 3+ same-environment snapshots
+* enrich Timeline Reconstruction and Cross-Environment Diff findings with snapshot-bounded Dataverse audit evidence
 * review, verify, comment on, and hand off operational drift findings
 * export Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff reports as HTML/PDF artifacts
 * export DVBUR artifacts from Result Viewer records for downstream DV Bulk Upsert Runner workflows
@@ -158,6 +159,129 @@ Offline Pro is designed for restricted, disconnected, and air-gapped environment
 ---
 
 
+## 🆕 What's New in v0.13.1
+
+v0.13.1 introduces **Audit Evidence Enrichment**.
+
+DV Quick Run can now query Dataverse audit history inside snapshot-bounded investigation windows and surface matching audit evidence directly alongside Timeline Reconstruction and Cross-Environment Diff findings.
+
+Highlights include:
+
+* Audit Evidence Enrichment for Timeline Reconstruction
+* Audit Evidence Enrichment for Cross-Environment Diff
+* snapshot-bounded audit queries
+* security role and relationship association audit interpretation
+* experimental audit payload decoder
+* audit-aware HTML reports
+* audit-aware PDF reports
+* audit edge-case reporting workflow
+* workspace report naming standardisation
+* Timeline and Cross-Environment Diff audit UX refinements
+
+Audit Evidence Enrichment answers:
+
+```text
+Is there Dataverse audit evidence inside this snapshot-bounded investigation window?
+Who or what recorded the available audit row?
+When was the audit row recorded?
+What operation or relationship payload can DVQR safely interpret?
+```
+
+It intentionally does **not** answer:
+
+```text
+Was this the root cause?
+Was this deployment correct?
+Was remediation completed?
+Is this operational authority?
+Can every Dataverse audit payload be fully decoded?
+```
+
+DV Quick Run continues to prioritise:
+
+```text
+DVQR reconstructs observed evidence.
+DVQR does not reconstruct historical certainty.
+
+Audit evidence enriches investigation context.
+Audit evidence does not establish causality, deployment correctness, remediation status, or operational authority.
+```
+
+### Audit Evidence Enrichment
+
+Timeline Reconstruction and Cross-Environment Diff findings can now query Dataverse audit history within the selected snapshot window.
+
+Audit enrichment can surface:
+
+* audit record timestamps
+* recorded user / actor where available
+* Dataverse operation and action labels
+* security relationship association payloads
+* related entity and object references
+* interpreted and partially interpreted payloads
+* raw audit payloads in HTML exports for edge-case review
+
+Behaviour:
+
+* audit lookup is explicit and user-triggered
+* audit queries are interval-bounded
+* audit rows enrich captured evidence but do not replace it
+* metadata-only findings may not have corresponding Dataverse audit rows
+* unknown payloads are preserved rather than guessed
+
+### Experimental Audit Payload Interpretation
+
+Dataverse audit payloads vary significantly across entity updates, relationship associations, security operations, ownership changes, platform activity, and metadata operations.
+
+DV Quick Run now includes a first-generation audit payload interpretation framework.
+
+When DVQR can confidently interpret the payload, it renders a structured audit evidence card. When the payload is unknown or only partially understood, DVQR preserves the raw evidence and clearly marks the interpretation as experimental.
+
+Unknown audit payloads are evidence, not errors.
+
+Users can submit audit edge cases through Feedback so future releases can expand decoder coverage.
+
+### Audit-Aware Reports
+
+Timeline and Cross-Environment Diff reports can now include audit evidence that was explicitly queried in the interactive investigation surface before export.
+
+Audit-aware reports may include:
+
+* audit evidence summaries
+* audit windows
+* interpreted audit records
+* relationship association details
+* experimental interpretation notes
+* raw payload preservation in HTML exports
+
+Reports remain evidence-first and advisory-only.
+
+### Report Naming Standard
+
+DV Quick Run now standardises report filenames across Timeline Reconstruction and Cross-Environment Diff.
+
+Reports use the pattern:
+
+```text
+{timestamp}-{scope}-{environment}-{artifact}.{extension}
+```
+
+Examples:
+
+```text
+2026-06-22-1426-dvurtestrecord-sandbox-diff-findings-summary.pdf
+2026-06-22-1427-dvurtestrecord-sandbox-timeline-investigation-handoff.html
+```
+
+Generated reports are saved under the Evidence Workspace reports folder:
+
+```text
+.dvqr/reports/
+```
+
+---
+
+
 ## 🆕 What's New in v0.13.0
 
 v0.13.0 introduces **Operational Timeline Reconstruction**.
@@ -173,6 +297,7 @@ Highlights include:
 * provider-owned timeline findings
 * Timeline Findings Summary reports
 * Timeline Investigation Handoff reports
+* optional Audit Evidence Enrichment where Dataverse audit rows are available
 * timeline trust and snapshot verification summaries
 * same-environment / same-entity timeline validation
 * built-in `TIMELINE-MOCK` snapshots for Free preview workflows
@@ -666,6 +791,7 @@ DV Quick Run reconstructs:
 * Timeline Trust
 * Timeline Findings Summary reports
 * Timeline Investigation Handoff reports
+* optional Audit Evidence Enrichment where Dataverse audit rows are available
 
 Timeline Reconstruction can show provider-backed operational drift across:
 
@@ -732,7 +858,34 @@ They preserve:
 * significance distribution
 * top timeline events
 * evidence references
+* audit evidence where explicitly queried before export
 * trust and verification boundaries
+
+
+### 🔍 Audit Evidence Enrichment
+
+Audit Evidence Enrichment adds optional Dataverse audit context to Timeline Reconstruction and Cross-Environment Diff investigations.
+
+When audit evidence is queried, DV Quick Run searches within the relevant snapshot-bounded investigation window and renders matching audit rows alongside the related finding.
+
+Audit evidence may include:
+
+* recorded timestamp
+* recorded user / actor where available
+* operation and action labels
+* changed attributes for supported entity update payloads
+* security or relationship association information
+* partially interpreted Dataverse audit payloads
+* raw payload preservation in HTML reports
+
+Audit Evidence Enrichment is intentionally bounded:
+
+```text
+Audit evidence enriches investigation context.
+Audit evidence does not establish causality, deployment correctness, remediation status, or operational authority.
+```
+
+Dataverse audit payload interpretation is experimental. Some payloads may be partially interpreted or preserved as raw evidence so users can submit edge cases through Feedback.
 
 
 
@@ -836,7 +989,18 @@ They are designed to help you understand:
 * whether platform-layer drift is low-priority context or relevant to the investigation
 * whether a comparison or timeline is scope-aligned before treating drift as meaningful
 
-Future roadmap direction includes **Audit Enrichment**: correlating available audit evidence into timeline windows to add who/when context while preserving human verification boundaries.
+Audit Evidence Enrichment is available in v0.13.1.
+
+Current coverage includes:
+
+* snapshot-bounded audit retrieval
+* Timeline Reconstruction audit enrichment
+* Cross-Environment Diff audit enrichment
+* security and relationship association interpretation
+* audit-aware HTML/PDF exports
+* raw payload preservation for partially interpreted audit rows
+
+Future roadmap direction includes expanded audit payload interpretation, ownership transfer decoding, platform-operation decoding, custom association decoding, richer attribute-level audit correlation, and timeline-assisted root-cause guidance while preserving human verification boundaries.
 
 ---
 
@@ -1077,6 +1241,8 @@ It detects or guards against risky situations such as:
 * treating inline evidence continuation as remediation or proof of root cause
 * treating review-state completion as operational correctness
 * treating exported reports or PDFs as approval, certification, root-cause proof, timeline certainty, or remediation authority
+* treating audit evidence as causality, deployment correctness, remediation proof, or operational authority
+* assuming unknown Dataverse audit payloads are fully interpreted when DVQR marks them as experimental or partially interpreted
 
 Execution-capable workflows are designed around:
 
@@ -1099,6 +1265,7 @@ Use DVQR Discussions to:
 * share workflow feedback
 * discuss operational investigation patterns
 * propose comparison providers
+* submit audit payload edge cases
 * follow roadmap direction
 
 GitHub Discussions:
@@ -1166,6 +1333,8 @@ Commercial Pro capabilities focus on advanced operational acceleration workflows
 - Timeline Reconstruction
 - Timeline Findings Summary Reports
 - Timeline Investigation Handoff Reports
+- Audit Evidence Enrichment
+- Audit-Aware HTML/PDF Report Exports
 - Runtime Behaviour Drift
 - Identity Participation Drift
 - Snapshot Replay

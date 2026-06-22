@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import type { ComparisonDifference } from "../../../core/comparison/index.js";
 import type { ComparisonReportFinding, ComparisonReportModel, ComparisonReportProviderDistributionItem } from "./comparisonReportTypes.js";
+import { auditEvidenceCompactReportLines } from "../../audit/auditEvidenceReportSummary.js";
 
 interface PdfCursor {
   readonly doc: PDFKit.PDFDocument;
@@ -581,6 +582,22 @@ function renderDetailedGroups(cursor: PdfCursor, report: ComparisonReportModel, 
   }
 }
 
+function renderAuditEvidenceSummary(cursor: PdfCursor, report: ComparisonReportModel, logoBuffer: Buffer | undefined, footerText: string): void {
+  if ((report.auditEvidenceResults ?? []).length === 0) {
+    return;
+  }
+  section(cursor, "Audit Evidence Summary", logoBuffer, footerText, 104);
+  paragraph(cursor, "Audit evidence shown here was explicitly queried in the interactive investigation surface before export. Audit evidence enriches findings; it does not establish causality, deployment correctness, remediation status, or operational authority.", logoBuffer, footerText, { fontSize: 8.7 });
+  for (const result of (report.auditEvidenceResults ?? []).slice(0, 6)) {
+    cursor.y += 5;
+    const lines = auditEvidenceCompactReportLines(result, 2);
+    for (const line of lines) {
+      paragraph(cursor, line, logoBuffer, footerText, { fontSize: line === result.title || line.startsWith("Record ") ? 8.2 : 7.3, bold: line === result.title || line.startsWith("Record "), color: line === result.title ? "#1f2328" : "#57606a" });
+    }
+  }
+  paragraph(cursor, "Audit payload interpretation is experimental. Raw payloads are preserved in HTML exports and can be submitted through Feedback as edge cases.", logoBuffer, footerText, { fontSize: 7.8, color: "#57606a" });
+}
+
 function renderBoundary(cursor: PdfCursor, logoBuffer: Buffer | undefined, footerText: string): void {
   section(cursor, "Verification boundary", logoBuffer, footerText, 104);
   paragraph(cursor, "DVQR observes operational drift and supports verification. This report does not certify root cause, assign blame, approve changes, or perform remediation. Human review remains required before corrective action.", logoBuffer, footerText, { fontSize: 9 });
@@ -616,6 +633,7 @@ export async function renderComparisonReportPdf(report: ComparisonReportModel): 
   }
   renderFindings(cursor, report.kind === "DiffFindingsSummary" ? "Top operational drift findings" : "Outstanding operational verification", report.topFindings, logoBuffer, footerText);
   cursor.y += report.kind === "DiffFindingsSummary" ? 14 : 8;
+  renderAuditEvidenceSummary(cursor, report, logoBuffer, footerText);
   renderBoundary(cursor, logoBuffer, footerText);
   renderDetailedGroups(cursor, report, logoBuffer, footerText);
   stampBufferedPages(doc, logoBuffer, footerText);

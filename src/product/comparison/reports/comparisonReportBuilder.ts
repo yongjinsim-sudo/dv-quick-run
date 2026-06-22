@@ -154,6 +154,7 @@ export function buildComparisonReportModel(
     watermark: {
       logoDataUri: options.watermarkLogoDataUri,
       footerText: buildWatermarkFooter()
-    }
+    },
+    auditEvidenceResults: options.auditEvidenceResults ?? []
   };
 }

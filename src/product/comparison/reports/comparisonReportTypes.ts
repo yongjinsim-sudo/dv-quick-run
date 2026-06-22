@@ -1,4 +1,5 @@
 import type { ComparisonDifference, ComparisonDriftGroup, ComparisonOperationalSignificance, ComparisonSnapshotTrustSummary, ComparisonViewModel } from "../../../core/comparison/index.js";
+import type { AuditEvidenceResult } from "../../audit/auditEvidenceTypes.js";
 
 export type ComparisonReportKind = "DiffFindingsSummary" | "InvestigationHandoff";
 
@@ -67,11 +68,13 @@ export interface ComparisonReportModel {
   readonly groups: readonly ComparisonReportGroup[];
   readonly sourceModel: ComparisonViewModel;
   readonly watermark: ComparisonReportWatermark;
+  readonly auditEvidenceResults?: readonly AuditEvidenceResult[];
 }
 
 export interface BuildComparisonReportOptions {
   readonly generatedAt?: Date;
   readonly watermarkLogoDataUri?: string;
+  readonly auditEvidenceResults?: readonly AuditEvidenceResult[];
 }
 
 export const reportSignificanceRank: Record<ComparisonOperationalSignificance, number> = {

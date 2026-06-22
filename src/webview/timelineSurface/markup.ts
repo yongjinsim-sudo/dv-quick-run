@@ -190,7 +190,7 @@ function renderTopTimelineEvents(events: readonly TimelineEvent[]): string {
       <p>Highest-signal changes first observed across the selected snapshot sequence.</p>
     </div>
     <div class="dvqr-timeline-event-list">
-      ${events.map(renderTimelineEvent).join("")}
+      ${events.map((event, index) => renderTimelineEvent(event, `top-${index}`, true)).join("")}
     </div>
   </section>`;
 }
@@ -243,12 +243,14 @@ function renderTimelineInterval(interval: TimelineInterval): string {
     </div>
     <p class="dvqr-muted">${escapeHtml(formatCapturedAt(interval.fromCapturedAtIso))} → ${escapeHtml(formatCapturedAt(interval.toCapturedAtIso))}</p>
     <div class="dvqr-timeline-provider-summary">${providerSummary}</div>
-    ${interval.events.length > 0 ? `<div class="dvqr-timeline-event-list">${interval.events.map(renderTimelineEvent).join("")}</div>` : `<p class="dvqr-muted">No changes first observed in this interval.</p>`}
+    ${interval.events.length > 0 ? `<div class="dvqr-timeline-event-list">${interval.events.map((event, index) => renderTimelineEvent(event, `interval-${interval.index}-${index}`, false)).join("")}</div>` : `<p class="dvqr-muted">No changes first observed in this interval.</p>`}
   </article>`;
 }
 
-function renderTimelineEvent(event: TimelineEvent): string {
-  return `<article id="${escapeHtml(event.id)}" class="dvqr-timeline-event dvqr-timeline-event-${escapeHtml(event.significance.toLowerCase())}" data-provider-id="${escapeHtml(event.providerId)}">
+function renderTimelineEvent(event: TimelineEvent, instanceKey: string, ownsAnchor: boolean): string {
+  const auditKey = `${event.id}::${instanceKey}`;
+  const articleId = ownsAnchor ? event.id : `${event.id}-${instanceKey}`;
+  return `<article id="${escapeHtml(articleId)}" class="dvqr-timeline-event dvqr-timeline-event-${escapeHtml(event.significance.toLowerCase())}" data-provider-id="${escapeHtml(event.providerId)}" data-timeline-event-id="${escapeHtml(event.id)}">
     <div class="dvqr-timeline-event-header">
       <span class="dvqr-timeline-significance">${escapeHtml(event.significance)}</span>
       <span class="dvqr-timeline-provider">${escapeHtml(event.providerTitle)}</span>
@@ -260,7 +262,21 @@ function renderTimelineEvent(event: TimelineEvent): string {
       <strong>${escapeHtml(formatCapturedAt(event.firstObservedBetween.fromCapturedAtIso))} → ${escapeHtml(formatCapturedAt(event.firstObservedBetween.toCapturedAtIso))}</strong>
     </div>
     ${renderEvidenceRefs(event)}
+    ${renderTimelineAuditAction(event, auditKey)}
   </article>`;
+}
+
+function renderTimelineAuditAction(event: TimelineEvent, auditKey: string): string {
+  return `<div class="dvqr-timeline-audit-actions">
+    <button type="button" class="dvqr-timeline-audit-button" data-timeline-audit-check="${escapeHtml(auditKey)}" data-timeline-event-id="${escapeHtml(event.id)}" data-event-title="${escapeHtml(event.title)}" data-event-summary="${escapeHtml(event.summary)}" data-provider-id="${escapeHtml(event.providerId)}" data-provider-title="${escapeHtml(event.providerTitle)}" data-entity-logical-name="${escapeHtml(event.sourceDifference?.evidence.find((item) => item.label.toLowerCase().includes("entity logical name"))?.value ?? "")}" data-from-captured-at="${escapeHtml(event.firstObservedBetween.fromCapturedAtIso)}" data-to-captured-at="${escapeHtml(event.firstObservedBetween.toCapturedAtIso)}" aria-expanded="false">
+      Check audit evidence ›
+    </button>
+  </div>
+  <div class="dvqr-timeline-audit-context" data-timeline-audit-context="${escapeHtml(auditKey)}" hidden>
+    <strong>Audit evidence</strong>
+    <p class="dvqr-muted">Audit lookup is explicit and interval-bounded. Audit evidence enriches this timeline event; it does not establish root cause.</p>
+    <div data-timeline-audit-result="${escapeHtml(auditKey)}">Not queried yet.</div>
+  </div>`;
 }
 
 function renderEvidenceRefs(event: TimelineEvent): string {
@@ -286,6 +302,36 @@ export function getTimelineSurfaceScript(): string {
     const vscode = acquireVsCodeApi();
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target.closest('[data-timeline-export-kind]') : null;
+      const auditTarget = event.target instanceof Element ? event.target.closest('[data-timeline-audit-check]') : null;
+      if (auditTarget) {
+        event.preventDefault();
+        const auditKey = auditTarget.getAttribute('data-timeline-audit-check') || '';
+        const eventId = auditTarget.getAttribute('data-timeline-event-id') || auditKey;
+        const context = document.querySelector('[data-timeline-audit-context="' + auditKey + '"]');
+        const result = document.querySelector('[data-timeline-audit-result="' + auditKey + '"]');
+        const isHidden = context?.hasAttribute('hidden');
+        context?.toggleAttribute('hidden', !isHidden);
+        auditTarget.classList.toggle('is-active', Boolean(isHidden));
+        auditTarget.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+        auditTarget.textContent = isHidden ? 'Hide audit evidence ↑' : 'Check audit evidence ›';
+        if (isHidden && result?.textContent === 'Not queried yet.') {
+          result.textContent = 'Checking audit evidence inside this snapshot-bounded interval...';
+          vscode.postMessage({
+            type: 'timelineAuditEvidenceRequested',
+            eventId,
+            auditKey,
+            title: auditTarget.getAttribute('data-event-title') || '',
+            summary: auditTarget.getAttribute('data-event-summary') || '',
+            providerId: auditTarget.getAttribute('data-provider-id') || '',
+            providerTitle: auditTarget.getAttribute('data-provider-title') || '',
+            entityLogicalName: auditTarget.getAttribute('data-entity-logical-name') || '',
+            fromCapturedAtIso: auditTarget.getAttribute('data-from-captured-at') || '',
+            toCapturedAtIso: auditTarget.getAttribute('data-to-captured-at') || ''
+          });
+        }
+        return;
+      }
+
       if (!target) {
         return;
       }
@@ -295,6 +341,18 @@ export function getTimelineSurfaceScript(): string {
       }
       event.preventDefault();
       vscode.postMessage({ type: 'saveTimelineReport', kind });
+    });
+
+    window.addEventListener('message', (event) => {
+      const message = event.data || {};
+      if (message.type !== 'timelineAuditEvidenceResult') {
+        return;
+      }
+      const auditKey = message.auditKey || message.eventId || '';
+      const result = document.querySelector('[data-timeline-audit-result="' + auditKey + '"]');
+      if (result) {
+        result.innerHTML = message.html || '<p>Audit evidence result was returned without renderable content.</p>';
+      }
     });
   })();`;
 }

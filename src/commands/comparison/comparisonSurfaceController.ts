@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import type { ComparisonViewModel } from "../../core/comparison/index.js";
 import { buildEvidencePivotResult } from "../../product/comparison/evidenceContinuation/liveEvidencePivotService.js";
 import { buildDefaultExportUri, renderComparisonMarkdown } from "../../product/comparison/export/comparisonMarkdownExport.js";
+import { ensureSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
 import { buildComparisonReportModel } from "../../product/comparison/reports/comparisonReportBuilder.js";
 import { renderComparisonReportHtml } from "../../product/comparison/reports/comparisonReportHtmlRenderer.js";
 import { renderComparisonReportPdf } from "../../product/comparison/reports/comparisonReportPdfRenderer.js";
@@ -13,12 +14,15 @@ import {
 } from "../../product/investigationWorkspace/investigationSessionState.js";
 import type { InvestigationSessionState } from "../../product/investigationWorkspace/investigationSessionState.js";
 import { canExportComparison, canRunCrossEnvironmentDiff } from "../../product/capabilities/capabilityResolver.js";
+import { queryAuditEvidence, renderAuditEvidenceResultHtml } from "../../product/audit/index.js";
+import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes.js";
 import { renderComparisonSurfaceHtml, renderStandaloneComparisonSurfaceHtml } from "../../webview/comparisonSurface/renderComparisonSurfaceHtml.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { promptForCrossEnvironmentDiffProAccess } from "./comparisonCapabilityPrompt.js";
 
 let comparisonPanel: vscode.WebviewPanel | undefined;
 let comparisonPanelMessageDisposable: vscode.Disposable | undefined;
+let comparisonAuditEvidenceByEvidenceId = new Map<string, AuditEvidenceResult>();
 
 function appendEvidencePivotDiagnostic(ctx: CommandContext, stage: string, details?: unknown): void {
   const timestamp = new Date().toISOString();
@@ -130,7 +134,8 @@ async function buildComparisonExportContent(ctx: CommandContext, model: Comparis
   if (kind === "summary-html" || kind === "handoff-html") {
     const logoDataUri = await readWatermarkLogoDataUri(ctx);
     const report = buildComparisonReportModel(kind === "summary-html" ? "DiffFindingsSummary" : "InvestigationHandoff", model, {
-      watermarkLogoDataUri: logoDataUri
+      watermarkLogoDataUri: logoDataUri,
+      auditEvidenceResults: [...comparisonAuditEvidenceByEvidenceId.values()]
     });
     return renderComparisonReportHtml(report);
   }
@@ -138,7 +143,8 @@ async function buildComparisonExportContent(ctx: CommandContext, model: Comparis
   if (kind === "summary-pdf" || kind === "handoff-pdf") {
     const logoDataUri = await readWatermarkLogoDataUri(ctx);
     const report = buildComparisonReportModel(kind === "summary-pdf" ? "DiffFindingsSummary" : "InvestigationHandoff", model, {
-      watermarkLogoDataUri: logoDataUri
+      watermarkLogoDataUri: logoDataUri,
+      auditEvidenceResults: [...comparisonAuditEvidenceByEvidenceId.values()]
     });
     return renderComparisonReportPdf(report);
   }
@@ -174,6 +180,10 @@ async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewMo
   if (!canSaveStandardComparisonExport(model) && !isReportExportKind(kind)) {
     await promptForCrossEnvironmentDiffProAccess("Comparison export");
     return undefined;
+  }
+
+  if (isReportExportKind(kind)) {
+    await ensureSnapshotWorkspace();
   }
 
   const uri = await vscode.window.showSaveDialog({
@@ -214,12 +224,13 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
       comparisonPanelMessageDisposable?.dispose();
       comparisonPanelMessageDisposable = undefined;
       comparisonPanel = undefined;
+      comparisonAuditEvidenceByEvidenceId = new Map();
     }, null, ctx.ext.subscriptions);
   }
 
   comparisonPanelMessageDisposable?.dispose();
   comparisonPanelMessageDisposable = comparisonPanel.webview.onDidReceiveMessage((message: unknown) => {
-    const request = message as { readonly type?: string; readonly kind?: string; readonly state?: InvestigationSessionState; readonly evidenceId?: string; readonly label?: string; readonly value?: string; readonly evidenceKind?: string; readonly parentTitle?: string; readonly parentSummary?: string; readonly parentKind?: string; readonly parentProvider?: string; readonly parentEvidence?: string; readonly entityLogicalName?: string; readonly stage?: string; readonly details?: Record<string, unknown> };
+    const request = message as { readonly type?: string; readonly kind?: string; readonly state?: InvestigationSessionState; readonly evidenceId?: string; readonly label?: string; readonly value?: string; readonly evidenceKind?: string; readonly parentTitle?: string; readonly parentSummary?: string; readonly parentKind?: string; readonly parentProvider?: string; readonly parentEvidence?: string; readonly entityLogicalName?: string; readonly fromCapturedAtIso?: string; readonly toCapturedAtIso?: string; readonly stage?: string; readonly details?: Record<string, unknown> };
     if (request.type === "resetInvestigationState") {
       void clearInvestigationSessionState(ctx.ext, investigationSessionKey);
       return;
@@ -277,6 +288,42 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
       return;
     }
 
+    if (request.type === "auditEvidenceRequested") {
+      void queryAuditEvidence(ctx, {
+        findingId: request.evidenceId ?? "comparison-finding",
+        findingTitle: request.parentTitle ?? "Comparison finding",
+        findingSummary: request.parentSummary,
+        providerTitle: request.parentProvider,
+        entityLogicalName: request.entityLogicalName || model.summary.entityLogicalName,
+        evidenceLabel: request.label,
+        evidenceValue: request.value,
+        parentEvidence: request.parentEvidence,
+        interval: {
+          fromCapturedAtIso: request.fromCapturedAtIso || model.session?.sourceSnapshot.capturedAtIso || model.summary.sourceCapturedAtIso,
+          toCapturedAtIso: request.toCapturedAtIso || model.session?.targetSnapshot.capturedAtIso || model.summary.targetCapturedAtIso
+        }
+      })
+        .then((result) => {
+          comparisonAuditEvidenceByEvidenceId.set(request.evidenceId ?? "comparison-finding", result);
+          void comparisonPanel?.webview.postMessage({
+            type: "auditEvidenceResult",
+            evidenceId: request.evidenceId,
+            status: result.status,
+            html: renderAuditEvidenceResultHtml(result)
+          });
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          void comparisonPanel?.webview.postMessage({
+            type: "auditEvidenceResult",
+            evidenceId: request.evidenceId,
+            status: "Error",
+            html: `<div class="dvqr-audit-result dvqr-audit-result-error"><strong>Audit evidence unavailable</strong><p>${message}</p><p class="dvqr-audit-boundary">Captured diff evidence remains available. Audit evidence enriches findings only when available.</p></div>`
+          });
+        });
+      return;
+    }
+
     if (request.type !== "saveComparison") {
       return;
     }
@@ -307,6 +354,7 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
     }
   }, null, ctx.ext.subscriptions);
 
+  comparisonAuditEvidenceByEvidenceId = new Map();
   comparisonPanel.title = model.title.startsWith("Timeline Diff") ? "DV Quick Run: Timeline Diff" : "DV Quick Run: Cross-Environment Diff";
   comparisonPanel.webview.html = renderComparisonSurfaceHtml(comparisonPanel.webview, model, { canExport: canSaveStandardComparisonExport(model), isProPreview: !canRunCrossEnvironmentDiff(), investigationState: persistedInvestigationState });
 }
