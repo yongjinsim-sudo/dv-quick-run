@@ -1,7 +1,9 @@
 import * as path from "path";
 import * as vscode from "vscode";
 
-const DEFAULT_DVQR_WORKSPACE_RELATIVE_PATH = ".dvqr";
+const DEFAULT_DV_FORGELAB_WORKSPACE_RELATIVE_PATH = ".dvforgelab";
+const DEFAULT_DVQR_WORKSPACE_RELATIVE_PATH = path.join(DEFAULT_DV_FORGELAB_WORKSPACE_RELATIVE_PATH, "dvqr");
+const DEFAULT_DVAF_WORKSPACE_RELATIVE_PATH = path.join(DEFAULT_DV_FORGELAB_WORKSPACE_RELATIVE_PATH, "dvaf");
 const DEFAULT_SNAPSHOT_WORKSPACE_RELATIVE_PATH = path.join(DEFAULT_DVQR_WORKSPACE_RELATIVE_PATH, "snapshots");
 const SNAPSHOT_WORKSPACE_CONFIGURATION_KEY = "snapshotWorkspaceFolder";
 
@@ -9,10 +11,13 @@ export interface SnapshotWorkspaceResolution {
   readonly available: boolean;
   readonly workspaceRoot?: vscode.Uri;
   readonly root?: vscode.Uri;
+  readonly forgeLabRoot?: vscode.Uri;
   readonly dvqrRoot?: vscode.Uri;
+  readonly dvafRoot?: vscode.Uri;
   readonly snapshotsRoot?: vscode.Uri;
   readonly comparisonsRoot?: vscode.Uri;
   readonly reportsRoot?: vscode.Uri;
+  readonly dvafExportsRoot?: vscode.Uri;
   readonly configuredFolder?: string;
   readonly reason?: string;
 }
@@ -60,17 +65,22 @@ export function resolveSnapshotWorkspace(): SnapshotWorkspaceResolution {
     workspaceFolder,
     configuredFolder ?? DEFAULT_SNAPSHOT_WORKSPACE_RELATIVE_PATH
   ));
+  const forgeLabRoot = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, DEFAULT_DV_FORGELAB_WORKSPACE_RELATIVE_PATH));
   const defaultDvqrRoot = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, DEFAULT_DVQR_WORKSPACE_RELATIVE_PATH));
   const dvqrRoot = configuredFolder ? dirnameUri(snapshotsRoot) : defaultDvqrRoot;
+  const dvafRoot = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, DEFAULT_DVAF_WORKSPACE_RELATIVE_PATH));
 
   return {
     available: true,
     workspaceRoot: workspaceFolder.uri,
     root: workspaceFolder.uri,
+    forgeLabRoot,
     dvqrRoot,
+    dvafRoot,
     snapshotsRoot,
     comparisonsRoot: vscode.Uri.joinPath(dvqrRoot, "comparisons"),
     reportsRoot: vscode.Uri.joinPath(dvqrRoot, "reports"),
+    dvafExportsRoot: vscode.Uri.joinPath(dvafRoot, "exports"),
     configuredFolder
   };
 }
@@ -128,10 +138,13 @@ export async function copySnapshotWorkspacePath(): Promise<SnapshotWorkspaceReso
 export interface CreatedEvidenceWorkspace {
   readonly workspaceFolder: vscode.Uri;
   readonly workspaceFile: vscode.Uri;
+  readonly forgeLabRoot: vscode.Uri;
   readonly dvqrRoot: vscode.Uri;
+  readonly dvafRoot: vscode.Uri;
   readonly snapshotsRoot: vscode.Uri;
   readonly comparisonsRoot: vscode.Uri;
   readonly reportsRoot: vscode.Uri;
+  readonly dvafExportsRoot: vscode.Uri;
 }
 
 function sanitizeWorkspaceFileName(value: string): string {
@@ -160,16 +173,20 @@ export async function createEvidenceWorkspace(): Promise<CreatedEvidenceWorkspac
   }
 
   const folderName = sanitizeWorkspaceFileName(path.basename(workspaceFolder.fsPath));
+  const forgeLabRoot = vscode.Uri.joinPath(workspaceFolder, DEFAULT_DV_FORGELAB_WORKSPACE_RELATIVE_PATH);
   const dvqrRoot = vscode.Uri.joinPath(workspaceFolder, DEFAULT_DVQR_WORKSPACE_RELATIVE_PATH);
+  const dvafRoot = vscode.Uri.joinPath(workspaceFolder, DEFAULT_DVAF_WORKSPACE_RELATIVE_PATH);
   const snapshotsRoot = vscode.Uri.joinPath(dvqrRoot, "snapshots");
   const comparisonsRoot = vscode.Uri.joinPath(dvqrRoot, "comparisons");
   const reportsRoot = vscode.Uri.joinPath(dvqrRoot, "reports");
+  const dvafExportsRoot = vscode.Uri.joinPath(dvafRoot, "exports");
   const workspaceFile = vscode.Uri.joinPath(workspaceFolder, `${folderName}.code-workspace`);
 
   await Promise.all([
     vscode.workspace.fs.createDirectory(snapshotsRoot),
     vscode.workspace.fs.createDirectory(comparisonsRoot),
-    vscode.workspace.fs.createDirectory(reportsRoot)
+    vscode.workspace.fs.createDirectory(reportsRoot),
+    vscode.workspace.fs.createDirectory(dvafExportsRoot)
   ]);
 
   const workspaceDefinition = {
@@ -179,7 +196,7 @@ export async function createEvidenceWorkspace(): Promise<CreatedEvidenceWorkspac
       }
     ],
     settings: {
-      "dvQuickRun.snapshotWorkspaceFolder": ".dvqr/snapshots"
+      "dvQuickRun.snapshotWorkspaceFolder": ".dvforgelab/dvqr/snapshots"
     }
   };
 
@@ -205,10 +222,13 @@ export async function createEvidenceWorkspace(): Promise<CreatedEvidenceWorkspac
   return {
     workspaceFolder,
     workspaceFile,
+    forgeLabRoot,
     dvqrRoot,
+    dvafRoot,
     snapshotsRoot,
     comparisonsRoot,
-    reportsRoot
+    reportsRoot,
+    dvafExportsRoot
   };
 }
 

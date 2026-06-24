@@ -589,4 +589,48 @@ body[data-active-workspace-mode="verification"] #dvqr-handoff-readiness {
   color: #7dd3fc;
 }
 
+
+/* v0.13.2 DVAF reconstruction artifact export */
+.dvqr-dvaf-export-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dvqr-dvaf-action-button {
+  background: color-mix(in srgb, var(--vscode-button-background) 16%, transparent);
+  border: 1px solid color-mix(in srgb, #4aa5d9 72%, var(--vscode-panel-border));
+  border-radius: 999px;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.dvqr-dvaf-action-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--vscode-button-background) 24%, transparent);
+  border-color: color-mix(in srgb, #4aa5d9 86%, var(--vscode-panel-border));
+}
+
+.dvqr-dvaf-action-button:disabled {
+  background: transparent;
+  border-color: var(--vscode-panel-border);
+  color: var(--vscode-descriptionForeground);
+  cursor: default;
+  opacity: 0.82;
+}
+
+.dvqr-dvaf-export-result {
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+}
+
+.dvqr-dvaf-export-result.is-visible {
+  display: inline-flex;
+}
 `;

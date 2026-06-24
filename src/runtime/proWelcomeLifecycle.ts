@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_13_1.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_13_2.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.13.1</title>
+<title>DV Quick Run v0.13.2</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,54 +122,54 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.13.1</div>
-        <h1>Audit Evidence Enrichment</h1>
-        <p class="subtitle"><strong>Timeline Reconstruction and Cross Environment Diff now support inline Audit Evidence enrichment.</strong><br>DV Quick Run can query Dataverse audit history inside snapshot-bounded investigation windows and surface matching audit evidence alongside observed operational drift.</p>
+        <div class="eyebrow">What's new in v0.13.2</div>
+        <h1>Reconstruction Artifacts & DVAF Integration</h1>
+        <p class="subtitle"><strong>DV Quick Run now bridges investigation and reconstruction workflows.</strong><br>Generate source-side DVAF reconstruction artifacts from eligible Column Metadata Drift findings, then preserve those artifacts inside Timeline and Cross-Diff handoff reports.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">Released in v0.13.1</div>
-          <div class="price">Audit Evidence Enrichment</div>
-          <div class="limit">Who/when audit context for snapshot-bounded investigations.</div>
-          <p class="recognition">Timeline Reconstruction and Cross Environment Diff can now query Dataverse audit history explicitly, render matching evidence inline, and include queried audit evidence in HTML/PDF reports. Audit evidence enriches investigation context; it does not establish causality, deployment correctness, remediation status, or operational authority.</p>
-          <span class="badge">Pro · Audit Evidence</span>
+          <div class="eyebrow">Released in v0.13.2</div>
+          <div class="price">DVAF Reconstruction Artifacts</div>
+          <div class="limit">Evidence-first handoff from DVQR investigation to DV Attribute Factory preview.</div>
+          <p class="recognition">Timeline Reconstruction and Cross Environment Diff can now export DVAF reconstruction artifacts from eligible source-side Column Metadata Drift findings. Reports include Reconstruction Artifacts sections when artifacts were generated before export.</p>
+          <span class="badge">Pro · Reconstruction Artifacts</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Inline Audit</strong><span>Check audit evidence from Timeline and Cross Diff findings</span></div>
-        <div class="price-pill"><strong>Audit Reports</strong><span>Queried audit evidence included in HTML/PDF exports</span></div>
-        <div class="price-pill"><strong>Edge Cases</strong><span>Raw payload preservation and feedback links for unknown audit shapes</span></div>
+        <div class="price-pill"><strong>DVAF Export</strong><span>Export source-side reconstruction intent from eligible metadata drift</span></div>
+        <div class="price-pill"><strong>Report Continuity</strong><span>Reconstruction Artifacts sections in Timeline and Cross-Diff reports</span></div>
+        <div class="price-pill"><strong>DV ForgeLab Workspace</strong><span>Artifacts saved under .dvforgelab/dvaf/exports</span></div>
       </div>
       <div class="actions">
-        <button class="primary" data-action="snapshotLibrary">Open Timeline Reconstruction</button>
+        <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
         <button class="gold" data-action="pricing">View Pro Pricing</button>
         <button class="store" data-action="store">Direct Purchase</button>
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Audit payload interpretation is experimental. Unknown payloads are preserved as evidence and may be submitted through Feedback. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Reconstruction artifacts are source-side reconstruction intent only. DVAF owns preview/apply and humans retain operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     </section>
 
     <section class="section">
       <div class="eyebrow">Available today</div>
       <div class="grid">
-        <div class="card"><h3>🧾 Inline Audit Evidence</h3><p>Query Dataverse audit history from Timeline Reconstruction and Cross Environment Diff findings.</p></div>
-        <div class="card"><h3>📄 Audit-Aware Reports</h3><p>Include queried audit evidence in Timeline and Cross Diff HTML/PDF reports for handoff continuity.</p></div>
-        <div class="card"><h3>🔐 Security Associations</h3><p>Interpret common security relationship audit payloads such as role/user association evidence.</p></div>
-        <div class="card"><h3>🧪 Experimental Decoder</h3><p>Preserve raw audit payloads and report edge cases when DVQR cannot confidently interpret a payload shape.</p></div>
+        <div class="card"><h3>🧩 DVAF Reconstruction Export</h3><p>Export DVAF artifacts from eligible Column Metadata Drift findings in Cross-Diff and Timeline Reconstruction.</p></div>
+        <div class="card"><h3>📄 Reconstruction-Aware Reports</h3><p>Timeline and Cross-Diff HTML/PDF reports now include Reconstruction Artifacts sections when artifacts were exported.</p></div>
+        <div class="card"><h3>🗂 DV ForgeLab Workspace</h3><p>DVQR evidence lives under .dvforgelab/dvqr while DVAF exports live under .dvforgelab/dvaf/exports.</p></div>
+        <div class="card"><h3>🧭 Evidence Boundary</h3><p>DVQR exports reconstruction intent only. It does not decide correctness, remediation, or operational authority.</p></div>
       </div>
     </section>
 
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🔬 Guided Operational Reasoning</h3><p>Evidence-backed mini-RCA style investigation guidance while preserving human verification boundaries.</p></div>
-        <div class="card"><h3>🧩 Expanded Comparison Providers</h3><p>Environment variables, choices, metadata construction artifacts, and additional operational drift domains.</p></div>
-        <div class="card"><h3>🔗 DV ForgeLab Utility Integration</h3><p>Bounded artifact handoffs across DV Bulk Upsert Runner, DV Choice Editor, DV Environment Variable Manager, DV Identity Manager, and DV Attribute Factory.</p></div>
-        <div class="card"><h3>⚙ Snapshot Automation</h3><p>PAC and scheduled snapshot workflows for operational comparison continuity.</p></div>
+        <div class="card"><h3>🔬 Mini RCA</h3><p>Evidence-backed hypothesis guidance while preserving human verification boundaries.</p></div>
+        <div class="card"><h3>🧩 DVCE Reconstruction</h3><p>Future choice drift handoff to DV Choice Editor without turning DVQR into a schema repair engine.</p></div>
+        <div class="card"><h3>🔐 DVIM Reconstruction</h3><p>Future identity and security role participation handoff to DV Identity Manager.</p></div>
+        <div class="card"><h3>⚙ More Utility Handoffs</h3><p>Bounded artifact handoffs across DVEVM, DVBUR, DVAF, DVCE, and DVIM.</p></div>
       </div>
     </section>
 
@@ -193,8 +193,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0130WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0131",
-    "DV Quick Run v0.13.1",
+    "dvQuickRunWelcomeV0132",
+    "DV Quick Run v0.13.2",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

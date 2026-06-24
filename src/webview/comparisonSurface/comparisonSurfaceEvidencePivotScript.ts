@@ -54,6 +54,29 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
 
 
 
+
+  window.addEventListener('message', (event) => {
+    const message = event.data || {};
+    if (message.type !== 'dvafExportResult') {
+      return;
+    }
+
+    const exportId = message.exportId;
+    if (!exportId) {
+      return;
+    }
+
+    const result = document.querySelector('[data-dvaf-export-result="' + exportId + '"]');
+    if (!result) {
+      return;
+    }
+
+    result.removeAttribute('hidden');
+    result.classList.toggle('is-error', message.ok !== true);
+    result.classList.toggle('is-success', message.ok === true);
+    result.textContent = message.summary || (message.ok ? 'DVAF artifact exported.' : 'DVAF export did not complete.');
+  });
+
   function resolveEvidenceButton(target) {
     if (!(target instanceof Element)) {
       return undefined;
@@ -156,6 +179,37 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   }
 
 
+
+  function resolveDvafExportButton(target) {
+    if (!(target instanceof Element)) {
+      return undefined;
+    }
+
+    return target.closest('[data-dvaf-export-candidate]');
+  }
+
+  function activateDvafExportButton(button, event) {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const exportId = button.getAttribute('data-dvaf-export-id') || '';
+    const candidateJson = button.getAttribute('data-dvaf-export-candidate') || '';
+    const result = exportId ? document.querySelector('[data-dvaf-export-result="' + exportId + '"]') : undefined;
+
+    if (result) {
+      result.removeAttribute('hidden');
+      result.classList.remove('is-error');
+      result.classList.remove('is-success');
+      result.textContent = 'Exporting source-side attribute definition to DVAF...';
+    }
+
+    vscode?.postMessage?.({
+      type: 'dvafExportRequested',
+      exportId,
+      candidateJson
+    });
+  }
+
   function resolveAuditButton(target) {
     if (!(target instanceof Element)) {
       return undefined;
@@ -249,6 +303,12 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   }, true);
 
   document.addEventListener('click', (event) => {
+    const dvafExportButton = resolveDvafExportButton(event.target);
+    if (dvafExportButton) {
+      activateDvafExportButton(dvafExportButton, event);
+      return;
+    }
+
     const auditButton = resolveAuditButton(event.target);
     if (auditButton) {
       activateAuditButton(auditButton, event);
@@ -271,6 +331,10 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   auditButtons.forEach((button) => {
     button.addEventListener('click', (event) => activateAuditButton(button, event));
   });
-  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length });
+  const dvafExportButtons = document.querySelectorAll('[data-dvaf-export-candidate]');
+  dvafExportButtons.forEach((button) => {
+    button.addEventListener('click', (event) => activateDvafExportButton(button, event));
+  });
+  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length, dvafExportButtonCount: dvafExportButtons.length });
 `;
 }

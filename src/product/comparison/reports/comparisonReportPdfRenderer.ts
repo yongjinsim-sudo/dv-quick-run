@@ -598,6 +598,31 @@ function renderAuditEvidenceSummary(cursor: PdfCursor, report: ComparisonReportM
   paragraph(cursor, "Audit payload interpretation is experimental. Raw payloads are preserved in HTML exports and can be submitted through Feedback as edge cases.", logoBuffer, footerText, { fontSize: 7.8, color: "#57606a" });
 }
 
+
+function renderReconstructionArtifacts(cursor: PdfCursor, report: ComparisonReportModel, logoBuffer: Buffer | undefined, footerText: string): void {
+  const artifacts = report.reconstructionArtifacts ?? [];
+  if (artifacts.length === 0) {
+    return;
+  }
+  section(cursor, "Reconstruction Artifacts", logoBuffer, footerText, 118);
+  paragraph(cursor, "DV Quick Run exported reconstruction intent artifacts for external preview. These artifacts do not imply the source is correct, the target is wrong, or changes should be applied without external verification.", logoBuffer, footerText, { fontSize: 8.7, color: "#57606a" });
+  for (const artifact of artifacts.slice(0, 8)) {
+    roundedCard(cursor, 104, logoBuffer, footerText);
+    const y = cursor.y;
+    const x = margin + 14;
+    cursor.doc.font("Helvetica-Bold").fontSize(10).fillColor("#1f2328").text(`${normalizePdfText(artifact.kind)} Reconstruction Candidate`, x, y + 12, { width: contentWidth - 28 });
+    cursor.doc.font("Helvetica").fontSize(8).fillColor("#57606a").text(`Entity: ${normalizePdfText(artifact.entityLogicalName)}`, x, y + 30, { width: 170 });
+    cursor.doc.text(`Reason: ${normalizePdfText(artifact.reason)}`, x + 176, y + 30, { width: 150 });
+    cursor.doc.text(`Support: ${normalizePdfText(artifact.support)}`, x + 332, y + 30, { width: 150 });
+    if (artifact.attributeLogicalName) {
+      cursor.doc.text(`Attribute: ${normalizePdfText(artifact.displayName ? `${artifact.displayName} (${artifact.attributeLogicalName})` : artifact.attributeLogicalName)}`, x, y + 46, { width: contentWidth - 28 });
+    }
+    cursor.doc.text(`Artifact: ${normalizePdfText(artifact.artifactFileName)}`, x, y + 62, { width: contentWidth - 28 });
+    cursor.doc.font("Helvetica").fontSize(7.3).fillColor("#57606a").text(normalizePdfText(artifact.notes[0] ?? "Source-side reconstruction intent exported for external preview."), x, y + 80, { width: contentWidth - 28, lineGap: 1 });
+    cursor.y += 118;
+  }
+}
+
 function renderBoundary(cursor: PdfCursor, logoBuffer: Buffer | undefined, footerText: string): void {
   section(cursor, "Verification boundary", logoBuffer, footerText, 104);
   paragraph(cursor, "DVQR observes operational drift and supports verification. This report does not certify root cause, assign blame, approve changes, or perform remediation. Human review remains required before corrective action.", logoBuffer, footerText, { fontSize: 9 });
@@ -634,6 +659,7 @@ export async function renderComparisonReportPdf(report: ComparisonReportModel): 
   renderFindings(cursor, report.kind === "DiffFindingsSummary" ? "Top operational drift findings" : "Outstanding operational verification", report.topFindings, logoBuffer, footerText);
   cursor.y += report.kind === "DiffFindingsSummary" ? 14 : 8;
   renderAuditEvidenceSummary(cursor, report, logoBuffer, footerText);
+  renderReconstructionArtifacts(cursor, report, logoBuffer, footerText);
   renderBoundary(cursor, logoBuffer, footerText);
   renderDetailedGroups(cursor, report, logoBuffer, footerText);
   stampBufferedPages(doc, logoBuffer, footerText);

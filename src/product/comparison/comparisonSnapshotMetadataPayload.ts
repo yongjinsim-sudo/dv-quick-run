@@ -31,7 +31,7 @@ export function buildEntityMetadataSnapshotPayload(args: {
     displayName: normalizeString(args.entityDisplayName),
     capturedAtIso: (args.capturedAt ?? new Date()).toISOString(),
     configuration: normalizeEntityConfiguration(args.configuration),
-    attributes: buildSnapshotAttributes(args.fields, args.choices),
+    attributes: buildSnapshotAttributes(args.fields, args.choices, args.relationships),
     relationships: buildSnapshotRelationships(args.relationships)
   };
 
@@ -65,8 +65,10 @@ function normalizeEntityConfiguration(
 
 function buildSnapshotAttributes(
   fields: readonly FieldDef[],
-  choices: readonly ChoiceMetadataDef[]
+  choices: readonly ChoiceMetadataDef[],
+  relationships: EntityRelationshipExplorerResult | undefined
 ): readonly SnapshotAttributeMetadata[] {
+  const relationshipTargetsByAttribute = buildLookupTargetMapFromRelationships(relationships);
   const choicesByField = new Map<string, ChoiceMetadataDef>();
   for (const choice of choices) {
     const key = normalizeKey(choice.fieldLogicalName);
@@ -98,7 +100,7 @@ function buildSnapshotAttributes(
         precision: normalizeNumber(field.precision),
         scale: normalizeNumber(field.scale),
         format: normalizeString(field.format),
-        targets: normalizeStringArray(field.lookupTargets),
+        targets: normalizeStringArray(field.lookupTargets) ?? relationshipTargetsByAttribute.get(normalizeKey(logicalName)),
         isSearchable: normalizeBoolean(field.isSearchable),
         isAuditEnabled: normalizeBoolean(field.isAuditEnabled),
         description: normalizeString(field.description),
@@ -122,6 +124,39 @@ function buildSnapshotOptionSet(choice: ChoiceMetadataDef): SnapshotOptionSetMet
       externalValue: normalizeString(option.externalValue)
     }))
   });
+}
+
+
+function buildLookupTargetMapFromRelationships(
+  relationships: EntityRelationshipExplorerResult | undefined
+): ReadonlyMap<string, readonly string[]> {
+  const map = new Map<string, string[]>();
+  if (!relationships) {
+    return map;
+  }
+
+  const addTarget = (attributeName: unknown, targetEntityName: unknown): void => {
+    const attributeKey = normalizeKey(attributeName);
+    const target = normalizeString(targetEntityName);
+    if (!attributeKey || !target) {
+      return;
+    }
+
+    const existing = map.get(attributeKey) ?? [];
+    if (!existing.some((item) => item.toLowerCase() === target.toLowerCase())) {
+      map.set(attributeKey, [...existing, target].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: "base" })));
+    }
+  };
+
+  for (const relationship of relationships.manyToOne) {
+    addTarget(relationship.referencingAttribute, relationship.referencedEntity);
+  }
+
+  for (const relationship of relationships.oneToMany) {
+    addTarget(relationship.referencingAttribute, relationship.referencedEntity);
+  }
+
+  return map;
 }
 
 function buildSnapshotRelationships(
