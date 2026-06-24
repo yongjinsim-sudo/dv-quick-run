@@ -12,10 +12,15 @@ import { queryAuditEvidence, renderAuditEvidenceResultHtml } from "../../product
 import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { ensureSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
+import { exportDvafAttributeArtifact } from "../../pro/reconstruction/dvafExportService.js";
+import type { AttributeReconstructionCandidate } from "../../pro/reconstruction/attributeReconstructionCandidate.js";
+import { buildDvafReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
+import type { ReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 
 let timelinePanel: vscode.WebviewPanel | undefined;
 let timelinePanelMessageDisposable: vscode.Disposable | undefined;
 let timelineAuditEvidenceByEventId = new Map<string, AuditEvidenceResult>();
+let timelineReconstructionArtifacts: ReconstructionArtifactReference[] = [];
 
 type TimelineExportKind = "findings-summary-html" | "findings-summary-pdf" | "investigation-handoff-html" | "investigation-handoff-pdf";
 
@@ -90,7 +95,7 @@ async function readWatermarkLogoDataUri(ctx: CommandContext): Promise<string | u
 
 async function buildTimelineReportContent(ctx: CommandContext, timeline: TimelineReconstruction, kind: TimelineExportKind): Promise<string | Buffer> {
   const watermarkLogoDataUri = await readWatermarkLogoDataUri(ctx);
-  const options = { watermarkLogoDataUri, auditEvidenceByEventId: timelineAuditEvidenceByEventId };
+  const options = { watermarkLogoDataUri, auditEvidenceByEventId: timelineAuditEvidenceByEventId, reconstructionArtifacts: timelineReconstructionArtifacts };
   if (kind === "findings-summary-html") {
     return renderTimelineFindingsSummaryReportHtml(buildTimelineFindingsSummaryReport(timeline, options));
   }
@@ -126,6 +131,7 @@ export function openTimelineSurface(ctx: CommandContext, timeline: TimelineRecon
   if (timelinePanel) {
     timelinePanel.reveal(vscode.ViewColumn.Beside);
     timelineAuditEvidenceByEventId = new Map();
+    timelineReconstructionArtifacts = [];
     timelinePanel.webview.html = renderTimelineSurfaceHtml(timelinePanel.webview, timeline);
     timelinePanel.title = title;
     registerTimelineMessageHandler(ctx, timeline);
@@ -143,6 +149,7 @@ export function openTimelineSurface(ctx: CommandContext, timeline: TimelineRecon
   );
 
   timelineAuditEvidenceByEventId = new Map();
+  timelineReconstructionArtifacts = [];
   timelinePanel.webview.html = renderTimelineSurfaceHtml(timelinePanel.webview, timeline);
   registerTimelineMessageHandler(ctx, timeline);
   timelinePanel.onDidDispose(() => {
@@ -150,13 +157,14 @@ export function openTimelineSurface(ctx: CommandContext, timeline: TimelineRecon
     timelinePanelMessageDisposable = undefined;
     timelinePanel = undefined;
     timelineAuditEvidenceByEventId = new Map();
+    timelineReconstructionArtifacts = [];
   });
 }
 
 function registerTimelineMessageHandler(ctx: CommandContext, timeline: TimelineReconstruction): void {
   timelinePanelMessageDisposable?.dispose();
   timelinePanelMessageDisposable = timelinePanel?.webview.onDidReceiveMessage((message: unknown) => {
-    const request = message as { readonly type?: string; readonly kind?: string; readonly eventId?: string; readonly auditKey?: string; readonly title?: string; readonly summary?: string; readonly providerId?: string; readonly providerTitle?: string; readonly entityLogicalName?: string; readonly fromCapturedAtIso?: string; readonly toCapturedAtIso?: string };
+    const request = message as { readonly type?: string; readonly kind?: string; readonly eventId?: string; readonly auditKey?: string; readonly title?: string; readonly summary?: string; readonly providerId?: string; readonly providerTitle?: string; readonly entityLogicalName?: string; readonly fromCapturedAtIso?: string; readonly toCapturedAtIso?: string; readonly exportId?: string; readonly candidateJson?: string };
     if (request.type === "timelineAuditEvidenceRequested") {
       void queryAuditEvidence(ctx, {
         findingId: request.eventId ?? "timeline-event",
@@ -190,6 +198,69 @@ function registerTimelineMessageHandler(ctx: CommandContext, timeline: TimelineR
             html: `<div class="dvqr-audit-result dvqr-audit-result-error"><strong>Audit evidence unavailable</strong><p>${messageText}</p><p class="dvqr-audit-boundary">Captured timeline evidence remains available. Audit evidence enriches findings only when available.</p></div>`
           });
         });
+      return;
+    }
+
+    if (request.type === "timelineDvafExportRequested") {
+      const exportId = request.exportId ?? "timeline-dvaf-export";
+      try {
+        const parsedCandidate = JSON.parse(request.candidateJson ?? "{}") as AttributeReconstructionCandidate;
+        const candidate: AttributeReconstructionCandidate = {
+          ...parsedCandidate,
+          source: "Timeline",
+          findingId: request.eventId ?? parsedCandidate.findingId,
+          sourceSnapshotId: parsedCandidate.sourceSnapshotId,
+          targetSnapshotId: parsedCandidate.targetSnapshotId,
+          notes: [
+            ...(parsedCandidate.notes ?? []),
+            "Timeline export uses the selected event interval's source-side definition. It does not export the latest snapshot or merged timeline state."
+          ]
+        };
+        const entityLogicalName = candidate.entityLogicalName || timeline.subject.entityLogicalName;
+        if (!entityLogicalName) {
+          throw new Error("DVAF export needs an entity logical name from the timeline attribute finding.");
+        }
+
+        void exportDvafAttributeArtifact({
+          entityLogicalName,
+          candidates: [candidate]
+        })
+          .then((result) => {
+            void timelinePanel?.webview.postMessage({
+              type: "timelineDvafExportResult",
+              exportId,
+              ok: result.ok,
+              summary: result.ok && result.fileUri
+                ? `DVAF artifact exported to ${result.fileUri.fsPath}.`
+                : result.reason ?? "DVAF export did not complete."
+            });
+            if (result.ok && result.fileUri && result.artifact) {
+              const artifactFileName = result.fileUri.path.split("/").pop() ?? result.fileUri.fsPath;
+              timelineReconstructionArtifacts = [
+                ...timelineReconstructionArtifacts,
+                buildDvafReconstructionArtifactReference({ artifact: result.artifact, artifactFileName })
+              ];
+              void vscode.window.showInformationMessage(`DV Quick Run: Exported DVAF artifact to ${result.fileUri.fsPath}.`);
+            }
+          })
+          .catch((error: unknown) => {
+            const messageText = error instanceof Error ? error.message : String(error);
+            void timelinePanel?.webview.postMessage({
+              type: "timelineDvafExportResult",
+              exportId,
+              ok: false,
+              summary: `DVAF export failed. ${messageText}`
+            });
+          });
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : String(error);
+        void timelinePanel?.webview.postMessage({
+          type: "timelineDvafExportResult",
+          exportId,
+          ok: false,
+          summary: `DVAF export failed. ${messageText}`
+        });
+      }
       return;
     }
 

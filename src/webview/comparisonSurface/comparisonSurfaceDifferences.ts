@@ -549,6 +549,32 @@ export function renderInvestigationContinuations(
   </details>`;
 }
 
+
+function renderDvafExportAction(difference: ComparisonDifference): string {
+  if (difference.reconstructionCandidateKind === "dvaf-attribute" && difference.reconstructionCandidate) {
+    const candidateJson = JSON.stringify(difference.reconstructionCandidate);
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" data-dvaf-export-candidate="${escapeHtml(candidateJson)}" data-dvaf-export-id="${escapeHtml(difference.id)}" aria-expanded="false" title="Export source-side attribute definition as a DVAF reconstruction artifact. DVAF owns preview/apply.">
+        Export DVAF artifact ›
+      </button>
+      <span class="dvqr-dvaf-export-result" data-dvaf-export-result="${escapeHtml(difference.id)}" hidden></span>
+    </div>`;
+  }
+
+  if (difference.reconstructionCandidateKind === "dvaf-attribute-unavailable") {
+    const reason = difference.reconstructionCandidateUnavailableReason
+      ?? "DVAF export is unavailable for this attribute finding.";
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" disabled title="${escapeHtml(reason)}">
+        Export DVAF unavailable
+      </button>
+      <span class="dvqr-dvaf-export-result is-visible">${escapeHtml(reason)}</span>
+    </div>`;
+  }
+
+  return "";
+}
+
 export function renderDifference(
   difference: ComparisonDifference,
   sourceLabel: string,
@@ -578,6 +604,7 @@ export function renderDifference(
         <span class="dvqr-chip">${escapeHtml(difference.significance)} significance</span>
         <span class="dvqr-chip dvqr-chip-muted">${escapeHtml(getEvidenceStrengthLabel(difference))}</span>
       </div>
+      ${renderDvafExportAction(difference)}
       ${evidence}
       ${renderInvestigationContinuations(difference.continuations, "Inline investigation continuations")}
     </div>

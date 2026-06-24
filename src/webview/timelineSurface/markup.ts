@@ -247,6 +247,34 @@ function renderTimelineInterval(interval: TimelineInterval): string {
   </article>`;
 }
 
+
+function renderTimelineDvafExportAction(event: TimelineEvent, instanceKey: string): string {
+  const candidate = event.sourceDifference?.reconstructionCandidate;
+  if (event.sourceDifference?.reconstructionCandidateKind === "dvaf-attribute" && candidate) {
+    const exportId = `${event.id}::dvaf::${instanceKey}`;
+    const candidateJson = JSON.stringify(candidate);
+    return `<div class="dvqr-timeline-audit-actions dvqr-timeline-dvaf-actions">
+      <button type="button" class="dvqr-timeline-audit-button dvqr-timeline-dvaf-button" data-timeline-dvaf-export="${escapeHtml(exportId)}" data-timeline-dvaf-candidate="${escapeHtml(candidateJson)}" data-timeline-event-id="${escapeHtml(event.id)}" title="Export this event's source-side attribute definition as a DVAF reconstruction artifact. DVAF owns preview/apply.">
+        Export DVAF artifact ›
+      </button>
+      <span class="dvqr-timeline-dvaf-result" data-timeline-dvaf-result="${escapeHtml(exportId)}" hidden></span>
+    </div>`;
+  }
+
+  if (event.sourceDifference?.reconstructionCandidateKind === "dvaf-attribute-unavailable") {
+    const reason = event.sourceDifference.reconstructionCandidateUnavailableReason
+      ?? "DVAF export is unavailable for this timeline attribute event.";
+    return `<div class="dvqr-timeline-audit-actions dvqr-timeline-dvaf-actions">
+      <button type="button" class="dvqr-timeline-audit-button dvqr-timeline-dvaf-button" disabled title="${escapeHtml(reason)}">
+        Export DVAF unavailable
+      </button>
+      <span class="dvqr-timeline-dvaf-result is-visible">${escapeHtml(reason)}</span>
+    </div>`;
+  }
+
+  return "";
+}
+
 function renderTimelineEvent(event: TimelineEvent, instanceKey: string, ownsAnchor: boolean): string {
   const auditKey = `${event.id}::${instanceKey}`;
   const articleId = ownsAnchor ? event.id : `${event.id}-${instanceKey}`;
@@ -262,6 +290,7 @@ function renderTimelineEvent(event: TimelineEvent, instanceKey: string, ownsAnch
       <strong>${escapeHtml(formatCapturedAt(event.firstObservedBetween.fromCapturedAtIso))} → ${escapeHtml(formatCapturedAt(event.firstObservedBetween.toCapturedAtIso))}</strong>
     </div>
     ${renderEvidenceRefs(event)}
+    ${renderTimelineDvafExportAction(event, instanceKey)}
     ${renderTimelineAuditAction(event, auditKey)}
   </article>`;
 }
@@ -302,7 +331,26 @@ export function getTimelineSurfaceScript(): string {
     const vscode = acquireVsCodeApi();
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target.closest('[data-timeline-export-kind]') : null;
+      const dvafTarget = event.target instanceof Element ? event.target.closest('[data-timeline-dvaf-export]') : null;
       const auditTarget = event.target instanceof Element ? event.target.closest('[data-timeline-audit-check]') : null;
+      if (dvafTarget) {
+        event.preventDefault();
+        const exportId = dvafTarget.getAttribute('data-timeline-dvaf-export') || '';
+        const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]');
+        if (result) {
+          result.removeAttribute('hidden');
+          result.classList.remove('is-error');
+          result.classList.remove('is-success');
+          result.textContent = 'Exporting source-side attribute definition to DVAF...';
+        }
+        vscode.postMessage({
+          type: 'timelineDvafExportRequested',
+          exportId,
+          eventId: dvafTarget.getAttribute('data-timeline-event-id') || '',
+          candidateJson: dvafTarget.getAttribute('data-timeline-dvaf-candidate') || ''
+        });
+        return;
+      }
       if (auditTarget) {
         event.preventDefault();
         const auditKey = auditTarget.getAttribute('data-timeline-audit-check') || '';
@@ -341,6 +389,22 @@ export function getTimelineSurfaceScript(): string {
       }
       event.preventDefault();
       vscode.postMessage({ type: 'saveTimelineReport', kind });
+    });
+
+    window.addEventListener('message', (event) => {
+      const message = event.data || {};
+      if (message.type !== 'timelineDvafExportResult') {
+        return;
+      }
+      const exportId = message.exportId || '';
+      const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]');
+      if (!result) {
+        return;
+      }
+      result.removeAttribute('hidden');
+      result.classList.toggle('is-error', message.ok !== true);
+      result.classList.toggle('is-success', message.ok === true);
+      result.textContent = message.summary || (message.ok ? 'DVAF artifact exported.' : 'DVAF export did not complete.');
     });
 
     window.addEventListener('message', (event) => {

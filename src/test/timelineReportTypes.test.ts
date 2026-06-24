@@ -53,6 +53,7 @@ test("timeline report contracts allow summary and handoff models to share common
     unchangedProviders: [],
     intervals: [],
     topEvents: [],
+    reconstructionArtifacts: [],
   } satisfies TimelineFindingsSummaryReportModel;
 
   const handoff = {

@@ -39,6 +39,54 @@ export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
     relatedCapabilities: ["guided-traversal", "result-viewer"]
   },
   {
+    id: "environment-differences",
+    title: "Investigate environment differences",
+    summary: "Use Cross-Diff to identify evidence-backed differences between environments while preserving investigation boundaries.",
+    whenToUse: [
+      "Production behaves differently from UAT.",
+      "A deployment may have introduced changes.",
+      "A configuration exists in one environment but not another.",
+      "You need evidence before escalating a release concern."
+    ],
+    flow: [
+      { label: "Capture source snapshot", description: "Create a source-side Operational Profile snapshot for the entity or subject under investigation.", relatedSurface: "Snapshot Library" },
+      { label: "Capture target snapshot", description: "Create the target-side snapshot so the comparison preserves environment and capture-time context.", relatedSurface: "Snapshot Library" },
+      { label: "Run Cross-Diff", description: "Compare the selected snapshots without treating observed drift as deployment authority.", relatedSurface: "Snapshot Library" },
+      { label: "Review high-signal drift", description: "Inspect provider-owned differences, significance, and evidence references first.", relatedSurface: "Cross-Diff" },
+      { label: "Verify with audit evidence", description: "Use Check Audit Evidence where available to enrich the bounded finding context.", relatedSurface: "Cross-Diff" },
+      { label: "Generate reconstruction artifacts", description: "Export supported source-side reconstruction intent only when external DVAF preview is needed.", relatedSurface: "Cross-Diff" }
+    ],
+    relatedCapabilities: ["cross-environment-comparison"],
+    safetyNotes: [
+      "Cross-Diff identifies observed evidence differences; it does not prove the source is correct, the target is wrong, or that remediation should be applied.",
+      "Reconstruction artifacts are external-review handoffs, not deployment authority."
+    ]
+  },
+  {
+    id: "change-over-time",
+    title: "Reconstruct change over time",
+    summary: "Use Timeline Reconstruction to understand when changes first appeared across a sequence of snapshots.",
+    whenToUse: [
+      "An issue appeared gradually.",
+      "Nobody knows when something changed.",
+      "Multiple deployments occurred.",
+      "You need timeline-oriented evidence."
+    ],
+    flow: [
+      { label: "Capture multiple snapshots", description: "Preserve a sequence of same-environment snapshots for the entity or subject under investigation.", relatedSurface: "Snapshot Library" },
+      { label: "Select timeline sequence", description: "Choose 3+ compatible snapshots so DVQR can reconstruct adjacent evidence intervals.", relatedSurface: "Snapshot Library" },
+      { label: "Run Timeline Reconstruction", description: "Build a first-observed timeline from adjacent snapshot comparisons.", relatedSurface: "Timeline Diff" },
+      { label: "Review first-observed windows", description: "Inspect when drift first appeared without treating the interval as exact changed-at certainty.", relatedSurface: "Timeline Findings" },
+      { label: "Enrich with audit evidence", description: "Use Check Audit Evidence where available to add bounded who/when context.", relatedSurface: "Timeline Findings" },
+      { label: "Generate reconstruction artifacts", description: "Export supported source-side reconstruction candidates from eligible timeline events.", relatedSurface: "Timeline Findings" }
+    ],
+    relatedCapabilities: ["timeline-reconstruction"],
+    safetyNotes: [
+      "Timeline Reconstruction reports first observed evidence windows, not exact change time or causality.",
+      "Timeline reconstruction artifacts use the selected event interval's source-side definition, not latest or merged timeline state."
+    ]
+  },
+  {
     id: "refine-from-results",
     title: "Refine from results",
     summary: "Use observed rows as the canvas for safer, more contextual query narrowing.",
@@ -268,18 +316,19 @@ export const capabilities: readonly CapabilityInfo[] = [
 
   {
     id: "cross-environment-comparison",
-    title: "🔒 Evidence Workspace & Snapshot Library Preview",
+    title: "🔒 Evidence Workspace, Timeline & Reconstruction Preview",
     group: "Future Workflows",
-    summary: "Capture, organise, and compare operational evidence using Snapshot Library and Evidence Workspace workflows.",
-    operationalUseCase: "Use this preview to understand operational drift investigation before unlocking real snapshot comparison workflows.",
+    summary: "Capture, organise, compare, audit-enrich, and understand reconstruction artifact workflows using Snapshot Library and Evidence Workspace previews.",
+    operationalUseCase: "Use this preview to understand operational drift investigation, timeline reconstruction, audit context, and reconstruction artifact handoff before unlocking real snapshot comparison workflows.",
     howToUse: [
       "Open the Snapshot Library preview from the Hub.",
       "Use Evidence Workspace orientation to understand capture, selection, and comparison workflows.",
       "Compare DEV-MOCK and SIT-MOCK snapshots to inspect the Pro comparison surface.",
-      "Upgrade to Pro to import, manage, compare, and export real operational snapshots.",
+      "Use TIMELINE-MOCK snapshots to understand timeline reconstruction and report workflows.",
+      "Upgrade to Pro to import, manage, compare, export real operational snapshots, and generate reconstruction artifacts from real evidence.",
       "Use Share Feedback when you want to send private product feedback, bugs, or workflow ideas."
     ],
-    relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
+    relatedPlaybooks: ["environment-differences", "change-over-time", "runtime-behaviour", "power-platform-participation"],
     commandId: "dvQuickRun.openSnapshotLibrary",
     actionLabel: "Open Pro Preview",
     contextRequirement: {
@@ -357,29 +406,31 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Runtime and Power Platform visibility", summary: "Continue bridging Dataverse execution evidence with orchestration participation where evidence supports it." },
   { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
-  { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded artifacts to focused companion utilities, starting with Upsert Artifact handoff to DV Bulk Upsert Runner." },
+  { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded reconstruction artifacts to focused companion utilities, starting with DVAF attribute reconstruction from observed metadata drift." },
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
   { title: "Evidence Workspace", summary: "Local workspace-backed evidence capture gives investigations a Git-friendly home without turning DVQR into Git tooling or hosted persistence." },
-  { title: "Timeline Reconstruction and operational comparison", summary: "Timeline Reconstruction is available for same-environment snapshot sequences, while broader comparison remains bounded to drift investigation without remediation or deployment tooling." }
+  { title: "Timeline Reconstruction and operational comparison", summary: "Timeline Reconstruction is available for same-environment snapshot sequences, while broader comparison remains bounded to drift investigation without remediation or deployment tooling." },
+  { title: "Reconstruction Artifacts", summary: "Generate source-side DVAF reconstruction artifacts from eligible column metadata drift while keeping DVQR observational and DVAF responsible for preview/apply." }
 ];
 
 
 function buildProComparisonCapability(): CapabilityInfo {
   return {
     id: "cross-environment-comparison",
-    title: "Evidence Workspace, Snapshot Library & Cross-Environment Diff",
+    title: "Evidence Workspace, Snapshot Library & Reconstruction Artifacts",
     group: "Operational Comparison Workflows",
-    summary: "Capture, organise, compare, reconstruct, and audit-enrich operational evidence using Evidence Workspace and Snapshot Library workflows.",
-    operationalUseCase: "Use Evidence Workspace, Snapshot Library, Timeline Reconstruction, Cross-Environment Diff, and inline Audit Evidence to investigate operational drift, compare topology changes, and preserve investigation continuity.",
+    summary: "Capture, organise, compare, reconstruct, audit-enrich, and export source-side reconstruction artifacts using Evidence Workspace and Snapshot Library workflows.",
+    operationalUseCase: "Investigate what changed, when it first appeared, supporting audit evidence, and generate reconstruction artifacts for external review.",
     howToUse: [
       "Create or open an Evidence Workspace from the Hub or Snapshot Library.",
       "Capture Operational Profile snapshots into the workspace.",
       "Select source and target snapshots, or compare latest and previous snapshots from the library.",
       "Use Timeline Reconstruction for 3+ same-environment snapshots, Timeline Diff for two same-environment snapshots, and Cross-Environment Diff for different-environment comparison.",
       "Query Audit Evidence on supported findings when you need snapshot-bounded who/when context.",
-      "Export HTML/PDF reports when you need to preserve or share investigation context, including any audit evidence explicitly queried before export."
+      "Export DVAF reconstruction artifacts from eligible source-side Column Metadata Drift findings when external reconstruction preview is needed.",
+      "Export HTML/PDF reports when you need to preserve or share investigation context, including any audit evidence and reconstruction artifacts explicitly generated before export."
     ],
-    relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
+    relatedPlaybooks: ["environment-differences", "change-over-time", "runtime-behaviour", "power-platform-participation"],
     commandId: "dvQuickRun.openSnapshotLibrary",
     actionLabel: "Open Snapshot Library",
     contextRequirement: {
@@ -402,18 +453,19 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.13.1 introduces Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",
+  "v0.13.2 introduces Reconstruction Artifacts and DVAF integration for eligible Column Metadata Drift findings.",
+  "Cross-Environment Diff can export source-side DVAF reconstruction artifacts from column metadata findings where the source definition exists.",
+  "Timeline Reconstruction can export DVAF reconstruction artifacts from the selected event interval's source-side definition; it does not export latest or merged timeline state.",
+  "Reconstruction artifacts are written to the DV ForgeLab workspace under .dvforgelab/dvaf/exports while DVQR evidence remains under .dvforgelab/dvqr.",
+  "Timeline and Cross Diff HTML/PDF reports now include Reconstruction Artifacts sections when artifacts were generated before export.",
+  "DVAF artifacts preserve both current flat DVAF-compatible definitions and richer DVQR evidence, source/target context, support notes, and reconstruction boundaries.",
+  "DVQR exports reconstruction intent only. DVAF owns preview/apply. Source-side export does not imply the source is correct, the target is wrong, or changes should be applied.",
+  "v0.13.1 introduced Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",
   "Inline Check Audit Evidence actions query Dataverse audit history inside snapshot-bounded investigation windows.",
-  "Queried audit evidence is included in Timeline and Cross Diff HTML/PDF reports for investigation handoff continuity.",
-  "Security relationship association audit payloads, including user/role association evidence, are partially interpreted when available.",
-  "Unknown audit payloads are preserved as raw evidence and can be submitted through Feedback as audit edge cases.",
-  "Audit payload interpretation is experimental; audit evidence enriches investigation context but does not establish causality, deployment correctness, remediation status, or operational authority.",
-  "Reports now use the shared .dvqr/reports workspace and the Report Naming Standard v1.0 pattern: {timestamp}-{scope}-{environment}-{artifact}.{extension}.",
+  "Audit payload interpretation remains experimental; audit evidence enriches investigation context but does not establish causality, deployment correctness, remediation status, or operational authority.",
   "v0.13.0 introduced Timeline Reconstruction for 3+ same-environment snapshots, with timeline graph, first-observed windows, and Timeline Findings/Handoff reports.",
   "Free users can try the timeline workflow with built-in TIMELINE-MOCK snapshots from Snapshot Library.",
-  "Evidence Workspace creates a local .dvqr evidence tree for snapshots, comparisons, and reports.",
-  "Snapshot Library can capture Operational Profile snapshots directly into the active Evidence Workspace.",
-  "Evidence selection supports compact multi-select, same-environment Timeline Reconstruction, Compare Selected, search, and timeline-ready selection states.",
+  "Evidence Workspace now uses the DV ForgeLab family workspace model for DVQR evidence and companion utility reconstruction artifacts.",
   "DV ForgeLab ecosystem orientation links DV Quick Run with companion Dataverse utilities at dvforgelab.com/products."
 ];
 

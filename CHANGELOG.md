@@ -8,6 +8,198 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.13.2 — Reconstruction Artifacts, DVAF Integration & Investigation-to-Reconstruction Handoff
+
+This release introduces the first reconstruction handoff workflow within the DV ForgeLab ecosystem.
+
+DV Quick Run can now identify eligible source-side metadata drift, generate bounded reconstruction intent artifacts, and hand those artifacts to DV Attribute Factory for external preview and application.
+
+DV Quick Run continues to investigate.
+
+DV Attribute Factory continues to reconstruct.
+
+Investigation and reconstruction remain separate concerns.
+
+---
+
+## 🧩 Reconstruction Artifacts (Major)
+
+Introduced Reconstruction Artifacts for eligible Column Metadata Drift findings.
+
+DV Quick Run can now:
+
+* detect source-side column metadata drift
+* identify reconstruction candidates
+* generate DVAF-compatible reconstruction artifacts
+* preserve reconstruction intent alongside investigation evidence
+* maintain investigation boundaries
+
+Behaviour:
+
+* only source-side definitions are exported
+* target-side additions do not generate reconstruction artifacts
+* exports remain user-triggered
+* reconstruction intent remains advisory-only
+
+Results:
+
+* stronger investigation-to-reconstruction continuity
+* reduced manual schema recreation effort
+* improved ecosystem integration
+
+---
+
+## 🏗️ DVAF Export Integration
+
+Added direct DVAF export support from:
+
+* Cross-Environment Diff
+* Timeline Reconstruction
+
+Eligible findings now surface:
+
+```text
+Export DVAF Artifact
+```
+
+DV Quick Run generates source-side reconstruction definitions suitable for external preview in DV Attribute Factory.
+
+Behaviour:
+
+* exports preserve source-side metadata
+* lookup targets and supported metadata are retained where available
+* artifacts remain externally reviewable
+* no automatic remediation occurs
+
+---
+
+## 📄 Reconstruction Artifacts in Reports
+
+Timeline Reconstruction and Cross-Diff reports now include:
+
+```text
+Reconstruction Artifacts
+```
+
+sections when exports were generated before report creation.
+
+Reports preserve:
+
+* artifact filename
+* entity context
+* attribute context
+* reconstruction rationale
+* support status
+
+Results:
+
+* stronger handoff readiness
+* improved review continuity
+* clearer reconstruction audit trail
+
+---
+
+## 🗂️ DV ForgeLab Workspace Expansion
+
+Expanded the Evidence Workspace model.
+
+Artifacts now separate investigation evidence from reconstruction intent.
+
+Example:
+
+```text
+.dvforgelab
+├─ dvqr
+│  ├─ snapshots
+│  ├─ comparisons
+│  └─ reports
+└─ dvaf
+   └─ exports
+```
+
+Behaviour:
+
+* DVQR evidence remains isolated
+* DVAF reconstruction artifacts remain isolated
+* workspace organisation becomes ecosystem-aware
+
+---
+
+## ⏱️ Timeline Reconstruction Artifact Support
+
+Timeline Reconstruction can now export reconstruction candidates from first-observed timeline events.
+
+Behaviour:
+
+* exports use the selected event interval's source-side definition
+* exports do not represent latest timeline state
+* exports do not merge timeline intervals
+* timeline trust boundaries remain preserved
+
+---
+
+## 🎨 Investigation Playbook Expansion
+
+Added dedicated Hub playbooks for:
+
+* Investigate Environment Differences
+* Reconstruct Change Over Time
+
+These playbooks formalise recommended workflows for:
+
+* Cross-Environment Diff
+* Timeline Reconstruction
+* Audit Evidence enrichment
+* Reconstruction Artifact generation
+
+Results:
+
+* improved discoverability
+* clearer operational guidance
+* stronger onboarding experience
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces:
+
+* DVQR investigates observed evidence
+* DVAF reconstructs metadata definitions
+* reconstruction artifacts are handoffs, not authority
+* source-side evidence is preserved
+* target-side additions remain observational
+* human review remains mandatory
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+* export DVAF reconstruction artifacts
+* preserve reconstruction candidates in reports
+* hand off investigation findings to DV Attribute Factory
+* generate reconstruction intent from Cross-Diff and Timeline Reconstruction
+* maintain bounded investigation and reconstruction responsibilities
+
+This release evolves DV Quick Run from:
+
+```text
+Investigation
+```
+
+towards:
+
+```text
+Investigation
+→ Reconstruction Handoff
+```
+
+while preserving DVQR's evidence-first investigation model.
+
+---
+
 # DV Quick Run v0.13.1 — Audit Evidence Enrichment, Timeline Context & Investigation Continuity
 
 This release introduces the first generation of **Audit Evidence Enrichment** for Timeline Reconstruction and Cross-Environment Diff.

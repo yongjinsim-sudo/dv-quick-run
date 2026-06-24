@@ -92,17 +92,18 @@ function renderEvidenceWorkspaceLauncher(model: DvQuickRunHubViewModel): string 
 
   return `<section id="evidence-workspace">
     <h2>Evidence Workspace</h2>
-    <p class="dvqr-section-note">Capture, organise, search, compare, and preserve investigation evidence across environments and time.</p>
+    <p class="dvqr-section-note">Capture, organise, search, compare, audit-enrich, and preserve investigation evidence across environments and time.</p>
     <div class="dvqr-card dvqr-evidence-workspace-card">
       <div>
         <h3>${statusTitle}</h3>
         <p>${statusDetail}</p>
-        <p>Use Evidence Workspace and Snapshot Library to reconstruct same-environment timelines, run Timeline Diff, and reserve Cross-Environment Diff for environment comparison.</p>
+        <p>Use Evidence Workspace and Snapshot Library to reconstruct same-environment timelines, run Timeline Diff, reserve Cross-Environment Diff for environment comparison, and generate reconstruction artifacts for external DVAF preview where supported.</p>
         <div class="dvqr-meta">
-          <span class="dvqr-chip">.dvqr/snapshots</span>
-          <span class="dvqr-chip">.dvqr/comparisons</span>
-          <span class="dvqr-chip">.dvqr/reports</span>
+          <span class="dvqr-chip">.dvforgelab/dvqr/snapshots</span>
+          <span class="dvqr-chip">.dvforgelab/dvqr/reports</span>
+          <span class="dvqr-chip">.dvforgelab/dvaf/exports</span>
           <span class="dvqr-chip">Timeline reconstruction</span>
+          <span class="dvqr-chip">Reconstruction artifacts</span>
         </div>
       </div>
       <div class="dvqr-evidence-actions">

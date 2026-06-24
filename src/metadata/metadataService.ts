@@ -139,22 +139,23 @@ export async function fetchNormalizedFieldMetadata(
   logicalName: string
 ): Promise<FieldMetadata[]> {
   const safeLogicalName = logicalName.replace(/'/g, "''");
+  const baseSelect = "LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName,RequiredLevel,IsSearchable,IsAuditEnabled,Description";
   const path =
     `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes` +
-    "?$select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName,RequiredLevel,IsSearchable,IsAuditEnabled,Description&$top=5000";
+    `?$select=${baseSelect}&$top=5000`;
 
   try {
     const rows = await getList<any>(client, token, path);
     const normalized = normalizeFieldMetadataList(rows);
     if (normalized.length) {
-      return normalized;
+      return await hydrateLookupTargets(client, token, logicalName, normalized);
     }
   } catch {
     // Fall back to expanded entity metadata below.
   }
 
   const response = await client.get(
-    `/EntityDefinitions(LogicalName='${safeLogicalName}')?$select=LogicalName&$expand=Attributes($select=LogicalName,AttributeType,IsValidForRead,IsValidForCreate,IsValidForUpdate,IsValidForAdvancedFind,AttributeOf,SchemaName,DisplayName,RequiredLevel,IsSearchable,IsAuditEnabled,Description)`,
+    `/EntityDefinitions(LogicalName='${safeLogicalName}')?$select=LogicalName&$expand=Attributes($select=${baseSelect})`,
     token
   );
 
@@ -167,7 +168,82 @@ export async function fetchNormalizedFieldMetadata(
     throw new Error(`No fields parsed for ${logicalName}`);
   }
 
-  return normalized;
+  return hydrateLookupTargets(client, token, logicalName, normalized);
+}
+
+async function hydrateLookupTargets(
+  client: DataverseClient,
+  token: string,
+  logicalName: string,
+  fields: readonly FieldMetadata[]
+): Promise<FieldMetadata[]> {
+  const safeLogicalName = normalizeODataStringLiteral(logicalName);
+  const lookupCasts = [
+    "Microsoft.Dynamics.CRM.LookupAttributeMetadata",
+    "Microsoft.Dynamics.CRM.CustomerAttributeMetadata",
+    "Microsoft.Dynamics.CRM.OwnerAttributeMetadata"
+  ];
+  const targetsByLogicalName = new Map<string, string[]>();
+
+  for (const cast of lookupCasts) {
+    try {
+      const rows = await getList<any>(
+        client,
+        token,
+        `/EntityDefinitions(LogicalName='${safeLogicalName}')/Attributes/${cast}` +
+          "?$select=LogicalName,Targets&$top=5000"
+      );
+      for (const row of rows) {
+        const fieldLogicalName = typeof row?.LogicalName === "string"
+          ? row.LogicalName.trim().toLowerCase()
+          : typeof row?.logicalname === "string"
+            ? row.logicalname.trim().toLowerCase()
+            : "";
+        if (!fieldLogicalName) {
+          continue;
+        }
+        const targets = normalizeLookupTargetRows(row?.Targets ?? row?.targets);
+        if (targets.length > 0) {
+          targetsByLogicalName.set(fieldLogicalName, targets);
+        }
+      }
+    } catch {
+      // Lookup target hydration is best-effort. Base attribute metadata remains usable.
+    }
+  }
+
+  if (targetsByLogicalName.size === 0) {
+    return [...fields];
+  }
+
+  return fields.map((field) => {
+    const hydratedTargets = targetsByLogicalName.get(field.logicalName.trim().toLowerCase());
+    if (!hydratedTargets || hydratedTargets.length === 0) {
+      return field;
+    }
+    return {
+      ...field,
+      lookupTargets: hydratedTargets
+    };
+  });
+}
+
+function normalizeLookupTargetRows(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const result: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") {
+      continue;
+    }
+    const normalized = item.trim();
+    if (normalized && !result.some((existing) => existing.toLowerCase() === normalized.toLowerCase())) {
+      result.push(normalized);
+    }
+  }
+  return result.sort((left, right) => left.localeCompare(right, undefined, { sensitivity: "base" }));
 }
 
 export async function fetchNormalizedChoiceMetadata(

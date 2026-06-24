@@ -44,8 +44,8 @@ suite("ColumnMetadataDiffProvider", () => {
 
     assert.strictEqual(result.groups.length, 1);
     assert.strictEqual(result.groups[0].title, "Column Metadata Drift");
-    assert.ok(result.groups[0].differences.some((difference) => difference.title === "Column removed: Legacy Code (legacycode)"));
-    assert.ok(result.groups[0].differences.some((difference) => difference.title === "Column added: New Code (newcode)"));
+    assert.ok(result.groups[0].differences.some((difference) => difference.title === "Column missing in target: Legacy Code (legacycode)"));
+    assert.ok(result.groups[0].differences.some((difference) => difference.title === "Column missing in source: New Code (newcode)"));
   });
 
   test("surfaces high-signal column property changes", async () => {

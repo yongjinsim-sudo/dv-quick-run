@@ -1,6 +1,7 @@
 import type { ComparisonDifference, ComparisonEvidenceRef } from "../../../core/comparison/index.js";
 import type { ComparisonReportFinding, ComparisonReportModel } from "./comparisonReportTypes.js";
 import { renderAuditEvidenceReportSectionHtml } from "../../audit/auditEvidenceReportSummary.js";
+import type { ReconstructionArtifactReference } from "../../reconstruction/reconstructionArtifactReference.js";
 
 function escapeHtml(value: string | undefined): string {
   return (value ?? "")
@@ -125,6 +126,31 @@ function renderHandoffPosture(report: ComparisonReportModel): string {
   </section>`;
 }
 
+
+function renderReconstructionArtifacts(artifacts: readonly ReconstructionArtifactReference[] | undefined): string {
+  if (!artifacts || artifacts.length === 0) {
+    return "";
+  }
+  return `<section class="dvqr-report-section dvqr-report-reconstruction">
+    <h2>Reconstruction Artifacts</h2>
+    <p class="dvqr-report-muted">DV Quick Run exported reconstruction intent artifacts for external preview. These artifacts do not imply the source is correct, the target is wrong, or changes should be applied without external verification.</p>
+    <div class="dvqr-report-reconstruction-list">
+      ${artifacts.map((artifact) => `<article class="dvqr-report-reconstruction-card">
+        <h3>${escapeHtml(artifact.kind)} Reconstruction Candidate</h3>
+        <div class="dvqr-report-reconstruction-grid">
+          <div><strong>Entity</strong><span>${escapeHtml(artifact.entityLogicalName)}</span></div>
+          ${artifact.attributeLogicalName ? `<div><strong>Attribute</strong><span>${escapeHtml(artifact.displayName ? `${artifact.displayName} (${artifact.attributeLogicalName})` : artifact.attributeLogicalName)}</span></div>` : ""}
+          <div><strong>Reason</strong><span>${escapeHtml(artifact.reason)}</span></div>
+          <div><strong>Support</strong><span>${escapeHtml(artifact.support)}</span></div>
+          <div><strong>Artifact</strong><span>${escapeHtml(artifact.artifactFileName)}</span></div>
+          ${artifact.sourceProvider ? `<div><strong>Source</strong><span>${escapeHtml(artifact.sourceProvider)}</span></div>` : ""}
+        </div>
+        ${artifact.notes.slice(0, 2).map((note) => `<p>${escapeHtml(note)}</p>`).join("")}
+      </article>`).join("")}
+    </div>
+  </section>`;
+}
+
 function renderReportBody(report: ComparisonReportModel): string {
   const isSummary = report.kind === "DiffFindingsSummary";
   const noDrift = report.differenceCount === 0;
@@ -183,6 +209,8 @@ function renderReportBody(report: ComparisonReportModel): string {
     </section>
 
     ${renderAuditEvidenceReportSectionHtml(report.auditEvidenceResults ?? [], "Audit Evidence Summary")}
+
+    ${renderReconstructionArtifacts(report.reconstructionArtifacts)}
 
     <section class="dvqr-report-section dvqr-report-boundary">
       <h2>Verification boundary</h2>
@@ -245,6 +273,12 @@ p { line-height: 1.5; margin: 0; }
 .dvqr-report-audit-records li { background: rgba(255,255,255,.76); border: 1px solid #d8dee4; border-radius: 8px; display: grid; gap: 3px; padding: 8px; }
 .dvqr-report-audit-records code, .dvqr-report-audit-result code { white-space: pre-wrap; word-break: break-word; }
 .dvqr-report-audit-experimental { border-top: 1px solid #d29922; color: #57606a; margin-top: 12px; padding-top: 10px; }
+.dvqr-report-reconstruction { border-left: 4px solid #bf8700; }
+.dvqr-report-reconstruction-list { display: grid; gap: 12px; margin-top: 14px; }
+.dvqr-report-reconstruction-card { background: #f6f8fa; border: 1px solid #d8dee4; border-radius: 12px; padding: 14px; }
+.dvqr-report-reconstruction-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin: 10px 0; }
+.dvqr-report-reconstruction-grid div { display: grid; gap: 4px; }
+.dvqr-report-reconstruction-grid span { color: #57606a; overflow-wrap: anywhere; }
 .dvqr-report-boundary { border-left: 4px solid #0969da; }
 .dvqr-report-handoff .dvqr-report-chart-section { display: none; }
 .dvqr-report-footer { color: #57606a; font-size: 11px; line-height: 1.45; padding: 12px 4px 0; text-align: center; }

@@ -19,10 +19,15 @@ import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes
 import { renderComparisonSurfaceHtml, renderStandaloneComparisonSurfaceHtml } from "../../webview/comparisonSurface/renderComparisonSurfaceHtml.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { promptForCrossEnvironmentDiffProAccess } from "./comparisonCapabilityPrompt.js";
+import { exportDvafAttributeArtifact } from "../../pro/reconstruction/dvafExportService.js";
+import type { AttributeReconstructionCandidate } from "../../pro/reconstruction/attributeReconstructionCandidate.js";
+import { buildDvafReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
+import type { ReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 
 let comparisonPanel: vscode.WebviewPanel | undefined;
 let comparisonPanelMessageDisposable: vscode.Disposable | undefined;
 let comparisonAuditEvidenceByEvidenceId = new Map<string, AuditEvidenceResult>();
+let comparisonReconstructionArtifacts: ReconstructionArtifactReference[] = [];
 
 function appendEvidencePivotDiagnostic(ctx: CommandContext, stage: string, details?: unknown): void {
   const timestamp = new Date().toISOString();
@@ -135,7 +140,8 @@ async function buildComparisonExportContent(ctx: CommandContext, model: Comparis
     const logoDataUri = await readWatermarkLogoDataUri(ctx);
     const report = buildComparisonReportModel(kind === "summary-html" ? "DiffFindingsSummary" : "InvestigationHandoff", model, {
       watermarkLogoDataUri: logoDataUri,
-      auditEvidenceResults: [...comparisonAuditEvidenceByEvidenceId.values()]
+      auditEvidenceResults: [...comparisonAuditEvidenceByEvidenceId.values()],
+      reconstructionArtifacts: comparisonReconstructionArtifacts
     });
     return renderComparisonReportHtml(report);
   }
@@ -144,7 +150,8 @@ async function buildComparisonExportContent(ctx: CommandContext, model: Comparis
     const logoDataUri = await readWatermarkLogoDataUri(ctx);
     const report = buildComparisonReportModel(kind === "summary-pdf" ? "DiffFindingsSummary" : "InvestigationHandoff", model, {
       watermarkLogoDataUri: logoDataUri,
-      auditEvidenceResults: [...comparisonAuditEvidenceByEvidenceId.values()]
+      auditEvidenceResults: [...comparisonAuditEvidenceByEvidenceId.values()],
+      reconstructionArtifacts: comparisonReconstructionArtifacts
     });
     return renderComparisonReportPdf(report);
   }
@@ -225,12 +232,13 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
       comparisonPanelMessageDisposable = undefined;
       comparisonPanel = undefined;
       comparisonAuditEvidenceByEvidenceId = new Map();
+      comparisonReconstructionArtifacts = [];
     }, null, ctx.ext.subscriptions);
   }
 
   comparisonPanelMessageDisposable?.dispose();
   comparisonPanelMessageDisposable = comparisonPanel.webview.onDidReceiveMessage((message: unknown) => {
-    const request = message as { readonly type?: string; readonly kind?: string; readonly state?: InvestigationSessionState; readonly evidenceId?: string; readonly label?: string; readonly value?: string; readonly evidenceKind?: string; readonly parentTitle?: string; readonly parentSummary?: string; readonly parentKind?: string; readonly parentProvider?: string; readonly parentEvidence?: string; readonly entityLogicalName?: string; readonly fromCapturedAtIso?: string; readonly toCapturedAtIso?: string; readonly stage?: string; readonly details?: Record<string, unknown> };
+    const request = message as { readonly type?: string; readonly kind?: string; readonly state?: InvestigationSessionState; readonly evidenceId?: string; readonly label?: string; readonly value?: string; readonly evidenceKind?: string; readonly parentTitle?: string; readonly parentSummary?: string; readonly parentKind?: string; readonly parentProvider?: string; readonly parentEvidence?: string; readonly entityLogicalName?: string; readonly fromCapturedAtIso?: string; readonly toCapturedAtIso?: string; readonly stage?: string; readonly details?: Record<string, unknown>; readonly exportId?: string; readonly candidateJson?: string };
     if (request.type === "resetInvestigationState") {
       void clearInvestigationSessionState(ctx.ext, investigationSessionKey);
       return;
@@ -324,6 +332,58 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
       return;
     }
 
+    if (request.type === "dvafExportRequested") {
+      const exportId = request.exportId ?? "dvaf-export";
+      try {
+        const candidate = JSON.parse(request.candidateJson ?? "{}") as AttributeReconstructionCandidate;
+        const entityLogicalName = candidate.entityLogicalName || model.summary.entityLogicalName;
+        if (!entityLogicalName) {
+          throw new Error("DVAF export needs an entity logical name from the source-side attribute finding.");
+        }
+
+        void exportDvafAttributeArtifact({
+          entityLogicalName,
+          candidates: [candidate]
+        })
+          .then((result) => {
+            void comparisonPanel?.webview.postMessage({
+              type: "dvafExportResult",
+              exportId,
+              ok: result.ok,
+              summary: result.ok && result.fileUri
+                ? `DVAF artifact exported to ${result.fileUri.fsPath}.`
+                : result.reason ?? "DVAF export did not complete."
+            });
+            if (result.ok && result.fileUri && result.artifact) {
+              const artifactFileName = result.fileUri.path.split("/").pop() ?? result.fileUri.fsPath;
+              comparisonReconstructionArtifacts = [
+                ...comparisonReconstructionArtifacts,
+                buildDvafReconstructionArtifactReference({ artifact: result.artifact, artifactFileName })
+              ];
+              void vscode.window.showInformationMessage(`DV Quick Run: Exported DVAF artifact to ${result.fileUri.fsPath}.`);
+            }
+          })
+          .catch((error: unknown) => {
+            const messageText = error instanceof Error ? error.message : String(error);
+            void comparisonPanel?.webview.postMessage({
+              type: "dvafExportResult",
+              exportId,
+              ok: false,
+              summary: `DVAF export failed. ${messageText}`
+            });
+          });
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : String(error);
+        void comparisonPanel?.webview.postMessage({
+          type: "dvafExportResult",
+          exportId,
+          ok: false,
+          summary: `DVAF export failed. ${messageText}`
+        });
+      }
+      return;
+    }
+
     if (request.type !== "saveComparison") {
       return;
     }
@@ -355,6 +415,7 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
   }, null, ctx.ext.subscriptions);
 
   comparisonAuditEvidenceByEvidenceId = new Map();
+  comparisonReconstructionArtifacts = [];
   comparisonPanel.title = model.title.startsWith("Timeline Diff") ? "DV Quick Run: Timeline Diff" : "DV Quick Run: Cross-Environment Diff";
   comparisonPanel.webview.html = renderComparisonSurfaceHtml(comparisonPanel.webview, model, { canExport: canSaveStandardComparisonExport(model), isProPreview: !canRunCrossEnvironmentDiff(), investigationState: persistedInvestigationState });
 }

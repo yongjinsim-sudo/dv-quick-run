@@ -110,6 +110,20 @@ export interface ComparisonDifference {
   readonly targetValue?: string;
   readonly evidence: readonly ComparisonEvidenceRef[];
   readonly continuations?: readonly ComparisonInvestigationContinuation[];
+  /**
+   * Optional provider-owned reconstruction intent metadata. This remains local
+   * investigation context only; renderers/controllers may offer explicit export
+   * actions, but the comparison engine must not treat it as remediation advice.
+   */
+  readonly reconstructionCandidateKind?: string;
+  readonly reconstructionCandidate?: unknown;
+  /**
+   * Optional explanation shown when a provider-owned reconstruction handoff is
+   * intentionally unavailable for this finding. For v0.13.2 this keeps
+   * source-side DVAF export direction visible instead of silently hiding the
+   * affordance on target-only attribute drift.
+   */
+  readonly reconstructionCandidateUnavailableReason?: string;
 }
 
 export interface ComparisonDriftGroup {
