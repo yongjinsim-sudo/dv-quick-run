@@ -57,7 +57,7 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
 
   window.addEventListener('message', (event) => {
     const message = event.data || {};
-    if (message.type !== 'dvafExportResult') {
+    if (message.type !== 'dvafExportResult' && message.type !== 'dvimExportResult') {
       return;
     }
 
@@ -66,7 +66,7 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
       return;
     }
 
-    const result = document.querySelector('[data-dvaf-export-result="' + exportId + '"]');
+    const result = document.querySelector('[data-dvaf-export-result="' + exportId + '"]') || document.querySelector('[data-dvim-export-result="' + exportId + '"]');
     if (!result) {
       return;
     }
@@ -74,7 +74,7 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
     result.removeAttribute('hidden');
     result.classList.toggle('is-error', message.ok !== true);
     result.classList.toggle('is-success', message.ok === true);
-    result.textContent = message.summary || (message.ok ? 'DVAF artifact exported.' : 'DVAF export did not complete.');
+    result.textContent = message.summary || (message.ok ? 'Reconstruction artifact exported.' : 'Export did not complete.');
   });
 
   function resolveEvidenceButton(target) {
@@ -210,6 +210,37 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
     });
   }
 
+
+  function resolveDvimExportButton(target) {
+    if (!(target instanceof Element)) {
+      return undefined;
+    }
+
+    return target.closest('[data-dvim-export-candidate]');
+  }
+
+  function activateDvimExportButton(button, event) {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const exportId = button.getAttribute('data-dvim-export-id') || '';
+    const candidateJson = button.getAttribute('data-dvim-export-candidate') || '';
+    const result = exportId ? document.querySelector('[data-dvim-export-result="' + exportId + '"]') : undefined;
+
+    if (result) {
+      result.removeAttribute('hidden');
+      result.classList.remove('is-error');
+      result.classList.remove('is-success');
+      result.textContent = 'Exporting source-side identity participation intent to DVIM...';
+    }
+
+    vscode?.postMessage?.({
+      type: 'dvimExportRequested',
+      exportId,
+      candidateJson
+    });
+  }
+
   function resolveAuditButton(target) {
     if (!(target instanceof Element)) {
       return undefined;
@@ -309,6 +340,12 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
       return;
     }
 
+    const dvimExportButton = resolveDvimExportButton(event.target);
+    if (dvimExportButton) {
+      activateDvimExportButton(dvimExportButton, event);
+      return;
+    }
+
     const auditButton = resolveAuditButton(event.target);
     if (auditButton) {
       activateAuditButton(auditButton, event);
@@ -335,6 +372,10 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   dvafExportButtons.forEach((button) => {
     button.addEventListener('click', (event) => activateDvafExportButton(button, event));
   });
-  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length, dvafExportButtonCount: dvafExportButtons.length });
+  const dvimExportButtons = document.querySelectorAll('[data-dvim-export-candidate]');
+  dvimExportButtons.forEach((button) => {
+    button.addEventListener('click', (event) => activateDvimExportButton(button, event));
+  });
+  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length, dvafExportButtonCount: dvafExportButtons.length, dvimExportButtonCount: dvimExportButtons.length });
 `;
 }

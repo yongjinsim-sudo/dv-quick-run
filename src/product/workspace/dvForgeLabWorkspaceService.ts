@@ -5,6 +5,7 @@ export const DV_FORGELAB_WORKSPACE_RELATIVE_PATH = ".dvforgelab";
 export const LEGACY_DVQR_WORKSPACE_RELATIVE_PATH = ".dvqr";
 export const DVQR_WORKSPACE_RELATIVE_PATH = path.join(DV_FORGELAB_WORKSPACE_RELATIVE_PATH, "dvqr");
 export const DVAF_WORKSPACE_RELATIVE_PATH = path.join(DV_FORGELAB_WORKSPACE_RELATIVE_PATH, "dvaf");
+export const DVIM_WORKSPACE_RELATIVE_PATH = path.join(DV_FORGELAB_WORKSPACE_RELATIVE_PATH, "dvim");
 export const DVQR_SNAPSHOTS_RELATIVE_PATH = path.join(DVQR_WORKSPACE_RELATIVE_PATH, "snapshots");
 
 export interface DvForgeLabWorkspaceResolution {
@@ -14,10 +15,12 @@ export interface DvForgeLabWorkspaceResolution {
   readonly forgeLabRoot?: vscode.Uri;
   readonly dvqrRoot?: vscode.Uri;
   readonly dvafRoot?: vscode.Uri;
+  readonly dvimRoot?: vscode.Uri;
   readonly snapshotsRoot?: vscode.Uri;
   readonly comparisonsRoot?: vscode.Uri;
   readonly reportsRoot?: vscode.Uri;
   readonly dvafExportsRoot?: vscode.Uri;
+  readonly dvimExportsRoot?: vscode.Uri;
   readonly configuredSnapshotFolder?: string;
   readonly usingLegacyDvqrRoot?: boolean;
   readonly reason?: string;
@@ -27,10 +30,12 @@ export interface DvForgeLabWorkspaceLayout {
   readonly forgeLabRoot: vscode.Uri;
   readonly dvqrRoot: vscode.Uri;
   readonly dvafRoot: vscode.Uri;
+  readonly dvimRoot: vscode.Uri;
   readonly snapshotsRoot: vscode.Uri;
   readonly comparisonsRoot: vscode.Uri;
   readonly reportsRoot: vscode.Uri;
   readonly dvafExportsRoot: vscode.Uri;
+  readonly dvimExportsRoot: vscode.Uri;
 }
 
 function getPrimaryWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
@@ -60,15 +65,18 @@ export function getDefaultDvForgeLabWorkspaceLayout(workspaceRoot: vscode.Uri): 
   const forgeLabRoot = vscode.Uri.joinPath(workspaceRoot, DV_FORGELAB_WORKSPACE_RELATIVE_PATH);
   const dvqrRoot = vscode.Uri.joinPath(forgeLabRoot, "dvqr");
   const dvafRoot = vscode.Uri.joinPath(forgeLabRoot, "dvaf");
+  const dvimRoot = vscode.Uri.joinPath(forgeLabRoot, "dvim");
 
   return {
     forgeLabRoot,
     dvqrRoot,
     dvafRoot,
+    dvimRoot,
     snapshotsRoot: vscode.Uri.joinPath(dvqrRoot, "snapshots"),
     comparisonsRoot: vscode.Uri.joinPath(dvqrRoot, "comparisons"),
     reportsRoot: vscode.Uri.joinPath(dvqrRoot, "reports"),
-    dvafExportsRoot: vscode.Uri.joinPath(dvafRoot, "exports")
+    dvafExportsRoot: vscode.Uri.joinPath(dvafRoot, "exports"),
+    dvimExportsRoot: vscode.Uri.joinPath(dvimRoot, "exports")
   };
 }
 
@@ -76,15 +84,18 @@ export function getLegacyDvqrWorkspaceLayout(workspaceRoot: vscode.Uri): DvForge
   const forgeLabRoot = vscode.Uri.joinPath(workspaceRoot, DV_FORGELAB_WORKSPACE_RELATIVE_PATH);
   const dvqrRoot = vscode.Uri.joinPath(workspaceRoot, LEGACY_DVQR_WORKSPACE_RELATIVE_PATH);
   const dvafRoot = vscode.Uri.joinPath(forgeLabRoot, "dvaf");
+  const dvimRoot = vscode.Uri.joinPath(forgeLabRoot, "dvim");
 
   return {
     forgeLabRoot,
     dvqrRoot,
     dvafRoot,
+    dvimRoot,
     snapshotsRoot: vscode.Uri.joinPath(dvqrRoot, "snapshots"),
     comparisonsRoot: vscode.Uri.joinPath(dvqrRoot, "comparisons"),
     reportsRoot: vscode.Uri.joinPath(dvqrRoot, "reports"),
-    dvafExportsRoot: vscode.Uri.joinPath(dvafRoot, "exports")
+    dvafExportsRoot: vscode.Uri.joinPath(dvafRoot, "exports"),
+    dvimExportsRoot: vscode.Uri.joinPath(dvimRoot, "exports")
   };
 }
 
@@ -97,15 +108,18 @@ export function resolveConfiguredSnapshotWorkspaceLayout(args: {
   const workspaceRoot = args.workspaceFolder.uri;
   const forgeLabRoot = vscode.Uri.joinPath(workspaceRoot, DV_FORGELAB_WORKSPACE_RELATIVE_PATH);
   const dvafRoot = vscode.Uri.joinPath(forgeLabRoot, "dvaf");
+  const dvimRoot = vscode.Uri.joinPath(forgeLabRoot, "dvim");
 
   return {
     forgeLabRoot,
     dvqrRoot,
     dvafRoot,
+    dvimRoot,
     snapshotsRoot,
     comparisonsRoot: vscode.Uri.joinPath(dvqrRoot, "comparisons"),
     reportsRoot: vscode.Uri.joinPath(dvqrRoot, "reports"),
-    dvafExportsRoot: vscode.Uri.joinPath(dvafRoot, "exports")
+    dvafExportsRoot: vscode.Uri.joinPath(dvafRoot, "exports"),
+    dvimExportsRoot: vscode.Uri.joinPath(dvimRoot, "exports")
   };
 }
 
@@ -157,6 +171,7 @@ export async function ensureDvForgeLabWorkspace(args?: {
   readonly configuredSnapshotFolder?: string;
   readonly preferLegacyIfPresent?: boolean;
   readonly includeDvaf?: boolean;
+  readonly includeDvim?: boolean;
 }): Promise<DvForgeLabWorkspaceResolution> {
   const resolution = await resolveDvForgeLabWorkspace(args);
   if (!resolution.available || !resolution.snapshotsRoot || !resolution.comparisonsRoot || !resolution.reportsRoot) {
@@ -173,10 +188,18 @@ export async function ensureDvForgeLabWorkspace(args?: {
     folders.push(resolution.dvafExportsRoot);
   }
 
+  if (args?.includeDvim === true && resolution.dvimExportsRoot) {
+    folders.push(resolution.dvimExportsRoot);
+  }
+
   await Promise.all(folders.map((folder) => vscode.workspace.fs.createDirectory(folder)));
   return resolution;
 }
 
 export async function ensureDvafExportsWorkspace(): Promise<DvForgeLabWorkspaceResolution> {
   return ensureDvForgeLabWorkspace({ includeDvaf: true, preferLegacyIfPresent: true });
+}
+
+export async function ensureDvimExportsWorkspace(): Promise<DvForgeLabWorkspaceResolution> {
+  return ensureDvForgeLabWorkspace({ includeDvim: true, preferLegacyIfPresent: true });
 }

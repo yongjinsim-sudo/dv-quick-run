@@ -410,7 +410,7 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
   { title: "Evidence Workspace", summary: "Local workspace-backed evidence capture gives investigations a Git-friendly home without turning DVQR into Git tooling or hosted persistence." },
   { title: "Timeline Reconstruction and operational comparison", summary: "Timeline Reconstruction is available for same-environment snapshot sequences, while broader comparison remains bounded to drift investigation without remediation or deployment tooling." },
-  { title: "Reconstruction Artifacts", summary: "Generate source-side DVAF reconstruction artifacts from eligible column metadata drift while keeping DVQR observational and DVAF responsible for preview/apply." }
+  { title: "Reconstruction Artifacts", summary: "Generate source-side DVAF and DVIM reconstruction artifacts from eligible metadata and identity participation drift while keeping DVQR observational and DVAF responsible for preview/apply." }
 ];
 
 
@@ -427,7 +427,7 @@ function buildProComparisonCapability(): CapabilityInfo {
       "Select source and target snapshots, or compare latest and previous snapshots from the library.",
       "Use Timeline Reconstruction for 3+ same-environment snapshots, Timeline Diff for two same-environment snapshots, and Cross-Environment Diff for different-environment comparison.",
       "Query Audit Evidence on supported findings when you need snapshot-bounded who/when context.",
-      "Export DVAF reconstruction artifacts from eligible source-side Column Metadata Drift findings when external reconstruction preview is needed.",
+      "Export DVAF artifacts from eligible source-side Column Metadata Drift and DVIM artifacts from eligible Identity Participation Drift when external preview-first reconstruction is needed.",
       "Export HTML/PDF reports when you need to preserve or share investigation context, including any audit evidence and reconstruction artifacts explicitly generated before export."
     ],
     relatedPlaybooks: ["environment-differences", "change-over-time", "runtime-behaviour", "power-platform-participation"],
@@ -454,9 +454,9 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 
 export const whatsNew: readonly string[] = [
   "v0.13.2 introduces Reconstruction Artifacts and DVAF integration for eligible Column Metadata Drift findings.",
-  "Cross-Environment Diff can export source-side DVAF reconstruction artifacts from column metadata findings where the source definition exists.",
-  "Timeline Reconstruction can export DVAF reconstruction artifacts from the selected event interval's source-side definition; it does not export latest or merged timeline state.",
-  "Reconstruction artifacts are written to the DV ForgeLab workspace under .dvforgelab/dvaf/exports while DVQR evidence remains under .dvforgelab/dvqr.",
+  "Cross-Environment Diff can export source-side DVAF artifacts from column metadata findings and DVIM artifacts from identity participation findings where supported source-side intent exists.",
+  "Timeline Reconstruction can export DVAF/DVIM artifacts from the selected event interval's source-side definition or participation intent; it does not export latest or merged timeline state.",
+  "Reconstruction artifacts are written to DV ForgeLab utility folders such as .dvforgelab/dvaf/exports • .dvforgelab/dvim/exports and .dvforgelab/dvim/exports while DVQR evidence remains under .dvforgelab/dvqr.",
   "Timeline and Cross Diff HTML/PDF reports now include Reconstruction Artifacts sections when artifacts were generated before export.",
   "DVAF artifacts preserve both current flat DVAF-compatible definitions and richer DVQR evidence, source/target context, support notes, and reconstruction boundaries.",
   "DVQR exports reconstruction intent only. DVAF owns preview/apply. Source-side export does not imply the source is correct, the target is wrong, or changes should be applied.",

@@ -13,8 +13,10 @@ import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes
 import type { CommandContext } from "../context/commandContext.js";
 import { ensureSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
 import { exportDvafAttributeArtifact } from "../../pro/reconstruction/dvafExportService.js";
+import { exportDvimIdentityParticipationArtifact } from "../../pro/reconstruction/dvimExportService.js";
 import type { AttributeReconstructionCandidate } from "../../pro/reconstruction/attributeReconstructionCandidate.js";
-import { buildDvafReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
+import type { DvimParticipationReconstructionCandidate } from "../../pro/reconstruction/dvimArtifactTypes.js";
+import { buildDvafReconstructionArtifactReference, buildDvimReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 import type { ReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 
 let timelinePanel: vscode.WebviewPanel | undefined;
@@ -109,12 +111,19 @@ async function buildTimelineReportContent(ctx: CommandContext, timeline: Timelin
 }
 
 async function saveTimelineReport(ctx: CommandContext, timeline: TimelineReconstruction, kind: TimelineExportKind): Promise<void> {
-  const uri = await vscode.window.showSaveDialog({
-    defaultUri: await buildTimelineReportDefaultUri(timeline, kind),
-    filters: getTimelineReportFilter(kind),
-    saveLabel: getTimelineReportTitle(kind),
-    title: getTimelineReportTitle(kind),
-  });
+  const workspace = await ensureSnapshotWorkspace();
+  let uri = workspace.available && workspace.reportsRoot
+    ? await buildTimelineReportDefaultUri(timeline, kind)
+    : undefined;
+
+  if (!uri) {
+    uri = await vscode.window.showSaveDialog({
+      defaultUri: await buildTimelineReportDefaultUri(timeline, kind),
+      filters: getTimelineReportFilter(kind),
+      saveLabel: getTimelineReportTitle(kind),
+      title: getTimelineReportTitle(kind),
+    });
+  }
 
   if (!uri) {
     return;
@@ -122,7 +131,8 @@ async function saveTimelineReport(ctx: CommandContext, timeline: TimelineReconst
 
   const content = await buildTimelineReportContent(ctx, timeline, kind);
   await vscode.workspace.fs.writeFile(uri, typeof content === "string" ? Buffer.from(content, "utf8") : content);
-  void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getTimelineReportSavedLabel(kind)} to ${uri.fsPath}.`);
+  const destination = workspace.available && workspace.reportsRoot ? "Evidence Workspace" : uri.fsPath;
+  void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getTimelineReportSavedLabel(kind)} to ${destination}.`);
 }
 
 export function openTimelineSurface(ctx: CommandContext, timeline: TimelineReconstruction): void {
@@ -259,6 +269,62 @@ function registerTimelineMessageHandler(ctx: CommandContext, timeline: TimelineR
           exportId,
           ok: false,
           summary: `DVAF export failed. ${messageText}`
+        });
+      }
+      return;
+    }
+
+    if (request.type === "timelineDvimExportRequested") {
+      const exportId = request.exportId ?? "timeline-dvim-export";
+      try {
+        const parsedCandidate = JSON.parse(request.candidateJson ?? "{}") as DvimParticipationReconstructionCandidate;
+        const candidate: DvimParticipationReconstructionCandidate = {
+          ...parsedCandidate,
+          source: "Timeline",
+          findingId: request.eventId ?? parsedCandidate.findingId,
+          notes: [
+            ...(parsedCandidate.notes ?? []),
+            "Timeline export uses the selected event interval's source-side participation intent. It does not export the latest snapshot or merged timeline state."
+          ]
+        };
+        void exportDvimIdentityParticipationArtifact({
+          subjectLabel: candidate.displayName ?? candidate.identifier ?? timeline.subject.subjectLabel,
+          candidates: [candidate]
+        })
+          .then((result) => {
+            void timelinePanel?.webview.postMessage({
+              type: "timelineDvimExportResult",
+              exportId,
+              ok: result.ok,
+              summary: result.ok && result.fileUri
+                ? `DVIM artifact exported to ${result.fileUri.fsPath}.`
+                : result.reason ?? "DVIM export did not complete."
+            });
+            if (result.ok && result.fileUri && result.artifact) {
+              const artifactFileName = result.fileUri.path.split("/").pop() ?? result.fileUri.fsPath;
+              timelineReconstructionArtifacts = [
+                ...timelineReconstructionArtifacts,
+                buildDvimReconstructionArtifactReference({ artifact: result.artifact, artifactFileName })
+              ];
+              void vscode.window.showInformationMessage(`DV Quick Run: Exported DVIM artifact to ${result.fileUri.fsPath}.`);
+            }
+          })
+          .catch((error: unknown) => {
+            const messageText = error instanceof Error ? error.message : String(error);
+            void timelinePanel?.webview.postMessage({
+              type: "timelineDvimExportResult",
+              exportId,
+              ok: false,
+              summary: `DVIM export failed. ${messageText}`
+            });
+          });
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : String(error);
+        void timelinePanel?.webview.postMessage({
+          type: "timelineDvimExportResult",
+          exportId,
+          ok: false,
+          summary: `DVIM export failed. ${messageText}`
         });
       }
       return;

@@ -92,18 +92,22 @@ export function buildDefaultExportUri(model: ComparisonViewModel, extension: "js
   const reportFileName = buildReportFileName(model, extension);
   const fileName = reportFileName ?? `${model.title.startsWith("Timeline Diff") ? "dvqr-timeline-diff" : "dvqr-cross-environment-diff"}-${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${formatExportTimestamp()}.${getReportExtension(extension)}`;
 
-  if (reportExport) {
-    const workspace = resolveSnapshotWorkspace();
-    if (workspace.available && workspace.reportsRoot) {
+  const workspace = resolveSnapshotWorkspace();
+  if (workspace.available) {
+    if (reportExport && workspace.reportsRoot) {
       return vscode.Uri.joinPath(workspace.reportsRoot, fileName);
+    }
+
+    if (!reportExport && workspace.comparisonsRoot) {
+      return vscode.Uri.joinPath(workspace.comparisonsRoot, fileName);
     }
   }
 
   const folders = vscode.workspace.workspaceFolders;
   if (folders && folders.length > 0) {
     return reportExport
-      ? vscode.Uri.joinPath(folders[0].uri, ".dvqr", "reports", fileName)
-      : vscode.Uri.joinPath(folders[0].uri, fileName);
+      ? vscode.Uri.joinPath(folders[0].uri, ".dvforgelab", "dvqr", "reports", fileName)
+      : vscode.Uri.joinPath(folders[0].uri, ".dvforgelab", "dvqr", "comparisons", fileName);
   }
 
   return vscode.Uri.file(fileName);
