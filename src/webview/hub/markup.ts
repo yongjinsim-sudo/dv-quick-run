@@ -101,7 +101,7 @@ function renderEvidenceWorkspaceLauncher(model: DvQuickRunHubViewModel): string 
         <div class="dvqr-meta">
           <span class="dvqr-chip">.dvforgelab/dvqr/snapshots</span>
           <span class="dvqr-chip">.dvforgelab/dvqr/reports</span>
-          <span class="dvqr-chip">.dvforgelab/dvaf/exports</span>
+          <span class="dvqr-chip">.dvforgelab/dvaf/exports • .dvforgelab/dvim/exports</span>
           <span class="dvqr-chip">Timeline reconstruction</span>
           <span class="dvqr-chip">Reconstruction artifacts</span>
         </div>

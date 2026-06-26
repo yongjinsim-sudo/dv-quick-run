@@ -2,6 +2,7 @@ import PDFDocument from "pdfkit";
 import type { ComparisonDifference } from "../../../core/comparison/index.js";
 import type { ComparisonReportFinding, ComparisonReportModel, ComparisonReportProviderDistributionItem } from "./comparisonReportTypes.js";
 import { auditEvidenceCompactReportLines } from "../../audit/auditEvidenceReportSummary.js";
+import { reconstructionArtifactIntro, toReconstructionArtifactCandidateViewModel } from "../../reconstruction/reconstructionArtifactReference.js";
 
 interface PdfCursor {
   readonly doc: PDFKit.PDFDocument;
@@ -605,20 +606,21 @@ function renderReconstructionArtifacts(cursor: PdfCursor, report: ComparisonRepo
     return;
   }
   section(cursor, "Reconstruction Artifacts", logoBuffer, footerText, 118);
-  paragraph(cursor, "DV Quick Run exported reconstruction intent artifacts for external preview. These artifacts do not imply the source is correct, the target is wrong, or changes should be applied without external verification.", logoBuffer, footerText, { fontSize: 8.7, color: "#57606a" });
+  paragraph(cursor, reconstructionArtifactIntro, logoBuffer, footerText, { fontSize: 8.7, color: "#57606a" });
   for (const artifact of artifacts.slice(0, 8)) {
+    const candidate = toReconstructionArtifactCandidateViewModel(artifact);
     roundedCard(cursor, 104, logoBuffer, footerText);
     const y = cursor.y;
     const x = margin + 14;
-    cursor.doc.font("Helvetica-Bold").fontSize(10).fillColor("#1f2328").text(`${normalizePdfText(artifact.kind)} Reconstruction Candidate`, x, y + 12, { width: contentWidth - 28 });
-    cursor.doc.font("Helvetica").fontSize(8).fillColor("#57606a").text(`Entity: ${normalizePdfText(artifact.entityLogicalName)}`, x, y + 30, { width: 170 });
-    cursor.doc.text(`Reason: ${normalizePdfText(artifact.reason)}`, x + 176, y + 30, { width: 150 });
-    cursor.doc.text(`Support: ${normalizePdfText(artifact.support)}`, x + 332, y + 30, { width: 150 });
-    if (artifact.attributeLogicalName) {
-      cursor.doc.text(`Attribute: ${normalizePdfText(artifact.displayName ? `${artifact.displayName} (${artifact.attributeLogicalName})` : artifact.attributeLogicalName)}`, x, y + 46, { width: contentWidth - 28 });
+    cursor.doc.font("Helvetica-Bold").fontSize(10).fillColor("#1f2328").text(normalizePdfText(candidate.candidateTitle), x, y + 12, { width: contentWidth - 28 });
+    cursor.doc.font("Helvetica").fontSize(8).fillColor("#57606a").text(`Entity: ${normalizePdfText(candidate.entityLabel)}`, x, y + 30, { width: 170 });
+    cursor.doc.text(`Reason: ${normalizePdfText(candidate.reason)}`, x + 176, y + 30, { width: 150 });
+    cursor.doc.text(`Support: ${normalizePdfText(candidate.support)}`, x + 332, y + 30, { width: 150 });
+    if (candidate.attributeLabel) {
+      cursor.doc.text(`Attribute: ${normalizePdfText(candidate.attributeLabel)}`, x, y + 46, { width: contentWidth - 28 });
     }
-    cursor.doc.text(`Artifact: ${normalizePdfText(artifact.artifactFileName)}`, x, y + 62, { width: contentWidth - 28 });
-    cursor.doc.font("Helvetica").fontSize(7.3).fillColor("#57606a").text(normalizePdfText(artifact.notes[0] ?? "Source-side reconstruction intent exported for external preview."), x, y + 80, { width: contentWidth - 28, lineGap: 1 });
+    cursor.doc.text(`Artifact: ${normalizePdfText(candidate.artifactFileName)}`, x, y + 62, { width: contentWidth - 28 });
+    cursor.doc.font("Helvetica").fontSize(7.3).fillColor("#57606a").text(normalizePdfText(candidate.description), x, y + 80, { width: contentWidth - 28, lineGap: 1 });
     cursor.y += 118;
   }
 }

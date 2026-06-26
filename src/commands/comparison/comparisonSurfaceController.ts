@@ -20,8 +20,10 @@ import { renderComparisonSurfaceHtml, renderStandaloneComparisonSurfaceHtml } fr
 import type { CommandContext } from "../context/commandContext.js";
 import { promptForCrossEnvironmentDiffProAccess } from "./comparisonCapabilityPrompt.js";
 import { exportDvafAttributeArtifact } from "../../pro/reconstruction/dvafExportService.js";
+import { exportDvimIdentityParticipationArtifact } from "../../pro/reconstruction/dvimExportService.js";
 import type { AttributeReconstructionCandidate } from "../../pro/reconstruction/attributeReconstructionCandidate.js";
-import { buildDvafReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
+import type { DvimParticipationReconstructionCandidate } from "../../pro/reconstruction/dvimArtifactTypes.js";
+import { buildDvafReconstructionArtifactReference, buildDvimReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 import type { ReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 
 let comparisonPanel: vscode.WebviewPanel | undefined;
@@ -189,16 +191,18 @@ async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewMo
     return undefined;
   }
 
-  if (isReportExportKind(kind)) {
-    await ensureSnapshotWorkspace();
-  }
+  const workspace = await ensureSnapshotWorkspace();
+  const workspaceTargetRoot = isReportExportKind(kind) ? workspace.reportsRoot : workspace.comparisonsRoot;
+  let uri = workspace.available && workspaceTargetRoot ? buildDefaultExportUri(model, kind) : undefined;
 
-  const uri = await vscode.window.showSaveDialog({
-    defaultUri: buildDefaultExportUri(model, kind),
-    filters: getExportFilter(kind),
-    saveLabel: getExportSaveLabel(kind),
-    title: getExportDialogTitle(model, kind)
-  });
+  if (!uri) {
+    uri = await vscode.window.showSaveDialog({
+      defaultUri: buildDefaultExportUri(model, kind),
+      filters: getExportFilter(kind),
+      saveLabel: getExportSaveLabel(kind),
+      title: getExportDialogTitle(model, kind)
+    });
+  }
 
   if (!uri) {
     return undefined;
@@ -207,7 +211,8 @@ async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewMo
   const content = await buildComparisonExportContent(ctx, model, kind);
 
   await vscode.workspace.fs.writeFile(uri, typeof content === "string" ? Buffer.from(content, "utf8") : content);
-  void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getSavedExportLabel(model, kind)} to ${uri.fsPath}.`);
+  const destination = workspace.available && workspaceTargetRoot ? "Evidence Workspace" : uri.fsPath;
+  void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getSavedExportLabel(model, kind)} to ${destination}.`);
   return uri;
 }
 
@@ -329,6 +334,53 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
             html: `<div class="dvqr-audit-result dvqr-audit-result-error"><strong>Audit evidence unavailable</strong><p>${message}</p><p class="dvqr-audit-boundary">Captured diff evidence remains available. Audit evidence enriches findings only when available.</p></div>`
           });
         });
+      return;
+    }
+
+    if (request.type === "dvimExportRequested") {
+      const exportId = request.exportId ?? "dvim-export";
+      try {
+        const candidate = JSON.parse(request.candidateJson ?? "{}") as DvimParticipationReconstructionCandidate;
+        void exportDvimIdentityParticipationArtifact({
+          subjectLabel: candidate.displayName ?? candidate.identifier ?? model.summary.subjectLabel,
+          candidates: [candidate]
+        })
+          .then((result) => {
+            void comparisonPanel?.webview.postMessage({
+              type: "dvimExportResult",
+              exportId,
+              ok: result.ok,
+              summary: result.ok && result.fileUri
+                ? `DVIM artifact exported to ${result.fileUri.fsPath}.`
+                : result.reason ?? "DVIM export did not complete."
+            });
+            if (result.ok && result.fileUri && result.artifact) {
+              const artifactFileName = result.fileUri.path.split("/").pop() ?? result.fileUri.fsPath;
+              comparisonReconstructionArtifacts = [
+                ...comparisonReconstructionArtifacts,
+                buildDvimReconstructionArtifactReference({ artifact: result.artifact, artifactFileName })
+              ];
+              void vscode.window.showInformationMessage(`DV Quick Run: Exported DVIM artifact to ${result.fileUri.fsPath}.`);
+            }
+          })
+          .catch((error: unknown) => {
+            const messageText = error instanceof Error ? error.message : String(error);
+            void comparisonPanel?.webview.postMessage({
+              type: "dvimExportResult",
+              exportId,
+              ok: false,
+              summary: `DVIM export failed. ${messageText}`
+            });
+          });
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : String(error);
+        void comparisonPanel?.webview.postMessage({
+          type: "dvimExportResult",
+          exportId,
+          ok: false,
+          summary: `DVIM export failed. ${messageText}`
+        });
+      }
       return;
     }
 

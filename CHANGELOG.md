@@ -8,6 +8,210 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.13.3 --- Identity Reconstruction, DVIM Integration & Shared Workspace Evolution
+
+This release introduces the first **Identity Participation Reconstruction** workflow within the DV ForgeLab ecosystem.
+
+DV Quick Run can now identify source-side identity participation drift, generate bounded reconstruction intent artifacts, and hand those
+artifacts directly to DV Identity Manager for external preview and application.
+
+This release also establishes the shared DV ForgeLab workspace as the common integration point across investigation and reconstruction utilities.
+
+DV Quick Run continues to investigate.
+
+DV Identity Manager continues to reconstruct.
+
+**Investigation and reconstruction remain separate concerns.**
+
+---
+
+## 👥 Identity Participation Reconstruction (Major)
+
+Introduced Reconstruction Artifacts for eligible Identity Participation Drift findings.
+
+DV Quick Run can now:
+
+-   detect source-side identity participation drift
+-   identify reconstruction candidates
+-   generate DVIM-compatible reconstruction artifacts
+-   preserve reconstruction intent alongside investigation evidence
+-   maintain investigation boundaries
+
+**Behaviour**
+
+-   only source-side participation is exported
+-   target-side additions do not generate reconstruction artifacts
+-   exports remain explicitly user-triggered
+-   reconstruction intent remains advisory-only
+
+**Results**
+
+-   stronger investigation-to-reconstruction continuity
+-   reduced manual security role recreation
+-   improved identity administration workflows
+-   stronger ecosystem integration
+
+---
+
+## 🏗️ DVIM Export Integration
+
+Added direct DVIM export support from:
+
+-   Cross-Environment Diff
+-   Timeline Reconstruction
+
+Eligible findings now surface:
+
+``` text
+Export DVIM Artifact
+```
+
+DV Quick Run generates source-side identity participation definitions
+suitable for external preview in DV Identity Manager.
+
+**Behaviour**
+
+-   exports preserve observed role participation
+-   team memberships are retained where supported
+-   artifacts remain externally reviewable
+-   no automatic remediation occurs
+
+---
+
+## 📄 Reconstruction Artifacts in Reports
+
+Timeline Reconstruction and Cross-Diff reports now include
+**Reconstruction Artifacts** sections for DVIM exports.
+
+Reports preserve:
+
+-   artifact filename
+-   identity context
+-   reconstruction rationale
+-   support status
+
+**Results**
+
+-   stronger operational handoff
+-   clearer reconstruction continuity
+-   improved investigation audit trail
+
+---
+
+## 🗂️ Shared DV ForgeLab Workspace Expansion
+
+Expanded the shared workspace architecture.
+
+``` text
+.dvforgelab
+├─ dvqr
+│   ├─ snapshots
+│   ├─ comparisons
+│   └─ reports
+├─ dvaf
+│   └─ exports
+└─ dvim
+    └─ exports
+```
+
+**Behaviour**
+
+-   investigation evidence remains isolated
+-   reconstruction artifacts remain utility-owned
+-   ecosystem integration becomes workspace-aware
+-   shared conventions continue to evolve
+
+---
+
+## 💾 Workspace-First Report Exports
+
+Timeline Reconstruction and Cross-Environment Diff report exports now
+default to the shared DV ForgeLab workspace.
+
+Supported exports include:
+
+-   JSON
+-   Markdown
+-   HTML
+-   PDF reports
+
+**Behaviour**
+
+-   reports save directly into the Evidence Workspace
+-   manual Save dialogs are no longer required for normal workflows
+-   evidence remains organised alongside comparisons and snapshots
+
+**Results**
+
+-   reduced export friction
+-   improved investigation continuity
+-   cleaner workspace organisation
+
+---
+
+## 🎨 Reconstruction Artifact Experience
+
+Refined reconstruction workflows throughout investigation surfaces.
+
+Improvements include:
+
+-   reusable reconstruction artifact components
+-   consistent export success messaging
+-   shared report presentation
+-   consistent reconstruction terminology across DVAF and DVIM
+-   simplified ecosystem architecture
+
+**Results**
+
+-   improved consistency
+-   reduced duplicated implementation
+-   easier future ecosystem expansion
+
+---
+
+## 🧭 Architectural Invariants Reinforced
+
+This release reinforces:
+
+-   DVQR investigates observed evidence
+-   DVIM reconstructs identity participation
+-   reconstruction artifacts are handoffs, not authority
+-   source-side evidence is preserved
+-   target-side additions remain observational
+-   human review remains mandatory
+-   investigation and reconstruction remain separate concerns
+
+---
+
+## 🎯 Summary
+
+DV Quick Run can now:
+
+-   export DVIM reconstruction artifacts
+-   preserve identity reconstruction candidates in reports
+-   hand off identity participation findings to DV Identity Manager
+-   organise reports automatically in the shared workspace
+-   expand the shared DV ForgeLab ecosystem architecture
+
+This release evolves DV Quick Run from:
+
+``` text
+Investigation
+→ Metadata Reconstruction Handoff
+```
+
+towards:
+
+``` text
+Investigation
+→ Metadata Reconstruction Handoff
+→ Identity Reconstruction Handoff
+```
+
+while preserving DVQR's evidence-first investigation model.
+
+---
+
 # DV Quick Run v0.13.2 — Reconstruction Artifacts, DVAF Integration & Investigation-to-Reconstruction Handoff
 
 This release introduces the first reconstruction handoff workflow within the DV ForgeLab ecosystem.

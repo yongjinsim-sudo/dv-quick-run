@@ -572,6 +572,27 @@ function renderDvafExportAction(difference: ComparisonDifference): string {
     </div>`;
   }
 
+  if (difference.reconstructionCandidateKind === "dvim-identity-participation" && difference.reconstructionCandidate) {
+    const candidateJson = JSON.stringify(difference.reconstructionCandidate);
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" data-dvim-export-candidate="${escapeHtml(candidateJson)}" data-dvim-export-id="${escapeHtml(difference.id)}" aria-expanded="false" title="Export source-side identity participation intent as a DVIM reconstruction artifact. DVIM owns stage/validate/preview/apply.">
+        Export DVIM artifact ›
+      </button>
+      <span class="dvqr-dvaf-export-result" data-dvim-export-result="${escapeHtml(difference.id)}" hidden></span>
+    </div>`;
+  }
+
+  if (difference.reconstructionCandidateKind === "dvim-identity-participation-unavailable") {
+    const reason = difference.reconstructionCandidateUnavailableReason
+      ?? "DVIM export is unavailable for this identity participation finding.";
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" disabled title="${escapeHtml(reason)}">
+        Export DVIM unavailable
+      </button>
+      <span class="dvqr-dvaf-export-result is-visible">${escapeHtml(reason)}</span>
+    </div>`;
+  }
+
   return "";
 }
 

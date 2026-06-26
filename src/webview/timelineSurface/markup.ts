@@ -272,6 +272,28 @@ function renderTimelineDvafExportAction(event: TimelineEvent, instanceKey: strin
     </div>`;
   }
 
+  if (event.sourceDifference?.reconstructionCandidateKind === "dvim-identity-participation" && candidate) {
+    const exportId = `${event.id}::dvim::${instanceKey}`;
+    const candidateJson = JSON.stringify(candidate);
+    return `<div class="dvqr-timeline-audit-actions dvqr-timeline-dvaf-actions">
+      <button type="button" class="dvqr-timeline-audit-button dvqr-timeline-dvaf-button" data-timeline-dvim-export="${escapeHtml(exportId)}" data-timeline-dvim-candidate="${escapeHtml(candidateJson)}" data-timeline-event-id="${escapeHtml(event.id)}" title="Export this event's source-side identity participation intent as a DVIM reconstruction artifact. DVIM owns stage/validate/preview/apply.">
+        Export DVIM artifact ›
+      </button>
+      <span class="dvqr-timeline-dvaf-result" data-timeline-dvim-result="${escapeHtml(exportId)}" hidden></span>
+    </div>`;
+  }
+
+  if (event.sourceDifference?.reconstructionCandidateKind === "dvim-identity-participation-unavailable") {
+    const reason = event.sourceDifference.reconstructionCandidateUnavailableReason
+      ?? "DVIM export is unavailable for this timeline identity participation event.";
+    return `<div class="dvqr-timeline-audit-actions dvqr-timeline-dvaf-actions">
+      <button type="button" class="dvqr-timeline-audit-button dvqr-timeline-dvaf-button" disabled title="${escapeHtml(reason)}">
+        Export DVIM unavailable
+      </button>
+      <span class="dvqr-timeline-dvaf-result is-visible">${escapeHtml(reason)}</span>
+    </div>`;
+  }
+
   return "";
 }
 
@@ -333,10 +355,11 @@ export function getTimelineSurfaceScript(): string {
       const target = event.target instanceof Element ? event.target.closest('[data-timeline-export-kind]') : null;
       const dvafTarget = event.target instanceof Element ? event.target.closest('[data-timeline-dvaf-export]') : null;
       const auditTarget = event.target instanceof Element ? event.target.closest('[data-timeline-audit-check]') : null;
+      const dvimTarget = event.target instanceof Element ? event.target.closest('[data-timeline-dvim-export]') : null;
       if (dvafTarget) {
         event.preventDefault();
         const exportId = dvafTarget.getAttribute('data-timeline-dvaf-export') || '';
-        const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]');
+        const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvim-result="' + exportId + '"]');
         if (result) {
           result.removeAttribute('hidden');
           result.classList.remove('is-error');
@@ -348,6 +371,24 @@ export function getTimelineSurfaceScript(): string {
           exportId,
           eventId: dvafTarget.getAttribute('data-timeline-event-id') || '',
           candidateJson: dvafTarget.getAttribute('data-timeline-dvaf-candidate') || ''
+        });
+        return;
+      }
+      if (dvimTarget) {
+        event.preventDefault();
+        const exportId = dvimTarget.getAttribute('data-timeline-dvim-export') || '';
+        const result = document.querySelector('[data-timeline-dvim-result="' + exportId + '"]');
+        if (result) {
+          result.removeAttribute('hidden');
+          result.classList.remove('is-error');
+          result.classList.remove('is-success');
+          result.textContent = 'Exporting source-side identity participation intent to DVIM...';
+        }
+        vscode.postMessage({
+          type: 'timelineDvimExportRequested',
+          exportId,
+          eventId: dvimTarget.getAttribute('data-timeline-event-id') || '',
+          candidateJson: dvimTarget.getAttribute('data-timeline-dvim-candidate') || ''
         });
         return;
       }
@@ -393,18 +434,18 @@ export function getTimelineSurfaceScript(): string {
 
     window.addEventListener('message', (event) => {
       const message = event.data || {};
-      if (message.type !== 'timelineDvafExportResult') {
+      if (message.type !== 'timelineDvafExportResult' && message.type !== 'timelineDvimExportResult') {
         return;
       }
       const exportId = message.exportId || '';
-      const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]');
+      const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvim-result="' + exportId + '"]');
       if (!result) {
         return;
       }
       result.removeAttribute('hidden');
       result.classList.toggle('is-error', message.ok !== true);
       result.classList.toggle('is-success', message.ok === true);
-      result.textContent = message.summary || (message.ok ? 'DVAF artifact exported.' : 'DVAF export did not complete.');
+      result.textContent = message.summary || (message.ok ? 'Reconstruction artifact exported.' : 'Export did not complete.');
     });
 
     window.addEventListener('message', (event) => {

@@ -160,35 +160,57 @@ Offline Pro is designed for restricted, disconnected, and air-gapped environment
 
 ---
 
-## 🆕 What's New in v0.13.2
+## 🆕 What's New in v0.13.3
 
-v0.13.2 introduces **Reconstruction Artifacts** and the first investigation-to-reconstruction handoff workflow within the DV ForgeLab ecosystem.
+v0.13.3 introduces the first **Identity Participation Reconstruction** workflow within the DV ForgeLab ecosystem.
 
-DV Quick Run can now identify eligible source-side Column Metadata Drift, generate bounded reconstruction intent artifacts, and hand those artifacts to DV Attribute Factory (DVAF) for external preview and supported metadata reconstruction.
+DV Quick Run can now identify eligible source-side Identity Participation Drift, generate bounded reconstruction intent artifacts, and hand those artifacts directly to DV Identity Manager for preview-first staging and explicit application.
 
 Highlights include:
 
-* DVAF reconstruction artifact export
-* source-side metadata drift reconstruction candidates
-* Cross-Environment Diff DVAF export support
-* Timeline Reconstruction DVAF export support
+* DVIM reconstruction artifact export
+* source-side identity participation reconstruction candidates
+* Cross-Environment Diff DVIM export support
+* Timeline Reconstruction DVIM export support
 * Reconstruction Artifacts report sections
-* lookup target preservation for DVAF-rich reconstruction artifacts
-* supported metadata handoff for text, numeric, date, choice, and lookup reconstruction
-* shadow/system attribute export safeguards
-* DV ForgeLab workspace expansion
-* investigation playbook refinements
-* investigation-to-reconstruction workflow guidance
+* shared DV ForgeLab workspace expansion
+* workspace-first report exports
+* reusable reconstruction artifact experience
 
 DV Quick Run continues to reinforce:
 
 ```text
 DVQR investigates observed evidence.
 
-DVAF reconstructs supported metadata definitions.
+DVIM reconstructs identity participation.
 
 Investigation and reconstruction remain separate concerns.
 ```
+
+### Identity Participation Reconstruction
+
+Eligible Identity Participation Drift findings can now generate reconstruction intent artifacts.
+
+DV Quick Run can:
+
+* identify source-side identity participation drift
+* classify reconstruction candidates
+* generate DVIM-compatible reconstruction definitions
+* preserve source-side participation alongside investigation evidence
+* maintain investigation boundaries
+
+Behaviour:
+
+* exports are explicit and user-triggered
+* only source-side participation is exported
+* target-side additions remain observational
+* artifacts are advisory-only handoffs
+
+### DVIM Export Integration
+
+Cross-Environment Diff and Timeline Reconstruction now support:
+
+```text
 
 ### Reconstruction Artifacts
 
