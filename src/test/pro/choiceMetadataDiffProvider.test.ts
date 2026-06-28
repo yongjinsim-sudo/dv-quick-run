@@ -27,6 +27,40 @@ suite("ChoiceMetadataDiffProvider", () => {
     assert.strictEqual(result.groups.length, 0);
   });
 
+  test("exports synthetic entity_attribute option set names as local DVCE reconstruction candidates", async () => {
+    const provider = new ChoiceMetadataDiffProvider();
+    const snapshots = [
+      buildEntityMetadataEvidenceSnapshot("DEV", [
+        buildChoiceAttribute("accountratingcode", "Account Rating", buildOptionSet([option(1, "Default Value"), option(1000000, "Test")], { name: "account_accountratingcode", isGlobal: true }))
+      ]),
+      buildEntityMetadataEvidenceSnapshot("SIT", [
+        buildChoiceAttribute("accountratingcode", "Account Rating", buildOptionSet([option(1, "Default Value")], { name: "account_accountratingcode", isGlobal: false }))
+      ])
+    ];
+
+    const result = await provider.compare({
+      source: { label: "DEV" },
+      target: { label: "SIT" },
+      entityLogicalName: "account",
+      snapshots
+    });
+
+    const difference = result.groups[0]?.differences.find((item) => item.title.includes("Account Rating option removed"));
+
+    const candidate = difference?.reconstructionCandidate as {
+      readonly scope?: string;
+      readonly entityLogicalName?: string;
+      readonly attributeLogicalName?: string;
+      readonly optionSetName?: string;
+    } | undefined;
+
+    assert.ok(candidate);
+    assert.strictEqual(candidate.scope, "local");
+    assert.strictEqual(candidate.entityLogicalName, "account");
+    assert.strictEqual(candidate.attributeLogicalName, "accountratingcode");
+    assert.strictEqual(candidate.optionSetName, undefined);
+  });
+
   test("surfaces added and removed choice options", async () => {
     const provider = new ChoiceMetadataDiffProvider();
     const snapshots = [

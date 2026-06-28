@@ -60,7 +60,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * continue investigation from comparison evidence using bounded inline pivots
 * reconstruct first-observed operational drift across 3+ same-environment snapshots
 * enrich Timeline Reconstruction and Cross-Environment Diff findings with snapshot-bounded Dataverse audit evidence
-* export DVAF reconstruction artifacts from eligible source-side Column Metadata Drift findings
+* export DVAF reconstruction artifacts from eligible source-side Column Metadata Drift findings, export DVIM identity participation artifacts, and export DVCE choice reconstruction artifacts from eligible option-level Choice Metadata Drift findings
 * preserve Reconstruction Artifact references in Timeline and Cross-Environment reports
 * review, verify, comment on, and hand off operational drift findings
 * export Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff reports as HTML/PDF artifacts
@@ -75,6 +75,54 @@ DV Quick Run is designed around a simple loop:
 ```text
 write → run → explore → refine → investigate → reconstruct evidence → verify → hand off
 ```
+
+## 🧩 v0.13.4 — Choice Reconstruction & DVCE Integration
+
+DV Quick Run v0.13.4 completes the first choice reconstruction handoff workflow.
+
+Eligible Choice Metadata Drift findings in Cross-Environment Diff and Timeline Reconstruction can now export DVCE-owned `.dvce.json` artifacts using the native `dvce.choiceDefinition` v3.0 schema.
+
+```text
+Observed drift
+↓
+Source-side reconstruction intent
+↓
+DV Choice Editor preview
+↓
+Human-reviewed apply/publish
+```
+
+Reports now explicitly separate **observed drift** from **reconstruction intent**. For example, a target-only option remains reported as an observed `Added` drift, while the source-side reconstruction artifact may stage `DeleteOption` because the artifact preserves the source snapshot.
+
+Supported DVCE reconstruction operations:
+
+* `AddOption`
+* `UpdateLabel`
+* `DeleteOption`
+
+Artifacts are saved under:
+
+```text
+.dvforgelab/dvce/exports
+```
+
+DV Quick Run does not mutate Dataverse choice metadata. DV Choice Editor owns import, staging, validation, preview, apply, publish, and execution-result review.
+
+Whole global choice definition creation remains intentionally unsupported until a bounded DV ForgeLab utility owns that workflow.
+
+## 🚀 14-day Pro Trial
+
+DV Quick Run surfaces user-facing 14-day Pro Trial messaging so teams can try the full Pro investigation workflow before choosing Pro.
+
+Trial messaging highlights:
+
+* Cross-Environment Diff
+* Timeline Reconstruction
+* Audit Evidence
+* Reconstruction Artifact exports
+* HTML/PDF investigation reports
+
+Trial and billing configuration is handled externally by the store/licensing provider. DV Quick Run only needs a valid Pro entitlement to unlock Pro features.
 
 ---
 

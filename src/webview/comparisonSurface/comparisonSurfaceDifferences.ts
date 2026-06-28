@@ -593,6 +593,27 @@ function renderDvafExportAction(difference: ComparisonDifference): string {
     </div>`;
   }
 
+  if (difference.reconstructionCandidateKind === "dvce-choice-definition" && difference.reconstructionCandidate) {
+    const candidateJson = JSON.stringify(difference.reconstructionCandidate);
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" data-dvce-export-candidate="${escapeHtml(candidateJson)}" data-dvce-export-id="${escapeHtml(difference.id)}" aria-expanded="false" title="Export source-side choice reconstruction intent as a DVCE .dvce.json artifact. DVCE owns stage/validate/preview/apply/publish.">
+        Export DVCE artifact ›
+      </button>
+      <span class="dvqr-dvaf-export-result" data-dvce-export-result="${escapeHtml(difference.id)}" hidden></span>
+    </div>`;
+  }
+
+  if (difference.reconstructionCandidateKind === "dvce-choice-definition-unavailable") {
+    const reason = difference.reconstructionCandidateUnavailableReason
+      ?? "DVCE export is unavailable for this choice metadata finding.";
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" disabled title="${escapeHtml(reason)}">
+        Export DVCE unavailable
+      </button>
+      <span class="dvqr-dvaf-export-result is-visible">${escapeHtml(reason)}</span>
+    </div>`;
+  }
+
   return "";
 }
 

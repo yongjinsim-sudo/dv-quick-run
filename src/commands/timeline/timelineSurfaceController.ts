@@ -14,9 +14,11 @@ import type { CommandContext } from "../context/commandContext.js";
 import { ensureSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
 import { exportDvafAttributeArtifact } from "../../pro/reconstruction/dvafExportService.js";
 import { exportDvimIdentityParticipationArtifact } from "../../pro/reconstruction/dvimExportService.js";
+import { exportDvceChoiceDefinitionArtifact } from "../../pro/reconstruction/dvceExportService.js";
 import type { AttributeReconstructionCandidate } from "../../pro/reconstruction/attributeReconstructionCandidate.js";
 import type { DvimParticipationReconstructionCandidate } from "../../pro/reconstruction/dvimArtifactTypes.js";
-import { buildDvafReconstructionArtifactReference, buildDvimReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
+import type { DvceChoiceReconstructionCandidate } from "../../pro/reconstruction/dvceArtifactTypes.js";
+import { buildDvafReconstructionArtifactReference, buildDvimReconstructionArtifactReference, buildDvceReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 import type { ReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 
 let timelinePanel: vscode.WebviewPanel | undefined;
@@ -325,6 +327,61 @@ function registerTimelineMessageHandler(ctx: CommandContext, timeline: TimelineR
           exportId,
           ok: false,
           summary: `DVIM export failed. ${messageText}`
+        });
+      }
+      return;
+    }
+
+
+
+    if (request.type === "timelineDvceExportRequested") {
+      const exportId = request.exportId ?? "timeline-dvce-export";
+      try {
+        const parsedCandidate = JSON.parse(request.candidateJson ?? "{}") as DvceChoiceReconstructionCandidate;
+        const candidate: DvceChoiceReconstructionCandidate = {
+          ...parsedCandidate,
+          source: "Timeline",
+          findingId: request.eventId ?? parsedCandidate.findingId,
+          notes: [
+            ...(parsedCandidate.notes ?? []),
+            "Timeline export uses the selected event interval's source-side choice operation. It does not export the latest snapshot or merged timeline state."
+          ]
+        };
+        void exportDvceChoiceDefinitionArtifact({ candidates: [candidate] })
+          .then((result) => {
+            void timelinePanel?.webview.postMessage({
+              type: "timelineDvceExportResult",
+              exportId,
+              ok: result.ok,
+              summary: result.ok && result.fileUri
+                ? `DVCE artifact exported to ${result.fileUri.fsPath}.`
+                : result.reason ?? "DVCE export did not complete."
+            });
+            if (result.ok && result.fileUri && result.artifact) {
+              const artifactFileName = result.fileUri.path.split("/").pop() ?? result.fileUri.fsPath;
+              timelineReconstructionArtifacts = [
+                ...timelineReconstructionArtifacts,
+                buildDvceReconstructionArtifactReference({ artifact: result.artifact, artifactFileName })
+              ];
+              void vscode.window.showInformationMessage(`DV Quick Run: Exported DVCE artifact to ${result.fileUri.fsPath}.`);
+            }
+          })
+          .catch((error: unknown) => {
+            const messageText = error instanceof Error ? error.message : String(error);
+            void timelinePanel?.webview.postMessage({
+              type: "timelineDvceExportResult",
+              exportId,
+              ok: false,
+              summary: `DVCE export failed. ${messageText}`
+            });
+          });
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : String(error);
+        void timelinePanel?.webview.postMessage({
+          type: "timelineDvceExportResult",
+          exportId,
+          ok: false,
+          summary: `DVCE export failed. ${messageText}`
         });
       }
       return;

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_13_2.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_13_4.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.13.2</title>
+<title>DV Quick Run v0.13.4</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,44 +122,44 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.13.2</div>
-        <h1>Reconstruction Artifacts & DVAF Integration</h1>
-        <p class="subtitle"><strong>DV Quick Run now bridges investigation and reconstruction workflows.</strong><br>Generate source-side DVAF reconstruction artifacts from eligible Column Metadata Drift findings, then preserve those artifacts inside Timeline and Cross-Diff handoff reports.</p>
+        <div class="eyebrow">What's new in v0.13.4</div>
+        <h1>Choice Reconstruction & DVCE Integration</h1>
+        <p class="subtitle"><strong>DV Quick Run now completes the choice reconstruction handoff.</strong><br>Generate DVCE-owned .dvce.json reconstruction artifacts from eligible Choice Metadata Drift findings while keeping investigation, preview, and remediation authority separate.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">Released in v0.13.2</div>
-          <div class="price">DVAF Reconstruction Artifacts</div>
-          <div class="limit">Evidence-first handoff from DVQR investigation to DV Attribute Factory preview.</div>
-          <p class="recognition">Timeline Reconstruction and Cross Environment Diff can now export DVAF reconstruction artifacts from eligible source-side Column Metadata Drift findings. Reports include Reconstruction Artifacts sections when artifacts were generated before export.</p>
-          <span class="badge">Pro · Reconstruction Artifacts</span>
+          <div class="eyebrow">New in v0.13.4</div>
+          <div class="price">Choice Reconstruction</div>
+          <div class="limit">Generate source-side choice reconstruction artifacts directly from Choice Metadata Drift while preserving investigation, preview, and remediation boundaries.</div>
+          <p class="recognition">Cross Environment Diff and Timeline Reconstruction can now export source-side DVCE reconstruction artifacts from eligible option-level Choice Metadata Drift findings. Reports now distinguish observed drift from reconstruction intent so Added drift can correctly become DeleteOption when preserving the source snapshot.</p>
+          <span class="badge">Pro · Choice Reconstruction</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>DVAF Export</strong><span>Export source-side reconstruction intent from eligible metadata drift</span></div>
-        <div class="price-pill"><strong>Report Continuity</strong><span>Reconstruction Artifacts sections in Timeline and Cross-Diff reports</span></div>
-        <div class="price-pill"><strong>DV ForgeLab Workspace</strong><span>Artifacts saved under .dvforgelab/dvaf/exports</span></div>
+        <div class="price-pill"><strong>Choice Reconstruction Export</strong><span>Export .dvce.json artifacts using the DVCE-owned v3 schema</span></div>
+        <div class="price-pill"><strong>Investigation & Reconstruction</strong><span>Reports separate observed drift from source-side reconstruction intent</span></div>
+        <div class="price-pill"><strong>Shared Workspace</strong><span>Artifacts saved under .dvforgelab/dvce/exports</span></div>
       </div>
       <div class="actions">
         <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
-        <button class="gold" data-action="pricing">View Pro Pricing</button>
-        <button class="store" data-action="store">Direct Purchase</button>
+        <button class="gold" data-action="pricing">Start 14-day Pro Trial</button>
+        <button class="store" data-action="store">Open Store</button>
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Reconstruction artifacts are source-side reconstruction intent only. DVAF owns preview/apply and humans retain operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Reconstruction artifacts are source-side reconstruction intent only. DVCE owns preview/apply/publish and humans retain operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     </section>
 
     <section class="section">
       <div class="eyebrow">Available today</div>
       <div class="grid">
-        <div class="card"><h3>🧩 DVAF Reconstruction Export</h3><p>Export DVAF artifacts from eligible Column Metadata Drift findings in Cross-Diff and Timeline Reconstruction.</p></div>
-        <div class="card"><h3>📄 Reconstruction-Aware Reports</h3><p>Timeline and Cross-Diff HTML/PDF reports now include Reconstruction Artifacts sections when artifacts were exported.</p></div>
-        <div class="card"><h3>🗂 DV ForgeLab Workspace</h3><p>DVQR evidence lives under .dvforgelab/dvqr while DVAF exports live under .dvforgelab/dvaf/exports.</p></div>
-        <div class="card"><h3>🧭 Evidence Boundary</h3><p>DVQR exports reconstruction intent only. It does not decide correctness, remediation, or operational authority.</p></div>
+        <div class="card"><h3>🧩 Choice Reconstruction Export</h3><p>Export DVCE-owned artifacts from eligible choice option drift in Cross-Diff and Timeline Reconstruction.</p></div>
+        <div class="card"><h3>📄 Investigation & Reconstruction</h3><p>Reports clarify observed drift versus reconstruction intent, including target-only Added drift becoming DeleteOption for source-side preservation.</p></div>
+        <div class="card"><h3>🗂 Shared Workspace</h3><p>DVQR evidence lives under .dvforgelab/dvqr while DVCE handoff artifacts live under .dvforgelab/dvce/exports.</p></div>
+        <div class="card"><h3>🚀 14-day Pro Trial</h3><p>Try every Pro feature free for 14 days, including Cross-Environment Diff, Timeline Reconstruction, Audit Evidence, and reconstruction artifact exports.</p></div>
       </div>
     </section>
 
@@ -167,9 +167,9 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
       <div class="eyebrow">Coming next</div>
       <div class="grid">
         <div class="card"><h3>🔬 Mini RCA</h3><p>Evidence-backed hypothesis guidance while preserving human verification boundaries.</p></div>
-        <div class="card"><h3>🧩 DVCE Reconstruction</h3><p>Future choice drift handoff to DV Choice Editor without turning DVQR into a schema repair engine.</p></div>
-        <div class="card"><h3>🔐 DVIM Reconstruction</h3><p>Future identity and security role participation handoff to DV Identity Manager.</p></div>
-        <div class="card"><h3>⚙ More Utility Handoffs</h3><p>Bounded artifact handoffs across DVEVM, DVBUR, DVAF, DVCE, and DVIM.</p></div>
+        <div class="card"><h3>🌐 Global Choice Creation</h3><p>Whole global choice definition reconstruction remains intentionally unsupported until a bounded utility owns that workflow.</p></div>
+        <div class="card"><h3>⚙ DVEVM Handoff</h3><p>Future environment variable reconstruction artifacts while preserving preview-first utility boundaries.</p></div>
+        <div class="card"><h3>🔁 DVBUR Multi-table</h3><p>Future data reconstruction handoff for relationship-aware, preview-first bulk upsert workflows.</p></div>
       </div>
     </section>
 
@@ -193,8 +193,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0130WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0132",
-    "DV Quick Run v0.13.2",
+    "dvQuickRunWelcomeV0134",
+    "DV Quick Run v0.13.4",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

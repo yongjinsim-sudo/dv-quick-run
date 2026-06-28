@@ -21,23 +21,23 @@ export async function promptForProAccelerationAccess(surface: string): Promise<b
 
   const message = [
     `DV Quick Run Pro is required for ${scopedSurface}.`,
-    "Early Bird: $19/month, limited to the first 200 licenses.",
-    "Foundational operational understanding remains available in Free. Pro unlocks accelerated workflows such as Cross-Environment Diff, Timeline Reconstruction, reports, replay, and Upsert Artifact export."
+    "A 14-day Pro trial is available after store-side trial configuration.",
+    "Foundational operational understanding remains available in Free. Pro unlocks accelerated workflows such as Cross-Environment Diff, Timeline Reconstruction, reports, replay, and DV ForgeLab reconstruction artifact export."
   ].join(" ");
 
   const choice = await vscode.window.showInformationMessage(
     message,
     { modal: false },
-    "View Pricing",
-    "Direct Purchase",
+    "Start Trial / View Pricing",
+    "Open Store",
     "Maybe Later"
   );
 
-  if (choice === "View Pricing") {
+  if (choice === "Start Trial / View Pricing") {
     await openDvQuickRunPricing();
   }
 
-  if (choice === "Direct Purchase") {
+  if (choice === "Open Store") {
     await openDvForgeLabStore();
   }
 
