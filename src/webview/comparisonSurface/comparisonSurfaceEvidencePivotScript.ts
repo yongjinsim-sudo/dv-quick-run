@@ -57,7 +57,7 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
 
   window.addEventListener('message', (event) => {
     const message = event.data || {};
-    if (message.type !== 'dvafExportResult' && message.type !== 'dvimExportResult') {
+    if (message.type !== 'dvafExportResult' && message.type !== 'dvimExportResult' && message.type !== 'dvceExportResult') {
       return;
     }
 
@@ -66,7 +66,7 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
       return;
     }
 
-    const result = document.querySelector('[data-dvaf-export-result="' + exportId + '"]') || document.querySelector('[data-dvim-export-result="' + exportId + '"]');
+    const result = document.querySelector('[data-dvaf-export-result="' + exportId + '"]') || document.querySelector('[data-dvim-export-result="' + exportId + '"]') || document.querySelector('[data-dvce-export-result="' + exportId + '"]');
     if (!result) {
       return;
     }
@@ -241,6 +241,38 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
     });
   }
 
+
+
+  function resolveDvceExportButton(target) {
+    if (!(target instanceof Element)) {
+      return undefined;
+    }
+
+    return target.closest('[data-dvce-export-candidate]');
+  }
+
+  function activateDvceExportButton(button, event) {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const exportId = button.getAttribute('data-dvce-export-id') || '';
+    const candidateJson = button.getAttribute('data-dvce-export-candidate') || '';
+    const result = exportId ? document.querySelector('[data-dvce-export-result="' + exportId + '"]') : undefined;
+
+    if (result) {
+      result.removeAttribute('hidden');
+      result.classList.remove('is-error');
+      result.classList.remove('is-success');
+      result.textContent = 'Exporting source-side choice reconstruction intent to DVCE...';
+    }
+
+    vscode?.postMessage?.({
+      type: 'dvceExportRequested',
+      exportId,
+      candidateJson
+    });
+  }
+
   function resolveAuditButton(target) {
     if (!(target instanceof Element)) {
       return undefined;
@@ -346,6 +378,12 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
       return;
     }
 
+    const dvceExportButton = resolveDvceExportButton(event.target);
+    if (dvceExportButton) {
+      activateDvceExportButton(dvceExportButton, event);
+      return;
+    }
+
     const auditButton = resolveAuditButton(event.target);
     if (auditButton) {
       activateAuditButton(auditButton, event);
@@ -376,6 +414,10 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   dvimExportButtons.forEach((button) => {
     button.addEventListener('click', (event) => activateDvimExportButton(button, event));
   });
-  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length, dvafExportButtonCount: dvafExportButtons.length, dvimExportButtonCount: dvimExportButtons.length });
+  const dvceExportButtons = document.querySelectorAll('[data-dvce-export-candidate]');
+  dvceExportButtons.forEach((button) => {
+    button.addEventListener('click', (event) => activateDvceExportButton(button, event));
+  });
+  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length, dvafExportButtonCount: dvafExportButtons.length, dvimExportButtonCount: dvimExportButtons.length, dvceExportButtonCount: dvceExportButtons.length });
 `;
 }

@@ -8,6 +8,39 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.13.4 --- Choice Reconstruction & DVCE Integration
+
+This release adds source-side choice reconstruction handoff support for eligible Choice Metadata Drift findings.
+
+DV Quick Run investigates observed choice drift. DV Choice Editor reconstructs choice options through its own preview-first workflow. Investigation and reconstruction remain separate concerns.
+
+### Added
+- Added DVCE-owned `.dvce.json` reconstruction artifact export for eligible option-level Choice Metadata Drift findings.
+- Added artifact generation using the DVCE-owned `dvce.choiceDefinition` v3.0 schema.
+- Added source-side choice operation candidates for `AddOption`, `UpdateLabel`, and `DeleteOption`.
+- Added workspace export support under `.dvforgelab/dvce/exports`.
+- Added Cross-Environment Diff and Timeline Reconstruction export actions for supported DVCE choice artifacts.
+- Added user-facing 14-day Pro Trial messaging on Welcome and Hub surfaces.
+
+### Changed
+- Updated reports to separate observed drift from reconstruction intent.
+  - Example: a target-only `Added` drift remains reported as observed `Added` drift.
+  - The matching source-side reconstruction artifact may stage `DeleteOption` because it preserves the source snapshot.
+- Updated DVCE reconstruction references to use clearer source-side reconstruction strategy wording.
+- Updated Welcome and Hub copy to describe user value.
+
+### Fixed
+- Fixed DVCE handoff scope classification so synthetic local option set names such as `account_accountratingcode` export as local choice artifacts instead of global choice artifacts.
+- Improved unsupported wording for whole choice set additions, especially where no bounded DV ForgeLab utility currently owns whole global choice definition creation.
+
+### Preserved
+- DV Quick Run remains investigation-only and does not apply Dataverse choice mutations.
+- DV Choice Editor owns import, stage, validate, preview, apply, and publish.
+- Source-side reconstruction intent does not imply the source is correct or the target is wrong.
+- Whole global choice definition creation remains intentionally unsupported until a bounded utility owns that workflow.
+
+---
+
 # DV Quick Run v0.13.3 --- Identity Reconstruction, DVIM Integration & Shared Workspace Evolution
 
 This release introduces the first **Identity Participation Reconstruction** workflow within the DV ForgeLab ecosystem.

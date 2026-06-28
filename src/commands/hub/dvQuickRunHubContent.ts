@@ -54,7 +54,7 @@ export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
       { label: "Run Cross-Diff", description: "Compare the selected snapshots without treating observed drift as deployment authority.", relatedSurface: "Snapshot Library" },
       { label: "Review high-signal drift", description: "Inspect provider-owned differences, significance, and evidence references first.", relatedSurface: "Cross-Diff" },
       { label: "Verify with audit evidence", description: "Use Check Audit Evidence where available to enrich the bounded finding context.", relatedSurface: "Cross-Diff" },
-      { label: "Generate reconstruction artifacts", description: "Export supported source-side reconstruction intent only when external DVAF preview is needed.", relatedSurface: "Cross-Diff" }
+      { label: "Generate reconstruction artifacts", description: "Export supported source-side reconstruction intent only when external DVAF, DVIM, or DVCE preview is needed.", relatedSurface: "Cross-Diff" }
     ],
     relatedCapabilities: ["cross-environment-comparison"],
     safetyNotes: [
@@ -453,13 +453,13 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.13.2 introduces Reconstruction Artifacts and DVAF integration for eligible Column Metadata Drift findings.",
-  "Cross-Environment Diff can export source-side DVAF artifacts from column metadata findings and DVIM artifacts from identity participation findings where supported source-side intent exists.",
-  "Timeline Reconstruction can export DVAF/DVIM artifacts from the selected event interval's source-side definition or participation intent; it does not export latest or merged timeline state.",
-  "Reconstruction artifacts are written to DV ForgeLab utility folders such as .dvforgelab/dvaf/exports • .dvforgelab/dvim/exports and .dvforgelab/dvim/exports while DVQR evidence remains under .dvforgelab/dvqr.",
-  "Timeline and Cross Diff HTML/PDF reports now include Reconstruction Artifacts sections when artifacts were generated before export.",
-  "DVAF artifacts preserve both current flat DVAF-compatible definitions and richer DVQR evidence, source/target context, support notes, and reconstruction boundaries.",
-  "DVQR exports reconstruction intent only. DVAF owns preview/apply. Source-side export does not imply the source is correct, the target is wrong, or changes should be applied.",
+  "v0.13.4 introduces Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
+  "Cross-Environment Diff and Timeline Reconstruction can export source-side .dvce.json artifacts using the DVCE-owned dvce.choiceDefinition v3.0 schema.",
+  "Reports now distinguish observed drift from reconstruction intent. For example, a target-only Added drift remains reported as Added, while the source-side reconstruction artifact correctly stages DeleteOption.",
+  "Reconstruction artifacts are written to DV ForgeLab utility folders such as .dvforgelab/dvaf/exports, .dvforgelab/dvim/exports, and .dvforgelab/dvce/exports while DVQR evidence remains under .dvforgelab/dvqr.",
+  "DVQR now hands off three reconstruction domains: DVAF for attributes, DVIM for identity participation, and DVCE for choice option reconstruction.",
+  "Whole choice set creation remains bounded: local choice column creation belongs to DVAF where supported, while whole global choice definition reconstruction is not currently supported by a DV ForgeLab utility.",
+  "14-day Pro Trial messaging is now user-facing so teams can try Cross-Environment Diff, Timeline Reconstruction, Audit Evidence, and reconstruction artifact exports before choosing Pro.",
   "v0.13.1 introduced Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",
   "Inline Check Audit Evidence actions query Dataverse audit history inside snapshot-bounded investigation windows.",
   "Audit payload interpretation remains experimental; audit evidence enriches investigation context but does not establish causality, deployment correctness, remediation status, or operational authority.",

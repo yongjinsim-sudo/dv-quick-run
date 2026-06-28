@@ -294,6 +294,28 @@ function renderTimelineDvafExportAction(event: TimelineEvent, instanceKey: strin
     </div>`;
   }
 
+  if (event.sourceDifference?.reconstructionCandidateKind === "dvce-choice-definition" && candidate) {
+    const exportId = `${event.id}::dvce::${instanceKey}`;
+    const candidateJson = JSON.stringify(candidate);
+    return `<div class="dvqr-timeline-audit-actions dvqr-timeline-dvaf-actions">
+      <button type="button" class="dvqr-timeline-audit-button dvqr-timeline-dvaf-button" data-timeline-dvce-export="${escapeHtml(exportId)}" data-timeline-dvce-candidate="${escapeHtml(candidateJson)}" data-timeline-event-id="${escapeHtml(event.id)}" title="Export this event's source-side choice reconstruction intent as a DVCE .dvce.json artifact. DVCE owns stage/validate/preview/apply/publish.">
+        Export DVCE artifact ›
+      </button>
+      <span class="dvqr-timeline-dvaf-result" data-timeline-dvce-result="${escapeHtml(exportId)}" hidden></span>
+    </div>`;
+  }
+
+  if (event.sourceDifference?.reconstructionCandidateKind === "dvce-choice-definition-unavailable") {
+    const reason = event.sourceDifference.reconstructionCandidateUnavailableReason
+      ?? "DVCE export is unavailable for this timeline choice metadata event.";
+    return `<div class="dvqr-timeline-audit-actions dvqr-timeline-dvaf-actions">
+      <button type="button" class="dvqr-timeline-audit-button dvqr-timeline-dvaf-button" disabled title="${escapeHtml(reason)}">
+        Export DVCE unavailable
+      </button>
+      <span class="dvqr-timeline-dvaf-result is-visible">${escapeHtml(reason)}</span>
+    </div>`;
+  }
+
   return "";
 }
 
@@ -356,10 +378,11 @@ export function getTimelineSurfaceScript(): string {
       const dvafTarget = event.target instanceof Element ? event.target.closest('[data-timeline-dvaf-export]') : null;
       const auditTarget = event.target instanceof Element ? event.target.closest('[data-timeline-audit-check]') : null;
       const dvimTarget = event.target instanceof Element ? event.target.closest('[data-timeline-dvim-export]') : null;
+      const dvceTarget = event.target instanceof Element ? event.target.closest('[data-timeline-dvce-export]') : null;
       if (dvafTarget) {
         event.preventDefault();
         const exportId = dvafTarget.getAttribute('data-timeline-dvaf-export') || '';
-        const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvim-result="' + exportId + '"]');
+        const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvim-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvce-result="' + exportId + '"]');
         if (result) {
           result.removeAttribute('hidden');
           result.classList.remove('is-error');
@@ -389,6 +412,24 @@ export function getTimelineSurfaceScript(): string {
           exportId,
           eventId: dvimTarget.getAttribute('data-timeline-event-id') || '',
           candidateJson: dvimTarget.getAttribute('data-timeline-dvim-candidate') || ''
+        });
+        return;
+      }
+      if (dvceTarget) {
+        event.preventDefault();
+        const exportId = dvceTarget.getAttribute('data-timeline-dvce-export') || '';
+        const result = document.querySelector('[data-timeline-dvce-result="' + exportId + '"]');
+        if (result) {
+          result.removeAttribute('hidden');
+          result.classList.remove('is-error');
+          result.classList.remove('is-success');
+          result.textContent = 'Exporting source-side choice reconstruction intent to DVCE...';
+        }
+        vscode.postMessage({
+          type: 'timelineDvceExportRequested',
+          exportId,
+          eventId: dvceTarget.getAttribute('data-timeline-event-id') || '',
+          candidateJson: dvceTarget.getAttribute('data-timeline-dvce-candidate') || ''
         });
         return;
       }
@@ -434,11 +475,11 @@ export function getTimelineSurfaceScript(): string {
 
     window.addEventListener('message', (event) => {
       const message = event.data || {};
-      if (message.type !== 'timelineDvafExportResult' && message.type !== 'timelineDvimExportResult') {
+      if (message.type !== 'timelineDvafExportResult' && message.type !== 'timelineDvimExportResult' && message.type !== 'timelineDvceExportResult') {
         return;
       }
       const exportId = message.exportId || '';
-      const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvim-result="' + exportId + '"]');
+      const result = document.querySelector('[data-timeline-dvaf-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvim-result="' + exportId + '"]') || document.querySelector('[data-timeline-dvce-result="' + exportId + '"]');
       if (!result) {
         return;
       }

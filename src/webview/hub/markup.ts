@@ -97,11 +97,11 @@ function renderEvidenceWorkspaceLauncher(model: DvQuickRunHubViewModel): string 
       <div>
         <h3>${statusTitle}</h3>
         <p>${statusDetail}</p>
-        <p>Use Evidence Workspace and Snapshot Library to reconstruct same-environment timelines, run Timeline Diff, reserve Cross-Environment Diff for environment comparison, and generate reconstruction artifacts for external DVAF preview where supported.</p>
+        <p>Use Evidence Workspace and Snapshot Library to reconstruct same-environment timelines, run Timeline Diff, reserve Cross-Environment Diff for environment comparison, and generate reconstruction artifacts for external DVAF, DVIM, and DVCE preview where supported.</p>
         <div class="dvqr-meta">
           <span class="dvqr-chip">.dvforgelab/dvqr/snapshots</span>
           <span class="dvqr-chip">.dvforgelab/dvqr/reports</span>
-          <span class="dvqr-chip">.dvforgelab/dvaf/exports • .dvforgelab/dvim/exports</span>
+          <span class="dvqr-chip">.dvforgelab/dvaf/exports • .dvforgelab/dvim/exports • .dvforgelab/dvce/exports</span>
           <span class="dvqr-chip">Timeline reconstruction</span>
           <span class="dvqr-chip">Reconstruction artifacts</span>
         </div>
@@ -185,13 +185,13 @@ function renderDvForgeLabEcosystem(): string {
       <article class="dvqr-card"><h3>DV Attribute Factory</h3><p>Accelerate Dataverse attribute creation and metadata construction.</p></article>
     </div>
     <div class="dvqr-card dvqr-ecosystem-handoff">
-      <h3>First ecosystem handoff</h3>
-      <p>Result Viewer can export a Pro Upsert Artifact for DV Bulk Upsert Runner, preserving operational context while keeping execution in the companion utility.</p>
-      <div class="dvqr-meta"><span class="dvqr-chip">DVQR observes</span><span class="dvqr-chip">DVBUR executes</span><span class="dvqr-chip">No orchestration</span></div>
+      <h3>DV ForgeLab reconstruction handoffs</h3>
+      <p>DV Quick Run investigates and exports bounded reconstruction intent for focused utilities. DVAF reconstructs attributes, DVIM reconstructs identity participation, and DVCE reconstructs choice options through preview-first workflows.</p>
+      <div class="dvqr-meta"><span class="dvqr-chip">DVQR investigates</span><span class="dvqr-chip">DVAF · DVIM · DVCE reconstruct</span><span class="dvqr-chip">Preview-first</span></div>
       <div class="dvqr-continuation-actions">
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabProducts">View DV ForgeLab Utilities</button>
-        <button class="dvqr-action-button" data-command="dvQuickRun.openDvQuickRunPricing">Pricing</button>
-        <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabStore">Direct Purchase</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openDvQuickRunPricing">Start 14-day Pro Trial</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabStore">Open Store</button>
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvQuickRunWebsite">Open dvquickrun.com</button>
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabWebsite">Open dvforgelab.com</button>
       </div>
