@@ -8,6 +8,40 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.13.5 --- Environment Variable Drift & DVEVM Reconstruction
+
+This release adds Dataverse Environment Variable Current Value Drift investigation and DVEVM reconstruction artifact handoff support.
+
+DV Quick Run investigates runtime configuration drift. DV Environment Variable Manager reconstructs supported current-value changes through its own preview-first workflow. Investigation and reconstruction remain separate concerns.
+
+### Added
+- Added Environment Variable Current Value Drift provider for Cross-Environment Diff.
+- Added DVEVM-owned `.dvevm.json` reconstruction artifact export for eligible Environment Variable Current Value Drift findings.
+- Added native DVEVM artifact v2.0 generation using `dvevm.environmentVariableDefinitions`.
+- Added source-side DVEVM operation candidates for `SetCurrentValue`, `CreateCurrentValue`, and `DeleteCurrentValue`.
+- Added workspace export support under `.dvforgelab/dvevm/exports`.
+- Added DVEVM Reconstruction Artifact references in HTML and PDF reports.
+- Added report wording for Component, Variable, Operation, Support, and Artifact fields.
+
+### Changed
+- Updated Reconstruction Artifact report cards to use `DVEVM Reconstruction Artifact` instead of candidate wording once an artifact is exported.
+- Improved PDF reconstruction card layout so long variable names, reasons, and artifact filenames wrap cleanly without overlapping.
+- Updated Welcome and Hub copy for v0.13.5 Environment Variable Drift and DVEVM reconstruction messaging.
+- Updated DV ForgeLab ecosystem messaging to include DVEVM as the fourth reconstruction handoff utility alongside DVAF, DVIM, and DVCE.
+
+### Security
+- Secret environment variable values are never exported by DV Quick Run.
+- Secret values remain masked in snapshots, reports, and reconstruction flows.
+- Secret variables are intentionally excluded from value reconstruction because evidence cannot prove or safely transport the secret value.
+
+### Preserved
+- DV Quick Run remains investigation-only and does not apply Dataverse environment variable mutations.
+- DV Environment Variable Manager owns import, validation, preview, apply, and execution-result review.
+- Source-side reconstruction intent does not imply the source is correct or the target is wrong.
+- Reconstruction artifacts remain external-review handoffs, not deployment authority.
+
+---
+
 # DV Quick Run v0.13.4 --- Choice Reconstruction & DVCE Integration
 
 This release adds source-side choice reconstruction handoff support for eligible Choice Metadata Drift findings.

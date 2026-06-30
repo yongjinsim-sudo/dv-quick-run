@@ -57,7 +57,7 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
 
   window.addEventListener('message', (event) => {
     const message = event.data || {};
-    if (message.type !== 'dvafExportResult' && message.type !== 'dvimExportResult' && message.type !== 'dvceExportResult') {
+    if (message.type !== 'dvafExportResult' && message.type !== 'dvimExportResult' && message.type !== 'dvceExportResult' && message.type !== 'dvevmExportResult') {
       return;
     }
 
@@ -66,7 +66,7 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
       return;
     }
 
-    const result = document.querySelector('[data-dvaf-export-result="' + exportId + '"]') || document.querySelector('[data-dvim-export-result="' + exportId + '"]') || document.querySelector('[data-dvce-export-result="' + exportId + '"]');
+    const result = document.querySelector('[data-dvaf-export-result="' + exportId + '"]') || document.querySelector('[data-dvim-export-result="' + exportId + '"]') || document.querySelector('[data-dvce-export-result="' + exportId + '"]') || document.querySelector('[data-dvevm-export-result="' + exportId + '"]');
     if (!result) {
       return;
     }
@@ -273,6 +273,36 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
     });
   }
 
+  function resolveDvevmExportButton(target) {
+    if (!(target instanceof Element)) {
+      return undefined;
+    }
+
+    return target.closest('[data-dvevm-export-candidate]');
+  }
+
+  function activateDvevmExportButton(button, event) {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const exportId = button.getAttribute('data-dvevm-export-id') || '';
+    const candidateJson = button.getAttribute('data-dvevm-export-candidate') || '';
+    const result = exportId ? document.querySelector('[data-dvevm-export-result="' + exportId + '"]') : undefined;
+
+    if (result) {
+      result.removeAttribute('hidden');
+      result.classList.remove('is-error');
+      result.classList.remove('is-success');
+      result.textContent = 'Exporting source-side runtime configuration intent to DVEVM...';
+    }
+
+    vscode?.postMessage?.({
+      type: 'dvevmExportRequested',
+      exportId,
+      candidateJson
+    });
+  }
+
   function resolveAuditButton(target) {
     if (!(target instanceof Element)) {
       return undefined;
@@ -384,6 +414,12 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
       return;
     }
 
+    const dvevmExportButton = resolveDvevmExportButton(event.target);
+    if (dvevmExportButton) {
+      activateDvevmExportButton(dvevmExportButton, event);
+      return;
+    }
+
     const auditButton = resolveAuditButton(event.target);
     if (auditButton) {
       activateAuditButton(auditButton, event);
@@ -418,6 +454,10 @@ export function getComparisonSurfaceEvidencePivotScript(): string {
   dvceExportButtons.forEach((button) => {
     button.addEventListener('click', (event) => activateDvceExportButton(button, event));
   });
-  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length, dvafExportButtonCount: dvafExportButtons.length, dvimExportButtonCount: dvimExportButtons.length, dvceExportButtonCount: dvceExportButtons.length });
+  const dvevmExportButtons = document.querySelectorAll('[data-dvevm-export-candidate]');
+  dvevmExportButtons.forEach((button) => {
+    button.addEventListener('click', (event) => activateDvevmExportButton(button, event));
+  });
+  emitEvidencePivotTrace('bindings.installed', { evidenceButtonCount: evidenceButtons.length, auditButtonCount: auditButtons.length, dvafExportButtonCount: dvafExportButtons.length, dvimExportButtonCount: dvimExportButtons.length, dvceExportButtonCount: dvceExportButtons.length, dvevmExportButtonCount: dvevmExportButtons.length });
 `;
 }

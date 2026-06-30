@@ -35,7 +35,7 @@ export function toReconstructionArtifactCandidateViewModel(reference: Reconstruc
   return {
     utilityId: reference.kind,
     utilityName: utility.utilityName,
-    candidateTitle: `${reference.kind} Reconstruction Candidate`,
+    candidateTitle: `${reference.kind} Reconstruction Artifact`,
     entityLabel: reference.entityLogicalName,
     attributeLabel: reference.attributeLogicalName
       ? reference.displayName
@@ -71,7 +71,7 @@ function utilityMetadata(kind: ReconstructionArtifactKind): { readonly utilityNa
     case "DVEVM":
       return {
         utilityName: "DV Environment Variable Manager",
-        defaultDescription: "DV Quick Run exported source-side environment variable reconstruction intent for external preview in DV Environment Variable Manager."
+        defaultDescription: "DV Quick Run exported source-side reconstruction intent for preview and validation in DV Environment Variable Manager."
       };
     case "DVBUR":
       return {
@@ -81,7 +81,7 @@ function utilityMetadata(kind: ReconstructionArtifactKind): { readonly utilityNa
     default:
       return {
         utilityName: "DV ForgeLab Utility",
-        defaultDescription: "DV Quick Run exported source-side reconstruction intent for external preview in a DV ForgeLab utility."
+        defaultDescription: "DV Quick Run exported source-side reconstruction intent for preview and validation in a DV ForgeLab utility."
       };
   }
 }

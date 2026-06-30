@@ -22,10 +22,12 @@ import { promptForCrossEnvironmentDiffProAccess } from "./comparisonCapabilityPr
 import { exportDvafAttributeArtifact } from "../../pro/reconstruction/dvafExportService.js";
 import { exportDvimIdentityParticipationArtifact } from "../../pro/reconstruction/dvimExportService.js";
 import { exportDvceChoiceDefinitionArtifact } from "../../pro/reconstruction/dvceExportService.js";
+import { exportDvevmEnvironmentVariableArtifact } from "../../pro/reconstruction/dvevmExportService.js";
 import type { AttributeReconstructionCandidate } from "../../pro/reconstruction/attributeReconstructionCandidate.js";
 import type { DvimParticipationReconstructionCandidate } from "../../pro/reconstruction/dvimArtifactTypes.js";
 import type { DvceChoiceReconstructionCandidate } from "../../pro/reconstruction/dvceArtifactTypes.js";
-import { buildDvafReconstructionArtifactReference, buildDvimReconstructionArtifactReference, buildDvceReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
+import type { DvevmRuntimeConfigurationCandidate } from "../../pro/reconstruction/dvevmArtifactTypes.js";
+import { buildDvafReconstructionArtifactReference, buildDvimReconstructionArtifactReference, buildDvceReconstructionArtifactReference, buildDvevmReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 import type { ReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 
 let comparisonPanel: vscode.WebviewPanel | undefined;
@@ -382,6 +384,53 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
           exportId,
           ok: false,
           summary: `DVCE export failed. ${messageText}`
+        });
+      }
+      return;
+    }
+
+    if (request.type === "dvevmExportRequested") {
+      const exportId = request.exportId ?? "dvevm-export";
+      try {
+        const candidate = JSON.parse(request.candidateJson ?? "{}") as DvevmRuntimeConfigurationCandidate;
+        void exportDvevmEnvironmentVariableArtifact({
+          scope: candidate.schemaName ?? model.summary.subjectLabel,
+          candidates: [candidate]
+        })
+          .then((result) => {
+            void comparisonPanel?.webview.postMessage({
+              type: "dvevmExportResult",
+              exportId,
+              ok: result.ok,
+              summary: result.ok && result.fileUri
+                ? `DVEVM artifact exported to ${result.fileUri.fsPath}.`
+                : result.reason ?? "DVEVM export did not complete."
+            });
+            if (result.ok && result.fileUri && result.artifact) {
+              const artifactFileName = result.fileUri.path.split("/").pop() ?? result.fileUri.fsPath;
+              comparisonReconstructionArtifacts = [
+                ...comparisonReconstructionArtifacts,
+                buildDvevmReconstructionArtifactReference({ artifact: result.artifact, artifactFileName })
+              ];
+              void vscode.window.showInformationMessage(`DV Quick Run: Exported DVEVM artifact to ${result.fileUri.fsPath}.`);
+            }
+          })
+          .catch((error: unknown) => {
+            const messageText = error instanceof Error ? error.message : String(error);
+            void comparisonPanel?.webview.postMessage({
+              type: "dvevmExportResult",
+              exportId,
+              ok: false,
+              summary: `DVEVM export failed. ${messageText}`
+            });
+          });
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : String(error);
+        void comparisonPanel?.webview.postMessage({
+          type: "dvevmExportResult",
+          exportId,
+          ok: false,
+          summary: `DVEVM export failed. ${messageText}`
         });
       }
       return;

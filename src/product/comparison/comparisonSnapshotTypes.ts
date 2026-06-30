@@ -4,6 +4,7 @@ export type ComparisonSnapshotEvidenceType =
   | "WorkflowParticipation"
   | "IdentityParticipation"
   | "EntityMetadata"
+  | "EnvironmentVariableDefinitions"
   | "Unknown";
 
 
