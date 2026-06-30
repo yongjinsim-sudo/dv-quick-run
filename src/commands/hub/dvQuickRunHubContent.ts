@@ -54,7 +54,7 @@ export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
       { label: "Run Cross-Diff", description: "Compare the selected snapshots without treating observed drift as deployment authority.", relatedSurface: "Snapshot Library" },
       { label: "Review high-signal drift", description: "Inspect provider-owned differences, significance, and evidence references first.", relatedSurface: "Cross-Diff" },
       { label: "Verify with audit evidence", description: "Use Check Audit Evidence where available to enrich the bounded finding context.", relatedSurface: "Cross-Diff" },
-      { label: "Generate reconstruction artifacts", description: "Export supported source-side reconstruction intent only when external DVAF, DVIM, or DVCE preview is needed.", relatedSurface: "Cross-Diff" }
+      { label: "Generate reconstruction artifacts", description: "Export supported source-side reconstruction intent only when external DVAF, DVIM, DVCE, or DVEVM preview is needed.", relatedSurface: "Cross-Diff" }
     ],
     relatedCapabilities: ["cross-environment-comparison"],
     safetyNotes: [
@@ -406,11 +406,11 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Runtime and Power Platform visibility", summary: "Continue bridging Dataverse execution evidence with orchestration participation where evidence supports it." },
   { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
-  { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded reconstruction artifacts to focused companion utilities, starting with DVAF attribute reconstruction from observed metadata drift." },
+  { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded reconstruction artifacts to focused companion utilities: DVAF for attributes, DVIM for identity participation, DVCE for choices, and DVEVM for environment variables." },
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
   { title: "Evidence Workspace", summary: "Local workspace-backed evidence capture gives investigations a Git-friendly home without turning DVQR into Git tooling or hosted persistence." },
   { title: "Timeline Reconstruction and operational comparison", summary: "Timeline Reconstruction is available for same-environment snapshot sequences, while broader comparison remains bounded to drift investigation without remediation or deployment tooling." },
-  { title: "Reconstruction Artifacts", summary: "Generate source-side DVAF and DVIM reconstruction artifacts from eligible metadata and identity participation drift while keeping DVQR observational and DVAF responsible for preview/apply." }
+  { title: "Reconstruction Artifacts", summary: "Generate source-side DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts from eligible drift while keeping DVQR observational and companion utilities responsible for validation, preview, and apply." }
 ];
 
 
@@ -427,7 +427,7 @@ function buildProComparisonCapability(): CapabilityInfo {
       "Select source and target snapshots, or compare latest and previous snapshots from the library.",
       "Use Timeline Reconstruction for 3+ same-environment snapshots, Timeline Diff for two same-environment snapshots, and Cross-Environment Diff for different-environment comparison.",
       "Query Audit Evidence on supported findings when you need snapshot-bounded who/when context.",
-      "Export DVAF artifacts from eligible source-side Column Metadata Drift and DVIM artifacts from eligible Identity Participation Drift when external preview-first reconstruction is needed.",
+      "Export DVAF, DVIM, DVCE, and DVEVM artifacts from eligible source-side drift when external preview-first reconstruction is needed.",
       "Export HTML/PDF reports when you need to preserve or share investigation context, including any audit evidence and reconstruction artifacts explicitly generated before export."
     ],
     relatedPlaybooks: ["environment-differences", "change-over-time", "runtime-behaviour", "power-platform-participation"],
@@ -453,13 +453,14 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.13.4 introduces Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
-  "Cross-Environment Diff and Timeline Reconstruction can export source-side .dvce.json artifacts using the DVCE-owned dvce.choiceDefinition v3.0 schema.",
-  "Reports now distinguish observed drift from reconstruction intent. For example, a target-only Added drift remains reported as Added, while the source-side reconstruction artifact correctly stages DeleteOption.",
-  "Reconstruction artifacts are written to DV ForgeLab utility folders such as .dvforgelab/dvaf/exports, .dvforgelab/dvim/exports, and .dvforgelab/dvce/exports while DVQR evidence remains under .dvforgelab/dvqr.",
-  "DVQR now hands off three reconstruction domains: DVAF for attributes, DVIM for identity participation, and DVCE for choice option reconstruction.",
-  "Whole choice set creation remains bounded: local choice column creation belongs to DVAF where supported, while whole global choice definition reconstruction is not currently supported by a DV ForgeLab utility.",
-  "14-day Pro Trial messaging is now user-facing so teams can try Cross-Environment Diff, Timeline Reconstruction, Audit Evidence, and reconstruction artifact exports before choosing Pro.",
+  "v0.13.5 introduces Environment Variable Current Value Drift for Dataverse runtime configuration comparison.",
+  "Cross-Environment Diff can export DVEVM-owned .dvevm.json reconstruction artifacts using the native DVEVM artifact v2.0 contract.",
+  "DVEVM reconstruction artifacts support SetCurrentValue, CreateCurrentValue, and DeleteCurrentValue source-side reconstruction intent.",
+  "Reconstruction artifacts are written to .dvforgelab/dvevm/exports while DVQR evidence remains under .dvforgelab/dvqr.",
+  "Secret environment variable values remain protected: DVQR masks secrets, never exports secret values, and does not reconstruct secrets from evidence.",
+  "Reports now preserve DVEVM Reconstruction Artifact references in HTML/PDF exports with clearer Component, Variable, Operation, Support, and Artifact wording.",
+  "DVQR now hands off four reconstruction domains: DVAF for attributes, DVIM for identity participation, DVCE for choice options, and DVEVM for environment variables.",
+  "v0.13.4 introduced Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
   "v0.13.1 introduced Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",
   "Inline Check Audit Evidence actions query Dataverse audit history inside snapshot-bounded investigation windows.",
   "Audit payload interpretation remains experimental; audit evidence enriches investigation context but does not establish causality, deployment correctness, remediation status, or operational authority.",

@@ -25,6 +25,7 @@ import type { ComparisonEvidenceSnapshot, OperationalComparisonSnapshotDocument 
 import type { SnapshotEntityConfigurationMetadata } from "../product/comparison/comparisonSnapshotTypes.js";
 import { buildIdentityParticipationSnapshotPayloadFromProfile } from "../product/comparison/comparisonSnapshotExtraction.js";
 import { buildEntityMetadataSnapshotPayload } from "../product/comparison/comparisonSnapshotMetadataPayload.js";
+import { buildEnvironmentVariableSnapshotPayload } from "../product/comparison/comparisonSnapshotEnvironmentVariables.js";
 import { canExportComparison } from "../product/capabilities/capabilityResolver.js";
 import { promptForProAccelerationAccess } from "./commercial/proPricingPrompt.js";
 
@@ -199,6 +200,7 @@ function buildOperationalProfileSnapshotDocument(args: {
   readonly entityLogicalName: string;
   readonly profile: ReturnType<typeof buildOperationalProfile>;
   readonly entityMetadata?: ReturnType<typeof buildEntityMetadataSnapshotPayload>;
+  readonly environmentVariables?: Awaited<ReturnType<typeof buildEnvironmentVariableSnapshotPayload>>;
   readonly capturedAt: Date;
 }): OperationalComparisonSnapshotDocument {
   const activeEnvironment = args.ctx.envContext.getActiveEnvironment();
@@ -224,6 +226,16 @@ function buildOperationalProfileSnapshotDocument(args: {
       evidence: args.entityMetadata,
       capturedAt: args.capturedAt,
       sourceFeature: "Operational Profile / Metadata"
+    }));
+  }
+
+  if (args.environmentVariables) {
+    evidenceSnapshots.push(createComparisonEvidenceSnapshot({
+      environment,
+      evidenceType: "EnvironmentVariableDefinitions",
+      evidence: args.environmentVariables,
+      capturedAt: args.capturedAt,
+      sourceFeature: "Operational Profile / Runtime Configuration"
     }));
   }
 
@@ -302,6 +314,7 @@ async function writeOperationalProfileSnapshotFile(args: {
   readonly entityLogicalName: string;
   readonly profile: ReturnType<typeof buildOperationalProfile>;
   readonly entityMetadata?: ReturnType<typeof buildEntityMetadataSnapshotPayload>;
+  readonly environmentVariables?: Awaited<ReturnType<typeof buildEnvironmentVariableSnapshotPayload>>;
   readonly mode: "manualExport" | "workspaceCapture";
   readonly label?: string;
 }): Promise<vscode.Uri | undefined> {
@@ -311,6 +324,7 @@ async function writeOperationalProfileSnapshotFile(args: {
     entityLogicalName: args.entityLogicalName,
     profile: args.profile,
     entityMetadata: args.entityMetadata,
+    environmentVariables: args.environmentVariables,
     capturedAt
   });
 
@@ -370,11 +384,12 @@ async function exportOperationalProfileSnapshot(
       }
 
       const metadataLoadOptions = { silent: true, forceRefresh: true } as const;
-      const [fields, choices, relationships, entityConfiguration] = await Promise.all([
+      const [fields, choices, relationships, entityConfiguration, environmentVariables] = await Promise.all([
         loadFields(ctx, client, token, entity.logicalName, metadataLoadOptions).catch(() => []),
         loadChoiceMetadata(ctx, client, token, entity.logicalName, metadataLoadOptions).catch(() => []),
         loadEntityRelationships(ctx, client, token, entity.logicalName, metadataLoadOptions).catch(() => undefined),
-        loadEntityConfigurationSnapshot(ctx, entity.logicalName, token).catch(() => undefined)
+        loadEntityConfigurationSnapshot(ctx, entity.logicalName, token).catch(() => undefined),
+        buildEnvironmentVariableSnapshotPayload({ client, token }).catch(() => undefined)
       ]);
 
       const operationalContext = await buildOperationalContextViewModel({
@@ -409,6 +424,7 @@ async function exportOperationalProfileSnapshot(
         entityLogicalName: entity.logicalName,
         profile,
         entityMetadata,
+        environmentVariables,
         mode,
         label
       });

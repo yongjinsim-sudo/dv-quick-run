@@ -470,6 +470,153 @@ export const sampleSnapshots: readonly ComparisonSnapshotFile[] = [
         }
       ]
     }
+
+  },
+  {
+    environment: {
+      label: "DEV",
+      capturedAtIso: "2026-05-24T00:00:00.000Z"
+    },
+    evidenceType: "EnvironmentVariableDefinitions",
+    metadata: {
+      capturedAtIso: "2026-05-24T00:00:00.000Z"
+    },
+    evidence: {
+      metadataVersion: "environment-variable-definitions-v1",
+      variables: [
+        {
+          schemaName: "cr564_APIEndpoint",
+          displayName: "API Endpoint",
+          type: "String",
+          defaultValue: "https://api.dev.mock",
+          currentValue: "https://api.dev.mock",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_DVFLJSONSettings",
+          displayName: "DVFL JSON Settings",
+          type: "JSON",
+          defaultValue: "{\"logging\":\"info\"}",
+          currentValue: "{\"logging\":\"debug\",\"cache\":true}",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_DVFLStorageContainer",
+          displayName: "DVFL Storage Container",
+          type: "String",
+          defaultValue: "patient-images-default",
+          currentValue: "patient-images-dev",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_EnableFeatureX",
+          displayName: "Enable Feature X",
+          type: "Boolean",
+          defaultValue: "no",
+          hasCurrentValue: false,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_DVFLClientSecret",
+          displayName: "DVFL Client Secret",
+          type: "Secret",
+          defaultValue: "********",
+          currentValue: "********",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: true,
+          valueCaptured: false
+        }
+      ],
+      notes: [
+        "Mock environment variable evidence for v0.13.5 Environment Variable Drift.",
+        "Secret environment variable values are masked and never exported."
+      ]
+    }
+  },
+  {
+    environment: {
+      label: "SIT",
+      capturedAtIso: "2026-05-24T01:30:00.000Z"
+    },
+    evidenceType: "EnvironmentVariableDefinitions",
+    metadata: {
+      capturedAtIso: "2026-05-24T01:30:00.000Z"
+    },
+    evidence: {
+      metadataVersion: "environment-variable-definitions-v1",
+      variables: [
+        {
+          schemaName: "cr564_APIEndpoint",
+          displayName: "API Endpoint",
+          type: "String",
+          defaultValue: "https://api.dev.mock",
+          currentValue: "https://api.sit.mock",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_DVFLJSONSettings",
+          displayName: "DVFL JSON Settings",
+          type: "JSON",
+          defaultValue: "{\"logging\":\"info\"}",
+          currentValue: "{\"logging\":\"warn\",\"cache\":false}",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_DVFLStorageContainer",
+          displayName: "DVFL Storage Container",
+          type: "String",
+          defaultValue: "patient-images-default",
+          hasCurrentValue: false,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_EnableFeatureX",
+          displayName: "Enable Feature X",
+          type: "Boolean",
+          defaultValue: "no",
+          currentValue: "yes",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: false,
+          valueCaptured: true
+        },
+        {
+          schemaName: "cr564_DVFLClientSecret",
+          displayName: "DVFL Client Secret",
+          type: "Secret",
+          defaultValue: "********",
+          currentValue: "********",
+          hasCurrentValue: true,
+          isManaged: false,
+          isSecret: true,
+          valueCaptured: false
+        }
+      ],
+      notes: [
+        "Mock environment variable evidence for v0.13.5 Environment Variable Drift.",
+        "Secret environment variable values are masked and never exported."
+      ]
+    }
   }
 ];
 
@@ -668,7 +815,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-05-25T05:27:12.006Z",
     sourceFeature: "Mock Timeline Snapshot",
-    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "EnvironmentVariableDefinitions", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-timeline-account-002-identity",
@@ -680,7 +827,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-06-16T06:20:23.405Z",
     sourceFeature: "Mock Timeline Snapshot",
-    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "EnvironmentVariableDefinitions", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-timeline-account-003-column",
@@ -692,7 +839,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-06-16T06:31:26.106Z",
     sourceFeature: "Mock Timeline Snapshot",
-    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "EnvironmentVariableDefinitions", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-timeline-account-004-relationship",
@@ -704,7 +851,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-06-16T07:23:46.723Z",
     sourceFeature: "Mock Timeline Snapshot",
-    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "EnvironmentVariableDefinitions", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-timeline-account-005-choice",
@@ -716,7 +863,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-06-16T07:40:50.866Z",
     sourceFeature: "Mock Timeline Snapshot",
-    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "EnvironmentVariableDefinitions", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-dev-account-baseline",
@@ -727,7 +874,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-05-25T00:05:25.000Z",
     sourceFeature: "Mock Operational Profile",
-    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "EnvironmentVariableDefinitions", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   },
   {
     snapshotId: "dvqr-mock-sit-account-drifted",
@@ -738,7 +885,7 @@ export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEnt
     entityDisplayName: "Account",
     capturedAtIso: "2026-05-25T01:30:00.000Z",
     sourceFeature: "Mock Operational Profile",
-    evidenceTypes: ["EntityMetadata", "IdentityParticipation", "OperationalProfile", "PluginStep"]
+    evidenceTypes: ["EntityMetadata", "EnvironmentVariableDefinitions", "IdentityParticipation", "OperationalProfile", "PluginStep"]
   }
 ];
 
@@ -758,7 +905,7 @@ export function normalizeMockComparisonRegistryEntry(entry: ComparisonSnapshotRe
   return {
     ...entry,
     sourceFeature: entry.sourceFeature || "Mock Operational Profile",
-    evidenceTypes: [...new Set([...entry.evidenceTypes, "EntityMetadata", "PluginStep"])].sort()
+    evidenceTypes: [...new Set([...entry.evidenceTypes, "EntityMetadata", "EnvironmentVariableDefinitions", "PluginStep"])].sort()
   };
 }
 

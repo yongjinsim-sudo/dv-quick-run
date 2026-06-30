@@ -97,11 +97,11 @@ function renderEvidenceWorkspaceLauncher(model: DvQuickRunHubViewModel): string 
       <div>
         <h3>${statusTitle}</h3>
         <p>${statusDetail}</p>
-        <p>Use Evidence Workspace and Snapshot Library to reconstruct same-environment timelines, run Timeline Diff, reserve Cross-Environment Diff for environment comparison, and generate reconstruction artifacts for external DVAF, DVIM, and DVCE preview where supported.</p>
+        <p>Use Evidence Workspace and Snapshot Library to capture investigation evidence, reconstruct same-environment timelines, compare environments, and generate bounded reconstruction artifacts for DVAF, DVIM, DVCE, and DVEVM.</p>
         <div class="dvqr-meta">
           <span class="dvqr-chip">.dvforgelab/dvqr/snapshots</span>
           <span class="dvqr-chip">.dvforgelab/dvqr/reports</span>
-          <span class="dvqr-chip">.dvforgelab/dvaf/exports • .dvforgelab/dvim/exports • .dvforgelab/dvce/exports</span>
+          <span class="dvqr-chip">.dvforgelab/dvaf/exports • .dvforgelab/dvim/exports • .dvforgelab/dvce/exports • .dvforgelab/dvevm/exports</span>
           <span class="dvqr-chip">Timeline reconstruction</span>
           <span class="dvqr-chip">Reconstruction artifacts</span>
         </div>
@@ -186,8 +186,8 @@ function renderDvForgeLabEcosystem(): string {
     </div>
     <div class="dvqr-card dvqr-ecosystem-handoff">
       <h3>DV ForgeLab reconstruction handoffs</h3>
-      <p>DV Quick Run investigates and exports bounded reconstruction intent for focused utilities. DVAF reconstructs attributes, DVIM reconstructs identity participation, and DVCE reconstructs choice options through preview-first workflows.</p>
-      <div class="dvqr-meta"><span class="dvqr-chip">DVQR investigates</span><span class="dvqr-chip">DVAF · DVIM · DVCE reconstruct</span><span class="dvqr-chip">Preview-first</span></div>
+      <p>DV Quick Run investigates and exports bounded reconstruction artifacts for focused companion utilities. DVAF reconstructs attributes, DVIM reconstructs identity participation, DVCE reconstructs choice metadata, and DVEVM reconstructs environment variable current values through preview-first workflows.</p>
+      <div class="dvqr-meta"><span class="dvqr-chip">DVQR investigates</span><span class="dvqr-chip">DVAF · DVIM · DVCE · DVEVM reconstruct</span><span class="dvqr-chip">Preview-first</span></div>
       <div class="dvqr-continuation-actions">
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvForgeLabProducts">View DV ForgeLab Utilities</button>
         <button class="dvqr-action-button" data-command="dvQuickRun.openDvQuickRunPricing">Start 14-day Pro Trial</button>

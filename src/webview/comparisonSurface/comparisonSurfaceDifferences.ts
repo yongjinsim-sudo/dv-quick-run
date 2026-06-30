@@ -614,6 +614,27 @@ function renderDvafExportAction(difference: ComparisonDifference): string {
     </div>`;
   }
 
+  if (difference.reconstructionCandidateKind === "dvevm-environment-variable-current-value" && difference.reconstructionCandidate) {
+    const candidateJson = JSON.stringify(difference.reconstructionCandidate);
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" data-dvevm-export-candidate="${escapeHtml(candidateJson)}" data-dvevm-export-id="${escapeHtml(difference.id)}" aria-expanded="false" title="Export source-side environment variable current-value intent as a DVEVM .dvevm.json artifact. DVEVM owns stage/validate/preview/apply.">
+        Export DVEVM artifact ›
+      </button>
+      <span class="dvqr-dvaf-export-result" data-dvevm-export-result="${escapeHtml(difference.id)}" hidden></span>
+    </div>`;
+  }
+
+  if (difference.reconstructionCandidateKind === "dvevm-environment-variable-current-value-unavailable") {
+    const reason = difference.reconstructionCandidateUnavailableReason
+      ?? "DVEVM export is unavailable for this environment variable finding.";
+    return `<div class="dvqr-dvaf-export-actions">
+      <button type="button" class="dvqr-dvaf-action-button dvqr-dvaf-export-pill" disabled title="${escapeHtml(reason)}">
+        Export DVEVM unavailable
+      </button>
+      <span class="dvqr-dvaf-export-result is-visible">${escapeHtml(reason)}</span>
+    </div>`;
+  }
+
   return "";
 }
 

@@ -605,23 +605,86 @@ function renderReconstructionArtifacts(cursor: PdfCursor, report: ComparisonRepo
   if (artifacts.length === 0) {
     return;
   }
-  section(cursor, "Reconstruction Artifacts", logoBuffer, footerText, 118);
+  section(cursor, "Reconstruction Artifacts", logoBuffer, footerText, 132);
   paragraph(cursor, reconstructionArtifactIntro, logoBuffer, footerText, { fontSize: 8.7, color: "#57606a" });
+
+  const renderField = (label: string, value: string, x: number, y: number, width: number): number => {
+    const safeLabel = normalizePdfText(label);
+    const safeValue = normalizePdfText(value);
+    const labelWidth = Math.min(76, cursor.doc.font("Helvetica-Bold").fontSize(8).widthOfString(`${safeLabel}: `) + 2);
+    cursor.doc.font("Helvetica-Bold").fontSize(8).fillColor("#1f2328");
+    pdfText(cursor.doc, `${safeLabel}:`, x, y, { lineBreak: false });
+    cursor.doc.font("Helvetica").fontSize(8).fillColor("#57606a");
+    const valueX = x + labelWidth;
+    const valueWidth = Math.max(40, width - labelWidth);
+    const height = cursor.doc.heightOfString(safeValue, { width: valueWidth, lineGap: 1 });
+    pdfText(cursor.doc, safeValue, valueX, y, { width: valueWidth, lineGap: 1 });
+    return Math.max(10, height);
+  };
+
   for (const artifact of artifacts.slice(0, 8)) {
     const candidate = toReconstructionArtifactCandidateViewModel(artifact);
-    roundedCard(cursor, 104, logoBuffer, footerText);
-    const y = cursor.y;
+    const operationMatch = candidate.reason.match(/(?:^|·\s*)Operation:\s*(.+)$/);
+    const operationLabel = operationMatch?.[1]?.replace(/\s*\(1\)$/, "") ?? "Reconstruction";
+    const reasonLabel = candidate.reason.replace(/\s*·\s*Operation:\s*.+$/, "").trim();
+    const leftRows: ReadonlyArray<readonly [string, string | undefined]> = [
+      ["Component", candidate.utilityId === "DVEVM" ? "Environment Variable" : candidate.entityLabel],
+      [candidate.utilityId === "DVEVM" ? "Variable" : "Attribute", candidate.attributeLabel],
+      ["Artifact", candidate.artifactFileName]
+    ];
+    const rightRows: ReadonlyArray<readonly [string, string]> = [
+      ["Reason", reasonLabel],
+      ["Operation", operationLabel],
+      ["Support", candidate.support]
+    ];
+
+    const innerWidth = contentWidth - 28;
+    const leftWidth = 310;
+    const columnGap = 22;
+    const rightWidth = innerWidth - leftWidth - columnGap;
+    const rowGap = 7;
+    const titleHeight = 16;
+    const measureRows = (rows: ReadonlyArray<readonly [string, string | undefined]>, width: number): number => rows.reduce((sum, [label, value]) => {
+      if (!value) {
+        return sum;
+      }
+      const labelWidth = Math.min(76, cursor.doc.font("Helvetica-Bold").fontSize(8).widthOfString(`${normalizePdfText(label)}: `) + 2);
+      const valueWidth = Math.max(40, width - labelWidth);
+      const height = cursor.doc.font("Helvetica").fontSize(8).heightOfString(normalizePdfText(value), { width: valueWidth, lineGap: 1 });
+      return sum + Math.max(10, height) + rowGap;
+    }, 0);
+
+    const bodyHeight = Math.max(measureRows(leftRows, leftWidth), measureRows(rightRows, rightWidth));
+    const descriptionHeight = cursor.doc.font("Helvetica").fontSize(7.3).heightOfString(normalizePdfText(candidate.description), { width: innerWidth, lineGap: 1 });
+    const cardHeight = Math.max(112, 12 + titleHeight + 12 + bodyHeight + 8 + descriptionHeight + 16);
+
+    roundedCard(cursor, cardHeight, logoBuffer, footerText);
+    const cardTop = cursor.y;
     const x = margin + 14;
-    cursor.doc.font("Helvetica-Bold").fontSize(10).fillColor("#1f2328").text(normalizePdfText(candidate.candidateTitle), x, y + 12, { width: contentWidth - 28 });
-    cursor.doc.font("Helvetica").fontSize(8).fillColor("#57606a").text(`Entity: ${normalizePdfText(candidate.entityLabel)}`, x, y + 30, { width: 170 });
-    cursor.doc.text(`Reason: ${normalizePdfText(candidate.reason)}`, x + 176, y + 30, { width: 150 });
-    cursor.doc.text(`Support: ${normalizePdfText(candidate.support)}`, x + 332, y + 30, { width: 150 });
-    if (candidate.attributeLabel) {
-      cursor.doc.text(`Attribute: ${normalizePdfText(candidate.attributeLabel)}`, x, y + 46, { width: contentWidth - 28 });
+    const titleY = cardTop + 12;
+    cursor.doc.font("Helvetica-Bold").fontSize(10).fillColor("#1f2328");
+    pdfText(cursor.doc, normalizePdfText(candidate.candidateTitle), x, titleY, { width: innerWidth });
+
+    let leftY = titleY + titleHeight + 10;
+    for (const [label, value] of leftRows) {
+      if (!value) {
+        continue;
+      }
+      const height = renderField(label, value, x, leftY, leftWidth);
+      leftY += height + rowGap;
     }
-    cursor.doc.text(`Artifact: ${normalizePdfText(candidate.artifactFileName)}`, x, y + 62, { width: contentWidth - 28 });
-    cursor.doc.font("Helvetica").fontSize(7.3).fillColor("#57606a").text(normalizePdfText(candidate.description), x, y + 80, { width: contentWidth - 28, lineGap: 1 });
-    cursor.y += 118;
+
+    let rightY = titleY + titleHeight + 10;
+    const rightX = x + leftWidth + columnGap;
+    for (const [label, value] of rightRows) {
+      const height = renderField(label, value, rightX, rightY, rightWidth);
+      rightY += height + rowGap;
+    }
+
+    const descriptionY = cardTop + cardHeight - descriptionHeight - 14;
+    cursor.doc.font("Helvetica").fontSize(7.3).fillColor("#57606a");
+    pdfText(cursor.doc, normalizePdfText(candidate.description), x, descriptionY, { width: innerWidth, lineGap: 1 });
+    cursor.y += cardHeight + 14;
   }
 }
 

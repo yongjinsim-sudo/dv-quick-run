@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -60,7 +60,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * continue investigation from comparison evidence using bounded inline pivots
 * reconstruct first-observed operational drift across 3+ same-environment snapshots
 * enrich Timeline Reconstruction and Cross-Environment Diff findings with snapshot-bounded Dataverse audit evidence
-* export DVAF reconstruction artifacts from eligible source-side Column Metadata Drift findings, export DVIM identity participation artifacts, and export DVCE choice reconstruction artifacts from eligible option-level Choice Metadata Drift findings
+* export DVAF reconstruction artifacts from eligible Column Metadata Drift, DVIM identity participation artifacts, DVCE choice reconstruction artifacts, and DVEVM environment variable artifacts from eligible Environment Variable Current Value Drift findings
 * preserve Reconstruction Artifact references in Timeline and Cross-Environment reports
 * review, verify, comment on, and hand off operational drift findings
 * export Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff reports as HTML/PDF artifacts
@@ -74,6 +74,64 @@ DV Quick Run is designed around a simple loop:
 
 ```text
 write → run → explore → refine → investigate → reconstruct evidence → verify → hand off
+```
+
+## ⚙️ v0.13.5 — Environment Variable Drift & DVEVM Reconstruction
+
+DV Quick Run v0.13.5 adds Dataverse Environment Variable Current Value Drift detection and completes the DVEVM reconstruction handoff workflow.
+
+Eligible Environment Variable Current Value Drift findings in Cross-Environment Diff can now export DVEVM-owned `.dvevm.json` artifacts using the native `dvevm.environmentVariableDefinitions` v2.0 schema.
+
+```text
+Observed runtime configuration drift
+↓
+Source-side reconstruction intent
+↓
+DV Environment Variable Manager import
+↓
+DVEVM validation / preview
+↓
+Human-reviewed apply
+```
+
+Supported DVEVM reconstruction operations:
+
+* `SetCurrentValue`
+* `CreateCurrentValue`
+* `DeleteCurrentValue`
+
+Artifacts are saved under:
+
+```text
+.dvforgelab/dvevm/exports
+```
+
+DVEVM artifacts use this filename convention:
+
+```text
+DVEVM-{scope}-{yyyyMMdd-HHmmss}.dvevm.json
+```
+
+DV Quick Run does not mutate Dataverse environment variables. DV Environment Variable Manager owns import, validation, preview, apply, and execution-result review.
+
+### Secret Environment Variables
+
+Secret environment variables remain intentionally protected.
+
+DV Quick Run:
+
+* detects secret variables
+* masks secret values
+* never exports secret values
+* never reconstructs secret values from evidence
+
+Secrets remain manual verification items.
+
+```text
+Secrets may be entered.
+Secrets may not travel.
+Secrets may not be reconstructed from evidence.
+Secrets remain masked outside active user input.
 ```
 
 ## 🧩 v0.13.4 — Choice Reconstruction & DVCE Integration
