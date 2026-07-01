@@ -384,8 +384,6 @@ async function copyValueToClipboard(value) {
                 fieldAttributeType: element.getAttribute("data-field-attribute-type") ?? ""
             };
 
-            console.log("[DVQR][webview] executeResultViewerAction payload", payload);
-
             vscodeApi.postMessage({
                 type: "executeResultViewerAction",
                 payload

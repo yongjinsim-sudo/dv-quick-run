@@ -30,13 +30,13 @@ import {
   loadEntityDefs
 } from "../shared/metadataAccess.js";
 import { loadInvestigateScopeSettings, matchesInvestigatePattern } from "./investigateScope.js";
-import { logInfo } from "../../../../utils/logger.js";
+import { logDebug, logInfo } from "../../../../utils/logger.js";
 
 export async function investigateRecordAction(
     ctx: CommandContext,
     inputOverride?: string
 ): Promise<void> {
-  console.log("[DVQR][investigate] input", inputOverride);
+  logDebug(ctx.output, `[DVQR][investigate] input ${inputOverride ?? ""}`);
 
   try {
 
@@ -75,7 +75,7 @@ export async function investigateRecordAction(
 
     let input: InvestigationInput | undefined;
     if (identifierRequest) {
-      console.log("[DVQR][investigate] forcing identifier-resolution branch", identifierRequest);
+      logDebug(ctx.output, `[DVQR][investigate] forcing identifier-resolution branch ${JSON.stringify(identifierRequest)}`);
       input = undefined;
     } else {
       input = await resolveInvestigationInput(

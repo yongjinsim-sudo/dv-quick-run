@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../../commands/context/commandContext.js";
+import { logDebug } from "../../utils/logger.js";
 import { buildDataverseRecordUiLink } from "../../commands/router/actions/investigateRecord/dataverseUiLinkBuilder.js";
 import {
   findEntityByEntitySetName,
@@ -425,7 +426,7 @@ export async function executeResultViewerAction(
   actionId: string,
   payload: ResultViewerActionPayload
 ): Promise<void> {
-  console.log("[DVQR][registry] executeResultViewerAction", { actionId, payload });
+  logDebug(ctx.output, `[DVQR][registry] executeResultViewerAction actionId=${actionId}`);
 
   const guid = String(payload.guid ?? "").trim();
   const entitySetName = payload.entitySetName?.trim();

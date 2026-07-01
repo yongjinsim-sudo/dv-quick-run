@@ -5,6 +5,7 @@ import {
   loadEntityDefs
 } from "../shared/metadataAccess.js";
 import { InvestigationInput, RecordContext } from "./types.js";
+import { logDebug } from "../../../../utils/logger.js";
 
 interface EntityChoice {
   logicalName: string;
@@ -81,10 +82,7 @@ async function promptForEntity(
     return undefined;
   }
 
-  console.log("[DVQR][investigate] opening generic table quick pick", {
-    reason: "resolveRecordContext:fallback",
-    entityCount: entities.length
-  });
+  logDebug(ctx.output, `[DVQR][investigate] opening generic table quick pick reason=resolveRecordContext:fallback entityCount=${entities.length}`);
 
   const picked = await vscode.window.showQuickPick(
     entities.map((entity) => ({

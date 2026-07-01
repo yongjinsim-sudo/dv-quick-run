@@ -76,6 +76,34 @@ DV Quick Run is designed around a simple loop:
 write → run → explore → refine → investigate → reconstruct evidence → verify → hand off
 ```
 
+## 🧠 v0.14.0 — Investigation Intelligence
+
+DV Quick Run v0.14.0 introduces **Investigation Intelligence**. Query Explain moves from clause-first documentation toward operational investigation understanding.
+
+DV Quick Run now teaches investigation thinking, not just query syntax. Explain Query uses **Explain Engine v2.1** to transform Dataverse query structure into structured observations, synthesized interpretation, confidence assessment, investigation patterns, and evidence-backed guidance.
+
+The report now starts with:
+
+* Investigation Summary
+* Investigation Stage
+* Investigation Profile
+* Confidence Assessment
+* Operational Implications
+* Things Worth Verifying
+* Investigation Pattern
+* Clause Analysis
+* Investigation Pipeline
+
+This means DVQR explains not only what a query does, but why the query shape matters during investigation: projection intent, filter boundaries, repeatability, row limits, relationship expansion, trade-offs, and what to verify next.
+
+Explain remains advisory. It teaches investigation patterns and preserves evidence boundaries; it does not claim root cause certainty or operational authority.
+
+### v0.14.0 identity
+
+DV Quick Run no longer explains query syntax alone. Explain Engine v2.1 introduces Investigation Intelligence, transforming parsed query structure into operational understanding through investigation summaries, confidence assessment, investigation pattern teaching, and evidence-backed guidance.
+
+This establishes the common understanding pipeline that future Cross Diff Understanding, Timeline Understanding, and Mini RCA will build upon.
+
 ## ⚙️ v0.13.5 — Environment Variable Drift & DVEVM Reconstruction
 
 DV Quick Run v0.13.5 adds Dataverse Environment Variable Current Value Drift detection and completes the DVEVM reconstruction handoff workflow.
@@ -1017,9 +1045,9 @@ Future roadmap direction includes expanded audit payload interpretation, ownersh
 
 ---
 
-### 🧠 Explain Query + Query Doctor
+### 🧠 Investigation Intelligence
 
-Use Explain and Query Doctor to understand and improve queries.
+Use Explain Query to turn Dataverse query structure into operational investigation understanding. Investigation Intelligence produces investigation summaries, confidence assessment, investigation pattern teaching, evidence-backed guidance, clause analysis, and verification recommendations. Query Doctor participates as an advisory contributor in the same pipeline.
 
 Supported workflows include:
 
