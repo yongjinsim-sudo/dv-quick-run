@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../commands/context/commandContext.js";
+import { logDebug } from "../utils/logger.js";
 import {
     executeResultViewerAction
 } from "./resultViewerActions/registry.js";
@@ -410,9 +411,10 @@ export class ResultViewerPanel {
     }
 
     private static async handleMessage(message: ResultViewerMessage): Promise<void> {
-        console.log("[DVQR][panel] incoming webview message", message);
-
         const ctx = ResultViewerPanel.currentContext;
+        if (ctx) {
+            logDebug(ctx.output, `[DVQR][panel] incoming webview message type=${message.type}`);
+        }
         if (!ctx) {
             return;
         }
@@ -1421,19 +1423,7 @@ export class ResultViewerPanel {
             return;
         }
 
-        console.log("[DVQR][panel] forwarding action payload", {
-            actionId,
-            guid: payload.guid,
-            entitySetName: payload.entitySetName,
-            entityLogicalName: payload.entityLogicalName,
-            columnName: payload.columnName,
-            rawValue: payload.rawValue,
-            displayValue: (payload as any).displayValue,
-            rowJson: (payload as any).rowJson,
-            primaryIdField: (payload as any).primaryIdField,
-            fieldLogicalName: (payload as any).fieldLogicalName || payload.columnName,
-            fieldAttributeType: (payload as any).fieldAttributeType
-        });
+        logDebug(ctx.output, `[DVQR][panel] forwarding action payload actionId=${actionId} entitySet=${payload.entitySetName ?? ""} column=${payload.columnName ?? ""}`);
 
         await executeResultViewerAction(ctx, actionId, {
         guid: payload.guid,

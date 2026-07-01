@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_13_5.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_14_0.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.13.5</title>
+<title>DV Quick Run v0.14.0</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,26 +122,27 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.13.5</div>
-        <h1>Environment Variable Drift & DVEVM Reconstruction</h1>
-        <p class="subtitle"><strong>DV Quick Run now detects runtime configuration drift.</strong><br>Generate DVEVM-owned .dvevm.json reconstruction artifacts from eligible Environment Variable Current Value Drift while keeping investigation, preview, and remediation authority separate.</p>
+        <div class="eyebrow">What's new in v0.14.0</div>
+        <h1>Investigation Intelligence</h1>
+        <p class="subtitle"><strong>DV Quick Run now teaches investigation thinking — not just query syntax.</strong><br>Explain Query transforms Dataverse query structure into operational investigation understanding through investigation summaries, confidence assessment, investigation patterns, and evidence-backed guidance.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.13.5</div>
-          <div class="price">Environment Variable Drift</div>
-          <div class="limit">Investigate Dataverse Environment Variable Current Value drift and export source-side DVEVM reconstruction artifacts.</div>
-          <p class="recognition">Cross Environment Diff can now identify runtime configuration drift, export DVEVM-owned reconstruction artifacts, and preserve those exports in HTML/PDF reports. Secret values remain protected and are never exported by DV Quick Run.</p>
-          <span class="badge">Pro · DVEVM Reconstruction</span>
+          <div class="eyebrow">New in v0.14.0</div>
+          <div class="price">Investigation Intelligence</div>
+          <div class="limit">Explain Query now teaches how to think about Dataverse query evidence, not just what each clause means.</div>
+          <p class="recognition">The new Explain pipeline converts parsed query structure into observations, synthesized interpretation, confidence factors, pattern trade-offs, and verification guidance while keeping conclusions bounded and evidence-led.</p>
+          <span class="badge">Free · Investigation Intelligence · Explain Engine v2.1</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Environment Variable Drift</strong><span>Detect current-value drift across Dataverse snapshots</span></div>
-        <div class="price-pill"><strong>DVEVM Export</strong><span>Export .dvevm.json artifacts using the DVEVM-owned v2 schema</span></div>
-        <div class="price-pill"><strong>Shared Workspace</strong><span>Artifacts saved under .dvforgelab/dvevm/exports</span></div>
+        <div class="price-pill"><strong>Investigation Summary</strong><span>Start with operational intent before clause details</span></div>
+        <div class="price-pill"><strong>Confidence Assessment</strong><span>Show why DVQR is more or less confident</span></div>
+        <div class="price-pill"><strong>Evidence-backed Guidance</strong><span>Keep recommendations bounded and advisory</span></div>
+        <div class="price-pill"><strong>Investigation Pattern</strong><span>Teach use cases, trade-offs, and verification habits</span></div>
       </div>
       <div class="actions">
         <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
@@ -150,26 +151,26 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Reconstruction artifacts are source-side reconstruction intent only. DVEVM owns import/validation/preview/apply and humans retain operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Explain guidance is advisory and evidence-backed. It teaches investigation patterns without claiming root cause certainty or operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     </section>
 
     <section class="section">
-      <div class="eyebrow">Available today</div>
+      <div class="eyebrow">New Investigation Capabilities</div>
       <div class="grid">
-        <div class="card"><h3>⚙ Environment Variable Drift</h3><p>Detect Dataverse environment variable current-value drift in Cross Environment Diff.</p></div>
-        <div class="card"><h3>📦 DVEVM Reconstruction Artifacts</h3><p>Export DVEVM-owned .dvevm.json artifacts for SetCurrentValue, CreateCurrentValue, and DeleteCurrentValue intent.</p></div>
-        <div class="card"><h3>🗂 Shared Workspace</h3><p>DVQR evidence lives under .dvforgelab/dvqr while DVEVM handoff artifacts live under .dvforgelab/dvevm/exports.</p></div>
-        <div class="card"><h3>🚀 14-day Pro Trial</h3><p>Try every Pro feature free for 14 days, including Cross-Environment Diff, Timeline Reconstruction, Audit Evidence, and reconstruction artifact exports.</p></div>
+        <div class="card"><h3>🧠 Investigation Intelligence</h3><p>Structured observations are synthesized into a clearer investigation narrative instead of raw clause-by-clause output.</p></div>
+        <div class="card"><h3>🧭 Investigation Summary</h3><p>Explain starts with what the query appears to be doing operationally before showing clause analysis.</p></div>
+        <div class="card"><h3>📊 Confidence Assessment</h3><p>Confidence now explains supporting evidence, limiting factors, and what would improve the assessment.</p></div>
+        <div class="card"><h3>📚 Investigation Pattern</h3><p>DVQR teaches why patterns such as projection, filters, ordering, row limits, and expands matter during investigation.</p></div>
       </div>
     </section>
 
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🔬 Mini RCA</h3><p>Evidence-backed hypothesis guidance while preserving human verification boundaries.</p></div>
-        <div class="card"><h3>🔐 Secret Handling</h3><p>Secret environment variables remain masked and are never exported or reconstructed from evidence.</p></div>
-        <div class="card"><h3>🌐 Global Choice Creation</h3><p>Whole global choice definition reconstruction remains intentionally unsupported until a bounded utility owns that workflow.</p></div>
-        <div class="card"><h3>🔁 DVBUR Multi-table</h3><p>Future data reconstruction handoff for relationship-aware, preview-first bulk upsert workflows.</p></div>
+        <div class="card"><h3>🔬 Mini RCA</h3><p>Future evidence-backed hypothesis guidance will build on the same observation and synthesis pipeline.</p></div>
+        <div class="card"><h3>🧩 Cross Diff Understanding</h3><p>Apply the same investigation narrative to drift findings, evidence references, and reconstruction handoffs.</p></div>
+        <div class="card"><h3>🕒 Timeline Understanding</h3><p>Use observations and confidence to explain first-observed windows without overstating exact change time or causality.</p></div>
+        <div class="card"><h3>🧰 Utility Handoffs</h3><p>DVAF, DVIM, DVCE, DVEVM, and future DVBUR workflows remain preview-first companion reconstruction paths.</p></div>
       </div>
     </section>
 
@@ -191,10 +192,10 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 </html>`;
 }
 
-async function showV0130WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
+async function showV0140WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0135",
-    "DV Quick Run v0.13.5",
+    "dvQuickRunWelcomeV0140",
+    "DV Quick Run v0.14.0",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -248,11 +249,11 @@ export async function maybeShowV0130Welcome(context: vscode.ExtensionContext): P
   }
 
   await context.globalState.update(WELCOME_KEY, true);
-  await showV0130WelcomePanel(context);
+  await showV0140WelcomePanel(context);
 }
 
 export async function showV0130Welcome(context: vscode.ExtensionContext): Promise<void> {
-  await showV0130WelcomePanel(context);
+  await showV0140WelcomePanel(context);
 }
 
 export function registerShowWelcomeCommand(context: vscode.ExtensionContext): void {

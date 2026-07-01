@@ -22,10 +22,10 @@ const parsed: ParsedDataverseQuery = {
 suite("explainQuerySections", () => {
   test("buildSummary includes retrieval, filter, ordering and top hints", () => {
     const summary = buildSummary(parsed, { logicalName: "contact" } as any);
-    assert.ok(summary.includes("Retrieves contact records."));
-    assert.ok(summary.includes("Filter intent:"));
-    assert.ok(summary.includes("Sorts by createdon desc."));
-    assert.ok(summary.includes("Limits the result to 5 rows."));
+    assert.ok(summary.includes("This appears to be a targeted retrieval of contact records."));
+    assert.ok(summary.includes("The filter narrows the evidence set:"));
+    assert.ok(summary.includes("The result order is intentional: createdon desc."));
+    assert.ok(summary.includes("The 5-row limit keeps the result bounded"));
   });
 
   test("buildSections includes select, filter, expand and other query options sections", () => {

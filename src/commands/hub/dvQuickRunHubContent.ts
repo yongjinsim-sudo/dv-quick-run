@@ -192,10 +192,10 @@ export const capabilities: readonly CapabilityInfo[] = [
   },
   {
     id: "explain-query-doctor",
-    title: "Explain and Query Doctor",
+    title: "Investigation Intelligence",
     group: "Refine & Understand",
-    summary: "Understand query shape and preview deterministic improvements where supported.",
-    operationalUseCase: "Use when a query needs explanation, narrowing guidance, or a safer previewed correction.",
+    summary: "Turn Dataverse query structure into operational investigation understanding.",
+    operationalUseCase: "Use when a query needs investigation summaries, confidence assessment, investigation pattern teaching, verification guidance, or evidence-backed recommendations.",
     relatedPlaybooks: ["refine-from-results"],
     contextRequirement: {
       kind: "query",
@@ -402,7 +402,8 @@ export const capabilities: readonly CapabilityInfo[] = [
 ];
 
 export const productDirection: readonly ProductDirectionInfo[] = [
-  { title: "Investigation continuity", summary: "Preserve context across query results, traversal, runtime evidence, profiles, and preview workflows." },
+  { title: "Investigation Intelligence", summary: "Convert operational artefacts into structured observations, synthesized understanding, evidence-backed confidence, and verification guidance." },
+  { title: "Continuous Investigation Understanding", summary: "Preserve context across query results, traversal, runtime evidence, profiles, and preview workflows." },
   { title: "Runtime and Power Platform visibility", summary: "Continue bridging Dataverse execution evidence with orchestration participation where evidence supports it." },
   { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
@@ -453,13 +454,14 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.13.5 introduces Environment Variable Current Value Drift for Dataverse runtime configuration comparison.",
-  "Cross-Environment Diff can export DVEVM-owned .dvevm.json reconstruction artifacts using the native DVEVM artifact v2.0 contract.",
-  "DVEVM reconstruction artifacts support SetCurrentValue, CreateCurrentValue, and DeleteCurrentValue source-side reconstruction intent.",
-  "Reconstruction artifacts are written to .dvforgelab/dvevm/exports while DVQR evidence remains under .dvforgelab/dvqr.",
-  "Secret environment variable values remain protected: DVQR masks secrets, never exports secret values, and does not reconstruct secrets from evidence.",
-  "Reports now preserve DVEVM Reconstruction Artifact references in HTML/PDF exports with clearer Component, Variable, Operation, Support, and Artifact wording.",
-  "DVQR now hands off four reconstruction domains: DVAF for attributes, DVIM for identity participation, DVCE for choice options, and DVEVM for environment variables.",
+  "v0.14.0 introduces Investigation Intelligence powered by Explain Engine v2.1.",
+  "Explain Query now teaches investigation thinking, not just query syntax.",
+  "Explain results now include evidence-backed Confidence Assessment with supporting and limiting factors.",
+  "Investigation Pattern teaches why query patterns matter, when to use them, and what trade-offs they introduce.",
+  "Explain contributors now produce structured observations that are synthesized into a clearer investigation narrative and Investigation Pipeline.",
+  "Query Explain writes workspace-backed markdown artifacts silently and opens the rendered preview directly.",
+  "Query Doctor guidance now participates in the Explain Engine pipeline as advisory evidence rather than root-cause certainty.",
+  "v0.13.5 introduced Environment Variable Current Value Drift and DVEVM-owned .dvevm.json reconstruction artifacts.",
   "v0.13.4 introduced Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
   "v0.13.1 introduced Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",
   "Inline Check Audit Evidence actions query Dataverse audit history inside snapshot-bounded investigation windows.",

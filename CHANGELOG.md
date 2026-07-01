@@ -8,6 +8,47 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.14.0 --- Investigation Intelligence & Explain Engine v2.1
+
+This release introduces Investigation Intelligence for DV Quick Run. Query Explain now transforms Dataverse query structure into operational investigation understanding using Explain Engine v2.1, structured observations, confidence assessment, investigation patterns, and evidence-backed guidance while keeping the existing command surface stable.
+
+DV Quick Run now teaches investigation thinking, not just query syntax. It explains and recommends with evidence, while avoiding claims of root cause certainty, operational authority, or deployment correctness.
+
+### Added
+- Added neutral Explain Engine v2 foundation under `src/product/explainEngine`.
+- Added `ExplainResult` schema v2.1 with structured observations, confidence factors, unknowns, evidence references, recommendations, and contributors.
+- Added contributor-based OData Query Explain rendering for query structure, validation, relationship reasoning, Query Doctor diagnostics, execution evidence, and trust model sections.
+- Added workspace-backed Query Explain markdown artifacts under `.dvforgelab/dvqr/explain`.
+- Added Markdown Preview opening from the generated host-side `.md` file.
+- Added structured teaching observations for pattern purpose, common use cases, trade-offs, and watch-outs.
+- Added an Investigation Synthesizer that turns contributor observations into report sections.
+- Added evidence-backed Confidence Assessment with supporting factors, limiting factors, and next steps to increase confidence.
+- Added Investigation Stage and Investigation Profile sections to describe where the query sits in the investigation lifecycle.
+- Added Investigation Pipeline rendering so end users see synthesized investigation components rather than internal contributor IDs.
+
+### Changed
+- Migrated OData Query Explain markdown generation through Explain Engine v2 while preserving the existing command and workflow entry points.
+- Reordered Query Explain output around investigation summary, investigation stage, investigation profile, confidence assessment, operational implications, verification guidance, and investigation pattern teaching before clause-level analysis.
+- Reframed Query Explain summary copy to teach operational intent rather than only describing parsed syntax.
+- Merged teaching notes and pattern trade-offs into a synthesized `Investigation Pattern` section.
+- Simplified contributor names in the report while preserving internal contributor IDs in the ExplainResult model.
+- Reframed Query Doctor output as contributor-backed recommendations with confidence and actionability metadata.
+- Debug-gated or removed raw host-side `console.log` diagnostics from investigation, traversal cache, and result-viewer action paths.
+- Polished Explain Intelligence report prose so confidence, operational implications, and verification guidance read as bounded investigation advice.
+- Updated Welcome screen, Hub copy, README, and changelog so Investigation Intelligence is the user-facing capability and Explain Engine v2.1 is the underlying implementation.
+
+### Release identity
+
+v0.14.0 marks the shift from syntax explanation to operational investigation understanding. It establishes the shared Investigation Pipeline that future Cross Diff Understanding, Timeline Understanding, and Mini RCA can reuse.
+
+### Preserved
+- Existing Query Explain command behaviour remains available from the editor.
+- FetchXML explain continues to use the existing FetchXML explain pipeline.
+- Query Doctor findings remain advisory and do not imply root cause certainty.
+- v0.14.0 lays Mini RCA groundwork but does not ship Mini RCA as a user-facing RCA surface.
+
+---
+
 # DV Quick Run v0.13.5 --- Environment Variable Drift & DVEVM Reconstruction
 
 This release adds Dataverse Environment Variable Current Value Drift investigation and DVEVM reconstruction artifact handoff support.
@@ -33,6 +74,10 @@ DV Quick Run investigates runtime configuration drift. DV Environment Variable M
 - Secret environment variable values are never exported by DV Quick Run.
 - Secret values remain masked in snapshots, reports, and reconstruction flows.
 - Secret variables are intentionally excluded from value reconstruction because evidence cannot prove or safely transport the secret value.
+
+### Release identity
+
+v0.14.0 marks the shift from syntax explanation to operational investigation understanding. It establishes the shared Investigation Pipeline that future Cross Diff Understanding, Timeline Understanding, and Mini RCA can reuse.
 
 ### Preserved
 - DV Quick Run remains investigation-only and does not apply Dataverse environment variable mutations.
@@ -66,6 +111,10 @@ DV Quick Run investigates observed choice drift. DV Choice Editor reconstructs c
 ### Fixed
 - Fixed DVCE handoff scope classification so synthetic local option set names such as `account_accountratingcode` export as local choice artifacts instead of global choice artifacts.
 - Improved unsupported wording for whole choice set additions, especially where no bounded DV ForgeLab utility currently owns whole global choice definition creation.
+
+### Release identity
+
+v0.14.0 marks the shift from syntax explanation to operational investigation understanding. It establishes the shared Investigation Pipeline that future Cross Diff Understanding, Timeline Understanding, and Mini RCA can reuse.
 
 ### Preserved
 - DV Quick Run remains investigation-only and does not apply Dataverse choice mutations.

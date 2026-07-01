@@ -22,6 +22,7 @@ import { getExecutionEvidenceForQuery } from "../shared/diagnostics/executionEvi
 import type { EditorQueryTarget } from "../shared/queryMutation/editorQueryTarget.js";
 
 type ExplainAnalysis = Awaited<ReturnType<typeof analyseExplainQuery>>;
+type MaybePromise<T> = T | Promise<T>;
 
 type ExplainWorkflowDeps = {
   resolveText: () => string | undefined;
@@ -36,7 +37,7 @@ type ExplainWorkflowDeps = {
     diagnostics: Awaited<ReturnType<typeof runDiagnostics>>,
     executionEvidence?: import("../shared/diagnostics/executionEvidence.js").ExecutionEvidence,
     choiceMetadata?: ChoiceMetadataDef[]
-  ) => string;
+  ) => MaybePromise<string>;
   getQueryDoctorCapabilities: () => import("../../../../product/capabilities/capabilityTypes.js").QueryDoctorCapabilityProfile;
   getActionableInsightCapabilities?: () => import("../../../../product/capabilities/capabilityTypes.js").ActionableInsightCapabilityProfile;
   loadFieldsForEntity: (ctx: CommandContext, logicalName: string) => Promise<FieldDef[]>;
@@ -128,7 +129,7 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
     ? await deps.loadChoiceMetadataForEntity(ctx, analysis.entity.logicalName)
     : [];
 
-  const markdown = deps.buildMarkdown(
+  const markdown = await deps.buildMarkdown(
     parsed,
     analysis.entity,
     analysis.validationIssues,

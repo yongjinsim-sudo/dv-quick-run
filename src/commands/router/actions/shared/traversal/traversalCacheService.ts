@@ -1,3 +1,17 @@
+import * as vscode from "vscode";
+
+
+function isTraversalDebugEnabled(): boolean {
+  return (vscode.workspace.getConfiguration("dvQuickRun").get<string>("logLevel") ?? "info").toLowerCase() === "debug";
+}
+
+function debugTraversal(message: string): void {
+  if (isTraversalDebugEnabled()) {
+    // Traversal cache does not receive the shared output channel; gate browser-host diagnostics behind dvQuickRun.logLevel=debug.
+    console.debug(message);
+  }
+}
+
 export interface TraversalRouteKey {
   environmentId: string;
   sourceTable: string;
@@ -13,7 +27,7 @@ export class TraversalCacheService {
 
   public static getMetadata(environmentId: string): any | undefined {
     const hit = this.metadataCache.get(environmentId);
-    console.log(`[Traversal] Metadata cache ${hit ? 'HIT' : 'MISS'} (${environmentId})`);
+    debugTraversal(`[Traversal] Metadata cache ${hit ? 'HIT' : 'MISS'} (${environmentId})`);
     return hit;
   }
 
@@ -30,7 +44,7 @@ export class TraversalCacheService {
   public static getRoute(key: TraversalRouteKey): any | undefined {
     const cacheKey = this.buildRouteKey(key);
     const hit = this.routeCache.get(cacheKey);
-    console.log(`[Traversal] Route cache ${hit ? 'HIT' : 'MISS'} (${cacheKey})`);
+    debugTraversal(`[Traversal] Route cache ${hit ? 'HIT' : 'MISS'} (${cacheKey})`);
     return hit;
   }
 
@@ -44,7 +58,7 @@ export class TraversalCacheService {
   public static clearAll(): void {
     this.metadataCache.clear();
     this.routeCache.clear();
-    console.log('[Traversal] Cache cleared');
+    debugTraversal('[Traversal] Cache cleared');
   }
 
   public static clearEnvironment(environmentId: string): void {
@@ -56,6 +70,6 @@ export class TraversalCacheService {
       }
     }
 
-    console.log(`[Traversal] Cache cleared for environment ${environmentId}`);
+    debugTraversal(`[Traversal] Cache cleared for environment ${environmentId}`);
   }
 }
