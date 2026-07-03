@@ -2,7 +2,8 @@ import type { CommandContext } from '../../../../context/commandContext.js';
 import { buildFetchXmlDiagnostics } from './fetchXmlDiagnostics.js';
 import { buildFetchXmlExplainModel } from './fetchXmlExplainModelBuilder.js';
 import { enrichFetchXmlTree } from './fetchXmlMetadataEnricher.js';
-import { narrateFetchXmlExplain } from './fetchXmlNarrator.js';
+import { renderUnderstandingDocumentMarkdown } from '../../../../../product/understanding/understandingMarkdownRenderer.js';
+import { buildFetchXmlUnderstandingDocument } from './fetchXmlUnderstanding.js';
 import { parseFetchXml } from './fetchXmlParser.js';
 import { resolveFetchXmlScopes } from './fetchXmlScopeResolver.js';
 
@@ -19,5 +20,6 @@ export async function runFetchXmlExplainPipeline(
   model.diagnostics = diagnostics;
   model.suggestions = suggestions;
 
-  return narrateFetchXmlExplain(document, model, fetchXmlText);
+  const understanding = buildFetchXmlUnderstandingDocument(document, model, fetchXmlText);
+  return renderUnderstandingDocumentMarkdown(understanding);
 }

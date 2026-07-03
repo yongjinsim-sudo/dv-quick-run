@@ -8,8 +8,9 @@ import { ExplainRelationshipReasoningNote, ParsedDataverseQuery } from "./explai
 import type { ExecutionEvidence } from "../shared/diagnostics/executionEvidence.js";
 import { runExplainEngine } from "../../../../product/explainEngine/explainEngine.js";
 import { fromNumericConfidence } from "../../../../product/explainEngine/explainConfidence.js";
-import { renderExplainResultMarkdown } from "../../../../product/explainEngine/explainMarkdownRenderer.js";
+import { renderUnderstandingDocumentMarkdown } from "../../../../product/understanding/understandingMarkdownRenderer.js";
 import type { ExplainContributor, ExplainResult } from "../../../../product/explainEngine/explainEngineTypes.js";
+import { buildODataQueryUnderstandingDocument } from "./explainQueryUnderstanding.js";
 
 function buildRelationshipReasoningLines(notes: ExplainRelationshipReasoningNote[]): string[] {
   const lines: string[] = [];
@@ -274,5 +275,7 @@ export async function toExplainMarkdown(
     choiceMetadata
   );
 
-  return renderExplainResultMarkdown(result);
+  const understanding = buildODataQueryUnderstandingDocument(result, parsed, entity, diagnostics, executionEvidence);
+
+  return renderUnderstandingDocumentMarkdown(understanding);
 }
