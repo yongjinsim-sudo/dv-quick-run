@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_14_0.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_14_1.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.14.0</title>
+<title>DV Quick Run v0.14.1</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,27 +122,27 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.14.0</div>
-        <h1>Investigation Intelligence</h1>
-        <p class="subtitle"><strong>DV Quick Run now teaches investigation thinking — not just query syntax.</strong><br>Explain Query transforms Dataverse query structure into operational investigation understanding through investigation summaries, confidence assessment, investigation patterns, and evidence-backed guidance.</p>
+        <div class="eyebrow">What's new in v0.14.1</div>
+        <h1>Query Understanding Reports</h1>
+        <p class="subtitle"><strong>Turn technical queries into investigation-ready understanding.</strong><br>Query Understanding Reports combine plain-English investigation guidance, technical mechanics, evidence references, and bounded recommendations into a single evidence-backed Markdown artifact for OData and FetchXML.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.14.0</div>
-          <div class="price">Investigation Intelligence</div>
-          <div class="limit">Explain Query now teaches how to think about Dataverse query evidence, not just what each clause means.</div>
-          <p class="recognition">The new Explain pipeline converts parsed query structure into observations, synthesized interpretation, confidence factors, pattern trade-offs, and verification guidance while keeping conclusions bounded and evidence-led.</p>
-          <span class="badge">Free · Investigation Intelligence · Explain Engine v2.1</span>
+          <div class="eyebrow">New in v0.14.1</div>
+          <div class="price">Query Understanding Reports</div>
+          <div class="limit">Narrative never replaces technical truth: reports now keep investigation interpretation and exact query mechanics visible together.</div>
+          <p class="recognition">The new report structure adds Traversal, Returned Shape, Investigation Complexity, Positive Findings, Investigation Smells, Evidence References, and bounded recommendations while keeping Query Doctor guidance advisory.</p>
+          <span class="badge">Free · Query Understanding Reports · Evidence-backed guidance</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Investigation Summary</strong><span>Start with operational intent before clause details</span></div>
-        <div class="price-pill"><strong>Confidence Assessment</strong><span>Show why DVQR is more or less confident</span></div>
-        <div class="price-pill"><strong>Evidence-backed Guidance</strong><span>Keep recommendations bounded and advisory</span></div>
-        <div class="price-pill"><strong>Investigation Pattern</strong><span>Teach use cases, trade-offs, and verification habits</span></div>
+        <div class="price-pill"><strong>Understand</strong><span>Plain-English narrative with technical truth underneath</span></div>
+        <div class="price-pill"><strong>Navigate</strong><span>See how entities and relationships are traversed</span></div>
+        <div class="price-pill"><strong>Inspect</strong><span>Visualise the returned payload shape separately from raw syntax</span></div>
+        <div class="price-pill"><strong>Assess</strong><span>Understand investigation readiness, smells, and next steps</span></div>
       </div>
       <div class="actions">
         <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
@@ -151,26 +151,26 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Explain guidance is advisory and evidence-backed. It teaches investigation patterns without claiming root cause certainty or operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Query Understanding guidance is advisory and evidence-backed. It teaches investigation patterns without claiming root cause certainty or operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     </section>
 
     <section class="section">
-      <div class="eyebrow">New Investigation Capabilities</div>
+      <div class="eyebrow">New in v0.14.1</div>
       <div class="grid">
-        <div class="card"><h3>🧠 Investigation Intelligence</h3><p>Structured observations are synthesized into a clearer investigation narrative instead of raw clause-by-clause output.</p></div>
-        <div class="card"><h3>🧭 Investigation Summary</h3><p>Explain starts with what the query appears to be doing operationally before showing clause analysis.</p></div>
-        <div class="card"><h3>📊 Confidence Assessment</h3><p>Confidence now explains supporting evidence, limiting factors, and what would improve the assessment.</p></div>
-        <div class="card"><h3>📚 Investigation Pattern</h3><p>DVQR teaches why patterns such as projection, filters, ordering, row limits, and expands matter during investigation.</p></div>
+        <div class="card"><h3>🧠 Query Understanding Report</h3><p>Explain output is now framed as an investigation artifact rather than syntax documentation.</p></div>
+        <div class="card"><h3>🔎 Technical Truth Preserved</h3><p>Every report keeps the technical breakdown visible underneath the plain-English narrative.</p></div>
+        <div class="card"><h3>🌳 Traversal & Returned Shape</h3><p>Relationship paths and payload shape now have dedicated report sections.</p></div>
+        <div class="card"><h3>⚖️ Complexity & Recommendations</h3><p>DVQR surfaces bounded retrieval, investigation smells, and advisory next steps without claiming causality.</p></div>
       </div>
     </section>
 
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🔬 Mini RCA</h3><p>Future evidence-backed hypothesis guidance will build on the same observation and synthesis pipeline.</p></div>
-        <div class="card"><h3>🧩 Cross Diff Understanding</h3><p>Apply the same investigation narrative to drift findings, evidence references, and reconstruction handoffs.</p></div>
-        <div class="card"><h3>🕒 Timeline Understanding</h3><p>Use observations and confidence to explain first-observed windows without overstating exact change time or causality.</p></div>
-        <div class="card"><h3>🧰 Utility Handoffs</h3><p>DVAF, DVIM, DVCE, DVEVM, and future DVBUR workflows remain preview-first companion reconstruction paths.</p></div>
+        <div class="card"><h3>🔬 Mini RCA</h3><p>Today's Understanding becomes evidence-backed hypothesis guidance without jumping to causality.</p></div>
+        <div class="card"><h3>🕒 Timeline Understanding</h3><p>Use bounded interpretation to explain first-observed windows without overstating exact change time.</p></div>
+        <div class="card"><h3>🧩 Cross Diff Understanding</h3><p>Apply the same narrative-plus-technical structure to drift findings and reconstruction handoffs.</p></div>
+        <div class="card"><h3>🧰 MCP-ready Context</h3><p>Query Understanding becomes reusable semantic context for future local AI and MCP-facing investigation workflows.</p></div>
       </div>
     </section>
 
@@ -192,10 +192,10 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 </html>`;
 }
 
-async function showV0140WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
+async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0140",
-    "DV Quick Run v0.14.0",
+    "dvQuickRunWelcomeV0141",
+    "DV Quick Run v0.14.1",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -249,11 +249,11 @@ export async function maybeShowV0130Welcome(context: vscode.ExtensionContext): P
   }
 
   await context.globalState.update(WELCOME_KEY, true);
-  await showV0140WelcomePanel(context);
+  await showV0141WelcomePanel(context);
 }
 
 export async function showV0130Welcome(context: vscode.ExtensionContext): Promise<void> {
-  await showV0140WelcomePanel(context);
+  await showV0141WelcomePanel(context);
 }
 
 export function registerShowWelcomeCommand(context: vscode.ExtensionContext): void {

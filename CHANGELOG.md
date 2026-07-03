@@ -8,6 +8,49 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.14.1 --- Query Understanding Report & Understanding Engine v2.2
+
+This release completes the v0.14.1 Understanding Engine pass. Query Explain is now rendered as a **Query Understanding Report** through Understanding Engine v2.2, preserving plain-English investigation narrative and technical truth in the same evidence-backed Markdown artifact.
+
+The release consolidates the first-pass, second-pass, and fix-pass work into one stable report model for OData and FetchXML. It strengthens the path from syntax explanation to operational understanding while keeping recommendations advisory and bounded.
+
+### Added
+- Added `src/product/understanding` with `UnderstandingDocument`, query mechanics, investigation signals, recommendations, evidence references, and Markdown rendering.
+- Added an OData Query Understanding adapter that wraps the existing Explain Engine result into Understanding Engine v2.2 output.
+- Added a FetchXML Understanding Document adapter so FetchXML Explain now uses the same v2.2 report structure as OData.
+- Added first-class report sections for Investigation Narrative, Query Mechanics, Traversal, Returned Shape, Investigation Complexity, Positive Findings, Investigation Smells & Risks, Technical Breakdown, Recommendations, Evidence References, and Raw Query Reference.
+- Added richer OData `$expand` / relationship traversal explanation, including bounded related payload guidance when nested `$select` is used.
+- Added positive `Bounded retrieval` findings for OData `$top` and FetchXML `top` queries.
+- Added tests proving narrative and technical breakdown are preserved in the same rendered document.
+
+### Changed
+- Renamed rendered Explain output to `DV Quick Run - Query Understanding Report`.
+- Updated OData Query Explain Markdown output to render from the Understanding Document model while reusing existing Explain Engine contributors and Query Doctor diagnostics.
+- Preserved existing technical sections underneath the new narrative, mechanics, traversal, and returned-shape layers.
+- Moved raw query syntax lower into the Raw Query Reference section so the report starts with investigation understanding rather than syntax.
+- Reduced repeated section-level confidence noise in rendered Markdown while keeping overall confidence and bounded trust language.
+- Kept Query Doctor fixes in Recommendations instead of duplicating them as Positive Findings.
+- Reworded partial relationship diagnostics so `$expand` guidance reads as relationship guidance instead of a generic diagnostic review.
+- Improved FetchXML filtered-query narrative so filtered FetchXML reports are framed as validation, matching OData.
+- Hid the `Recommendations` item from the Investigation Pipeline when a report has no recommendations.
+- Updated extension version to `0.14.1`.
+
+### Fixed
+- Normalised displayed filter text so expressions like `statecode eq 0and contains(...)` render as `statecode eq 0 and contains(...)`.
+- Normalised recommendation preview query text using the same filter spacing guardrail.
+- Removed the user-facing `Review diagnostic finding` wording for partial relationship diagnostics.
+- Prevented FetchXML reports with no recommendations from implying a Recommendations section in the pipeline.
+
+### Locked invariant
+
+Narrative must never replace technical truth. Plain-English interpretation is provided first, and the technical breakdown remains available underneath.
+
+### Release identity
+
+v0.14.1 completes the shift from Explain Query as syntax documentation to Query Understanding as an investigation artifact. The Understanding Document becomes the reusable semantic layer for richer Query Doctor recommendations, future Mini RCA, Binder, Timeline Understanding, Cross Diff Understanding, and MCP-facing investigation context.
+
+---
+
 # DV Quick Run v0.14.0 --- Investigation Intelligence & Explain Engine v2.1
 
 This release introduces Investigation Intelligence for DV Quick Run. Query Explain now transforms Dataverse query structure into operational investigation understanding using Explain Engine v2.1, structured observations, confidence assessment, investigation patterns, and evidence-backed guidance while keeping the existing command surface stable.

@@ -454,13 +454,13 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.14.0 introduces Investigation Intelligence powered by Explain Engine v2.1.",
-  "Explain Query now teaches investigation thinking, not just query syntax.",
-  "Explain results now include evidence-backed Confidence Assessment with supporting and limiting factors.",
-  "Investigation Pattern teaches why query patterns matter, when to use them, and what trade-offs they introduce.",
-  "Explain contributors now produce structured observations that are synthesized into a clearer investigation narrative and Investigation Pipeline.",
-  "Query Explain writes workspace-backed markdown artifacts silently and opens the rendered preview directly.",
-  "Query Doctor guidance now participates in the Explain Engine pipeline as advisory evidence rather than root-cause certainty.",
+  "v0.14.1 turns technical queries into investigation-ready Query Understanding Reports.",
+  "OData and FetchXML Explain now share the same Query Understanding Report structure.",
+  "Query Understanding Reports preserve both plain-English investigation narrative and technical breakdown; narrative never replaces technical truth.",
+  "Reports now include Traversal, Returned Shape, Investigation Complexity, Positive Findings, Investigation Smells, Evidence References, and bounded recommendations.",
+  "Query Doctor guidance now appears as advisory evidence with clearer wording and no root-cause certainty claims.",
+  "Bounded retrieval is recognised as a positive investigation guardrail when $top or FetchXML top is present.",
+  "v0.14.0 introduced Investigation Intelligence powered by Explain Engine v2.1.",
   "v0.13.5 introduced Environment Variable Current Value Drift and DVEVM-owned .dvevm.json reconstruction artifacts.",
   "v0.13.4 introduced Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
   "v0.13.1 introduced Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",

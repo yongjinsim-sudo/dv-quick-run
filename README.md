@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
-**Run, understand, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explain through Query Understanding Reports, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -47,6 +47,7 @@ DV Quick Run turns VS Code into a focused **Dataverse developer and investigatio
 Instead of switching between Postman, browser tabs, maker portals, Excel, and manual metadata lookups, you can:
 
 * run OData and FetchXML queries
+* generate Query Understanding Reports that preserve both investigation narrative and technical breakdown
 * inspect results in a table or JSON view
 * refine queries safely using preview-first workflows
 * update records using Smart PATCH
@@ -75,6 +76,47 @@ DV Quick Run is designed around a simple loop:
 ```text
 write → run → explore → refine → investigate → reconstruct evidence → verify → hand off
 ```
+
+## 🧠 v0.14.1 — Query Understanding Report
+
+DV Quick Run v0.14.1 turns technical queries into **investigation-ready Query Understanding Reports** for both OData and FetchXML.
+
+Each report preserves two layers together:
+
+```text
+**Plain-English** investigation narrative
+↓
+**Technical breakdown** and raw query mechanics
+```
+
+This keeps DVQR approachable for investigation handoff while remaining trustworthy for developers and admins who need exact query mechanics.
+
+Query Understanding Reports now include:
+
+* Investigation Narrative
+* Query Mechanics
+* Traversal
+* Returned Shape
+* Investigation Complexity
+* Positive Findings
+* Investigation Smells & Risks
+* Technical Breakdown
+* Recommendations
+* Evidence References
+* Raw Query Reference
+
+OData and FetchXML now share the same Query Understanding Report structure, giving both query types a consistent investigation artifact.
+
+The core invariant for v0.14.1 is:
+
+```text
+Narrative must never replace technical truth.
+Plain-English interpretation is provided first, and the technical breakdown remains available underneath.
+```
+
+### v0.14.1 identity
+
+v0.14.1 completes the shift from Explain Query as syntax documentation to Query Understanding as an investigation artifact. Internally, the Understanding Document becomes the reusable semantic layer for richer Query Doctor recommendations, future Mini RCA, Binder, Timeline Understanding, Cross Diff Understanding, and MCP-facing investigation context.
 
 ## 🧠 v0.14.0 — Investigation Intelligence
 
