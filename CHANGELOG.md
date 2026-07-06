@@ -8,6 +8,33 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.14.2 --- Cross Diff Understanding First Pass
+
+This release adds the first Cross-Environment Diff consumer of Understanding Engine v2.2. Cross Diff Understanding is intentionally built on the existing `UnderstandingDocument` model without a broad schema refactor, proving the second investigation surface before generalising the shared understanding schema.
+
+### Added
+- Added Cross Diff Understanding report generation from the existing comparison view model.
+- Added a Reports menu entry for Cross Diff Understanding.
+- Added workspace-backed Markdown output under `.dvforgelab/dvqr/reports`.
+- Added Markdown Preview-only opening for Cross Diff Understanding reports.
+
+### Changed
+- Reframed Cross Diff Understanding output as a briefing-first investigation report rather than query documentation.
+- Added explicit **Cross Diff Explain** framing so Markdown Preview is understood as the comparison equivalent of Query Explain.
+- Finalised Cross Diff Explain report polish: **Report Information**, executive-style Investigation Summary, consistent provider counts, domain-level Evidence Coverage, and Appendix-backed raw comparison data.
+- Updated Hub and Welcome page messaging for v0.14.2 so Explain is positioned as the human-readable front door to cross-environment investigations.
+- Simplified Comparison Scope and Evidence Coverage into investigator-facing language.
+- Added critical operational change and affected investigation area summaries before detailed provider highlights.
+- Reordered the report so Understanding Summary, key operational changes, investigation priority, and recommended review order appear before technical comparison detail.
+- Renamed Cross Diff sections from query-shaped labels to comparison/provider language: Comparison Scope, Evidence Coverage, Key Operational Changes, and Raw Comparison Reference.
+- Preserved Query Understanding wording and layout for OData and FetchXML.
+
+### v0.14.3+ design note
+- The second Understanding Engine consumer confirms the need for a future generic investigation document shape. v0.14.3+ should smooth the transition toward a shared Investigation/Understanding document model for Query Understanding, Cross Diff Understanding, Timeline Understanding, Binder, and Mini RCA.
+- Do not generalise prematurely in v0.14.2; keep the current release bounded and use concrete Cross Diff behaviour to inform the later schema cleanup.
+
+---
+
 # DV Quick Run v0.14.1 --- Query Understanding Report & Understanding Engine v2.2
 
 This release completes the v0.14.1 Understanding Engine pass. Query Explain is now rendered as a **Query Understanding Report** through Understanding Engine v2.2, preserving plain-English investigation narrative and technical truth in the same evidence-backed Markdown artifact.

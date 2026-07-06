@@ -2,7 +2,7 @@
 
 A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
-**Run, understand, explain through Query Understanding Reports, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explain through Query Understanding Reports and Cross Diff Explain, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Cross Diff Explain, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
@@ -23,7 +23,7 @@ The website includes:
 * marketplace/install links
 * Free / Pro / Offline pricing and activation guidance
 * interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
-* sample Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, Timeline Investigation Handoff, audit-aware report flows, and Reconstruction Artifact handoff flows
+* sample Diff Findings Summary, Cross Diff Explain, Timeline Findings Summary, Investigation Handoff, Timeline Investigation Handoff, audit-aware report flows, and Reconstruction Artifact handoff flows
 
 The interactive HTML demo helps illustrate:
 
@@ -34,7 +34,7 @@ The interactive HTML demo helps illustrate:
 * Timeline Reconstruction, interval graph, first-observed drift, audit evidence enrichment, and reconstruction artifact report flows
 * dense enterprise comparison readability
 * operational investigation continuity
-* report export mental models for Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff workflows
+* report export mental models for Cross Diff Explain, Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff workflows
 
 without requiring a live Dataverse environment.
 
@@ -48,6 +48,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 
 * run OData and FetchXML queries
 * generate Query Understanding Reports that preserve both investigation narrative and technical breakdown
+* open Cross Diff Explain to understand cross-environment drift before reviewing provider evidence
 * inspect results in a table or JSON view
 * refine queries safely using preview-first workflows
 * update records using Smart PATCH
@@ -58,6 +59,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
 * investigate bounded Access Context for users, application users, teams, roles, and business units
 * compare operational snapshots through Snapshot Library, Timeline Reconstruction, and Cross-Environment Diff
+* turn cross-environment comparison evidence into briefing-first Explain reports with confidence basis, key changes, and investigation path
 * continue investigation from comparison evidence using bounded inline pivots
 * reconstruct first-observed operational drift across 3+ same-environment snapshots
 * enrich Timeline Reconstruction and Cross-Environment Diff findings with snapshot-bounded Dataverse audit evidence
@@ -77,166 +79,41 @@ DV Quick Run is designed around a simple loop:
 write → run → explore → refine → investigate → reconstruct evidence → verify → hand off
 ```
 
-## 🧠 v0.14.1 — Query Understanding Report
+## 🧠 v0.14.2 — Cross Diff Explain
 
-DV Quick Run v0.14.1 turns technical queries into **investigation-ready Query Understanding Reports** for both OData and FetchXML.
+DV Quick Run v0.14.2 introduces **Cross Diff Explain** as the first comparison-backed Explain surface.
 
-Each report preserves two layers together:
+Cross Diff Explain helps investigators understand cross-environment drift before reviewing the underlying provider evidence. It turns comparison output into a briefing-first Markdown Preview that explains what changed, why it matters, how confident DVQR is, and where to investigate next.
 
-```text
-**Plain-English** investigation narrative
-↓
-**Technical breakdown** and raw query mechanics
-```
+Cross Diff Explain reports include:
 
-This keeps DVQR approachable for investigation handoff while remaining trustworthy for developers and admins who need exact query mechanics.
-
-Query Understanding Reports now include:
-
-* Investigation Narrative
-* Query Mechanics
-* Traversal
-* Returned Shape
-* Investigation Complexity
-* Positive Findings
-* Investigation Smells & Risks
-* Technical Breakdown
-* Recommendations
-* Evidence References
-* Raw Query Reference
-
-OData and FetchXML now share the same Query Understanding Report structure, giving both query types a consistent investigation artifact.
-
-The core invariant for v0.14.1 is:
-
-```text
-Narrative must never replace technical truth.
-Plain-English interpretation is provided first, and the technical breakdown remains available underneath.
-```
-
-### v0.14.1 identity
-
-v0.14.1 completes the shift from Explain Query as syntax documentation to Query Understanding as an investigation artifact. Internally, the Understanding Document becomes the reusable semantic layer for richer Query Doctor recommendations, future Mini RCA, Binder, Timeline Understanding, Cross Diff Understanding, and MCP-facing investigation context.
-
-## 🧠 v0.14.0 — Investigation Intelligence
-
-DV Quick Run v0.14.0 introduces **Investigation Intelligence**. Query Explain moves from clause-first documentation toward operational investigation understanding.
-
-DV Quick Run now teaches investigation thinking, not just query syntax. Explain Query uses **Explain Engine v2.1** to transform Dataverse query structure into structured observations, synthesized interpretation, confidence assessment, investigation patterns, and evidence-backed guidance.
-
-The report now starts with:
-
+* Explain purpose and advisory boundary
 * Investigation Summary
-* Investigation Stage
-* Investigation Profile
-* Confidence Assessment
-* Operational Implications
-* Things Worth Verifying
-* Investigation Pattern
-* Clause Analysis
-* Investigation Pipeline
+* Confidence basis
+* Investigation Objective
+* Snapshot Comparison context
+* Key Operational Changes
+* Investigation Priority & Risks
+* Recommended Investigation Path
+* Investigation Method
+* Evidence Coverage
+* Technical Breakdown
+* Evidence References
+* Appendix pipeline and Raw Comparison Reference
 
-This means DVQR explains not only what a query does, but why the query shape matters during investigation: projection intent, filter boundaries, repeatability, row limits, relationship expansion, trade-offs, and what to verify next.
-
-Explain remains advisory. It teaches investigation patterns and preserves evidence boundaries; it does not claim root cause certainty or operational authority.
-
-### v0.14.0 identity
-
-DV Quick Run no longer explains query syntax alone. Explain Engine v2.1 introduces Investigation Intelligence, transforming parsed query structure into operational understanding through investigation summaries, confidence assessment, investigation pattern teaching, and evidence-backed guidance.
-
-This establishes the common understanding pipeline that future Cross Diff Understanding, Timeline Understanding, and Mini RCA will build upon.
-
-## ⚙️ v0.13.5 — Environment Variable Drift & DVEVM Reconstruction
-
-DV Quick Run v0.13.5 adds Dataverse Environment Variable Current Value Drift detection and completes the DVEVM reconstruction handoff workflow.
-
-Eligible Environment Variable Current Value Drift findings in Cross-Environment Diff can now export DVEVM-owned `.dvevm.json` artifacts using the native `dvevm.environmentVariableDefinitions` v2.0 schema.
+The governing rule remains:
 
 ```text
-Observed runtime configuration drift
-↓
-Source-side reconstruction intent
-↓
-DV Environment Variable Manager import
-↓
-DVEVM validation / preview
-↓
-Human-reviewed apply
+Explain assists; evidence decides.
 ```
 
-Supported DVEVM reconstruction operations:
+Cross Diff Explain does not replace provider evidence, audit evidence, raw comparison data, reconstruction artifacts, review state, or human judgement. It helps users understand the investigation while keeping technical truth visible underneath.
 
-* `SetCurrentValue`
-* `CreateCurrentValue`
-* `DeleteCurrentValue`
+### v0.14.2 identity
 
-Artifacts are saved under:
+v0.14.2 moves Explain beyond query interpretation. Query Explain helps users understand a query; Cross Diff Explain helps users understand an investigation. Together, they establish Explain as DVQR's primary human-readable investigation surface, powered internally by the Understanding Engine and preserved externally as Markdown Preview evidence under the DVQR reports workspace.
 
-```text
-.dvforgelab/dvevm/exports
-```
-
-DVEVM artifacts use this filename convention:
-
-```text
-DVEVM-{scope}-{yyyyMMdd-HHmmss}.dvevm.json
-```
-
-DV Quick Run does not mutate Dataverse environment variables. DV Environment Variable Manager owns import, validation, preview, apply, and execution-result review.
-
-### Secret Environment Variables
-
-Secret environment variables remain intentionally protected.
-
-DV Quick Run:
-
-* detects secret variables
-* masks secret values
-* never exports secret values
-* never reconstructs secret values from evidence
-
-Secrets remain manual verification items.
-
-```text
-Secrets may be entered.
-Secrets may not travel.
-Secrets may not be reconstructed from evidence.
-Secrets remain masked outside active user input.
-```
-
-## 🧩 v0.13.4 — Choice Reconstruction & DVCE Integration
-
-DV Quick Run v0.13.4 completes the first choice reconstruction handoff workflow.
-
-Eligible Choice Metadata Drift findings in Cross-Environment Diff and Timeline Reconstruction can now export DVCE-owned `.dvce.json` artifacts using the native `dvce.choiceDefinition` v3.0 schema.
-
-```text
-Observed drift
-↓
-Source-side reconstruction intent
-↓
-DV Choice Editor preview
-↓
-Human-reviewed apply/publish
-```
-
-Reports now explicitly separate **observed drift** from **reconstruction intent**. For example, a target-only option remains reported as an observed `Added` drift, while the source-side reconstruction artifact may stage `DeleteOption` because the artifact preserves the source snapshot.
-
-Supported DVCE reconstruction operations:
-
-* `AddOption`
-* `UpdateLabel`
-* `DeleteOption`
-
-Artifacts are saved under:
-
-```text
-.dvforgelab/dvce/exports
-```
-
-DV Quick Run does not mutate Dataverse choice metadata. DV Choice Editor owns import, staging, validation, preview, apply, publish, and execution-result review.
-
-Whole global choice definition creation remains intentionally unsupported until a bounded DV ForgeLab utility owns that workflow.
+Future Explain surfaces can provide a consistent investigation briefing across Query, Cross Diff, Timeline, Mini RCA, and MCP-facing workflows without weakening DVQR's evidence boundaries.
 
 ## 🚀 14-day Pro Trial
 
@@ -995,6 +872,9 @@ Real operational timeline reconstruction remains Pro capability-aware.
 
 Cross-Environment Diff remains the workflow for comparing snapshots across different environments.
 
+Cross Diff Explain is available from the comparison **Reports** menu. It opens as Markdown Preview and saves under the DVQR reports workspace so investigators can understand the comparison before drilling into detailed evidence.
+
+
 Comparison reports preserve scope awareness so exported artifacts clearly identify the operational subject being compared, for example:
 
 ```text
@@ -1032,6 +912,7 @@ Review and verification state is local to the comparison workflow and remains in
 
 Comparison reports can be exported as dedicated operational artifacts:
 
+* **Cross Diff Explain** — Markdown Preview briefing that summarises confidence, key operational changes, affected areas, risk posture, investigation path, technical breakdown, and raw comparison references
 * **Diff Findings Summary** — concise operational briefing focused on strongest drift signals, executive summary, significance distribution, provider distribution, snapshot trust, and top operational findings
 * **Investigation Handoff** — verification-oriented handoff package focused on outstanding operational review, grouped evidence continuity, review posture, and external follow-up context
 * **HTML reports** — readable, branded report exports that preserve operational hierarchy and evidence-backed summaries
@@ -1087,7 +968,14 @@ Future roadmap direction includes expanded audit payload interpretation, ownersh
 
 ---
 
-### 🧠 Investigation Intelligence
+### 🧠 Explain & Investigation Intelligence
+
+Use Explain to turn Dataverse technical evidence into human-readable investigation briefings.
+
+Supported Explain surfaces include:
+
+* **Query Explain** — explains OData and FetchXML query structure, intent, risk, recommendations, and raw query mechanics
+* **Cross Diff Explain** — explains cross-environment comparison evidence, confidence basis, key operational changes, investigation priority, and recommended investigation path
 
 Use Explain Query to turn Dataverse query structure into operational investigation understanding. Investigation Intelligence produces investigation summaries, confidence assessment, investigation pattern teaching, evidence-backed guidance, clause analysis, and verification recommendations. Query Doctor participates as an advisory contributor in the same pipeline.
 
@@ -1323,7 +1211,7 @@ It detects or guards against risky situations such as:
 * hidden cross-environment scans or automatic drift verification
 * treating inline evidence continuation as remediation or proof of root cause
 * treating review-state completion as operational correctness
-* treating exported reports or PDFs as approval, certification, root-cause proof, timeline certainty, or remediation authority
+* treating exported reports, Explain surfaces, or PDFs as approval, certification, root-cause proof, timeline certainty, or remediation authority
 * treating audit evidence as causality, deployment correctness, remediation proof, or operational authority
 * assuming unknown Dataverse audit payloads are fully interpreted when DVQR marks them as experimental or partially interpreted
 * treating DVAF reconstruction artifacts as proof that the source is correct or the target is wrong
@@ -1416,6 +1304,7 @@ The MIT-licensed core preserves foundational operational understanding workflows
 Commercial Pro capabilities focus on advanced operational acceleration workflows such as:
 
 - Cross-Environment Diff
+- Cross Diff Explain
 - Timeline Reconstruction
 - Timeline Findings Summary Reports
 - Timeline Investigation Handoff Reports

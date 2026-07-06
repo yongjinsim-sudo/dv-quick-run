@@ -175,7 +175,7 @@ function renderCapability(capability: CapabilityInfo): string {
 function renderDvForgeLabEcosystem(): string {
   return `<section id="dvforgelab-ecosystem">
     <h2>DV ForgeLab Ecosystem</h2>
-    <p class="dvqr-section-note">DV Quick Run is part of the DV ForgeLab ecosystem of focused Dataverse engineering tools.</p>
+    <p class="dvqr-section-note">DV Quick Run investigates. DV ForgeLab utilities reconstruct. Investigation and reconstruction remain separate concerns.</p>
     <div class="dvqr-direction-grid">
       <article class="dvqr-card"><h3>DV Quick Run</h3><p>Investigate operational drift, runtime behaviour, identity participation, and cross-environment evidence.</p></article>
       <article class="dvqr-card"><h3>DV Bulk Upsert Runner</h3><p>Bulk import and upsert Dataverse records using reusable data packages.</p></article>

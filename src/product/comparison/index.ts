@@ -58,3 +58,6 @@ export type { CreatedEvidenceWorkspace, SnapshotWorkspaceLayout, SnapshotWorkspa
 
 export { resolveSnapshotSelection } from "./snapshotSelectionService.js";
 export type { SnapshotSelectionDescriptor, SnapshotSelectionMode } from "./snapshotSelectionService.js";
+
+export { buildComparisonUnderstandingDocument } from "./comparisonUnderstandingDocument.js";
+export type { ComparisonUnderstandingContext } from "./comparisonUnderstandingDocument.js";
