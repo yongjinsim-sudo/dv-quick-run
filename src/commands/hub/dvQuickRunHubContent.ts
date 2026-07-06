@@ -454,12 +454,12 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.14.1 turns technical queries into investigation-ready Query Understanding Reports.",
-  "OData and FetchXML Explain now share the same Query Understanding Report structure.",
-  "Query Understanding Reports preserve both plain-English investigation narrative and technical breakdown; narrative never replaces technical truth.",
-  "Reports now include Traversal, Returned Shape, Investigation Complexity, Positive Findings, Investigation Smells, Evidence References, and bounded recommendations.",
-  "Query Doctor guidance now appears as advisory evidence with clearer wording and no root-cause certainty claims.",
-  "Bounded retrieval is recognised as a positive investigation guardrail when $top or FetchXML top is present.",
+  "v0.14.2 adds Cross Diff Explain as the first comparison-backed Explain surface.",
+  "Cross Diff Explain opens from the Reports menu and renders as Markdown Preview only, saved under the DVQR reports workspace.",
+  "The report starts with an investigation briefing: summary, confidence basis, objective, key operational changes, risks, and recommended investigation path.",
+  "Detailed technical evidence remains underneath: investigation method, evidence coverage, technical breakdown, evidence references, appendix pipeline, and raw comparison reference.",
+  "Explain assists; evidence decides. Cross Diff Explain is advisory and does not replace provider evidence, audit evidence, raw comparison data, or reconstruction review.",
+  "v0.14.1 introduced Query Understanding Reports for OData and FetchXML Explain.",
   "v0.14.0 introduced Investigation Intelligence powered by Explain Engine v2.1.",
   "v0.13.5 introduced Environment Variable Current Value Drift and DVEVM-owned .dvevm.json reconstruction artifacts.",
   "v0.13.4 introduced Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
@@ -469,7 +469,7 @@ export const whatsNew: readonly string[] = [
   "v0.13.0 introduced Timeline Reconstruction for 3+ same-environment snapshots, with timeline graph, first-observed windows, and Timeline Findings/Handoff reports.",
   "Free users can try the timeline workflow with built-in TIMELINE-MOCK snapshots from Snapshot Library.",
   "Evidence Workspace now uses the DV ForgeLab family workspace model for DVQR evidence and companion utility reconstruction artifacts.",
-  "DV ForgeLab ecosystem orientation links DV Quick Run with companion Dataverse utilities at dvforgelab.com/products."
+  "DV Quick Run investigates. DV ForgeLab utilities reconstruct. Investigation and reconstruction remain separate concerns. Companion utilities are available at dvforgelab.com/products."
 ];
 
 export const philosophy: readonly string[] = [

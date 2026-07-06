@@ -4,6 +4,8 @@ import { buildEvidencePivotResult } from "../../product/comparison/evidenceConti
 import { buildDefaultExportUri, renderComparisonMarkdown } from "../../product/comparison/export/comparisonMarkdownExport.js";
 import { ensureSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
 import { buildComparisonReportModel } from "../../product/comparison/reports/comparisonReportBuilder.js";
+import { buildComparisonUnderstandingDocument } from "../../product/comparison/comparisonUnderstandingDocument.js";
+import { renderUnderstandingDocumentMarkdown } from "../../product/understanding/understandingMarkdownRenderer.js";
 import { renderComparisonReportHtml } from "../../product/comparison/reports/comparisonReportHtmlRenderer.js";
 import { renderComparisonReportPdf } from "../../product/comparison/reports/comparisonReportPdfRenderer.js";
 import {
@@ -48,10 +50,10 @@ function appendEvidencePivotDiagnostic(ctx: CommandContext, stage: string, detai
   ctx.output.appendLine(`[${timestamp}] [Comparison Evidence Pivot] ${stage} ${serialisedDetails}`);
 }
 
-type ComparisonExportKind = "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf";
+type ComparisonExportKind = "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md";
 
 function isReportExportKind(kind: ComparisonExportKind): boolean {
-  return kind === "summary-html" || kind === "summary-pdf" || kind === "handoff-html" || kind === "handoff-pdf";
+  return kind === "summary-html" || kind === "summary-pdf" || kind === "handoff-html" || kind === "handoff-pdf" || kind === "understanding-md";
 }
 
 function canSaveStandardComparisonExport(model: ComparisonViewModel): boolean {
@@ -77,7 +79,7 @@ function getExportFilter(kind: ComparisonExportKind): Record<string, string[]> {
     return { "JSON": ["json"] };
   }
 
-  if (kind === "md") {
+  if (kind === "md" || kind === "understanding-md") {
     return { "Markdown": ["md"] };
   }
 
@@ -104,6 +106,8 @@ function getExportSaveLabel(kind: ComparisonExportKind): string {
       return "Save Diff Findings Summary PDF";
     case "handoff-pdf":
       return "Save Investigation Handoff PDF";
+    case "understanding-md":
+      return "Save Understanding Report";
     case "html":
     default:
       return "Save HTML";
@@ -127,6 +131,8 @@ function getExportDialogTitle(model: ComparisonViewModel, kind: ComparisonExport
       return "Save Diff Findings Summary PDF";
     case "handoff-pdf":
       return "Save Investigation Handoff PDF";
+    case "understanding-md":
+      return "Save Understanding Report";
     case "html":
     default:
       return `Save ${exportTitle} HTML`;
@@ -140,6 +146,14 @@ async function buildComparisonExportContent(ctx: CommandContext, model: Comparis
 
   if (kind === "md") {
     return renderComparisonMarkdown(model);
+  }
+
+  if (kind === "understanding-md") {
+    const understanding = buildComparisonUnderstandingDocument(model, {
+      auditEvidenceResults: [...comparisonAuditEvidenceByEvidenceId.values()],
+      reconstructionArtifacts: comparisonReconstructionArtifacts
+    });
+    return renderUnderstandingDocumentMarkdown(understanding);
   }
 
   if (kind === "summary-html" || kind === "handoff-html") {
@@ -186,7 +200,27 @@ function getSavedExportLabel(model: ComparisonViewModel, kind: ComparisonExportK
     return "Investigation Handoff PDF";
   }
 
+  if (kind === "understanding-md") {
+    return "Cross Diff Understanding Markdown";
+  }
+
   return `${model.title.startsWith("Timeline Diff") ? "Timeline Diff" : "Cross-Environment Diff"} ${kind.toUpperCase()}`;
+}
+
+async function openUnderstandingMarkdownPreview(uri: vscode.Uri): Promise<void> {
+  await vscode.commands.executeCommand("markdown.showPreview", uri);
+}
+
+function getWorkspaceRelativePath(workspace: Awaited<ReturnType<typeof ensureSnapshotWorkspace>>, uri: vscode.Uri): string {
+  if (workspace.available && workspace.workspaceRoot) {
+    const rootPath = workspace.workspaceRoot.fsPath.replace(/\\/g, "/");
+    const filePath = uri.fsPath.replace(/\\/g, "/");
+    if (filePath.toLowerCase().startsWith(rootPath.toLowerCase())) {
+      return filePath.slice(rootPath.length).replace(/^\//, "");
+    }
+  }
+
+  return uri.fsPath;
 }
 
 async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewModel, kind: ComparisonExportKind): Promise<vscode.Uri | undefined> {
@@ -215,8 +249,15 @@ async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewMo
   const content = await buildComparisonExportContent(ctx, model, kind);
 
   await vscode.workspace.fs.writeFile(uri, typeof content === "string" ? Buffer.from(content, "utf8") : content);
-  const destination = workspace.available && workspaceTargetRoot ? "Evidence Workspace" : uri.fsPath;
-  void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getSavedExportLabel(model, kind)} to ${destination}.`);
+  const destination = workspace.available && workspaceTargetRoot ? getWorkspaceRelativePath(workspace, uri) : uri.fsPath;
+
+  if (kind === "understanding-md") {
+    await openUnderstandingMarkdownPreview(uri);
+    void vscode.window.showInformationMessage(`DV Quick Run: Understanding Report generated and opened. Saved to ${destination}.`);
+  } else {
+    void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getSavedExportLabel(model, kind)} to ${destination}.`);
+  }
+
   return uri;
 }
 
@@ -539,7 +580,7 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
       return;
     }
 
-    if (request.kind === "json" || request.kind === "md" || request.kind === "html" || request.kind === "baseline" || request.kind === "summary-html" || request.kind === "handoff-html" || request.kind === "summary-pdf" || request.kind === "handoff-pdf") {
+    if (request.kind === "json" || request.kind === "md" || request.kind === "html" || request.kind === "baseline" || request.kind === "summary-html" || request.kind === "handoff-html" || request.kind === "summary-pdf" || request.kind === "handoff-pdf" || request.kind === "understanding-md") {
       if (!isReportExportKind(request.kind) && !canSaveStandardComparisonExport(model)) {
         void promptForCrossEnvironmentDiffProAccess(getExportSaveLabel(request.kind));
         return;
