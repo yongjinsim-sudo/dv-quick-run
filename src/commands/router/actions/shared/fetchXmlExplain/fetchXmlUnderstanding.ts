@@ -115,7 +115,7 @@ export function buildFetchXmlUnderstandingDocument(
 
   return {
     schemaVersion: '1.0',
-    engineVersion: 'v2.2',
+    engineVersion: 'v2.3',
     title: 'DV Quick Run - Query Understanding Report',
     generatedAt: new Date().toISOString(),
     subject: {

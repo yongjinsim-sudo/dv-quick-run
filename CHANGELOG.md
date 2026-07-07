@@ -8,7 +8,39 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
-# DV Quick Run v0.14.2 --- Cross Diff Understanding First Pass
+# DV Quick Run v0.14.3 --- Timeline Understanding Reports
+
+This release adds Timeline Understanding Reports for multi-snapshot Timeline Reconstruction. Timeline Understanding turns first-observed timeline evidence into a briefing-first Markdown Preview report that explains strongest activity intervals, grouped operational highlights, adjacent-interval investigation guidance, trust posture, evidence references, and collapsed raw reconstruction context while preserving the invariant: **Explain assists. Evidence decides.**
+
+### Added
+- Added Timeline Understanding Report generation from Timeline Reconstruction.
+- Added Timeline Reports menu entry for Timeline Understanding Markdown.
+- Added grouped operational highlights so related timeline events are summarized before detailed technical evidence.
+- Added timeline narrative synthesis for strongest activity interval detection.
+- Added adjacent-interval investigation guidance for setup and follow-on evidence review.
+- Added collapsed Raw Comparison Reference rendering for Timeline Understanding reports.
+- Added rebalanced Free `TIMELINE-MOCK` snapshot sequence covering identity, automation, operational profile, metadata, relationship, choice, and environment-variable drift across adjacent intervals.
+
+### Changed
+- Updated Welcome screen for v0.14.3 Timeline Understanding.
+- Updated Hub copy for v0.14.3 Timeline Understanding and Free TIMELINE-MOCK discovery.
+- Reduced Timeline Understanding main narrative noise by using investigation domains instead of provider-heavy wording in the main sections.
+- Simplified detailed operational highlights for better handoff readability.
+- Updated README to include Timeline Understanding as the third Understanding surface after Query Understanding and Cross Diff Understanding.
+- Updated extension version to `0.14.3`.
+
+### Fixed
+- Suppressed no-op participation findings before Timeline Understanding grouping and technical top-event rendering.
+- Suppressed empty grouped highlights that have no displayable findings.
+- Deduped Investigation Pipeline contributors in generated Understanding reports.
+
+### Locked invariant
+
+Timeline Understanding is advisory and evidence-backed. It narrows first-observed change windows, but does not establish exact change time, root cause certainty, remediation status, deployment correctness, or operational authority.
+
+---
+
+# DV Quick Run v0.14.2 --- Cross Diff Understanding Reports
 
 This release adds the first Cross-Environment Diff consumer of Understanding Engine v2.2. Cross Diff Understanding is intentionally built on the existing `UnderstandingDocument` model without a broad schema refactor, proving the second investigation surface before generalising the shared understanding schema.
 

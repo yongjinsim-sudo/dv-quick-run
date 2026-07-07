@@ -2,7 +2,24 @@
 
 A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
-**Run, understand, explain through Query Understanding Reports and Cross Diff Explain, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Cross Diff Explain, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+**Run, understand, explain through Query Understanding Reports, Cross Diff Understanding, and Timeline Understanding, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Cross Diff Understanding, Timeline Understanding, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+
+---
+
+## ✨ What's new in v0.14.3
+
+DV Quick Run v0.14.3 adds **Timeline Understanding Reports** for multi-snapshot Timeline Reconstruction. Reports open from the Timeline Reports menu, render as Markdown Preview, and are saved under the DVQR reports workspace for handoff.
+
+Timeline Understanding adds:
+
+* narrative synthesis for strongest activity intervals
+* grouped operational highlights before technical breakdown
+* adjacent-interval investigation guidance
+* trust posture and inspect-only warnings
+* evidence references and collapsed raw reconstruction context
+* a rebalanced Free `TIMELINE-MOCK` sequence for trying identity, automation, metadata, relationship, choice, and environment-variable drift across adjacent snapshots
+
+**Explain assists. Evidence decides.** Timeline Understanding narrows first-observed change windows, but does not claim exact change time, root cause certainty, remediation status, or operational authority.
 
 ---
 
@@ -23,7 +40,7 @@ The website includes:
 * marketplace/install links
 * Free / Pro / Offline pricing and activation guidance
 * interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
-* sample Diff Findings Summary, Cross Diff Explain, Timeline Findings Summary, Investigation Handoff, Timeline Investigation Handoff, audit-aware report flows, and Reconstruction Artifact handoff flows
+* sample Diff Findings Summary, Cross Diff Understanding, Timeline Understanding, Timeline Findings Summary, Investigation Handoff, Timeline Investigation Handoff, audit-aware report flows, and Reconstruction Artifact handoff flows
 
 The interactive HTML demo helps illustrate:
 
@@ -34,7 +51,7 @@ The interactive HTML demo helps illustrate:
 * Timeline Reconstruction, interval graph, first-observed drift, audit evidence enrichment, and reconstruction artifact report flows
 * dense enterprise comparison readability
 * operational investigation continuity
-* report export mental models for Cross Diff Explain, Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff workflows
+* report export mental models for Cross Diff Understanding, Timeline Understanding, Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff workflows
 
 without requiring a live Dataverse environment.
 
@@ -48,7 +65,8 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 
 * run OData and FetchXML queries
 * generate Query Understanding Reports that preserve both investigation narrative and technical breakdown
-* open Cross Diff Explain to understand cross-environment drift before reviewing provider evidence
+* open Cross Diff Understanding to understand cross-environment drift before reviewing provider evidence
+* open Timeline Understanding to interpret multi-snapshot change windows, grouped operational highlights, trust posture, and adjacent-interval investigation guidance
 * inspect results in a table or JSON view
 * refine queries safely using preview-first workflows
 * update records using Smart PATCH
@@ -62,6 +80,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * turn cross-environment comparison evidence into briefing-first Explain reports with confidence basis, key changes, and investigation path
 * continue investigation from comparison evidence using bounded inline pivots
 * reconstruct first-observed operational drift across 3+ same-environment snapshots
+* generate Timeline Understanding reports that identify strongest activity intervals without claiming exact change time or root cause
 * enrich Timeline Reconstruction and Cross-Environment Diff findings with snapshot-bounded Dataverse audit evidence
 * export DVAF reconstruction artifacts from eligible Column Metadata Drift, DVIM identity participation artifacts, DVCE choice reconstruction artifacts, and DVEVM environment variable artifacts from eligible Environment Variable Current Value Drift findings
 * preserve Reconstruction Artifact references in Timeline and Cross-Environment reports

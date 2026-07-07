@@ -81,6 +81,38 @@ function renderReturnedShape(
   return lines;
 }
 
+
+function renderTimelineOperationalHighlights(
+  nodes: UnderstandingReturnedShapeNode[],
+): string[] {
+  if (!nodes.length) {
+    return [];
+  }
+
+  const lines: string[] = [];
+  for (const node of nodes) {
+    const summaryField = node.fields.find((field) => field.includes(" · "));
+    const significance = summaryField?.split(" · ")[1]?.trim();
+    const firstObserved = node.fields.find((field) => field.startsWith("First observed:"));
+    const includedCount = node.fields.find((field) => field.startsWith("Included findings:"));
+    const included = node.fields
+      .filter((field) => field.startsWith("Includes:"))
+      .map((field) => field.replace(/^Includes:\s*/, ""));
+
+    lines.push(`- **${node.label}**${significance ? ` — ${significance}` : ""}`);
+    if (firstObserved) {
+      lines.push(`  - ${firstObserved}`);
+    }
+    if (includedCount && !includedCount.endsWith(": 1")) {
+      lines.push(`  - ${includedCount}`);
+    }
+    for (const item of included) {
+      lines.push(`  - ${item}`);
+    }
+  }
+  return lines;
+}
+
 function getUnderstandingLabels(document: UnderstandingDocument): {
   intentHeading: string;
   mechanicsHeading: string;
@@ -126,6 +158,39 @@ function getUnderstandingLabels(document: UnderstandingDocument): {
 }
 
 type UnderstandingLabels = ReturnType<typeof getUnderstandingLabels>;
+
+function uniqueSourceContributors(document: UnderstandingDocument): Array<{ id: string; title: string }> {
+  const seen = new Set<string>();
+  const contributors: Array<{ id: string; title: string }> = [];
+  for (const contributor of document.sourceContributors) {
+    const key = contributor.title.trim().toLowerCase();
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    contributors.push(contributor);
+  }
+  return contributors;
+}
+
+function pushCollapsedRawReference(
+  lines: string[],
+  heading: string,
+  rawReference: UnderstandingDocument["rawReference"],
+  headingLevel: "##" | "###",
+): void {
+  lines.push(`${headingLevel} ${heading}`);
+  lines.push("");
+  lines.push("<details>");
+  lines.push(`<summary>Show ${heading}</summary>`);
+  lines.push("");
+  lines.push(`\`\`\`${rawReference.language}`);
+  lines.push(rawReference.text);
+  lines.push("\`\`\`");
+  lines.push("");
+  lines.push("</details>");
+  lines.push("");
+}
 
 function renderMechanics(
   document: UnderstandingDocument,
@@ -233,7 +298,17 @@ function pushSignals(
 }
 
 
-function renderComparisonExplainSurface(): string[] {
+function renderComparisonExplainSurface(document: UnderstandingDocument): string[] {
+  if (document.subject.kind === "timelineDiff") {
+    return [
+      "**Timeline Understanding** helps investigators understand how operational changes emerged across a sequence of snapshots.",
+      "It identifies when changes were first observed, prioritises the most significant timeline events, and preserves interval boundaries so investigators can narrow the search space without implying exact execution time or root cause.",
+      "This explanation is advisory. It assists investigation, but does not replace provider evidence, raw comparison data, audit evidence, or reconstruction review.",
+      "",
+      "> This report is generated as Markdown so it can be previewed in VS Code, versioned alongside investigation evidence, shared during handoffs, and retained as part of the investigation record.",
+    ];
+  }
+
   return [
     "**Cross Diff Explain** helps investigators understand a comparison before reviewing the underlying evidence.",
     "It summarises the most significant operational changes, highlights investigation priorities, and explains what DV Quick Run observed while preserving the complete technical evidence underneath.",
@@ -371,51 +446,108 @@ function renderComparisonProfile(document: UnderstandingDocument): string[] {
   return profileLines;
 }
 
-function renderCriticalOperationalChanges(document: UnderstandingDocument): string[] {
-  const highChanges: string[] = [];
-  const otherChanges: string[] = [];
 
-  for (const node of document.returnedShape) {
+function isNoOpReturnedShapeText(value: string): boolean {
+  const normalized = value.toLowerCase().replace(/`/g, "").trim();
+  const participationMatch = normalized.match(/user participation changed:\s*(.+?)\s*→\s*(.+)$/);
+  if (participationMatch) {
+    return participationMatch[1]?.trim() === participationMatch[2]?.trim();
+  }
+  return false;
+}
+
+function filteredReturnedShapeNodes(
+  nodes: UnderstandingReturnedShapeNode[],
+): UnderstandingReturnedShapeNode[] {
+  return nodes
+    .map((node) => ({
+      ...node,
+      fields: node.fields.filter((field) => !isNoOpReturnedShapeText(field)),
+    }))
+    .filter((node) => !isNoOpReturnedShapeText(node.label))
+    .filter((node) => node.fields.length || node.depth === 0);
+}
+
+function isRecognisedInvestigationArea(label: string): boolean {
+  return [
+    "Plugin Runtime",
+    "Workflow & Automation",
+    "Solution Participation",
+    "Security & Identity",
+    "Entity Metadata",
+    "Relationship Metadata",
+    "Choice Metadata",
+    "Metadata",
+    "Environment Variables",
+    "Operational Profile",
+  ].includes(label);
+}
+
+function renderCriticalOperationalChanges(document: UnderstandingDocument): string[] {
+  const returnedShape = filteredReturnedShapeNodes(document.returnedShape);
+  const highChanges: string[] = [];
+  const mediumChanges: string[] = [];
+  const lowChanges: string[] = [];
+
+  for (const node of returnedShape) {
     for (const field of node.fields) {
       const parts = field.split(" · ");
-      const significance = parts.length >= 3 ? parts[1]?.trim().toLowerCase() : "";
-      const description = parts.length >= 3 ? parts.slice(2).join(" · ").trim() : field.trim();
-      if (!description) {
+      if (parts.length < 3) {
+        continue;
+      }
+      const significance = parts[1]?.trim().toLowerCase() ?? "";
+      const description = parts.slice(2).join(" · ").trim();
+      if (!description || isNoOpReturnedShapeText(description)) {
         continue;
       }
       if (significance === "high") {
         highChanges.push(description);
-      } else {
-        otherChanges.push(description);
+      } else if (significance === "medium") {
+        mediumChanges.push(description);
+      } else if (significance === "low") {
+        lowChanges.push(description);
       }
     }
   }
 
   const lines: string[] = [];
-  if (highChanges.length || otherChanges.length) {
+  if (highChanges.length) {
     lines.push("### Critical operational changes");
     lines.push("");
-    if (highChanges.length) {
-      lines.push("#### High significance");
-      lines.push("");
-      for (const change of highChanges.slice(0, 8)) {
-        lines.push(`- ${change}`);
-      }
-      lines.push("");
+    for (const change of highChanges.slice(0, 8)) {
+      lines.push(`- ${change}`);
     }
-    if (otherChanges.length) {
-      lines.push("#### Other notable changes");
-      lines.push("");
-      for (const change of otherChanges.slice(0, Math.max(0, 8 - Math.min(highChanges.length, 8)))) {
-        lines.push(`- ${change}`);
-      }
-      lines.push("");
-    }
+    lines.push("");
   }
 
-  const affectedAreas = document.returnedShape
-    .filter((node) => node.depth === 0)
-    .map((node) => providerDomainLabel(node.label))
+  if (mediumChanges.length) {
+    lines.push("### Significant operational changes");
+    lines.push("");
+    for (const change of mediumChanges.slice(0, Math.max(0, 8 - Math.min(highChanges.length, 8)))) {
+      lines.push(`- ${change}`);
+    }
+    lines.push("");
+  }
+
+  if (lowChanges.length && !highChanges.length) {
+    lines.push("### Other operational changes");
+    lines.push("");
+    for (const change of lowChanges.slice(0, Math.max(0, 8 - Math.min(mediumChanges.length, 8)))) {
+      lines.push(`- ${change}`);
+    }
+    lines.push("");
+  }
+
+  const affectedAreaCandidates = document.subject.kind === "timelineDiff"
+    ? returnedShape.flatMap((node) => node.fields)
+        .filter((field) => field.toLowerCase().startsWith("investigation area:"))
+        .map((field) => field.slice(field.indexOf(":") + 1).trim())
+    : returnedShape
+        .filter((node) => node.depth === 0)
+        .map((node) => providerDomainLabel(node.label));
+
+  const affectedAreas = affectedAreaCandidates
+    .filter((area) => area && isRecognisedInvestigationArea(area))
     .filter((value, index, values) => values.indexOf(value) === index)
     .slice(0, 10);
   if (affectedAreas.length) {
@@ -427,9 +559,11 @@ function renderCriticalOperationalChanges(document: UnderstandingDocument): stri
     lines.push("");
   }
 
-  const detailLines = renderReturnedShape(document.returnedShape);
+  const detailLines = document.subject.kind === "timelineDiff"
+    ? renderTimelineOperationalHighlights(returnedShape)
+    : renderReturnedShape(returnedShape);
   if (detailLines.length) {
-    lines.push("### Detailed provider highlights");
+    lines.push(document.subject.kind === "timelineDiff" ? "### Detailed operational highlights" : "### Detailed provider highlights");
     lines.push("");
     lines.push(...detailLines);
   }
@@ -466,7 +600,7 @@ function pushComparisonBriefing(
   document: UnderstandingDocument,
   labels: UnderstandingLabels,
 ): void {
-  pushSection(lines, "Explain", renderComparisonExplainSurface());
+  pushSection(lines, "Explain", renderComparisonExplainSurface(document));
 
   pushSection(lines, "Investigation Summary", renderInvestigationSummary(document));
 
@@ -537,7 +671,7 @@ export function renderUnderstandingDocumentMarkdown(
   lines.push(`# ${document.title}`);
   lines.push("");
   if (comparisonUnderstanding) {
-    lines.push(`> **Cross-Environment Diff Explain** · Generated by Understanding Engine **${document.engineVersion}**`);
+    lines.push(`> **${document.subject.kind === "timelineDiff" ? "Timeline Understanding Report" : "Cross-Environment Diff Explain"}** · Generated by Understanding Engine **${document.engineVersion}**`);
     lines.push("");
   }
   lines.push("## Report Information");
@@ -623,20 +757,15 @@ export function renderUnderstandingDocumentMarkdown(
     if (document.recommendations.length) {
       lines.push("- ✓ Recommended Investigation Path");
     }
-    for (const contributor of document.sourceContributors) {
+    for (const contributor of uniqueSourceContributors(document)) {
       lines.push(`- ✓ ${contributor.title}`);
     }
     lines.push("");
 
-    lines.push(`### ${labels.rawReferenceHeading}`);
+    pushCollapsedRawReference(lines, labels.rawReferenceHeading, document.rawReference, "###");
   } else {
-    lines.push(`## ${labels.rawReferenceHeading}`);
+    pushCollapsedRawReference(lines, labels.rawReferenceHeading, document.rawReference, "##");
   }
-  lines.push("");
-  lines.push(`\`\`\`${document.rawReference.language}`);
-  lines.push(document.rawReference.text);
-  lines.push("``` ".trim());
-  lines.push("");
 
   if (!comparisonUnderstanding) {
     lines.push("## Investigation Pipeline");
@@ -649,7 +778,7 @@ export function renderUnderstandingDocumentMarkdown(
     if (document.recommendations.length) {
       lines.push("- ✓ Recommendations");
     }
-    for (const contributor of document.sourceContributors) {
+    for (const contributor of uniqueSourceContributors(document)) {
       lines.push(`- ✓ ${contributor.title}`);
     }
     lines.push("");

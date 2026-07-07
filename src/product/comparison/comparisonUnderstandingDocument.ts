@@ -3,7 +3,7 @@ import type { AuditEvidenceResult } from "../audit/auditEvidenceTypes.js";
 import type { ReconstructionArtifactReference } from "../reconstruction/reconstructionArtifactReference.js";
 import type { UnderstandingComplexityLevel, UnderstandingConfidence, UnderstandingDocument, UnderstandingEvidence, UnderstandingRecommendation, UnderstandingReturnedShapeNode, UnderstandingSignal, UnderstandingTechnicalSection, UnderstandingTraversalNode } from "../understanding/understandingTypes.js";
 
-const invariant = "Narrative must never replace technical truth.";
+const invariant = "Explain assists. Evidence decides.";
 
 export interface ComparisonUnderstandingContext {
   readonly auditEvidenceResults?: readonly AuditEvidenceResult[];
@@ -327,7 +327,7 @@ export function buildComparisonUnderstandingDocument(model: ComparisonViewModel,
 
   return {
     schemaVersion: "1.0",
-    engineVersion: "v2.2",
+    engineVersion: "v2.3",
     title: `${mode} Understanding Report`,
     generatedAt: new Date().toISOString(),
     subject: {
