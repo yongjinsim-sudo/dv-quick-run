@@ -316,15 +316,15 @@ export const capabilities: readonly CapabilityInfo[] = [
 
   {
     id: "cross-environment-comparison",
-    title: "🔒 Evidence Workspace, Timeline & Reconstruction Preview",
+    title: "🔒 Evidence Workspace, Timeline Understanding & Reconstruction Preview",
     group: "Future Workflows",
-    summary: "Capture, organise, compare, audit-enrich, and understand reconstruction artifact workflows using Snapshot Library and Evidence Workspace previews.",
-    operationalUseCase: "Use this preview to understand operational drift investigation, timeline reconstruction, audit context, and reconstruction artifact handoff before unlocking real snapshot comparison workflows.",
+    summary: "Capture, organise, compare, timeline-explain, audit-enrich, and understand reconstruction artifact workflows using Snapshot Library and Evidence Workspace previews.",
+    operationalUseCase: "Use this preview to understand operational drift investigation, Timeline Understanding, audit context, and reconstruction artifact handoff before unlocking real snapshot comparison workflows.",
     howToUse: [
       "Open the Snapshot Library preview from the Hub.",
       "Use Evidence Workspace orientation to understand capture, selection, and comparison workflows.",
       "Compare DEV-MOCK and SIT-MOCK snapshots to inspect the Pro comparison surface.",
-      "Use TIMELINE-MOCK snapshots to understand timeline reconstruction and report workflows.",
+      "Use rebalanced TIMELINE-MOCK snapshots to understand Timeline Reconstruction, Timeline Understanding Markdown, and adjacent-interval investigation workflows.",
       "Upgrade to Pro to import, manage, compare, export real operational snapshots, and generate reconstruction artifacts from real evidence.",
       "Use Share Feedback when you want to send private product feedback, bugs, or workflow ideas."
     ],
@@ -454,11 +454,12 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.14.2 adds Cross Diff Explain as the first comparison-backed Explain surface.",
-  "Cross Diff Explain opens from the Reports menu and renders as Markdown Preview only, saved under the DVQR reports workspace.",
-  "The report starts with an investigation briefing: summary, confidence basis, objective, key operational changes, risks, and recommended investigation path.",
-  "Detailed technical evidence remains underneath: investigation method, evidence coverage, technical breakdown, evidence references, appendix pipeline, and raw comparison reference.",
-  "Explain assists; evidence decides. Cross Diff Explain is advisory and does not replace provider evidence, audit evidence, raw comparison data, or reconstruction review.",
+  "v0.14.3 adds Timeline Understanding Reports for multi-snapshot Timeline Reconstruction.",
+  "Timeline Understanding opens from the Timeline Reports menu and renders as Markdown Preview, saved under the DVQR reports workspace.",
+  "The report now explains strongest activity intervals, grouped operational highlights, adjacent-interval review guidance, trust posture, and evidence-backed timeline recommendations.",
+  "Free users can try the rebalanced TIMELINE-MOCK sequence to see identity, automation, metadata, relationship, choice, and environment-variable drift unfold across adjacent intervals.",
+  "v0.14.2 introduced Cross Diff Understanding as the first comparison-backed Understanding surface.",
+  "Understanding assists; evidence decides. Query, Cross Diff, and Timeline reports are advisory and do not replace provider evidence, audit evidence, raw comparison data, or reconstruction review.",
   "v0.14.1 introduced Query Understanding Reports for OData and FetchXML Explain.",
   "v0.14.0 introduced Investigation Intelligence powered by Explain Engine v2.1.",
   "v0.13.5 introduced Environment Variable Current Value Drift and DVEVM-owned .dvevm.json reconstruction artifacts.",

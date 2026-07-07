@@ -803,6 +803,85 @@ const mockSitPluginStepSnapshot: ComparisonSnapshotFile = {
   }
 };
 
+interface TimelineMockSnapshotPlan {
+  readonly identity: "DEV" | "SIT";
+  readonly operationalProfile: "DEV" | "SIT";
+  readonly entityMetadata: "DEV" | "SIT";
+  readonly environmentVariables: "DEV" | "SIT";
+  readonly pluginSteps: "DEV" | "SIT";
+}
+
+const timelineMockPlans: Record<number, TimelineMockSnapshotPlan> = {
+  // Baseline: calm DEV shape.
+  1: { identity: "DEV", operationalProfile: "DEV", entityMetadata: "DEV", environmentVariables: "DEV", pluginSteps: "DEV" },
+  // Interval 1: participation / identity drift only.
+  2: { identity: "SIT", operationalProfile: "DEV", entityMetadata: "DEV", environmentVariables: "DEV", pluginSteps: "DEV" },
+  // Interval 2: automation and operational profile drift.
+  3: { identity: "SIT", operationalProfile: "SIT", entityMetadata: "DEV", environmentVariables: "DEV", pluginSteps: "SIT" },
+  // Interval 3: metadata, relationship, and choice drift.
+  4: { identity: "SIT", operationalProfile: "SIT", entityMetadata: "SIT", environmentVariables: "DEV", pluginSteps: "SIT" },
+  // Interval 4: environment variable current-value drift.
+  5: { identity: "SIT", operationalProfile: "SIT", entityMetadata: "SIT", environmentVariables: "SIT", pluginSteps: "SIT" }
+};
+
+function buildTimelineMockSnapshots(
+  sequence: number,
+  environmentLabel: string,
+  capturedAtIso: string
+): readonly ComparisonSnapshotFile[] {
+  const plan = timelineMockPlans[sequence] ?? timelineMockPlans[1];
+  const snapshots = [
+    cloneTimelineMockSnapshot(selectMockSnapshot("IdentityParticipation", plan.identity), environmentLabel, capturedAtIso),
+    cloneTimelineMockSnapshot(selectMockSnapshot("OperationalProfile", plan.operationalProfile), environmentLabel, capturedAtIso),
+    cloneTimelineMockSnapshot(selectMockSnapshot("EntityMetadata", plan.entityMetadata), environmentLabel, capturedAtIso),
+    cloneTimelineMockSnapshot(selectMockSnapshot("EnvironmentVariableDefinitions", plan.environmentVariables), environmentLabel, capturedAtIso),
+    cloneTimelineMockSnapshot(plan.pluginSteps === "SIT" ? mockSitPluginStepSnapshot : mockDevPluginStepSnapshot, environmentLabel, capturedAtIso)
+  ];
+
+  return snapshots;
+}
+
+function selectMockSnapshot(evidenceType: string, sourceEnvironmentLabel: "DEV" | "SIT"): ComparisonSnapshotFile {
+  const snapshot = sampleSnapshots.find((candidate) => candidate.evidenceType === evidenceType
+    && candidate.environment?.label === sourceEnvironmentLabel);
+  if (!snapshot) {
+    throw new Error(`Missing mock snapshot for ${sourceEnvironmentLabel} ${evidenceType}.`);
+  }
+  return snapshot;
+}
+
+function cloneTimelineMockSnapshot(
+  snapshot: ComparisonSnapshotFile,
+  environmentLabel: string,
+  capturedAtIso: string
+): ComparisonSnapshotFile {
+  const clone = JSON.parse(JSON.stringify(snapshot)) as ComparisonSnapshotFile;
+  const cloneRecord = clone as {
+    environment?: ComparisonEnvironmentRef;
+    metadata?: { capturedAtIso?: string };
+    evidence?: { capturedAtIso?: string; entities?: Array<{ capturedAtIso?: string }> };
+  };
+
+  cloneRecord.environment = {
+    ...(clone.environment ?? {}),
+    label: environmentLabel,
+    capturedAtIso
+  };
+
+  if (cloneRecord.metadata) {
+    cloneRecord.metadata.capturedAtIso = capturedAtIso;
+  }
+
+  if (cloneRecord.evidence) {
+    cloneRecord.evidence.capturedAtIso = capturedAtIso;
+    for (const entity of cloneRecord.evidence.entities ?? []) {
+      entity.capturedAtIso = capturedAtIso;
+    }
+  }
+
+  return clone;
+}
+
 
 export const mockSnapshotRegistryEntries: readonly ComparisonSnapshotRegistryEntry[] = [
   {
@@ -916,13 +995,9 @@ export function getMockComparisonSnapshotsForEntry(entry: ComparisonSnapshotRegi
 
   if (entry.fileUri.includes("timeline-account-")) {
     const sequence = Number(entry.fileUri.match(/timeline-account-(\d+)/)?.[1] ?? "1");
-    const useDriftedShape = sequence >= 2;
     return {
-      snapshots: cloneSnapshotsForComparison([
-        ...sampleSnapshots.filter((snapshot) => snapshot.environment?.label === (useDriftedShape ? "SIT" : "DEV")),
-        useDriftedShape ? mockSitPluginStepSnapshot : mockDevPluginStepSnapshot
-      ], entry.environmentLabel),
-      trustState: sequence === 1 ? "Legacy / Unverified" : sequence === 3 ? "Modified" : "Verified"
+      snapshots: buildTimelineMockSnapshots(sequence, entry.environmentLabel, entry.capturedAtIso),
+      trustState: sequence === 1 ? "Legacy / Unverified" : sequence === 4 ? "Modified" : "Verified"
     };
   }
 

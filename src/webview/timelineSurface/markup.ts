@@ -42,6 +42,7 @@ function renderTimelineToolbar(): string {
         <button type="button" data-timeline-export-kind="findings-summary-pdf" role="menuitem">Timeline Findings Summary <span>PDF</span></button>
         <button type="button" data-timeline-export-kind="investigation-handoff-html" role="menuitem">Timeline Investigation Handoff <span>HTML</span></button>
         <button type="button" data-timeline-export-kind="investigation-handoff-pdf" role="menuitem">Timeline Investigation Handoff <span>PDF</span></button>
+        <button type="button" data-timeline-export-kind="understanding-md" role="menuitem">Timeline Understanding Report <span>MD</span></button>
       </div>
     </details>
     <a class="dvqr-timeline-action-button dvqr-timeline-action-link" href="#dvqr-timeline-interval-index">Jump to intervals</a>

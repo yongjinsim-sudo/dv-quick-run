@@ -269,7 +269,7 @@ export function buildODataQueryUnderstandingDocument(
 
   return {
     schemaVersion: "1.0",
-    engineVersion: "v2.2",
+    engineVersion: "v2.3",
     title: "DV Quick Run - Query Understanding Report",
     generatedAt: result.context.generatedAt ?? new Date().toISOString(),
     subject: {

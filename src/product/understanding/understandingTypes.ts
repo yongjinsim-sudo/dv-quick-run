@@ -10,7 +10,7 @@ export type UnderstandingComplexityLevel = "Low" | "Medium" | "High";
 
 export interface UnderstandingDocument {
   schemaVersion: UnderstandingSchemaVersion;
-  engineVersion: "v2.2";
+  engineVersion: "v2.3";
   title: string;
   generatedAt: string;
   subject: {

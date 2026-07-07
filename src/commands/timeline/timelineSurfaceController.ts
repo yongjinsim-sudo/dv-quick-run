@@ -6,8 +6,10 @@ import {
   renderTimelineFindingsSummaryReportHtml,
   renderTimelineInvestigationHandoffReportHtml,
   renderTimelineReportPdf,
+  buildTimelineUnderstandingDocument,
 } from "../../pro/timeline/index.js";
 import { renderTimelineSurfaceHtml } from "../../webview/timelineSurface/index.js";
+import { renderUnderstandingDocumentMarkdown } from "../../product/understanding/understandingMarkdownRenderer.js";
 import { queryAuditEvidence, renderAuditEvidenceResultHtml } from "../../product/audit/index.js";
 import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes.js";
 import type { CommandContext } from "../context/commandContext.js";
@@ -26,16 +28,20 @@ let timelinePanelMessageDisposable: vscode.Disposable | undefined;
 let timelineAuditEvidenceByEventId = new Map<string, AuditEvidenceResult>();
 let timelineReconstructionArtifacts: ReconstructionArtifactReference[] = [];
 
-type TimelineExportKind = "findings-summary-html" | "findings-summary-pdf" | "investigation-handoff-html" | "investigation-handoff-pdf";
+type TimelineExportKind = "findings-summary-html" | "findings-summary-pdf" | "investigation-handoff-html" | "investigation-handoff-pdf" | "understanding-md";
 
 function isTimelineExportKind(kind: string | undefined): kind is TimelineExportKind {
   return kind === "findings-summary-html"
     || kind === "findings-summary-pdf"
     || kind === "investigation-handoff-html"
-    || kind === "investigation-handoff-pdf";
+    || kind === "investigation-handoff-pdf"
+    || kind === "understanding-md";
 }
 
 function getTimelineReportFilter(kind: TimelineExportKind): Record<string, string[]> {
+  if (kind === "understanding-md") {
+    return { "Markdown": ["md"] };
+  }
   return kind.endsWith("pdf") ? { "PDF": ["pdf"] } : { "HTML": ["html"] };
 }
 
@@ -49,6 +55,8 @@ function getTimelineReportTitle(kind: TimelineExportKind): string {
       return "Save Timeline Investigation Handoff HTML";
     case "investigation-handoff-pdf":
       return "Save Timeline Investigation Handoff PDF";
+    case "understanding-md":
+      return "Generate Timeline Understanding Markdown";
   }
 }
 
@@ -62,6 +70,8 @@ function getTimelineReportSavedLabel(kind: TimelineExportKind): string {
       return "Timeline Investigation Handoff HTML";
     case "investigation-handoff-pdf":
       return "Timeline Investigation Handoff PDF";
+    case "understanding-md":
+      return "Timeline Understanding Markdown";
   }
 }
 
@@ -76,8 +86,8 @@ async function buildTimelineReportDefaultUri(timeline: TimelineReconstruction, k
   const subject = normalizeReportSegment(timeline.subject.subjectLabel ?? timeline.subject.entityLogicalName, "timeline");
   const environment = normalizeReportSegment(timeline.subject.environmentLabel, "environment");
   const timestamp = new Date().toISOString().replace(/[:.]/g, "").replace(/T/, "-").slice(0, 15);
-  const reportKind = kind.startsWith("findings") ? "timeline-findings-summary" : "timeline-investigation-handoff";
-  const extension = kind.endsWith("pdf") ? "pdf" : "html";
+  const reportKind = kind === "understanding-md" ? "timeline-understanding-report" : kind.startsWith("findings") ? "timeline-findings-summary" : "timeline-investigation-handoff";
+  const extension = kind === "understanding-md" ? "md" : kind.endsWith("pdf") ? "pdf" : "html";
   const fileName = `${timestamp}-${subject}-${environment}-${reportKind}.${extension}`;
   const workspace = await ensureSnapshotWorkspace();
   if (workspace.available && workspace.reportsRoot) {
@@ -100,6 +110,12 @@ async function readWatermarkLogoDataUri(ctx: CommandContext): Promise<string | u
 async function buildTimelineReportContent(ctx: CommandContext, timeline: TimelineReconstruction, kind: TimelineExportKind): Promise<string | Buffer> {
   const watermarkLogoDataUri = await readWatermarkLogoDataUri(ctx);
   const options = { watermarkLogoDataUri, auditEvidenceByEventId: timelineAuditEvidenceByEventId, reconstructionArtifacts: timelineReconstructionArtifacts };
+  if (kind === "understanding-md") {
+    return renderUnderstandingDocumentMarkdown(buildTimelineUnderstandingDocument(timeline, {
+      auditEvidenceResults: [...timelineAuditEvidenceByEventId.values()],
+      reconstructionArtifacts: timelineReconstructionArtifacts
+    }));
+  }
   if (kind === "findings-summary-html") {
     return renderTimelineFindingsSummaryReportHtml(buildTimelineFindingsSummaryReport(timeline, options));
   }
@@ -134,7 +150,12 @@ async function saveTimelineReport(ctx: CommandContext, timeline: TimelineReconst
   const content = await buildTimelineReportContent(ctx, timeline, kind);
   await vscode.workspace.fs.writeFile(uri, typeof content === "string" ? Buffer.from(content, "utf8") : content);
   const destination = workspace.available && workspace.reportsRoot ? "Evidence Workspace" : uri.fsPath;
-  void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getTimelineReportSavedLabel(kind)} to ${destination}.`);
+  if (kind === "understanding-md") {
+    await vscode.commands.executeCommand("markdown.showPreview", uri);
+    void vscode.window.showInformationMessage(`DV Quick Run: Timeline Understanding Report generated and opened. Saved to ${destination}.`);
+  } else {
+    void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getTimelineReportSavedLabel(kind)} to ${destination}.`);
+  }
 }
 
 export function openTimelineSurface(ctx: CommandContext, timeline: TimelineReconstruction): void {

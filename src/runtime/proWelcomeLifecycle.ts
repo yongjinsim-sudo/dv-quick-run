@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_14_2.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_14_3.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.14.2</title>
+<title>DV Quick Run v0.14.3</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,26 +122,26 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.14.2</div>
-        <h1>Cross Diff Explain</h1>
-        <p class="subtitle"><strong>Understand cross-environment drift before reading the evidence.</strong><br>Cross Diff Explain turns provider-backed comparison evidence into a briefing-first Markdown Preview that shows what changed, why it matters, how confident DVQR is, and where to investigate next.</p>
+        <div class="eyebrow">What's new in v0.14.3</div>
+        <h1>Timeline Understanding</h1>
+        <p class="subtitle"><strong>Understand how operational changes unfolded across snapshots.</strong><br>Timeline Understanding turns multi-snapshot reconstruction evidence into a briefing-first Markdown Preview that shows strongest activity intervals, grouped operational highlights, trust posture, and where to investigate next.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.14.2</div>
-          <div class="price">Cross Diff Explain</div>
-          <div class="limit">Explain assists; evidence decides: Cross Diff Explain keeps investigation interpretation, provider evidence, and raw comparison data visible together.</div>
-          <p class="recognition">The new report structure adds Investigation Summary, Confidence, Key Operational Changes, Recommended Investigation Path, Evidence Coverage, Technical Breakdown, and Appendix references while keeping reconstruction and audit context advisory.</p>
-          <span class="badge">Pro · Cross Diff Explain · Evidence-backed briefing</span>
+          <div class="eyebrow">New in v0.14.3</div>
+          <div class="price">Timeline Understanding</div>
+          <div class="limit">Explain assists; evidence decides: Timeline Understanding narrows first-observed change windows without claiming exact change time or root cause.</div>
+          <p class="recognition">The new report structure adds narrative synthesis, grouped operational highlights, adjacent-interval investigation guidance, trust posture, technical breakdown, evidence references, and collapsed raw reconstruction context.</p>
+          <span class="badge">Pro · Timeline Understanding · Evidence-backed briefing</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Understand</strong><span>Plain-English narrative with technical truth underneath</span></div>
-        <div class="price-pill"><strong>Prioritise</strong><span>See high-significance operational drift before the detailed provider breakdown</span></div>
-        <div class="price-pill"><strong>Verify</strong><span>Keep evidence coverage, technical breakdown, and raw comparison data underneath</span></div>
+        <div class="price-pill"><strong>Interpret</strong><span>Plain-English timeline interpretation with technical truth underneath</span></div>
+        <div class="price-pill"><strong>Prioritise</strong><span>Start with the strongest activity interval and high-significance grouped highlights</span></div>
+        <div class="price-pill"><strong>Verify</strong><span>Keep interval boundaries, trust posture, evidence coverage, and raw reconstruction data underneath</span></div>
         <div class="price-pill"><strong>Handoff</strong><span>Save Markdown evidence that can be previewed, versioned, and shared</span></div>
       </div>
       <div class="actions">
@@ -151,15 +151,15 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Cross Diff Explain is advisory and evidence-backed. It helps investigators understand comparison evidence without claiming root cause certainty, remediation status, or operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Timeline Understanding is advisory and evidence-backed. It helps investigators understand first-observed change windows without claiming exact change time, root cause certainty, remediation status, or operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     </section>
 
     <section class="section">
-      <div class="eyebrow">New in v0.14.2</div>
+      <div class="eyebrow">New in v0.14.3</div>
       <div class="grid">
-        <div class="card"><h3>🧠 Cross Diff Explain</h3><p>Cross-environment comparison now has a briefing-first Explain surface under the Reports menu.</p></div>
-        <div class="card"><h3>🔎 Evidence Still Decides</h3><p>The Explain briefing never replaces provider evidence, raw comparison data, audit evidence, or reconstruction review.</p></div>
-        <div class="card"><h3>📌 Investigation Path</h3><p>High-significance findings, confidence basis, affected areas, and review order appear before technical detail.</p></div>
+        <div class="card"><h3>🕒 Timeline Understanding</h3><p>Generate Timeline Understanding reports directly from Timeline Reconstruction.</p></div>
+        <div class="card"><h3>🧭 Adjacent Intervals</h3><p>The report identifies the strongest activity interval and recommends reviewing nearby intervals for setup or follow-on evidence.</p></div>
+        <div class="card"><h3>📌 Grouped Highlights</h3><p>Related timeline events are grouped into operational highlights before the detailed provider breakdown.</p></div>
         <div class="card"><h3>🗂️ Markdown Preview</h3><p>Reports open directly in preview and are saved under the DVQR reports workspace for handoff.</p></div>
       </div>
     </section>
@@ -168,8 +168,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
       <div class="eyebrow">Coming next</div>
       <div class="grid">
         <div class="card"><h3>🔬 Mini RCA Explain</h3><p>Future RCA surfaces can reuse Explain as bounded hypothesis guidance without jumping to causality.</p></div>
-        <div class="card"><h3>🕒 Timeline Understanding</h3><p>Use bounded interpretation to explain first-observed windows without overstating exact change time.</p></div>
-        <div class="card"><h3>🧩 Shared Explain Experience</h3><p>Future Explain surfaces will provide a consistent investigation briefing across Query, Cross Diff, Timeline, and Mini RCA.</p></div>
+        <div class="card"><h3>🌉 Understanding Engine</h3><p>Query, Cross Diff, and Timeline now share the same evidence-first briefing pattern.</p></div>
+        <div class="card"><h3>🧩 Shared Investigation Experience</h3><p>Future Understanding surfaces will provide a consistent investigation briefing across Audit Story, Mini RCA, and beyond.</p></div>
         <div class="card"><h3>🧰 MCP-ready Context</h3><p>Query Understanding becomes reusable semantic context for future local AI and MCP-facing investigation workflows.</p></div>
       </div>
     </section>
@@ -194,8 +194,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0141",
-    "DV Quick Run v0.14.2",
+    "dvQuickRunWelcomeV0143",
+    "DV Quick Run v0.14.3",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
