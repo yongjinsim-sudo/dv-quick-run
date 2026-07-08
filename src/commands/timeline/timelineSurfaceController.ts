@@ -10,6 +10,7 @@ import {
 } from "../../pro/timeline/index.js";
 import { renderTimelineSurfaceHtml } from "../../webview/timelineSurface/index.js";
 import { renderUnderstandingDocumentMarkdown } from "../../product/understanding/understandingMarkdownRenderer.js";
+import { buildMiniRcaReportFromTimeline, renderMiniRcaReportHtml, renderMiniRcaReportMarkdown, withMiniRcaStory } from "../../pro/miniRca/index.js";
 import { queryAuditEvidence, renderAuditEvidenceResultHtml } from "../../product/audit/index.js";
 import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes.js";
 import type { CommandContext } from "../context/commandContext.js";
@@ -28,18 +29,20 @@ let timelinePanelMessageDisposable: vscode.Disposable | undefined;
 let timelineAuditEvidenceByEventId = new Map<string, AuditEvidenceResult>();
 let timelineReconstructionArtifacts: ReconstructionArtifactReference[] = [];
 
-type TimelineExportKind = "findings-summary-html" | "findings-summary-pdf" | "investigation-handoff-html" | "investigation-handoff-pdf" | "understanding-md";
+type TimelineExportKind = "findings-summary-html" | "findings-summary-pdf" | "investigation-handoff-html" | "investigation-handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md";
 
 function isTimelineExportKind(kind: string | undefined): kind is TimelineExportKind {
   return kind === "findings-summary-html"
     || kind === "findings-summary-pdf"
     || kind === "investigation-handoff-html"
     || kind === "investigation-handoff-pdf"
-    || kind === "understanding-md";
+    || kind === "understanding-md"
+    || kind === "mini-rca-html"
+    || kind === "mini-rca-md";
 }
 
 function getTimelineReportFilter(kind: TimelineExportKind): Record<string, string[]> {
-  if (kind === "understanding-md") {
+  if (kind === "understanding-md" || kind === "mini-rca-md") {
     return { "Markdown": ["md"] };
   }
   return kind.endsWith("pdf") ? { "PDF": ["pdf"] } : { "HTML": ["html"] };
@@ -57,6 +60,10 @@ function getTimelineReportTitle(kind: TimelineExportKind): string {
       return "Save Timeline Investigation Handoff PDF";
     case "understanding-md":
       return "Generate Timeline Understanding Markdown";
+    case "mini-rca-html":
+      return "Generate Mini RCA HTML";
+    case "mini-rca-md":
+      return "Generate Mini RCA Markdown";
   }
 }
 
@@ -72,6 +79,10 @@ function getTimelineReportSavedLabel(kind: TimelineExportKind): string {
       return "Timeline Investigation Handoff PDF";
     case "understanding-md":
       return "Timeline Understanding Markdown";
+    case "mini-rca-html":
+      return "Mini RCA HTML";
+    case "mini-rca-md":
+      return "Mini RCA Markdown";
   }
 }
 
@@ -86,8 +97,8 @@ async function buildTimelineReportDefaultUri(timeline: TimelineReconstruction, k
   const subject = normalizeReportSegment(timeline.subject.subjectLabel ?? timeline.subject.entityLogicalName, "timeline");
   const environment = normalizeReportSegment(timeline.subject.environmentLabel, "environment");
   const timestamp = new Date().toISOString().replace(/[:.]/g, "").replace(/T/, "-").slice(0, 15);
-  const reportKind = kind === "understanding-md" ? "timeline-understanding-report" : kind.startsWith("findings") ? "timeline-findings-summary" : "timeline-investigation-handoff";
-  const extension = kind === "understanding-md" ? "md" : kind.endsWith("pdf") ? "pdf" : "html";
+  const reportKind = kind === "understanding-md" ? "timeline-understanding-report" : kind === "mini-rca-html" || kind === "mini-rca-md" ? "mini-rca-report" : kind.startsWith("findings") ? "timeline-findings-summary" : "timeline-investigation-handoff";
+  const extension = kind === "understanding-md" || kind === "mini-rca-md" ? "md" : kind.endsWith("pdf") ? "pdf" : "html";
   const fileName = `${timestamp}-${subject}-${environment}-${reportKind}.${extension}`;
   const workspace = await ensureSnapshotWorkspace();
   if (workspace.available && workspace.reportsRoot) {
@@ -115,6 +126,10 @@ async function buildTimelineReportContent(ctx: CommandContext, timeline: Timelin
       auditEvidenceResults: [...timelineAuditEvidenceByEventId.values()],
       reconstructionArtifacts: timelineReconstructionArtifacts
     }));
+  }
+  if (kind === "mini-rca-html" || kind === "mini-rca-md") {
+    const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline));
+    return kind === "mini-rca-html" ? renderMiniRcaReportHtml(report) : renderMiniRcaReportMarkdown(report);
   }
   if (kind === "findings-summary-html") {
     return renderTimelineFindingsSummaryReportHtml(buildTimelineFindingsSummaryReport(timeline, options));
@@ -150,9 +165,13 @@ async function saveTimelineReport(ctx: CommandContext, timeline: TimelineReconst
   const content = await buildTimelineReportContent(ctx, timeline, kind);
   await vscode.workspace.fs.writeFile(uri, typeof content === "string" ? Buffer.from(content, "utf8") : content);
   const destination = workspace.available && workspace.reportsRoot ? "Evidence Workspace" : uri.fsPath;
-  if (kind === "understanding-md") {
+  if (kind === "understanding-md" || kind === "mini-rca-md") {
     await vscode.commands.executeCommand("markdown.showPreview", uri);
-    void vscode.window.showInformationMessage(`DV Quick Run: Timeline Understanding Report generated and opened. Saved to ${destination}.`);
+    const reportLabel = kind === "mini-rca-md" ? "Mini RCA Report" : "Timeline Understanding Report";
+    void vscode.window.showInformationMessage(`DV Quick Run: ${reportLabel} generated and opened. Saved to ${destination}.`);
+  } else if (kind === "mini-rca-html") {
+    await vscode.env.openExternal(uri);
+    void vscode.window.showInformationMessage(`DV Quick Run: Mini RCA HTML generated. Saved to ${destination}.`);
   } else {
     void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getTimelineReportSavedLabel(kind)} to ${destination}.`);
   }

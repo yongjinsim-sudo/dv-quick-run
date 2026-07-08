@@ -454,9 +454,10 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.14.3 adds Timeline Understanding Reports for multi-snapshot Timeline Reconstruction.",
-  "Timeline Understanding opens from the Timeline Reports menu and renders as Markdown Preview, saved under the DVQR reports workspace.",
-  "The report now explains strongest activity intervals, grouped operational highlights, adjacent-interval review guidance, trust posture, and evidence-backed timeline recommendations.",
+  "v0.14.4 introduces Mini RCA (Experimental), a new evidence-backed operational explanation layer built on Timeline Understanding.",
+  "Mini RCA correlates available understanding into ranked operational explanations without claiming root-cause certainty, with consultant-style HTML and Markdown reports saved under the DVQR reports workspace.",
+  "The report ranks probable operational explanations, competing explanations, confidence, understanding bundle correlation, investigation gaps, and recommended next steps, with future Understanding Bundle inputs clearly identified.",
+  "v0.14.3 added Timeline Understanding Reports for multi-snapshot Timeline Reconstruction.",
   "Free users can try the rebalanced TIMELINE-MOCK sequence to see identity, automation, metadata, relationship, choice, and environment-variable drift unfold across adjacent intervals.",
   "v0.14.2 introduced Cross Diff Understanding as the first comparison-backed Understanding surface.",
   "Understanding assists; evidence decides. Query, Cross Diff, and Timeline reports are advisory and do not replace provider evidence, audit evidence, raw comparison data, or reconstruction review.",

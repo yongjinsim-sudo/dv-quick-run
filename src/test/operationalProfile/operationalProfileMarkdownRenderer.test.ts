@@ -33,8 +33,8 @@ suite("operationalProfileMarkdownRenderer", () => {
     assert.ok(!markdown.includes("High (75%)"));
     assert.ok(markdown.includes("74 relationships"));
     assert.ok(markdown.includes("Review relationship footprint"));
-    assert.ok(markdown.includes("Runtime correlation investigation"));
-    assert.ok(markdown.includes("Deployment readiness investigation"));
+    assert.ok(markdown.includes("Explain Understanding"));
+    assert.ok(markdown.includes("Mini RCA (Experimental)"));
     assert.ok(markdown.includes("347 attributes"));
     assert.ok(markdown.includes("advisory-only"));
     assert.ok(markdown.includes("not risk, health, quality, security severity, or root cause"));

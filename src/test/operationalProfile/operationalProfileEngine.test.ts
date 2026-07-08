@@ -208,15 +208,15 @@ suite("operationalProfileEngine", () => {
     const profile = buildOperationalProfile({ entityLogicalName: "contact" });
 
     assert.strictEqual(profile.futureSurfaces.length, 5);
-    assert.ok(profile.futureSurfaces.some((item) => item.id === "timelineInvestigation" && item.availability === "proRoadmap"));
-    assert.ok(profile.futureSurfaces.some((item) => item.id === "auditInvestigation" && item.availability === "proRoadmap"));
-    assert.ok(profile.futureSurfaces.some((item) => item.id === "runtimeCorrelationInvestigation" && item.availability === "proRoadmap"));
-    assert.ok(profile.futureSurfaces.some((item) => item.id === "deploymentReadinessInvestigation" && item.availability === "proRoadmap"));
-    assert.ok(profile.futureSurfaces.some((item) => item.id === "operationalBaselineInvestigation" && item.availability === "proRoadmap"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "explainUnderstanding" && item.availability === "available"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "timelineInvestigation" && item.availability === "available"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "crossEnvironmentUnderstanding" && item.availability === "proRoadmap"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "miniRcaExperimental" && item.availability === "proExperimental"));
+    assert.ok(profile.futureSurfaces.some((item) => item.id === "auditUnderstanding" && item.availability === "proRoadmap"));
 
     const futureText = profile.futureSurfaces.map((item) => `${item.label} ${item.description}`).join(" ").toLowerCase();
     assert.ok(futureText.includes("audit"));
-    assert.ok(futureText.includes("drift"));
+    assert.ok(futureText.includes("understanding"));
     assert.ok(!futureText.includes("root cause"));
     assert.ok(!futureText.includes("buy now"));
     assert.ok(!futureText.includes("upgrade now"));
