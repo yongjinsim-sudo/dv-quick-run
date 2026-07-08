@@ -1117,11 +1117,12 @@ function showCopyStatus(message) {
             const renderSurface = (surface) => {
                 const availability = String(surface?.availability || "freeRoadmap");
                 const isPro = availability === "proRoadmap";
-                const isTimeline = String(surface?.id || "") === "timelineInvestigation";
-                const badgeText = isTimeline ? "Available" : (isPro ? "Pro roadmap" : "Free roadmap");
+                const isExperimental = availability === "proExperimental";
+                const isAvailable = availability === "available" || String(surface?.id || "") === "timelineInvestigation" || String(surface?.id || "") === "explainUnderstanding";
+                const badgeText = isAvailable ? "Available" : (isExperimental ? "Pro experimental" : (isPro ? "Pro roadmap" : "Free roadmap"));
                 const tooltip = String(surface?.description || "Future investigation surface.");
                 return '<div class="profile-future-surface profile-future-surface-' + escapeAttribute(availability) + '" title="' + escapeAttribute(tooltip) + '" tabindex="0" aria-label="' + escapeAttribute((surface?.label || "Future investigation surface") + '. ' + tooltip) + '">' +
-                    '<span class="profile-future-lock" aria-hidden="true">' + (isTimeline ? '🕒' : (isPro ? '🔒' : '⏳')) + '</span>' +
+                    '<span class="profile-future-lock" aria-hidden="true">' + (isAvailable ? '✅' : (isExperimental ? '🧪' : (isPro ? '🔒' : '⏳'))) + '</span>' +
                     '<span class="profile-future-main"><span class="profile-future-label">' + escapeHtml(surface?.label || "Future investigation surface") + '</span>' +
                     '<span class="profile-future-description">' + escapeHtml(tooltip) + '</span></span>' +
                     '<span class="profile-future-badge">' + escapeHtml(badgeText) + '</span>' +
@@ -1129,9 +1130,9 @@ function showCopyStatus(message) {
             };
 
             return '<details class="profile-future-surfaces">' +
-                '<summary><span class="profile-future-icon">' + profileIconSvg("target", "Operational investigation surfaces") + '</span><span>Operational investigation surfaces</span><span class="profile-guidance-count">' + escapeHtml(String(surfaces.length)) + ' items</span></summary>' +
+                '<summary><span class="profile-future-icon">' + profileIconSvg("target", "Operational investigation surfaces") + '</span><span>Operational understanding surfaces</span><span class="profile-guidance-count">' + escapeHtml(String(surfaces.length)) + ' items</span></summary>' +
                 '<div class="profile-future-surface-list">' +
-                '<div class="profile-future-surface-intro">Timeline investigation is available from Snapshot Library for 3+ same-environment snapshots; audit, runtime, deployment, and baseline surfaces remain roadmap directions.</div>' +
+                '<div class="profile-future-surface-intro">Explain and Timeline Understanding are available today. Mini RCA is Experimental and currently Timeline Understanding-led. Future Understanding Bundle inputs can add Cross Environment, Audit, and richer Operational Profile context without changing the evidence-first report boundary.</div>' +
                 surfaces.map(renderSurface).join("") + '</div>' +
                 '</details>';
         }

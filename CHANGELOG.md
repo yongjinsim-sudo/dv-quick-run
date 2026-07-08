@@ -8,6 +8,33 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.14.4 --- Mini RCA (Experimental)
+
+This release introduces Mini RCA (Experimental), a new evidence-backed operational explanation layer built on Timeline Understanding. Mini RCA is marked **Experimental** in v0.14.4 because the first release is Timeline Understanding-led while the future Understanding Bundle will add Explain, Cross Environment, Audit, and richer Operational Profile inputs. Mini RCA is the first bounded operational correlation layer above Understanding: it consumes available timeline evidence, ranks probable operational explanations, keeps competing explanations visible, and produces consultant-style HTML/Markdown handoff reports while preserving the invariant: **Explain assists. Evidence decides.**
+
+### Added
+- Added `src/pro/miniRca` with Mini RCA report types, deterministic classifier, HTML renderer, Markdown renderer, and public exports.
+- Added experimental Mini RCA report generation from Timeline Reconstruction.
+- Added Timeline Reports menu entries for Mini RCA HTML and Mini RCA Markdown, labelled as experimental in release surfaces.
+- Added split Mini RCA confidence: Evidence, Correlation, and Recommendation.
+- Added fixed explanation categories including Automation Participation, Security Participation, Metadata Evolution, Relationship Behaviour, Choice Evolution, Environment Variables, Operational Profile, Data Shape, Configuration Drift, Mixed Contributors, and Unknown.
+- Added competing explanations so RCA output does not collapse uncertainty into a single overconfident answer.
+- Added investigation gaps and evidence-backed next-step recommendations.
+- Added consultant-style HTML report output for workable Evidence Workspace handoff.
+- Added RCA / Mini RCA marketplace keywords to package metadata.
+
+### Changed
+- Updated Welcome screen for v0.14.4 Mini RCA (Experimental).
+- Updated Hub copy for v0.14.4 Mini RCA (Experimental).
+- Updated README to include Mini RCA as the first operational correlation layer after Query, Cross Diff, and Timeline Understanding.
+- Updated extension version to `0.14.4`.
+
+### Locked invariant
+
+Mini RCA is experimental, deterministic, and evidence-backed. It suggests probable operational explanations. It does not prove exact change time, root cause certainty, remediation status, deployment correctness, or operational authority.
+
+---
+
 # DV Quick Run v0.14.3 --- Timeline Understanding Reports
 
 This release adds Timeline Understanding Reports for multi-snapshot Timeline Reconstruction. Timeline Understanding turns first-observed timeline evidence into a briefing-first Markdown Preview report that explains strongest activity intervals, grouped operational highlights, adjacent-interval investigation guidance, trust posture, evidence references, and collapsed raw reconstruction context while preserving the invariant: **Explain assists. Evidence decides.**

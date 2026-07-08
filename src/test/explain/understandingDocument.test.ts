@@ -44,7 +44,7 @@ suite("understandingDocument", () => {
     const document = buildODataQueryUnderstandingDocument(explainResult, parsed, { logicalName: "account" } as any);
     const markdown = renderUnderstandingDocumentMarkdown(document);
 
-    assert.strictEqual(document.engineVersion, "v2.2");
+    assert.strictEqual(document.engineVersion, "v2.3");
     assert.strictEqual(document.invariant, "Narrative must never replace technical truth.");
     assert.ok(markdown.includes("## Investigation Narrative"));
     assert.ok(markdown.includes("## Query Mechanics"));

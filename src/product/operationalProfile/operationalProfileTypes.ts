@@ -52,7 +52,7 @@ export interface OperationalProfileNavigationAction {
   evidenceDimensionIds: string[];
 }
 
-export type OperationalProfileFutureSurfaceAvailability = "freeRoadmap" | "proRoadmap";
+export type OperationalProfileFutureSurfaceAvailability = "available" | "freeRoadmap" | "proRoadmap" | "proExperimental";
 
 export interface OperationalProfileFutureSurface {
   id: string;

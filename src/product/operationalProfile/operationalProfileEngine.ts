@@ -271,33 +271,33 @@ function buildOperationalProfileNavigationActions(
 function buildOperationalProfileFutureSurfaces(): OperationalProfileFutureSurface[] {
   return [
     {
+      id: "explainUnderstanding",
+      label: "Explain Understanding",
+      description: "Explain execution participation and investigation mechanics for OData and FetchXML queries while preserving technical evidence references.",
+      availability: "available"
+    },
+    {
       id: "timelineInvestigation",
-      label: "Timeline investigation",
-      description: "Available from Snapshot Library for 3+ same-environment snapshots. Reconstruct first-observed drift windows and generate timeline investigation reports without treating the timeline as root-cause proof.",
+      label: "Timeline Understanding",
+      description: "Reconstruct snapshot evolution and determine first-observed investigation windows across three or more same-environment snapshots.",
+      availability: "available"
+    },
+    {
+      id: "crossEnvironmentUnderstanding",
+      label: "Cross Environment Understanding",
+      description: "Compare environments and explain operational differences using evidence-backed understanding rather than raw diffs alone.",
       availability: "proRoadmap"
     },
     {
-      id: "auditInvestigation",
-      label: "Audit investigation",
-      description: "Use available audit evidence to inspect historical change context while preserving human verification boundaries.",
-      availability: "proRoadmap"
+      id: "miniRcaExperimental",
+      label: "Mini RCA (Experimental)",
+      description: "Correlate available understanding into ranked operational explanations while preserving bounded, evidence-backed investigation.",
+      availability: "proExperimental"
     },
     {
-      id: "runtimeCorrelationInvestigation",
-      label: "Runtime correlation investigation",
-      description: "Correlate nearby runtime evidence across plugin, workflow, async, and automation participation where captured evidence supports it.",
-      availability: "proRoadmap"
-    },
-    {
-      id: "deploymentReadinessInvestigation",
-      label: "Deployment readiness investigation",
-      description: "Surface readiness signals, missing dependencies, and operational follow-up context without becoming deployment execution tooling.",
-      availability: "proRoadmap"
-    },
-    {
-      id: "operationalBaselineInvestigation",
-      label: "Operational baseline investigation",
-      description: "Compare current operational state against known baselines to preserve verification continuity and highlight drift for review.",
+      id: "auditUnderstanding",
+      label: "Audit Understanding",
+      description: "Narrow first-observed windows with audit evidence where available. Audit enriches understanding but does not prove causality.",
       availability: "proRoadmap"
     }
   ];
