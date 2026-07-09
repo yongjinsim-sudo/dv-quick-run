@@ -8,6 +8,38 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.14.5 --- Mini RCA Report Refinement & Evidence Correlation
+
+This focused release matures Mini RCA (Experimental) from a ranked explanation surface into a consultant-style investigation report. It adds Investigation Conclusion, Investigation Narrative, Investigation Reasoning, confidence labels, Understanding Bundle v1, audit-aware evidence correlation, and Confidence Model v2 while preserving the invariant: **Explain assists. Evidence decides.** Mini RCA remains deterministic, bounded, and advisory.
+
+### Added
+- Added Investigation Conclusion to Mini RCA HTML and Markdown reports with the question, leading conclusion, confidence posture, supporting evidence count, strongest competing explanation, and recommended first action.
+- Added Investigation Reasoning to show reportable deterministic evidence flow from Timeline Understanding through grouped evidence, confidence adjustment, and the Mini RCA recommendation. This is not hidden chain-of-thought.
+- Added confidence labels for Evidence, Correlation, and Recommendation confidence: Very High, High, Moderate, Low, and Very Low.
+- Added Understanding Bundle v1 to Mini RCA reports with Timeline Understanding, optional Audit Evidence Summary, optional Cross Diff, provider signals, reconstruction artifacts, and metadata.
+- Added Evidence Correlation output: supporting evidence, limiting evidence, missing evidence, competing explanations, confidence drivers, and confidence reducers.
+- Added Confidence Model v2: Confidence Strengthened By, Confidence Limited By, Missing Evidence, and What Would Increase Confidence.
+- Added audit-aware correlation semantics: when audit evidence is unavailable, reports state `Audit evidence unavailable. Confidence unchanged.`
+- Added focused Mini RCA tests for Investigation Conclusion, Investigation Reasoning, Understanding Bundle, audit-unavailable behaviour, confidence analysis, Markdown sections, and HTML sections.
+
+### Changed
+- Renamed Mini RCA report wording from Operational Story to Investigation Narrative.
+- Updated Mini RCA schema to `mini-rca-v2` and engine to `v2.0`.
+- Updated Mini RCA Markdown and HTML report layout to improve executive readability, deterministic evidence-flow visibility, evidence correlation, confidence analysis, Understanding Bundle, Investigation Gaps, Recommended Next Steps, Evidence Appendix, and Experimental Boundary.
+- Updated README, Hub, and Welcome surfaces for v0.14.5 release alignment.
+- Updated extension version to `0.14.5`.
+
+### Unchanged
+- Cross-Environment Diff behaviour is unchanged in v0.14.5.
+- Timeline Reconstruction behaviour is unchanged in v0.14.5.
+- Reconstruction artifact export behaviour is unchanged in v0.14.5.
+
+### Locked invariant
+
+Better evidence improves explanations. It never creates certainty.
+
+---
+
 # DV Quick Run v0.14.4 --- Mini RCA (Experimental)
 
 This release introduces Mini RCA (Experimental), a new evidence-backed operational explanation layer built on Timeline Understanding. Mini RCA is marked **Experimental** in v0.14.4 because the first release is Timeline Understanding-led while the future Understanding Bundle will add Explain, Cross Environment, Audit, and richer Operational Profile inputs. Mini RCA is the first bounded operational correlation layer above Understanding: it consumes available timeline evidence, ranks probable operational explanations, keeps competing explanations visible, and produces consultant-style HTML/Markdown handoff reports while preserving the invariant: **Explain assists. Evidence decides.**

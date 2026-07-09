@@ -6,21 +6,26 @@ A fast, metadata-aware Dataverse query, evidence, and operational investigation 
 
 ---
 
-## ✨ What's new in v0.14.4
+## ✨ What's new in v0.14.5
 
-DV Quick Run v0.14.4 introduces **Mini RCA (Experimental)**, a new evidence-backed operational explanation layer built on Timeline Understanding. Mini RCA correlates available understanding into ranked operational explanations without claiming root-cause certainty, with HTML and Markdown output under the DVQR reports workspace.
+DV Quick Run v0.14.5 makes **Mini RCA (Experimental)** investigation-ready through a clearer consultant-style report flow, Understanding Bundle v1, audit-aware evidence correlation, Confidence Model v2, and explicit confidence labels. It is a focused Mini RCA release: Timeline Reconstruction and Cross-Environment Diff behaviour remain unchanged.
 
-Mini RCA is marked **Experimental** in v0.14.4 because the first release is Timeline Understanding-led. The report is deterministic and evidence-backed, while future Understanding Bundle inputs such as Explain, Cross Environment, Audit, and richer Operational Profile context will improve correlation breadth.
+Mini RCA remains **Experimental** and deterministic. Audit evidence is optional: when it is unavailable, the report says `Audit evidence unavailable. Confidence unchanged.` rather than pretending the evidence exists.
 
-Mini RCA adds:
+Mini RCA v0.14.5 adds:
 
-* most probable operational explanation ranking
-* competing explanations rather than single-answer certainty
-* split Evidence / Correlation / Recommendation confidence
-* operational story narrative for handoff
-* understanding bundle correlation pipeline with future inputs clearly marked
-* investigation gaps and recommended next steps
-* HTML report output for workable evidence handoff, plus Markdown for versioned notes
+* **Investigation Conclusion**: a fast executive answer covering question, conclusion, confidence, supporting evidence, strongest competing explanation, and first action
+* **Investigation Narrative** replacing the earlier Operational Story wording for a more professional handoff tone
+* **Investigation Reasoning**: a reportable deterministic evidence-flow section, not hidden chain-of-thought
+* confidence labels across Evidence, Correlation, and Recommendation confidence: Very High, High, Moderate, Low, and Very Low
+* Understanding Bundle v1 around Timeline Understanding, optional Audit Evidence Summary, optional Cross Diff, provider signals, reconstruction artifacts, and metadata
+* Evidence Correlation with supporting, limiting, and missing evidence
+* Confidence Model v2: Strengthened By, Limited By, Missing Evidence, and What Would Increase Confidence
+* audit-aware correlation semantics without overstating certainty
+* improved Markdown and HTML report layout for consultant-style handoff
+* retained competing explanations, investigation gaps, recommendations, evidence appendix, and experimental boundary
+
+**Release boundary:** v0.14.5 refines Mini RCA reporting and correlation. It does not change Cross Diff, Timeline Reconstruction, provider comparison semantics, or reconstruction artifact export behaviour.
 
 **Experimental boundary:** **Explain assists. Evidence decides.** Mini RCA suggests probable operational explanations, but does not claim exact change time, root cause certainty, remediation status, deployment correctness, or operational authority.
 
@@ -102,42 +107,6 @@ DV Quick Run is designed around a simple loop:
 ```text
 write → run → explore → refine → investigate → reconstruct evidence → verify → hand off
 ```
-
-## 🧠 v0.14.2 — Cross Diff Explain
-
-DV Quick Run v0.14.2 introduces **Cross Diff Explain** as the first comparison-backed Explain surface.
-
-Cross Diff Explain helps investigators understand cross-environment drift before reviewing the underlying provider evidence. It turns comparison output into a briefing-first Markdown Preview that explains what changed, why it matters, how confident DVQR is, and where to investigate next.
-
-Cross Diff Explain reports include:
-
-* Explain purpose and advisory boundary
-* Investigation Summary
-* Confidence basis
-* Investigation Objective
-* Snapshot Comparison context
-* Key Operational Changes
-* Investigation Priority & Risks
-* Recommended Investigation Path
-* Investigation Method
-* Evidence Coverage
-* Technical Breakdown
-* Evidence References
-* Appendix pipeline and Raw Comparison Reference
-
-The governing rule remains:
-
-```text
-Explain assists; evidence decides.
-```
-
-Cross Diff Explain does not replace provider evidence, audit evidence, raw comparison data, reconstruction artifacts, review state, or human judgement. It helps users understand the investigation while keeping technical truth visible underneath.
-
-### v0.14.2 identity
-
-v0.14.2 moves Explain beyond query interpretation. Query Explain helps users understand a query; Cross Diff Explain helps users understand an investigation. Together, they establish Explain as DVQR's primary human-readable investigation surface, powered internally by the Understanding Engine and preserved externally as Markdown Preview evidence under the DVQR reports workspace.
-
-Future Explain surfaces can provide a consistent investigation briefing across Query, Cross Diff, Timeline, Mini RCA, and MCP-facing workflows without weakening DVQR's evidence boundaries.
 
 ## 🚀 14-day Pro Trial
 
@@ -236,154 +205,6 @@ DV Quick Run: Import Offline License
 Offline Pro is designed for restricted, disconnected, and air-gapped environments where recurring online validation is not suitable.
 
 ---
-
-## 🆕 What's New in v0.13.3
-
-v0.13.3 introduces the first **Identity Participation Reconstruction** workflow within the DV ForgeLab ecosystem.
-
-DV Quick Run can now identify eligible source-side Identity Participation Drift, generate bounded reconstruction intent artifacts, and hand those artifacts directly to DV Identity Manager for preview-first staging and explicit application.
-
-Highlights include:
-
-* DVIM reconstruction artifact export
-* source-side identity participation reconstruction candidates
-* Cross-Environment Diff DVIM export support
-* Timeline Reconstruction DVIM export support
-* Reconstruction Artifacts report sections
-* shared DV ForgeLab workspace expansion
-* workspace-first report exports
-* reusable reconstruction artifact experience
-
-DV Quick Run continues to reinforce:
-
-```text
-DVQR investigates observed evidence.
-
-DVIM reconstructs identity participation.
-
-Investigation and reconstruction remain separate concerns.
-```
-
-### Identity Participation Reconstruction
-
-Eligible Identity Participation Drift findings can now generate reconstruction intent artifacts.
-
-DV Quick Run can:
-
-* identify source-side identity participation drift
-* classify reconstruction candidates
-* generate DVIM-compatible reconstruction definitions
-* preserve source-side participation alongside investigation evidence
-* maintain investigation boundaries
-
-Behaviour:
-
-* exports are explicit and user-triggered
-* only source-side participation is exported
-* target-side additions remain observational
-* artifacts are advisory-only handoffs
-
-### DVIM Export Integration
-
-Cross-Environment Diff and Timeline Reconstruction now support:
-
-```text
-
-### Reconstruction Artifacts
-
-Eligible Column Metadata Drift findings can now generate reconstruction intent artifacts.
-
-DV Quick Run can:
-
-* identify source-side attribute drift
-* classify reconstruction candidates
-* generate DVAF-compatible reconstruction definitions
-* preserve source-side metadata alongside investigation evidence
-* maintain investigation boundaries
-
-Behaviour:
-
-* exports are explicit and user-triggered
-* only source-side definitions are exported
-* target-side additions remain observational
-* shadow/system companion attributes are blocked from export
-* artifacts are advisory-only handoffs
-
-### DVAF Export Integration
-
-Cross-Environment Diff and Timeline Reconstruction now support:
-
-```text
-Export DVAF Artifact
-```
-
-for eligible source-side Column Metadata Drift findings.
-
-Generated artifacts preserve supported source-side metadata and can be reviewed externally in DV Attribute Factory before any reconstruction activity occurs.
-
-Supported DVAF reconstruction handoff currently covers:
-
-* Text / Multiline Text
-* Whole Number / Decimal / Currency
-* Date Only / Date and Time
-* Yes/No
-* Choice / Picklist values
-* Lookup target metadata
-
-Boundary notes:
-
-* DVQR exports reconstruction intent only
-* DVAF validates, previews, and creates supported metadata
-* Global choice lifecycle management belongs to DV Choice Editor
-* DVQR does not decide the source is correct, the target is wrong, or changes should be applied
-
-### Reconstruction Artifacts in Reports
-
-Timeline and Cross-Environment reports now include Reconstruction Artifact references when exports were generated during the investigation workflow.
-
-Reports can preserve:
-
-* artifact filename
-* entity context
-* attribute context
-* reconstruction rationale
-* support status
-* export references
-
-### Workspace Expansion
-
-DV ForgeLab workspace organisation now separates investigation evidence from reconstruction intent.
-
-Example:
-
-```text
-.dvforgelab
-├─ dvaf
-│  └─ exports
-└─ dvqr
-   ├─ comparisons
-   ├─ reports
-   └─ snapshots
-```
-
-This keeps DVQR investigation artifacts and DVAF reconstruction artifacts independent while supporting ecosystem continuity.
-
-### Hub, Welcome & Quickstart Updates
-
-Updated product messaging across:
-
-* Welcome experience
-* DV Quick Run Hub
-* Evidence Workspace guidance
-* Snapshot Library guidance
-* Cross-Environment Diff and Timeline Reconstruction playbooks
-* Quickstart investigation continuity guidance
-
-The Hub now includes dedicated playbooks for:
-
-* investigating environment differences
-* reconstructing change over time
-* generating reconstruction artifacts where supported
 
 ## 🎬 Result Viewer
 

@@ -454,9 +454,10 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.14.4 introduces Mini RCA (Experimental), a new evidence-backed operational explanation layer built on Timeline Understanding.",
-  "Mini RCA correlates available understanding into ranked operational explanations without claiming root-cause certainty, with consultant-style HTML and Markdown reports saved under the DVQR reports workspace.",
-  "The report ranks probable operational explanations, competing explanations, confidence, understanding bundle correlation, investigation gaps, and recommended next steps, with future Understanding Bundle inputs clearly identified.",
+  "v0.14.5 refines Mini RCA (Experimental) into a clearer consultant-style investigation report.",
+  "Mini RCA reports now include Investigation Conclusion, Investigation Narrative, Investigation Reasoning, confidence labels, Evidence Correlation, Confidence Model v2, and Understanding Bundle v1.",
+  "Investigation Reasoning shows reportable deterministic evidence flow only; it is not hidden chain-of-thought. Explain assists; evidence decides.",
+  "Cross-Environment Diff, Timeline Reconstruction, and reconstruction artifact export behaviour are unchanged in v0.14.5.",
   "v0.14.3 added Timeline Understanding Reports for multi-snapshot Timeline Reconstruction.",
   "Free users can try the rebalanced TIMELINE-MOCK sequence to see identity, automation, metadata, relationship, choice, and environment-variable drift unfold across adjacent intervals.",
   "v0.14.2 introduced Cross Diff Understanding as the first comparison-backed Understanding surface.",
