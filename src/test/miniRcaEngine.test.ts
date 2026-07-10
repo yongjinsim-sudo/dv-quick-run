@@ -135,30 +135,30 @@ suite("miniRcaEngine", () => {
     const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline()));
 
     assert.strictEqual(report.schemaVersion, "mini-rca-v2");
-    assert.strictEqual(report.engineVersion, "v2.0");
+    assert.strictEqual(report.engineVersion, "v2.1");
     assert.ok(report.evidenceCorrelation.supportingEvidenceIds.length > 0);
     assert.ok(report.evidenceCorrelation.missingEvidence.some((item) => /Audit evidence unavailable/.test(item)));
     assert.ok(report.confidenceAnalysis.wouldIncreaseConfidence.some((item) => /audit/i.test(item)));
     assert.ok(report.operationalStory.length > 0);
   });
 
-  test("renders v0.14.5 Mini RCA Markdown and HTML report sections", () => {
+  test("renders v0.14.6 simplified Mini RCA Markdown and HTML report sections", () => {
     const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline()));
     const markdown = renderMiniRcaReportMarkdown(report);
     const html = renderMiniRcaReportHtml(report);
 
-    assert.match(markdown, /## Investigation Conclusion/);
-    assert.match(markdown, /## Investigation Narrative/);
-    assert.match(markdown, /## Investigation Reasoning/);
-    assert.match(markdown, /## Evidence Correlation/);
-    assert.match(markdown, /## Confidence Analysis/);
-    assert.match(markdown, /## Understanding Bundle/);
+    assert.match(markdown, /## Executive Summary/);
+    assert.match(markdown, /## Investigation Story/);
+    assert.match(markdown, /## Why DVQR Thinks This/);
+    assert.match(markdown, /## Evidence/);
+    assert.match(markdown, /## Recommended Next Steps/);
+    assert.match(markdown, /### Understanding Bundle v1/);
     assert.match(markdown, /## Experimental Boundary/);
-    assert.match(html, /Investigation Conclusion/);
-    assert.match(html, /Investigation Narrative/);
-    assert.match(html, /Investigation Reasoning/);
-    assert.match(html, /Evidence Correlation/);
-    assert.match(html, /Confidence Model v2/);
+    assert.match(html, /Executive Summary/);
+    assert.match(html, /Investigation Story/);
+    assert.match(html, /Why DVQR Thinks This/);
+    assert.match(html, /Supporting, missing, and confidence notes/);
+    assert.match(html, /Recommended Next Steps/);
     assert.match(html, /Understanding Bundle v1/);
   });
 });

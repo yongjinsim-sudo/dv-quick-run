@@ -6,28 +6,25 @@ A fast, metadata-aware Dataverse query, evidence, and operational investigation 
 
 ---
 
-## ✨ What's new in v0.14.5
+## ✨ What's new in v0.14.6
 
-DV Quick Run v0.14.5 makes **Mini RCA (Experimental)** investigation-ready through a clearer consultant-style report flow, Understanding Bundle v1, audit-aware evidence correlation, Confidence Model v2, and explicit confidence labels. It is a focused Mini RCA release: Timeline Reconstruction and Cross-Environment Diff behaviour remain unchanged.
+DV Quick Run v0.14.6 simplifies **Mini RCA (Experimental)** into a cleaner investigator-facing report.
 
-Mini RCA remains **Experimental** and deterministic. Audit evidence is optional: when it is unavailable, the report says `Audit evidence unavailable. Confidence unchanged.` rather than pretending the evidence exists.
+Mini RCA now opens with the information investigators need first:
 
-Mini RCA v0.14.5 adds:
+* Executive Summary
+* Investigation Story
+* Why DVQR Thinks This
+* Evidence
+* Recommended Next Steps
 
-* **Investigation Conclusion**: a fast executive answer covering question, conclusion, confidence, supporting evidence, strongest competing explanation, and first action
-* **Investigation Narrative** replacing the earlier Operational Story wording for a more professional handoff tone
-* **Investigation Reasoning**: a reportable deterministic evidence-flow section, not hidden chain-of-thought
-* confidence labels across Evidence, Correlation, and Recommendation confidence: Very High, High, Moderate, Low, and Very Low
-* Understanding Bundle v1 around Timeline Understanding, optional Audit Evidence Summary, optional Cross Diff, provider signals, reconstruction artifacts, and metadata
-* Evidence Correlation with supporting, limiting, and missing evidence
-* Confidence Model v2: Strengthened By, Limited By, Missing Evidence, and What Would Increase Confidence
-* audit-aware correlation semantics without overstating certainty
-* improved Markdown and HTML report layout for consultant-style handoff
-* retained competing explanations, investigation gaps, recommendations, evidence appendix, and experimental boundary
+Detailed Understanding Bundle and contributor information remains available in the Appendix for deeper review, handoff, and future RCA composition.
 
-**Release boundary:** v0.14.5 refines Mini RCA reporting and correlation. It does not change Cross Diff, Timeline Reconstruction, provider comparison semantics, or reconstruction artifact export behaviour.
+The release keeps the Understanding Bundle contract introduced for Mini RCA, but no longer exposes contributor internals in the main report flow. The default report is shorter, calmer, and focused on the leading operational pattern before exposing deeper bundle detail.
 
-**Experimental boundary:** **Explain assists. Evidence decides.** Mini RCA suggests probable operational explanations, but does not claim exact change time, root cause certainty, remediation status, deployment correctness, or operational authority.
+**Release boundary:** Existing Timeline Reconstruction, Cross-Environment Diff, reconstruction artifact export, provider comparison semantics, and Dataverse mutation behaviour are unchanged in v0.14.6.
+
+**Experimental boundary:** **Explain assists. Evidence decides.** Mini RCA remains advisory, deterministic, and evidence-backed. It does not prove exact change time, root-cause certainty, remediation status, deployment correctness, or operational authority.
 
 ---
 

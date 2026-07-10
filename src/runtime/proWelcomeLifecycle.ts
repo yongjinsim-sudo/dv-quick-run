@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_14_5.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_14_6.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.14.5</title>
+<title>DV Quick Run v0.14.6</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,27 +122,27 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.14.5</div>
+        <div class="eyebrow">What's new in v0.14.6</div>
         <h1>Mini RCA <span class="badge">Experimental</span></h1>
-        <p class="subtitle"><strong>Move from understanding to bounded operational explanation.</strong><br>Mini RCA now adds Investigation Conclusion, Investigation Narrative, Investigation Reasoning, confidence labels, Understanding Bundle v1, audit-aware evidence correlation, and Confidence Model v2 while staying experimental, deterministic, and evidence-backed.</p>
+        <p class="subtitle"><strong>Move from understanding to bounded operational explanation.</strong><br>Mini RCA now opens with a simpler investigator-facing report: summary, story, reasoning, evidence, and next steps. Detailed Understanding Bundle contributors remain available in the appendix.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.14.5</div>
+          <div class="eyebrow">New in v0.14.6</div>
           <div class="price">Mini RCA (Experimental)</div>
-          <div class="limit">Explain assists; evidence decides: Mini RCA suggests probable operational explanations without claiming root-cause certainty.</div>
-          <p class="recognition">The enriched report now gives a fast Investigation Conclusion, a professional Investigation Narrative, deterministic Investigation Reasoning, confidence labels, supporting evidence, limiting evidence, missing evidence, competing explanations, gaps, and next investigation steps.</p>
+          <div class="limit">A cleaner report explains the leading operational pattern first, then keeps bundle details available when you need to inspect the evidence contract.</div>
+          <p class="recognition">The default report is intentionally shorter, with confidence and contributor internals moved into collapsible appendix sections for review and handoff.</p>
           <span class="badge">Pro · Mini RCA (Experimental)</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Explain</strong><span>Plain-English operational explanation with evidence references underneath</span></div>
-        <div class="price-pill"><strong>Rank</strong><span>Start with the most probable explanation and review competing explanations</span></div>
-        <div class="price-pill"><strong>Reason</strong><span>Show deterministic evidence flow without exposing hidden chain-of-thought</span></div>
-        <div class="price-pill"><strong>Handoff</strong><span>Save HTML and Markdown Mini RCA reports under the Evidence Workspace</span></div>
+        <div class="price-pill"><strong>Summary</strong><span>Lead with conclusion, confidence, strongest competitor, and first investigation action</span></div>
+        <div class="price-pill"><strong>Explain</strong><span>Show the deterministic reasoning path without exposing every internal object by default</span></div>
+        <div class="price-pill"><strong>Evidence</strong><span>Separate supporting evidence from missing or limiting evidence in a compact section</span></div>
+        <div class="price-pill"><strong>Appendix</strong><span>Keep Understanding Bundle and contributor details available for deep review</span></div>
       </div>
       <div class="actions">
         <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
@@ -155,19 +155,19 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     </section>
 
     <section class="section">
-      <div class="eyebrow">New in v0.14.5</div>
+      <div class="eyebrow">New in v0.14.6</div>
       <div class="grid">
-        <div class="card"><h3>🕒 Mini RCA (Experimental)</h3><p>Generate enriched Mini RCA reports from Timeline Reconstruction with Understanding Bundle v1.</p></div>
-        <div class="card"><h3>✅ Investigation Conclusion</h3><p>Start with the question, leading conclusion, confidence posture, supporting evidence count, strongest competing explanation, and first action.</p></div>
-        <div class="card"><h3>🧭 Investigation Reasoning</h3><p>Show deterministic evidence flow from grouped evidence to recommendation without exposing hidden chain-of-thought.</p></div>
-        <div class="card"><h3>📌 Confidence Labels</h3><p>Evidence, Correlation, and Recommendation confidence now include readable labels such as Low, High, and Very High.</p></div>
+        <div class="card"><h3>🧭 Executive Summary</h3><p>The report now starts with the leading explanation, confidence, supporting evidence count, strongest competitor, and first action.</p></div>
+        <div class="card"><h3>📖 Investigation Story</h3><p>Mini RCA keeps the plain-English narrative near the top so users can understand the pattern before reading details.</p></div>
+        <div class="card"><h3>🔎 Why DVQR Thinks This</h3><p>The deterministic reasoning path remains visible, but deeper bundle internals are no longer pushed into the main flow.</p></div>
+        <div class="card"><h3>📎 Appendix Details</h3><p>Understanding Bundle availability, contributor confidence, correlation summary, and evidence appendix remain available for deep review.</p></div>
       </div>
     </section>
 
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🔬 Understanding Bundle Inputs</h3><p>Future releases can attach richer Explain, Cross Environment, Audit, and Operational Profile inputs to the same Mini RCA seam. Cross Diff behaviour itself is unchanged in v0.14.5.</p></div>
+        <div class="card"><h3>🔬 Understanding Bundle Inputs</h3><p>Future releases can deepen each contributor independently while Mini RCA continues to consume the same bundle contract. Cross Diff behaviour itself is unchanged in v0.14.6.</p></div>
         <div class="card"><h3>🌉 Understanding Engine</h3><p>Query, Cross Diff, Timeline, and Mini RCA now follow the evidence-first briefing pattern.</p></div>
         <div class="card"><h3>🧩 Shared Investigation Experience</h3><p>Future RCA surfaces can compose more understanding bundles without changing the evidence-first report boundary.</p></div>
         <div class="card"><h3>🧰 MCP-ready Context</h3><p>Mini RCA creates an MCP-ready operational explanation seam while staying deterministic and local-first.</p></div>
@@ -194,8 +194,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0144",
-    "DV Quick Run v0.14.5",
+    "dvQuickRunWelcomeV0146",
+    "DV Quick Run v0.14.6",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
