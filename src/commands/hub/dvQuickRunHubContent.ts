@@ -409,7 +409,7 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
   { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded reconstruction artifacts to focused companion utilities: DVAF for attributes, DVIM for identity participation, DVCE for choices, and DVEVM for environment variables." },
   { title: "Future persistence and collaboration", summary: "Longer-term hosted work may preserve investigations for replay and handoff, but not as autonomous orchestration." },
-  { title: "Evidence Workspace", summary: "Local workspace-backed evidence capture gives investigations a Git-friendly home without turning DVQR into Git tooling or hosted persistence." },
+  { title: "Evidence Workspace", summary: "Local workspace-backed evidence capture and Snapshot Library workflows give investigations a Git-friendly home without turning DVQR into Git tooling or hosted persistence." },
   { title: "Timeline Reconstruction and operational comparison", summary: "Timeline Reconstruction is available for same-environment snapshot sequences, while broader comparison remains bounded to drift investigation without remediation or deployment tooling." },
   { title: "Reconstruction Artifacts", summary: "Generate source-side DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts from eligible drift while keeping DVQR observational and companion utilities responsible for validation, preview, and apply." }
 ];
@@ -454,15 +454,16 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.14.5 refines Mini RCA (Experimental) into a clearer consultant-style investigation report.",
-  "Mini RCA reports now include Investigation Conclusion, Investigation Narrative, Investigation Reasoning, confidence labels, Evidence Correlation, Confidence Model v2, and Understanding Bundle v1.",
-  "Investigation Reasoning shows reportable deterministic evidence flow only; it is not hidden chain-of-thought. Explain assists; evidence decides.",
-  "Cross-Environment Diff, Timeline Reconstruction, and reconstruction artifact export behaviour are unchanged in v0.14.5.",
+  "v0.14.6 refines Mini RCA into a cleaner investigator-focused report while keeping the Understanding Bundle contract in the appendix.",
+  "Mini RCA now leads with Executive Summary, Investigation Story, Why DVQR Thinks This, Evidence, and Recommended Next Steps.",
+  "Detailed Understanding Bundle information now appears in the Appendix so the main investigation stays focused.",
+  "Existing Timeline Reconstruction, Cross-Environment Diff, and reconstruction workflows are unchanged in v0.14.6.",
+  "v0.14.5 refined Mini RCA into a clearer consultant-style investigation report with Investigation Conclusion, Investigation Narrative, Investigation Reasoning, Evidence Correlation, and Confidence Model v2.",
   "v0.14.3 added Timeline Understanding Reports for multi-snapshot Timeline Reconstruction.",
-  "Free users can try the rebalanced TIMELINE-MOCK sequence to see identity, automation, metadata, relationship, choice, and environment-variable drift unfold across adjacent intervals.",
+  "Free users can explore Timeline Reconstruction using the built-in TIMELINE-MOCK investigation sequence.",
   "v0.14.2 introduced Cross Diff Understanding as the first comparison-backed Understanding surface.",
-  "Understanding assists; evidence decides. Query, Cross Diff, and Timeline reports are advisory and do not replace provider evidence, audit evidence, raw comparison data, or reconstruction review.",
-  "v0.14.1 introduced Query Understanding Reports for OData and FetchXML Explain.",
+  "Explain assists. Evidence decides. Investigation reports remain advisory and evidence-backed.",
+  "v0.14.1 refined Explain Reports for OData and FetchXML.",
   "v0.14.0 introduced Investigation Intelligence powered by Explain Engine v2.1.",
   "v0.13.5 introduced Environment Variable Current Value Drift and DVEVM-owned .dvevm.json reconstruction artifacts.",
   "v0.13.4 introduced Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
@@ -470,7 +471,6 @@ export const whatsNew: readonly string[] = [
   "Inline Check Audit Evidence actions query Dataverse audit history inside snapshot-bounded investigation windows.",
   "Audit payload interpretation remains experimental; audit evidence enriches investigation context but does not establish causality, deployment correctness, remediation status, or operational authority.",
   "v0.13.0 introduced Timeline Reconstruction for 3+ same-environment snapshots, with timeline graph, first-observed windows, and Timeline Findings/Handoff reports.",
-  "Free users can try the timeline workflow with built-in TIMELINE-MOCK snapshots from Snapshot Library.",
   "Evidence Workspace now uses the DV ForgeLab family workspace model for DVQR evidence and companion utility reconstruction artifacts.",
   "DV Quick Run investigates. DV ForgeLab utilities reconstruct. Investigation and reconstruction remain separate concerns. Companion utilities are available at dvforgelab.com/products."
 ];

@@ -8,6 +8,38 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.14.6 --- Simplified Mini RCA Report & Understanding Bundle Appendix
+
+This release simplifies Mini RCA (Experimental) into a clearer investigator-facing report. The main report now focuses on summary, investigation story, deterministic reasoning, evidence, and recommended next steps, while detailed Understanding Bundle contributor information remains available in the appendix.
+
+### Added
+- Added a cleaner Mini RCA Markdown and HTML report structure centred on the investigator's reading flow.
+- Added clearer Executive Summary, Investigation Story, Why DVQR Thinks This, Evidence, and Recommended Next Steps sections.
+- Added collapsible Appendix sections for Understanding Bundle details and supporting evidence review in HTML reports.
+- Added report copy that keeps the leading operational explanation visible before exposing contributor internals.
+
+### Changed
+- Moved Understanding Bundle availability, contributor confidence, correlation summary, legacy input details, and detailed evidence appendix content into the Appendix.
+- Reduced default Mini RCA report noise by hiding engineering-heavy contributor internals from the main flow.
+- Updated Mini RCA engine to `v2.1` while preserving schema `mini-rca-v2`.
+- Updated Hub and Welcome surfaces for the cleaner Mini RCA report experience.
+- Updated README and changelog wording to describe v0.14.6 as a Mini RCA simplification and appendix polish release.
+- Updated extension version to `0.14.6`.
+
+### Unchanged
+- Cross-Environment Diff behaviour is unchanged in v0.14.6.
+- Timeline Reconstruction behaviour is unchanged in v0.14.6.
+- Reconstruction artifact export behaviour is unchanged in v0.14.6.
+- Provider comparison semantics are unchanged in v0.14.6.
+- Dataverse mutation behaviour is unchanged in v0.14.6.
+- Mini RCA remains Experimental, deterministic, advisory, and evidence-backed.
+
+### Locked invariant
+
+Explain assists. Evidence decides.
+
+---
+
 # DV Quick Run v0.14.5 --- Mini RCA Report Refinement & Evidence Correlation
 
 This focused release matures Mini RCA (Experimental) from a ranked explanation surface into a consultant-style investigation report. It adds Investigation Conclusion, Investigation Narrative, Investigation Reasoning, confidence labels, Understanding Bundle v1, audit-aware evidence correlation, and Confidence Model v2 while preserving the invariant: **Explain assists. Evidence decides.** Mini RCA remains deterministic, bounded, and advisory.
