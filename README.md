@@ -6,25 +6,35 @@ A fast, metadata-aware Dataverse query, evidence, and operational investigation 
 
 ---
 
-## ✨ What's new in v0.14.6
+## ✨ What's new in v0.14.7
 
-DV Quick Run v0.14.6 simplifies **Mini RCA (Experimental)** into a cleaner investigator-facing report.
+DV Quick Run v0.14.7 introduces **Evidence Correlation v1** for **Mini RCA (Experimental)**.
 
-Mini RCA now opens with the information investigators need first:
+Mini RCA can now explain how existing evidence relates through a deterministic, closed relationship vocabulary:
 
-* Executive Summary
-* Investigation Story
-* Why DVQR Thinks This
-* Evidence
-* Recommended Next Steps
+* `supports`
+* `reinforces`
+* `limits`
+* `contradicts`
+* `missing`
+* `neutral`
 
-Detailed Understanding Bundle and contributor information remains available in the Appendix for deeper review, handoff, and future RCA composition.
+The report now includes:
 
-The release keeps the Understanding Bundle contract introduced for Mini RCA, but no longer exposes contributor internals in the main report flow. The default report is shorter, calmer, and focused on the leading operational pattern before exposing deeper bundle detail.
+* a first-class **Evidence Correlation** section;
+* graph-driven **Evidence Relationships** in the Understanding Bundle appendix;
+* contributor availability counts;
+* consistent relationship semantics and visual treatment;
+* a responsive two-column Supporting Evidence Appendix;
+* stable, deterministic ordering and relationship deduplication.
 
-**Release boundary:** Existing Timeline Reconstruction, Cross-Environment Diff, reconstruction artifact export, provider comparison semantics, and Dataverse mutation behaviour are unchanged in v0.14.6.
+Evidence remains immutable and provider-owned. Correlation interprets relationships between existing evidence; it does not create evidence, infer causation, validate deployments, prove remediation, or replace engineering judgement.
 
-**Experimental boundary:** **Explain assists. Evidence decides.** Mini RCA remains advisory, deterministic, and evidence-backed. It does not prove exact change time, root-cause certainty, remediation status, deployment correctness, or operational authority.
+**Report flow:** Executive Summary → Investigation Story → Why DVQR Thinks This → Leading and Competing Explanations → Evidence Correlation → Supporting and Missing Evidence → Confidence Notes → Recommended Next Steps → Understanding Bundle → Supporting Evidence Appendix → Experimental Boundary.
+
+**Release boundary:** Existing Timeline Reconstruction, Cross-Environment Diff, reconstruction artifact export, provider comparison semantics, and Dataverse mutation behaviour are unchanged in v0.14.7.
+
+**Locked invariant:** **Explain assists. Evidence decides. Correlation connects evidence. Humans retain operational authority.**
 
 ---
 
@@ -72,7 +82,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * generate Query Understanding Reports that preserve both investigation narrative and technical breakdown
 * open Cross Diff Understanding to understand cross-environment drift before reviewing provider evidence
 * open Timeline Understanding to interpret multi-snapshot change windows, grouped operational highlights, trust posture, and adjacent-interval investigation guidance
-* generate experimental Mini RCA reports that rank probable operational explanations, competing explanations, confidence, investigation gaps, and recommended next steps
+* generate experimental Mini RCA reports that rank probable operational explanations, correlate existing evidence through deterministic relationship rules, preserve competing explanations, explain confidence limits, and recommend bounded next steps
 * inspect results in a table or JSON view
 * refine queries safely using preview-first workflows
 * update records using Smart PATCH
@@ -87,7 +97,7 @@ Instead of switching between Postman, browser tabs, maker portals, Excel, and ma
 * continue investigation from comparison evidence using bounded inline pivots
 * reconstruct first-observed operational drift across 3+ same-environment snapshots
 * generate Timeline Understanding reports that identify strongest activity intervals without claiming exact change time or root cause
-* generate experimental Mini RCA HTML/Markdown reports from timeline evidence without claiming root-cause certainty
+* generate experimental Mini RCA HTML/Markdown reports with Evidence Correlation, Evidence Relationships, contributor confidence, and grouped supporting evidence without claiming root-cause certainty
 * enrich Timeline Reconstruction and Cross-Environment Diff findings with snapshot-bounded Dataverse audit evidence
 * export DVAF reconstruction artifacts from eligible Column Metadata Drift, DVIM identity participation artifacts, DVCE choice reconstruction artifacts, and DVEVM environment variable artifacts from eligible Environment Variable Current Value Drift findings
 * preserve Reconstruction Artifact references in Timeline and Cross-Environment reports
