@@ -454,24 +454,15 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.14.6 refines Mini RCA into a cleaner investigator-focused report while keeping the Understanding Bundle contract in the appendix.",
-  "Mini RCA now leads with Executive Summary, Investigation Story, Why DVQR Thinks This, Evidence, and Recommended Next Steps.",
-  "Detailed Understanding Bundle information now appears in the Appendix so the main investigation stays focused.",
-  "Existing Timeline Reconstruction, Cross-Environment Diff, and reconstruction workflows are unchanged in v0.14.6.",
-  "v0.14.5 refined Mini RCA into a clearer consultant-style investigation report with Investigation Conclusion, Investigation Narrative, Investigation Reasoning, Evidence Correlation, and Confidence Model v2.",
-  "v0.14.3 added Timeline Understanding Reports for multi-snapshot Timeline Reconstruction.",
-  "Free users can explore Timeline Reconstruction using the built-in TIMELINE-MOCK investigation sequence.",
-  "v0.14.2 introduced Cross Diff Understanding as the first comparison-backed Understanding surface.",
-  "Explain assists. Evidence decides. Investigation reports remain advisory and evidence-backed.",
-  "v0.14.1 refined Explain Reports for OData and FetchXML.",
-  "v0.14.0 introduced Investigation Intelligence powered by Explain Engine v2.1.",
-  "v0.13.5 introduced Environment Variable Current Value Drift and DVEVM-owned .dvevm.json reconstruction artifacts.",
-  "v0.13.4 introduced Choice Reconstruction Artifact export for eligible option-level Choice Metadata Drift findings.",
-  "v0.13.1 introduced Audit Evidence Enrichment for Timeline Reconstruction and Cross Environment Diff findings.",
-  "Inline Check Audit Evidence actions query Dataverse audit history inside snapshot-bounded investigation windows.",
-  "Audit payload interpretation remains experimental; audit evidence enriches investigation context but does not establish causality, deployment correctness, remediation status, or operational authority.",
-  "v0.13.0 introduced Timeline Reconstruction for 3+ same-environment snapshots, with timeline graph, first-observed windows, and Timeline Findings/Handoff reports.",
-  "Evidence Workspace now uses the DV ForgeLab family workspace model for DVQR evidence and companion utility reconstruction artifacts.",
+  "v0.14.7 introduces deterministic Evidence Correlation v1 for Mini RCA.",
+  "Evidence relationships now show how existing findings support, reinforce, limit, contradict, or remain missing or neutral without creating new evidence or asserting causation.",
+  "Mini RCA reports now include a first-class Evidence Correlation section, an Evidence Relationships appendix, contributor availability counts, and a responsive two-column Supporting Evidence Appendix.",
+  "Relationship cards use consistent semantic treatment for supporting, limiting, missing, conflicting, and neutral relationships.",
+  "The Understanding Bundle remains the stable investigation contract for Timeline, Audit, Metadata, Identity, Relationship, Configuration, Cross Diff, and Query contributors.",
+  "Existing Timeline Reconstruction, Cross-Environment Diff, reconstruction workflows, provider comparison semantics, and Dataverse mutation behaviour are unchanged in v0.14.7.",
+  "Explain assists. Evidence decides. Correlation connects evidence; it does not prove causation.",
+  "v0.14.6 simplified the Mini RCA report and moved detailed contributor internals into the appendix.",
+  "v0.14.5 introduced Understanding Bundle v1, evidence-aware confidence, and consultant-style Mini RCA reporting.",
   "DV Quick Run investigates. DV ForgeLab utilities reconstruct. Investigation and reconstruction remain separate concerns. Companion utilities are available at dvforgelab.com/products."
 ];
 

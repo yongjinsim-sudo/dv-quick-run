@@ -142,7 +142,27 @@ suite("miniRcaEngine", () => {
     assert.ok(report.operationalStory.length > 0);
   });
 
-  test("renders v0.14.6 simplified Mini RCA Markdown and HTML report sections", () => {
+  test("builds deterministic Evidence Correlation Graph v1 without mutating evidence", () => {
+    const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline()));
+
+    assert.strictEqual(report.correlationGraph.version, "evidence-correlation-v1");
+    assert.strictEqual(report.correlationGraph.metadata.deterministic, true);
+    assert.strictEqual(report.correlationGraph.metadata.evidenceImmutable, true);
+    assert.ok(report.correlationGraph.nodes.some((node) => node.kind === "evidence" && node.evidenceReferenceId === "timeline-1"));
+    assert.ok(report.correlationGraph.edges.some((edge) => edge.relationship === "missing" && /audit/.test(edge.targetNodeId)));
+    assert.deepStrictEqual(report.evidence.map((item) => item.id), ["timeline-1", "timeline-2"]);
+  });
+
+  test("renders Evidence Correlation Graph v1 in the Mini RCA appendix", () => {
+    const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline()));
+    const markdown = renderMiniRcaReportMarkdown(report);
+
+    assert.match(markdown, /### Evidence Correlation Graph v1/);
+    assert.match(markdown, /Graph version: evidence-correlation-v1/);
+    assert.match(markdown, /Evidence immutable: yes/);
+  });
+
+  test("renders v0.14.7 Evidence Relationships and two-column Mini RCA report sections", () => {
     const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline()));
     const markdown = renderMiniRcaReportMarkdown(report);
     const html = renderMiniRcaReportHtml(report);
@@ -150,15 +170,26 @@ suite("miniRcaEngine", () => {
     assert.match(markdown, /## Executive Summary/);
     assert.match(markdown, /## Investigation Story/);
     assert.match(markdown, /## Why DVQR Thinks This/);
+    assert.match(markdown, /## Evidence Correlation/);
+    assert.match(markdown, /correlation connects existing evidence; it does not create evidence or assert causation/i);
     assert.match(markdown, /## Evidence/);
     assert.match(markdown, /## Recommended Next Steps/);
     assert.match(markdown, /### Understanding Bundle v1/);
+    assert.match(markdown, /### Evidence Relationships/);
+    assert.match(markdown, /Available \(\d+\):/);
     assert.match(markdown, /## Experimental Boundary/);
     assert.match(html, /Executive Summary/);
     assert.match(html, /Investigation Story/);
     assert.match(html, /Why DVQR Thinks This/);
+    assert.match(html, /How the available evidence relates/);
+    assert.match(html, /correlation-cards/);
+    assert.match(html, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
     assert.match(html, /Supporting, missing, and confidence notes/);
     assert.match(html, /Recommended Next Steps/);
     assert.match(html, /Understanding Bundle v1/);
+    assert.match(html, /Understanding Bundle Contract v0\.14\.7/);
+    assert.match(html, /Evidence Relationships/);
+    assert.match(html, /relationship-flow-grid/);
+    assert.doesNotMatch(html, /<h2 style="margin-top:24px">Correlation Summary<\/h2>/);
   });
 });

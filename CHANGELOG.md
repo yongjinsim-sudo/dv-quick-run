@@ -8,6 +8,41 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.14.7 --- Evidence Correlation v1
+
+This release introduces a deterministic evidence-correlation layer for Mini RCA. It connects existing evidence through a canonical graph without creating evidence, changing provider ownership, or asserting causation.
+
+### Added
+- Added canonical `evidence-correlation-v1` graph output with immutable evidence nodes and deterministic typed edges.
+- Added the closed relationship vocabulary: `supports`, `reinforces`, `limits`, `contradicts`, `missing`, and `neutral`.
+- Added a first-class Evidence Correlation section to Mini RCA HTML and Markdown reports.
+- Added graph-driven Evidence Relationships to the Understanding Bundle appendix.
+- Added relationship summary counts, explicit missing/not-applicable relationships, stable ordering, and duplicate-edge prevention.
+- Added contributor availability counts for available, unavailable, and not-applicable Understanding contributors.
+
+### Changed
+- Improved relationship explanations to use natural investigator language while retaining deterministic rule identifiers in technical output.
+- Replaced the legacy list-based appendix Correlation Summary with Evidence Relationships.
+- Updated relationship cards and summary chips with consistent supporting, limiting, conflicting, missing, and neutral semantics.
+- Changed Supporting Evidence and contributor summary cards to a responsive two-column layout.
+- Updated the visible Understanding Bundle contract label to `v0.14.7`.
+- Updated Hub, Welcome, README, and release documentation for Evidence Correlation v1.
+- Updated extension version to `0.14.7`.
+
+### Unchanged
+- Evidence remains immutable and provider-owned.
+- Correlation does not create evidence or infer causation.
+- Cross-Environment Diff behaviour is unchanged in v0.14.7.
+- Timeline Reconstruction behaviour is unchanged in v0.14.7.
+- Reconstruction artifact export behaviour is unchanged in v0.14.7.
+- Provider comparison semantics and Dataverse mutation behaviour are unchanged in v0.14.7.
+
+### Locked invariant
+
+Explain assists. Evidence decides. Correlation connects evidence. Humans retain operational authority.
+
+---
+
 # DV Quick Run v0.14.6 --- Simplified Mini RCA Report & Understanding Bundle Appendix
 
 This release simplifies Mini RCA (Experimental) into a clearer investigator-facing report. The main report now focuses on summary, investigation story, deterministic reasoning, evidence, and recommended next steps, while detailed Understanding Bundle contributor information remains available in the appendix.
