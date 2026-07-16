@@ -107,6 +107,44 @@ function renderAuditRecord(record: AuditEvidenceResult["records"][number]): stri
       </article>`;
 }
 
+
+function classifyAuditError(message: string): { status: string; summary: string } {
+  const normalised = message.toLowerCase();
+  if (normalised.includes("403") || normalised.includes("forbidden") || normalised.includes("does not have prvreadrecordaudit") || normalised.includes("missing prvreadrecordaudit")) {
+    return {
+      status: "403 Forbidden",
+      summary: "The current Dataverse identity does not have permission to read Audit records for this lookup."
+    };
+  }
+  if (normalised.includes("401") || normalised.includes("unauthorized")) {
+    return {
+      status: "401 Unauthorized",
+      summary: "Dataverse rejected the audit lookup because the current identity could not be authenticated for this request."
+    };
+  }
+  return {
+    status: "Request failed",
+    summary: "DVQR could not retrieve Dataverse Audit evidence for this lookup."
+  };
+}
+
+export function renderAuditEvidenceErrorHtml(error: unknown, capturedEvidenceLabel: string): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const classification = classifyAuditError(message);
+  return `<div class="dvqr-audit-result dvqr-audit-result-error">
+    <strong>Audit evidence unavailable</strong>
+    <dl class="dvqr-audit-error-summary">
+      <dt>Status</dt><dd>${escapeHtml(classification.status)}</dd>
+      <dt>Reason</dt><dd>${escapeHtml(classification.summary)}</dd>
+    </dl>
+    <p class="dvqr-audit-boundary">${escapeHtml(capturedEvidenceLabel)} remains available. Audit evidence enriches findings only when available.</p>
+    <details class="dvqr-audit-technical-details">
+      <summary>Show technical details</summary>
+      <pre><code>${escapeHtml(message)}</code></pre>
+    </details>
+  </div>`;
+}
+
 export function renderAuditEvidenceResultHtml(result: AuditEvidenceResult): string {
   const statusClass = result.status.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const records = result.records.length > 0

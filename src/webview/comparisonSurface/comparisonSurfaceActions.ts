@@ -13,6 +13,8 @@ export function renderToolbar(options: ComparisonSurfaceRenderOptions = {}): str
       <div class="dvqr-report-menu-panel" role="menu" aria-label="Export reports">
         <span class="dvqr-report-menu-heading">Investigation reports</span>
         <button type="button" class="dvqr-report-menu-item" data-export-kind="understanding-md" role="menuitem">Understanding Report <span>MD${reportSuffix}</span></button>
+        <button type="button" class="dvqr-report-menu-item" data-export-kind="mini-rca-html" role="menuitem">Mini RCA Report <span>HTML${reportSuffix}</span></button>
+        <button type="button" class="dvqr-report-menu-item" data-export-kind="mini-rca-md" role="menuitem">Mini RCA Report <span>MD${reportSuffix}</span></button>
         <button type="button" class="dvqr-report-menu-item" data-export-kind="summary-html" role="menuitem">Diff Findings Summary <span>HTML${reportSuffix}</span></button>
         <button type="button" class="dvqr-report-menu-item" data-export-kind="summary-pdf" role="menuitem">Diff Findings Summary <span>PDF${reportSuffix}</span></button>
         <button type="button" class="dvqr-report-menu-item" data-export-kind="handoff-html" role="menuitem">Investigation Handoff <span>HTML${reportSuffix}</span></button>

@@ -6,37 +6,11 @@ A fast, metadata-aware Dataverse query, evidence, and operational investigation 
 
 ---
 
-## ✨ What's new in v0.14.7
+## ✨ What's new in v0.15.0
 
-DV Quick Run v0.14.7 introduces **Evidence Correlation v1** for **Mini RCA (Experimental)**.
+DV Quick Run v0.15.0 introduces **Cross-Diff Bundle Input for Mini RCA (Experimental)** through the versioned `investigation-input-v1` boundary.
 
-Mini RCA can now explain how existing evidence relates through a deterministic, closed relationship vocabulary:
-
-* `supports`
-* `reinforces`
-* `limits`
-* `contradicts`
-* `missing`
-* `neutral`
-
-The report now includes:
-
-* a first-class **Evidence Correlation** section;
-* graph-driven **Evidence Relationships** in the Understanding Bundle appendix;
-* contributor availability counts;
-* consistent relationship semantics and visual treatment;
-* a responsive two-column Supporting Evidence Appendix;
-* stable, deterministic ordering and relationship deduplication.
-
-Evidence remains immutable and provider-owned. Correlation interprets relationships between existing evidence; it does not create evidence, infer causation, validate deployments, prove remediation, or replace engineering judgement.
-
-**Report flow:** Executive Summary → Investigation Story → Why DVQR Thinks This → Leading and Competing Explanations → Evidence Correlation → Supporting and Missing Evidence → Confidence Notes → Recommended Next Steps → Understanding Bundle → Supporting Evidence Appendix → Experimental Boundary.
-
-**Release boundary:** Existing Timeline Reconstruction, Cross-Environment Diff, reconstruction artifact export, provider comparison semantics, and Dataverse mutation behaviour are unchanged in v0.14.7.
-
-**Locked invariant:** **Explain assists. Evidence decides. Correlation connects evidence. Humans retain operational authority.**
-
----
+Cross-Environment Diff reports can now generate deterministic Mini RCA HTML and Markdown without rerunning the comparison or coupling Mini RCA to Cross-Diff internals. v0.15.0 adds first-class non-dominant outcomes, evidence-owning Automation and Operational Profile contributors, sparse-input handling, provider-execution awareness, calibrated correlation coverage, and source/target-preserving report semantics. Mini RCA remains advisory: differences and participation do not prove causality, runtime impact, deployment correctness, or remediation authority.
 
 ## 🌐 Website & Interactive Demo
 

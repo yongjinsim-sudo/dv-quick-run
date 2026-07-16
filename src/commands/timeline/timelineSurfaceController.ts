@@ -11,7 +11,7 @@ import {
 import { renderTimelineSurfaceHtml } from "../../webview/timelineSurface/index.js";
 import { renderUnderstandingDocumentMarkdown } from "../../product/understanding/understandingMarkdownRenderer.js";
 import { buildMiniRcaReportFromTimeline, renderMiniRcaReportHtml, renderMiniRcaReportMarkdown, withMiniRcaStory } from "../../pro/miniRca/index.js";
-import { queryAuditEvidence, renderAuditEvidenceResultHtml } from "../../product/audit/index.js";
+import { queryAuditEvidence, renderAuditEvidenceErrorHtml, renderAuditEvidenceResultHtml } from "../../product/audit/index.js";
 import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { ensureSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
@@ -241,13 +241,12 @@ function registerTimelineMessageHandler(ctx: CommandContext, timeline: TimelineR
           });
         })
         .catch((error: unknown) => {
-          const messageText = error instanceof Error ? error.message : String(error);
           void timelinePanel?.webview.postMessage({
             type: "timelineAuditEvidenceResult",
             eventId: request.eventId,
             auditKey: request.auditKey,
             status: "Error",
-            html: `<div class="dvqr-audit-result dvqr-audit-result-error"><strong>Audit evidence unavailable</strong><p>${messageText}</p><p class="dvqr-audit-boundary">Captured timeline evidence remains available. Audit evidence enriches findings only when available.</p></div>`
+            html: renderAuditEvidenceErrorHtml(error, "Captured timeline evidence")
           });
         });
       return;

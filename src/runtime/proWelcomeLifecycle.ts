@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.14.7</title>
+<title>DV Quick Run v0.15.0</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,7 +122,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.14.7</div>
+        <div class="eyebrow">What's new in v0.15.0</div>
         <h1>Mini RCA <span class="badge">Experimental</span></h1>
         <p class="subtitle"><strong>See how deterministic investigation evidence relates.</strong><br>Mini RCA now connects existing findings through explicit Evidence Correlation rules while preserving evidence ownership, bounded interpretation, and human operational authority.</p>
       </div>
@@ -131,7 +131,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.14.7</div>
+          <div class="eyebrow">New in v0.15.0</div>
           <div class="price">Mini RCA (Experimental)</div>
           <div class="limit">Evidence Correlation shows which findings support, reinforce, limit, contradict, or remain missing or neutral.</div>
           <p class="recognition">All relationships are deterministic projections of existing evidence. Correlation never creates evidence and never claims causation.</p>
@@ -155,7 +155,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     </section>
 
     <section class="section">
-      <div class="eyebrow">New in v0.14.7</div>
+      <div class="eyebrow">New in v0.15.0</div>
       <div class="grid">
         <div class="card"><h3>🔗 Evidence Correlation</h3><p>Relationship cards explain how evidence supports, reinforces, limits, contradicts, or remains missing or neutral.</p></div>
         <div class="card"><h3>🧭 Evidence Relationships</h3><p>The bundle appendix now projects the same canonical graph into a compact investigator-facing relationship view.</p></div>
@@ -167,7 +167,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🔬 Understanding Bundle Inputs</h3><p>Future releases can deepen each contributor independently while Mini RCA continues to consume the same graph-ready bundle contract. Cross Diff behaviour itself is unchanged in v0.14.7.</p></div>
+        <div class="card"><h3>🔬 Understanding Bundle Inputs</h3><p>Future releases can deepen each contributor independently while Mini RCA continues to consume the same graph-ready bundle contract. Cross-Diff now supplies a persisted, source/target-preserving Mini RCA input through investigation-input-v1.</p></div>
         <div class="card"><h3>🌉 Understanding Engine</h3><p>Query, Cross Diff, Timeline, and Mini RCA now follow the evidence-first briefing pattern.</p></div>
         <div class="card"><h3>🧩 Shared Investigation Experience</h3><p>Future RCA surfaces can compose more understanding bundles without changing the evidence-first report boundary.</p></div>
         <div class="card"><h3>🧰 MCP-ready Context</h3><p>Mini RCA creates an MCP-ready operational explanation seam while staying deterministic and local-first.</p></div>
@@ -195,7 +195,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     "dvQuickRunWelcomeV0147",
-    "DV Quick Run v0.14.7",
+    "DV Quick Run v0.15.0",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

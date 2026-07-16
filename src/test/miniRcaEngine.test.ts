@@ -162,7 +162,7 @@ suite("miniRcaEngine", () => {
     assert.match(markdown, /Evidence immutable: yes/);
   });
 
-  test("renders v0.14.7 Evidence Relationships and two-column Mini RCA report sections", () => {
+  test("renders versioned Evidence Relationships and two-column Mini RCA report sections", () => {
     const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline()));
     const markdown = renderMiniRcaReportMarkdown(report);
     const html = renderMiniRcaReportHtml(report);
@@ -174,7 +174,8 @@ suite("miniRcaEngine", () => {
     assert.match(markdown, /correlation connects existing evidence; it does not create evidence or assert causation/i);
     assert.match(markdown, /## Evidence/);
     assert.match(markdown, /## Recommended Next Steps/);
-    assert.match(markdown, /### Understanding Bundle v1/);
+    assert.match(markdown, /### Contract Metadata/);
+    assert.match(markdown, /Understanding Bundle: understanding-bundle-v2|Understanding Bundle: understanding-bundle-v1/);
     assert.match(markdown, /### Evidence Relationships/);
     assert.match(markdown, /Available \(\d+\):/);
     assert.match(markdown, /## Experimental Boundary/);
@@ -186,8 +187,9 @@ suite("miniRcaEngine", () => {
     assert.match(html, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
     assert.match(html, /Supporting, missing, and confidence notes/);
     assert.match(html, /Recommended Next Steps/);
-    assert.match(html, /Understanding Bundle v1/);
-    assert.match(html, /Understanding Bundle Contract v0\.14\.7/);
+    assert.match(html, /Understanding Bundle · contributor details/);
+    assert.match(html, /DV Quick Run v0\.15\.0/);
+    assert.doesNotMatch(html, /Understanding Bundle Contract v0\.14\.7/);
     assert.match(html, /Evidence Relationships/);
     assert.match(html, /relationship-flow-grid/);
     assert.doesNotMatch(html, /<h2 style="margin-top:24px">Correlation Summary<\/h2>/);
