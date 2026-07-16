@@ -1,3 +1,4 @@
+
 # Change Log
 
 ---
@@ -7,6 +8,32 @@ All notable changes to the **DV Quick Run** extension will be documented in this
 This project follows the principles of [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+
+# DV Quick Run v0.15.0 — Cross-Diff Bundle Input for Mini RCA
+
+This release adds Cross-Environment Diff as a first-class Mini RCA input through `investigation-input-v1`. Existing persisted Cross-Diff bundles remain authoritative; the adapter normalises provider-owned evidence without rerunning comparisons or manufacturing conclusions.
+
+## Added
+- Cross-Diff Mini RCA HTML and Markdown actions in the existing Reports menu.
+- Canonical `investigation-input-v1` boundary supporting Timeline and Cross-Environment Diff investigations.
+- First-class dominant and non-dominant Mini RCA outcomes with explicit dominance criteria.
+- Automation Participation, Operational Profile, Solution Participation, Identity, Metadata, Relationship, and Configuration understanding contributors.
+- Provider-execution awareness, including available contributors that completed with no material differences.
+- Correlation coverage based only on meaningful evidence relationships; administrative availability edges do not increase the user-facing score.
+- Cross-Diff-specific missing evidence, reconstruction guidance, and source/target-preserving narratives.
+
+## Changed
+- Added diminishing returns for repeated findings from the same provider family.
+- Reduced the influence of Microsoft/platform solution package noise.
+- Separated supporting, missing, and other relevant evidence.
+- Hid technical evidence IDs and correlation rule IDs from main report surfaces while retaining them in the appendix.
+- Updated Hub, Welcome, README, and release copy for v0.15.0.
+
+## Invariants
+- Mini RCA does not rerun Cross Diff.
+- Adapters normalise evidence but do not invent evidence, causality, or remediation advice.
+- Correlation connects existing evidence; it does not create evidence.
+- Humans retain operational authority.
 
 # DV Quick Run v0.14.7 --- Evidence Correlation v1
 
@@ -12745,3 +12772,12 @@ Priority : 1 (Normal)
 - CodeLens actions for quick query execution
 - Azure CLI authentication support
 - Added Ctrl+Enter, Ctrl+Shift+R shortcut to run query under cursor
+
+### v0.15.0 dogfood finalisation
+
+- Prioritised structural relationship changes over Associated Menu Configuration and other presentation/navigation drift.
+- Relationship contributor scoring now derives primarily from structural and material findings; homogeneous presentation clusters remain visible but near-zero signal.
+- Representative and recommendation evidence now selects structural relationship changes before presentation drift.
+- Removed duplicate display of selected evidence from Cross-Cutting Environment Context.
+- Corrected singular recommendation and evidence-count grammar.
+- Locked Timeline Mini RCA semantic parity work for the next release; see `TIMELINE_MINI_RCA_PARITY_NEXT_RELEASE.md`.

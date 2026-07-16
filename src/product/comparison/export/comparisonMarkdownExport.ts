@@ -36,11 +36,11 @@ function formatExportTimestamp(date = new Date()): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
 }
 
-function isReportExport(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md"): boolean {
-  return extension === "summary-html" || extension === "summary-pdf" || extension === "handoff-html" || extension === "handoff-pdf" || extension === "understanding-md";
+function isReportExport(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): boolean {
+  return extension === "summary-html" || extension === "summary-pdf" || extension === "handoff-html" || extension === "handoff-pdf" || extension === "understanding-md" || extension === "mini-rca-html" || extension === "mini-rca-md";
 }
 
-function getReportArtifactName(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md"): string | undefined {
+function getReportArtifactName(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): string | undefined {
   if (extension === "summary-html" || extension === "summary-pdf") {
     return "diff-findings-summary";
   }
@@ -53,15 +53,19 @@ function getReportArtifactName(extension: "json" | "md" | "html" | "baseline" | 
     return "understanding-report";
   }
 
+  if (extension === "mini-rca-html" || extension === "mini-rca-md") {
+    return "mini-rca-report";
+  }
+
   return undefined;
 }
 
-function getReportExtension(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md"): string {
-  if (extension === "understanding-md") {
+function getReportExtension(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): string {
+  if (extension === "understanding-md" || extension === "mini-rca-md") {
     return "md";
   }
 
-  if (extension === "summary-html" || extension === "handoff-html") {
+  if (extension === "summary-html" || extension === "handoff-html" || extension === "mini-rca-html") {
     return "html";
   }
 
@@ -84,7 +88,7 @@ function extractEnvironmentLabel(model: ComparisonViewModel): string {
   return "environment";
 }
 
-function buildReportFileName(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md"): string | undefined {
+function buildReportFileName(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): string | undefined {
   const artifact = getReportArtifactName(extension);
   if (!artifact) {
     return undefined;
@@ -95,7 +99,7 @@ function buildReportFileName(model: ComparisonViewModel, extension: "json" | "md
   return `${formatExportTimestamp()}-${slugFilePart(scope)}-${slugFilePart(environment)}-${artifact}.${getReportExtension(extension)}`;
 }
 
-export function buildDefaultExportUri(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md"): vscode.Uri | undefined {
+export function buildDefaultExportUri(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): vscode.Uri | undefined {
   const reportExport = isReportExport(extension);
   const reportFileName = buildReportFileName(model, extension);
   const fileName = reportFileName ?? `${model.title.startsWith("Timeline Diff") ? "dvqr-timeline-diff" : "dvqr-cross-environment-diff"}-${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${formatExportTimestamp()}.${getReportExtension(extension)}`;

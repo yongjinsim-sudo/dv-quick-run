@@ -11,6 +11,8 @@ suite("comparison surface toolbar", () => {
     assert.match(html, /Diff Findings Summary <span>PDF/);
     assert.match(html, /Investigation Handoff <span>HTML/);
     assert.match(html, /Investigation Handoff <span>PDF/);
+    assert.match(html, /Mini RCA Report <span>HTML/);
+    assert.match(html, /Mini RCA Report <span>MD/);
     assert.doesNotMatch(html, /data-export-kind="summary-html">Diff Findings Summary/);
     assert.doesNotMatch(html, /data-export-kind="handoff-pdf">Handoff PDF/);
   });
@@ -25,5 +27,7 @@ suite("comparison surface toolbar", () => {
     assert.match(html, /Diff Findings Summary <span>PDF<\/span>/);
     assert.match(html, /Investigation Handoff <span>HTML<\/span>/);
     assert.match(html, /Investigation Handoff <span>PDF<\/span>/);
+    assert.match(html, /Mini RCA Report <span>HTML<\/span>/);
+    assert.match(html, /Mini RCA Report <span>MD<\/span>/);
   });
 });

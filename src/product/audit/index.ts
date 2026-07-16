@@ -6,4 +6,4 @@ export type {
   AuditEvidenceStatus
 } from "./auditEvidenceTypes.js";
 export { queryAuditEvidence } from "./auditEvidenceProvider.js";
-export { renderAuditEvidenceResultHtml } from "./auditEvidenceHtml.js";
+export { renderAuditEvidenceErrorHtml, renderAuditEvidenceResultHtml } from "./auditEvidenceHtml.js";
