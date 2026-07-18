@@ -53,6 +53,7 @@ suite("explainQueryWorkflow", () => {
         buildFetchXmlMarkdown: async () => "",
         loadFieldsForEntity: async () => [],
         loadChoiceMetadataForEntity: async () => [],
+        loadRelationshipsForEntity: async () => ({ logicalName: "account", manyToOne: [], oneToMany: [], manyToMany: [] }),
         openPreview: async (markdown: string) => {
           previewMarkdown = markdown;
           return fakePreviewDocument();
@@ -81,6 +82,7 @@ suite("explainQueryWorkflow", () => {
         buildFetchXmlMarkdown: async () => "",
         loadFieldsForEntity: async () => [],
         loadChoiceMetadataForEntity: async () => [],
+        loadRelationshipsForEntity: async () => ({ logicalName: "account", manyToOne: [], oneToMany: [], manyToMany: [] }),
         openPreview: async () => ({} as any),
         resolveSourceTarget: () => ({
         editor: {
@@ -110,6 +112,7 @@ suite("explainQueryWorkflow", () => {
         buildFetchXmlMarkdown: async () => "",
         loadFieldsForEntity: async () => [],
         loadChoiceMetadataForEntity: async () => [],
+        loadRelationshipsForEntity: async () => ({ logicalName: "account", manyToOne: [], oneToMany: [], manyToMany: [] }),
         openPreview: async () => ({} as any),
         resolveSourceTarget: () => ({
           editor: {
@@ -139,6 +142,7 @@ suite("explainQueryWorkflow", () => {
       buildFetchXmlMarkdown: async () => "fetchxml-markdown",
       loadFieldsForEntity: async () => [],
       loadChoiceMetadataForEntity: async () => [],
+        loadRelationshipsForEntity: async () => ({ logicalName: "account", manyToOne: [], oneToMany: [], manyToMany: [] }),
       openPreview: async (markdown: string) => {
         previewMarkdown = markdown;
         return {

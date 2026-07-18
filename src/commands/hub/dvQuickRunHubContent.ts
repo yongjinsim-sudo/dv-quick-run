@@ -454,18 +454,15 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.0 adds Cross-Diff Bundle Input for Mini RCA through investigation-input-v1.",
-  "Cross-Diff reports can now generate deterministic Mini RCA HTML and Markdown without rerunning the comparison.",
-  "Non-dominant outcomes, provider-execution awareness, sparse-input handling, and calibrated correlation coverage keep conclusions bounded.",
-  "Evidence relationships now show how existing findings support, reinforce, limit, contradict, or remain missing or neutral without creating new evidence or asserting causation.",
-  "Mini RCA reports now include a first-class Evidence Correlation section, an Evidence Relationships appendix, contributor availability counts, and a responsive two-column Supporting Evidence Appendix.",
-  "Relationship cards use consistent semantic treatment for supporting, limiting, missing, conflicting, and neutral relationships.",
-  "The Understanding Bundle remains the stable investigation contract for Timeline, Audit, Metadata, Identity, Relationship, Configuration, Cross Diff, and Query contributors.",
-  "Existing Timeline Reconstruction, reconstruction workflows, provider-owned comparison semantics, and Dataverse mutation behaviour remain unchanged in v0.15.0.",
-  "Explain assists. Evidence decides. Correlation connects evidence; it does not prove causation.",
-  "v0.14.6 simplified the Mini RCA report and moved detailed contributor internals into the appendix.",
-  "v0.14.5 introduced Understanding Bundle v1, evidence-aware confidence, and consultant-style Mini RCA reporting.",
-  "DV Quick Run investigates. DV ForgeLab utilities reconstruct. Investigation and reconstruction remain separate concerns. Companion utilities are available at dvforgelab.com/products."
+  "v0.15.1 introduces one deterministic Shared Recommendation Engine for Timeline and Cross-Diff Mini RCA.",
+  "Polymorphic Lookup Understanding now explains valid target tables, target-specific navigation properties, runtime target annotations, and safe query starting points. Available Lookup Discovery can also browse and insert lookup syntax before the query is written.",
+  "Repeated evidence observations are grouped with occurrence counts while technical references remain available.",
+  "Richer contributor narratives explain Security Participation, Configuration Drift, Metadata Evolution, Relationship Behaviour, and other bounded patterns.",
+  "Cross-evidence relationships now read as None identified when observations are independent rather than presenting an unexplained zero.",
+  "Understanding Coverage separates contributor availability from explanatory confidence.",
+  "Timeline now uses the same dominant and non-dominant outcome semantics as Cross-Diff and guides review of first-observed plus adjacent intervals.",
+  "Recommendations remain advisory: they guide verification and never prove root cause, authorise remediation, or mutate Dataverse.",
+  "Explain assists. Evidence decides. Correlation connects evidence; recommendations guide the next investigation step."
 ];
 
 export const philosophy: readonly string[] = [

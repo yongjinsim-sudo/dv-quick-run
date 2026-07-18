@@ -137,7 +137,8 @@ export async function buildRelatedRecords(
             ctx,
             client,
             token,
-            resolvedTargetLogicalNames
+            resolvedTargetLogicalNames,
+            navMatches
           );
 
       const primaryTarget = targetOptions[0];
@@ -151,7 +152,11 @@ export async function buildRelatedRecords(
         targetEntitySetName: isOwnerLookup ? undefined : primaryTarget?.entitySetName,
         recordId,
         displayName: getLookupFormattedValue(record, logicalName),
-        targetOptions: isOwnerLookup ? undefined : targetOptions
+        targetOptions: isOwnerLookup ? undefined : targetOptions,
+        attributeLogicalName,
+        lookupValueProperty: logicalName,
+        logicalNameAnnotation: `${logicalName}@Microsoft.Dynamics.CRM.lookuplogicalname`,
+        formattedValueAnnotation: `${logicalName}@OData.Community.Display.V1.FormattedValue`
       };
 
       return suggestion;
@@ -325,7 +330,8 @@ async function loadLookupTargetOptions(
   ctx: CommandContext,
   client: DataverseClient,
   token: string,
-  logicalNames: string[]
+  logicalNames: string[],
+  navMatches: NavigationPropertyLike[]
 ): Promise<InvestigationLookupTargetOption[]> {
   const entityDefs: Array<InvestigationLookupTargetOption | undefined> = await Promise.all(
     logicalNames.map(async (logicalName) => {
@@ -344,7 +350,8 @@ async function loadLookupTargetOptions(
       const option: InvestigationLookupTargetOption = {
         logicalName: normalized,
         entitySetName: entityDef?.entitySetName,
-        displayName: prettifyEntityName(normalized)
+        displayName: prettifyEntityName(normalized),
+        navigationPropertyName: findNavigationPropertyForTarget(navMatches, normalized)
       };
 
       return option;
@@ -356,6 +363,21 @@ async function loadLookupTargetOptions(
   );
 
   return dedupeLookupTargetOptions(resolvedEntityDefs);
+}
+
+
+function findNavigationPropertyForTarget(
+  navMatches: NavigationPropertyLike[],
+  targetLogicalName: string
+): string | undefined {
+  const normalizedTarget = normalize(targetLogicalName);
+
+  const match = navMatches.find((nav) => {
+    const candidates = [nav.targetEntityLogicalName, nav.referencedEntity];
+    return candidates.some((candidate) => normalize(candidate) === normalizedTarget);
+  });
+
+  return match?.navigationPropertyName?.trim() || undefined;
 }
 
 function dedupeLookupTargetOptions(

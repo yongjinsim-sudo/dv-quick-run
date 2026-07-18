@@ -8,7 +8,7 @@ import { detectQueryKind } from "../../../../shared/editorIntelligence/queryDete
 import { runFetchXmlExplainPipeline } from "../shared/fetchXmlExplain/fetchXmlExplainPipeline.js";
 import { runDiagnostics } from "../shared/diagnostics/diagnosticRuleEngine.js";
 import { getActionableInsightCapabilities, getQueryDoctorCapabilities } from "../../../../product/capabilities/capabilityResolver.js";
-import { loadChoiceMetadata, loadFields } from "../shared/metadataAccess.js";
+import { loadChoiceMetadata, loadEntityRelationships, loadFields } from "../shared/metadataAccess.js";
 import { parseDataverseQuery } from "./explainQueryParser.js";
 import { toExplainMarkdown } from "./explainQueryMarkdown.js";
 import { openMarkdownPreview } from "./explainQueryRuntime.js";
@@ -20,6 +20,8 @@ import { hasExpandClause } from "../shared/diagnostics/expandDetection.js";
 import { buildExpandNotFullySupportedDiagnostic } from "../shared/diagnostics/diagnosticSuggestionBuilder.js";
 import { getExecutionEvidenceForQuery } from "../shared/diagnostics/executionEvidence.js";
 import type { EditorQueryTarget } from "../shared/queryMutation/editorQueryTarget.js";
+import type { EntityRelationshipExplorerResult } from "../../../../services/entityRelationshipExplorerService.js";
+import { buildExplainLookupUnderstanding, type ExplainLookupUnderstanding } from "./explainLookupUnderstanding.js";
 
 type ExplainAnalysis = Awaited<ReturnType<typeof analyseExplainQuery>>;
 type MaybePromise<T> = T | Promise<T>;
@@ -36,12 +38,14 @@ type ExplainWorkflowDeps = {
     relationshipReasoningNotes: ExplainAnalysis["relationshipReasoningNotes"] | undefined,
     diagnostics: Awaited<ReturnType<typeof runDiagnostics>>,
     executionEvidence?: import("../shared/diagnostics/executionEvidence.js").ExecutionEvidence,
-    choiceMetadata?: ChoiceMetadataDef[]
+    choiceMetadata?: ChoiceMetadataDef[],
+    lookupUnderstanding?: ExplainLookupUnderstanding[]
   ) => MaybePromise<string>;
   getQueryDoctorCapabilities: () => import("../../../../product/capabilities/capabilityTypes.js").QueryDoctorCapabilityProfile;
   getActionableInsightCapabilities?: () => import("../../../../product/capabilities/capabilityTypes.js").ActionableInsightCapabilityProfile;
   loadFieldsForEntity: (ctx: CommandContext, logicalName: string) => Promise<FieldDef[]>;
   loadChoiceMetadataForEntity: (ctx: CommandContext, logicalName: string) => Promise<ChoiceMetadataDef[]>;
+  loadRelationshipsForEntity: (ctx: CommandContext, logicalName: string) => Promise<EntityRelationshipExplorerResult>;
   buildFetchXmlMarkdown: (ctx: CommandContext, text: string) => Promise<string>;
   openPreview: (markdown: string) => Promise<vscode.TextDocument>;
   logDebugMessage: (output: CommandContext["output"], message: string) => void;
@@ -68,6 +72,11 @@ const defaultDeps: ExplainWorkflowDeps = {
     const client = ctx.getClient();
     const token = await ctx.getToken(ctx.getScope());
     return await loadChoiceMetadata(ctx, client, token, logicalName, { silent: true });
+  },
+  loadRelationshipsForEntity: async (ctx: CommandContext, logicalName: string) => {
+    const client = ctx.getClient();
+    const token = await ctx.getToken(ctx.getScope());
+    return await loadEntityRelationships(ctx, client, token, logicalName, { silent: true });
   },
   openPreview: openMarkdownPreview,
   resolveSourceTarget: getLogicalEditorQueryTarget,
@@ -128,6 +137,13 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   const choiceMetadata = analysis.entity?.logicalName
     ? await deps.loadChoiceMetadataForEntity(ctx, analysis.entity.logicalName)
     : [];
+  const lookupUnderstanding = analysis.entity?.logicalName && parsed.select.length
+    ? buildExplainLookupUnderstanding(
+      parsed.select,
+      await deps.loadFieldsForEntity(ctx, analysis.entity.logicalName),
+      await deps.loadRelationshipsForEntity(ctx, analysis.entity.logicalName)
+    )
+    : [];
 
   const markdown = await deps.buildMarkdown(
     parsed,
@@ -136,7 +152,8 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
     analysis.relationshipReasoningNotes ?? [],
     diagnostics,
     executionEvidence,
-    choiceMetadata
+    choiceMetadata,
+    lookupUnderstanding
   );
 
   const sourceTarget = deps.resolveSourceTarget();
