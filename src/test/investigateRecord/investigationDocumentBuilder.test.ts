@@ -26,9 +26,13 @@ suite("investigationDocumentBuilder", () => {
           targetEntityLogicalName: "Account / Contact",
           recordId: "6d29eec7-4414-f111-8341-6045bdc42f8b",
           targetOptions: [
-            { logicalName: "account", entitySetName: "accounts" },
-            { logicalName: "contact", entitySetName: "contacts" }
-          ]
+            { logicalName: "account", entitySetName: "accounts", displayName: "Account", navigationPropertyName: "customerid_account" },
+            { logicalName: "contact", entitySetName: "contacts", displayName: "Contact", navigationPropertyName: "customerid_contact" }
+          ],
+          attributeLogicalName: "customerid",
+          lookupValueProperty: "_customerid_value",
+          logicalNameAnnotation: "_customerid_value@Microsoft.Dynamics.CRM.lookuplogicalname",
+          formattedValueAnnotation: "_customerid_value@OData.Community.Display.V1.FormattedValue"
         }
       ],
       reverseLinks: [
@@ -67,7 +71,11 @@ suite("investigationDocumentBuilder", () => {
 
     assert.match(document, /POINTS TO/);
     assert.match(document, /Target\s+: Account \/ Contact/);
-    assert.match(document, /Polymorphic lookup — multiple valid target entities\./);
+    assert.match(document, /Type\s+: Polymorphic lookup/);
+    assert.match(document, /Account \(account\)/);
+    assert.match(document, /Navigation: customerid_account/);
+    assert.match(document, /Runtime\s+: _customerid_value@Microsoft\.Dynamics\.CRM\.lookuplogicalname/);
+    assert.match(document, /Example\s+: \$expand=customerid_account/);
     assert.match(document, /accounts\(6d29eec7-4414-f111-8341-6045bdc42f8b\)/);
     assert.match(document, /contacts\(6d29eec7-4414-f111-8341-6045bdc42f8b\)/);
   });

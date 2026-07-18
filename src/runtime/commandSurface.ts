@@ -21,6 +21,7 @@ import { registerRunQueryUnderCursorCommand } from "../commands/runQueryUnderCur
 import { registerAddFieldsSelectCommand } from "../commands/addFieldsSelect.js";
 import { registerAddFilterCommand } from "../commands/addFilter.js";
 import { registerAddExpandCommand } from "../commands/addExpand.js";
+import { registerExploreAvailableLookupsCommand } from "../commands/exploreAvailableLookups.js";
 import { registerAddOrderByCommand } from "../commands/addOrderBy.js";
 import { registerExplainQueryCommand } from "../commands/explainQuery.js";
 import { registerRelationshipExplorerCommand } from "../commands/relationshipExplorer.js";
@@ -66,6 +67,7 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerAddFieldsSelectCommand,
   registerAddFilterCommand,
   registerAddExpandCommand,
+  registerExploreAvailableLookupsCommand,
   registerAddOrderByCommand,
   registerExplainQueryCommand,
   registerRelationshipExplorerCommand,

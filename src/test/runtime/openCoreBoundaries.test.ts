@@ -3,7 +3,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { describeOpenCoreBoundary, openCoreBoundaryRules } from "../../core/openCore/index.js";
 
-suite("open-core boundaries", () => {
+suite("open-core boundaries", function () {
+  // Repository-wide boundary checks perform synchronous filesystem scans.
+  // Keep the assertions strict while allowing slower Windows/VS Code test hosts
+  // enough time to complete the scan.
+  this.timeout(10_000);
   test("canonical open-core boundary wording remains stable", () => {
     assert.strictEqual(
       describeOpenCoreBoundary(),
@@ -56,17 +60,14 @@ function assertNoForbiddenLayerImports(sourceRoot: string, forbiddenLayers: read
   assert.deepStrictEqual(findForbiddenLayerImports(sourceRoot, forbiddenLayers), []);
 }
 
+const importSpecifierCache = new Map<string, readonly string[]>();
+
 function findForbiddenLayerImports(sourceRoot: string, forbiddenLayers: readonly string[]): readonly string[] {
   const absoluteRoot = path.join(repoRoot(), sourceRoot);
   const offenders: string[] = [];
 
-  for (const file of walk(absoluteRoot)) {
-    if (!file.endsWith(".ts")) {
-      continue;
-    }
-
-    const content = fs.readFileSync(file, "utf8");
-    const imports = extractImportSpecifiers(content);
+  for (const file of walkTypeScriptFiles(absoluteRoot)) {
+    const imports = getImportSpecifiers(file);
     const relativeFile = path.relative(repoRoot(), file);
 
     for (const specifier of imports) {
@@ -111,16 +112,42 @@ function resolveImportPath(fromDir: string, specifier: string): string | undefin
   return path.resolve(fromDir, withoutJsExtension);
 }
 
-function walk(dir: string): string[] {
+function getImportSpecifiers(file: string): readonly string[] {
+  const cached = importSpecifierCache.get(file);
+  if (cached) {
+    return cached;
+  }
+
+  const specifiers = extractImportSpecifiers(fs.readFileSync(file, "utf8"));
+  importSpecifierCache.set(file, specifiers);
+  return specifiers;
+}
+
+function walkTypeScriptFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) {
     return [];
   }
 
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  return entries.flatMap((entry) => {
-    const resolved = path.join(dir, entry.name);
-    return entry.isDirectory() ? walk(resolved) : [resolved];
-  });
+  const files: string[] = [];
+  const pending = [dir];
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current) {
+      continue;
+    }
+
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const resolved = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(resolved);
+      } else if (entry.isFile() && entry.name.endsWith(".ts")) {
+        files.push(resolved);
+      }
+    }
+  }
+
+  return files;
 }
 
 function repoRoot(): string {

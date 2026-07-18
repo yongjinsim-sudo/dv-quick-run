@@ -143,7 +143,33 @@ function pushPointsTo(
     lines.push(`      Target    : ${related.targetEntityLogicalName ?? "unknown target"}`);
 
     if ((related.targetOptions?.length ?? 0) > 1) {
-      lines.push("      Note      : Polymorphic lookup — multiple valid target entities.");
+      lines.push("      Type      : Polymorphic lookup");
+      lines.push("      Note      : Multiple target tables share one lookup value property.");
+      lines.push("      Targets   :");
+
+      for (const target of related.targetOptions ?? []) {
+        const targetLabel = target.displayName ?? target.logicalName;
+        const navigation = target.navigationPropertyName ?? "navigation property unavailable";
+        lines.push(`        - ${targetLabel} (${target.logicalName})`);
+        lines.push(`          Navigation: ${navigation}`);
+      }
+
+      if (related.lookupValueProperty) {
+        lines.push(`      Select    : $select=${related.lookupValueProperty}`);
+      }
+      if (related.logicalNameAnnotation) {
+        lines.push(`      Runtime   : ${related.logicalNameAnnotation}`);
+      }
+      if (related.formattedValueAnnotation) {
+        lines.push(`      Label     : ${related.formattedValueAnnotation}`);
+      }
+
+      const firstExpandableTarget = related.targetOptions?.find((target) => target.navigationPropertyName);
+      if (firstExpandableTarget?.navigationPropertyName) {
+        lines.push(`      Example   : $expand=${firstExpandableTarget.navigationPropertyName}`);
+      }
+
+      lines.push("      Boundary  : The annotation identifies the active runtime target; metadata lists every valid target.");
     }
 
     lines.push(`      Record Id : ${related.recordId ?? "unknown record id"}`);

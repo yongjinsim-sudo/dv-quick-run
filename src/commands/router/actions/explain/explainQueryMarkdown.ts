@@ -11,6 +11,7 @@ import { fromNumericConfidence } from "../../../../product/explainEngine/explain
 import { renderUnderstandingDocumentMarkdown } from "../../../../product/understanding/understandingMarkdownRenderer.js";
 import type { ExplainContributor, ExplainResult } from "../../../../product/explainEngine/explainEngineTypes.js";
 import { buildODataQueryUnderstandingDocument } from "./explainQueryUnderstanding.js";
+import { buildLookupUnderstandingLines, type ExplainLookupUnderstanding } from "./explainLookupUnderstanding.js";
 
 function buildRelationshipReasoningLines(notes: ExplainRelationshipReasoningNote[]): string[] {
   const lines: string[] = [];
@@ -33,7 +34,8 @@ function buildQueryExplainContributors(
   relationshipReasoningNotes: ExplainRelationshipReasoningNote[],
   diagnostics: DiagnosticResult | undefined,
   executionEvidence: ExecutionEvidence | undefined,
-  choiceMetadata: ChoiceMetadataDef[]
+  choiceMetadata: ChoiceMetadataDef[],
+  lookupUnderstanding: ExplainLookupUnderstanding[]
 ): ExplainContributor[] {
   return [
     {
@@ -129,6 +131,20 @@ function buildQueryExplainContributors(
           reason: "The option was preserved but is not interpreted by the Explain Engine yet.",
           impact: "Review the generated query manually before using it as operational evidence."
         }))
+      })
+    },
+    {
+      id: "dataverse.lookup.understanding",
+      title: "Lookup Understanding",
+      run: () => ({
+        sections: lookupUnderstanding.length
+          ? [{
+            heading: "Lookup Understanding",
+            lines: buildLookupUnderstandingLines(lookupUnderstanding),
+            confidence: "high" as const,
+            sourceContributor: "dataverse.lookup.understanding"
+          }]
+          : []
       })
     },
     {
@@ -242,7 +258,8 @@ export async function toExplainResult(
   relationshipReasoningNotes: ExplainRelationshipReasoningNote[] = [],
   diagnostics?: DiagnosticResult,
   executionEvidence?: ExecutionEvidence,
-  choiceMetadata: ChoiceMetadataDef[] = []
+  choiceMetadata: ChoiceMetadataDef[] = [],
+  lookupUnderstanding: ExplainLookupUnderstanding[] = []
 ): Promise<ExplainResult> {
   return await runExplainEngine(
     "DV Quick Run - Explain Query",
@@ -252,7 +269,7 @@ export async function toExplainResult(
       entityLogicalName: entity?.logicalName,
       entitySetName: parsed.entitySetName
     },
-    buildQueryExplainContributors(parsed, entity, validationIssues, relationshipReasoningNotes, diagnostics, executionEvidence, choiceMetadata)
+    buildQueryExplainContributors(parsed, entity, validationIssues, relationshipReasoningNotes, diagnostics, executionEvidence, choiceMetadata, lookupUnderstanding)
   );
 }
 
@@ -263,7 +280,8 @@ export async function toExplainMarkdown(
   relationshipReasoningNotes: ExplainRelationshipReasoningNote[] = [],
   diagnostics?: DiagnosticResult,
   executionEvidence?: ExecutionEvidence,
-  choiceMetadata: ChoiceMetadataDef[] = []
+  choiceMetadata: ChoiceMetadataDef[] = [],
+  lookupUnderstanding: ExplainLookupUnderstanding[] = []
 ): Promise<string> {
   const result = await toExplainResult(
     parsed,
@@ -272,7 +290,8 @@ export async function toExplainMarkdown(
     relationshipReasoningNotes,
     diagnostics,
     executionEvidence,
-    choiceMetadata
+    choiceMetadata,
+    lookupUnderstanding
   );
 
   const understanding = buildODataQueryUnderstandingDocument(result, parsed, entity, diagnostics, executionEvidence);

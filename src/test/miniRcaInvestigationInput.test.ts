@@ -100,6 +100,10 @@ suite("miniRcaInvestigationInput", () => {
     assert.ok(first.operationalStory.some((line) => /DEV → TEST/.test(line)));
     assert.strictEqual(first.competingExplanations.some((item) => item.category === "Mixed Contributors"), false);
     assert.ok(first.outcome);
+    assert.strictEqual(first.engineVersion, "v2.2");
+    assert.deepStrictEqual(first.recommendations.map((item) => item.id), second.recommendations.map((item) => item.id));
+    assert.ok(first.recommendations.every((item) => item.investigationKind === "cross-environment-diff"));
+    assert.strictEqual(new Set(first.recommendations.map((item) => item.id)).size, first.recommendations.length);
   });
 
   test("calibrates Cross-Diff confidence and correlation", () => {
@@ -136,7 +140,7 @@ suite("miniRcaInvestigationInput", () => {
     assert.doesNotMatch(report.operationalStory.join(" "), /snapshot/i);
     assert.match(markdown, /Understanding Bundle: understanding-bundle-v2/);
     assert.match(markdown, /Investigation Input: investigation-input-v1/);
-    assert.match(html, /DV Quick Run v0\.15\.0/);
+    assert.match(html, /DV Quick Run v0\.15\.1/);
     assert.doesNotMatch(html, /Understanding Bundle Contract v0\.14\.7/);
     assert.doesNotMatch(html.split("Evidence Correlation Graph v1")[0], /cross-diff-approved-category-pair/);
     assert.doesNotMatch(markdown.split("## Appendix")[0], /Limiting evidence:/);
@@ -172,8 +176,8 @@ suite("miniRcaInvestigationInput", () => {
 
     assert.strictEqual((markdownOther.match(/Shared identity present only in source/g) ?? []).length, 1);
     assert.strictEqual((htmlOther.match(/Shared identity present only in source/g) ?? []).length, 1);
-    assert.match(markdown, /Supporting evidence: \d+ observations?/i);
-    assert.match(html, /Supporting Evidence<\/span><strong>\d+ observations?/i);
+    assert.match(markdown, /Leading-candidate evidence: \d+ observations?/i);
+    assert.match(html, /Leading-Candidate Evidence<\/span><strong>\d+ observations?/i);
   });
 
   test("classifies subject-local and cross-cutting Cross-Diff evidence", () => {

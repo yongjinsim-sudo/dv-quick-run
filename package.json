@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, investigation, execution, comparison, Mini RCA, and operational timeline reconstruction workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -156,6 +156,10 @@
       {
         "command": "dvQuickRun.addExpand",
         "title": "DV Quick Run: Add Expand"
+      },
+      {
+        "command": "dvQuickRun.exploreAvailableLookups",
+        "title": "DV Quick Run: Explore Available Lookups"
       },
       {
         "command": "dvQuickRun.addOrderBy",
@@ -339,6 +343,11 @@
           "command": "dvQuickRun.addFilter",
           "when": "editorTextFocus && !editorReadonly",
           "group": "dvQuickRun_queryBuilder@32"
+        },
+        {
+          "command": "dvQuickRun.exploreAvailableLookups",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "dvQuickRun_queryBuilder@30"
         },
         {
           "command": "dvQuickRun.addExpand",

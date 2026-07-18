@@ -1,16 +1,46 @@
 # DV Quick Run
 
+## ✨ What's new in v0.15.1
+
+DV Quick Run v0.15.1 brings **Timeline Mini RCA semantic parity**, a **Shared Recommendation Engine**, and introduces the first release of **Metadata Discovery**.
+
+Timeline Reconstruction and Cross-Environment Diff now feed the same bounded Mini RCA contract while preserving their own evidence semantics, contributor confidence model, Evidence Correlation, and shared recommendations.
+
+### Metadata Discovery
+
+Metadata Discovery helps developers understand Dataverse metadata **before writing OData**.
+
+New capabilities include:
+
+- Explore available lookups directly from the editor
+- Discover standard and polymorphic lookups
+- Search by display name, logical name, target table, or lookup type
+- View supported target tables and navigation properties
+- Generate Web API lookup properties
+- Insert target-specific `$expand`
+- Insert `$select` + `$expand` together while preserving existing query clauses
+- Explain lookup semantics after execution
+- Display runtime lookup annotations and practical guidance
+
+DV Quick Run now assists developers through the complete workflow:
+
+**Discover metadata → Build queries → Execute → Understand → Investigate → Mini RCA**
+
+---
+
+# DV Quick Run
+
 A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
 **Run, understand, explain through Query Understanding Reports, Cross Diff Understanding, Timeline Understanding, and Mini RCA, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Cross Diff Understanding, Timeline Understanding, Mini RCA Reports, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
-## ✨ What's new in v0.15.0
+## ✨ What's new in v0.15.1
 
-DV Quick Run v0.15.0 introduces **Cross-Diff Bundle Input for Mini RCA (Experimental)** through the versioned `investigation-input-v1` boundary.
+DV Quick Run v0.15.1 introduces **Timeline Mini RCA Semantic Parity, the Shared Recommendation Engine, and the final Mini RCA report polish pass**. It also adds the first bounded **Polymorphic Lookup Understanding** foundation: supported target tables, target-specific navigation properties, runtime target annotations, safe query-ready examples, and pre-query **Available Lookup Discovery** directly from the editor.
 
-Cross-Environment Diff reports can now generate deterministic Mini RCA HTML and Markdown without rerunning the comparison or coupling Mini RCA to Cross-Diff internals. v0.15.0 adds first-class non-dominant outcomes, evidence-owning Automation and Operational Profile contributors, sparse-input handling, provider-execution awareness, calibrated correlation coverage, and source/target-preserving report semantics. Mini RCA remains advisory: differences and participation do not prove causality, runtime impact, deployment correctness, or remediation authority.
+Timeline and Cross-Environment Diff Mini RCA now use one deterministic recommendation pipeline for candidate selection, prioritisation, deduplication, evidence references, bounded wording, and safety rules. Reports group repeated observations with occurrence counts, describe independent evidence clearly when no deterministic relationships exist, use richer contributor narratives, and present contributor availability separately as Understanding Coverage. Timeline participates in the same dominant/non-dominant outcome model and adds first-observed plus adjacent-interval guidance. Recommendations remain advisory: they guide verification and never prove root cause, authorise remediation, or mutate Dataverse.
 
 ## 🌐 Website & Interactive Demo
 

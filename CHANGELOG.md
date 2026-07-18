@@ -1,4 +1,3 @@
-
 # Change Log
 
 ---
@@ -8,6 +7,74 @@ All notable changes to the **DV Quick Run** extension will be documented in this
 This project follows the principles of [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+
+# DV Quick Run v0.15.1 — Timeline Semantic Parity & Shared Recommendation Engine
+
+## Polymorphic Lookup Understanding Foundation
+
+- Added **Explore Available Lookups** to the editor query-builder surface. Start with a root table query such as `contacts`, browse standard and polymorphic lookups before writing syntax, then insert the Web API value property, target-specific `$expand`, or both.
+- Lookup discovery is metadata-backed and searchable by display name, logical name, target table, and lookup type.
+- Added copyable lookup references containing targets, navigation properties, runtime target annotations, formatted-value annotations, and safe expand examples.
+
+- Detects polymorphic lookups during record investigation.
+- Lists every metadata-backed target table and its target-specific navigation property.
+- Surfaces the lookup value property plus `lookuplogicalname` and `FormattedValue` annotations.
+- Provides a bounded `$select` and `$expand` starting point without pretending to know target-specific business columns.
+- Keeps advanced query generation, validation, and table-wide inventory work planned for v0.15.2.
+
+
+## Final Mini RCA Dogfooding Polish
+
+### Mini RCA
+- Grouped repeated evidence observations across leading evidence, contributor summaries, and recommendation references while preserving technical occurrence counts.
+- Added richer bounded narratives for Security Participation, Configuration Drift, Metadata Evolution, Relationship Behaviour, Choice Evolution, Environment Variables, Data Shape, Automation Participation, Solution Participation, and Operational Profile contributors.
+- Standardised the remaining non-dominant wording to `No dominant contributor confirmed`.
+
+### Evidence Correlation
+- Replaced zero-value relationship wording with `Cross-evidence relationships: None identified`.
+- Clarified that independent observations do not weaken an investigation when no deterministic relationship rule applies.
+
+### Report Presentation
+- Reworded contributor support as evidence observations rather than duplicated evidence items.
+- Deduplicated recommendation evidence labels and rendered repeated observations with occurrence counts.
+
+### Documentation
+- Refreshed the Welcome page, Hub, README, and CHANGELOG for the completed v0.15.1 Mini RCA experience.
+
+This release brings Timeline Mini RCA onto the v0.15.0 Cross-Diff semantic baseline and replaces investigation-specific Mini RCA recommendation synthesis with one deterministic shared engine.
+
+## v0.15.1 — Final Mini RCA report polish
+
+- Canonicalised symmetric and repeated evidence correlations so each semantic relationship is rendered once.
+- Consolidated repeated Audit-unavailable wording in the primary report.
+- Strengthened the executive narrative for bounded leading-candidate outcomes.
+- Simplified contributor evidence wording.
+- Renamed Bundle Completeness to Understanding Coverage to distinguish availability from explanatory confidence.
+- Added human-readable correlation rule labels while retaining internal rule IDs in the technical appendix.
+
+## Added
+- Canonical Shared Recommendation Engine with stable recommendation IDs, rule IDs, priority, kind, investigation source, and evidence references.
+- Timeline dominant/non-dominant outcome assessment using the same bounded outcome contract as Cross-Diff.
+- Timeline first-observed and adjacent-interval investigation guidance.
+- Deterministic recommendation ordering and semantic deduplication.
+- Shared gap, Audit, cross-cutting context, reconstruction-candidate, and manual-verification rules.
+
+## Changed
+- Timeline and Cross-Diff Mini RCA now consume the same recommendation pipeline.
+- Mini RCA engine contract advanced to `v2.2` while preserving `mini-rca-v2`.
+- Recommendation wording is evidence-backed, source-aware, and bounded by human operational authority.
+- Choice and Option Set evidence is classified before incidental identity wording such as “user-facing”.
+- Mixed-contributor distribution is presented as an outcome pattern rather than a contributor candidate.
+- Timeline reports use snapshot-native evidence labels and treat unrelated Cross-Diff and Query contributors as not applicable.
+- Non-dominant reports explain both the minimum score and required lead margin.
+- Audit limitations distinguish unchanged Timeline evidence confidence from limited exact change-time confidence.
+- Correlation suppresses identical visible observations rather than displaying apparent self-reinforcement.
+
+## Invariants
+- Recommendations do not create evidence or claim causality.
+- Recommendations guide investigation; they do not apply fixes or mutate Dataverse.
+- Renderers consume recommendation semantics and do not invent recommendation authority.
+- Humans retain operational authority.
 
 # DV Quick Run v0.15.0 — Cross-Diff Bundle Input for Mini RCA
 

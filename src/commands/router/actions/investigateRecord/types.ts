@@ -56,6 +56,7 @@ export interface InvestigationLookupTargetOption {
   logicalName: string;
   entitySetName?: string;
   displayName?: string;
+  navigationPropertyName?: string;
 }
 
 export interface InvestigationLookupSuggestion {
@@ -66,6 +67,10 @@ export interface InvestigationLookupSuggestion {
     recordId: string;
     displayName?: string;
     targetOptions?: InvestigationLookupTargetOption[];
+    attributeLogicalName?: string;
+    lookupValueProperty?: string;
+    logicalNameAnnotation?: string;
+    formattedValueAnnotation?: string;
 }
 
 export interface InvestigationDocumentModel {

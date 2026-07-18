@@ -6,7 +6,7 @@ import type {
   TimelineSnapshotRef,
   TimelineTrustSummary,
 } from "../pro/timeline/index.js";
-import { buildMiniRcaReportFromTimeline, buildUnderstandingBundleFromTimeline, renderMiniRcaReportHtml, renderMiniRcaReportMarkdown, withMiniRcaStory } from "../pro/miniRca/index.js";
+import { buildMiniRcaReportFromTimeline, buildUnderstandingBundleFromTimeline, classifyMiniRcaTimelineEvent, renderMiniRcaReportHtml, renderMiniRcaReportMarkdown, withMiniRcaStory } from "../pro/miniRca/index.js";
 import { buildTimelineFindingsSummary } from "../pro/timeline/index.js";
 
 function snapshot(id: string, capturedAtIso: string): TimelineSnapshotRef {
@@ -122,22 +122,31 @@ function timeline(): TimelineReconstruction {
 }
 
 suite("miniRcaEngine", () => {
+
+  test("classifies choice evidence before incidental user-facing wording", () => {
+    const t = timeline();
+    const choiceEvent = event("event-choice", "choice-option-set", "Choice / Option Set Diff", "Label changes can affect user-facing interpretation while preserving the same stored option value.", t.intervals[0], "Low");
+    assert.strictEqual(classifyMiniRcaTimelineEvent(choiceEvent), "Choice Evolution");
+  });
+
   test("builds Understanding Bundle v1 with audit unavailable as non-confidence-changing evidence", () => {
     const bundle = buildUnderstandingBundleFromTimeline(timeline());
 
     assert.strictEqual(bundle.version, "understanding-bundle-v1");
     assert.strictEqual(bundle.timelineUnderstanding.summary.eventCount, 2);
     assert.strictEqual(bundle.auditEvidenceSummary.status, "Unavailable");
-    assert.match(bundle.auditEvidenceSummary.summary, /Confidence unchanged/);
+    assert.match(bundle.auditEvidenceSummary.summary, /Timeline evidence confidence is unchanged/i);
+    assert.ok(bundle.availability.notApplicable.includes("crossDiff"));
+    assert.ok(bundle.availability.notApplicable.includes("query"));
   });
 
   test("builds Mini RCA v2 evidence correlation and confidence analysis", () => {
     const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline()));
 
     assert.strictEqual(report.schemaVersion, "mini-rca-v2");
-    assert.strictEqual(report.engineVersion, "v2.1");
+    assert.strictEqual(report.engineVersion, "v2.2");
     assert.ok(report.evidenceCorrelation.supportingEvidenceIds.length > 0);
-    assert.ok(report.evidenceCorrelation.missingEvidence.some((item) => /Audit evidence unavailable/.test(item)));
+    assert.ok(report.evidenceCorrelation.missingEvidence.some((item) => /Audit evidence was not available/i.test(item)));
     assert.ok(report.confidenceAnalysis.wouldIncreaseConfidence.some((item) => /audit/i.test(item)));
     assert.ok(report.operationalStory.length > 0);
   });
@@ -188,10 +197,25 @@ suite("miniRcaEngine", () => {
     assert.match(html, /Supporting, missing, and confidence notes/);
     assert.match(html, /Recommended Next Steps/);
     assert.match(html, /Understanding Bundle · contributor details/);
-    assert.match(html, /DV Quick Run v0\.15\.0/);
+    assert.match(html, /DV Quick Run v0\.15\.1/);
     assert.doesNotMatch(html, /Understanding Bundle Contract v0\.14\.7/);
     assert.match(html, /Evidence Relationships/);
     assert.match(html, /relationship-flow-grid/);
     assert.doesNotMatch(html, /<h2 style="margin-top:24px">Correlation Summary<\/h2>/);
+  });
+});
+
+suite("sharedMiniRcaRecommendationEngine", () => {
+  test("uses stable shared recommendation IDs and bounded semantics for Timeline", () => {
+    const first = buildMiniRcaReportFromTimeline(timeline());
+    const second = buildMiniRcaReportFromTimeline(timeline());
+
+    assert.strictEqual(first.engineVersion, "v2.2");
+    assert.ok(first.outcome);
+    assert.deepStrictEqual(first.recommendations.map((item) => item.id), second.recommendations.map((item) => item.id));
+    assert.deepStrictEqual(first.recommendations.map((item) => item.ruleId), second.recommendations.map((item) => item.ruleId));
+    assert.ok(first.recommendations.every((item) => item.investigationKind === "timeline"));
+    assert.ok(first.recommendations.some((item) => item.kind === "ReviewAdjacentInterval"));
+    assert.doesNotMatch(first.recommendations.map((item) => `${item.title} ${item.detail}`).join(" "), /root cause confirmed|must fix|automatically change/i);
   });
 });

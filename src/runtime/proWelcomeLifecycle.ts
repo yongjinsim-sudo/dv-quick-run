@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.0</title>
+<title>DV Quick Run v0.15.1</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,27 +122,27 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.0</div>
+        <div class="eyebrow">What's new in v0.15.1</div>
         <h1>Mini RCA <span class="badge">Experimental</span></h1>
-        <p class="subtitle"><strong>See how deterministic investigation evidence relates.</strong><br>Mini RCA now connects existing findings through explicit Evidence Correlation rules while preserving evidence ownership, bounded interpretation, and human operational authority.</p>
+        <p class="subtitle"><strong>One recommendation contract, clearer evidence stories, and bounded conclusions across Timeline and Cross-Diff.</strong><br>Mini RCA now uses one deterministic Shared Recommendation Engine for prioritisation, evidence grouping, evidence references, bounded conclusions, and next-investigation guidance.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.0</div>
+          <div class="eyebrow">New in v0.15.1</div>
           <div class="price">Mini RCA (Experimental)</div>
-          <div class="limit">Evidence Correlation shows which findings support, reinforce, limit, contradict, or remain missing or neutral.</div>
-          <p class="recognition">All relationships are deterministic projections of existing evidence. Correlation never creates evidence and never claims causation.</p>
+          <div class="limit">Timeline and Cross-Diff now share recommendation authority, safety rules, and deterministic ordering.</div>
+          <p class="recognition">Recommendations are deterministic projections of bounded investigation state. They never create evidence, claim causation, or apply remediation.</p>
           <span class="badge">Pro · Mini RCA (Experimental)</span>
         </div>
       </div>
       <div class="price-grid">
         <div class="price-pill"><strong>Evidence Correlation</strong><span>Connect existing evidence using the closed relationship vocabulary</span></div>
         <div class="price-pill"><strong>Evidence Relationships</strong><span>Inspect graph-driven relationships inside the Understanding Bundle appendix</span></div>
-        <div class="price-pill"><strong>Contributor Context</strong><span>Scan availability counts, confidence, limitations, and evidence references</span></div>
-        <div class="price-pill"><strong>Evidence Appendix</strong><span>Review grouped supporting evidence in a responsive two-column layout</span></div>
+        <div class="price-pill"><strong>Understanding Coverage</strong><span>Separate contributor availability from explanatory confidence</span></div>
+        <div class="price-pill"><strong>Grouped Observations</strong><span>Collapse repeated evidence labels while preserving technical occurrences</span></div>
       </div>
       <div class="actions">
         <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
@@ -152,22 +152,24 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="continue">Continue</button>
       </div>
       <div class="footer">Mini RCA is Experimental, advisory, and evidence-backed. It helps investigators correlate available evidence without claiming exact change time, root-cause certainty, remediation status, or operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
-    </section>
+    
+        <p><strong>Polymorphic Lookup Understanding foundation:</strong> inspect valid target tables, navigation properties, runtime target annotations, and safe query examples directly from metadata. Use <strong>Explore Available Lookups</strong> to discover and insert lookup syntax before writing the query.</p>
+      </section>
 
     <section class="section">
-      <div class="eyebrow">New in v0.15.0</div>
+      <div class="eyebrow">New in v0.15.1</div>
       <div class="grid">
         <div class="card"><h3>🔗 Evidence Correlation</h3><p>Relationship cards explain how evidence supports, reinforces, limits, contradicts, or remains missing or neutral.</p></div>
         <div class="card"><h3>🧭 Evidence Relationships</h3><p>The bundle appendix now projects the same canonical graph into a compact investigator-facing relationship view.</p></div>
-        <div class="card"><h3>📊 Contributor Availability</h3><p>Available, unavailable, and not-applicable contributors are counted and kept distinct from evidence findings.</p></div>
-        <div class="card"><h3>📎 Cleaner Evidence Review</h3><p>Supporting evidence and contributor confidence cards use a responsive two-column layout for easier scanning.</p></div>
+        <div class="card"><h3>📊 Understanding Coverage</h3><p>Available, unavailable, and not-applicable contributors are counted separately from explanatory confidence.</p></div>
+        <div class="card"><h3>📎 Cleaner Evidence Review</h3><p>Repeated observations are grouped with occurrence counts, contributor narratives are richer, and independent evidence is described clearly when no deterministic relationship applies.</p></div>
       </div>
     </section>
 
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🔬 Understanding Bundle Inputs</h3><p>Future releases can deepen each contributor independently while Mini RCA continues to consume the same graph-ready bundle contract. Cross-Diff now supplies a persisted, source/target-preserving Mini RCA input through investigation-input-v1.</p></div>
+        <div class="card"><h3>🔬 Deeper Understanding Inputs</h3><p>Future contributors can add Audit, runtime, identity, configuration, and other bounded evidence without changing the graph-ready bundle contract.</p></div>
         <div class="card"><h3>🌉 Understanding Engine</h3><p>Query, Cross Diff, Timeline, and Mini RCA now follow the evidence-first briefing pattern.</p></div>
         <div class="card"><h3>🧩 Shared Investigation Experience</h3><p>Future RCA surfaces can compose more understanding bundles without changing the evidence-first report boundary.</p></div>
         <div class="card"><h3>🧰 MCP-ready Context</h3><p>Mini RCA creates an MCP-ready operational explanation seam while staying deterministic and local-first.</p></div>
@@ -195,7 +197,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     "dvQuickRunWelcomeV0147",
-    "DV Quick Run v0.15.0",
+    "DV Quick Run v0.15.1",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
