@@ -22,6 +22,10 @@ import { getExecutionEvidenceForQuery } from "../shared/diagnostics/executionEvi
 import type { EditorQueryTarget } from "../shared/queryMutation/editorQueryTarget.js";
 import type { EntityRelationshipExplorerResult } from "../../../../services/entityRelationshipExplorerService.js";
 import { buildExplainLookupUnderstanding, type ExplainLookupUnderstanding } from "./explainLookupUnderstanding.js";
+import { buildExplainLookupUnderstandingFromContext } from "./explainLookupUnderstanding.js";
+import { buildQuerySemanticModel } from "../../../../core/query/querySemanticModel.js";
+import { buildQueryMetadataContext, type QueryMetadataContext } from "../../../../core/metadata/lookupUnderstanding.js";
+import { resolveQueryMetadataContext } from "../shared/metadataContextResolver.js";
 
 type ExplainAnalysis = Awaited<ReturnType<typeof analyseExplainQuery>>;
 type MaybePromise<T> = T | Promise<T>;
@@ -52,6 +56,11 @@ type ExplainWorkflowDeps = {
   logInfoMessage: (output: CommandContext["output"], message: string) => void;
   showInformationMessage: (message: string) => Thenable<string | undefined>;
   resolveSourceTarget: () => EditorQueryTarget;
+  resolveMetadataContext?: (
+    ctx: CommandContext,
+    model: ReturnType<typeof buildQuerySemanticModel>,
+    entity: NonNullable<ExplainAnalysis["entity"]>
+  ) => Promise<QueryMetadataContext>;
 };
 
 const defaultDeps: ExplainWorkflowDeps = {
@@ -82,7 +91,8 @@ const defaultDeps: ExplainWorkflowDeps = {
   resolveSourceTarget: getLogicalEditorQueryTarget,
   logDebugMessage: logDebug,
   logInfoMessage: logInfo,
-  showInformationMessage: vscode.window.showInformationMessage
+  showInformationMessage: vscode.window.showInformationMessage,
+  resolveMetadataContext: resolveQueryMetadataContext
 };
 
 export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps: ExplainWorkflowDeps): Promise<void> {
@@ -110,6 +120,23 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   deps.logDebugMessage(ctx.output, `Explain Query: entitySet=${parsed.entitySetName} sourceLength=${text.length}`);
 
   const analysis = await deps.analyse(ctx, parsed);
+  const querySemanticModel = buildQuerySemanticModel(parsed);
+  let queryMetadataContext: QueryMetadataContext | undefined;
+  if (analysis.entity?.logicalName) {
+    try {
+      queryMetadataContext = deps.resolveMetadataContext
+        ? await deps.resolveMetadataContext(ctx, querySemanticModel, analysis.entity)
+        : undefined;
+    } catch (error) {
+      queryMetadataContext = buildQueryMetadataContext({
+        model: querySemanticModel,
+        entityLogicalName: analysis.entity.logicalName,
+        entitySetName: analysis.entity.entitySetName,
+        environmentLabel: ctx.envContext.getEnvironmentName(),
+        limitations: [error instanceof Error ? error.message : String(error)]
+      });
+    }
+  }
   const queryDoctorCapabilities = deps.getQueryDoctorCapabilities();
   const actionableInsightCapabilities = deps.getActionableInsightCapabilities?.() ?? { canApply: queryDoctorCapabilities.canApplyFix === true };
   deps.logInfoMessage(ctx.output, `Query Doctor: level=${queryDoctorCapabilities.insightLevel} entity=${analysis.entity?.logicalName ?? "unknown"}`);
@@ -120,7 +147,9 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
       validationIssues: analysis.validationIssues,
       entityLogicalName: analysis.entity?.logicalName,
       loadFieldsForEntity: async (logicalName: string) => await deps.loadFieldsForEntity(ctx, logicalName),
-      executionEvidence
+      executionEvidence,
+      querySemanticModel,
+      queryMetadataContext
     },
     queryDoctorCapabilities,
     actionableInsightCapabilities
@@ -137,13 +166,15 @@ export async function runExplainQueryWorkflowWithDeps(ctx: CommandContext, deps:
   const choiceMetadata = analysis.entity?.logicalName
     ? await deps.loadChoiceMetadataForEntity(ctx, analysis.entity.logicalName)
     : [];
-  const lookupUnderstanding = analysis.entity?.logicalName && parsed.select.length
-    ? buildExplainLookupUnderstanding(
+  const lookupUnderstanding = queryMetadataContext
+    ? buildExplainLookupUnderstandingFromContext(queryMetadataContext)
+    : analysis.entity?.logicalName && parsed.select.length
+      ? buildExplainLookupUnderstanding(
       parsed.select,
       await deps.loadFieldsForEntity(ctx, analysis.entity.logicalName),
       await deps.loadRelationshipsForEntity(ctx, analysis.entity.logicalName)
     )
-    : [];
+      : [];
 
   const markdown = await deps.buildMarkdown(
     parsed,

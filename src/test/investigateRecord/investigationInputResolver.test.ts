@@ -49,11 +49,11 @@ suite("investigationInputResolver", () => {
 
   test("extracts entity set from projected collection odata context", async () => {
     const json = JSON.stringify({
-      "@odata.context": "https://example.crm.dynamics.com/api/data/v9.2/$metadata#bu_healthcheckactivitydefinitions(bu_title,bu_bookingurl,bu_bookingurldestination)",
+      "@odata.context": "https://example.crm.dynamics.com/api/data/v9.2/$metadata#sample_activitydefinitions(sample_title,sample_bookingurl,sample_bookingdestination)",
       value: [
         {
-          bu_healthcheckactivitydefinitionid: "d7eabf0b-1f3d-f011-b4cb-002248129d4e",
-          bu_title: "Eye test"
+          sample_activitydefinitionid: "d7eabf0b-1f3d-f011-b4cb-002248129d4e",
+          sample_title: "Example activity"
         }
       ]
     });
@@ -62,7 +62,7 @@ suite("investigationInputResolver", () => {
 
     assert.ok(result);
     assert.strictEqual(result?.type, "json");
-    assert.strictEqual(result?.entitySetName, "bu_healthcheckactivitydefinitions");
+    assert.strictEqual(result?.entitySetName, "sample_activitydefinitions");
     assert.strictEqual(result?.recordId, "d7eabf0b-1f3d-f011-b4cb-002248129d4e");
   });
   test("uses nearest preceding odata context from full document for selected fragment", async () => {

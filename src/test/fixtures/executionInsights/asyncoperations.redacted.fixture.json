@@ -82,7 +82,7 @@
       "iswaitingforevent": null,
       "_workflowactivationid_value": "00000000-0000-4000-8000-000000000018",
       "primaryentitytype": "none",
-      "messagename": "bu_RegisterContactShellAPI",
+      "messagename": "sample_RegisterContactAPI",
       "friendlymessage": "The entity with ObjectTypeCode = 0 was not found in the MetadataCache. MetadataCacheDetails: ProviderType=Dynamic, StandardCache=True, IsLoadedInStagedContext = False, Timestamp=220146289, MinActiveRowVersion=220146289, MetadataInstanceId=38243861, LastUpdated=2025-07-24 06:40:06.897, OrgId=00000000-0000-4000-8000-000000000060",
       "workload": null,
       "_regardingobjectid_value": null
@@ -110,7 +110,7 @@
       "iswaitingforevent": null,
       "_workflowactivationid_value": "00000000-0000-4000-8000-000000000018",
       "primaryentitytype": "none",
-      "messagename": "bu_GetShellContactAPI",
+      "messagename": "sample_GetContactAPI",
       "friendlymessage": "The entity with ObjectTypeCode = 0 was not found in the MetadataCache. MetadataCacheDetails: ProviderType=Dynamic, StandardCache=True, IsLoadedInStagedContext = False, Timestamp=217507836, MinActiveRowVersion=217507836, MetadataInstanceId=37606719, LastUpdated=2025-07-18 03:02:31.520, OrgId=00000000-0000-4000-8000-000000000060",
       "workload": null,
       "_regardingobjectid_value": null

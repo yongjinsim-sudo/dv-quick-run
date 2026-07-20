@@ -1,5 +1,11 @@
 import * as assert from "assert";
-import { buildAvailableLookups } from "../commands/router/actions/queryMutation/exploreAvailableLookupsAction.js";
+import {
+  buildAvailableLookupMutationPreview,
+  buildAvailableLookupPreviewFlowOptions,
+  buildAvailableLookups,
+  type AvailableLookup
+} from "../commands/router/actions/queryMutation/exploreAvailableLookupsAction.js";
+import { parseEditorQuery } from "../commands/router/actions/shared/queryMutation/parsedEditorQuery.js";
 
 suite("Available Lookup Discovery", () => {
   test("classifies Contact parentcustomerid as polymorphic", () => {
@@ -101,6 +107,70 @@ suite("Available Lookup Discovery", () => {
       ["account", "contact"]
     );
     assert.strictEqual(lookups[0].isPolymorphic, true);
+  });
+
+  test("builds an identifier preview without changing unrelated query clauses", () => {
+    const lookup: AvailableLookup = {
+      logicalName: "parentcustomerid",
+      displayName: "Company Name",
+      attributeType: "Customer",
+      selectToken: "_parentcustomerid_value",
+      isPolymorphic: true,
+      targets: []
+    };
+    const original = "contacts?$select=fullname&$filter=statecode eq 0&$orderby=createdon desc&$top=10";
+    const preview = buildAvailableLookupMutationPreview(
+      original,
+      parseEditorQuery(original),
+      lookup,
+      "insertValue"
+    );
+
+    assert.ok(preview);
+    assert.strictEqual(preview.result.originalQuery, original);
+    const updated = parseEditorQuery(preview.result.updatedQuery);
+    assert.strictEqual(updated.queryOptions.get("$select"), "fullname,_parentcustomerid_value");
+    assert.strictEqual(updated.queryOptions.get("$filter"), "statecode eq 0");
+    assert.strictEqual(updated.queryOptions.get("$orderby"), "createdon desc");
+    assert.strictEqual(updated.queryOptions.get("$top"), "10");
+    assert.strictEqual(preview.details.heading, "Available lookup query rewrite");
+  });
+
+  test("builds a target-specific preview without applying it", () => {
+    const lookup: AvailableLookup = {
+      logicalName: "parentcustomerid",
+      displayName: "Company Name",
+      attributeType: "Customer",
+      selectToken: "_parentcustomerid_value",
+      isPolymorphic: true,
+      targets: [{
+        logicalName: "account",
+        displayName: "Account",
+        navigationPropertyName: "parentcustomerid_account"
+      }]
+    };
+    const original = "contacts?$top=25";
+    const preview = buildAvailableLookupMutationPreview(
+      original,
+      parseEditorQuery(original),
+      lookup,
+      "insertBoth",
+      lookup.targets[0]
+    );
+
+    assert.ok(preview);
+    assert.strictEqual(
+      preview.result.updatedQuery,
+      "contacts?$top=25&$select=_parentcustomerid_value&$expand=parentcustomerid_account"
+    );
+    assert.strictEqual(preview.result.originalQuery, original);
+  });
+
+  test("keeps Available Lookup apply Pro-gated", () => {
+    assert.strictEqual(buildAvailableLookupPreviewFlowOptions(false).mode, "copy");
+    assert.strictEqual(buildAvailableLookupPreviewFlowOptions(true).mode, "applyOrCopy");
+    assert.strictEqual(buildAvailableLookupPreviewFlowOptions(false).copyButtonLabel, "Copy Suggested Query");
+    assert.strictEqual(buildAvailableLookupPreviewFlowOptions(true).applyButtonLabel, "Apply Suggested Query");
   });
 
 });

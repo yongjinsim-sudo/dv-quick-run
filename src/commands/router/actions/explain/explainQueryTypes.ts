@@ -3,6 +3,17 @@ export type QueryParam = {
   value: string;
 };
 
+export type QueryParseDiagnosticCode =
+  | "MalformedQueryOption"
+  | "DuplicateQueryOption"
+  | "UnsupportedQueryPath";
+
+export type QueryParseDiagnostic = {
+  code: QueryParseDiagnosticCode;
+  message: string;
+  optionName?: string;
+};
+
 export type ParsedOrderBy = {
   field: string;
   direction: "asc" | "desc";
@@ -30,6 +41,9 @@ export type ParsedDataverseQuery = {
   top?: number;
   expand: ParsedExpand[];
   unknownParams: QueryParam[];
+  duplicateParams?: QueryParam[];
+  parseDiagnostics?: QueryParseDiagnostic[];
+  sourceKind?: "relative" | "absolute-url";
 };
 
 export type ExplanationSection = {

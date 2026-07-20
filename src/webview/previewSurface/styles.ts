@@ -4,17 +4,34 @@ export function getPreviewSurfaceStyles(): string {
       color-scheme: light dark;
     }
 
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       margin: 0;
       padding: 0;
+      overflow: hidden;
       font-family: var(--vscode-font-family);
       color: var(--vscode-editor-foreground);
       background: var(--vscode-editor-background);
     }
 
     .preview-shell {
-      padding: 18px 22px 24px;
+      box-sizing: border-box;
+      height: 100vh;
+      padding: 18px 22px 14px;
       max-width: 1120px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-content {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 4px;
     }
 
     .preview-header {
@@ -139,14 +156,14 @@ export function getPreviewSurfaceStyles(): string {
     }
 
     .preview-actions {
-      position: sticky;
-      bottom: 0;
+      flex: 0 0 auto;
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       align-items: center;
       justify-content: flex-end;
       padding: 12px 0 0;
-      margin-top: 18px;
+      margin-top: 10px;
       background: var(--vscode-editor-background);
       border-top: 1px solid var(--vscode-panel-border);
     }

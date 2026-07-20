@@ -10,3 +10,11 @@ vsc-extension-quickstart.md
 **/*.ts
 **/.vscode-test.*
 tools/**
+out/test/**
+out/src/**
+AGENTS.md
+GLOBAL-AGENTS.template.md
+next.config.js
+.github/**
+docs/architecture/**
+docs/codex/**

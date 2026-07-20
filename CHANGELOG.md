@@ -8,6 +8,36 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.15.2 — Metadata-Aware Query Intelligence
+
+## Added
+
+- Automatic lookup and relationship metadata resolution for OData Query Explain and Query Doctor.
+- Single-target, multi-target, Customer, Owner, and Regarding lookup classification from active-environment metadata.
+- Deterministic diagnostics for invalid direct lookup expansion, unsupported navigation targets, lookup scalar-property misuse, unknown navigation properties, malformed/duplicate options, and valid target expansions that may return null at runtime.
+- Target-specific query suggestions that preserve the original URL and unrelated `$select`, `$filter`, `$orderby`, `$top`, and `$expand` clauses.
+- **Show Metadata-Aware Query Suggestions**, including progressive lookup discovery from a bare entity-set query, with copy-only preview in Free and explicit apply-or-copy in Pro.
+- Metadata-backed **Copy lookup reference** within the progressive discovery flow.
+- **Refresh Metadata Context** for a forced current-query metadata refresh.
+- Lookup & Relationship Understanding output with metadata confidence, environment, evidence references, supported targets, navigation properties, annotations, and runtime limitations.
+
+## Changed
+
+- Hardened OData parsing for full Dataverse Web API URLs, `GET`/`HEAD` prefixes, fragments, percent-encoded values, nested expand options, duplicates, and malformed options.
+- Scoped entity, field, relationship/navigation, and choice in-memory caches by active environment.
+- Reused deterministic recommendation ID/ranking primitives across Mini RCA and metadata query diagnostics.
+- Refactored Available Lookup Discovery and Query Explain to consume one canonical lookup-understanding engine.
+- Validated each suggested nested display field against lazily loaded target attribute metadata; Owner/Principal navigation no longer receives an invalid guessed `name` selection.
+- Kept preview actions pinned outside the scrollable preview content so **Copy Suggested Query**, **Apply Suggested Query**, and **Cancel** remain visible when metadata limitations add extra sections.
+- Changed **Explore Available Lookups** so lookup value and target-specific expansion choices open the shared preview surface instead of mutating the editor immediately. Free can copy the suggested query; Pro can explicitly apply or copy it.
+
+## Safety and product boundaries
+
+- Metadata-valid targets are never described as the target used by a particular row.
+- Metadata-unavailable states remain explicit; navigation names are not guessed.
+- Suggestions never execute queries or silently change the editor.
+- Fundamental metadata insight remains available in Free; applying an actionable rewrite remains a Pro capability.
+
 # DV Quick Run v0.15.1 — Timeline Semantic Parity & Shared Recommendation Engine
 
 ## Polymorphic Lookup Understanding Foundation
@@ -8489,7 +8519,7 @@ Examples tested:
 * `plugintracelog`
 * `sdkmessageprocessingstep`
 * `msemr_medicalidentifier`
-* `bu_task`
+* custom task tables
 * lightweight metadata/helper tables
 
 Validation focused on:
