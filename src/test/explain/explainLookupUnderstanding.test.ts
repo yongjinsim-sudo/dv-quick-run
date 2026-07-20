@@ -3,6 +3,8 @@ import {
   buildExplainLookupUnderstanding,
   buildLookupUnderstandingLines
 } from "../../commands/router/actions/explain/explainLookupUnderstanding.js";
+import { toExplainMarkdown } from "../../commands/router/actions/explain/explainQueryMarkdown.js";
+import { parseDataverseQuery } from "../../commands/router/actions/explain/explainQueryParser.js";
 
 suite("Explain lookup understanding", () => {
   test("classifies parentcustomerid as polymorphic and exposes target navigation properties", () => {
@@ -45,6 +47,7 @@ suite("Explain lookup understanding", () => {
     );
 
     const markdown = buildLookupUnderstandingLines(result).join("\n");
+    assert.match(markdown, /^#### Company Name \(parentcustomerid\)$/m);
     assert.match(markdown, /Polymorphic lookup/);
     assert.match(markdown, /parentcustomerid_account/);
     assert.match(markdown, /parentcustomerid_contact/);
@@ -95,5 +98,57 @@ suite("Explain lookup understanding", () => {
     );
 
     assert.deepStrictEqual(result, []);
+  });
+
+  test("renders lookup and diagnostic details beneath their technical sections", async () => {
+    const lookupUnderstanding = buildExplainLookupUnderstanding(
+      ["fullname", "_parentcustomerid_value"],
+      [{
+        logicalName: "parentcustomerid",
+        displayName: "Company Name",
+        attributeType: "Customer",
+        lookupTargets: ["account", "contact"]
+      }],
+      {
+        logicalName: "contact",
+        manyToOne: [
+          {
+            navigationPropertyName: "parentcustomerid_account",
+            referencingAttribute: "parentcustomerid",
+            referencedEntity: "account"
+          },
+          {
+            navigationPropertyName: "parentcustomerid_contact",
+            referencingAttribute: "parentcustomerid",
+            referencedEntity: "contact"
+          }
+        ],
+        oneToMany: [],
+        manyToMany: []
+      }
+    );
+    const parsed = parseDataverseQuery("contacts?$select=fullname,_parentcustomerid_value&$top=10");
+    const markdown = await toExplainMarkdown(
+      parsed,
+      { logicalName: "contact", entitySetName: "contacts" } as any,
+      [],
+      [],
+      {
+        findings: [{
+          message: "Company Name requires a target-specific navigation property.",
+          severity: "info",
+          suggestion: "Choose a target only when target fields are needed"
+        }]
+      },
+      undefined,
+      [],
+      lookupUnderstanding
+    );
+
+    assert.match(markdown, /^### Lookup & Relationship Understanding$/m);
+    assert.match(markdown, /^#### Company Name \(parentcustomerid\)$/m);
+    assert.doesNotMatch(markdown, /^### Company Name \(parentcustomerid\)$/m);
+    assert.match(markdown, /^### Diagnostics$/m);
+    assert.match(markdown, /^#### Issue: Company Name requires a target-specific navigation property\.$/m);
   });
 });

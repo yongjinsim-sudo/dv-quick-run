@@ -61,7 +61,7 @@ suite("expandCandidateResolver", () => {
         relationshipType: "ManyToOne",
         referencedEntity: "contact"
       }
-    ]);
+    ], "TEST");
 
     const candidates = await resolveSiblingExpandCandidates(createStubContext(), "contact");
 

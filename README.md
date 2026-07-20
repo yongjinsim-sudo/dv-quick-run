@@ -1,26 +1,32 @@
 # DV Quick Run
 
-## ✨ What's new in v0.15.1
+## ✨ What's new in v0.15.2
 
-DV Quick Run v0.15.1 brings **Timeline Mini RCA semantic parity**, a **Shared Recommendation Engine**, and introduces the first release of **Metadata Discovery**.
+DV Quick Run v0.15.2 adds **Metadata-Aware Query Intelligence** and automated polymorphic lookup understanding.
 
-Timeline Reconstruction and Cross-Environment Diff now feed the same bounded Mini RCA contract while preserving their own evidence semantics, contributor confidence model, Evidence Correlation, and shared recommendations.
+Query Explain and Query Doctor now resolve referenced lookup metadata automatically from the active Dataverse environment. They identify single- and multi-target lookups, list metadata-valid target navigation properties, intercept invalid direct lookup expansion, flag unsupported targets, and explain why a valid target-specific expansion may still return null for some rows.
 
-### Metadata Discovery
+### Metadata-aware query assistance
 
-Metadata Discovery helps developers understand Dataverse metadata **before writing OData**.
+Use **DV Quick Run: Show Metadata-Aware Query Suggestions** on the current query to preview a deterministic correction. When the query starts with only an entity set such as `contacts`, DVQR first offers the table's metadata-backed lookups, then previews either the lookup identifier or a target-specific expansion. The same picker can copy the complete lookup reference without changing the editor. Existing `$select`, `$filter`, `$orderby`, `$top`, unrelated `$expand`, URL base, and entity set are preserved.
+
+The earlier **DV Quick Run: Explore Available Lookups** workflow now uses the same preview-first boundary. Choosing a value property or target-specific expansion opens a query preview; Free can copy it, Pro can explicitly apply it, and cancelling leaves the editor unchanged.
 
 New capabilities include:
 
-- Explore available lookups directly from the editor
-- Discover standard and polymorphic lookups
-- Search by display name, logical name, target table, or lookup type
-- View supported target tables and navigation properties
-- Generate Web API lookup properties
-- Insert target-specific `$expand`
-- Insert `$select` + `$expand` together while preserving existing query clauses
-- Explain lookup semantics after execution
-- Display runtime lookup annotations and practical guidance
+- Automatic current-environment metadata resolution
+- Single- and multi-target lookup classification
+- Target-specific navigation-property discovery
+- Progressive lookup discovery from a bare entity-set query
+- Lazy validation of target display fields before they are added to nested `$select`
+- Safe Owner/Principal expansion without a guessed common name property
+- Copyable lookup references from the progressive suggestion workflow
+- Metadata-aware Query Doctor diagnostics before execution
+- Plain-language Lookup & Relationship Understanding in Query Explain
+- Preview-first target-specific query rewrites
+- Preview-first Available Lookup discovery with no immediate editor mutation
+- Copy-only suggestions in Free; explicit apply-or-copy in Pro
+- Environment-isolated metadata caches and an explicit refresh command
 
 DV Quick Run now assists developers through the complete workflow:
 
@@ -36,11 +42,11 @@ A fast, metadata-aware Dataverse query, evidence, and operational investigation 
 
 ---
 
-## ✨ What's new in v0.15.1
+## ✨ What's new in v0.15.2
 
-DV Quick Run v0.15.1 introduces **Timeline Mini RCA Semantic Parity, the Shared Recommendation Engine, and the final Mini RCA report polish pass**. It also adds the first bounded **Polymorphic Lookup Understanding** foundation: supported target tables, target-specific navigation properties, runtime target annotations, safe query-ready examples, and pre-query **Available Lookup Discovery** directly from the editor.
+DV Quick Run v0.15.2 turns the v0.15.1 Metadata Discovery foundation into automatic **Metadata-Aware Query Intelligence**. Referenced lookups are resolved during Query Explain, metadata-backed Query Doctor findings include deterministic target-specific examples, and the editor exposes a preview-first suggestion command without executing the query.
 
-Timeline and Cross-Environment Diff Mini RCA now use one deterministic recommendation pipeline for candidate selection, prioritisation, deduplication, evidence references, bounded wording, and safety rules. Reports group repeated observations with occurrence counts, describe independent evidence clearly when no deterministic relationships exist, use richer contributor narratives, and present contributor availability separately as Understanding Coverage. Timeline participates in the same dominant/non-dominant outcome model and adds first-observed plus adjacent-interval guidance. Recommendations remain advisory: they guide verification and never prove root cause, authorise remediation, or mutate Dataverse.
+Metadata remains canonical: DVQR does not invent navigation-property names or assume a row's runtime lookup target. Suggested rewrites preserve the original query shape and require an explicit copy or apply action.
 
 ## 🌐 Website & Interactive Demo
 

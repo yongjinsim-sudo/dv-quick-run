@@ -197,7 +197,7 @@ suite("miniRcaEngine", () => {
     assert.match(html, /Supporting, missing, and confidence notes/);
     assert.match(html, /Recommended Next Steps/);
     assert.match(html, /Understanding Bundle · contributor details/);
-    assert.match(html, /DV Quick Run v0\.15\.1/);
+    assert.match(html, /DV Quick Run v0\.15\.2/);
     assert.doesNotMatch(html, /Understanding Bundle Contract v0\.14\.7/);
     assert.match(html, /Evidence Relationships/);
     assert.match(html, /relationship-flow-grid/);

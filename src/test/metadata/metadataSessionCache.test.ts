@@ -66,4 +66,19 @@ suite("metadataSessionCache", () => {
     assert.strictEqual(calls, 1);
     assert.deepStrictEqual(a, b);
   });
+
+  test("isolates metadata memory and in-flight work by environment", async () => {
+    setFieldsMemory("contact", [{ logicalName: "env_a_field" }], "Environment A");
+    setFieldsMemory("contact", [{ logicalName: "env_b_field" }], "Environment B");
+
+    assert.deepStrictEqual(getFieldsMemory("contact", "Environment A"), [{ logicalName: "env_a_field" }]);
+    assert.deepStrictEqual(getFieldsMemory("contact", "Environment B"), [{ logicalName: "env_b_field" }]);
+
+    let calls = 0;
+    await Promise.all([
+      getOrCreateFieldsInFlight("contact", async () => { calls++; return []; }, "Environment A"),
+      getOrCreateFieldsInFlight("contact", async () => { calls++; return []; }, "Environment B")
+    ]);
+    assert.strictEqual(calls, 2);
+  });
 });

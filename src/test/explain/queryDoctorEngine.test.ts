@@ -37,27 +37,27 @@ suite("queryDoctorEngine", () => {
       {
         parsed: {
           ...baseParsed,
-          raw: "bu_tasks?$select=bu_status,bu_intent,_bu_taskrequesterpractitioner_value&$top=5000",
-          normalized: "bu_tasks?$select=bu_status,bu_intent,_bu_taskrequesterpractitioner_value&$top=5000",
-          pathPart: "bu_tasks",
-          queryPart: "$select=bu_status,bu_intent,_bu_taskrequesterpractitioner_value&$top=5000",
-          entitySetName: "bu_tasks",
-          select: ["bu_status", "bu_intent", "_bu_taskrequesterpractitioner_value"],
+          raw: "sample_workitems?$select=sample_status,sample_intent,_sample_requester_value&$top=5000",
+          normalized: "sample_workitems?$select=sample_status,sample_intent,_sample_requester_value&$top=5000",
+          pathPart: "sample_workitems",
+          queryPart: "$select=sample_status,sample_intent,_sample_requester_value&$top=5000",
+          entitySetName: "sample_workitems",
+          select: ["sample_status", "sample_intent", "_sample_requester_value"],
           top: 5000,
           params: [
-            { key: "$select", value: "bu_status,bu_intent,_bu_taskrequesterpractitioner_value" },
+            { key: "$select", value: "sample_status,sample_intent,_sample_requester_value" },
             { key: "$top", value: "5000" }
           ]
         },
-        entityLogicalName: "bu_task",
+        entityLogicalName: "sample_workitem",
         loadFieldsForEntity: async () => ([
-          { logicalName: "bu_status", attributeType: "Picklist", displayName: "Status", isValidForAdvancedFind: true },
-          { logicalName: "bu_intent", attributeType: "Picklist", displayName: "Intent", isValidForAdvancedFind: true },
-          { logicalName: "bu_taskrequesterpractitioner", attributeType: "Lookup", displayName: "Requester Practitioner", isValidForAdvancedFind: true }
+          { logicalName: "sample_status", attributeType: "Picklist", displayName: "Status", isValidForAdvancedFind: true },
+          { logicalName: "sample_intent", attributeType: "Picklist", displayName: "Intent", isValidForAdvancedFind: true },
+          { logicalName: "sample_requester", attributeType: "Lookup", displayName: "Requester", isValidForAdvancedFind: true }
         ] as any),
         executionEvidence: {
-          querySignature: "bu_tasks?$select=bu_status,bu_intent,_bu_taskrequesterpractitioner_value&$top=5000",
-          entitySetName: "bu_tasks",
+          querySignature: "sample_workitems?$select=sample_status,sample_intent,_sample_requester_value&$top=5000",
+          entitySetName: "sample_workitems",
           executionTimeMs: 3578,
           returnedRowCount: 5000,
           requestedTop: 5000,
@@ -67,7 +67,7 @@ suite("queryDoctorEngine", () => {
           filterFieldNames: [],
           fieldObservations: [
             {
-              field: "bu_status",
+              field: "sample_status",
               nonNullCount: 5000,
               nullCount: 0,
               distinctCount: 4,
@@ -76,7 +76,7 @@ suite("queryDoctorEngine", () => {
               topValues: [{ value: "Active", count: 1800 }, { value: "Completed", count: 1500 }, { value: "Cancelled", count: 900 }]
             },
             {
-              field: "bu_intent",
+              field: "sample_intent",
               nonNullCount: 4700,
               nullCount: 300,
               distinctCount: 3,
@@ -85,7 +85,7 @@ suite("queryDoctorEngine", () => {
               topValues: [{ value: "Review", count: 2000 }, { value: "Follow up", count: 1600 }, { value: "Escalation", count: 1100 }]
             },
             {
-              field: "_bu_taskrequesterpractitioner_value",
+              field: "_sample_requester_value",
               nonNullCount: 16,
               nullCount: 4984,
               distinctCount: 16,
@@ -102,10 +102,10 @@ suite("queryDoctorEngine", () => {
 
     const finding = result.findings.find((item) => item.narrowingSuggestions?.length);
     assert.ok(finding);
-    assert.strictEqual(finding?.narrowingSuggestions?.[0]?.field, "bu_status");
+    assert.strictEqual(finding?.narrowingSuggestions?.[0]?.field, "sample_status");
     assert.ok((finding?.narrowingSuggestions?.length ?? 0) <= 3);
     assert.strictEqual(
-      finding?.narrowingSuggestions?.some((suggestion) => suggestion.field === "_bu_taskrequesterpractitioner_value"),
+      finding?.narrowingSuggestions?.some((suggestion) => suggestion.field === "_sample_requester_value"),
       false
     );
   });
@@ -116,25 +116,25 @@ suite("queryDoctorEngine", () => {
       {
         parsed: {
           ...baseParsed,
-          raw: "bu_tasks?$select=bu_status,bu_intent,bu_priority,bu_timingperiod,bu_timingperiodunit",
-          normalized: "bu_tasks?$select=bu_status,bu_intent,bu_priority,bu_timingperiod,bu_timingperiodunit",
-          pathPart: "bu_tasks",
-          queryPart: "$select=bu_status,bu_intent,bu_priority,bu_timingperiod,bu_timingperiodunit",
-          entitySetName: "bu_tasks",
-          select: ["bu_status", "bu_intent", "bu_priority", "bu_timingperiod", "bu_timingperiodunit"],
-          params: [{ key: "$select", value: "bu_status,bu_intent,bu_priority,bu_timingperiod,bu_timingperiodunit" }]
+          raw: "sample_workitems?$select=sample_status,sample_intent,sample_priority,sample_timingperiod,sample_timingperiodunit",
+          normalized: "sample_workitems?$select=sample_status,sample_intent,sample_priority,sample_timingperiod,sample_timingperiodunit",
+          pathPart: "sample_workitems",
+          queryPart: "$select=sample_status,sample_intent,sample_priority,sample_timingperiod,sample_timingperiodunit",
+          entitySetName: "sample_workitems",
+          select: ["sample_status", "sample_intent", "sample_priority", "sample_timingperiod", "sample_timingperiodunit"],
+          params: [{ key: "$select", value: "sample_status,sample_intent,sample_priority,sample_timingperiod,sample_timingperiodunit" }]
         },
-        entityLogicalName: "bu_task",
+        entityLogicalName: "sample_workitem",
         loadFieldsForEntity: async () => ([
-          { logicalName: "bu_status", attributeType: "Picklist", displayName: "Status", isValidForAdvancedFind: true },
-          { logicalName: "bu_intent", attributeType: "Picklist", displayName: "Intent", isValidForAdvancedFind: true },
-          { logicalName: "bu_priority", attributeType: "Picklist", displayName: "Priority", isValidForAdvancedFind: true },
-          { logicalName: "bu_timingperiod", attributeType: "Integer", displayName: "Timing Period", isValidForAdvancedFind: true },
-          { logicalName: "bu_timingperiodunit", attributeType: "Picklist", displayName: "Timing Period Unit", isValidForAdvancedFind: true }
+          { logicalName: "sample_status", attributeType: "Picklist", displayName: "Status", isValidForAdvancedFind: true },
+          { logicalName: "sample_intent", attributeType: "Picklist", displayName: "Intent", isValidForAdvancedFind: true },
+          { logicalName: "sample_priority", attributeType: "Picklist", displayName: "Priority", isValidForAdvancedFind: true },
+          { logicalName: "sample_timingperiod", attributeType: "Integer", displayName: "Timing Period", isValidForAdvancedFind: true },
+          { logicalName: "sample_timingperiodunit", attributeType: "Picklist", displayName: "Timing Period Unit", isValidForAdvancedFind: true }
         ] as any),
         executionEvidence: {
-          querySignature: "bu_tasks?$select=bu_status,bu_intent,bu_priority,bu_timingperiod,bu_timingperiodunit",
-          entitySetName: "bu_tasks",
+          querySignature: "sample_workitems?$select=sample_status,sample_intent,sample_priority,sample_timingperiod,sample_timingperiodunit",
+          entitySetName: "sample_workitems",
           executionTimeMs: 638,
           returnedRowCount: 5000,
           requestedTop: undefined,
@@ -143,11 +143,11 @@ suite("queryDoctorEngine", () => {
           hasExpand: false,
           filterFieldNames: [],
           fieldObservations: [
-            { field: "bu_status", nonNullCount: 5000, nullCount: 0, distinctCount: 5, mostCommonCount: 4923, kind: "categorical", topValues: [{ value: "In progress", count: 4923 }, { value: "Open", count: 30 }, { value: "Complete", count: 30 }] },
-            { field: "bu_intent", nonNullCount: 5000, nullCount: 0, distinctCount: 4, mostCommonCount: 4985, kind: "categorical", topValues: [{ value: "Default", count: 4985 }, { value: "Reminder", count: 8 }, { value: "Follow-up", count: 6 }] },
-            { field: "bu_priority", nonNullCount: 15, nullCount: 4985, distinctCount: 2, mostCommonCount: 8, kind: "presence", topValues: [] },
-            { field: "bu_timingperiod", nonNullCount: 3585, nullCount: 1415, distinctCount: 6, mostCommonCount: 1278, kind: "categorical", topValues: [{ value: "12", count: 1278 }, { value: "24", count: 1121 }, { value: "6", count: 732 }] },
-            { field: "bu_timingperiodunit", nonNullCount: 3585, nullCount: 1415, distinctCount: 1, mostCommonCount: 3585, kind: "presence", topValues: [] }
+            { field: "sample_status", nonNullCount: 5000, nullCount: 0, distinctCount: 5, mostCommonCount: 4923, kind: "categorical", topValues: [{ value: "In progress", count: 4923 }, { value: "Open", count: 30 }, { value: "Complete", count: 30 }] },
+            { field: "sample_intent", nonNullCount: 5000, nullCount: 0, distinctCount: 4, mostCommonCount: 4985, kind: "categorical", topValues: [{ value: "Default", count: 4985 }, { value: "Reminder", count: 8 }, { value: "Follow-up", count: 6 }] },
+            { field: "sample_priority", nonNullCount: 15, nullCount: 4985, distinctCount: 2, mostCommonCount: 8, kind: "presence", topValues: [] },
+            { field: "sample_timingperiod", nonNullCount: 3585, nullCount: 1415, distinctCount: 6, mostCommonCount: 1278, kind: "categorical", topValues: [{ value: "12", count: 1278 }, { value: "24", count: 1121 }, { value: "6", count: 732 }] },
+            { field: "sample_timingperiodunit", nonNullCount: 3585, nullCount: 1415, distinctCount: 1, mostCommonCount: 3585, kind: "presence", topValues: [] }
           ],
           observedAt: Date.now()
         }
@@ -158,10 +158,10 @@ suite("queryDoctorEngine", () => {
     const finding = result.findings.find((item) => item.narrowingSuggestions?.length);
     assert.ok(finding);
     const fields = finding?.narrowingSuggestions?.map((s) => s.field) ?? [];
-    assert.ok(fields.includes("bu_status"));
-    assert.ok(fields.includes("bu_intent"));
-    assert.strictEqual(fields[0], "bu_status");
-    assert.strictEqual(fields[1], "bu_intent");
+    assert.ok(fields.includes("sample_status"));
+    assert.ok(fields.includes("sample_intent"));
+    assert.strictEqual(fields[0], "sample_status");
+    assert.strictEqual(fields[1], "sample_intent");
   });
 
   test("surfaces structured narrowing guidance when evidence shows candidate fields", async () => {

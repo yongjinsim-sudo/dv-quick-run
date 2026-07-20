@@ -9,6 +9,6 @@ suite("fieldSemantics", () => {
 
   test("applies stronger business boost to status-like fields", () => {
     assert.ok(getBusinessSemanticBoost("statuscode") > getBusinessSemanticBoost("new_mode"));
-    assert.ok(getBusinessSemanticBoost("bu_intent") >= 2.2);
+    assert.ok(getBusinessSemanticBoost("sample_intent") >= 2.2);
   });
 });

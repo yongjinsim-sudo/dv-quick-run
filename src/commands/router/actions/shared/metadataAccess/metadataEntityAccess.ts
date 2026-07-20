@@ -12,32 +12,38 @@ export async function loadEntityDefs(
   token: string,
   options?: MetadataLoadOptions
 ): Promise<EntityDef[]> {
-  const memory = getEntityDefsMemory<EntityDef>();
-  if (memory?.length) {
+  const forceRefresh = options?.forceRefresh === true;
+  const envName = ctx.envContext.getEnvironmentName();
+  const memory = getEntityDefsMemory<EntityDef>(envName);
+  if (!forceRefresh && memory?.length) {
     return memory;
   }
 
-  const envName = ctx.envContext.getEnvironmentName();
-  const cached = getCachedEntityDefs(ctx.ext, envName);
+  const cached = !forceRefresh ? getCachedEntityDefs(ctx.ext, envName) : undefined;
   if (cached?.length) {
-    setEntityDefsMemory(cached);
+    setEntityDefsMemory(cached, envName);
     appendOutput(ctx, `Entity defs cache hit: ${cached.length} items.`, options);
     return cached;
   }
 
   try {
-    return await getOrCreateEntityDefsInFlight<EntityDef>(async () => {
+    const fetchAndCache = async () => {
       const fetched = await runMetadataLoad<EntityDef[]>(
-        "DV Quick Run: Loading Dataverse entity list...",
+        forceRefresh
+          ? "DV Quick Run: Refreshing Dataverse entity list..."
+          : "DV Quick Run: Loading Dataverse entity list...",
         async () => await fetchEntityDefs(client, token),
         options
       );
 
       await setCachedEntityDefs(ctx.ext, envName, fetched);
-      setEntityDefsMemory(fetched);
+      setEntityDefsMemory(fetched, envName);
       appendOutput(ctx, `Entity defs fetched: ${fetched.length} items.`, options);
       return fetched;
-    });
+    };
+    return forceRefresh
+      ? await fetchAndCache()
+      : await getOrCreateEntityDefsInFlight<EntityDef>(fetchAndCache, envName);
   } catch (e: any) {
     appendOutput(ctx, `Entity defs fetch failed: ${e?.message ?? String(e)}`, options);
 

@@ -140,7 +140,7 @@ suite("miniRcaInvestigationInput", () => {
     assert.doesNotMatch(report.operationalStory.join(" "), /snapshot/i);
     assert.match(markdown, /Understanding Bundle: understanding-bundle-v2/);
     assert.match(markdown, /Investigation Input: investigation-input-v1/);
-    assert.match(html, /DV Quick Run v0\.15\.1/);
+    assert.match(html, /DV Quick Run v0\.15\.2/);
     assert.doesNotMatch(html, /Understanding Bundle Contract v0\.14\.7/);
     assert.doesNotMatch(html.split("Evidence Correlation Graph v1")[0], /cross-diff-approved-category-pair/);
     assert.doesNotMatch(markdown.split("## Appendix")[0], /Limiting evidence:/);

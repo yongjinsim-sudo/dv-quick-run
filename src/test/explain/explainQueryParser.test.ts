@@ -26,4 +26,23 @@ suite("explainQueryParser", () => {
     const parsed = parseDataverseQuery("contacts?$foo=bar&$select=fullname");
     assert.deepStrictEqual(parsed.unknownParams.map((x) => x.key), ["$foo"]);
   });
+
+  test("parses a full Dataverse Web API URL and preserves the original source", () => {
+    const source = "GET https://org.crm.dynamics.com/api/data/v9.2/contacts?$select=fullname&$expand=parentcustomerid_account($select=name;$filter=statecode eq 0)#example";
+    const parsed = parseDataverseQuery(source);
+
+    assert.strictEqual(parsed.entitySetName, "contacts");
+    assert.strictEqual(parsed.sourceKind, "absolute-url");
+    assert.strictEqual(parsed.raw, source);
+    assert.strictEqual(parsed.expand[0].navigationProperty, "parentcustomerid_account");
+    assert.deepStrictEqual(parsed.expand[0].nestedSelect, ["name"]);
+  });
+
+  test("reports duplicate and malformed query options without discarding them", () => {
+    const parsed = parseDataverseQuery("contacts?$select=fullname&select=emailaddress1&$select=contactid");
+
+    assert.deepStrictEqual(parsed.duplicateParams?.map((item) => item.key), ["$select", "$select"]);
+    assert.ok(parsed.parseDiagnostics?.some((item) => item.code === "DuplicateQueryOption"));
+    assert.ok(parsed.parseDiagnostics?.some((item) => item.code === "MalformedQueryOption" && item.optionName === "select"));
+  });
 });

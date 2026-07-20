@@ -43,15 +43,15 @@ export async function loadChoiceMetadata(
   options?: MetadataLoadOptions
 ): Promise<ChoiceMetadataDef[]> {
   const forceRefresh = options?.forceRefresh === true;
-  const memory = getChoiceMemory<ChoiceMetadataDef>(logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  const memory = getChoiceMemory<ChoiceMetadataDef>(logicalName, envName);
   if (!forceRefresh && memory?.length) {
     return memory;
   }
 
-  const envName = ctx.envContext.getEnvironmentName();
   const cached = !forceRefresh ? getCachedChoiceMetadata(ctx.ext, envName, logicalName) : undefined;
   if (cached?.length) {
-    setChoiceMemory(logicalName, cached);
+    setChoiceMemory(logicalName, cached, envName);
     appendOutput(
       ctx,
       `Choice metadata cache hit for ${logicalName}: ${cached.length} fields.`,
@@ -75,7 +75,7 @@ export async function loadChoiceMetadata(
         );
 
     await setCachedChoiceMetadata(ctx.ext, envName, logicalName, fetched);
-    setChoiceMemory(logicalName, fetched);
+    setChoiceMemory(logicalName, fetched, envName);
     appendOutput(
       ctx,
       `Choice metadata ${forceRefresh ? "refreshed" : "fetched"} for ${logicalName}: ${fetched.length} fields.`,
@@ -89,5 +89,5 @@ export async function loadChoiceMetadata(
     return await fetchAndCache();
   }
 
-  return await getOrCreateChoiceInFlight<ChoiceMetadataDef>(logicalName, fetchAndCache);
+  return await getOrCreateChoiceInFlight<ChoiceMetadataDef>(logicalName, fetchAndCache, envName);
 }

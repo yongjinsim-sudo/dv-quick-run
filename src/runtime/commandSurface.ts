@@ -46,6 +46,7 @@ import { registerOpenCapabilityExplorerCommand } from "../commands/capabilityExp
 import { registerOpenCapabilityExecutionInsightsCommand } from "../commands/capabilityExplorer/openCapabilityExecutionInsightsCommand.js";
 import { registerInvestigateAccessContextCommand } from "../commands/investigateAccessContext.js";
 import { registerOpenCrossEnvironmentDiffCommand } from "../commands/comparison/openCrossEnvironmentDiffCommand.js";
+import { registerMetadataQueryIntelligenceCommands } from "../commands/showMetadataQuerySuggestions.js";
 
 type ContextRegistration = (context: vscode.ExtensionContext, ctx: CommandContext) => void;
 const coreRegistrations: readonly ContextRegistration[] = [
@@ -91,7 +92,8 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerOpenCapabilityExplorerCommand,
   registerOpenCapabilityExecutionInsightsCommand,
   registerInvestigateAccessContextCommand,
-  registerOpenCrossEnvironmentDiffCommand
+  registerOpenCrossEnvironmentDiffCommand,
+  registerMetadataQueryIntelligenceCommands
 ];
 
 const diagnosticsRegistrations = (

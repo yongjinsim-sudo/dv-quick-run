@@ -13,15 +13,18 @@ import { appendOutput, MetadataLoadOptions, runMetadataLoad } from "./metadataAc
 const relationshipMemory = new Map<string, EntityRelationshipExplorerResult>();
 const relationshipInFlight = new Map<string, Promise<EntityRelationshipExplorerResult>>();
 
-function normalizeKey(logicalName: string): string {
-  return logicalName.trim().toLowerCase();
+function normalizeKey(logicalName: string, environmentName?: string): string {
+  const logical = logicalName.trim().toLowerCase();
+  const environment = (environmentName ?? "").trim().toLowerCase();
+  return environment ? `${environment}::${logical}` : logical;
 }
 
 async function getOrCreateRelationshipInFlight(
   logicalName: string,
-  factory: () => Promise<EntityRelationshipExplorerResult>
+  factory: () => Promise<EntityRelationshipExplorerResult>,
+  environmentName?: string
 ): Promise<EntityRelationshipExplorerResult> {
-  const key = normalizeKey(logicalName);
+  const key = normalizeKey(logicalName, environmentName);
   const existing = relationshipInFlight.get(key);
   if (existing) {
     return existing;
@@ -42,14 +45,14 @@ export async function loadEntityRelationships(
   logicalName: string,
   options?: MetadataLoadOptions
 ): Promise<EntityRelationshipExplorerResult> {
-  const key = normalizeKey(logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  const key = normalizeKey(logicalName, envName);
   const forceRefresh = options?.forceRefresh === true;
   const memory = relationshipMemory.get(key);
   if (!forceRefresh && memory) {
     return memory;
   }
 
-  const envName = ctx.envContext.getEnvironmentName();
   const cached = !forceRefresh ? getCachedEntityRelationships(ctx.ext, envName, logicalName) : undefined;
   if (cached) {
     relationshipMemory.set(key, cached);
@@ -76,7 +79,7 @@ export async function loadEntityRelationships(
     return await fetchAndCache();
   }
 
-  return await getOrCreateRelationshipInFlight(logicalName, fetchAndCache);
+  return await getOrCreateRelationshipInFlight(logicalName, fetchAndCache, envName);
 }
 
 export function clearRelationshipMetadataMemory(): void {

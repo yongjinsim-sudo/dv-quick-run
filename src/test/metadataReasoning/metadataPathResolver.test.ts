@@ -31,36 +31,36 @@ function buildGraph(): MetadataReasoningGraph {
         outboundRelationships: [
           {
             fromEntity: "contact",
-            toEntity: "bu_patient",
+            toEntity: "sample_patient",
             navigationPropertyName: "sample_patientid",
             relationshipType: "OneToMany",
             direction: "oneToMany"
           }
         ]
       },
-      bu_patient: {
-        logicalName: "bu_patient",
-        fieldLogicalNames: ["bu_patientid", "bu_patientnumber"],
+      sample_patient: {
+        logicalName: "sample_patient",
+        fieldLogicalNames: ["sample_patientid", "sample_patientnumber"],
         outboundRelationships: [
           {
-            fromEntity: "bu_patient",
+            fromEntity: "sample_patient",
             toEntity: "msemr_careplan",
             navigationPropertyName: "msemr_careplans",
             relationshipType: "OneToMany",
             direction: "oneToMany"
           },
           {
-            fromEntity: "bu_patient",
-            toEntity: "bu_patientextension",
-            navigationPropertyName: "bu_patientextensions",
+            fromEntity: "sample_patient",
+            toEntity: "sample_patientextension",
+            navigationPropertyName: "sample_patientextensions",
             relationshipType: "OneToMany",
             direction: "oneToMany"
           }
         ]
       },
-      bu_patientextension: {
-        logicalName: "bu_patientextension",
-        fieldLogicalNames: ["bu_extensionfield"],
+      sample_patientextension: {
+        logicalName: "sample_patientextension",
+        fieldLogicalNames: ["sample_extensionfield"],
         outboundRelationships: []
       },
       msemr_careplan: {
@@ -82,8 +82,8 @@ function buildGraph(): MetadataReasoningGraph {
         outboundRelationships: [
           {
             fromEntity: "msemr_careplanactivity",
-            toEntity: "bu_task",
-            navigationPropertyName: "bu_tasks",
+            toEntity: "sample_workitem",
+            navigationPropertyName: "sample_workitems",
             relationshipType: "OneToMany",
             direction: "oneToMany"
           },
@@ -96,9 +96,9 @@ function buildGraph(): MetadataReasoningGraph {
           }
         ]
       },
-      bu_task: {
-        logicalName: "bu_task",
-        fieldLogicalNames: ["bu_taskstatus"],
+      sample_workitem: {
+        logicalName: "sample_workitem",
+        fieldLogicalNames: ["sample_workitemstatus"],
         outboundRelationships: []
       },
       sample_lookup: {
@@ -130,19 +130,19 @@ suite("metadataPathResolver", () => {
   });
 
   test("classifies two-hop related fields as TwoHop", () => {
-    const result = resolveMetadataReasoning(buildGraph(), "account", "bu_patientnumber");
+    const result = resolveMetadataReasoning(buildGraph(), "account", "sample_patientnumber");
 
     assert.strictEqual(result.classification, "TwoHop");
-    assert.strictEqual(result.matchedEntity, "bu_patient");
+    assert.strictEqual(result.matchedEntity, "sample_patient");
     assert.strictEqual(result.hopCount, 2);
     assert.strictEqual(result.confidence, "Medium");
   });
 
   test("classifies deeper reachable fields as TooDeep", () => {
-    const result = resolveMetadataReasoning(buildGraph(), "account", "bu_taskstatus");
+    const result = resolveMetadataReasoning(buildGraph(), "account", "sample_workitemstatus");
 
     assert.strictEqual(result.classification, "TooDeep");
-    assert.strictEqual(result.matchedEntity, "bu_task");
+    assert.strictEqual(result.matchedEntity, "sample_workitem");
     assert.strictEqual(result.hopCount, 5);
     assert.strictEqual(result.confidence, "Low");
     assert.ok(result.assistCandidates.length === 0);
@@ -166,13 +166,13 @@ suite("metadataPathResolver", () => {
   });
 
   test("does not loop forever on cyclic graphs", () => {
-    const result = resolveMetadataReasoning(buildGraph(), "msemr_careplanactivity", "bu_extensionfield", {
+    const result = resolveMetadataReasoning(buildGraph(), "msemr_careplanactivity", "sample_extensionfield", {
       queryAssistMaxDepth: 2,
       advisoryMaxDepth: 4
     });
 
     assert.strictEqual(result.classification, "TooDeep");
-    assert.strictEqual(result.matchedEntity, "bu_patientextension");
+    assert.strictEqual(result.matchedEntity, "sample_patientextension");
     assert.strictEqual(result.hopCount, 4);
   });
 });

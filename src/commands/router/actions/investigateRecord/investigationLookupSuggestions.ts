@@ -556,7 +556,6 @@ function toFriendlyLabel(logicalName: string, displayName?: string): string {
   return stripped
     .replace(/^msdyn_/i, "")
     .replace(/^msemr_/i, "")
-    .replace(/^bu_/i, "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, char => char.toUpperCase());
 }

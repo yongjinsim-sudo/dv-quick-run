@@ -4,6 +4,7 @@ import type { DiagnosticFinding, DiagnosticResult } from "./diagnosticTypes.js";
 import { basicQueryShapeRules } from "./queryDoctorRules/basicQueryShapeRules.js";
 import { metadataValidationRules } from "./queryDoctorRules/metadataValidationRules.js";
 import { evidenceAwareRules } from "./queryDoctorRules/evidenceAwareRules.js";
+import { metadataLookupRules } from "./queryDoctorRules/metadataLookupRules.js";
 
 function normalizeFinding(
   finding: DiagnosticFinding,
@@ -93,6 +94,10 @@ export async function runDiagnostics(
     }
 
     for (const rule of evidenceAwareRules) {
+      findings.push(...await Promise.resolve(rule(context, capabilities)));
+    }
+
+    for (const rule of metadataLookupRules) {
       findings.push(...await Promise.resolve(rule(context, capabilities)));
     }
   }

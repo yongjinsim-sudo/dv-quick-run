@@ -20,15 +20,15 @@ export async function loadNavigationProperties(
   logicalName: string,
   options?: MetadataLoadOptions
 ): Promise<any[]> {
-  const memory = getNavigationMemory<any>(logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  const memory = getNavigationMemory<any>(logicalName, envName);
   if (memory?.length) {
     return memory;
   }
 
-  const envName = ctx.envContext.getEnvironmentName();
   const cached = getCachedNavigationProperties(ctx.ext, envName, logicalName);
   if (cached?.length) {
-    setNavigationMemory(logicalName, cached);
+    setNavigationMemory(logicalName, cached, envName);
     appendOutput(
       ctx,
       `Navigation properties cache hit for ${logicalName}: ${cached.length} relationships.`,
@@ -45,7 +45,7 @@ export async function loadNavigationProperties(
     );
 
     await setCachedNavigationProperties(ctx.ext, envName, logicalName, fetched);
-    setNavigationMemory(logicalName, fetched);
+    setNavigationMemory(logicalName, fetched, envName);
     appendOutput(
       ctx,
       `Navigation properties fetched for ${logicalName}: ${fetched.length} relationships.`,
@@ -53,7 +53,7 @@ export async function loadNavigationProperties(
     );
 
     return fetched;
-  });
+  }, envName);
 }
 
 export async function findFieldOnDirectlyRelatedEntity(

@@ -64,6 +64,19 @@ export function buildDiagnosticMarkdownLines(result: DiagnosticResult): string[]
         lines.push(`    - ${queryLabel}: ${findingPreviewQuery}`);
       }
 
+      const alternativeQueries = (finding.suggestedQueries ?? []).filter((item) => item.query !== findingPreviewQuery);
+      for (const alternative of alternativeQueries) {
+        lines.push(`    - ${alternative.label ?? "Alternative preview"}: ${alternative.query}`);
+      }
+
+      if (finding.supportedTargets?.length) {
+        lines.push(`    - Supported targets: ${finding.supportedTargets.map((target) => `\`${target}\``).join(", ")}`);
+      }
+
+      for (const limitation of finding.limitations ?? []) {
+        lines.push(`    - Limitation: ${limitation}`);
+      }
+
       if (finding.observedDetails?.length) {
         lines.push("    - Observed from returned rows:");
         for (const detail of finding.observedDetails) {

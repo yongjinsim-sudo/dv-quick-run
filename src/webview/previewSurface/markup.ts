@@ -65,21 +65,23 @@ export function getPreviewSurfaceMarkup(model: PreviewSurfaceModel): string {
 
   return `
     <main class="preview-shell" data-preview-id="${escapeHtml(model.previewId)}">
-      <header class="preview-header">
-        <div class="preview-title-row">
-          <h1 class="preview-title">${escapeHtml(model.title)}</h1>
-          <span class="preview-pill">${escapeHtml(model.kind)}</span>
-        </div>
-        <div class="preview-meta">
-          <div><strong>Previewing:</strong> ${escapeHtml(model.sourceAction)}</div>
-          <div><strong>Source:</strong> ${escapeHtml(model.source)}</div>
-          <div><strong>Created:</strong> ${escapeHtml(model.createdAt)}</div>
-          ${model.environmentName ? `<div><strong>Environment:</strong> ${escapeHtml(model.environmentName)}</div>` : ""}
-        </div>
-      </header>
-      ${renderRiskBlock(model)}
-      ${model.summary ? `<p class="preview-summary">${escapeHtml(model.summary)}</p>` : ""}
-      ${sections}
+      <div class="preview-content">
+        <header class="preview-header">
+          <div class="preview-title-row">
+            <h1 class="preview-title">${escapeHtml(model.title)}</h1>
+            <span class="preview-pill">${escapeHtml(model.kind)}</span>
+          </div>
+          <div class="preview-meta">
+            <div><strong>Previewing:</strong> ${escapeHtml(model.sourceAction)}</div>
+            <div><strong>Source:</strong> ${escapeHtml(model.source)}</div>
+            <div><strong>Created:</strong> ${escapeHtml(model.createdAt)}</div>
+            ${model.environmentName ? `<div><strong>Environment:</strong> ${escapeHtml(model.environmentName)}</div>` : ""}
+          </div>
+        </header>
+        ${renderRiskBlock(model)}
+        ${model.summary ? `<p class="preview-summary">${escapeHtml(model.summary)}</p>` : ""}
+        ${sections}
+      </div>
       <footer class="preview-actions">
         ${actions}
       </footer>

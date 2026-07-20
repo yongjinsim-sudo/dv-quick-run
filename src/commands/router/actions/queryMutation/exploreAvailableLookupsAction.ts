@@ -1,26 +1,26 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../../../context/commandContext.js";
-import { isLookupLikeAttributeType, buildLookupSelectToken } from "../../../../metadata/metadataModel.js";
 import { loadFields, loadNavigationProperties } from "../shared/metadataAccess.js";
 import { runQueryMutationAction } from "../shared/queryMutation/runQueryMutationAction.js";
-import { upsertCsvQueryOption, setQueryOption } from "../shared/queryMutation/queryOptionMutator.js";
-import { applyExpand } from "../shared/expand/expandComposer.js";
 import type { FieldDef } from "../../../../services/entityFieldMetadataService.js";
+import { buildLookupUnderstandings } from "../../../../core/metadata/lookupUnderstanding.js";
+import { canApplyActionableInsight } from "../../../../product/capabilities/capabilityResolver.js";
+import { previewMutationResult } from "../../../../refinement/queryPreview.js";
+import {
+  buildAvailableLookupMutationPreview,
+  buildAvailableLookupPreviewFlowOptions,
+  type AvailableLookup,
+  type AvailableLookupTarget,
+  type LookupAction
+} from "./availableLookupMutationPreview.js";
 
-export type AvailableLookupTarget = {
-  logicalName: string;
-  displayName?: string;
-  navigationPropertyName?: string;
-};
-
-export type AvailableLookup = {
-  logicalName: string;
-  displayName: string;
-  attributeType: string;
-  selectToken: string;
-  targets: AvailableLookupTarget[];
-  isPolymorphic: boolean;
-};
+export {
+  buildAvailableLookupMutationPreview,
+  buildAvailableLookupPreviewFlowOptions,
+  type AvailableLookup,
+  type AvailableLookupTarget,
+  type LookupAction
+} from "./availableLookupMutationPreview.js";
 
 type NavigationRow = {
   navigationPropertyName?: string;
@@ -40,76 +40,31 @@ export function buildAvailableLookups(
   targetDisplayNames: ReadonlyMap<string, string>,
   primaryIdAttribute?: string
 ): AvailableLookup[] {
-  return fields
-    .filter((field) => isLookupLikeAttributeType(field.attributeType))
-    .filter((field) => normalize(field.logicalName) !== normalize(primaryIdAttribute))
-    .map((field): AvailableLookup | undefined => {
-      const logicalName = String(field.logicalName ?? "").trim();
-      const selectToken = buildLookupSelectToken(logicalName, field.attributeType);
-      if (!logicalName || !selectToken) {
-        return undefined;
-      }
-
-      const relationshipTargets = navigationRows
-        // A lookup attribute belongs to the table on the referencing side of a many-to-one
-        // relationship. Navigation metadata can also include incoming one-to-many relationships
-        // whose referencing attribute happens to share the same logical name. Those rows must not
-        // be grouped into this lookup family (for example a portal table's parentcustomerid that
-        // references contact).
-        .filter((row) =>
-          normalize(row.referencingEntity) === normalize(sourceLogicalName)
-          && normalize(row.referencingAttribute) === normalize(logicalName)
-        )
-        .map((row): AvailableLookupTarget | undefined => {
-          const targetLogicalName = String(row.referencedEntity ?? "").trim();
-          if (!targetLogicalName) {
-            return undefined;
-          }
-
-          return {
-            logicalName: targetLogicalName,
-            displayName: targetDisplayNames.get(normalize(targetLogicalName)),
-            navigationPropertyName: String(row.navigationPropertyName ?? "").trim() || undefined
-          };
-        })
-        .filter((target): target is AvailableLookupTarget => !!target);
-
-      const metadataTargets: AvailableLookupTarget[] = (field.lookupTargets ?? []).map((target) => ({
-        logicalName: target,
-        displayName: targetDisplayNames.get(normalize(target))
-      }));
-
-      const merged = new Map<string, AvailableLookupTarget>();
-      for (const target of [...metadataTargets, ...relationshipTargets]) {
-        const key = normalize(target.logicalName);
-        const previous = merged.get(key);
-        merged.set(key, {
-          logicalName: target.logicalName,
-          displayName: target.displayName ?? previous?.displayName,
-          navigationPropertyName: target.navigationPropertyName ?? previous?.navigationPropertyName
-        });
-      }
-
-      const targets = Array.from(merged.values()).sort((a, b) => a.logicalName.localeCompare(b.logicalName));
-
-      // Discovery is intentionally relationship-backed. A field that merely looks like a
-      // lookup in attribute metadata (for example a primary key misreported by a provider)
-      // must not be offered unless Dataverse exposes a usable navigation property for it.
-      if (!targets.some((target) => !!target.navigationPropertyName)) {
-        return undefined;
-      }
-
-      return {
-        logicalName,
-        displayName: String(field.displayName ?? logicalName).trim() || logicalName,
-        attributeType: String(field.attributeType ?? "Lookup"),
-        selectToken,
-        targets,
-        isPolymorphic: targets.length > 1
-      };
-    })
-    .filter((lookup): lookup is AvailableLookup => !!lookup)
-    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const entityDefinitions = [...targetDisplayNames.entries()].map(([logicalName, displayName]) => ({
+    logicalName,
+    entitySetName: logicalName,
+    displayName
+  }));
+  return buildLookupUnderstandings({
+    sourceLogicalName,
+    fields,
+    relationships: navigationRows,
+    entityDefinitions,
+    primaryIdAttribute
+  }).map((lookup) => ({
+    logicalName: lookup.attributeLogicalName,
+    displayName: lookup.displayName ?? lookup.attributeLogicalName,
+    attributeType: lookup.attributeType ?? "Lookup",
+    selectToken: lookup.lookupValueProperty,
+    targets: lookup.targetEntities.flatMap((target) =>
+      target.navigationProperties.map((navigation) => ({
+        logicalName: target.entityLogicalName,
+        displayName: target.displayName,
+        navigationPropertyName: navigation.name
+      }))
+    ),
+    isPolymorphic: lookup.targetEntities.length > 1
+  }));
 }
 
 function targetLabel(target: AvailableLookupTarget): string {
@@ -172,14 +127,12 @@ async function pickTarget(lookup: AvailableLookup): Promise<AvailableLookupTarge
   return picked?.target;
 }
 
-type LookupAction = "insertValue" | "insertExpand" | "insertBoth" | "copyReference";
-
 async function pickAction(lookup: AvailableLookup): Promise<LookupAction | undefined> {
   const picked = await vscode.window.showQuickPick(
     [
-      { label: "Insert value property", description: lookup.selectToken, action: "insertValue" as const },
-      { label: "Insert target-specific expand", description: "Update $expand only", action: "insertExpand" as const },
-      { label: "Insert value + expand", description: "Update both $select and $expand", action: "insertBoth" as const },
+      { label: "Preview value property", description: lookup.selectToken, action: "insertValue" as const },
+      { label: "Preview target-specific expand", description: "Preview a $expand update", action: "insertExpand" as const },
+      { label: "Preview value + expand", description: "Preview $select and $expand updates", action: "insertBoth" as const },
       { label: "Copy lookup reference", description: "Clipboard only — do not modify the editor", action: "copyReference" as const }
     ],
     {
@@ -214,8 +167,8 @@ export async function runExploreAvailableLookupsAction(ctx: CommandContext): Pro
   await runQueryMutationAction(
     ctx,
     "Explore Available Lookups",
-    "DV Quick Run: Lookup syntax added to the query.",
-    async ({ parsed, token, client, defs, entityDef }) => {
+    "DV Quick Run: Lookup preview applied to the query.",
+    async ({ target, parsed, token, client, defs, entityDef }) => {
       const [fields, navigationRows] = await Promise.all([
         loadFields(ctx, client, token, entityDef.logicalName),
         loadNavigationProperties(ctx, client, token, entityDef.logicalName)
@@ -246,25 +199,34 @@ export async function runExploreAvailableLookupsAction(ctx: CommandContext): Pro
         return false;
       }
 
-      if (action === "insertValue") {
-        upsertCsvQueryOption(parsed, "$select", [lookup.selectToken], "appendCsv");
-        return true;
-      }
-
-      const target = await pickTarget(lookup);
-      if (!target?.navigationPropertyName) {
+      const lookupTarget = action === "insertValue" ? undefined : await pickTarget(lookup);
+      if (action !== "insertValue" && !lookupTarget?.navigationPropertyName) {
         void vscode.window.showInformationMessage(`DV Quick Run: No target-specific navigation property is available for ${lookup.displayName}.`);
         return false;
       }
 
-      if (action === "insertBoth") {
-        upsertCsvQueryOption(parsed, "$select", [lookup.selectToken], "appendCsv");
+      const preview = buildAvailableLookupMutationPreview(
+        target.text,
+        parsed,
+        lookup,
+        action,
+        lookupTarget
+      );
+      if (!preview || preview.result.updatedQuery === preview.result.originalQuery) {
+        void vscode.window.showInformationMessage("DV Quick Run: The selected lookup syntax is already present in the query.");
+        return false;
       }
 
-      const existingExpand = parsed.queryOptions.get("$expand");
-      const expanded = applyExpand(existingExpand ?? undefined, { relationship: target.navigationPropertyName });
-      setQueryOption(parsed, "$expand", expanded);
-      return true;
+      await previewMutationResult(
+        target,
+        preview.result,
+        preview.details,
+        buildAvailableLookupPreviewFlowOptions(canApplyActionableInsight())
+      );
+
+      // The preview surface owns any explicit apply. Returning false prevents the
+      // legacy mutation runner from applying the same query immediately.
+      return false;
     }
   );
 }

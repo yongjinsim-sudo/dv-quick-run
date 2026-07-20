@@ -18,6 +18,7 @@ export interface DiagnosticFixHook {
 export interface DiagnosticSuggestedQuery {
   query: string;
   label?: string;
+  targetEntityLogicalName?: string;
 }
 
 export type NarrowingSuggestionKind = "categorical" | "presence";
@@ -36,11 +37,18 @@ export interface DiagnosticNarrowingSuggestion {
 }
 
 export interface DiagnosticFinding {
+  id?: string;
+  code?: string;
+  ruleId?: string;
   message: string;
   severity: DiagnosticSeverity;
   suggestion?: string;
   suggestedFix?: DiagnosticSuggestedFix;
   suggestedQuery?: DiagnosticSuggestedQuery;
+  suggestedQueries?: DiagnosticSuggestedQuery[];
+  supportedTargets?: string[];
+  evidenceRefs?: string[];
+  limitations?: string[];
   observedDetails?: string[];
   narrowingSuggestions?: DiagnosticNarrowingSuggestion[];
   confidence?: number;

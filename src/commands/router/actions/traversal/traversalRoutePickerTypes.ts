@@ -30,7 +30,6 @@ export function buildCompactRouteLabel(route: TraversalRoute): string {
 function humanizeVariantHop(raw: string): string {
   let friendly = raw
     .replace(/^msemr_/i, "")
-    .replace(/^bu_/i, "")
     .replace(/^msa_/i, "")
     .replace(/_/g, " ")
     .replace(/([a-z])([A-Z])/g, "$1 $2")

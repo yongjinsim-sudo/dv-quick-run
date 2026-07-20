@@ -15,15 +15,15 @@ export async function loadFields(
   options?: MetadataLoadOptions
 ): Promise<FieldDef[]> {
   const forceRefresh = options?.forceRefresh === true;
-  const memory = getFieldsMemory<FieldDef>(logicalName);
+  const envName = ctx.envContext.getEnvironmentName();
+  const memory = getFieldsMemory<FieldDef>(logicalName, envName);
   if (!forceRefresh && memory?.length) {
     return memory;
   }
 
-  const envName = ctx.envContext.getEnvironmentName();
   const cached = !forceRefresh ? getCachedFields(ctx.ext, envName, logicalName) : undefined;
   if (cached?.length) {
-    setFieldsMemory(logicalName, cached);
+    setFieldsMemory(logicalName, cached, envName);
     appendOutput(ctx, `Fields cache hit for ${logicalName}: ${cached.length} fields.`, options);
     return cached;
   }
@@ -38,7 +38,7 @@ export async function loadFields(
     );
 
     await setCachedFields(ctx.ext, envName, logicalName, fetched);
-    setFieldsMemory(logicalName, fetched);
+    setFieldsMemory(logicalName, fetched, envName);
     appendOutput(ctx, `Fields ${forceRefresh ? "refreshed" : "fetched"} for ${logicalName}: ${fetched.length} fields.`, options);
     return fetched;
   };
@@ -47,7 +47,7 @@ export async function loadFields(
     return await fetchAndCache();
   }
 
-  return await getOrCreateFieldsInFlight<FieldDef>(logicalName, fetchAndCache);
+  return await getOrCreateFieldsInFlight<FieldDef>(logicalName, fetchAndCache, envName);
 }
 
 export async function loadSelectableFields(

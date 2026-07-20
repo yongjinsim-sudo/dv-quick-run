@@ -135,11 +135,11 @@ function buildQueryExplainContributors(
     },
     {
       id: "dataverse.lookup.understanding",
-      title: "Lookup Understanding",
+      title: "Lookup & Relationship Understanding",
       run: () => ({
         sections: lookupUnderstanding.length
           ? [{
-            heading: "Lookup Understanding",
+            heading: "Lookup & Relationship Understanding",
             lines: buildLookupUnderstandingLines(lookupUnderstanding),
             confidence: "high" as const,
             sourceContributor: "dataverse.lookup.understanding"
@@ -168,7 +168,9 @@ function buildQueryExplainContributors(
         sections: diagnostics?.findings.length
           ? [{
             heading: "Diagnostics",
-            lines: buildDiagnosticMarkdownLines(diagnostics).filter((line) => line !== "## Diagnostics"),
+            lines: buildDiagnosticMarkdownLines(diagnostics)
+              .filter((line) => line !== "## Diagnostics")
+              .map((line) => line.startsWith("### ") ? `#### ${line.slice(4)}` : line),
             confidence: "medium" as const,
             sourceContributor: "query.doctor.v2"
           }]

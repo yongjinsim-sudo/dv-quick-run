@@ -454,15 +454,15 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.1 introduces one deterministic Shared Recommendation Engine for Timeline and Cross-Diff Mini RCA.",
-  "Polymorphic Lookup Understanding now explains valid target tables, target-specific navigation properties, runtime target annotations, and safe query starting points. Available Lookup Discovery can also browse and insert lookup syntax before the query is written.",
-  "Repeated evidence observations are grouped with occurrence counts while technical references remain available.",
-  "Richer contributor narratives explain Security Participation, Configuration Drift, Metadata Evolution, Relationship Behaviour, and other bounded patterns.",
-  "Cross-evidence relationships now read as None identified when observations are independent rather than presenting an unexplained zero.",
-  "Understanding Coverage separates contributor availability from explanatory confidence.",
-  "Timeline now uses the same dominant and non-dominant outcome semantics as Cross-Diff and guides review of first-observed plus adjacent intervals.",
-  "Recommendations remain advisory: they guide verification and never prove root cause, authorise remediation, or mutate Dataverse.",
-  "Explain assists. Evidence decides. Correlation connects evidence; recommendations guide the next investigation step."
+  "v0.15.2 introduces Metadata-Aware Query Intelligence for OData Query Explain and Query Doctor.",
+  "Referenced lookups are classified automatically from current-environment attributes and outbound relationship metadata.",
+  "Polymorphic lookups show every supported target and its real target-specific navigation property without guessed names.",
+  "Invalid direct expansions, unsupported targets, scalar lookup misuse, and unknown navigation properties are detected before execution.",
+  "Valid target-specific expansions explain that rows using another supported target may return null expansion data.",
+  "A bare entity-set query can open searchable lookup discovery before identifier and target-specific previews are shown.",
+  "Show Metadata-Aware Query Suggestions preserves the existing query and opens an explicit preview; it never executes the query.",
+  "Free includes metadata insight and copyable previews. Pro can explicitly apply a preview to the editor.",
+  "Refresh Metadata Context forces a current-environment refresh when schema changes during a session."
 ];
 
 export const philosophy: readonly string[] = [

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_14_7.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_15_2.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.1</title>
+<title>DV Quick Run v0.15.2</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,47 +122,47 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.1</div>
-        <h1>Mini RCA <span class="badge">Experimental</span></h1>
-        <p class="subtitle"><strong>One recommendation contract, clearer evidence stories, and bounded conclusions across Timeline and Cross-Diff.</strong><br>Mini RCA now uses one deterministic Shared Recommendation Engine for prioritisation, evidence grouping, evidence references, bounded conclusions, and next-investigation guidance.</p>
+        <div class="eyebrow">What's new in v0.15.2</div>
+        <h1>Metadata-Aware Query Intelligence</h1>
+        <p class="subtitle"><strong>Understand polymorphic lookups before running a query that Dataverse may reject.</strong><br>Query Explain and Query Doctor use the active environment's metadata to identify lookup targets, validate navigation properties, and suggest corrected queries.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.1</div>
-          <div class="price">Mini RCA (Experimental)</div>
-          <div class="limit">Timeline and Cross-Diff now share recommendation authority, safety rules, and deterministic ordering.</div>
-          <p class="recognition">Recommendations are deterministic projections of bounded investigation state. They never create evidence, claim causation, or apply remediation.</p>
-          <span class="badge">Pro · Mini RCA (Experimental)</span>
+          <div class="eyebrow">New in v0.15.2</div>
+          <div class="price">Lookup & Relationship Understanding</div>
+          <div class="limit">Metadata-valid targets, real navigation properties, and deterministic query corrections.</div>
+          <p class="recognition">Metadata remains canonical. DVQR does not guess a navigation name or claim which target a particular row uses.</p>
+          <span class="badge">Free insight · Pro apply</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Evidence Correlation</strong><span>Connect existing evidence using the closed relationship vocabulary</span></div>
-        <div class="price-pill"><strong>Evidence Relationships</strong><span>Inspect graph-driven relationships inside the Understanding Bundle appendix</span></div>
-        <div class="price-pill"><strong>Understanding Coverage</strong><span>Separate contributor availability from explanatory confidence</span></div>
-        <div class="price-pill"><strong>Grouped Observations</strong><span>Collapse repeated evidence labels while preserving technical occurrences</span></div>
+        <div class="price-pill"><strong>Automatic classification</strong><span>Resolve single- and multi-target lookups from the active environment</span></div>
+        <div class="price-pill"><strong>Query Doctor</strong><span>Catch invalid expansion and unsupported targets before execution</span></div>
+        <div class="price-pill"><strong>Target-specific examples</strong><span>Preserve the original query while using metadata-valid navigation properties</span></div>
+        <div class="price-pill"><strong>Runtime boundary</strong><span>Explain why a valid target expansion may still return null for a row</span></div>
       </div>
       <div class="actions">
-        <button class="primary" data-action="snapshotLibrary">Open Snapshot Library</button>
+        <button class="primary" data-action="suggestions">Show Query Suggestions</button>
         <button class="gold" data-action="pricing">Start 14-day Pro Trial</button>
         <button class="store" data-action="store">Open Store</button>
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Mini RCA is Experimental, advisory, and evidence-backed. It helps investigators correlate available evidence without claiming exact change time, root-cause certainty, remediation status, or operational authority. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Suggestions are preview-first and never execute a query. Free can copy a preview; Pro can explicitly apply or copy it. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     
-        <p><strong>Polymorphic Lookup Understanding foundation:</strong> inspect valid target tables, navigation properties, runtime target annotations, and safe query examples directly from metadata. Use <strong>Explore Available Lookups</strong> to discover and insert lookup syntax before writing the query.</p>
+        <p><strong>Try it:</strong> start with a table query such as <code>contacts</code>, then run <strong>Show Metadata-Aware Query Suggestions</strong> to choose a lookup and preview its identifier or a target-specific expansion.</p>
       </section>
 
     <section class="section">
-      <div class="eyebrow">New in v0.15.1</div>
+      <div class="eyebrow">Metadata-aware workflow</div>
       <div class="grid">
-        <div class="card"><h3>🔗 Evidence Correlation</h3><p>Relationship cards explain how evidence supports, reinforces, limits, contradicts, or remains missing or neutral.</p></div>
-        <div class="card"><h3>🧭 Evidence Relationships</h3><p>The bundle appendix now projects the same canonical graph into a compact investigator-facing relationship view.</p></div>
-        <div class="card"><h3>📊 Understanding Coverage</h3><p>Available, unavailable, and not-applicable contributors are counted separately from explanatory confidence.</p></div>
-        <div class="card"><h3>📎 Cleaner Evidence Review</h3><p>Repeated observations are grouped with occurrence counts, contributor narratives are richer, and independent evidence is described clearly when no deterministic relationship applies.</p></div>
+        <div class="card"><h3>🔎 Detect</h3><p>Discover a lookup from a bare table query or resolve referenced lookup metadata automatically.</p></div>
+        <div class="card"><h3>🧭 Understand</h3><p>Supported targets, navigation properties, annotations, confidence, and limitations stay visible.</p></div>
+        <div class="card"><h3>🩺 Diagnose</h3><p>Query Doctor distinguishes invalid lookup syntax from a valid target that may be null at runtime.</p></div>
+        <div class="card"><h3>👁 Preview</h3><p>Target-specific suggestions preserve the original query and require an explicit user action.</p></div>
       </div>
     </section>
 
@@ -196,8 +196,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0147",
-    "DV Quick Run v0.15.1",
+    "dvQuickRunWelcomeV0152",
+    "DV Quick Run v0.15.2",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -229,8 +229,8 @@ async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<
       return;
     }
 
-    if (message.action === "snapshotLibrary") {
-      await vscode.commands.executeCommand("dvQuickRun.openSnapshotLibrary");
+    if (message.action === "suggestions") {
+      await vscode.commands.executeCommand("dvQuickRun.showMetadataQuerySuggestions");
       panel.dispose();
       return;
     }
