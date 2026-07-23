@@ -1,0 +1,76 @@
+{
+  "fixtureContractVersion": "investigation-readiness-phase6-semantic-operations-v1",
+  "releaseVersion": "0.15.3",
+  "transportBoundary": "none",
+  "semanticTransformation": "none",
+  "operations": [
+    {
+      "operationId": "assess-investigation-readiness",
+      "inputContract": "investigation-readiness-request-v1",
+      "outputContracts": [
+        "investigation-readiness-v1",
+        "investigation-readiness-error-v1"
+      ],
+      "requestFixture": {
+        "file": "readiness-phase0-golden-scenarios.fixture.json",
+        "scenarioIds": [
+          "cross-diff-ready",
+          "timeline-conditional",
+          "cross-diff-limited",
+          "timeline-not-assessable"
+        ]
+      },
+      "responseFixture": {
+        "file": "readiness-phase1-contract-snapshots.fixture.json",
+        "jsonPointer": "/result"
+      }
+    },
+    {
+      "operationId": "retrieve-investigation-gaps",
+      "inputContract": "investigation-readiness-v1",
+      "outputField": "gaps",
+      "sourceScenarioIds": [
+        "timeline-conditional",
+        "cross-diff-limited"
+      ]
+    },
+    {
+      "operationId": "retrieve-contributor-availability",
+      "inputContract": "investigation-readiness-v1",
+      "outputField": "contributorStates",
+      "sourceScenarioIds": [
+        "cross-diff-ready",
+        "timeline-conditional",
+        "cross-diff-limited",
+        "timeline-not-assessable"
+      ]
+    },
+    {
+      "operationId": "retrieve-evidence-recommendations",
+      "inputContract": "investigation-readiness-v1",
+      "outputField": "recommendations",
+      "sourceScenarioIds": [
+        "timeline-conditional",
+        "cross-diff-limited"
+      ]
+    }
+  ],
+  "errorFixture": {
+    "file": "readiness-phase1-contract-snapshots.fixture.json",
+    "jsonPointer": "/errors",
+    "codes": [
+      "InvalidInput",
+      "UnsupportedInputVersion",
+      "UnsupportedProfileVersion",
+      "ContractViolation"
+    ],
+    "projectionBehavior": "preserve-error-envelope"
+  },
+  "deferredTransportConcerns": [
+    "tool names",
+    "authentication",
+    "hosting",
+    "capability gating",
+    "server lifecycle"
+  ]
+}

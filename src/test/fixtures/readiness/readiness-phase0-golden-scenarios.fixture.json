@@ -1,0 +1,325 @@
+{
+  "fixtureContractVersion": "investigation-readiness-phase0-golden-v1",
+  "releaseVersion": "0.15.3",
+  "canonicalization": {
+    "algorithm": "sha256-recursive-sorted-key-json-v1",
+    "excludedRequestFields": ["generatedUtc"],
+    "fingerprintPrefix": "sha256:"
+  },
+  "scenarios": [
+    {
+      "id": "cross-diff-ready",
+      "title": "Ready Cross-Environment Diff investigation",
+      "request": {
+        "contractVersion": "investigation-readiness-request-v1",
+        "investigationInput": {
+          "version": "investigation-input-v1",
+          "investigationId": "fixture-cross-diff-ready",
+          "kind": "cross-environment-diff",
+          "subject": {
+            "label": "Sample Work Item",
+            "kind": "entity",
+            "entityLogicalName": "sample_workitem",
+            "sourceEnvironmentLabel": "Source Environment",
+            "targetEnvironmentLabel": "Target Environment"
+          },
+          "provenance": {
+            "producer": "Cross-Environment Diff",
+            "sourceArtifactId": "fixture-comparison-ready-v1",
+            "generatedAtIso": "2026-07-21T22:00:00.000Z",
+            "contractVersion": "investigation-input-v1"
+          },
+          "evidence": [
+            {
+              "id": "evidence:comparison:ready",
+              "providerId": "fixture.attribute-metadata",
+              "providerTitle": "Attribute Metadata",
+              "title": "Required-level difference",
+              "summary": "A sample attribute has different required-level metadata between the source and target snapshots.",
+              "category": "Metadata Evolution",
+              "significance": "Medium",
+              "confidence": "Medium",
+              "source": "Cross Environment",
+              "sourceEvidenceReferences": [
+                { "label": "Source snapshot", "value": "snapshot-source-ready", "source": "source" },
+                { "label": "Target snapshot", "value": "snapshot-target-ready", "source": "target" }
+              ]
+            }
+          ],
+          "contributors": [
+            { "id": "crossDiff.comparison", "role": "Primary", "state": "Available", "evidenceRefs": ["evidence:comparison:ready"] },
+            { "id": "crossDiff.sourceSnapshot", "role": "Required", "state": "Available", "evidenceRefs": ["artifact:snapshot-source-ready"] },
+            { "id": "crossDiff.targetSnapshot", "role": "Required", "state": "Available", "evidenceRefs": ["artifact:snapshot-target-ready"] },
+            { "id": "crossDiff.providerFindings", "role": "Required", "state": "Available", "evidenceRefs": ["evidence:comparison:ready"] },
+            { "id": "query.evidence", "role": "Optional", "state": "Unsupported", "applicable": false, "evidenceRefs": [] }
+          ],
+          "intent": {
+            "actorOrChangeTimeRequested": false,
+            "temporalProgressionRequested": false,
+            "runtimeConfirmationAttached": false
+          }
+        },
+        "understandingBundle": {
+          "version": "understanding-bundle-v2",
+          "sourceInputIdentity": "fixture-comparison-ready-v1",
+          "baseSynthesizedConfidence": "High",
+          "dominanceResult": "dominant-contributor",
+          "limitations": []
+        },
+        "profile": { "profileId": "cross-diff-mini-rca-v1", "version": "1.0" },
+        "assessmentUtc": "2026-07-22T00:00:00.000Z",
+        "generatedUtc": "2026-07-22T00:00:01.000Z"
+      },
+      "expected": {
+        "contractVersion": "investigation-readiness-v1",
+        "posture": "Ready",
+        "confidenceEffect": "Preserve",
+        "baseSynthesizedConfidence": "High",
+        "effectiveSynthesizedConfidence": "High",
+        "inputFingerprint": "sha256:0f18c9161639bbd4a0a03481440455be75fb05e3e7a8cba07ee116eecdb22155",
+        "gaps": [],
+        "recommendations": [],
+        "semanticAssertions": [
+          "Optional unsupported evidence does not prevent Ready when it is not applicable.",
+          "Ready means prepared for bounded synthesis and does not certify truth."
+        ]
+      }
+    },
+    {
+      "id": "timeline-conditional",
+      "title": "Conditional Timeline investigation with visible evidence limitations",
+      "request": {
+        "contractVersion": "investigation-readiness-request-v1",
+        "investigationInput": {
+          "version": "investigation-input-v1",
+          "investigationId": "fixture-timeline-conditional",
+          "kind": "timeline",
+          "subject": {
+            "label": "Sample Work Item",
+            "kind": "entity",
+            "entityLogicalName": "sample_workitem",
+            "environmentLabel": "Investigation Environment"
+          },
+          "provenance": {
+            "producer": "Timeline Reconstruction",
+            "sourceArtifactId": "fixture-timeline-conditional-v1",
+            "generatedAtIso": "2026-07-21T21:00:00.000Z",
+            "contractVersion": "investigation-input-v1"
+          },
+          "evidence": [
+            {
+              "id": "evidence:timeline:conditional",
+              "providerId": "fixture.timeline",
+              "providerTitle": "Timeline Reconstruction",
+              "title": "Configuration difference first observed",
+              "summary": "A configuration difference was first observed between two preserved snapshots.",
+              "category": "Configuration Drift",
+              "significance": "Medium",
+              "confidence": "Medium",
+              "source": "Timeline",
+              "firstObservedBetween": "Snapshot 1 to Snapshot 2",
+              "sourceEvidenceReferences": [
+                { "label": "Earlier snapshot", "value": "timeline-snapshot-1" },
+                { "label": "Later snapshot", "value": "timeline-snapshot-2" }
+              ]
+            }
+          ],
+          "contributors": [
+            { "id": "timeline.reconstruction", "role": "Primary", "state": "Available", "evidenceRefs": ["evidence:timeline:conditional"] },
+            { "id": "timeline.understanding", "role": "Required", "state": "Available", "evidenceRefs": ["evidence:timeline:conditional"] },
+            { "id": "timeline.trust", "role": "Required", "state": "Partial", "evidenceRefs": ["artifact:timeline-snapshot-2"] },
+            { "id": "audit.evidence", "role": "Recommended", "state": "PermissionLimited", "applicable": true, "consultationAttempted": true, "evidenceRefs": [] },
+            { "id": "identity.evidence", "role": "Recommended", "state": "NotConsulted", "applicable": true, "evidenceRefs": [] },
+            { "id": "query.evidence", "role": "Optional", "state": "Unsupported", "applicable": false, "evidenceRefs": [] }
+          ],
+          "intent": {
+            "actorOrChangeTimeRequested": true,
+            "identityParticipationInScope": true,
+            "runtimeConfirmationAttached": false
+          }
+        },
+        "understandingBundle": {
+          "version": "understanding-bundle-v2",
+          "sourceInputIdentity": "fixture-timeline-conditional-v1",
+          "baseSynthesizedConfidence": "Medium",
+          "dominanceResult": "non-dominant",
+          "limitations": ["Timeline Trust covers only part of the requested interval."]
+        },
+        "profile": { "profileId": "timeline-mini-rca-v1", "version": "1.0" },
+        "assessmentUtc": "2026-07-22T00:00:00.000Z",
+        "generatedUtc": "2026-07-22T00:00:02.000Z"
+      },
+      "expected": {
+        "contractVersion": "investigation-readiness-v1",
+        "posture": "Conditional",
+        "confidenceEffect": "Qualify",
+        "baseSynthesizedConfidence": "Medium",
+        "effectiveSynthesizedConfidence": "Medium",
+        "inputFingerprint": "sha256:0629a1a44ff865648d2d08d6c3d41d3bc56daafc7a5785c9a04f9c5090bbdb71",
+        "gaps": [
+          { "ruleId": "GAP-COVERAGE-003", "category": "Coverage", "priority": "Medium", "contributorIds": ["timeline.trust"] },
+          { "ruleId": "GAP-COVERAGE-004", "category": "Coverage", "priority": "Medium", "contributorIds": ["identity.evidence"] },
+          { "ruleId": "GAP-PERMISSION-002", "category": "Permission", "priority": "Medium", "contributorIds": ["audit.evidence"] }
+        ],
+        "recommendations": [
+          { "ruleId": "GAP-COVERAGE-003", "family": "Complete required evidence coverage" },
+          { "ruleId": "GAP-COVERAGE-004", "family": "Consult or complete recommended evidence" },
+          { "ruleId": "GAP-PERMISSION-002", "family": "Verify with authorised access where material" }
+        ],
+        "semanticAssertions": [
+          "Permission limitation is not proof that no audit event exists.",
+          "NotConsulted remains distinct from Missing.",
+          "A non-dominant result does not determine readiness posture."
+        ]
+      }
+    },
+    {
+      "id": "cross-diff-limited",
+      "title": "Limited Cross-Environment Diff investigation",
+      "request": {
+        "contractVersion": "investigation-readiness-request-v1",
+        "investigationInput": {
+          "version": "investigation-input-v1",
+          "investigationId": "fixture-cross-diff-limited",
+          "kind": "cross-environment-diff",
+          "subject": {
+            "label": "Sample Work Item",
+            "kind": "entity",
+            "entityLogicalName": "sample_workitem",
+            "sourceEnvironmentLabel": "Source Environment",
+            "targetEnvironmentLabel": "Target Environment"
+          },
+          "provenance": {
+            "producer": "Cross-Environment Diff",
+            "sourceArtifactId": "fixture-comparison-limited-v1",
+            "generatedAtIso": "2026-07-20T20:00:00.000Z",
+            "contractVersion": "investigation-input-v1"
+          },
+          "evidence": [
+            {
+              "id": "evidence:comparison:limited",
+              "providerId": "fixture.relationship-metadata",
+              "providerTitle": "Relationship Metadata",
+              "title": "Relationship definition differs",
+              "summary": "A sample relationship differs between the supplied source and target artifacts.",
+              "category": "Relationship Behaviour",
+              "significance": "High",
+              "confidence": "High",
+              "source": "Cross Environment",
+              "sourceEvidenceReferences": [
+                { "label": "Source snapshot", "value": "snapshot-source-limited", "source": "source" },
+                { "label": "Target snapshot", "value": "snapshot-target-limited", "source": "target" }
+              ]
+            }
+          ],
+          "contributors": [
+            { "id": "crossDiff.comparison", "role": "Primary", "state": "Available", "evidenceRefs": ["evidence:comparison:limited"] },
+            { "id": "crossDiff.sourceSnapshot", "role": "Required", "state": "Available", "evidenceRefs": ["artifact:snapshot-source-limited"] },
+            { "id": "crossDiff.targetSnapshot", "role": "Required", "state": "Stale", "freshnessRuleId": "fixture-target-validity-window", "evidenceRefs": ["artifact:snapshot-target-limited"] },
+            { "id": "crossDiff.providerFindings", "role": "Required", "state": "Available", "provenanceState": "Limited", "evidenceRefs": ["evidence:comparison:limited"] }
+          ],
+          "intent": {
+            "actorOrChangeTimeRequested": false,
+            "temporalProgressionRequested": false,
+            "runtimeConfirmationAttached": false
+          }
+        },
+        "understandingBundle": {
+          "version": "understanding-bundle-v2",
+          "sourceInputIdentity": "fixture-comparison-limited-v1",
+          "baseSynthesizedConfidence": "High",
+          "dominanceResult": "dominant-contributor",
+          "limitations": ["Provider capture time is absent from one required finding reference."]
+        },
+        "profile": { "profileId": "cross-diff-mini-rca-v1", "version": "1.0" },
+        "assessmentUtc": "2026-07-22T00:00:00.000Z",
+        "generatedUtc": "2026-07-22T00:00:03.000Z"
+      },
+      "expected": {
+        "contractVersion": "investigation-readiness-v1",
+        "posture": "Limited",
+        "confidenceEffect": "Dampen",
+        "baseSynthesizedConfidence": "High",
+        "effectiveSynthesizedConfidence": "Medium",
+        "inputFingerprint": "sha256:2e6518cbde76985af415aa9ea0cb1d5480667fa676774ef99493481111b00b83",
+        "gaps": [
+          { "ruleId": "GAP-PROVENANCE-001", "category": "Provenance", "priority": "High", "contributorIds": ["crossDiff.providerFindings"] },
+          { "ruleId": "GAP-FRESHNESS-001", "category": "Freshness", "priority": "High", "contributorIds": ["crossDiff.targetSnapshot"] }
+        ],
+        "recommendations": [
+          { "ruleId": "GAP-PROVENANCE-001", "family": "Re-capture or attach provenance-bearing evidence" },
+          { "ruleId": "GAP-FRESHNESS-001", "family": "Refresh required evidence" }
+        ],
+        "semanticAssertions": [
+          "Readiness applies one Dampen effect even when more than one High gap exists.",
+          "Provider-owned evidence confidence remains unchanged.",
+          "The target snapshot remains inspectable even though an explicit rule classifies it as Stale."
+        ]
+      }
+    },
+    {
+      "id": "timeline-not-assessable",
+      "title": "Timeline investigation without qualifying Primary evidence",
+      "request": {
+        "contractVersion": "investigation-readiness-request-v1",
+        "investigationInput": {
+          "version": "investigation-input-v1",
+          "investigationId": "fixture-timeline-not-assessable",
+          "kind": "timeline",
+          "subject": {
+            "label": "Sample Work Item",
+            "kind": "entity",
+            "entityLogicalName": "sample_workitem",
+            "environmentLabel": "Investigation Environment"
+          },
+          "provenance": {
+            "producer": "Timeline Reconstruction",
+            "sourceArtifactId": "fixture-timeline-empty-v1",
+            "generatedAtIso": "2026-07-21T19:00:00.000Z",
+            "contractVersion": "investigation-input-v1"
+          },
+          "evidence": [],
+          "contributors": [
+            { "id": "timeline.reconstruction", "role": "Primary", "state": "Missing", "evidenceRefs": [] },
+            { "id": "timeline.understanding", "role": "Required", "state": "NotConsulted", "evidenceRefs": [] },
+            { "id": "timeline.trust", "role": "Required", "state": "Missing", "evidenceRefs": [] }
+          ],
+          "intent": {
+            "actorOrChangeTimeRequested": false,
+            "identityParticipationInScope": false,
+            "runtimeConfirmationAttached": false
+          }
+        },
+        "understandingBundle": {
+          "version": "understanding-bundle-v2",
+          "sourceInputIdentity": "fixture-timeline-empty-v1",
+          "baseSynthesizedConfidence": "Medium",
+          "dominanceResult": "non-dominant",
+          "limitations": ["No qualifying Timeline Reconstruction evidence is supplied."]
+        },
+        "profile": { "profileId": "timeline-mini-rca-v1", "version": "1.0" },
+        "assessmentUtc": "2026-07-22T00:00:00.000Z",
+        "generatedUtc": "2026-07-22T00:00:04.000Z"
+      },
+      "expected": {
+        "contractVersion": "investigation-readiness-v1",
+        "posture": "NotAssessable",
+        "confidenceEffect": "Withhold",
+        "baseSynthesizedConfidence": "Medium",
+        "effectiveSynthesizedConfidence": "Unknown",
+        "inputFingerprint": "sha256:5f3fcce0150d6316c200c9f5cb36adc97b0105862ae546ba92af230584d56822",
+        "gaps": [
+          { "ruleId": "GAP-COVERAGE-001", "category": "Coverage", "priority": "High", "contributorIds": ["timeline.reconstruction"] }
+        ],
+        "recommendations": [
+          { "ruleId": "GAP-COVERAGE-001", "family": "Acquire canonical Primary evidence" }
+        ],
+        "semanticAssertions": [
+          "NotAssessable is a modeled result and not an exception.",
+          "Contributor labels alone do not establish investigation readiness.",
+          "Withhold is the only readiness effect that converts known synthesized confidence to Unknown."
+        ]
+      }
+    }
+  ]
+}

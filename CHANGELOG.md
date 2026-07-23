@@ -8,6 +8,39 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+# DV Quick Run v0.15.3 — Investigation Readiness & MCP-Ready Application Boundary
+
+## Added
+
+- Versioned `investigation-readiness-v1` request, result and structured error contracts.
+- Timeline and Cross-Diff readiness profiles with one canonical contributor-state and evidence-quality vocabulary.
+- Exactly 18 deterministic, fixture-backed gap rules across Coverage, Permission, Provenance, Freshness, Scope, Repeatability, Conflict and Contributor Unavailable.
+- Ready, Conditional, Limited and NotAssessable postures without a numeric readiness score.
+- Preserve, Qualify, Dampen and Withhold confidence effects that never raise synthesized confidence.
+- Concise Investigation Readiness sections in Mini RCA Markdown and HTML, with complete technical traces in the Appendix.
+- Frozen `mini-rca-artifact-v1` canonical JSON containing the normalized investigation input, persisted readiness metadata and complete report.
+- Explicit Mini RCA regeneration for Timeline and Cross-Diff.
+- Historical raw `mini-rca-v2` compatibility without fabricated readiness.
+- Transport-neutral semantic operations for assessment, gaps, contributor availability and evidence recommendations.
+- MCP-readiness fixtures, host-isolation tests, deterministic performance baselines and package/privacy validation.
+
+## Changed
+
+- Mini RCA HTML, Markdown and JSON exports now reuse one frozen report per active investigation surface.
+- Mini RCA filenames use the frozen artifact timestamp with second-level precision, keeping one export set grouped while preserving regenerated versions.
+- Timeline InspectOnly understanding remains evidence-bearing; the underlying trust contributor owns the provenance limitation.
+- Structured identity participation providers remain classified as Security Participation across Timeline readiness and Mini RCA.
+- Public release surfaces now describe evidence preparation and bounded confidence limitations without remediation or authority claims.
+
+## Safety and product boundaries
+
+- Readiness is advisory and does not certify truth, causality, completeness, remediation, deployment correctness or operational authority.
+- Missing, NotConsulted, PermissionLimited, Unsupported and Stale remain distinct states.
+- Freshness requires explicit provider/profile evidence; no hidden global TTL is introduced.
+- Evidence Correlation v1, dominance ordering and provider confidence remain unchanged.
+- No network, filesystem, editor, Dataverse or renderer dependency exists in the readiness engine.
+- No MCP runtime, transport, authentication or server lifecycle is packaged in v0.15.3.
+
 # DV Quick Run v0.15.2 — Metadata-Aware Query Intelligence
 
 ## Added
@@ -8518,7 +8551,7 @@ Examples tested:
 * `contact`
 * `plugintracelog`
 * `sdkmessageprocessingstep`
-* `msemr_medicalidentifier`
+* `sample_medicalidentifier`
 * custom task tables
 * lightweight metadata/helper tables
 
@@ -11268,7 +11301,7 @@ No major UX changes, but this is a **foundational release** that enables deeper 
 
 - Improved weak-context identifier resolution (e.g. GUID pasted without entity context)
 - Better handling of fields like:
-- `msemr_azurefhirid`
+- `sample_externalidentifier`
 - custom identifier-style columns
 - More consistent ranking of candidate matches
 

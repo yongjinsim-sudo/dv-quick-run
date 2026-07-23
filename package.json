@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, investigation, execution, comparison, Mini RCA, and operational timeline reconstruction workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.15.2",
+  "version": "0.15.3",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -525,7 +525,7 @@
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Bounded table patterns used by Investigate Record for weak-context identifier search. Supports wildcards such as `msemr_*`."
+          "markdownDescription": "Bounded table patterns used by Investigate Record for weak-context identifier search. Supports wildcards such as `sample_*`."
         },
         "dvQuickRun.investigate.maxSearchTables": {
           "type": "number",

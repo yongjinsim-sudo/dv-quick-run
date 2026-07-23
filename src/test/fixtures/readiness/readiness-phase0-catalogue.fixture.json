@@ -1,0 +1,304 @@
+{
+  "fixtureContractVersion": "investigation-readiness-phase0-fixtures-v1",
+  "releaseVersion": "0.15.3",
+  "lockedDate": "2026-07-22",
+  "vocabulary": {
+    "postures": ["Ready", "Conditional", "Limited", "NotAssessable"],
+    "contributorStates": ["Available", "Partial", "PermissionLimited", "Missing", "NotConsulted", "Unsupported", "Stale"],
+    "contributorRoles": ["Primary", "Required", "Recommended", "Optional"],
+    "qualityStates": ["Sufficient", "Limited", "Unknown", "NotApplicable"],
+    "gapCategories": ["Coverage", "Permission", "Provenance", "Freshness", "Scope", "Repeatability", "Conflict", "ContributorUnavailable"],
+    "gapPriorities": ["High", "Medium", "Low"],
+    "confidenceEffects": ["Preserve", "Qualify", "Dampen", "Withhold"],
+    "confidenceLevels": ["High", "Medium", "Low", "Unknown"]
+  },
+  "stateFixtures": [
+    {
+      "id": "state-available",
+      "state": "Available",
+      "qualifyingEvidenceSupplied": true,
+      "semanticInvariant": "Qualifying evidence is supplied with sufficient provenance and satisfies every applicable explicit freshness rule."
+    },
+    {
+      "id": "state-partial",
+      "state": "Partial",
+      "qualifyingEvidenceSupplied": true,
+      "semanticInvariant": "Some qualifying evidence exists, but expected records, fields, intervals or scope are incomplete; Partial is not Missing."
+    },
+    {
+      "id": "state-permission-limited",
+      "state": "PermissionLimited",
+      "qualifyingEvidenceSupplied": false,
+      "semanticInvariant": "Consultation was attempted and access constraints prevented complete retrieval; this is not proof that evidence or an event does not exist."
+    },
+    {
+      "id": "state-missing",
+      "state": "Missing",
+      "qualifyingEvidenceSupplied": false,
+      "semanticInvariant": "The profile expects the contributor and consultation was possible, but no qualifying evidence was supplied; this is not negative evidence."
+    },
+    {
+      "id": "state-not-consulted",
+      "state": "NotConsulted",
+      "qualifyingEvidenceSupplied": false,
+      "semanticInvariant": "The contributor was not requested, loaded or evaluated; NotConsulted is not Missing."
+    },
+    {
+      "id": "state-unsupported",
+      "state": "Unsupported",
+      "qualifyingEvidenceSupplied": false,
+      "semanticInvariant": "The current input kind, provider version, environment or product capability does not support the contributor; this is not a runtime failure."
+    },
+    {
+      "id": "state-stale",
+      "state": "Stale",
+      "qualifyingEvidenceSupplied": true,
+      "semanticInvariant": "Evidence exists but fails an explicit provider-owned or profile-owned freshness rule relative to assessmentUtc; it remains inspectable but is not current evidence."
+    }
+  ],
+  "profiles": [
+    {
+      "profileId": "timeline-mini-rca-v1",
+      "version": "1.0",
+      "investigationKind": "timeline",
+      "contributors": [
+        { "id": "timeline.reconstruction", "role": "Primary", "appliesWhen": "always", "absenceBehavior": "No qualifying evidence produces NotAssessable." },
+        { "id": "timeline.understanding", "role": "Required", "appliesWhen": "always", "absenceBehavior": "Missing, PermissionLimited or Stale produces a High gap." },
+        { "id": "timeline.trust", "role": "Required", "appliesWhen": "always", "absenceBehavior": "Missing or unresolved trust produces a High provenance or coverage gap." },
+        { "id": "audit.evidence", "role": "Recommended", "appliesWhen": "audit-requested-or-actor-change-time-intent", "absenceBehavior": "A limitation is Medium by default and High only through an explicit profile rule." },
+        { "id": "identity.evidence", "role": "Recommended", "appliesWhen": "identity-role-ownership-or-participation-in-scope", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "relationship.evidence", "role": "Recommended", "appliesWhen": "association-lookup-or-relationship-behaviour-in-scope", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "configuration.evidence", "role": "Recommended", "appliesWhen": "workflow-environment-variable-or-runtime-configuration-in-scope", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "crossDiff.evidence", "role": "Recommended", "appliesWhen": "environment-drift-or-source-target-comparison-linked", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "query.evidence", "role": "Optional", "appliesWhen": "query-or-runtime-result-attached", "absenceBehavior": "Absence alone produces no gap; incomplete attached evidence may produce a repeatability gap." },
+        { "id": "metadata.evidence", "role": "Optional", "appliesWhen": "metadata-context-attached-and-not-owned-by-another-applicable-contributor", "absenceBehavior": "Absence alone produces no gap." }
+      ]
+    },
+    {
+      "profileId": "cross-diff-mini-rca-v1",
+      "version": "1.0",
+      "investigationKind": "cross-environment-diff",
+      "contributors": [
+        { "id": "crossDiff.comparison", "role": "Primary", "appliesWhen": "always", "absenceBehavior": "No qualifying comparison produces NotAssessable." },
+        { "id": "crossDiff.sourceSnapshot", "role": "Required", "appliesWhen": "always", "absenceBehavior": "Missing, PermissionLimited or Stale produces a High gap." },
+        { "id": "crossDiff.targetSnapshot", "role": "Required", "appliesWhen": "always", "absenceBehavior": "Missing, PermissionLimited or Stale produces a High gap." },
+        { "id": "crossDiff.providerFindings", "role": "Required", "appliesWhen": "always", "absenceBehavior": "Missing or provenance-limited findings produce a High gap." },
+        { "id": "relationship.evidence", "role": "Recommended", "appliesWhen": "relationship-providers-or-findings-relevant", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "metadata.evidence", "role": "Recommended", "appliesWhen": "metadata-or-schema-findings-relevant", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "configuration.evidence", "role": "Recommended", "appliesWhen": "configuration-or-runtime-findings-relevant", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "identity.evidence", "role": "Recommended", "appliesWhen": "identity-ownership-or-participation-findings-relevant", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "audit.evidence", "role": "Recommended", "appliesWhen": "audit-requested-or-actor-change-time-intent", "absenceBehavior": "A limitation is Medium by default." },
+        { "id": "timeline.evidence", "role": "Recommended", "appliesWhen": "temporal-progression-or-change-interval-requested", "absenceBehavior": "A material limitation is Medium." },
+        { "id": "query.evidence", "role": "Optional", "appliesWhen": "runtime-or-query-confirmation-attached", "absenceBehavior": "Absence alone produces no gap." }
+      ]
+    }
+  ],
+  "gapRules": [
+    {
+      "ruleId": "GAP-COVERAGE-001",
+      "category": "Coverage",
+      "priority": "High",
+      "trigger": "No qualifying Primary evidence.",
+      "recommendationFamily": "Acquire canonical Primary evidence",
+      "fixture": { "role": "Primary", "state": "Missing", "expectedPostureCeiling": "NotAssessable" }
+    },
+    {
+      "ruleId": "GAP-COVERAGE-002",
+      "category": "Coverage",
+      "priority": "High",
+      "trigger": "An applicable Required contributor is Missing.",
+      "recommendationFamily": "Acquire missing required evidence",
+      "fixture": { "role": "Required", "state": "Missing", "expectedPostureCeiling": "Limited" }
+    },
+    {
+      "ruleId": "GAP-COVERAGE-003",
+      "category": "Coverage",
+      "priority": "Medium",
+      "trigger": "An applicable Required contributor is Partial.",
+      "recommendationFamily": "Complete required evidence coverage",
+      "fixture": { "role": "Required", "state": "Partial", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-COVERAGE-004",
+      "category": "Coverage",
+      "priority": "Medium",
+      "trigger": "An applicable Recommended contributor is Missing, Partial or NotConsulted.",
+      "recommendationFamily": "Consult or complete recommended evidence",
+      "fixture": { "role": "Recommended", "state": "NotConsulted", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-PERMISSION-001",
+      "category": "Permission",
+      "priority": "High",
+      "trigger": "An applicable Required contributor is PermissionLimited.",
+      "recommendationFamily": "Retry through an authorised evidence-acquisition path",
+      "fixture": { "role": "Required", "state": "PermissionLimited", "expectedPostureCeiling": "Limited" }
+    },
+    {
+      "ruleId": "GAP-PERMISSION-002",
+      "category": "Permission",
+      "priority": "Medium",
+      "trigger": "An applicable Recommended contributor is PermissionLimited.",
+      "recommendationFamily": "Verify with authorised access where material",
+      "fixture": { "role": "Recommended", "state": "PermissionLimited", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-PROVENANCE-001",
+      "category": "Provenance",
+      "priority": "High",
+      "trigger": "Primary or Required evidence lacks material source, environment, provider or capture provenance.",
+      "recommendationFamily": "Re-capture or attach provenance-bearing evidence",
+      "fixture": { "role": "Required", "state": "Available", "qualityState": "Limited", "expectedPostureCeiling": "Limited" }
+    },
+    {
+      "ruleId": "GAP-PROVENANCE-002",
+      "category": "Provenance",
+      "priority": "Medium",
+      "trigger": "Recommended evidence has incomplete provenance.",
+      "recommendationFamily": "Preserve missing provenance details",
+      "fixture": { "role": "Recommended", "state": "Available", "qualityState": "Limited", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-FRESHNESS-001",
+      "category": "Freshness",
+      "priority": "High",
+      "trigger": "Applicable Required evidence is Stale under an explicit rule.",
+      "recommendationFamily": "Refresh required evidence",
+      "fixture": { "role": "Required", "state": "Stale", "expectedPostureCeiling": "Limited" }
+    },
+    {
+      "ruleId": "GAP-FRESHNESS-002",
+      "category": "Freshness",
+      "priority": "Medium",
+      "trigger": "Applicable Recommended evidence is Stale under an explicit rule.",
+      "recommendationFamily": "Refresh recommended evidence where material",
+      "fixture": { "role": "Recommended", "state": "Stale", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-SCOPE-001",
+      "category": "Scope",
+      "priority": "High",
+      "trigger": "Subject, environment or source-target orientation materially mismatches the investigation.",
+      "recommendationFamily": "Align evidence with the investigated scope",
+      "fixture": { "role": "Required", "state": "Available", "qualityState": "Limited", "expectedPostureCeiling": "Limited" }
+    },
+    {
+      "ruleId": "GAP-SCOPE-002",
+      "category": "Scope",
+      "priority": "Medium",
+      "trigger": "Requested interval, provider or record scope is only partially covered.",
+      "recommendationFamily": "Extend or narrow evidence scope explicitly",
+      "fixture": { "role": "Recommended", "state": "Partial", "qualityState": "Limited", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-REPEATABILITY-001",
+      "category": "Repeatability",
+      "priority": "Medium",
+      "trigger": "Attached query or runtime evidence lacks material query shape, ordering, capture or artifact identity.",
+      "recommendationFamily": "Capture repeatable query and evidence context",
+      "fixture": { "role": "Optional", "state": "Partial", "qualityState": "Limited", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-REPEATABILITY-002",
+      "category": "Repeatability",
+      "priority": "Low",
+      "trigger": "Optional reproduction context is incomplete.",
+      "recommendationFamily": "Preserve additional handoff context",
+      "fixture": { "role": "Optional", "state": "Partial", "qualityState": "Limited", "expectedPostureCeiling": "Ready" }
+    },
+    {
+      "ruleId": "GAP-CONFLICT-001",
+      "category": "Conflict",
+      "priority": "High",
+      "trigger": "Canonical sources materially conflict and the conflict limits synthesis.",
+      "recommendationFamily": "Verify competing evidence sources",
+      "fixture": { "role": "Required", "state": "Available", "qualityState": "Limited", "expectedPostureCeiling": "Limited" }
+    },
+    {
+      "ruleId": "GAP-CONFLICT-002",
+      "category": "Conflict",
+      "priority": "Medium",
+      "trigger": "Canonical sources contain a non-dominant unresolved inconsistency.",
+      "recommendationFamily": "Review the inconsistency before increasing confidence",
+      "fixture": { "role": "Recommended", "state": "Available", "qualityState": "Limited", "expectedPostureCeiling": "Conditional" }
+    },
+    {
+      "ruleId": "GAP-CONTRIBUTOR-001",
+      "category": "ContributorUnavailable",
+      "priority": "High",
+      "trigger": "An applicable Required contributor is Unsupported.",
+      "recommendationFamily": "Record unsupported capability and seek alternative evidence",
+      "fixture": { "role": "Required", "state": "Unsupported", "expectedPostureCeiling": "Limited" }
+    },
+    {
+      "ruleId": "GAP-CONTRIBUTOR-002",
+      "category": "ContributorUnavailable",
+      "priority": "Low",
+      "trigger": "An Optional contributor is Unsupported or NotConsulted and the profile explicitly enables transparency.",
+      "recommendationFamily": "Optional review only",
+      "fixture": { "role": "Optional", "state": "Unsupported", "expectedPostureCeiling": "Ready" }
+    }
+  ],
+  "confidenceTransitions": [
+    { "base": "High", "effect": "Preserve", "effective": "High", "limitationStrength": "None" },
+    { "base": "High", "effect": "Qualify", "effective": "High", "limitationStrength": "Explicit" },
+    { "base": "High", "effect": "Dampen", "effective": "Medium", "limitationStrength": "Explicit" },
+    { "base": "High", "effect": "Withhold", "effective": "Unknown", "limitationStrength": "Explicit" },
+    { "base": "Medium", "effect": "Preserve", "effective": "Medium", "limitationStrength": "None" },
+    { "base": "Medium", "effect": "Qualify", "effective": "Medium", "limitationStrength": "Explicit" },
+    { "base": "Medium", "effect": "Dampen", "effective": "Low", "limitationStrength": "Explicit" },
+    { "base": "Medium", "effect": "Withhold", "effective": "Unknown", "limitationStrength": "Explicit" },
+    { "base": "Low", "effect": "Preserve", "effective": "Low", "limitationStrength": "None" },
+    { "base": "Low", "effect": "Qualify", "effective": "Low", "limitationStrength": "Explicit" },
+    { "base": "Low", "effect": "Dampen", "effective": "Low", "limitationStrength": "Severe" },
+    { "base": "Low", "effect": "Withhold", "effective": "Unknown", "limitationStrength": "Explicit" },
+    { "base": "Unknown", "effect": "Preserve", "effective": "Unknown", "limitationStrength": "None" },
+    { "base": "Unknown", "effect": "Qualify", "effective": "Unknown", "limitationStrength": "Explicit" },
+    { "base": "Unknown", "effect": "Dampen", "effective": "Unknown", "limitationStrength": "Explicit" },
+    { "base": "Unknown", "effect": "Withhold", "effective": "Unknown", "limitationStrength": "Explicit" }
+  ],
+  "freshnessPolicies": [
+    {
+      "evidenceFamily": "Timeline Reconstruction",
+      "thresholdOwner": "Profile",
+      "evaluation": "Historical age alone never makes the timeline stale; assess requested-window coverage and artifact provenance.",
+      "withoutExplicitThreshold": "NotApplicable"
+    },
+    {
+      "evidenceFamily": "Timeline Understanding and Trust",
+      "thresholdOwner": "Profile",
+      "evaluation": "Derived evidence must correspond to the current Timeline Reconstruction input fingerprint.",
+      "withoutExplicitThreshold": "Unknown"
+    },
+    {
+      "evidenceFamily": "Cross-Diff source and target snapshots",
+      "thresholdOwner": "Profile",
+      "evaluation": "Preserve source-target orientation and evaluate only an explicit comparison-context freshness constraint; otherwise assess relative alignment and provenance.",
+      "withoutExplicitThreshold": "Unknown"
+    },
+    {
+      "evidenceFamily": "Provider findings",
+      "thresholdOwner": "Provider",
+      "evaluation": "Findings must correspond to the current comparison or Timeline input fingerprint.",
+      "withoutExplicitThreshold": "Unknown"
+    },
+    {
+      "evidenceFamily": "Audit Evidence",
+      "thresholdOwner": "Profile",
+      "evaluation": "Assess coverage of the requested audit interval and retrieval provenance; event age alone is not staleness.",
+      "withoutExplicitThreshold": "Unknown"
+    },
+    {
+      "evidenceFamily": "Runtime query result",
+      "thresholdOwner": "ProviderOrProfile",
+      "evaluation": "Use an explicit validity window when supplied; otherwise freshness is Unknown.",
+      "withoutExplicitThreshold": "Unknown"
+    },
+    {
+      "evidenceFamily": "Metadata, configuration, identity and relationship evidence",
+      "thresholdOwner": "ProviderOrProfile",
+      "evaluation": "Use provider-supplied intrinsic validity or an explicit profile threshold; otherwise freshness is Unknown.",
+      "withoutExplicitThreshold": "Unknown"
+    }
+  ]
+}

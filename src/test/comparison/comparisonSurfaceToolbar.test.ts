@@ -13,6 +13,8 @@ suite("comparison surface toolbar", () => {
     assert.match(html, /Investigation Handoff <span>PDF/);
     assert.match(html, /Mini RCA Report <span>HTML/);
     assert.match(html, /Mini RCA Report <span>MD/);
+    assert.match(html, /Mini RCA Artifact <span>JSON/);
+    assert.match(html, /Regenerate Mini RCA <span>Explicit/);
     assert.doesNotMatch(html, /data-export-kind="summary-html">Diff Findings Summary/);
     assert.doesNotMatch(html, /data-export-kind="handoff-pdf">Handoff PDF/);
   });
@@ -29,5 +31,7 @@ suite("comparison surface toolbar", () => {
     assert.match(html, /Investigation Handoff <span>PDF<\/span>/);
     assert.match(html, /Mini RCA Report <span>HTML<\/span>/);
     assert.match(html, /Mini RCA Report <span>MD<\/span>/);
+    assert.match(html, /Mini RCA Artifact <span>JSON<\/span>/);
+    assert.match(html, /Regenerate Mini RCA <span>Explicit<\/span>/);
   });
 });

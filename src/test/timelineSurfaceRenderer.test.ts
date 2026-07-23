@@ -185,6 +185,8 @@ suite("timelineSurfaceRenderer", () => {
     assert.match(html, /Reports ▾/);
     assert.match(html, /Timeline Findings Summary <span>HTML<\/span>/);
     assert.match(html, /Timeline Investigation Handoff <span>PDF<\/span>/);
+    assert.match(html, /Mini RCA Artifact <span>JSON<\/span>/);
+    assert.match(html, /Regenerate Mini RCA <span>Explicit<\/span>/);
     assert.match(html, /Timeline Intervals/);
     assert.match(html, /href="#interval-1"/);
     assert.doesNotMatch(html, /Timeline Diff/);
