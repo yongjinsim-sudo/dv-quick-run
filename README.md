@@ -1,52 +1,31 @@
 # DV Quick Run
 
-## ✨ What's new in v0.15.2
-
-DV Quick Run v0.15.2 adds **Metadata-Aware Query Intelligence** and automated polymorphic lookup understanding.
-
-Query Explain and Query Doctor now resolve referenced lookup metadata automatically from the active Dataverse environment. They identify single- and multi-target lookups, list metadata-valid target navigation properties, intercept invalid direct lookup expansion, flag unsupported targets, and explain why a valid target-specific expansion may still return null for some rows.
-
-### Metadata-aware query assistance
-
-Use **DV Quick Run: Show Metadata-Aware Query Suggestions** on the current query to preview a deterministic correction. When the query starts with only an entity set such as `contacts`, DVQR first offers the table's metadata-backed lookups, then previews either the lookup identifier or a target-specific expansion. The same picker can copy the complete lookup reference without changing the editor. Existing `$select`, `$filter`, `$orderby`, `$top`, unrelated `$expand`, URL base, and entity set are preserved.
-
-The earlier **DV Quick Run: Explore Available Lookups** workflow now uses the same preview-first boundary. Choosing a value property or target-specific expansion opens a query preview; Free can copy it, Pro can explicitly apply it, and cancelling leaves the editor unchanged.
-
-New capabilities include:
-
-- Automatic current-environment metadata resolution
-- Single- and multi-target lookup classification
-- Target-specific navigation-property discovery
-- Progressive lookup discovery from a bare entity-set query
-- Lazy validation of target display fields before they are added to nested `$select`
-- Safe Owner/Principal expansion without a guessed common name property
-- Copyable lookup references from the progressive suggestion workflow
-- Metadata-aware Query Doctor diagnostics before execution
-- Plain-language Lookup & Relationship Understanding in Query Explain
-- Preview-first target-specific query rewrites
-- Preview-first Available Lookup discovery with no immediate editor mutation
-- Copy-only suggestions in Free; explicit apply-or-copy in Pro
-- Environment-isolated metadata caches and an explicit refresh command
-
-DV Quick Run now assists developers through the complete workflow:
-
-**Discover metadata → Build queries → Execute → Understand → Investigate → Mini RCA**
-
----
-
-# DV Quick Run
-
 A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
 
 **Run, understand, explain through Query Understanding Reports, Cross Diff Understanding, Timeline Understanding, and Mini RCA, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Cross Diff Understanding, Timeline Understanding, Mini RCA Reports, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
 
 ---
 
-## ✨ What's new in v0.15.2
+## ✨ What's new in v0.15.3
 
-DV Quick Run v0.15.2 turns the v0.15.1 Metadata Discovery foundation into automatic **Metadata-Aware Query Intelligence**. Referenced lookups are resolved during Query Explain, metadata-backed Query Doctor findings include deterministic target-specific examples, and the editor exposes a preview-first suggestion command without executing the query.
+DV Quick Run v0.15.3 adds **Investigation Readiness** to Timeline and Cross-Diff Mini RCA.
 
-Metadata remains canonical: DVQR does not invent navigation-property names or assume a row's runtime lookup target. Suggested rewrites preserve the original query shape and require an explicit copy or apply action.
+Readiness explains whether the supplied evidence is prepared for bounded synthesis, which evidence gaps qualify confidence, and what evidence is worth collecting next. It never produces a numeric readiness score, increases confidence, certifies root cause, or authorises remediation.
+
+New capabilities include:
+
+- Versioned `investigation-readiness-v1` results for Timeline and Cross-Diff
+- Ready, Conditional, Limited and NotAssessable postures
+- Contributor availability and six categorical evidence-quality dimensions
+- Exactly 18 deterministic, fixture-backed evidence-gap rules
+- Evidence-only recommendations with stable rule, gap and evidence references
+- Concise Markdown/HTML readiness summaries with complete technical Appendices
+- Frozen `mini-rca-artifact-v1` JSON exports and explicit regeneration
+- Stable second-precision filenames shared by HTML, Markdown and JSON from one artifact
+- Historical report compatibility without fabricated readiness
+- A headless, transport-neutral service boundary prepared for the next MCP Foundation release
+
+v0.15.3 does **not** ship an MCP server, protocol transport, authentication layer or server lifecycle. The release stabilises the local deterministic application contract those future adapters can reuse.
 
 ## 🌐 Website & Interactive Demo
 

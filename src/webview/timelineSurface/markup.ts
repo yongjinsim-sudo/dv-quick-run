@@ -45,6 +45,8 @@ function renderTimelineToolbar(): string {
         <button type="button" data-timeline-export-kind="understanding-md" role="menuitem">Timeline Understanding Report <span>MD</span></button>
         <button type="button" data-timeline-export-kind="mini-rca-html" role="menuitem">Mini RCA Report <span>HTML</span></button>
         <button type="button" data-timeline-export-kind="mini-rca-md" role="menuitem">Mini RCA Report <span>MD</span></button>
+        <button type="button" data-timeline-export-kind="mini-rca-json" role="menuitem">Mini RCA Artifact <span>JSON</span></button>
+        <button type="button" data-timeline-export-kind="mini-rca-regenerate" role="menuitem">Regenerate Mini RCA <span>Explicit</span></button>
       </div>
     </details>
     <a class="dvqr-timeline-action-button dvqr-timeline-action-link" href="#dvqr-timeline-interval-index">Jump to intervals</a>

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_15_2.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_15_3.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.2</title>
+<title>DV Quick Run v0.15.3</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,57 +122,57 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.2</div>
-        <h1>Metadata-Aware Query Intelligence</h1>
-        <p class="subtitle"><strong>Understand polymorphic lookups before running a query that Dataverse may reject.</strong><br>Query Explain and Query Doctor use the active environment's metadata to identify lookup targets, validate navigation properties, and suggest corrected queries.</p>
+        <div class="eyebrow">What's new in v0.15.3</div>
+        <h1>Investigation Readiness</h1>
+        <p class="subtitle"><strong>See whether the supplied evidence is prepared for bounded synthesis.</strong><br>Timeline and Cross-Diff Mini RCA now explain contributor availability, material evidence gaps, confidence limitations, and the next evidence worth collecting.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.2</div>
-          <div class="price">Lookup & Relationship Understanding</div>
-          <div class="limit">Metadata-valid targets, real navigation properties, and deterministic query corrections.</div>
-          <p class="recognition">Metadata remains canonical. DVQR does not guess a navigation name or claim which target a particular row uses.</p>
-          <span class="badge">Free insight · Pro apply</span>
+          <div class="eyebrow">New in v0.15.3</div>
+          <div class="price">Evidence preparation, clearly bounded</div>
+          <div class="limit">Ready · Conditional · Limited · NotAssessable</div>
+          <p class="recognition">Readiness may preserve or reduce synthesized confidence. It never certifies truth, raises confidence, or authorises remediation.</p>
+          <span class="badge">Evidence first · Human authority</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Automatic classification</strong><span>Resolve single- and multi-target lookups from the active environment</span></div>
-        <div class="price-pill"><strong>Query Doctor</strong><span>Catch invalid expansion and unsupported targets before execution</span></div>
-        <div class="price-pill"><strong>Target-specific examples</strong><span>Preserve the original query while using metadata-valid navigation properties</span></div>
-        <div class="price-pill"><strong>Runtime boundary</strong><span>Explain why a valid target expansion may still return null for a row</span></div>
+        <div class="price-pill"><strong>Contributor availability</strong><span>Preserve Missing, NotConsulted, PermissionLimited, Unsupported and Stale distinctions</span></div>
+        <div class="price-pill"><strong>Evidence quality</strong><span>Explain provenance, coverage, freshness, scope, repeatability and consistency</span></div>
+        <div class="price-pill"><strong>Frozen artifacts</strong><span>Keep HTML, Markdown and JSON aligned until explicit regeneration</span></div>
+        <div class="price-pill"><strong>MCP-ready boundary</strong><span>Stabilise a transport-neutral service without shipping an MCP runtime</span></div>
       </div>
       <div class="actions">
-        <button class="primary" data-action="suggestions">Show Query Suggestions</button>
+        <button class="primary" data-action="hub">Open DV Quick Run Hub</button>
         <button class="gold" data-action="pricing">Start 14-day Pro Trial</button>
         <button class="store" data-action="store">Open Store</button>
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Suggestions are preview-first and never execute a query. Free can copy a preview; Pro can explicitly apply or copy it. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Investigation Readiness is advisory and never initiates a Dataverse read, write, query, upload, or remediation action. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     
-        <p><strong>Try it:</strong> start with a table query such as <code>contacts</code>, then run <strong>Show Metadata-Aware Query Suggestions</strong> to choose a lookup and preview its identifier or a target-specific expansion.</p>
+        <p><strong>Try it:</strong> generate a Timeline or Cross-Diff Mini RCA, review the readiness summary, then open the Appendix for the complete evidence-gap trace.</p>
       </section>
 
     <section class="section">
-      <div class="eyebrow">Metadata-aware workflow</div>
+      <div class="eyebrow">Readiness workflow</div>
       <div class="grid">
-        <div class="card"><h3>🔎 Detect</h3><p>Discover a lookup from a bare table query or resolve referenced lookup metadata automatically.</p></div>
-        <div class="card"><h3>🧭 Understand</h3><p>Supported targets, navigation properties, annotations, confidence, and limitations stay visible.</p></div>
-        <div class="card"><h3>🩺 Diagnose</h3><p>Query Doctor distinguishes invalid lookup syntax from a valid target that may be null at runtime.</p></div>
-        <div class="card"><h3>👁 Preview</h3><p>Target-specific suggestions preserve the original query and require an explicit user action.</p></div>
+        <div class="card"><h3>🔎 Assess</h3><p>Normalize supplied Timeline or Cross-Diff evidence through one versioned readiness profile.</p></div>
+        <div class="card"><h3>🧭 Explain</h3><p>Keep contributor states, evidence quality, gaps and confidence effects visible.</p></div>
+        <div class="card"><h3>📦 Preserve</h3><p>Export one frozen HTML, Markdown and canonical JSON report set.</p></div>
+        <div class="card"><h3>↻ Regenerate</h3><p>Recompute only through an explicit action when the investigation evidence changes.</p></div>
       </div>
     </section>
 
     <section class="section future">
       <div class="eyebrow">Coming next</div>
       <div class="grid">
-        <div class="card"><h3>🔬 Deeper Understanding Inputs</h3><p>Future contributors can add Audit, runtime, identity, configuration, and other bounded evidence without changing the graph-ready bundle contract.</p></div>
-        <div class="card"><h3>🌉 Understanding Engine</h3><p>Query, Cross Diff, Timeline, and Mini RCA now follow the evidence-first briefing pattern.</p></div>
-        <div class="card"><h3>🧩 Shared Investigation Experience</h3><p>Future RCA surfaces can compose more understanding bundles without changing the evidence-first report boundary.</p></div>
-        <div class="card"><h3>🧰 MCP-ready Context</h3><p>Mini RCA creates an MCP-ready operational explanation seam while staying deterministic and local-first.</p></div>
+        <div class="card"><h3>🔌 MCP Server Foundation</h3><p>Future transport can reuse the stable readiness request, result and error contracts without rewriting semantics.</p></div>
+        <div class="card"><h3>🛡 Capability boundaries</h3><p>Authentication, consent, hosting and server lifecycle remain separate v0.15.4 decisions.</p></div>
+        <div class="card"><h3>📚 Read-oriented operations</h3><p>Assessment, gaps, contributor availability and evidence recommendations remain deterministic projections.</p></div>
+        <div class="card"><h3>🏠 Local-first authority</h3><p>Future transport must not gain more evidence or operational authority than local DVQR.</p></div>
       </div>
     </section>
 
@@ -196,8 +196,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0152",
-    "DV Quick Run v0.15.2",
+    "dvQuickRunWelcomeV0153",
+    "DV Quick Run v0.15.3",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -229,8 +229,8 @@ async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<
       return;
     }
 
-    if (message.action === "suggestions") {
-      await vscode.commands.executeCommand("dvQuickRun.showMetadataQuerySuggestions");
+    if (message.action === "hub") {
+      await vscode.commands.executeCommand("dvQuickRun.openHub");
       panel.dispose();
       return;
     }

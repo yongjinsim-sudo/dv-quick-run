@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import type { ComparisonViewModel } from "../../../core/comparison/index.js";
+import { formatLocalReportFileTimestamp } from "../../reporting/reportFileTimestamp.js";
 import { resolveSnapshotWorkspace } from "../snapshotWorkspaceService.js";
 
 function formatSnapshotPickerTime(value: string | undefined): string {
@@ -31,16 +32,13 @@ function normalizeExportScopeLabel(value: string | undefined): string | undefine
     .replace(/\s*→\s*/g, " to ");
 }
 
-function formatExportTimestamp(date = new Date()): string {
-  const pad = (value: number): string => value.toString().padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
+type ComparisonExportExtension = "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md" | "mini-rca-json";
+
+function isReportExport(extension: ComparisonExportExtension): boolean {
+  return extension === "summary-html" || extension === "summary-pdf" || extension === "handoff-html" || extension === "handoff-pdf" || extension === "understanding-md" || extension === "mini-rca-html" || extension === "mini-rca-md" || extension === "mini-rca-json";
 }
 
-function isReportExport(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): boolean {
-  return extension === "summary-html" || extension === "summary-pdf" || extension === "handoff-html" || extension === "handoff-pdf" || extension === "understanding-md" || extension === "mini-rca-html" || extension === "mini-rca-md";
-}
-
-function getReportArtifactName(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): string | undefined {
+function getReportArtifactName(extension: ComparisonExportExtension): string | undefined {
   if (extension === "summary-html" || extension === "summary-pdf") {
     return "diff-findings-summary";
   }
@@ -53,14 +51,18 @@ function getReportArtifactName(extension: "json" | "md" | "html" | "baseline" | 
     return "understanding-report";
   }
 
-  if (extension === "mini-rca-html" || extension === "mini-rca-md") {
+  if (extension === "mini-rca-html" || extension === "mini-rca-md" || extension === "mini-rca-json") {
     return "mini-rca-report";
   }
 
   return undefined;
 }
 
-function getReportExtension(extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): string {
+function getReportExtension(extension: ComparisonExportExtension): string {
+  if (extension === "mini-rca-json") {
+    return "json";
+  }
+
   if (extension === "understanding-md" || extension === "mini-rca-md") {
     return "md";
   }
@@ -88,7 +90,7 @@ function extractEnvironmentLabel(model: ComparisonViewModel): string {
   return "environment";
 }
 
-function buildReportFileName(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): string | undefined {
+function buildReportFileName(model: ComparisonViewModel, extension: ComparisonExportExtension, timestampDate: Date): string | undefined {
   const artifact = getReportArtifactName(extension);
   if (!artifact) {
     return undefined;
@@ -96,13 +98,13 @@ function buildReportFileName(model: ComparisonViewModel, extension: "json" | "md
 
   const scope = normalizeExportScopeLabel(model.summary.subjectLabel) ?? "comparison";
   const environment = extractEnvironmentLabel(model);
-  return `${formatExportTimestamp()}-${slugFilePart(scope)}-${slugFilePart(environment)}-${artifact}.${getReportExtension(extension)}`;
+  return `${formatLocalReportFileTimestamp(timestampDate)}-${slugFilePart(scope)}-${slugFilePart(environment)}-${artifact}.${getReportExtension(extension)}`;
 }
 
-export function buildDefaultExportUri(model: ComparisonViewModel, extension: "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md"): vscode.Uri | undefined {
+export function buildDefaultExportUri(model: ComparisonViewModel, extension: ComparisonExportExtension, timestampDate = new Date()): vscode.Uri | undefined {
   const reportExport = isReportExport(extension);
-  const reportFileName = buildReportFileName(model, extension);
-  const fileName = reportFileName ?? `${model.title.startsWith("Timeline Diff") ? "dvqr-timeline-diff" : "dvqr-cross-environment-diff"}-${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${formatExportTimestamp()}.${getReportExtension(extension)}`;
+  const reportFileName = buildReportFileName(model, extension, timestampDate);
+  const fileName = reportFileName ?? `${model.title.startsWith("Timeline Diff") ? "dvqr-timeline-diff" : "dvqr-cross-environment-diff"}-${slugFilePart(model.summary.sourceLabel)}-to-${slugFilePart(model.summary.targetLabel)}-${formatLocalReportFileTimestamp(timestampDate)}.${getReportExtension(extension)}`;
 
   const workspace = resolveSnapshotWorkspace();
   if (workspace.available) {

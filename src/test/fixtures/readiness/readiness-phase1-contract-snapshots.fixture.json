@@ -1,0 +1,196 @@
+{
+  "fixtureContractVersion": "investigation-readiness-phase1-contract-snapshots-v1",
+  "releaseVersion": "0.15.3",
+  "requestScenarioId": "cross-diff-ready",
+  "profileCanonicalSha256": {
+    "timeline-mini-rca-v1": "02423509db00777f93bad2db74cbb93558dcaea7b2d7aa0468354939c85aac11",
+    "cross-diff-mini-rca-v1": "99fb134f0fc6887a4d07a1bc0028913f5a8b33d9d26cb2471e78c7658856db84"
+  },
+  "gapRegistryCanonicalSha256": "aa32e1005e826847a971a159d382bbaee98b3887a686eb2f8d5a39385e0e972d",
+  "result": {
+    "contractVersion": "investigation-readiness-v1",
+    "investigationId": "fixture-cross-diff-ready",
+    "investigationKind": "cross-environment-diff",
+    "profileId": "cross-diff-mini-rca-v1",
+    "profileVersion": "1.0",
+    "posture": "Ready",
+    "summary": "The supplied evidence is ready for bounded synthesis; readiness does not certify truth or root cause.",
+    "contributorStates": [
+      {
+        "contributorId": "crossDiff.comparison",
+        "sourceContributorIds": ["crossDiff.comparison"],
+        "role": "Primary",
+        "state": "Available",
+        "applicable": true,
+        "explanation": "The canonical comparison is supplied with a preserved source artifact.",
+        "evidenceRefs": [
+          {
+            "id": "evidence:comparison:ready",
+            "label": "Required-level difference",
+            "source": "Cross Environment",
+            "providerId": "fixture.attribute-metadata",
+            "sourceArtifactId": "fixture-comparison-ready-v1"
+          }
+        ],
+        "limitations": []
+      },
+      {
+        "contributorId": "crossDiff.sourceSnapshot",
+        "sourceContributorIds": ["crossDiff.sourceSnapshot"],
+        "role": "Required",
+        "state": "Available",
+        "applicable": true,
+        "explanation": "The source snapshot is preserved and aligned with the comparison.",
+        "evidenceRefs": [
+          {
+            "id": "artifact:snapshot-source-ready",
+            "label": "Source snapshot",
+            "source": "source",
+            "value": "snapshot-source-ready"
+          }
+        ],
+        "limitations": []
+      },
+      {
+        "contributorId": "crossDiff.targetSnapshot",
+        "sourceContributorIds": ["crossDiff.targetSnapshot"],
+        "role": "Required",
+        "state": "Available",
+        "applicable": true,
+        "explanation": "The target snapshot is preserved and aligned with the comparison.",
+        "evidenceRefs": [
+          {
+            "id": "artifact:snapshot-target-ready",
+            "label": "Target snapshot",
+            "source": "target",
+            "value": "snapshot-target-ready"
+          }
+        ],
+        "limitations": []
+      },
+      {
+        "contributorId": "crossDiff.providerFindings",
+        "sourceContributorIds": ["crossDiff.providerFindings"],
+        "role": "Required",
+        "state": "Available",
+        "applicable": true,
+        "explanation": "Provider findings correspond to the current comparison input.",
+        "evidenceRefs": [
+          {
+            "id": "evidence:comparison:ready",
+            "label": "Required-level difference",
+            "source": "Cross Environment",
+            "providerId": "fixture.attribute-metadata",
+            "sourceArtifactId": "fixture-comparison-ready-v1"
+          }
+        ],
+        "limitations": []
+      },
+      {
+        "contributorId": "query.evidence",
+        "sourceContributorIds": ["query.evidence"],
+        "role": "Optional",
+        "state": "Unsupported",
+        "applicable": false,
+        "explanation": "Runtime query confirmation is not applicable to this bounded fixture.",
+        "evidenceRefs": [],
+        "limitations": []
+      }
+    ],
+    "qualityDimensions": [
+      {
+        "dimension": "Provenance",
+        "state": "Sufficient",
+        "explanation": "Material provider and source-artifact provenance is preserved.",
+        "ruleIds": ["QUALITY-PROVENANCE-001"],
+        "contributorIds": ["crossDiff.comparison", "crossDiff.providerFindings"],
+        "evidenceRefs": []
+      },
+      {
+        "dimension": "Coverage",
+        "state": "Sufficient",
+        "explanation": "All applicable Primary and Required contributors are available.",
+        "ruleIds": ["QUALITY-COVERAGE-001"],
+        "contributorIds": ["crossDiff.comparison", "crossDiff.sourceSnapshot", "crossDiff.targetSnapshot", "crossDiff.providerFindings"],
+        "evidenceRefs": []
+      },
+      {
+        "dimension": "Freshness",
+        "state": "Unknown",
+        "explanation": "No explicit comparison-context threshold is supplied; freshness remains Unknown without inventing a TTL.",
+        "ruleIds": ["QUALITY-FRESHNESS-001", "FRESHNESS-CROSS-DIFF-SNAPSHOTS-001"],
+        "contributorIds": ["crossDiff.sourceSnapshot", "crossDiff.targetSnapshot"],
+        "evidenceRefs": []
+      },
+      {
+        "dimension": "Scope",
+        "state": "Sufficient",
+        "explanation": "Source-target orientation and investigation subject align.",
+        "ruleIds": ["QUALITY-SCOPE-001"],
+        "contributorIds": ["crossDiff.comparison"],
+        "evidenceRefs": []
+      },
+      {
+        "dimension": "Repeatability",
+        "state": "Sufficient",
+        "explanation": "Snapshot and source artifact identities are preserved for review.",
+        "ruleIds": ["QUALITY-REPEATABILITY-001"],
+        "contributorIds": ["crossDiff.sourceSnapshot", "crossDiff.targetSnapshot"],
+        "evidenceRefs": []
+      },
+      {
+        "dimension": "Consistency",
+        "state": "Sufficient",
+        "explanation": "The supplied canonical contributors contain no material conflict.",
+        "ruleIds": ["QUALITY-CONSISTENCY-001"],
+        "contributorIds": ["crossDiff.comparison", "crossDiff.providerFindings"],
+        "evidenceRefs": []
+      }
+    ],
+    "gaps": [],
+    "recommendations": [],
+    "confidenceEffect": "Preserve",
+    "baseSynthesizedConfidence": "High",
+    "effectiveSynthesizedConfidence": "High",
+    "confidenceLimitations": [],
+    "evidenceRefs": [
+      {
+        "id": "evidence:comparison:ready",
+        "label": "Required-level difference",
+        "source": "Cross Environment",
+        "providerId": "fixture.attribute-metadata",
+        "sourceArtifactId": "fixture-comparison-ready-v1"
+      }
+    ],
+    "limitations": ["Ready means prepared for bounded synthesis and does not certify truth."],
+    "inputFingerprint": "sha256:0f18c9161639bbd4a0a03481440455be75fb05e3e7a8cba07ee116eecdb22155",
+    "assessmentUtc": "2026-07-22T00:00:00.000Z",
+    "generatedUtc": "2026-07-22T00:00:01.000Z"
+  },
+  "errors": [
+    {
+      "contractVersion": "investigation-readiness-error-v1",
+      "code": "InvalidInput",
+      "message": "The readiness request is not structurally valid.",
+      "limitations": ["No assessment was performed."]
+    },
+    {
+      "contractVersion": "investigation-readiness-error-v1",
+      "code": "UnsupportedInputVersion",
+      "message": "The investigation input version is not supported.",
+      "limitations": ["Use investigation-input-v1."]
+    },
+    {
+      "contractVersion": "investigation-readiness-error-v1",
+      "code": "UnsupportedProfileVersion",
+      "message": "The readiness profile version is not supported.",
+      "limitations": ["Use profile version 1.0."]
+    },
+    {
+      "contractVersion": "investigation-readiness-error-v1",
+      "code": "ContractViolation",
+      "message": "The produced readiness result violated its published contract.",
+      "limitations": ["The invalid result must not be rendered or exported."]
+    }
+  ]
+}

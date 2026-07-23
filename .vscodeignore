@@ -1,5 +1,8 @@
 .vscode/**
 .vscode-test/**
+.agents/**
+.codex/**
+.git/**
 src/**
 .gitignore
 .yarnrc
@@ -14,6 +17,14 @@ out/test/**
 out/src/**
 AGENTS.md
 GLOBAL-AGENTS.template.md
+*.zip
+*.vsix
+.env
+.env.*
+*.pem
+*.key
+*.secret
+*.dvqr-license.json
 next.config.js
 .github/**
 docs/architecture/**

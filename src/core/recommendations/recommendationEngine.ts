@@ -22,6 +22,6 @@ export function dedupeAndRankRecommendations<T extends RankedRecommendation>(ite
     }
   }
   return [...byId.values()].sort((left, right) =>
-    right.rank - left.rank || left.id.localeCompare(right.id)
+    right.rank - left.rank || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0)
   );
 }

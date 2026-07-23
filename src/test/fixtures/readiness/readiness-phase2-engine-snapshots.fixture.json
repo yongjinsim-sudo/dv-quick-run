@@ -1,0 +1,22 @@
+{
+  "fixtureContractVersion": "investigation-readiness-phase2-engine-snapshots-v1",
+  "releaseVersion": "0.15.3",
+  "canonicalResults": {
+    "cross-diff-ready": {
+      "sha256": "fd87c092628bc2a33044aba0534af1bfa08e97a2226f79983dec297a9e1558e6",
+      "bytes": 11653
+    },
+    "timeline-conditional": {
+      "sha256": "6197cc2b49d78e44e1a387404bcf8e65cd72d89a3a2439ed18e2086768cc40a8",
+      "bytes": 12789
+    },
+    "cross-diff-limited": {
+      "sha256": "efa8993673053e2e1d36ae9310b6384421078aca0147189ed0912db19cf34d1a",
+      "bytes": 14975
+    },
+    "timeline-not-assessable": {
+      "sha256": "b30ee53e26d8fcde87a3d3c812cfb1adac7e15335e428d4d255fd3f255ef1002",
+      "bytes": 6182
+    }
+  }
+}

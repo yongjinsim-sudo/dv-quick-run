@@ -10,11 +10,20 @@ import {
 } from "../../pro/timeline/index.js";
 import { renderTimelineSurfaceHtml } from "../../webview/timelineSurface/index.js";
 import { renderUnderstandingDocumentMarkdown } from "../../product/understanding/understandingMarkdownRenderer.js";
-import { buildMiniRcaReportFromTimeline, renderMiniRcaReportHtml, renderMiniRcaReportMarkdown, withMiniRcaStory } from "../../pro/miniRca/index.js";
+import {
+  adaptTimelineToInvestigationInput,
+  generateMiniRcaArtifact,
+  regenerateMiniRcaArtifact,
+  renderMiniRcaReportHtml,
+  renderMiniRcaReportMarkdown,
+  serializeMiniRcaArtifact
+} from "../../pro/miniRca/index.js";
+import type { MiniRcaArtifactV1 } from "../../pro/miniRca/index.js";
 import { queryAuditEvidence, renderAuditEvidenceErrorHtml, renderAuditEvidenceResultHtml } from "../../product/audit/index.js";
 import type { AuditEvidenceResult } from "../../product/audit/auditEvidenceTypes.js";
 import type { CommandContext } from "../context/commandContext.js";
 import { ensureSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
+import { formatUtcReportFileTimestamp } from "../../product/reporting/reportFileTimestamp.js";
 import { exportDvafAttributeArtifact } from "../../pro/reconstruction/dvafExportService.js";
 import { exportDvimIdentityParticipationArtifact } from "../../pro/reconstruction/dvimExportService.js";
 import { exportDvceChoiceDefinitionArtifact } from "../../pro/reconstruction/dvceExportService.js";
@@ -28,8 +37,9 @@ let timelinePanel: vscode.WebviewPanel | undefined;
 let timelinePanelMessageDisposable: vscode.Disposable | undefined;
 let timelineAuditEvidenceByEventId = new Map<string, AuditEvidenceResult>();
 let timelineReconstructionArtifacts: ReconstructionArtifactReference[] = [];
+let timelineMiniRcaArtifact: MiniRcaArtifactV1 | undefined;
 
-type TimelineExportKind = "findings-summary-html" | "findings-summary-pdf" | "investigation-handoff-html" | "investigation-handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md";
+type TimelineExportKind = "findings-summary-html" | "findings-summary-pdf" | "investigation-handoff-html" | "investigation-handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md" | "mini-rca-json";
 
 function isTimelineExportKind(kind: string | undefined): kind is TimelineExportKind {
   return kind === "findings-summary-html"
@@ -38,10 +48,18 @@ function isTimelineExportKind(kind: string | undefined): kind is TimelineExportK
     || kind === "investigation-handoff-pdf"
     || kind === "understanding-md"
     || kind === "mini-rca-html"
-    || kind === "mini-rca-md";
+    || kind === "mini-rca-md"
+    || kind === "mini-rca-json";
+}
+
+function isTimelineMiniRcaExportKind(kind: TimelineExportKind): boolean {
+  return kind === "mini-rca-html" || kind === "mini-rca-md" || kind === "mini-rca-json";
 }
 
 function getTimelineReportFilter(kind: TimelineExportKind): Record<string, string[]> {
+  if (kind === "mini-rca-json") {
+    return { "JSON": ["json"] };
+  }
   if (kind === "understanding-md" || kind === "mini-rca-md") {
     return { "Markdown": ["md"] };
   }
@@ -64,6 +82,8 @@ function getTimelineReportTitle(kind: TimelineExportKind): string {
       return "Generate Mini RCA HTML";
     case "mini-rca-md":
       return "Generate Mini RCA Markdown";
+    case "mini-rca-json":
+      return "Save Frozen Mini RCA Artifact JSON";
   }
 }
 
@@ -83,6 +103,8 @@ function getTimelineReportSavedLabel(kind: TimelineExportKind): string {
       return "Mini RCA HTML";
     case "mini-rca-md":
       return "Mini RCA Markdown";
+    case "mini-rca-json":
+      return "Mini RCA Artifact JSON";
   }
 }
 
@@ -93,12 +115,12 @@ function normalizeReportSegment(value: string | undefined, fallback: string): st
   return normalized || fallback;
 }
 
-async function buildTimelineReportDefaultUri(timeline: TimelineReconstruction, kind: TimelineExportKind): Promise<vscode.Uri> {
+async function buildTimelineReportDefaultUri(timeline: TimelineReconstruction, kind: TimelineExportKind, timestampDate = new Date()): Promise<vscode.Uri> {
   const subject = normalizeReportSegment(timeline.subject.subjectLabel ?? timeline.subject.entityLogicalName, "timeline");
   const environment = normalizeReportSegment(timeline.subject.environmentLabel, "environment");
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "").replace(/T/, "-").slice(0, 15);
-  const reportKind = kind === "understanding-md" ? "timeline-understanding-report" : kind === "mini-rca-html" || kind === "mini-rca-md" ? "mini-rca-report" : kind.startsWith("findings") ? "timeline-findings-summary" : "timeline-investigation-handoff";
-  const extension = kind === "understanding-md" || kind === "mini-rca-md" ? "md" : kind.endsWith("pdf") ? "pdf" : "html";
+  const timestamp = formatUtcReportFileTimestamp(timestampDate);
+  const reportKind = kind === "understanding-md" ? "timeline-understanding-report" : kind === "mini-rca-html" || kind === "mini-rca-md" || kind === "mini-rca-json" ? "mini-rca-report" : kind.startsWith("findings") ? "timeline-findings-summary" : "timeline-investigation-handoff";
+  const extension = kind === "understanding-md" || kind === "mini-rca-md" ? "md" : kind === "mini-rca-json" ? "json" : kind.endsWith("pdf") ? "pdf" : "html";
   const fileName = `${timestamp}-${subject}-${environment}-${reportKind}.${extension}`;
   const workspace = await ensureSnapshotWorkspace();
   if (workspace.available && workspace.reportsRoot) {
@@ -127,9 +149,14 @@ async function buildTimelineReportContent(ctx: CommandContext, timeline: Timelin
       reconstructionArtifacts: timelineReconstructionArtifacts
     }));
   }
-  if (kind === "mini-rca-html" || kind === "mini-rca-md") {
-    const report = withMiniRcaStory(buildMiniRcaReportFromTimeline(timeline));
-    return kind === "mini-rca-html" ? renderMiniRcaReportHtml(report) : renderMiniRcaReportMarkdown(report);
+  if (kind === "mini-rca-html" || kind === "mini-rca-md" || kind === "mini-rca-json") {
+    const artifact = getOrCreateTimelineMiniRcaArtifact(timeline);
+    if (kind === "mini-rca-json") {
+      return serializeMiniRcaArtifact(artifact);
+    }
+    return kind === "mini-rca-html"
+      ? renderMiniRcaReportHtml(artifact.report)
+      : renderMiniRcaReportMarkdown(artifact.report);
   }
   if (kind === "findings-summary-html") {
     return renderTimelineFindingsSummaryReportHtml(buildTimelineFindingsSummaryReport(timeline, options));
@@ -145,13 +172,16 @@ async function buildTimelineReportContent(ctx: CommandContext, timeline: Timelin
 
 async function saveTimelineReport(ctx: CommandContext, timeline: TimelineReconstruction, kind: TimelineExportKind): Promise<void> {
   const workspace = await ensureSnapshotWorkspace();
+  const timestampDate = isTimelineMiniRcaExportKind(kind)
+    ? new Date(getOrCreateTimelineMiniRcaArtifact(timeline).report.generatedAtIso)
+    : new Date();
   let uri = workspace.available && workspace.reportsRoot
-    ? await buildTimelineReportDefaultUri(timeline, kind)
+    ? await buildTimelineReportDefaultUri(timeline, kind, timestampDate)
     : undefined;
 
   if (!uri) {
     uri = await vscode.window.showSaveDialog({
-      defaultUri: await buildTimelineReportDefaultUri(timeline, kind),
+      defaultUri: await buildTimelineReportDefaultUri(timeline, kind, timestampDate),
       filters: getTimelineReportFilter(kind),
       saveLabel: getTimelineReportTitle(kind),
       title: getTimelineReportTitle(kind),
@@ -172,9 +202,26 @@ async function saveTimelineReport(ctx: CommandContext, timeline: TimelineReconst
   } else if (kind === "mini-rca-html") {
     await vscode.env.openExternal(uri);
     void vscode.window.showInformationMessage(`DV Quick Run: Mini RCA HTML generated. Saved to ${destination}.`);
+  } else if (kind === "mini-rca-json") {
+    void vscode.window.showInformationMessage(`DV Quick Run: Frozen Mini RCA artifact saved to ${destination}. Use Regenerate Mini RCA before exporting again when evidence changes.`);
   } else {
     void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getTimelineReportSavedLabel(kind)} to ${destination}.`);
   }
+}
+
+function getOrCreateTimelineMiniRcaArtifact(timeline: TimelineReconstruction): MiniRcaArtifactV1 {
+  if (!timelineMiniRcaArtifact) {
+    timelineMiniRcaArtifact = generateMiniRcaArtifact(adaptTimelineToInvestigationInput(timeline));
+  }
+  return timelineMiniRcaArtifact;
+}
+
+function regenerateTimelineMiniRcaArtifact(timeline: TimelineReconstruction): MiniRcaArtifactV1 {
+  const currentInput = adaptTimelineToInvestigationInput(timeline);
+  timelineMiniRcaArtifact = timelineMiniRcaArtifact
+    ? regenerateMiniRcaArtifact(timelineMiniRcaArtifact, currentInput)
+    : generateMiniRcaArtifact(currentInput);
+  return timelineMiniRcaArtifact;
 }
 
 export function openTimelineSurface(ctx: CommandContext, timeline: TimelineReconstruction): void {
@@ -184,6 +231,7 @@ export function openTimelineSurface(ctx: CommandContext, timeline: TimelineRecon
     timelinePanel.reveal(vscode.ViewColumn.Beside);
     timelineAuditEvidenceByEventId = new Map();
     timelineReconstructionArtifacts = [];
+    timelineMiniRcaArtifact = undefined;
     timelinePanel.webview.html = renderTimelineSurfaceHtml(timelinePanel.webview, timeline);
     timelinePanel.title = title;
     registerTimelineMessageHandler(ctx, timeline);
@@ -202,6 +250,7 @@ export function openTimelineSurface(ctx: CommandContext, timeline: TimelineRecon
 
   timelineAuditEvidenceByEventId = new Map();
   timelineReconstructionArtifacts = [];
+  timelineMiniRcaArtifact = undefined;
   timelinePanel.webview.html = renderTimelineSurfaceHtml(timelinePanel.webview, timeline);
   registerTimelineMessageHandler(ctx, timeline);
   timelinePanel.onDidDispose(() => {
@@ -210,6 +259,7 @@ export function openTimelineSurface(ctx: CommandContext, timeline: TimelineRecon
     timelinePanel = undefined;
     timelineAuditEvidenceByEventId = new Map();
     timelineReconstructionArtifacts = [];
+    timelineMiniRcaArtifact = undefined;
   });
 }
 
@@ -423,6 +473,12 @@ function registerTimelineMessageHandler(ctx: CommandContext, timeline: TimelineR
           summary: `DVCE export failed. ${messageText}`
         });
       }
+      return;
+    }
+
+    if (request.type === "saveTimelineReport" && request.kind === "mini-rca-regenerate") {
+      regenerateTimelineMiniRcaArtifact(timeline);
+      void vscode.window.showInformationMessage("DV Quick Run: Mini RCA explicitly regenerated from the current Timeline evidence. Future HTML, Markdown, and JSON exports will use this frozen assessment.");
       return;
     }
 

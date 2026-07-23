@@ -31,12 +31,21 @@ import type { DvceChoiceReconstructionCandidate } from "../../pro/reconstruction
 import type { DvevmRuntimeConfigurationCandidate } from "../../pro/reconstruction/dvevmArtifactTypes.js";
 import { buildDvafReconstructionArtifactReference, buildDvimReconstructionArtifactReference, buildDvceReconstructionArtifactReference, buildDvevmReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
 import type { ReconstructionArtifactReference } from "../../pro/reconstruction/reconstructionArtifactReference.js";
-import { adaptCrossDiffToInvestigationInput, buildMiniRcaReportFromInvestigationInput, renderMiniRcaReportHtml, renderMiniRcaReportMarkdown } from "../../pro/miniRca/index.js";
+import {
+  adaptCrossDiffToInvestigationInput,
+  generateMiniRcaArtifact,
+  regenerateMiniRcaArtifact,
+  renderMiniRcaReportHtml,
+  renderMiniRcaReportMarkdown,
+  serializeMiniRcaArtifact
+} from "../../pro/miniRca/index.js";
+import type { MiniRcaArtifactV1 } from "../../pro/miniRca/index.js";
 
 let comparisonPanel: vscode.WebviewPanel | undefined;
 let comparisonPanelMessageDisposable: vscode.Disposable | undefined;
 let comparisonAuditEvidenceByEvidenceId = new Map<string, AuditEvidenceResult>();
 let comparisonReconstructionArtifacts: ReconstructionArtifactReference[] = [];
+let comparisonMiniRcaArtifact: MiniRcaArtifactV1 | undefined;
 
 function appendEvidencePivotDiagnostic(ctx: CommandContext, stage: string, details?: unknown): void {
   const timestamp = new Date().toISOString();
@@ -51,10 +60,10 @@ function appendEvidencePivotDiagnostic(ctx: CommandContext, stage: string, detai
   ctx.output.appendLine(`[${timestamp}] [Comparison Evidence Pivot] ${stage} ${serialisedDetails}`);
 }
 
-type ComparisonExportKind = "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md";
+type ComparisonExportKind = "json" | "md" | "html" | "baseline" | "summary-html" | "handoff-html" | "summary-pdf" | "handoff-pdf" | "understanding-md" | "mini-rca-html" | "mini-rca-md" | "mini-rca-json";
 
 function isReportExportKind(kind: ComparisonExportKind): boolean {
-  return kind === "summary-html" || kind === "summary-pdf" || kind === "handoff-html" || kind === "handoff-pdf" || kind === "understanding-md" || kind === "mini-rca-html" || kind === "mini-rca-md";
+  return kind === "summary-html" || kind === "summary-pdf" || kind === "handoff-html" || kind === "handoff-pdf" || kind === "understanding-md" || kind === "mini-rca-html" || kind === "mini-rca-md" || kind === "mini-rca-json";
 }
 
 function canSaveStandardComparisonExport(model: ComparisonViewModel): boolean {
@@ -76,7 +85,7 @@ async function readWatermarkLogoDataUri(ctx: CommandContext): Promise<string | u
 }
 
 function getExportFilter(kind: ComparisonExportKind): Record<string, string[]> {
-  if (kind === "json") {
+  if (kind === "json" || kind === "mini-rca-json") {
     return { "JSON": ["json"] };
   }
 
@@ -113,6 +122,8 @@ function getExportSaveLabel(kind: ComparisonExportKind): string {
       return "Generate Mini RCA HTML";
     case "mini-rca-md":
       return "Generate Mini RCA Markdown";
+    case "mini-rca-json":
+      return "Save Frozen Mini RCA Artifact JSON";
     case "html":
     default:
       return "Save HTML";
@@ -142,6 +153,8 @@ function getExportDialogTitle(model: ComparisonViewModel, kind: ComparisonExport
       return "Generate Mini RCA HTML";
     case "mini-rca-md":
       return "Generate Mini RCA Markdown";
+    case "mini-rca-json":
+      return "Save Frozen Mini RCA Artifact JSON";
     case "html":
     default:
       return `Save ${exportTitle} HTML`;
@@ -165,10 +178,14 @@ async function buildComparisonExportContent(ctx: CommandContext, model: Comparis
     return renderUnderstandingDocumentMarkdown(understanding);
   }
 
-  if (kind === "mini-rca-html" || kind === "mini-rca-md") {
-    const input = adaptCrossDiffToInvestigationInput(model);
-    const report = buildMiniRcaReportFromInvestigationInput(input);
-    return kind === "mini-rca-html" ? renderMiniRcaReportHtml(report) : renderMiniRcaReportMarkdown(report);
+  if (kind === "mini-rca-html" || kind === "mini-rca-md" || kind === "mini-rca-json") {
+    const artifact = getOrCreateComparisonMiniRcaArtifact(model);
+    if (kind === "mini-rca-json") {
+      return serializeMiniRcaArtifact(artifact);
+    }
+    return kind === "mini-rca-html"
+      ? renderMiniRcaReportHtml(artifact.report)
+      : renderMiniRcaReportMarkdown(artifact.report);
   }
 
   if (kind === "summary-html" || kind === "handoff-html") {
@@ -227,11 +244,34 @@ function getSavedExportLabel(model: ComparisonViewModel, kind: ComparisonExportK
     return "Cross-Diff Mini RCA Markdown";
   }
 
+  if (kind === "mini-rca-json") {
+    return "Cross-Diff Mini RCA Artifact JSON";
+  }
+
   return `${model.title.startsWith("Timeline Diff") ? "Timeline Diff" : "Cross-Environment Diff"} ${kind.toUpperCase()}`;
 }
 
 async function openUnderstandingMarkdownPreview(uri: vscode.Uri): Promise<void> {
   await vscode.commands.executeCommand("markdown.showPreview", uri);
+}
+
+function isComparisonMiniRcaExportKind(kind: ComparisonExportKind): boolean {
+  return kind === "mini-rca-html" || kind === "mini-rca-md" || kind === "mini-rca-json";
+}
+
+function getOrCreateComparisonMiniRcaArtifact(model: ComparisonViewModel): MiniRcaArtifactV1 {
+  if (!comparisonMiniRcaArtifact) {
+    comparisonMiniRcaArtifact = generateMiniRcaArtifact(adaptCrossDiffToInvestigationInput(model));
+  }
+  return comparisonMiniRcaArtifact;
+}
+
+function regenerateComparisonMiniRcaArtifact(model: ComparisonViewModel): MiniRcaArtifactV1 {
+  const currentInput = adaptCrossDiffToInvestigationInput(model);
+  comparisonMiniRcaArtifact = comparisonMiniRcaArtifact
+    ? regenerateMiniRcaArtifact(comparisonMiniRcaArtifact, currentInput)
+    : generateMiniRcaArtifact(currentInput);
+  return comparisonMiniRcaArtifact;
 }
 
 function getWorkspaceRelativePath(workspace: Awaited<ReturnType<typeof ensureSnapshotWorkspace>>, uri: vscode.Uri): string {
@@ -254,11 +294,14 @@ async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewMo
 
   const workspace = await ensureSnapshotWorkspace();
   const workspaceTargetRoot = isReportExportKind(kind) ? workspace.reportsRoot : workspace.comparisonsRoot;
-  let uri = workspace.available && workspaceTargetRoot ? buildDefaultExportUri(model, kind) : undefined;
+  const timestampDate = isComparisonMiniRcaExportKind(kind)
+    ? new Date(getOrCreateComparisonMiniRcaArtifact(model).report.generatedAtIso)
+    : new Date();
+  let uri = workspace.available && workspaceTargetRoot ? buildDefaultExportUri(model, kind, timestampDate) : undefined;
 
   if (!uri) {
     uri = await vscode.window.showSaveDialog({
-      defaultUri: buildDefaultExportUri(model, kind),
+      defaultUri: buildDefaultExportUri(model, kind, timestampDate),
       filters: getExportFilter(kind),
       saveLabel: getExportSaveLabel(kind),
       title: getExportDialogTitle(model, kind)
@@ -281,6 +324,8 @@ async function saveComparisonExport(ctx: CommandContext, model: ComparisonViewMo
   } else if (kind === "mini-rca-html") {
     await vscode.env.openExternal(uri);
     void vscode.window.showInformationMessage(`DV Quick Run: Mini RCA HTML generated. Saved to ${destination}.`);
+  } else if (kind === "mini-rca-json") {
+    void vscode.window.showInformationMessage(`DV Quick Run: Frozen Mini RCA artifact saved to ${destination}. Use Regenerate Mini RCA before exporting again when evidence changes.`);
   } else {
     void vscode.window.showInformationMessage(`DV Quick Run: Saved ${getSavedExportLabel(model, kind)} to ${destination}.`);
   }
@@ -310,6 +355,7 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
       comparisonPanel = undefined;
       comparisonAuditEvidenceByEvidenceId = new Map();
       comparisonReconstructionArtifacts = [];
+      comparisonMiniRcaArtifact = undefined;
     }, null, ctx.ext.subscriptions);
   }
 
@@ -606,7 +652,13 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
       return;
     }
 
-    if (request.kind === "json" || request.kind === "md" || request.kind === "html" || request.kind === "baseline" || request.kind === "summary-html" || request.kind === "handoff-html" || request.kind === "summary-pdf" || request.kind === "handoff-pdf" || request.kind === "understanding-md" || request.kind === "mini-rca-html" || request.kind === "mini-rca-md") {
+    if (request.kind === "mini-rca-regenerate") {
+      regenerateComparisonMiniRcaArtifact(model);
+      void vscode.window.showInformationMessage("DV Quick Run: Mini RCA explicitly regenerated from the current Cross-Diff evidence. Future HTML, Markdown, and JSON exports will use this frozen assessment.");
+      return;
+    }
+
+    if (request.kind === "json" || request.kind === "md" || request.kind === "html" || request.kind === "baseline" || request.kind === "summary-html" || request.kind === "handoff-html" || request.kind === "summary-pdf" || request.kind === "handoff-pdf" || request.kind === "understanding-md" || request.kind === "mini-rca-html" || request.kind === "mini-rca-md" || request.kind === "mini-rca-json") {
       if (!isReportExportKind(request.kind) && !canSaveStandardComparisonExport(model)) {
         void promptForCrossEnvironmentDiffProAccess(getExportSaveLabel(request.kind));
         return;
@@ -634,6 +686,7 @@ export function revealComparisonSurface(ctx: CommandContext, model: ComparisonVi
 
   comparisonAuditEvidenceByEvidenceId = new Map();
   comparisonReconstructionArtifacts = [];
+  comparisonMiniRcaArtifact = undefined;
   comparisonPanel.title = model.title.startsWith("Timeline Diff") ? "DV Quick Run: Timeline Diff" : "DV Quick Run: Cross-Environment Diff";
   comparisonPanel.webview.html = renderComparisonSurfaceHtml(comparisonPanel.webview, model, { canExport: canSaveStandardComparisonExport(model), isProPreview: !canRunCrossEnvironmentDiff(), investigationState: persistedInvestigationState });
 }

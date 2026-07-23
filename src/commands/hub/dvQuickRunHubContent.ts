@@ -454,15 +454,15 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.2 introduces Metadata-Aware Query Intelligence for OData Query Explain and Query Doctor.",
-  "Referenced lookups are classified automatically from current-environment attributes and outbound relationship metadata.",
-  "Polymorphic lookups show every supported target and its real target-specific navigation property without guessed names.",
-  "Invalid direct expansions, unsupported targets, scalar lookup misuse, and unknown navigation properties are detected before execution.",
-  "Valid target-specific expansions explain that rows using another supported target may return null expansion data.",
-  "A bare entity-set query can open searchable lookup discovery before identifier and target-specific previews are shown.",
-  "Show Metadata-Aware Query Suggestions preserves the existing query and opens an explicit preview; it never executes the query.",
-  "Free includes metadata insight and copyable previews. Pro can explicitly apply a preview to the editor.",
-  "Refresh Metadata Context forces a current-environment refresh when schema changes during a session."
+  "v0.15.3 introduces Investigation Readiness for Timeline and Cross-Diff Mini RCA.",
+  "Ready, Conditional, Limited and NotAssessable explain evidence preparation without creating a numeric readiness score.",
+  "Contributor availability, evidence quality and deterministic gaps show what qualifies confidence and why.",
+  "Readiness may preserve or reduce synthesized confidence; it can never raise confidence.",
+  "The main report stays concise while the Appendix retains the complete contributor, gap, recommendation and fingerprint trace.",
+  "Mini RCA HTML, Markdown and JSON reuse one frozen artifact until Regenerate Mini RCA is explicitly selected.",
+  "Second-precision artifact filenames keep one export set grouped and preserve regenerated versions.",
+  "Historical reports remain readable without manufacturing a current readiness assessment.",
+  "The headless readiness contract is prepared for a future MCP adapter; no MCP server is included in v0.15.3."
 ];
 
 export const philosophy: readonly string[] = [

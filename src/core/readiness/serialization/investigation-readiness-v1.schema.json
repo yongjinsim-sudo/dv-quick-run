@@ -1,0 +1,327 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.dvquickrun.com/investigation-readiness-v1.schema.json",
+  "title": "DV Quick Run Investigation Readiness v1 contracts",
+  "$comment": "schema: dvqr.investigation-readiness; version: 1.0",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/result" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "jsonValue": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/$defs/jsonValue" } },
+        { "$ref": "#/$defs/jsonObject" }
+      ]
+    },
+    "jsonObject": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    },
+    "profileReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "version"],
+      "properties": {
+        "profileId": { "type": "string", "minLength": 1 },
+        "version": { "const": "1.0" }
+      }
+    },
+    "investigationInput": {
+      "type": "object",
+      "required": ["version", "kind", "subject", "provenance", "evidence", "contributors"],
+      "properties": {
+        "version": { "const": "investigation-input-v1" },
+        "investigationId": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["timeline", "cross-environment-diff"] },
+        "subject": { "$ref": "#/$defs/jsonObject" },
+        "provenance": { "$ref": "#/$defs/jsonObject" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/jsonObject" } },
+        "contributors": { "type": "array", "items": { "$ref": "#/$defs/jsonObject" } },
+        "notes": { "type": "array", "items": { "type": "string" } },
+        "intent": { "$ref": "#/$defs/jsonObject" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    },
+    "understandingBundle": {
+      "type": "object",
+      "required": ["version"],
+      "properties": {
+        "version": { "const": "understanding-bundle-v2" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "investigationInput", "understandingBundle", "profile", "assessmentUtc", "generatedUtc"],
+      "properties": {
+        "contractVersion": { "const": "investigation-readiness-request-v1" },
+        "investigationInput": { "$ref": "#/$defs/investigationInput" },
+        "understandingBundle": { "$ref": "#/$defs/understandingBundle" },
+        "profile": { "$ref": "#/$defs/profileReference" },
+        "assessmentUtc": { "type": "string", "minLength": 1 },
+        "generatedUtc": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "source"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" },
+        "providerId": { "type": "string" },
+        "sourceArtifactId": { "type": "string" },
+        "environmentLabel": { "type": "string" },
+        "capturedUtc": { "type": "string" }
+      }
+    },
+    "contributorState": {
+      "enum": ["Available", "Partial", "PermissionLimited", "Missing", "NotConsulted", "Unsupported", "Stale"]
+    },
+    "contributorRole": {
+      "enum": ["Primary", "Required", "Recommended", "Optional"]
+    },
+    "qualityDimensionName": {
+      "enum": ["Provenance", "Coverage", "Freshness", "Scope", "Repeatability", "Consistency"]
+    },
+    "qualityState": {
+      "enum": ["Sufficient", "Limited", "Unknown", "NotApplicable"]
+    },
+    "gapCategory": {
+      "enum": ["Coverage", "Permission", "Provenance", "Freshness", "Scope", "Repeatability", "Conflict", "ContributorUnavailable"]
+    },
+    "gapPriority": {
+      "enum": ["High", "Medium", "Low"]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidenceReferenceArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidenceReference" }
+    },
+    "contributorReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contributorId", "sourceContributorIds", "role", "state", "applicable", "explanation", "evidenceRefs", "limitations"],
+      "properties": {
+        "contributorId": { "type": "string", "minLength": 1 },
+        "sourceContributorIds": { "$ref": "#/$defs/stringArray" },
+        "role": { "$ref": "#/$defs/contributorRole" },
+        "state": { "$ref": "#/$defs/contributorState" },
+        "applicable": { "type": "boolean" },
+        "explanation": { "type": "string", "minLength": 1 },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceReferenceArray" },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "qualityDimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dimension", "state", "explanation", "ruleIds", "contributorIds", "evidenceRefs"],
+      "properties": {
+        "dimension": { "$ref": "#/$defs/qualityDimensionName" },
+        "state": { "$ref": "#/$defs/qualityState" },
+        "explanation": { "type": "string", "minLength": 1 },
+        "ruleIds": { "$ref": "#/$defs/stringArray" },
+        "contributorIds": { "$ref": "#/$defs/stringArray" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceReferenceArray" }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ruleId", "category", "priority", "title", "explanation", "contributorIds", "evidenceRefs", "recommendationIds", "limitations"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "ruleId": { "type": "string", "minLength": 1 },
+        "category": { "$ref": "#/$defs/gapCategory" },
+        "priority": { "$ref": "#/$defs/gapPriority" },
+        "title": { "type": "string", "minLength": 1 },
+        "explanation": { "type": "string", "minLength": 1 },
+        "contributorIds": { "$ref": "#/$defs/stringArray" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceReferenceArray" },
+        "recommendationIds": { "$ref": "#/$defs/stringArray" },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ruleId", "priority", "action", "reason", "gapIds", "evidenceRefs", "limitations"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "ruleId": { "type": "string", "minLength": 1 },
+        "priority": { "$ref": "#/$defs/gapPriority" },
+        "action": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "gapIds": { "$ref": "#/$defs/stringArray" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceReferenceArray" },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contractVersion", "investigationId", "investigationKind", "profileId", "profileVersion", "posture", "summary",
+        "contributorStates", "qualityDimensions", "gaps", "recommendations", "confidenceEffect", "baseSynthesizedConfidence",
+        "effectiveSynthesizedConfidence", "confidenceLimitations", "evidenceRefs", "limitations", "inputFingerprint", "assessmentUtc", "generatedUtc"
+      ],
+      "properties": {
+        "contractVersion": { "const": "investigation-readiness-v1" },
+        "investigationId": { "type": "string", "minLength": 1 },
+        "investigationKind": { "enum": ["timeline", "cross-environment-diff"] },
+        "profileId": { "type": "string", "minLength": 1 },
+        "profileVersion": { "const": "1.0" },
+        "posture": { "enum": ["Ready", "Conditional", "Limited", "NotAssessable"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "contributorStates": { "type": "array", "items": { "$ref": "#/$defs/contributorReadiness" } },
+        "qualityDimensions": { "type": "array", "items": { "$ref": "#/$defs/qualityDimension" } },
+        "gaps": { "type": "array", "items": { "$ref": "#/$defs/gap" } },
+        "recommendations": { "type": "array", "items": { "$ref": "#/$defs/recommendation" } },
+        "confidenceEffect": { "enum": ["Preserve", "Qualify", "Dampen", "Withhold"] },
+        "baseSynthesizedConfidence": { "enum": ["High", "Medium", "Low", "Unknown"] },
+        "effectiveSynthesizedConfidence": { "enum": ["High", "Medium", "Low", "Unknown"] },
+        "confidenceLimitations": { "$ref": "#/$defs/stringArray" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceReferenceArray" },
+        "limitations": { "$ref": "#/$defs/stringArray" },
+        "inputFingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "assessmentUtc": { "type": "string", "minLength": 1 },
+        "generatedUtc": { "type": "string", "minLength": 1 }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "code", "message", "limitations"],
+      "properties": {
+        "contractVersion": { "const": "investigation-readiness-error-v1" },
+        "code": { "enum": ["InvalidInput", "UnsupportedInputVersion", "UnsupportedProfileVersion", "ContractViolation"] },
+        "message": { "type": "string", "minLength": 1 },
+        "limitations": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "always" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "flag", "equals"],
+          "properties": {
+            "kind": { "const": "intent-flag" },
+            "flag": {
+              "enum": [
+                "auditRequested", "actorOrChangeTimeRequested", "identityParticipationInScope", "relationshipBehaviourInScope",
+                "configurationInScope", "environmentDriftLinked", "temporalProgressionRequested", "runtimeConfirmationAttached",
+                "metadataContextAttached", "metadataOwnedByAnotherContributor"
+              ]
+            },
+            "equals": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "families", "mode"],
+          "properties": {
+            "kind": { "const": "finding-family" },
+            "families": { "type": "array", "items": { "enum": ["relationship", "metadata", "configuration", "identity"] }, "minItems": 1 },
+            "mode": { "const": "any" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "conditions"],
+          "properties": {
+            "kind": { "enum": ["any", "all"] },
+            "conditions": { "type": "array", "items": { "$ref": "#/$defs/condition" }, "minItems": 1 }
+          }
+        }
+      ]
+    },
+    "contributorRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contributorId", "role", "appliesWhen", "absenceBehavior"],
+      "properties": {
+        "contributorId": { "type": "string", "minLength": 1 },
+        "role": { "$ref": "#/$defs/contributorRole" },
+        "appliesWhen": { "$ref": "#/$defs/condition" },
+        "absenceBehavior": { "type": "string", "minLength": 1 }
+      }
+    },
+    "freshnessRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleId", "evidenceFamily", "contributorIds", "owner", "evaluation", "withoutExplicitThreshold"],
+      "properties": {
+        "ruleId": { "type": "string", "minLength": 1 },
+        "evidenceFamily": { "type": "string", "minLength": 1 },
+        "contributorIds": { "$ref": "#/$defs/stringArray" },
+        "owner": { "enum": ["Provider", "Profile", "ProviderOrProfile"] },
+        "evaluation": { "type": "string", "minLength": 1 },
+        "withoutExplicitThreshold": { "enum": ["Unknown", "NotApplicable"] }
+      }
+    },
+    "qualityRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleId", "dimension", "defaultState", "explanation"],
+      "properties": {
+        "ruleId": { "type": "string", "minLength": 1 },
+        "dimension": { "$ref": "#/$defs/qualityDimensionName" },
+        "defaultState": { "$ref": "#/$defs/qualityState" },
+        "explanation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "version", "investigationKind", "contributorRules", "freshnessRules", "qualityRules", "gapRuleIds"],
+      "properties": {
+        "profileId": { "type": "string", "minLength": 1 },
+        "version": { "const": "1.0" },
+        "investigationKind": { "enum": ["timeline", "cross-environment-diff"] },
+        "contributorRules": { "type": "array", "items": { "$ref": "#/$defs/contributorRule" }, "minItems": 1 },
+        "freshnessRules": { "type": "array", "items": { "$ref": "#/$defs/freshnessRule" } },
+        "qualityRules": { "type": "array", "items": { "$ref": "#/$defs/qualityRule" } },
+        "gapRuleIds": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "gapRuleDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruleId", "category", "priority", "trigger", "recommendationFamily", "conditionKind", "sourceRoles", "sourceStates", "expectedPostureCeiling"],
+      "properties": {
+        "ruleId": { "type": "string", "pattern": "^GAP-[A-Z]+-[0-9]{3}$" },
+        "category": { "$ref": "#/$defs/gapCategory" },
+        "priority": { "$ref": "#/$defs/gapPriority" },
+        "trigger": { "type": "string", "minLength": 1 },
+        "recommendationFamily": { "type": "string", "minLength": 1 },
+        "conditionKind": { "enum": ["NoQualifyingPrimaryEvidence", "ContributorState", "EvidenceQuality", "ScopeMismatch", "RepeatabilityLimited", "EvidenceConflict"] },
+        "sourceRoles": { "type": "array", "items": { "$ref": "#/$defs/contributorRole" }, "minItems": 1 },
+        "sourceStates": { "type": "array", "items": { "$ref": "#/$defs/contributorState" }, "minItems": 1 },
+        "qualityDimension": { "$ref": "#/$defs/qualityDimensionName" },
+        "expectedPostureCeiling": { "enum": ["Ready", "Conditional", "Limited", "NotAssessable"] }
+      }
+    }
+  }
+}

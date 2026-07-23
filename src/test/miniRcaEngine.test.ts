@@ -129,6 +129,20 @@ suite("miniRcaEngine", () => {
     assert.strictEqual(classifyMiniRcaTimelineEvent(choiceEvent), "Choice Evolution");
   });
 
+  test("classifies structured Identity Participation providers as Security Participation", () => {
+    const t = timeline();
+    const identityEvent = event(
+      "event-identity",
+      "identity-participation",
+      "Identity Participation Diff",
+      "human.operator.dev@example.com is present only in the source evidence set.",
+      t.intervals[0],
+      "High"
+    );
+
+    assert.strictEqual(classifyMiniRcaTimelineEvent(identityEvent), "Security Participation");
+  });
+
   test("builds Understanding Bundle v1 with audit unavailable as non-confidence-changing evidence", () => {
     const bundle = buildUnderstandingBundleFromTimeline(timeline());
 
@@ -136,6 +150,7 @@ suite("miniRcaEngine", () => {
     assert.strictEqual(bundle.timelineUnderstanding.summary.eventCount, 2);
     assert.strictEqual(bundle.auditEvidenceSummary.status, "Unavailable");
     assert.match(bundle.auditEvidenceSummary.summary, /Timeline evidence confidence is unchanged/i);
+    assert.ok(bundle.availability.available.includes("identity"));
     assert.ok(bundle.availability.notApplicable.includes("crossDiff"));
     assert.ok(bundle.availability.notApplicable.includes("query"));
   });
@@ -197,7 +212,7 @@ suite("miniRcaEngine", () => {
     assert.match(html, /Supporting, missing, and confidence notes/);
     assert.match(html, /Recommended Next Steps/);
     assert.match(html, /Understanding Bundle · contributor details/);
-    assert.match(html, /DV Quick Run v0\.15\.2/);
+    assert.match(html, /DV Quick Run v0\.15\.3/);
     assert.doesNotMatch(html, /Understanding Bundle Contract v0\.14\.7/);
     assert.match(html, /Evidence Relationships/);
     assert.match(html, /relationship-flow-grid/);
