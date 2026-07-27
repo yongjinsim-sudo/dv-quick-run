@@ -9,6 +9,8 @@ suite("dvQuickRunHubViewModel", () => {
 
     assert.strictEqual(model.title, "DV Quick Run Hub");
     assert.deepStrictEqual(model.sectionLinks.map((link) => link.anchor), [
+      "local-mcp",
+      "getting-started",
       "current-context",
       "evidence-workspace",
       "access-context",
@@ -81,6 +83,20 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes("Content-Security-Policy"));
     assert.ok(html.includes("nonce-"));
     assert.ok(html.includes('id="current-context"'));
+    assert.ok(html.includes('id="getting-started"'));
+    assert.ok(html.includes("MCP Prompt Playground"));
+    assert.ok(html.includes("data-copy-text"));
+    assert.ok(html.includes("🧩 Investigate"));
+    assert.ok(html.includes("📋 Copy Prompt"));
+    assert.ok(html.includes("💬 Talk to Dataverse"));
+    assert.ok(html.includes("🔎 Understand metadata"));
+    assert.ok(html.includes("📖 Explain a query"));
+    assert.ok(html.includes("What's New in v0.15.4"));
+    assert.ok(html.includes("Using DV Quick Run, show me the first 10 active Accounts."));
+    assert.ok(html.includes('id="local-mcp"'));
+    assert.ok(html.includes("DV Quick Run Local MCP"));
+    assert.ok(html.includes("dvqr-mcp-health"));
+    assert.ok(html.includes("Ready · Enabled") || html.includes("Off · Disabled"));
     assert.ok(html.includes('id="evidence-workspace"'));
     assert.ok(html.includes('id="access-context"'));
     assert.ok(html.includes('id="playbooks"'));

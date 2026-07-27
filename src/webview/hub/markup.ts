@@ -13,9 +13,15 @@ function renderList(items: readonly string[]): string {
   return `<ul class="dvqr-list">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 }
 
+function renderCopyPrompt(prompt: string): string {
+  const escaped = escapeHtml(prompt);
+  return `<div class="dvqr-prompt dvqr-copy-prompt"><span>${escaped}</span><button class="dvqr-copy-button" type="button" data-copy-text="${escaped}" aria-label="Copy prompt">📋 Copy Prompt</button></div>`;
+}
+
 function renderPlaybook(playbook: InvestigationPlaybook): string {
   const steps = playbook.flow.map((step) => {
-    const command = step.commandId ? `<button class="dvqr-action-button" data-command="${escapeHtml(step.commandId)}">Start Guided Traversal</button><div class="dvqr-command">Command: ${escapeHtml(step.commandId)}</div>` : "";
+    const commandLabel = step.commandId === "dvQuickRun.enableLocalMcpServer" ? "Enable Local MCP" : "Start Guided Traversal";
+    const command = step.commandId ? `<button class="dvqr-action-button" data-command="${escapeHtml(step.commandId)}">${escapeHtml(commandLabel)}</button><div class="dvqr-command">Command: ${escapeHtml(step.commandId)}</div>` : "";
     const surface = step.relatedSurface ? `<div class="dvqr-muted">Surface: ${escapeHtml(step.relatedSurface)}</div>` : "";
     return `<li><strong>${escapeHtml(step.label)}</strong><br />${escapeHtml(step.description)}${surface}${command}</li>`;
   }).join("");
@@ -74,6 +80,94 @@ function renderInvestigationContinuation(model: DvQuickRunHubViewModel): string 
   </section>`;
 }
 
+
+
+function renderGettingStarted(model: DvQuickRunHubViewModel): string {
+  const mcpCommand = model.localMcp.enabled ? "dvQuickRun.showLocalMcpServerStatus" : "dvQuickRun.enableLocalMcpServer";
+  const mcpLabel = model.localMcp.enabled ? "View MCP Status" : "Enable Local MCP";
+
+  return `<section id="getting-started">
+    <h2>Start Here</h2>
+    <p class="dvqr-section-note">Choose the outcome you need. Start with natural language, an editor query, or a preserved investigation workflow.</p>
+    <div class="dvqr-start-grid">
+      <article class="dvqr-card dvqr-start-card">
+        <div class="dvqr-eyebrow">1 · Ask</div>
+        <h3>💬 Talk to Dataverse</h3>
+        <p>Ask GitHub Copilot a bounded Dataverse question and let DV Quick Run select a deterministic read-only tool.</p>
+        ${renderCopyPrompt("Using DV Quick Run, show me the first 10 active Accounts.")}
+        <button class="dvqr-action-button" data-command="${mcpCommand}">${mcpLabel}</button>
+      </article>
+      <article class="dvqr-card dvqr-start-card">
+        <div class="dvqr-eyebrow">2 · Discover</div>
+        <h3>🔎 Understand metadata</h3>
+        <p>Search related tables without asking the model to invent unsupported EntityDefinitions filters.</p>
+        ${renderCopyPrompt("Using DV Quick Run, find tables related to customers.")}
+        <button class="dvqr-action-button" data-command="dvQuickRun.openQuickStart">Open Quickstart</button>
+      </article>
+      <article class="dvqr-card dvqr-start-card">
+        <div class="dvqr-eyebrow">3 · Explain</div>
+        <h3>📖 Explain a query</h3>
+        <p>Use natural language or the editor Explain action to break down OData structure and intent.</p>
+        ${renderCopyPrompt("Using DV Quick Run, explain accounts?$select=name&$top=10.")}
+        <button class="dvqr-action-button" data-command="dvQuickRun.openQuickStart">Open runnable samples</button>
+      </article>
+      <article class="dvqr-card dvqr-start-card">
+        <div class="dvqr-eyebrow">4 · Investigate</div>
+        <h3>🧩 Investigate</h3>
+        <p>Move from returned rows into Result Viewer, Operational Profiles, Access Context, snapshots, comparison, Timeline, or Mini RCA.</p>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openSnapshotLibrary">Open Snapshot Library</button>
+      </article>
+    </div>
+    <div class="dvqr-card dvqr-mcp-playground">
+      <div>
+        <h3>MCP Prompt Playground</h3>
+        <p class="dvqr-muted">Copy one of these into GitHub Copilot Chat after enabling DV Quick Run tools.</p>
+      </div>
+      <div class="dvqr-prompt-grid">
+        ${renderCopyPrompt("Using DV Quick Run, retrieve Contacts and summarise what you found.")}
+        ${renderCopyPrompt("Using DV Quick Run, show the 10 Accounts with the highest revenue.")}
+        ${renderCopyPrompt("Using DV Quick Run, describe the System User table.")}
+        ${renderCopyPrompt("Using DV Quick Run, list your available MCP capabilities.")}
+      </div>
+      <div class="dvqr-copy-status" role="status" aria-live="polite"></div>
+    </div>
+  </section>`;
+}
+
+function renderLocalMcpDashboard(model: DvQuickRunHubViewModel): string {
+  const mcp = model.localMcp;
+  const statusLabel = mcp.enabled ? "Enabled" : "Disabled";
+  const statusClass = mcp.enabled ? "healthy" : "disabled";
+  const trafficLabel = mcp.enabled ? "Ready" : "Off";
+  const primaryCommand = mcp.enabled ? "dvQuickRun.showLocalMcpServerStatus" : "dvQuickRun.enableLocalMcpServer";
+  const primaryLabel = mcp.enabled ? "View MCP Status" : "Enable Local MCP";
+  const disable = mcp.enabled
+    ? `<button class="dvqr-action-button" data-command="dvQuickRun.disableLocalMcpServer">Disable</button>`
+    : "";
+
+  return `<section id="local-mcp">
+    <h2>Local MCP</h2>
+    <p class="dvqr-section-note">Talk to Dataverse through an extension-owned, read-only DV Quick Run MCP server.</p>
+    <div class="dvqr-card dvqr-evidence-workspace-card">
+      <div>
+        <div class="dvqr-continuation-action-header"><h3>DV Quick Run Local MCP</h3><span class="dvqr-mcp-health dvqr-mcp-health-${statusClass}"><span class="dvqr-mcp-health-dot" aria-hidden="true"></span>${trafficLabel} · ${statusLabel}</span></div>
+        <p>${mcp.enabled ? "Enabled for this workspace. VS Code discovers and starts the local stdio process when its tools are needed." : "Enable once for this workspace. DV Quick Run remembers the choice across VS Code restarts and computer reboots."}</p>
+        <dl class="dvqr-context-list">
+          <div><dt>Mode</dt><dd>${escapeHtml(mcp.mode)}</dd></div>
+          <div><dt>Free tools</dt><dd>${mcp.toolCount}</dd></div>
+          <div><dt>Environment</dt><dd>${escapeHtml(mcp.environmentName ?? "Not selected")}</dd></div>
+          <div><dt>Lifecycle</dt><dd>${escapeHtml(mcp.lifecycle)}</dd></div>
+          <div><dt>Authentication</dt><dd>${escapeHtml(mcp.authentication)}</dd></div>
+        </dl>
+        <div class="dvqr-meta"><span class="dvqr-chip">Read-only</span><span class="dvqr-chip">Natural-language OData</span><span class="dvqr-chip">Deterministic metadata search</span><span class="dvqr-chip">No POST · PATCH · DELETE</span>${mcp.enabled ? `<span class="dvqr-chip dvqr-chip-ready">MCP Ready</span>` : ""}</div>
+      </div>
+      <div class="dvqr-evidence-actions">
+        <button class="dvqr-action-button" data-command="${primaryCommand}">${primaryLabel}</button>
+        ${disable}
+      </div>
+    </div>
+  </section>`;
+}
 
 function renderEvidenceWorkspaceLauncher(model: DvQuickRunHubViewModel): string {
   const workspace = model.evidenceWorkspace;
@@ -199,6 +293,21 @@ function renderDvForgeLabEcosystem(): string {
   </section>`;
 }
 
+function renderReleaseHighlights(): string {
+  const highlights = [
+    ["Local MCP Server", "Extension-owned, workspace-persistent and started by VS Code on demand."],
+    ["Talk to Dataverse", "Ask bounded Dataverse questions in plain English through GitHub Copilot."],
+    ["Deterministic Metadata Search", "Rank related entities locally instead of inventing unsupported metadata filters."],
+    ["Nine Free Tools", "Execute, inspect, explain and understand through a read-only MCP surface."],
+    ["Strict Safety Boundary", "No POST, PATCH, DELETE, upload or remediation tools are registered."]
+  ] as const;
+  return `<section id="whats-new">
+    <h2>What's New in v0.15.4</h2>
+    <p class="dvqr-section-note">The headline v0.15.4 experience. Detailed release history remains in CHANGELOG.md.</p>
+    <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
+  </section>`;
+}
+
 export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: string): string {
   const capabilityGroups = Array.from(groupCapabilities(model.capabilities).entries());
   const heroIcon = iconUri
@@ -222,6 +331,10 @@ export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: 
       ${heroIcon}
     </section>
 
+    ${renderLocalMcpDashboard(model)}
+
+    ${renderGettingStarted(model)}
+
     ${renderInvestigationContinuation(model)}
 
     ${renderEvidenceWorkspaceLauncher(model)}
@@ -242,10 +355,7 @@ export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: 
 
     ${renderDvForgeLabEcosystem()}
 
-    <section id="whats-new">
-      <h2>What's New</h2>
-      <div class="dvqr-card">${renderList(model.whatsNew)}</div>
-    </section>
+    ${renderReleaseHighlights()}
 
     <section id="direction">
       <h2>Product Direction</h2>

@@ -4,6 +4,24 @@ import type { EntitlementPlan } from "../../product/capabilities/entitlementType
 
 export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
   {
+    id: "talk-to-dataverse",
+    title: "Talk to Dataverse",
+    summary: "Use GitHub Copilot with DV Quick Run's deterministic, read-only MCP tools to query, explain, and discover Dataverse without inventing metadata behaviour.",
+    whenToUse: [
+      "You want to ask a Dataverse question in plain English.",
+      "You need a bounded read-only query without writing OData first.",
+      "You want deterministic table discovery or a clear OData explanation."
+    ],
+    flow: [
+      { label: "Enable Local MCP once", description: "Enable the extension-owned MCP server for the current workspace from the Hub.", commandId: "dvQuickRun.enableLocalMcpServer", relatedSurface: "Local MCP" },
+      { label: "Open GitHub Copilot Chat", description: "Make sure the DV Quick Run MCP tools are enabled for the chat session.", relatedSurface: "GitHub Copilot Chat" },
+      { label: "Ask a bounded question", description: "Try a read-only query, metadata search, or OData explanation using natural language.", relatedSurface: "DV Quick Run MCP" },
+      { label: "Inspect the grounded result", description: "Review the selected tool, generated query, metadata ranking, or returned Dataverse rows before acting.", relatedSurface: "Copilot Chat" }
+    ],
+    relatedCapabilities: ["odata-fetchxml-execution", "investigation-intelligence"],
+    safetyNotes: ["Local MCP registers no POST, PATCH, DELETE, upload, or remediation tools."]
+  },
+  {
     id: "runtime-behaviour",
     title: "Investigate runtime behaviour",
     summary: "Start from a query result, inspect runtime evidence, and continue into related operational context without treating signals as root cause proof.",
@@ -454,15 +472,15 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.3 introduces Investigation Readiness for Timeline and Cross-Diff Mini RCA.",
-  "Ready, Conditional, Limited and NotAssessable explain evidence preparation without creating a numeric readiness score.",
-  "Contributor availability, evidence quality and deterministic gaps show what qualifies confidence and why.",
-  "Readiness may preserve or reduce synthesized confidence; it can never raise confidence.",
-  "The main report stays concise while the Appendix retains the complete contributor, gap, recommendation and fingerprint trace.",
-  "Mini RCA HTML, Markdown and JSON reuse one frozen artifact until Regenerate Mini RCA is explicitly selected.",
-  "Second-precision artifact filenames keep one export set grouped and preserve regenerated versions.",
-  "Historical reports remain readable without manufacturing a current readiness assessment.",
-  "The headless readiness contract is prepared for a future MCP adapter; no MCP server is included in v0.15.3."
+  "v0.15.4 introduces the first extension-owned local MCP server for DV Quick Run.",
+  "Ask GitHub Copilot natural-language Dataverse questions through nine read-only Free MCP tools.",
+  "Execute bounded OData GET requests, explain OData, retrieve entity metadata, and discover capabilities without exposing mutation authority.",
+  "Deterministic metadata search ranks entity matches locally and avoids unsupported generated EntityDefinitions filters.",
+  "Metadata search now separates highest-confidence, related, and contextual matches with transparent reasons.",
+  "Local MCP enablement is remembered per workspace and VS Code owns the on-demand stdio lifecycle.",
+  "The Hub now shows MCP registration, environment, mode, tool count, authentication boundary, and lifecycle status.",
+  "The Hub now includes a Start Here path, copy-ready MCP prompts, and a Talk to Dataverse playbook for first-time discovery.",
+  "Free remains Execute, Inspect, Explain and Understand; Pro remains Correlate, Prioritise, Recommend and Investigate."
 ];
 
 export const philosophy: readonly string[] = [

@@ -17,6 +17,34 @@ export function getDvQuickRunHubScript(): string {
     });
   });
 
+  document.querySelectorAll('[data-copy-text]').forEach((button) => {
+    button.addEventListener('click', async (event) => {
+      const element = event.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
+      const text = element?.getAttribute('data-copy-text') ?? '';
+      if (!text) {
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = element?.textContent ?? 'Copy';
+        if (element) {
+          element.textContent = 'Copied';
+          window.setTimeout(() => { element.textContent = original; }, 1400);
+        }
+        const status = document.querySelector('.dvqr-copy-status');
+        if (status) {
+          status.textContent = 'Prompt copied to the clipboard.';
+        }
+      } catch {
+        const status = document.querySelector('.dvqr-copy-status');
+        if (status) {
+          status.textContent = 'Copy failed. Select the prompt text manually.';
+        }
+      }
+    });
+  });
+
   document.querySelectorAll('[data-command]').forEach((button) => {
     button.addEventListener('click', (event) => {
       const command = event.currentTarget instanceof HTMLElement

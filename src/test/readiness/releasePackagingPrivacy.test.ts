@@ -26,16 +26,16 @@ function filesUnder(directory: string, predicate: (file: string) => boolean): st
 }
 
 suite("releasePackagingPrivacy", () => {
-  test("locks final v0.15.3 version identity across package metadata", () => {
+  test("locks final v0.15.4 version identity across package metadata", () => {
     const root = workspaceRoot();
     const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as { version: string };
     const packageLock = JSON.parse(fs.readFileSync(path.join(root, "package-lock.json"), "utf8")) as {
       version: string;
       packages: Record<string, { version?: string }>;
     };
-    assert.strictEqual(packageJson.version, "0.15.3");
-    assert.strictEqual(packageLock.version, "0.15.3");
-    assert.strictEqual(packageLock.packages[""].version, "0.15.3");
+    assert.strictEqual(packageJson.version, "0.15.4");
+    assert.strictEqual(packageLock.version, "0.15.4");
+    assert.strictEqual(packageLock.packages[""].version, "0.15.4");
   });
 
   test("keeps tests, source maps, agent residue, secrets, and stale trees out of the VSIX", () => {
@@ -63,19 +63,20 @@ suite("releasePackagingPrivacy", () => {
     }
   });
 
-  test("does not package or depend on an MCP runtime", () => {
+  test("packages the local read-only MCP runtime without network or mutation authority", () => {
     const root = workspaceRoot();
     const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as {
       dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
+      bin?: Record<string, string>;
     };
-    const dependencies = Object.keys({
-      ...packageJson.dependencies,
-      ...packageJson.devDependencies
-    });
-    assert.strictEqual(dependencies.some((dependency) => /modelcontextprotocol|mcp[-_]?server/i.test(dependency)), false);
-    assert.strictEqual(fs.existsSync(path.join(root, "src", "mcp")), false);
-    assert.strictEqual(fs.existsSync(path.join(root, "src", "server")), false);
+    assert.ok(packageJson.dependencies?.["@modelcontextprotocol/sdk"]);
+    assert.strictEqual(packageJson.bin?.["dvqr-mcp"], "./out/mcp/dvqrMcpStdioServer.js");
+    assert.strictEqual(fs.existsSync(path.join(root, "src", "mcp", "dvqrMcpStdioServer.ts")), true);
+
+    const mcpFiles = filesUnder(path.join(root, "src", "mcp"), (file) => file.endsWith(".ts"));
+    const mcpSource = mcpFiles.map((file) => fs.readFileSync(file, "utf8")).join("\n");
+    assert.doesNotMatch(mcpSource, /createServer|listen\s*\(|websocket|http\.createServer/i);
+    assert.doesNotMatch(mcpSource, /\b(?:patch|delete)WithMetadata\b/i);
   });
 
   test("keeps public readiness fixtures and v0.15.3 documentation customer-neutral", () => {
@@ -123,6 +124,6 @@ suite("releasePackagingPrivacy", () => {
       assert.strictEqual(surfaces.includes(phrase), false, `Prohibited public claim: ${phrase}`);
     }
     assert.match(surfaces, /does not certify|never certifies/i);
-    assert.match(surfaces, /does not.*MCP server|no MCP server|no MCP runtime/i);
+    assert.match(surfaces, /local MCP|MCP server|stdio/i);
   });
 });
