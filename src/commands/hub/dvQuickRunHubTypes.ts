@@ -111,6 +111,18 @@ export interface HubEvidenceWorkspaceInfo {
   reason?: string;
 }
 
+
+export interface HubLocalMcpInfo {
+  enabled: boolean;
+  registrationState: "registered" | "disabled";
+  toolCount: number;
+  environmentName?: string;
+  environmentUrl?: string;
+  mode: "Free" | "Pro";
+  lifecycle: string;
+  authentication: string;
+}
+
 export interface DvQuickRunHubViewModel {
   title: string;
   supporterBadges: string[];
@@ -118,6 +130,7 @@ export interface DvQuickRunHubViewModel {
   sectionLinks: HubSectionLink[];
   investigationContinuation: InvestigationContinuationModel;
   evidenceWorkspace: HubEvidenceWorkspaceInfo;
+  localMcp: HubLocalMcpInfo;
   playbooks: InvestigationPlaybook[];
   capabilities: CapabilityInfo[];
   whatsNew: string[];

@@ -18,6 +18,7 @@ import { registerImportOfflineLicenseCommand } from "./commands/commercial/impor
 import { registerOnlineProLicenseCommands } from "./commands/commercial/onlineProLicenseCommands.js";
 import { scheduleOnlineEntitlementRefresh } from "./product/capabilities/onlineActivation/onlineEntitlementRefresh.js";
 import { maybeShowV0130Welcome, registerShowWelcomeCommand } from "./runtime/proWelcomeLifecycle.js";
+import { registerLocalMcpLifecycle } from "./runtime/localMcpLifecycle.js";
 
 export async function activate(context: vscode.ExtensionContext) {
   
@@ -44,6 +45,7 @@ registerVirtualJsonProvider(context);
   initializeMetadataRuntime(ctx);
   registerCommandSurface(context, ctx);
   registerEnvironmentLifecycle(context, ctx, envContext, environmentStatusBar);
+  registerLocalMcpLifecycle(context, envContext);
   registerEditorSupportCommands(context);
   if (context.extensionMode === vscode.ExtensionMode.Development) {
     registerDevSupportCommands(context);

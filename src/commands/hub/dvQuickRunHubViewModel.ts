@@ -4,6 +4,7 @@ import type { DvQuickRunHubViewModel, HubEvidenceWorkspaceInfo } from "./dvQuick
 import type { InvestigationContext } from "../../investigation/context/investigationContextTypes.js";
 import { formatEntitlementSupporterTag, type EntitlementContext } from "../../product/capabilities/entitlementTypes.js";
 import { resolveSnapshotWorkspace } from "../../product/comparison/snapshotWorkspaceService.js";
+import { getLocalMcpStatusSnapshot } from "../../runtime/localMcpLifecycle.js";
 
 const emptyInvestigationContext: InvestigationContext = {
   id: "hub-empty-context",
@@ -43,8 +44,10 @@ export function buildDvQuickRunHubViewModel(
   return {
     title: "DV Quick Run Hub",
     supporterBadges,
-    subtitle: "Operational investigation playbooks, capability discovery, and calm product direction inside VS Code.",
+    subtitle: "Talk to Dataverse, continue investigations, and discover the right DV Quick Run workflow from one calm home screen.",
     sectionLinks: [
+      { label: "Local MCP", anchor: "local-mcp" },
+      { label: "Start Here", anchor: "getting-started" },
       { label: "Current Context", anchor: "current-context" },
       { label: "Evidence Workspace", anchor: "evidence-workspace" },
       { label: "Access Context", anchor: "access-context" },
@@ -57,6 +60,11 @@ export function buildDvQuickRunHubViewModel(
     ],
     investigationContinuation: buildInvestigationContinuationModel(context),
     evidenceWorkspace: buildEvidenceWorkspaceInfo(),
+    localMcp: {
+      ...getLocalMcpStatusSnapshot(),
+      lifecycle: "VS Code-managed stdio process, started on demand and remembered per workspace",
+      authentication: "Azure CLI tenant session for v0.15.4 Dataverse reads"
+    },
     playbooks: [...investigationPlaybooks],
     capabilities: applyCapabilityContextStates(getHubCapabilities(entitlement.plan), context)
       .filter((capability) => capability.id !== "cross-environment-comparison"),

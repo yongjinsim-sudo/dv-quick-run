@@ -77,6 +77,7 @@ export async function openDvQuickRunHub(ctx: CommandContext): Promise<void> {
     try {
       const args = Array.isArray(message.args) ? message.args : [];
       await vscode.commands.executeCommand(message.command, ...args);
+      refreshHubPanel(ctx);
     } catch (error) {
       void vscode.window.showErrorMessage(`Failed to run command: ${message.command}`);
     }

@@ -1,3 +1,38 @@
+## 0.15.4
+
+- Added the first extension-owned DV Quick Run local MCP server with VS Code-managed stdio lifecycle.
+- Added nine read-only Free MCP tools for capability discovery, OData explanation and execution, entity metadata, deterministic metadata search, and bounded Pro readiness projections.
+- Added deterministic entity metadata search with explicit concept aliases, ranked confidence, transparent reasons, grouped presentation tiers, and no generated metadata-filter guesswork.
+- Added Windows PowerShell transport fallback when native Node fetch cannot reach Dataverse through enterprise network settings.
+- Added workspace-remembered MCP enable/disable/status commands and an MCP status-bar indicator.
+- Added a Local MCP dashboard to the DV Quick Run Hub.
+- Refreshed the welcome experience and README around natural-language, read-only Dataverse access.
+- Added a green/off traffic-light state to the Hub Local MCP dashboard for at-a-glance workspace status.
+- Added Local MCP setup steps and copy-ready prompts to Quick Start and the welcome experience.
+- Added three real GitHub Copilot MCP screenshots to the README covering deterministic metadata search, natural-language OData execution, and OData explanation.
+- Preserved the commercial boundary: Free executes and understands; Pro correlates, prioritises, recommends and investigates.
+
+
+- Added `dvqr_search_metadata`, a deterministic Free MCP entity-discovery tool that ranks Dataverse tables locally from bounded metadata projections and returns transparent match reasons.
+- Added explicit Dataverse concept aliases so natural-language requests such as “employee-related tables” resolve without unsupported or invented `EntityDefinitions` filters.
+
+### MCP Dataverse transport fix
+
+- Added a Windows-only, read-only PowerShell fallback when the standalone MCP process encounters a low-level Node `fetch failed` transport error.
+- Preserved Node fetch as the preferred transport.
+- Added transport provenance and the original native-fetch failure to structured MCP results.
+- Expanded failures to include the final request URL and underlying transport details instead of returning only `fetch failed`.
+
+## 0.15.4
+
+- Added a checked-in VS Code `.vscode/mcp.json` configuration so the local DVQR stdio server can be started and managed from the MCP server UI.
+
+- Added the first live local DVQR MCP server using stdio and the official TypeScript MCP SDK.
+- Added Free MCP tools for capability discovery, OData explanation, read-only OData GET execution and entity metadata retrieval.
+- Registered the existing deterministic Investigation Readiness operations as Pro MCP acceleration tools.
+- Added bounded Pro capability previews, Azure CLI authentication, protocol-safe stderr logging and manual MCP Inspector verification guidance.
+- Preserved the no-mutation boundary: no PATCH, POST, DELETE, HTTP listener, hosted transport or autonomous investigation.
+
 # Change Log
 
 ---
@@ -7,6 +42,24 @@ All notable changes to the **DV Quick Run** extension will be documented in this
 This project follows the principles of [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+
+# DV Quick Run v0.15.4 — Read-Only MCP Server Foundation
+
+## Added
+
+- Host-independent MCP capability manifest and deterministic read-only tool catalogue.
+- Four MCP semantic tools for readiness assessment, evidence gaps, contributor availability, and evidence recommendations.
+- A transport-neutral MCP application adapter that delegates exclusively to the existing readiness semantic operations.
+- Deterministic MCP error envelopes for unknown tools, invalid arguments, application failures, and internal failures.
+- Host-independent server-foundation dispatcher with no Dataverse, filesystem, workspace mutation, authentication, or lifecycle dependency.
+- MCP parity tests that verify projections remain identical to the canonical readiness result collections.
+
+## Safety and product boundaries
+
+- MCP contains no investigation logic and cannot create a second reasoning model.
+- The v0.15.4 foundation is read-only and acquires no evidence.
+- No investigation execution, Dataverse query execution, report generation, regeneration, or workspace mutation is exposed.
+- Transport binding, authentication, hosted topology, and operational lifecycle remain explicitly deferred.
 
 # DV Quick Run v0.15.3 — Investigation Readiness & MCP-Ready Application Boundary
 
@@ -12911,3 +12964,12 @@ Priority : 1 (Normal)
 - Removed duplicate display of selected evidence from Cross-Cutting Environment Context.
 - Corrected singular recommendation and evidence-count grammar.
 - Locked Timeline Mini RCA semantic parity work for the next release; see `TIMELINE_MINI_RCA_PARITY_NEXT_RELEASE.md`.
+
+### Extension-owned Local MCP lifecycle
+
+- Added an extension-contributed MCP server definition provider.
+- Added workspace-persistent Enable, Disable and Status commands.
+- Removed the requirement for a checked-in `.vscode/mcp.json`.
+- Automatically derives the active Dataverse environment and current entitlement mode when VS Code starts the server.
+- Added a compact `DVQR MCP` status-bar indicator when enabled.
+- VS Code now owns on-demand stdio process startup and session shutdown.

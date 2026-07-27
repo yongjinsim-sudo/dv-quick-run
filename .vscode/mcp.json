@@ -1,0 +1,40 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "dvqrEnvironmentUrl",
+      "description": "DV Quick Run Dataverse environment URL",
+      "default": "https://org7013c734.api.crm6.dynamics.com"
+    },
+    {
+      "type": "pickString",
+      "id": "dvqrProEnabled",
+      "description": "Enable local DVQR Pro MCP investigation tools",
+      "options": [
+        {
+          "label": "Free capabilities only",
+          "value": "false"
+        },
+        {
+          "label": "Enable Pro capability verification",
+          "value": "true"
+        }
+      ],
+      "default": "false"
+    }
+  ],
+  "servers": {
+    "dvQuickRun": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/out/mcp/dvqrMcpStdioServer.js"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "DVQR_MCP_ENVIRONMENT_URL": "${input:dvqrEnvironmentUrl}",
+        "DVQR_MCP_PRO_ENABLED": "${input:dvqrProEnabled}"
+      }
+    }
+  }
+}

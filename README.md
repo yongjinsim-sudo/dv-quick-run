@@ -6,26 +6,67 @@ A fast, metadata-aware Dataverse query, evidence, and operational investigation 
 
 ---
 
-## ✨ What's new in v0.15.3
 
-DV Quick Run v0.15.3 adds **Investigation Readiness** to Timeline and Cross-Diff Mini RCA.
+## Local MCP — Talk to Dataverse
+The DV Quick Run Hub now provides icon-led **Start Here** outcomes and one-click **📋 Copy Prompt** examples for immediate Copilot testing.
 
-Readiness explains whether the supplied evidence is prepared for bounded synthesis, which evidence gaps qualify confidence, and what evidence is worth collecting next. It never produces a numeric readiness score, increases confidence, certifies root cause, or authorises remediation.
 
-New capabilities include:
+Ask Dataverse questions in plain English. DV Quick Run v0.15.4 exposes an extension-owned, local stdio MCP server that GitHub Copilot and compatible VS Code MCP clients can use to query, explain and understand your environment.
 
-- Versioned `investigation-readiness-v1` results for Timeline and Cross-Diff
-- Ready, Conditional, Limited and NotAssessable postures
-- Contributor availability and six categorical evidence-quality dimensions
-- Exactly 18 deterministic, fixture-backed evidence-gap rules
-- Evidence-only recommendations with stable rule, gap and evidence references
-- Concise Markdown/HTML readiness summaries with complete technical Appendices
-- Frozen `mini-rca-artifact-v1` JSON exports and explicit regeneration
-- Stable second-precision filenames shared by HTML, Markdown and JSON from one artifact
-- Historical report compatibility without fabricated readiness
-- A headless, transport-neutral service boundary prepared for the next MCP Foundation release
+Enable it once per workspace with **DV Quick Run: Enable Local MCP Server**. DV Quick Run remembers the choice and VS Code starts the process on demand in later sessions.
 
-v0.15.3 does **not** ship an MCP server, protocol transport, authentication layer or server lifecycle. The release stabilises the local deterministic application contract those future adapters can reuse.
+The Free MCP surface is strictly read-only and includes capability discovery, OData explanation, bounded OData GET execution, entity metadata retrieval, and deterministic entity metadata search. No POST, PATCH, DELETE, upload, remediation, or workspace-mutation tools are registered.
+
+Current Dataverse execution uses an Azure CLI tenant session. For tenants without an Azure subscription, sign in with `az login --tenant <tenant-id> --allow-no-subscriptions`.
+
+The DV Quick Run Hub shows a traffic-light MCP health state together with mode, environment, tool count, lifecycle, and authentication guidance.
+
+### What the Free MCP experience looks like
+
+**Find related Dataverse tables deterministically**
+
+![DV Quick Run MCP deterministic metadata search](docs/mcp-query-1.png)
+
+**Query Dataverse in natural language**
+
+![DV Quick Run MCP natural-language OData execution](docs/mcp-query-2.png)
+
+**Explain OData in plain English**
+
+![DV Quick Run MCP OData explanation](docs/mcp-query-3.png)
+
+| Without DV Quick Run | With DV Quick Run MCP |
+|---|---|
+| Remember OData syntax | Ask in plain English |
+| Browse metadata manually | Search related tables deterministically |
+| Interpret logical names yourself | Receive structured, metadata-grounded context |
+| Risk broad or unsupported metadata filters | Use bounded DVQR tools with explicit ranking |
+
+**Read-only · Deterministic · Metadata-aware · GitHub Copilot ready**
+
+## ✨ What's new in v0.15.4
+
+DV Quick Run v0.15.4 introduces **Talk to Dataverse**: an extension-owned, local MCP experience for GitHub Copilot and compatible VS Code MCP clients.
+
+- Ask bounded Dataverse questions in plain English.
+- Execute read-only OData GET queries against the active environment.
+- Explain OData structure and intent.
+- Retrieve entity metadata.
+- Search related tables deterministically without invented `EntityDefinitions` filters.
+- Enable Local MCP once per workspace; VS Code starts it on demand in later sessions.
+- Review MCP readiness, mode, environment, tool count, authentication boundary, and lifecycle from the Hub.
+- Copy tested MCP prompts directly from the Hub Prompt Playground.
+
+The safety and commercial boundaries remain explicit:
+
+- **Free:** Execute, inspect, explain, and understand.
+- **Pro:** Correlate, prioritise, recommend, and investigate.
+- **Local MCP:** No POST, PATCH, DELETE, upload, remediation, or workspace-mutation tools.
+
+### Two ways to use DV Quick Run
+
+1. **Talk to Dataverse** through GitHub Copilot and Local MCP.
+2. **Build and investigate in the editor** through CodeLens, Query-by-Canvas, Result Viewer, Guided Traversal, profiles, snapshots, Timeline, and Mini RCA.
 
 ## 🌐 Website & Interactive Demo
 
@@ -122,25 +163,52 @@ Trial and billing configuration is handled externally by the store/licensing pro
 
 ## ⚡ Quick Start
 
-1. Install **DV Quick Run**
-2. Login:
+### Run DV Quick Run normally
 
-   ```bash
-   az login --allow-no-subscriptions
-   ```
-
-3. Configure your Dataverse environment
-4. Run a query:
+1. Install **DV Quick Run**.
+2. Configure and select your Dataverse environment.
+3. Run a query such as:
 
    ```http
    contacts?$top=10
    ```
 
-5. Open the Hub any time:
+4. Open the Hub any time:
 
    ```text
    DV Quick Run: Open Hub
    ```
+
+### Enable Local MCP
+
+1. Select the Dataverse environment you want DV Quick Run MCP to use.
+2. Run:
+
+   ```text
+   DV Quick Run: Enable Local MCP Server
+   ```
+
+3. Sign into the environment tenant with Azure CLI. For a tenant without an Azure subscription:
+
+   ```bash
+   az login --tenant <tenant-id> --allow-no-subscriptions
+   ```
+
+4. Open GitHub Copilot Chat in VS Code and make sure the DV Quick Run MCP tools are enabled.
+5. Try one of these prompts:
+
+   ```text
+   Using DV Quick Run, give me the top 10 Accounts by Revenue.
+
+   Using DV Quick Run, find tables related to customers.
+
+   Using DV Quick Run, explain this OData query:
+   accounts?$select=name,revenue&$filter=statecode eq 0&$orderby=name asc&$top=10
+   ```
+
+6. Open **DV Quick Run: Open Hub** to review the Local MCP traffic-light status, environment, mode, tool count, lifecycle, and authentication guidance.
+
+DV Quick Run remembers MCP enablement per workspace. VS Code starts the local stdio server on demand after restarts or reboots; users do not need to recreate the configuration.
 
 ---
 
@@ -1178,3 +1246,39 @@ MIT open-core functionality
 Private proprietary acceleration modules
 Not included in the public repository or MIT grant
 ```
+
+## Local MCP Server — v0.15.4
+
+DV Quick Run now includes a first local, read-only MCP server over stdio.
+
+Free MCP capabilities execute and explain bounded Dataverse work. The first live tool set includes OData explanation, read-only OData GET execution, entity metadata retrieval and capability discovery. Pro MCP capabilities reuse the deterministic Investigation Readiness application layer for evidence-gap and recommendation acceleration.
+
+The server uses Azure CLI authentication and never exposes mutation tools. See `docs/DV-Quick-Run-v0.15.4-Local-MCP-Manual-Verification.md` for setup and MCP Inspector testing.
+
+### Local MCP server
+
+After `npm install` and `npm run compile`, DVQR can be run as a local stdio MCP server:
+
+```powershell
+npm run mcp:start
+```
+
+The command intentionally remains silent while it waits for an MCP client. For interactive verification, use:
+
+```powershell
+npm run mcp:inspect
+```
+
+The repository also includes `.vscode/mcp.json`. In VS Code, run **MCP: List Servers**, start **dvQuickRun**, provide the Dataverse environment URL, and then enable its tools from Chat's **Configure Tools** control. Azure CLI authentication must already be available through `az login`.
+
+
+## Extension-owned Local MCP
+
+DV Quick Run can register its packaged local MCP server directly with VS Code. Run **DV Quick Run: Enable Local MCP Server** once for a workspace. DVQR remembers the choice, derives the active environment and Free/Pro mode, and VS Code starts the stdio server on demand in future sessions. No workspace `mcp.json` or manual Node command is required.
+
+Use **DV Quick Run: Local MCP Server Status** to review the current environment and mode, or **DV Quick Run: Disable Local MCP Server** to remove the server from that workspace. The v0.15.4 execution adapter currently authenticates through Azure CLI, so run `az login` before invoking Dataverse tools.
+
+
+### Deterministic MCP metadata search
+
+The Free MCP surface includes `dvqr_search_metadata`, which searches a bounded Dataverse entity catalogue locally and returns ranked results with explicit match reasons. This prevents agents from inventing unsupported metadata filters for prompts such as “show me employee-related tables”.

@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Metadata-aware Dataverse query, investigation, execution, comparison, Mini RCA, and operational timeline reconstruction workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.15.3",
+  "version": "0.15.4",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -80,7 +80,10 @@
     "onCommand:dvQuickRun.licenseStatus",
     "onCommand:dvQuickRun.deactivateProLicense",
     "onCommand:dvQuickRun.importOfflineLicense",
-    "onCommand:dvQuickRun.showWelcomeScreen"
+    "onCommand:dvQuickRun.showWelcomeScreen",
+    "onCommand:dvQuickRun.enableLocalMcpServer",
+    "onCommand:dvQuickRun.disableLocalMcpServer",
+    "onCommand:dvQuickRun.showLocalMcpServerStatus"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -292,6 +295,18 @@
       {
         "command": "dvQuickRun.showWelcomeScreen",
         "title": "DV Quick Run: Show Welcome Screen"
+      },
+      {
+        "command": "dvQuickRun.enableLocalMcpServer",
+        "title": "DV Quick Run: Enable Local MCP Server"
+      },
+      {
+        "command": "dvQuickRun.disableLocalMcpServer",
+        "title": "DV Quick Run: Disable Local MCP Server"
+      },
+      {
+        "command": "dvQuickRun.showLocalMcpServerStatus",
+        "title": "DV Quick Run: Local MCP Server Status"
       }
     ],
     "menus": {
@@ -554,7 +569,13 @@
           "description": "Optional workspace-relative or absolute folder for DVQR workspace-backed snapshots. Empty uses .dvqr/snapshots in the current VS Code workspace."
         }
       }
-    }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "dvQuickRun.localMcp",
+        "label": "DV Quick Run Local MCP"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -563,7 +584,9 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "copy-fixtures": "xcopy src\\test\\fixtures out\\test\\fixtures /E /I /Y"
+    "copy-fixtures": "xcopy src\\test\\fixtures out\\test\\fixtures /E /I /Y",
+    "mcp:start": "node ./out/mcp/dvqrMcpStdioServer.js",
+    "mcp:inspect": "npx @modelcontextprotocol/inspector node ./out/mcp/dvqrMcpStdioServer.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -578,10 +601,14 @@
   },
   "dependencies": {
     "cytoscape": "^3.33.1",
-    "pdfkit": "^0.18.0"
+    "pdfkit": "^0.18.0",
+    "@modelcontextprotocol/sdk": "1.29.0"
   },
   "galleryBanner": {
     "color": "#0b1220",
     "theme": "dark"
+  },
+  "bin": {
+    "dvqr-mcp": "./out/mcp/dvqrMcpStdioServer.js"
   }
 }

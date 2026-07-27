@@ -129,6 +129,86 @@ h3 {
   gap: 16px;
 }
 
+.dvqr-start-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.dvqr-start-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dvqr-start-card .dvqr-action-button {
+  margin-top: auto;
+}
+
+.dvqr-prompt {
+  background: color-mix(in srgb, var(--vscode-textCodeBlock-background) 88%, transparent);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 8px;
+  font-family: var(--vscode-editor-font-family);
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.dvqr-copy-prompt {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.dvqr-copy-prompt span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dvqr-copy-button {
+  background: transparent;
+  border: 1px solid var(--vscode-button-secondaryBackground);
+  border-radius: 6px;
+  color: var(--vscode-textLink-foreground);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  padding: 4px 9px;
+}
+
+.dvqr-copy-button:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.dvqr-copy-status {
+  color: var(--vscode-descriptionForeground);
+  min-height: 1.4em;
+  margin-top: 8px;
+}
+
+.dvqr-chip-ready {
+  border-color: var(--vscode-testing-iconPassed);
+  color: var(--vscode-testing-iconPassed);
+}
+
+.dvqr-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.dvqr-mcp-playground {
+  margin-top: 16px;
+}
+
+.dvqr-prompt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .dvqr-playbook-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -159,6 +239,8 @@ h3 {
 }
 
 @media (max-width: 980px) {
+  .dvqr-start-grid,
+  .dvqr-prompt-grid,
   .dvqr-playbook-grid,
   .dvqr-direction-grid {
     grid-template-columns: 1fr;
@@ -342,6 +424,39 @@ h3 {
 .dvqr-context-state-launchable,
 .dvqr-context-state-availableInContext {
   color: var(--vscode-foreground);
+}
+
+.dvqr-mcp-health {
+  align-items: center;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  gap: 7px;
+  padding: 4px 10px;
+}
+
+.dvqr-mcp-health-dot {
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
+  height: 9px;
+  width: 9px;
+}
+
+.dvqr-mcp-health-healthy {
+  color: var(--vscode-testing-iconPassed, #73c991);
+}
+
+.dvqr-mcp-health-healthy .dvqr-mcp-health-dot {
+  background: currentColor;
+}
+
+.dvqr-mcp-health-disabled {
+  color: var(--vscode-descriptionForeground);
+}
+
+.dvqr-mcp-health-disabled .dvqr-mcp-health-dot {
+  background: currentColor;
 }
 
 
