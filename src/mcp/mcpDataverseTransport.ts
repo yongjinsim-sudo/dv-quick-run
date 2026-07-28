@@ -97,13 +97,27 @@ $headers = @{
   "OData-Version" = "4.0"
   "OData-MaxVersion" = "4.0"
 }
-$response = Invoke-WebRequest -UseBasicParsing -Method Get -Uri $env:DVQR_MCP_REQUEST_URL -Headers $headers -TimeoutSec ${timeoutSeconds}
-$envelope = [ordered]@{
-  statusCode = [int]$response.StatusCode
-  body = [string]$response.Content
-  correlationId = [string]$response.Headers['x-ms-correlation-request-id']
-  requestId = [string]$response.Headers['req_id']
-  operationId = [string]$response.Headers['x-ms-diagnostics-operation-id']
+try {
+  $response = Invoke-WebRequest -UseBasicParsing -Method Get -Uri $env:DVQR_MCP_REQUEST_URL -Headers $headers -TimeoutSec ${timeoutSeconds}
+  $envelope = [ordered]@{
+    statusCode = [int]$response.StatusCode
+    body = [string]$response.Content
+    correlationId = [string]$response.Headers['x-ms-correlation-request-id']
+    requestId = [string]$response.Headers['req_id']
+    operationId = [string]$response.Headers['x-ms-diagnostics-operation-id']
+  }
+} catch {
+  $webResponse = $_.Exception.Response
+  if ($null -eq $webResponse) { throw }
+  $reader = New-Object System.IO.StreamReader($webResponse.GetResponseStream())
+  try { $body = $reader.ReadToEnd() } finally { $reader.Dispose() }
+  $envelope = [ordered]@{
+    statusCode = [int]$webResponse.StatusCode
+    body = [string]$body
+    correlationId = [string]$webResponse.Headers['x-ms-correlation-request-id']
+    requestId = [string]$webResponse.Headers['req_id']
+    operationId = [string]$webResponse.Headers['x-ms-diagnostics-operation-id']
+  }
 }
 $envelope | ConvertTo-Json -Compress -Depth 5
 `;
@@ -126,6 +140,11 @@ $envelope | ConvertTo-Json -Compress -Depth 5
     );
 
     const envelope = JSON.parse(stdout.toString().trim()) as PowerShellResponseEnvelope;
+    if (envelope.statusCode < 200 || envelope.statusCode >= 300) {
+      throw new Error(
+        `Node transport failed (${args.nativeFetchFailure}). PowerShell fallback connected, but Dataverse returned HTTP ${envelope.statusCode}: ${envelope.body}`
+      );
+    }
     const executionContext: DataverseExecutionContext = {
       method: "GET",
       path: args.path,

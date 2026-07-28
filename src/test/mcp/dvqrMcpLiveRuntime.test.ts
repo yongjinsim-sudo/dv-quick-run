@@ -16,6 +16,17 @@ suite("dvqrMcpLiveRuntime", () => {
     assert.ok(DVQR_LIVE_MCP_TOOLS.every((tool) => !/patch|delete|update/i.test(tool.name)));
   });
 
+  test("guides callers to relationshipHint and forbids guessed pathIds", () => {
+    const tool = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_generate_relationship_query");
+    assert.ok(tool);
+    assert.match(tool.description, /Prefer relationshipHint/);
+    const properties = (tool.inputSchema as any).properties;
+    assert.match(properties.pathId.description, /copied exactly/);
+    assert.match(properties.pathId.description, /Do not construct or guess/);
+    assert.match(properties.relationshipHint.description, /Preferred when the user names/);
+    assert.match(tool.description, /return no query/);
+  });
+
   test("loads explicit local runtime configuration", () => {
     const config = loadDvqrMcpRuntimeConfiguration({
       DVQR_MCP_ENVIRONMENT_URL: "https://example.crm6.dynamics.com/",

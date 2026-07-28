@@ -6,16 +6,16 @@ export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
   {
     id: "talk-to-dataverse",
     title: "Talk to Dataverse",
-    summary: "Use GitHub Copilot with DV Quick Run's deterministic, read-only MCP tools to query, explain, and discover Dataverse without inventing metadata behaviour.",
+    summary: "Use GitHub Copilot with DV Quick Run's deterministic, read-only MCP tools to explain lookups, rank relationships, generate verified queries, and probe runtime data without inventing metadata behaviour.",
     whenToUse: [
       "You want to ask a Dataverse question in plain English.",
       "You need a bounded read-only query without writing OData first.",
-      "You want deterministic table discovery or a clear OData explanation."
+      "You want deterministic relationship discovery, query generation, or a clear OData explanation."
     ],
     flow: [
       { label: "Enable Local MCP once", description: "Enable the extension-owned MCP server for the current workspace from the Hub.", commandId: "dvQuickRun.enableLocalMcpServer", relatedSurface: "Local MCP" },
       { label: "Open GitHub Copilot Chat", description: "Make sure the DV Quick Run MCP tools are enabled for the chat session.", relatedSurface: "GitHub Copilot Chat" },
-      { label: "Ask a bounded question", description: "Try a read-only query, metadata search, or OData explanation using natural language.", relatedSurface: "DV Quick Run MCP" },
+      { label: "Ask a bounded question", description: "Try relationship discovery, lookup explanation, a generated query, a bounded probe, or read-only OData using natural language.", relatedSurface: "DV Quick Run MCP" },
       { label: "Inspect the grounded result", description: "Review the selected tool, generated query, metadata ranking, or returned Dataverse rows before acting.", relatedSurface: "Copilot Chat" }
     ],
     relatedCapabilities: ["odata-fetchxml-execution", "investigation-intelligence"],

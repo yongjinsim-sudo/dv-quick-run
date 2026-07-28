@@ -91,7 +91,7 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes("💬 Talk to Dataverse"));
     assert.ok(html.includes("🔎 Understand metadata"));
     assert.ok(html.includes("📖 Explain a query"));
-    assert.ok(html.includes("What's New in v0.15.4"));
+    assert.ok(html.includes("What's New in v0.15.5"));
     assert.ok(html.includes("Using DV Quick Run, show me the first 10 active Accounts."));
     assert.ok(html.includes('id="local-mcp"'));
     assert.ok(html.includes("DV Quick Run Local MCP"));

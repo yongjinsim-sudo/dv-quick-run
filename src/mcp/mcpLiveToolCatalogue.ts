@@ -84,6 +84,74 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       }
     }
   },
+  {
+    name: "dvqr_resolve_navigation_property",
+    title: "Resolve Navigation Property",
+    description: "Resolve exact Dataverse navigation properties and lookup value fields between verified source and target tables. Never generate a query from an unresolved or guessed navigation name; use only metadata-verified matches.",
+    tier: "free",
+    inputSchema: {
+      type: "object", additionalProperties: false, required: ["sourceTable", "targetTable"],
+      properties: {
+        sourceTable: { type: "string" }, targetTable: { type: "string" }, guessedProperty: { type: "string" },
+        environmentUrl: { type: "string" }
+      }
+    }
+  },
+  {
+    name: "dvqr_find_relationship_paths",
+    title: "Find Relationship Paths",
+    description: "Discover and deterministically rank bounded Dataverse relationship paths using verified metadata. Does not claim that paths contain business data.",
+    tier: "free",
+    inputSchema: {
+      type: "object", additionalProperties: false, required: ["sourceTable", "targetTable"],
+      properties: {
+        sourceTable: { type: "string" }, targetTable: { type: "string" }, relationshipHint: { type: "string", description: "Optional exact lookup logical name, navigation property, or relationship schema name that the selected path must honour." },
+        maxDepth: { type: "integer", minimum: 1, maximum: 6, default: 4 },
+        maxPaths: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+        environmentUrl: { type: "string" }
+      }
+    }
+  },
+  {
+    name: "dvqr_generate_relationship_query",
+    title: "Generate Relationship Query",
+    description: "Generate bounded OData query templates only from a metadata-verified relationship path. Prefer relationshipHint when the user names a lookup, navigation property, or relationship schema. Use pathId only when copied exactly from dvqr_find_relationship_paths; never construct or guess a pathId. If an exact hint cannot be verified, return no query and never substitute or invent a placeholder navigation.",
+    tier: "free",
+    inputSchema: {
+      type: "object", additionalProperties: false, required: ["sourceTable", "targetTable"],
+      properties: {
+        sourceTable: { type: "string" }, targetTable: { type: "string" }, pathId: { type: "string", description: "Optional opaque path identifier copied exactly from dvqr_find_relationship_paths. Do not construct or guess this value. When the user names a relationship, use relationshipHint instead." }, relationshipHint: { type: "string", description: "Preferred when the user names a lookup logical name, navigation property, or relationship schema. The selected path must honour this exact intent." }, sourceRecordId: { type: "string" },
+        maxDepth: { type: "integer", minimum: 1, maximum: 6, default: 4 },
+        maxRecordsPerStep: { type: "integer", minimum: 1, maximum: 20, default: 5 },
+        environmentUrl: { type: "string" }
+      }
+    }
+  },
+  {
+    name: "dvqr_probe_relationship_path",
+    title: "Probe Relationship Path",
+    description: "Explicitly execute a bounded, read-only runtime probe of a verified relationship path for one source record and report where matching continuation data stops.",
+    tier: "free",
+    inputSchema: {
+      type: "object", additionalProperties: false, required: ["sourceTable", "targetTable", "sourceRecordId"],
+      properties: {
+        sourceTable: { type: "string" }, targetTable: { type: "string" }, sourceRecordId: { type: "string" }, pathId: { type: "string" }, relationshipHint: { type: "string", description: "Optional exact lookup logical name, navigation property, or relationship schema name that the selected path must honour." },
+        maxDepth: { type: "integer", minimum: 1, maximum: 6, default: 4 },
+        maxRecordsPerStep: { type: "integer", minimum: 1, maximum: 10, default: 3 },
+        environmentUrl: { type: "string" }
+      }
+    }
+  },
+  {
+    name: "dvqr_explain_lookup",
+    title: "Explain Dataverse Lookup",
+    description: "Explain a standard or polymorphic lookup using exact attribute targets, target-qualified navigation properties, value property and runtime annotations.",
+    tier: "free",
+    inputSchema: {
+      type: "object", additionalProperties: false, required: ["sourceTable", "lookup"],
+      properties: { sourceTable: { type: "string" }, lookup: { type: "string" }, environmentUrl: { type: "string" } }
+    }
+  },
   ...[
     ["dvqr_assess_investigation_readiness", "Assess Investigation Readiness", "dvqr.assessInvestigationReadiness"],
     ["dvqr_get_investigation_gaps", "Get Investigation Gaps", "dvqr.retrieveInvestigationGaps"],
