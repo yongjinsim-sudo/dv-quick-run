@@ -4,7 +4,7 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
-## DV Quick Run v0.15.4 — Talk to Dataverse Expansion (implementation in progress)
+## DV Quick Run v0.15.5 — Talk to Dataverse Expansion
 
 - Added deterministic MCP relationship-path discovery with bounded depth and candidate limits.
 - Added transparent `DeterministicTraversalScore` ranking, reasons, penalties, bridge-table identification, and ranked alternatives.
