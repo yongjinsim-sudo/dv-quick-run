@@ -147,7 +147,7 @@ function renderLocalMcpDashboard(model: DvQuickRunHubViewModel): string {
 
   return `<section id="local-mcp">
     <h2>Local MCP</h2>
-    <p class="dvqr-section-note">Talk to Dataverse through an extension-owned, read-only DV Quick Run MCP server.</p>
+    <p class="dvqr-section-note">Talk to Dataverse through an extension-owned, read-only MCP server with metadata-grounded relationship intelligence and deterministic explainability.</p>
     <div class="dvqr-card dvqr-evidence-workspace-card">
       <div>
         <div class="dvqr-continuation-action-header"><h3>DV Quick Run Local MCP</h3><span class="dvqr-mcp-health dvqr-mcp-health-${statusClass}"><span class="dvqr-mcp-health-dot" aria-hidden="true"></span>${trafficLabel} · ${statusLabel}</span></div>
@@ -295,15 +295,16 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["Local MCP Server", "Extension-owned, workspace-persistent and started by VS Code on demand."],
-    ["Talk to Dataverse", "Ask bounded Dataverse questions in plain English through GitHub Copilot."],
-    ["Deterministic Metadata Search", "Rank related entities locally instead of inventing unsupported metadata filters."],
-    ["Nine Free Tools", "Execute, inspect, explain and understand through a read-only MCP surface."],
-    ["Strict Safety Boundary", "No POST, PATCH, DELETE, upload or remediation tools are registered."]
+    ["Talk to Dataverse", "Ask bounded Dataverse questions in plain English through a deterministic, metadata-grounded MCP surface."],
+    ["Relationship Intelligence", "Explain business meaning, relationship category, confidence, ranking reasons, alternatives, and practical Dataverse guidance."],
+    ["Navigation Resolution", "Resolve exact target-qualified navigation properties without guessing or emitting unverified placeholder queries."],
+    ["Relationship Query Generation", "Create Minimal, Recommended, and Staged OData variants from metadata-verified paths with cost and round-trip guidance."],
+    ["Bounded Runtime Probing", "Check one source record through read-only GET steps while clearly separating metadata validity from observed runtime data."],
+    ["Strict Safety Boundary", "No POST, PATCH, DELETE, upload, remediation, or unverified query-generation tools are registered."]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.15.4</h2>
-    <p class="dvqr-section-note">The headline v0.15.4 experience. Detailed release history remains in CHANGELOG.md.</p>
+    <h2>What's New in v0.15.5</h2>
+    <p class="dvqr-section-note">Talk to Dataverse: relationship intelligence, verified query generation, bounded runtime probing, and deterministic explainability.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }

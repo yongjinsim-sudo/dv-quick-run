@@ -63,7 +63,7 @@ export function buildDvQuickRunHubViewModel(
     localMcp: {
       ...getLocalMcpStatusSnapshot(),
       lifecycle: "VS Code-managed stdio process, started on demand and remembered per workspace",
-      authentication: "Azure CLI tenant session for v0.15.4 Dataverse reads"
+      authentication: "Azure CLI tenant session for v0.15.5 read-only Dataverse metadata and probes"
     },
     playbooks: [...investigationPlaybooks],
     capabilities: applyCapabilityContextStates(getHubCapabilities(entitlement.plan), context)

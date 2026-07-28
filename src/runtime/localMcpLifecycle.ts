@@ -237,6 +237,12 @@ export function registerLocalMcpLifecycle(
   const lifecycle = new LocalMcpLifecycle(context, envContext);
   lifecycle.register();
   activeLocalMcpLifecycle = lifecycle;
-  context.subscriptions.push(lifecycle, { dispose: () => { if (activeLocalMcpLifecycle === lifecycle) activeLocalMcpLifecycle = undefined; } });
+  context.subscriptions.push(lifecycle, {
+    dispose: () => {
+      if (activeLocalMcpLifecycle === lifecycle) {
+        activeLocalMcpLifecycle = undefined;
+      }
+    }
+  });
   return lifecycle;
 }

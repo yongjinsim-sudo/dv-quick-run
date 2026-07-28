@@ -19,7 +19,7 @@ function capabilityPayload(proEnabled: boolean) {
   return {
     contractVersion: "dvqr-mcp-capabilities-v1",
     product: "DV Quick Run",
-    releaseVersion: "0.15.4",
+    releaseVersion: "0.15.5",
     transport: "stdio",
     mode: "local-read-only",
     commercialBoundary: {
@@ -29,7 +29,7 @@ function capabilityPayload(proEnabled: boolean) {
     proEnabled,
     implementedTools: DVQR_LIVE_MCP_TOOLS.map(({ name, title, tier, description }) => ({ name, title, tier, description })),
     deferredCapabilities: [
-      "Guided Traversal MCP projection",
+      "FetchXML generation from verified paths",
       "Custom API discovery and read-only function execution",
       "Execution Profile projection",
       "DVQR Score projection",
@@ -49,7 +49,7 @@ export async function startDvqrMcpStdioServer(): Promise<void> {
   const freeAdapter = new DvqrMcpFreeApplicationAdapter(config);
   const foundation = new DvqrMcpServerFoundation();
   const server = new Server(
-    { name: "dv-quick-run", version: "0.15.4" },
+    { name: "dv-quick-run", version: "0.15.5" },
     { capabilities: { tools: {} } }
   );
 
@@ -71,19 +71,62 @@ export async function startDvqrMcpStdioServer(): Promise<void> {
     }
     if (name === "dvqr_explain_odata") {
       const result = freeAdapter.explainOData(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
     }
     if (name === "dvqr_execute_odata") {
       const result = await freeAdapter.executeOData(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
     }
     if (name === "dvqr_search_metadata") {
       const result = await freeAdapter.searchMetadata(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
     }
     if (name === "dvqr_get_entity_metadata") {
       const result = await freeAdapter.getEntityMetadata(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+    }
+    if (name === "dvqr_resolve_navigation_property") {
+      const result = await freeAdapter.resolveNavigationProperty(args);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+    }
+    if (name === "dvqr_find_relationship_paths") {
+      const result = await freeAdapter.findRelationshipPaths(args);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+    }
+    if (name === "dvqr_generate_relationship_query") {
+      try {
+        const result = await freeAdapter.generateRelationshipQuery(args);
+        if (result.ok) {
+          return textResult(result.summary, result.structuredContent);
+        }
+        // A metadata-grounded refusal is an expected tool outcome, not an MCP transport failure.
+        // Returning it as a normal completion avoids SDK/client error-envelope handling while
+        // preserving the explicit no-query evidence boundary for the caller.
+        if (result.code === "UnknownNavigationProperty" || result.code === "InvalidArguments") {
+          return textResult(result.message, result.structuredContent ?? {
+            ok: false,
+            code: result.code,
+            queryGenerated: false,
+            message: result.message
+          });
+        }
+        return textResult(result.message, result.structuredError ?? result, true);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return textResult(
+          `DVQR could not generate a relationship query safely: ${message}. No query was generated.`,
+          { ok: false, code: "ExecutionFailed", queryGenerated: false, message, evidenceBoundary: "DVQR did not emit a query because the metadata-verified generation path failed." },
+          true
+        );
+      }
+    }
+    if (name === "dvqr_probe_relationship_path") {
+      const result = await freeAdapter.probeRelationshipPath(args);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+    }
+    if (name === "dvqr_explain_lookup") {
+      const result = await freeAdapter.explainLookup(args);
+      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
     }
 
     const internalName = DVQR_PUBLIC_TO_INTERNAL_TOOL.get(name);

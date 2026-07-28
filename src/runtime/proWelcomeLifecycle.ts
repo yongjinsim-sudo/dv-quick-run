@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.4</title>
+<title>DV Quick Run v0.15.5</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,7 +122,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.4</div>
+        <div class="eyebrow">What's new in v0.15.5</div>
         <h1>Talk to Dataverse</h1>
         <p class="subtitle"><strong>Ask Dataverse questions in plain English.</strong><br>DV Quick Run gives Copilot a deterministic, metadata-aware and strictly read-only Dataverse tool surface.</p>
       </div>
@@ -131,7 +131,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.4</div>
+          <div class="eyebrow">New in v0.15.5</div>
           <div class="price">Natural-language Dataverse, grounded by DV Quick Run</div>
           <div class="limit">Read-only · Metadata-aware · Deterministic · Local-first</div>
           <p class="recognition">Ask Copilot to query, explain and inspect Dataverse while DV Quick Run keeps execution read-only and metadata-grounded.</p>
@@ -140,7 +140,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
       </div>
       <div class="price-grid">
         <div class="price-pill"><strong>Natural-language OData</strong><span>Build and execute bounded read-only GET queries</span></div>
-        <div class="price-pill"><strong>Metadata understanding</strong><span>Describe tables and discover related entities deterministically</span></div>
+        <div class="price-pill"><strong>Metadata understanding</strong><span>Explain lookups, rank relationship paths, preserve explicit relationship intent, and generate verified queries</span></div>
         <div class="price-pill"><strong>Extension-owned lifecycle</strong><span>Enable once per workspace; VS Code starts the server on demand</span></div>
         <div class="price-pill"><strong>Free and Pro boundary</strong><span>Free understands and executes; Pro investigates and accelerates</span></div>
       </div>
@@ -181,16 +181,16 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <div class="card"><h3>1 · Select environment</h3><p>Choose the Dataverse environment DV Quick Run should expose to the local MCP server.</p></div>
         <div class="card"><h3>2 · Enable once</h3><p>Run <strong>DV Quick Run: Enable Local MCP Server</strong>. The workspace preference is remembered.</p></div>
         <div class="card"><h3>3 · Sign in</h3><p>Use <code>az login --tenant &lt;tenant-id&gt; --allow-no-subscriptions</code> for tenant-only Dataverse access.</p></div>
-        <div class="card"><h3>4 · Ask Copilot</h3><p>Try: “Using DV Quick Run, find tables related to customers.”</p></div>
+        <div class="card"><h3>4 · Ask Copilot</h3><p>Try: “How do I get from Contact to Task?” or “Generate a query through parentcustomerid.”</p></div>
       </div>
     </section>
 
     <section class="section future">
-      <div class="eyebrow">Included in v0.15.4</div>
+      <div class="eyebrow">Included in v0.15.5</div>
       <div class="grid">
-        <div class="card"><h3>🔌 Local MCP Server</h3><p>Extension-owned stdio server with nine read-only Free tools.</p></div>
+        <div class="card"><h3>🔌 Local MCP Server</h3><p>Extension-owned stdio server with relationship discovery, query generation, runtime probing, and explainability.</p></div>
         <div class="card"><h3>🧭 Deterministic metadata search</h3><p>Rank related tables locally instead of inventing unsupported metadata filters.</p></div>
-        <div class="card"><h3>📚 Natural-language execution</h3><p>Explain and execute OData, inspect entity metadata, and list capabilities.</p></div>
+        <div class="card"><h3>🧠 Relationship intelligence</h3><p>Explain business meaning, confidence, ranking reasons, query shape, and bounded runtime observations.</p></div>
         <div class="card"><h3>🏠 Workspace-owned experience</h3><p>Enable once; VS Code remembers and starts the server on demand.</p></div>
       </div>
     </section>
@@ -216,7 +216,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     "dvQuickRunWelcomeV0153",
-    "DV Quick Run v0.15.4",
+    "DV Quick Run v0.15.5",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

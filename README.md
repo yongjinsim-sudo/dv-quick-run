@@ -6,7 +6,6 @@ A fast, metadata-aware Dataverse query, evidence, and operational investigation 
 
 ---
 
-
 ## Local MCP — Talk to Dataverse
 The DV Quick Run Hub now provides icon-led **Start Here** outcomes and one-click **📋 Copy Prompt** examples for immediate Copilot testing.
 
@@ -44,24 +43,18 @@ The DV Quick Run Hub shows a traffic-light MCP health state together with mode, 
 
 **Read-only · Deterministic · Metadata-aware · GitHub Copilot ready**
 
-## ✨ What's new in v0.15.4
+## ✨ What's new in v0.15.5
 
-DV Quick Run v0.15.4 introduces **Talk to Dataverse**: an extension-owned, local MCP experience for GitHub Copilot and compatible VS Code MCP clients.
+> Evidence boundary: unresolved relationship or navigation names never produce placeholder queries. DV Quick Run returns no query until metadata verifies the path.
 
-- Ask bounded Dataverse questions in plain English.
-- Execute read-only OData GET queries against the active environment.
-- Explain OData structure and intent.
-- Retrieve entity metadata.
-- Search related tables deterministically without invented `EntityDefinitions` filters.
-- Enable Local MCP once per workspace; VS Code starts it on demand in later sessions.
-- Review MCP readiness, mode, environment, tool count, authentication boundary, and lifecycle from the Hub.
-- Copy tested MCP prompts directly from the Hub Prompt Playground.
+DV Quick Run Local MCP now explains and ranks Dataverse relationships, preserves explicitly requested lookup intent, generates metadata-verified query variants, and performs bounded read-only runtime probes. Relationship results include deterministic confidence, business meaning, ranking reasons, query-shape rationale, and concise educational tips.
 
-The safety and commercial boundaries remain explicit:
+Try prompts such as:
 
-- **Free:** Execute, inspect, explain, and understand.
-- **Pro:** Correlate, prioritise, recommend, and investigate.
-- **Local MCP:** No POST, PATCH, DELETE, upload, remediation, or workspace-mutation tools.
+- `How do I get from Contact to Task?`
+- `Explain parentcustomerid on Contact.`
+- `Generate a query from Contact to Account through parentcustomerid.`
+- `Probe this relationship path for record <guid>.`
 
 ### Two ways to use DV Quick Run
 

@@ -127,8 +127,12 @@ function resultTier(score: number): "highest-confidence" | "related" | "contextu
 
 function recommendation(logicalName: string, displayName: string | undefined, tier: "highest-confidence" | "related" | "contextual"): string {
   const label = displayName ?? logicalName;
-  if (tier === "highest-confidence") return `${label} is a primary deterministic match for the requested concept.`;
-  if (tier === "related") return `${label} is related through explicit metadata or the bounded Dataverse concept catalogue.`;
+  if (tier === "highest-confidence") {
+    return `${label} is a primary deterministic match for the requested concept.`;
+  }
+  if (tier === "related") {
+    return `${label} is related through explicit metadata or the bounded Dataverse concept catalogue.`;
+  }
   return `${label} is contextual; verify its operational relevance before using it.`;
 }
 
