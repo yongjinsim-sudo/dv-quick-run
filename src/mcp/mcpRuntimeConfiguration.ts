@@ -3,6 +3,8 @@ export interface DvqrMcpRuntimeConfiguration {
   readonly tenantId?: string;
   readonly proEnabled: boolean;
   readonly requestTimeoutMs: number;
+  readonly emitTextMirror: boolean;
+  readonly textMirrorMaxCharacters: number;
 }
 
 function normalizeEnvironmentUrl(value: string | undefined): string | undefined {
@@ -22,6 +24,11 @@ export function loadDvqrMcpRuntimeConfiguration(env: NodeJS.ProcessEnv = process
     environmentUrl: normalizeEnvironmentUrl(env.DVQR_MCP_ENVIRONMENT_URL),
     tenantId: env.DVQR_MCP_TENANT_ID?.trim() || undefined,
     proEnabled: env.DVQR_MCP_PRO_ENABLED?.trim().toLowerCase() === "true",
-    requestTimeoutMs: Number.isFinite(timeout) && timeout >= 1000 ? timeout : 30000
+    requestTimeoutMs: Number.isFinite(timeout) && timeout >= 1000 ? timeout : 30000,
+    emitTextMirror: env.DVQR_MCP_EMIT_TEXT_MIRROR?.trim().toLowerCase() !== "false",
+    textMirrorMaxCharacters: (() => {
+      const value = Number(env.DVQR_MCP_TEXT_MIRROR_MAX_CHARACTERS ?? "32768");
+      return Number.isFinite(value) && value >= 1024 ? Math.floor(value) : 32768;
+    })()
   };
 }

@@ -26,16 +26,16 @@ function filesUnder(directory: string, predicate: (file: string) => boolean): st
 }
 
 suite("releasePackagingPrivacy", () => {
-  test("locks final v0.15.5 version identity across package metadata", () => {
+  test("locks final v0.15.6 version identity across package metadata", () => {
     const root = workspaceRoot();
     const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as { version: string };
     const packageLock = JSON.parse(fs.readFileSync(path.join(root, "package-lock.json"), "utf8")) as {
       version: string;
       packages: Record<string, { version?: string }>;
     };
-    assert.strictEqual(packageJson.version, "0.15.5");
-    assert.strictEqual(packageLock.version, "0.15.5");
-    assert.strictEqual(packageLock.packages[""].version, "0.15.5");
+    assert.strictEqual(packageJson.version, "0.15.6");
+    assert.strictEqual(packageLock.version, "0.15.6");
+    assert.strictEqual(packageLock.packages[""].version, "0.15.6");
   });
 
   test("keeps tests, source maps, agent residue, secrets, and stale trees out of the VSIX", () => {

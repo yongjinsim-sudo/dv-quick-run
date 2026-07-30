@@ -85,6 +85,22 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
     }
   },
   {
+    name: "dvqr_discover_operational_anchors",
+    title: "Understand Business Capabilities",
+    description: "Discover business capabilities, rank operational anchors, separate governance, scheduling, coordination and execution roles, and identify downstream work-item evidence from bounded Dataverse metadata. Does not claim runtime data exists.",
+    tier: "free",
+    inputSchema: {
+      type: "object", additionalProperties: false, required: ["sourceTable"],
+      properties: {
+        sourceTable: { type: "string", description: "Logical name of the investigation source table, such as contact or account." },
+        maxDepth: { type: "integer", minimum: 1, maximum: 5, default: 3 },
+        maxResults: { type: "integer", minimum: 1, maximum: 20, default: 8 },
+        maxTablesInspected: { type: "integer", minimum: 10, maximum: 100, default: 60 },
+        environmentUrl: { type: "string" }
+      }
+    }
+  },
+  {
     name: "dvqr_resolve_navigation_property",
     title: "Resolve Navigation Property",
     description: "Resolve exact Dataverse navigation properties and lookup value fields between verified source and target tables. Never generate a query from an unresolved or guessed navigation name; use only metadata-verified matches.",
@@ -130,7 +146,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
   {
     name: "dvqr_probe_relationship_path",
     title: "Probe Relationship Path",
-    description: "Explicitly execute a bounded, read-only runtime probe of a verified relationship path for one source record and report where matching continuation data stops.",
+    description: "Explicitly execute bounded, read-only evidence-guided traversal for one source record. Without pathId or relationshipHint, DVQR probes diverse metadata path families, optionally expands generic target concepts such as task to related custom tables, and returns separate metadata and runtime-observed recommendations.",
     tier: "free",
     inputSchema: {
       type: "object", additionalProperties: false, required: ["sourceTable", "targetTable", "sourceRecordId"],
@@ -138,6 +154,10 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
         sourceTable: { type: "string" }, targetTable: { type: "string" }, sourceRecordId: { type: "string" }, pathId: { type: "string" }, relationshipHint: { type: "string", description: "Optional exact lookup logical name, navigation property, or relationship schema name that the selected path must honour." },
         maxDepth: { type: "integer", minimum: 1, maximum: 6, default: 4 },
         maxRecordsPerStep: { type: "integer", minimum: 1, maximum: 10, default: 3 },
+        maxProbeRequests: { type: "integer", minimum: 1, maximum: 20, default: 8, description: "Maximum Dataverse GET requests across all candidate paths." },
+        maxFamilies: { type: "integer", minimum: 1, maximum: 8, default: 4, description: "Maximum materially different relationship families to consider." },
+        maxCandidatePaths: { type: "integer", minimum: 1, maximum: 12, default: 6 },
+        expandTargetConcept: { type: "boolean", description: "When true, deterministically include related target tables. Defaults to true for generic task/tasks targets and false otherwise." },
         environmentUrl: { type: "string" }
       }
     }

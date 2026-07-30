@@ -1,24 +1,100 @@
 # DV Quick Run
 
-A fast, metadata-aware Dataverse query, evidence, and operational investigation workbench for VS Code.
+**Understand Dataverse applications. Investigate operational behaviour. Stay grounded in evidence.**
 
-**Run, understand, explain through Query Understanding Reports, Cross Diff Understanding, Timeline Understanding, and Mini RCA, explore, refine, safely update, execute governed operational capabilities, compare operational snapshots, reconstruct operational timelines, verify drift evidence, export DVBUR artifacts, export DVAF, DVIM, DVCE, and DVEVM reconstruction artifacts, and investigate Dataverse behaviour — with Query-by-Canvas, Guided Traversal, `$batch`, Smart PATCH, Capability Explorer, Execution Insights, Operational Profiles, Operational Context, Access Context, Evidence Workspace, Snapshot Library, Timeline Reconstruction, Timeline Graph, Timeline Findings Summary, Timeline Investigation Handoff, Cross-Environment Diff, Cross Diff Understanding, Timeline Understanding, Mini RCA Reports, Audit Evidence Enrichment, Reconstruction Artifacts, DVAF/DVIM/DVCE/DVEVM reconstruction export, inline evidence continuation, Pro activation, and the DV Quick Run Hub — without leaving your editor.**
+DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Dataverse investigation workbench for VS Code. Use GitHub Copilot to understand unfamiliar business architecture and query Dataverse in natural language, or continue in the editor with OData, FetchXML, Result Viewer, Guided Traversal, Operational Profiles, Cross-Environment Diff, Timeline Reconstruction and Mini RCA.
+
+**Read-only MCP · Deterministic metadata · Evidence-backed conclusions · Human authority**
 
 ---
 
-## Local MCP — Talk to Dataverse
-The DV Quick Run Hub now provides icon-led **Start Here** outcomes and one-click **📋 Copy Prompt** examples for immediate Copilot testing.
+## What is DV Quick Run?
 
+DV Quick Run gives Dataverse developers, consultants and support teams two connected ways to work:
 
-Ask Dataverse questions in plain English. DV Quick Run v0.15.4 exposes an extension-owned, local stdio MCP server that GitHub Copilot and compatible VS Code MCP clients can use to query, explain and understand your environment.
+1. **Talk to Dataverse through Local MCP** — discover business capabilities, identify operational anchors, explain workflow layers, search metadata, generate verified OData and run bounded read-only probes.
+2. **Build and investigate in the editor** — write and execute queries, inspect results, follow relationships, capture evidence, compare environments, reconstruct timelines and generate bounded Mini RCA reports.
 
-Enable it once per workspace with **DV Quick Run: Enable Local MCP Server**. DV Quick Run remembers the choice and VS Code starts the process on demand in later sessions.
+The product is organised around four outcomes:
 
-The Free MCP surface is strictly read-only and includes capability discovery, OData explanation, bounded OData GET execution, entity metadata retrieval, and deterministic entity metadata search. No POST, PATCH, DELETE, upload, remediation, or workspace-mutation tools are registered.
+- **Understand applications** — translate structural metadata into a layered Business Capability Landscape.
+- **Query and explain** — use natural language or editor workflows to create, validate and understand OData and FetchXML.
+- **Investigate runtime behaviour** — move from records and queries into Execution Insights, Operational Profiles, Access Context and evidence-backed traversal.
+- **Compare and reconstruct** — use snapshots, Cross-Environment Diff, Timeline Reconstruction, Audit Evidence and Mini RCA without claiming unsupported causality.
 
-Current Dataverse execution uses an Azure CLI tenant session. For tenants without an Azure subscription, sign in with `az login --tenant <tenant-id> --allow-no-subscriptions`.
+DV Quick Run follows a simple investigation loop:
 
-The DV Quick Run Hub shows a traffic-light MCP health state together with mode, environment, tool count, lifecycle, and authentication guidance.
+```text
+understand → query → verify → investigate → compare → explain → hand off
+```
+
+## Local MCP — Business Architecture Understanding
+
+DV Quick Run v0.15.6 provides an extension-owned local stdio MCP server for GitHub Copilot and compatible VS Code MCP clients. Enable it once per workspace with **DV Quick Run: Enable Local MCP Server**; VS Code then starts the server on demand and DV Quick Run remembers the workspace preference.
+
+The Free MCP surface is strictly read-only. It can:
+
+- discover business capabilities and operational anchors;
+- produce a layered **Business Capability Landscape**;
+- explain why architectural conclusions were selected;
+- show confidence, evidence provenance and inline uncertainty;
+- discover metadata-verified relationship paths;
+- generate and explain OData;
+- execute bounded Dataverse GET requests;
+- search and inspect entity metadata.
+
+No POST, PATCH, DELETE, upload, remediation or workspace-mutation tools are registered.
+
+Current Dataverse execution uses an Azure CLI tenant session. For tenants without an Azure subscription, sign in with:
+
+```bash
+az login --tenant <tenant-id> --allow-no-subscriptions
+```
+
+The Hub shows the selected environment, MCP mode, available tool count, lifecycle, authentication guidance and traffic-light health state.
+
+### Business Architecture Understanding
+
+The user-facing capability is **Business Architecture Understanding**. Its underlying **Operational Workflow Intelligence** engine separates:
+
+- **Core Domain** — the principal business, service, clinical, case, plan or request concepts;
+- **Coordination** — journey, referral, process, routing and orchestration records;
+- **Execution** — tasks, activities and downstream work items;
+- **Governance** — eligibility, consent, approval, safety and control records;
+- **Platform** — plugins, flows, asynchronous jobs and integration participation.
+
+`dvqr_discover_operational_anchors` returns explainable conclusions rather than an unexplained entity ranking. Each major conclusion can include:
+
+- confidence and evidence provenance;
+- why DVQR reached the conclusion;
+- metadata evidence and bounded runtime observations;
+- explicit runtime-verification requirements;
+- a plain-English architectural narrative;
+- an onboarding-oriented “If I joined tomorrow” summary.
+
+Capability classification remains metadata-derived. Strong structural evidence does not prove that a particular record participated until runtime evidence is collected.
+
+### Evidence-guided workflow discovery
+
+DVQR continues bounded exploration through materially different workflow families rather than stopping at the shortest direct task relationship. Runtime probing keeps separate conclusions for:
+
+- the metadata recommendation;
+- runtime-observed workflow;
+- accessible paths with no matching data;
+- permission-limited evidence;
+- incomplete coverage when a probe budget is exhausted.
+
+Runtime evidence is investigation-scoped and never overwrites metadata confidence.
+
+### Try these prompts
+
+```text
+Using DV Quick Run, starting only from Contact metadata, discover the business capabilities and explain where operational work is coordinated and performed.
+
+Using DV Quick Run, identify the operational anchors around Account and explain why each was ranked.
+
+Using DV Quick Run, investigate this Contact from the highest-ranked operational anchor and separate metadata recommendation from runtime-observed workflow.
+```
 
 ### What the Free MCP experience looks like
 
@@ -41,25 +117,14 @@ The DV Quick Run Hub shows a traffic-light MCP health state together with mode, 
 | Interpret logical names yourself | Receive structured, metadata-grounded context |
 | Risk broad or unsupported metadata filters | Use bounded DVQR tools with explicit ranking |
 
-**Read-only · Deterministic · Metadata-aware · GitHub Copilot ready**
+## Core capabilities
 
-## ✨ What's new in v0.15.5
-
-> Evidence boundary: unresolved relationship or navigation names never produce placeholder queries. DV Quick Run returns no query until metadata verifies the path.
-
-DV Quick Run Local MCP now explains and ranks Dataverse relationships, preserves explicitly requested lookup intent, generates metadata-verified query variants, and performs bounded read-only runtime probes. Relationship results include deterministic confidence, business meaning, ranking reasons, query-shape rationale, and concise educational tips.
-
-Try prompts such as:
-
-- `How do I get from Contact to Task?`
-- `Explain parentcustomerid on Contact.`
-- `Generate a query from Contact to Account through parentcustomerid.`
-- `Probe this relationship path for record <guid>.`
-
-### Two ways to use DV Quick Run
-
-1. **Talk to Dataverse** through GitHub Copilot and Local MCP.
-2. **Build and investigate in the editor** through CodeLens, Query-by-Canvas, Result Viewer, Guided Traversal, profiles, snapshots, Timeline, and Mini RCA.
+- **Local MCP:** business architecture understanding, deterministic metadata discovery, relationship intelligence, natural-language OData, bounded GET execution and explainability.
+- **Query workbench:** OData, FetchXML, `$batch`, Query-by-Canvas, CodeLens, Query Doctor, metadata-aware suggestions and preview-first Smart PATCH.
+- **Investigation:** Result Viewer, Guided Traversal, Execution Insights, Operational Profiles, Operational Context and Access Context.
+- **Evidence and comparison:** Evidence Workspace, Snapshot Library, Cross-Environment Diff, Timeline Reconstruction, Audit Evidence and investigation handoff reports.
+- **Understanding:** Query Understanding, Cross Diff Understanding, Timeline Understanding and evidence-backed Mini RCA.
+- **DV ForgeLab handoffs:** DVBUR plus DVAF, DVIM, DVCE and DVEVM reconstruction artifacts, while investigation and reconstruction remain separate concerns.
 
 ## 🌐 Website & Interactive Demo
 
@@ -94,49 +159,6 @@ The interactive HTML demo helps illustrate:
 without requiring a live Dataverse environment.
 
 ---
-
-## 🚀 What is DV Quick Run?
-
-DV Quick Run turns VS Code into a focused **Dataverse developer and investigation console**.
-
-Instead of switching between Postman, browser tabs, maker portals, Excel, and manual metadata lookups, you can:
-
-* run OData and FetchXML queries
-* generate Query Understanding Reports that preserve both investigation narrative and technical breakdown
-* open Cross Diff Understanding to understand cross-environment drift before reviewing provider evidence
-* open Timeline Understanding to interpret multi-snapshot change windows, grouped operational highlights, trust posture, and adjacent-interval investigation guidance
-* generate experimental Mini RCA reports that rank probable operational explanations, correlate existing evidence through deterministic relationship rules, preserve competing explanations, explain confidence limits, and recommend bounded next steps
-* inspect results in a table or JSON view
-* refine queries safely using preview-first workflows
-* update records using Smart PATCH
-* traverse Dataverse relationships step-by-step
-* run related queries as `$batch`
-* investigate runtime behaviour with Execution Insights
-* understand entity operational footprint with Operational Profiles
-* inspect bounded Operational Context for solution layering, access, runtime actor, and ownership signals
-* investigate bounded Access Context for users, application users, teams, roles, and business units
-* compare operational snapshots through Snapshot Library, Timeline Reconstruction, and Cross-Environment Diff
-* turn cross-environment comparison evidence into briefing-first Explain reports with confidence basis, key changes, and investigation path
-* continue investigation from comparison evidence using bounded inline pivots
-* reconstruct first-observed operational drift across 3+ same-environment snapshots
-* generate Timeline Understanding reports that identify strongest activity intervals without claiming exact change time or root cause
-* generate experimental Mini RCA HTML/Markdown reports with Evidence Correlation, Evidence Relationships, contributor confidence, and grouped supporting evidence without claiming root-cause certainty
-* enrich Timeline Reconstruction and Cross-Environment Diff findings with snapshot-bounded Dataverse audit evidence
-* export DVAF reconstruction artifacts from eligible Column Metadata Drift, DVIM identity participation artifacts, DVCE choice reconstruction artifacts, and DVEVM environment variable artifacts from eligible Environment Variable Current Value Drift findings
-* preserve Reconstruction Artifact references in Timeline and Cross-Environment reports
-* review, verify, comment on, and hand off operational drift findings
-* export Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff reports as HTML/PDF artifacts
-* export DVBUR artifacts from Result Viewer records for downstream DV Bulk Upsert Runner workflows
-* discover and execute supported Custom API capabilities through Capability Explorer
-* activate Online Pro, import Offline Pro licenses, and inspect capability status
-* use the Hub to stay oriented across investigation workflows
-* capture and organise operational snapshots in a local Evidence Workspace
-
-DV Quick Run is designed around a simple loop:
-
-```text
-write → run → explore → refine → investigate → reconstruct evidence → verify → hand off
-```
 
 ## 🚀 14-day Pro Trial
 
@@ -1240,38 +1262,18 @@ Private proprietary acceleration modules
 Not included in the public repository or MIT grant
 ```
 
-## Local MCP Server — v0.15.4
+## Developer MCP verification
 
-DV Quick Run now includes a first local, read-only MCP server over stdio.
-
-Free MCP capabilities execute and explain bounded Dataverse work. The first live tool set includes OData explanation, read-only OData GET execution, entity metadata retrieval and capability discovery. Pro MCP capabilities reuse the deterministic Investigation Readiness application layer for evidence-gap and recommendation acceleration.
-
-The server uses Azure CLI authentication and never exposes mutation tools. See `docs/DV-Quick-Run-v0.15.4-Local-MCP-Manual-Verification.md` for setup and MCP Inspector testing.
-
-### Local MCP server
-
-After `npm install` and `npm run compile`, DVQR can be run as a local stdio MCP server:
+The packaged extension owns normal MCP registration and lifecycle. Repository contributors can also run the stdio server directly after `npm install` and `npm run compile`:
 
 ```powershell
 npm run mcp:start
 ```
 
-The command intentionally remains silent while it waits for an MCP client. For interactive verification, use:
+The process remains silent while waiting for an MCP client. For interactive inspection, use:
 
 ```powershell
 npm run mcp:inspect
 ```
 
-The repository also includes `.vscode/mcp.json`. In VS Code, run **MCP: List Servers**, start **dvQuickRun**, provide the Dataverse environment URL, and then enable its tools from Chat's **Configure Tools** control. Azure CLI authentication must already be available through `az login`.
-
-
-## Extension-owned Local MCP
-
-DV Quick Run can register its packaged local MCP server directly with VS Code. Run **DV Quick Run: Enable Local MCP Server** once for a workspace. DVQR remembers the choice, derives the active environment and Free/Pro mode, and VS Code starts the stdio server on demand in future sessions. No workspace `mcp.json` or manual Node command is required.
-
-Use **DV Quick Run: Local MCP Server Status** to review the current environment and mode, or **DV Quick Run: Disable Local MCP Server** to remove the server from that workspace. The v0.15.4 execution adapter currently authenticates through Azure CLI, so run `az login` before invoking Dataverse tools.
-
-
-### Deterministic MCP metadata search
-
-The Free MCP surface includes `dvqr_search_metadata`, which searches a bounded Dataverse entity catalogue locally and returns ranked results with explicit match reasons. This prevents agents from inventing unsupported metadata filters for prompts such as “show me employee-related tables”.
+Azure CLI authentication must already be available through `az login`. The Free MCP catalogue remains deterministic and read-only; it includes metadata search, capability discovery, relationship intelligence, OData explanation and bounded GET execution without mutation tools.

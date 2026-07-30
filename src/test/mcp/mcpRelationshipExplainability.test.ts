@@ -15,6 +15,8 @@ suite("mcpRelationshipExplainability", () => {
     const edge: McpRelationshipEdge = { fromTable:"contact", toTable:"account", navigationProperty:"parentcustomerid_account", referencingAttribute:"parentcustomerid", relationshipType:"ManyToOne", direction:"manyToOne", collectionValued:false, polymorphicTargetQualified:true };
     const result = explainRelationshipPath(rankRelationshipPath([edge]), { relationshipHintHonoured:true, rank:1 });
     assert.strictEqual(result.confidence, 100);
+    assert.strictEqual(result.confidenceKind, "MetadataConfidence");
+    assert.strictEqual(result.businessConfidence, "UnknownFromMetadata");
     assert.ok(result.whySelected.some((item) => item.includes("Explicit relationship intent")));
     assert.strictEqual(result.rating, 5);
     assert.strictEqual(result.ratingStars, "★★★★★");

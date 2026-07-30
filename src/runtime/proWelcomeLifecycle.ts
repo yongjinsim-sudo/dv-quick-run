@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_15_4.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_15_6.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.5</title>
+<title>DV Quick Run v0.15.6</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,25 +122,25 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.5</div>
-        <h1>Talk to Dataverse</h1>
-        <p class="subtitle"><strong>Ask Dataverse questions in plain English.</strong><br>DV Quick Run gives Copilot a deterministic, metadata-aware and strictly read-only Dataverse tool surface.</p>
+        <div class="eyebrow">What's new in v0.15.6</div>
+        <h1>Understand Business Architecture</h1>
+        <p class="subtitle"><strong>Discover how a Dataverse solution actually operates.</strong><br>DV Quick Run identifies business capabilities, operational anchors, workflow layers and runtime evidence through a deterministic, read-only MCP surface.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.5</div>
-          <div class="price">Natural-language Dataverse, grounded by DV Quick Run</div>
+          <div class="eyebrow">New in v0.15.6</div>
+          <div class="price">Operational Workflow Intelligence, grounded by DV Quick Run</div>
           <div class="limit">Read-only · Metadata-aware · Deterministic · Local-first</div>
-          <p class="recognition">Ask Copilot to query, explain and inspect Dataverse while DV Quick Run keeps execution read-only and metadata-grounded.</p>
+          <p class="recognition">Ask Copilot to discover business capabilities, explain workflow architecture and follow bounded runtime evidence while DV Quick Run remains read-only and metadata-grounded.</p>
           <span class="badge">Evidence first · Human authority</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Natural-language OData</strong><span>Build and execute bounded read-only GET queries</span></div>
-        <div class="price-pill"><strong>Metadata understanding</strong><span>Explain lookups, rank relationship paths, preserve explicit relationship intent, and generate verified queries</span></div>
+        <div class="price-pill"><strong>Evidence-backed capability landscape</strong><span>See layered capabilities, confidence states, evidence provenance and explicit uncertainty</span></div>
+        <div class="price-pill"><strong>Operational workflow discovery</strong><span>Rank anchors, follow bridged workflow paths and identify downstream work items</span></div>
         <div class="price-pill"><strong>Extension-owned lifecycle</strong><span>Enable once per workspace; VS Code starts the server on demand</span></div>
         <div class="price-pill"><strong>Free and Pro boundary</strong><span>Free understands and executes; Pro investigates and accelerates</span></div>
       </div>
@@ -153,13 +153,13 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
       </div>
       <div class="footer">Local MCP is read-only: it may perform bounded Dataverse GET requests but never registers POST, PATCH, DELETE, upload, or remediation tools. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     
-        <p><strong>Try it:</strong> enable Local MCP from the Hub, sign in with Azure CLI, then ask Copilot to query Dataverse, explain OData, or find related tables.</p>
+        <p><strong>Try it:</strong> enable Local MCP from the Hub, sign in with Azure CLI, then ask: “Using DV Quick Run, starting from Contact, explain this application’s capability landscape, show why you believe each conclusion, and mark anything that still needs runtime verification.”</p>
       </section>
 
     <section class="section">
       <div class="eyebrow">Two ways to use DV Quick Run</div>
       <div class="grid">
-        <div class="card"><h3>1 · Talk to Dataverse</h3><p>Use GitHub Copilot Chat with DV Quick Run's deterministic, read-only MCP tools.</p></div>
+        <div class="card"><h3>1 · Understand the application</h3><p>Use GitHub Copilot Chat to discover business capabilities, workflow anchors and execution layers through DV Quick Run.</p></div>
         <div class="card"><h3>2 · Build and investigate</h3><p>Use editor queries, CodeLens, Result Viewer, Guided Traversal, profiles, snapshots, Timeline, and Mini RCA.</p></div>
       </div>
     </section>
@@ -167,9 +167,9 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="section">
       <div class="eyebrow">Local MCP workflow</div>
       <div class="grid">
-        <div class="card"><h3>💬 Ask</h3><p>Ask a Dataverse question in GitHub Copilot Chat.</p></div>
-        <div class="card"><h3>🧠 Ground</h3><p>DV Quick Run chooses a read-only MCP tool and returns structured evidence.</p></div>
-        <div class="card"><h3>🔎 Inspect</h3><p>Review the generated query, metadata result, or returned Dataverse rows.</p></div>
+        <div class="card"><h3>🧭 Discover</h3><p>Start from a business record or table and discover the capabilities and anchors around it.</p></div>
+        <div class="card"><h3>🧠 Understand</h3><p>DV Quick Run separates governance, domain, scheduling, coordination and execution roles.</p></div>
+        <div class="card"><h3>🔎 Verify</h3><p>Follow metadata-verified workflow paths and add bounded runtime evidence when a record ID is available.</p></div>
         <div class="card"><h3>🛡 Stay bounded</h3><p>No POST, PATCH or DELETE tools are registered.</p></div>
       </div>
     </section>
@@ -181,16 +181,16 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <div class="card"><h3>1 · Select environment</h3><p>Choose the Dataverse environment DV Quick Run should expose to the local MCP server.</p></div>
         <div class="card"><h3>2 · Enable once</h3><p>Run <strong>DV Quick Run: Enable Local MCP Server</strong>. The workspace preference is remembered.</p></div>
         <div class="card"><h3>3 · Sign in</h3><p>Use <code>az login --tenant &lt;tenant-id&gt; --allow-no-subscriptions</code> for tenant-only Dataverse access.</p></div>
-        <div class="card"><h3>4 · Ask Copilot</h3><p>Try: “How do I get from Contact to Task?” or “Generate a query through parentcustomerid.”</p></div>
+        <div class="card"><h3>4 · Ask Copilot</h3><p>Try: “Starting only from Contact metadata, explain this application's business capabilities and operational workflow.”</p></div>
       </div>
     </section>
 
     <section class="section future">
-      <div class="eyebrow">Included in v0.15.5</div>
+      <div class="eyebrow">Included in v0.15.6</div>
       <div class="grid">
         <div class="card"><h3>🔌 Local MCP Server</h3><p>Extension-owned stdio server with relationship discovery, query generation, runtime probing, and explainability.</p></div>
-        <div class="card"><h3>🧭 Deterministic metadata search</h3><p>Rank related tables locally instead of inventing unsupported metadata filters.</p></div>
-        <div class="card"><h3>🧠 Relationship intelligence</h3><p>Explain business meaning, confidence, ranking reasons, query shape, and bounded runtime observations.</p></div>
+        <div class="card"><h3>🧭 Business capability understanding</h3><p>Separate governance, domain, scheduling, coordination, execution and integration roles.</p></div>
+        <div class="card"><h3>🧠 Operational workflow intelligence</h3><p>Rank anchors, preserve bridged workflow families, and separate metadata from runtime observations.</p></div>
         <div class="card"><h3>🏠 Workspace-owned experience</h3><p>Enable once; VS Code remembers and starts the server on demand.</p></div>
       </div>
     </section>
@@ -215,8 +215,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0153",
-    "DV Quick Run v0.15.5",
+    "dvQuickRunWelcomeV0156",
+    "DV Quick Run v0.15.6",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

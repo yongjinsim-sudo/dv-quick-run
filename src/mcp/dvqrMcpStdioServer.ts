@@ -6,11 +6,23 @@ import { DvqrMcpServerFoundation } from "./dvqrMcpServerFoundation.js";
 import { DvqrMcpFreeApplicationAdapter } from "./mcpFreeApplicationAdapter.js";
 import { DVQR_LIVE_MCP_TOOLS, DVQR_PUBLIC_TO_INTERNAL_TOOL } from "./mcpLiveToolCatalogue.js";
 import { loadDvqrMcpRuntimeConfiguration } from "./mcpRuntimeConfiguration.js";
+import { buildPortableTextPayload, normalizeStructuredContent, type DvqrMcpPortableTextOptions } from "./mcpPortableText.js";
 
-function textResult(text: string, structuredContent?: unknown, isError = false) {
+function textResult(
+  text: string,
+  structuredContent: unknown,
+  portableTextOptions: DvqrMcpPortableTextOptions,
+  isError = false
+) {
+  const normalized = normalizeStructuredContent(structuredContent);
+  const portable = buildPortableTextPayload(normalized, portableTextOptions);
+  const content: Array<{ type: "text"; text: string }> = [{ type: "text", text }];
+  if (portable.text !== undefined) {
+    content.push({ type: "text", text: portable.text });
+  }
   return {
-    content: [{ type: "text" as const, text }],
-    ...(structuredContent === undefined ? {} : { structuredContent: (structuredContent && typeof structuredContent === "object" && !Array.isArray(structuredContent)) ? structuredContent : { result: structuredContent } }),
+    content,
+    ...(normalized === undefined ? {} : { structuredContent: normalized }),
     ...(isError ? { isError: true } : {})
   };
 }
@@ -19,7 +31,7 @@ function capabilityPayload(proEnabled: boolean) {
   return {
     contractVersion: "dvqr-mcp-capabilities-v1",
     product: "DV Quick Run",
-    releaseVersion: "0.15.5",
+    releaseVersion: "0.15.6",
     transport: "stdio",
     mode: "local-read-only",
     commercialBoundary: {
@@ -48,8 +60,12 @@ export async function startDvqrMcpStdioServer(): Promise<void> {
   const config = loadDvqrMcpRuntimeConfiguration();
   const freeAdapter = new DvqrMcpFreeApplicationAdapter(config);
   const foundation = new DvqrMcpServerFoundation();
+  const portableTextOptions: DvqrMcpPortableTextOptions = {
+    enabled: config.emitTextMirror,
+    maxCharacters: config.textMirrorMaxCharacters
+  };
   const server = new Server(
-    { name: "dv-quick-run", version: "0.15.5" },
+    { name: "dv-quick-run", version: "0.15.6" },
     { capabilities: { tools: {} } }
   );
 
@@ -67,37 +83,41 @@ export async function startDvqrMcpStdioServer(): Promise<void> {
 
     if (name === "dvqr_list_capabilities") {
       const payload = capabilityPayload(config.proEnabled);
-      return textResult("DVQR local MCP is active. Free execution and understanding tools are available; Pro tools provide investigation acceleration.", payload);
+      return textResult("DVQR local MCP is active. Free execution and understanding tools are available; Pro tools provide investigation acceleration.", payload, portableTextOptions);
     }
     if (name === "dvqr_explain_odata") {
       const result = freeAdapter.explainOData(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
     if (name === "dvqr_execute_odata") {
       const result = await freeAdapter.executeOData(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
     if (name === "dvqr_search_metadata") {
       const result = await freeAdapter.searchMetadata(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
     if (name === "dvqr_get_entity_metadata") {
       const result = await freeAdapter.getEntityMetadata(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
+    }
+    if (name === "dvqr_discover_operational_anchors") {
+      const result = await freeAdapter.discoverOperationalAnchors(args);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
     if (name === "dvqr_resolve_navigation_property") {
       const result = await freeAdapter.resolveNavigationProperty(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
     if (name === "dvqr_find_relationship_paths") {
       const result = await freeAdapter.findRelationshipPaths(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
     if (name === "dvqr_generate_relationship_query") {
       try {
         const result = await freeAdapter.generateRelationshipQuery(args);
         if (result.ok) {
-          return textResult(result.summary, result.structuredContent);
+          return textResult(result.summary, result.structuredContent, portableTextOptions);
         }
         // A metadata-grounded refusal is an expected tool outcome, not an MCP transport failure.
         // Returning it as a normal completion avoids SDK/client error-envelope handling while
@@ -108,25 +128,26 @@ export async function startDvqrMcpStdioServer(): Promise<void> {
             code: result.code,
             queryGenerated: false,
             message: result.message
-          });
+          }, portableTextOptions);
         }
-        return textResult(result.message, result.structuredError ?? result, true);
+        return textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return textResult(
           `DVQR could not generate a relationship query safely: ${message}. No query was generated.`,
           { ok: false, code: "ExecutionFailed", queryGenerated: false, message, evidenceBoundary: "DVQR did not emit a query because the metadata-verified generation path failed." },
+          portableTextOptions,
           true
         );
       }
     }
     if (name === "dvqr_probe_relationship_path") {
       const result = await freeAdapter.probeRelationshipPath(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
     if (name === "dvqr_explain_lookup") {
       const result = await freeAdapter.explainLookup(args);
-      return result.ok ? textResult(result.summary, result.structuredContent) : textResult(result.message, result.structuredError ?? result, true);
+      return result.ok ? textResult(result.summary, result.structuredContent, portableTextOptions) : textResult(result.message, result.structuredError ?? result, portableTextOptions, true);
     }
 
     const internalName = DVQR_PUBLIC_TO_INTERNAL_TOOL.get(name);
@@ -140,17 +161,18 @@ export async function startDvqrMcpStdioServer(): Promise<void> {
             availableIn: "pro",
             preview: ["Deterministic investigation readiness", "Evidence-gap derivation", "Evidence-linked recommendations"]
           },
+          portableTextOptions,
           true
         );
       }
       const result = foundation.callTool({ name: internalName, arguments: args as never });
       if (!result.ok) {
-        return textResult(result.error.message, result, true);
+        return textResult(result.error.message, result, portableTextOptions, true);
       }
-      return textResult(`DVQR completed ${name}.`, result.structuredContent);
+      return textResult(`DVQR completed ${name}.`, result.structuredContent, portableTextOptions);
     }
 
-    return textResult(`Unknown DVQR MCP tool: ${name}`, { code: "ToolNotFound", toolName: name }, true);
+    return textResult(`Unknown DVQR MCP tool: ${name}`, { code: "ToolNotFound", toolName: name }, portableTextOptions, true);
   });
 
   const transport = new StdioServerTransport();

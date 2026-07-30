@@ -92,9 +92,9 @@ function renderGettingStarted(model: DvQuickRunHubViewModel): string {
     <div class="dvqr-start-grid">
       <article class="dvqr-card dvqr-start-card">
         <div class="dvqr-eyebrow">1 · Ask</div>
-        <h3>💬 Talk to Dataverse</h3>
-        <p>Ask GitHub Copilot a bounded Dataverse question and let DV Quick Run select a deterministic read-only tool.</p>
-        ${renderCopyPrompt("Using DV Quick Run, show me the first 10 active Accounts.")}
+        <h3>💬 Understand business architecture</h3>
+        <p>Ask GitHub Copilot how an unfamiliar Dataverse solution organises, coordinates and executes work.</p>
+        ${renderCopyPrompt("Using DV Quick Run, starting only from Contact metadata, discover the business capabilities and explain where operational work is coordinated and performed.")}
         <button class="dvqr-action-button" data-command="${mcpCommand}">${mcpLabel}</button>
       </article>
       <article class="dvqr-card dvqr-start-card">
@@ -124,9 +124,9 @@ function renderGettingStarted(model: DvQuickRunHubViewModel): string {
         <p class="dvqr-muted">Copy one of these into GitHub Copilot Chat after enabling DV Quick Run tools.</p>
       </div>
       <div class="dvqr-prompt-grid">
-        ${renderCopyPrompt("Using DV Quick Run, retrieve Contacts and summarise what you found.")}
-        ${renderCopyPrompt("Using DV Quick Run, show the 10 Accounts with the highest revenue.")}
-        ${renderCopyPrompt("Using DV Quick Run, describe the System User table.")}
+        ${renderCopyPrompt("Using DV Quick Run, discover the business objects that organise work around Contact. Do not start with Task.")}
+        ${renderCopyPrompt("Using DV Quick Run, separate governance, scheduling, coordination and execution capabilities around Account.")}
+        ${renderCopyPrompt("Using DV Quick Run, identify the operational anchors around Contact and explain why each was ranked.")}
         ${renderCopyPrompt("Using DV Quick Run, list your available MCP capabilities.")}
       </div>
       <div class="dvqr-copy-status" role="status" aria-live="polite"></div>
@@ -147,7 +147,7 @@ function renderLocalMcpDashboard(model: DvQuickRunHubViewModel): string {
 
   return `<section id="local-mcp">
     <h2>Local MCP</h2>
-    <p class="dvqr-section-note">Talk to Dataverse through an extension-owned, read-only MCP server with metadata-grounded relationship intelligence and deterministic explainability.</p>
+    <p class="dvqr-section-note">Understand Dataverse business architecture through an extension-owned, read-only MCP server with capability modelling, operational anchor discovery, workflow intelligence and deterministic explainability.</p>
     <div class="dvqr-card dvqr-evidence-workspace-card">
       <div>
         <div class="dvqr-continuation-action-header"><h3>DV Quick Run Local MCP</h3><span class="dvqr-mcp-health dvqr-mcp-health-${statusClass}"><span class="dvqr-mcp-health-dot" aria-hidden="true"></span>${trafficLabel} · ${statusLabel}</span></div>
@@ -295,16 +295,16 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["Talk to Dataverse", "Ask bounded Dataverse questions in plain English through a deterministic, metadata-grounded MCP surface."],
-    ["Relationship Intelligence", "Explain business meaning, relationship category, confidence, ranking reasons, alternatives, and practical Dataverse guidance."],
-    ["Navigation Resolution", "Resolve exact target-qualified navigation properties without guessing or emitting unverified placeholder queries."],
-    ["Relationship Query Generation", "Create Minimal, Recommended, and Staged OData variants from metadata-verified paths with cost and round-trip guidance."],
-    ["Bounded Runtime Probing", "Check one source record through read-only GET steps while clearly separating metadata validity from observed runtime data."],
+    ["Evidence-Backed Capability Landscape", "Group Core Domain, Coordination, Execution, Governance and Platform capabilities with confidence and provenance."],
+    ["Explainable Architectural Conclusions", "Show why each anchor, governance layer, scheduling layer and execution layer was selected."],
+    ["Workflow Family Discovery", "Continue bounded exploration beyond direct relationships so materially different bridged workflows remain visible."],
+    ["Evidence-Guided Traversal", "Compare metadata recommendations with investigation-scoped runtime observations across diverse path families."],
+    ["Permission-Aware Outcomes", "Distinguish no matching data from access-limited evidence and incomplete probe coverage."],
     ["Strict Safety Boundary", "No POST, PATCH, DELETE, upload, remediation, or unverified query-generation tools are registered."]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.15.5</h2>
-    <p class="dvqr-section-note">Talk to Dataverse: relationship intelligence, verified query generation, bounded runtime probing, and deterministic explainability.</p>
+    <h2>What's New in v0.15.6</h2>
+    <p class="dvqr-section-note">Operational Workflow Intelligence: layered capability understanding, evidence-backed conclusions, inline uncertainty, verified workflow paths and bounded runtime evidence.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }

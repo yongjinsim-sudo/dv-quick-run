@@ -44,7 +44,7 @@ export function buildDvQuickRunHubViewModel(
   return {
     title: "DV Quick Run Hub",
     supporterBadges,
-    subtitle: "Talk to Dataverse, continue investigations, and discover the right DV Quick Run workflow from one calm home screen.",
+    subtitle: "Understand business architecture, follow operational workflow evidence, and continue Dataverse investigations from one calm home screen.",
     sectionLinks: [
       { label: "Local MCP", anchor: "local-mcp" },
       { label: "Start Here", anchor: "getting-started" },
@@ -63,7 +63,7 @@ export function buildDvQuickRunHubViewModel(
     localMcp: {
       ...getLocalMcpStatusSnapshot(),
       lifecycle: "VS Code-managed stdio process, started on demand and remembered per workspace",
-      authentication: "Azure CLI tenant session for v0.15.5 read-only Dataverse metadata and probes"
+      authentication: "Azure CLI tenant session for v0.15.6 read-only Dataverse metadata, workflow discovery and probes"
     },
     playbooks: [...investigationPlaybooks],
     capabilities: applyCapabilityContextStates(getHubCapabilities(entitlement.plan), context)

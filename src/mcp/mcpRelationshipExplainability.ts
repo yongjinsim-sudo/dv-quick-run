@@ -20,10 +20,12 @@ export interface McpRelationshipPurpose {
 
 export interface McpPathExplainability {
   readonly confidence: number;
+  readonly confidenceKind: "MetadataConfidence";
   readonly confidenceLabel: "Very High" | "High" | "Moderate" | "Low";
   readonly rating: 1 | 2 | 3 | 4 | 5;
   readonly ratingStars: string;
   readonly confidenceDisplay: string;
+  readonly businessConfidence: "UnknownFromMetadata";
   readonly purpose: McpRelationshipPurpose;
   readonly whySelected: readonly string[];
   readonly whyNotFirst: readonly string[];
@@ -135,10 +137,12 @@ export function explainRelationshipPath(path: McpRankedRelationshipPath, options
   const label = confidenceLabel(confidence);
   return {
     confidence,
+    confidenceKind: "MetadataConfidence",
     confidenceLabel: label,
     rating: confidenceRating,
     ratingStars: `${"★".repeat(confidenceRating)}${"☆".repeat(5 - confidenceRating)}`,
     confidenceDisplay: `${"★".repeat(confidenceRating)}${"☆".repeat(5 - confidenceRating)} ${label}`,
+    businessConfidence: "UnknownFromMetadata",
     purpose,
     whySelected,
     whyNotFirst,
