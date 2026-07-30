@@ -1,8 +1,8 @@
 {
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
-  "description": "Metadata-aware Dataverse query, investigation, execution, comparison, Mini RCA, and operational timeline reconstruction workbench for OData, FetchXML, and $batch in VS Code.",
-  "version": "0.15.5",
+  "description": "Extension-owned Local MCP server and metadata-aware Dataverse investigation workbench for VS Code. Understand business architecture, query with natural language, investigate operational workflows, explain OData, compare environments, reconstruct timelines, and generate Mini RCA.",
+  "version": "0.15.6",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -27,6 +27,17 @@
   ],
   "keywords": [
     "dataverse",
+    "mcp",
+    "model context protocol",
+    "local mcp",
+    "github copilot",
+    "copilot",
+    "dataverse mcp",
+    "business architecture",
+    "business capability",
+    "application understanding",
+    "workflow intelligence",
+    "operational workflow",
     "dataverse api",
     "dataverse query",
     "dataverse odata",

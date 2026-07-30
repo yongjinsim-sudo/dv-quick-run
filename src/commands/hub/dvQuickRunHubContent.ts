@@ -5,10 +5,10 @@ import type { EntitlementPlan } from "../../product/capabilities/entitlementType
 export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
   {
     id: "talk-to-dataverse",
-    title: "Talk to Dataverse",
-    summary: "Use GitHub Copilot with DV Quick Run's deterministic, read-only MCP tools to explain lookups, rank relationships, generate verified queries, and probe runtime data without inventing metadata behaviour.",
+    title: "Understand business architecture",
+    summary: "Use GitHub Copilot with DV Quick Run's deterministic, read-only MCP tools to discover business capabilities, rank operational anchors, explain workflow layers, generate verified queries, and probe runtime data without inventing business meaning.",
     whenToUse: [
-      "You want to ask a Dataverse question in plain English.",
+      "You want to understand how an unfamiliar Dataverse application operates.",
       "You need a bounded read-only query without writing OData first.",
       "You want deterministic relationship discovery, query generation, or a clear OData explanation."
     ],
@@ -423,6 +423,7 @@ export const productDirection: readonly ProductDirectionInfo[] = [
   { title: "Investigation Intelligence", summary: "Convert operational artefacts into structured observations, synthesized understanding, evidence-backed confidence, and verification guidance." },
   { title: "Continuous Investigation Understanding", summary: "Preserve context across query results, traversal, runtime evidence, profiles, and preview workflows." },
   { title: "Runtime and Power Platform visibility", summary: "Continue bridging Dataverse execution evidence with orchestration participation where evidence supports it." },
+  { title: "Business Capability Understanding", summary: "Translate bounded structural metadata into governance, domain, scheduling, coordination, execution and integration capability views without claiming runtime truth." },
   { title: "Metadata-aware guidance", summary: "Use schema and relationship context to reduce orientation cost without inventing unsupported meaning." },
   { title: "Safe operational actions", summary: "Keep mutation workflows preview-first, explicit, and environment-aware." },
   { title: "DV ForgeLab ecosystem handoffs", summary: "Let DVQR export bounded reconstruction artifacts to focused companion utilities: DVAF for attributes, DVIM for identity participation, DVCE for choices, and DVEVM for environment variables." },
@@ -472,14 +473,14 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.4 introduces the first extension-owned local MCP server for DV Quick Run.",
-  "Ask GitHub Copilot natural-language Dataverse questions through nine read-only Free MCP tools.",
-  "Execute bounded OData GET requests, explain OData, retrieve entity metadata, and discover capabilities without exposing mutation authority.",
-  "Deterministic metadata search ranks entity matches locally and avoids unsupported generated EntityDefinitions filters.",
-  "Metadata search now separates highest-confidence, related, and contextual matches with transparent reasons.",
-  "Local MCP enablement is remembered per workspace and VS Code owns the on-demand stdio lifecycle.",
-  "The Hub now shows MCP registration, environment, mode, tool count, authentication boundary, and lifecycle status.",
-  "The Hub now includes a Start Here path, copy-ready MCP prompts, and a Talk to Dataverse playbook for first-time discovery.",
+  "v0.15.6 introduces Operational Workflow Intelligence for source-first Dataverse application understanding.",
+  "The Business Capability Landscape groups Core Domain, Coordination, Execution, Governance and Platform roles.",
+  "Architectural conclusions now show confidence, evidence provenance, reasons and runtime-verification boundaries.",
+  "Operational Anchor Discovery ranks the business objects that organise work before treating downstream tasks or activities as the answer.",
+  "Relationship discovery continues beyond direct paths so materially different bridged workflow families remain visible.",
+  "Evidence-guided traversal separates metadata recommendation, runtime-observed workflow, no-data evidence and permission-limited outcomes.",
+  "MCP outputs now include an investigation summary, layered capability landscape, explainable conclusion cards and an onboarding-oriented executive summary.",
+  "The Welcome page, Hub, README and changelog now present the complete v0.15.6 business-architecture workflow.",
   "Free remains Execute, Inspect, Explain and Understand; Pro remains Correlate, Prioritise, Recommend and Investigate."
 ];
 
