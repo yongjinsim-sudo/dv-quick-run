@@ -28,6 +28,24 @@ DV Quick Run follows a simple investigation loop:
 understand → query → verify → investigate → compare → explain → hand off
 ```
 
+## Custom API Intelligence — v0.15.7
+
+DV Quick Run now provides a complete metadata-aware Custom API lifecycle through Local MCP:
+
+```text
+Discover → Explain → Compare → Recommend → Architecture → Preview → Execute → Interpret
+```
+
+- **Discover and explain:** inspect exact public Custom API metadata, operation and binding shape, inputs, outputs, and bounded usage guidance.
+- **Compare and recommend:** evaluate named APIs or a natural-language goal without substituting unsupported capabilities.
+- **Solution Architecture:** assemble semantically compatible APIs into ordered Recommended, Simpler, and Extended pipelines with confidence and evidence boundaries.
+- **Preview-first execution:** validate required inputs and review the exact method, route, body, expected outputs, side-effect posture, preview ID, and expiry.
+- **Explicit confirmation:** execution only continues after a later user reply of `EXECUTE`; preview sessions are short-lived, single-use, and atomically consumed.
+- **Live execution:** the initial MCP scope is deliberately narrow—public global generate-only Actions with supported scalar inputs.
+- **Execution Intelligence:** successful and failed calls receive an execution ID and can be interpreted later from stored runtime evidence without rerunning or contacting Dataverse.
+
+Execution reports distinguish observed runtime evidence from inference. Administrative, private, bound, complex, mutation-like, and unsupported operations remain outside the initial MCP execution policy. Basic understanding and execution remain Free; deeper orchestration, environment-aware intelligence, and productivity acceleration remain natural Pro territory.
+
 ## Local MCP — Business Architecture Understanding
 
 DV Quick Run v0.15.6 provides an extension-owned local stdio MCP server for GitHub Copilot and compatible VS Code MCP clients. Enable it once per workspace with **DV Quick Run: Enable Local MCP Server**; VS Code then starts the server on demand and DV Quick Run remembers the workspace preference.

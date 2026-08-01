@@ -6,7 +6,7 @@ export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
   {
     id: "talk-to-dataverse",
     title: "Understand business architecture",
-    summary: "Use GitHub Copilot with DV Quick Run's deterministic, read-only MCP tools to discover business capabilities, rank operational anchors, explain workflow layers, generate verified queries, and probe runtime data without inventing business meaning.",
+    summary: "Use GitHub Copilot with DV Quick Run's metadata-aware MCP tools to understand business architecture and complete the Custom API lifecycle from discovery through preview-confirmed execution and stored-evidence interpretation.",
     whenToUse: [
       "You want to understand how an unfamiliar Dataverse application operates.",
       "You need a bounded read-only query without writing OData first.",
@@ -19,7 +19,7 @@ export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
       { label: "Inspect the grounded result", description: "Review the selected tool, generated query, metadata ranking, or returned Dataverse rows before acting.", relatedSurface: "Copilot Chat" }
     ],
     relatedCapabilities: ["odata-fetchxml-execution", "investigation-intelligence"],
-    safetyNotes: ["Local MCP registers no POST, PATCH, DELETE, upload, or remediation tools."]
+    safetyNotes: ["OData and investigation tools remain read-only. Eligible Custom API Actions require a short-lived preview, a later explicit EXECUTE confirmation, and single-use replay protection."]
   },
   {
     id: "runtime-behaviour",
@@ -308,16 +308,17 @@ export const capabilities: readonly CapabilityInfo[] = [
   },
   {
     id: "capability-explorer",
-    title: "Capability Explorer",
+    title: "Custom API Intelligence",
     group: "Explore Capabilities",
-    summary: "Discover Custom APIs and other operational capabilities available in the current Dataverse environment.",
-    operationalUseCase: "Use when you need to understand what executable Custom APIs exist before testing or wiring operational actions.",
+    summary: "Discover, explain, compare, recommend, architect, preview, execute, and interpret supported Dataverse Custom APIs.",
+    operationalUseCase: "Use when you need an end-to-end, metadata-aware Custom API workflow with preview-first safety and runtime evidence.",
     howToUse: [
       "Open Capability Explorer from the Hub or command palette.",
       "Filter Custom APIs by name, binding, type, or visibility.",
       "Use the catalogue to understand bound entities, parameter complexity, execution readiness, and OData eligibility before execution.",
-      "Preview Function requests safely before execution and inspect structured execution diagnostics after completion.",
-      "Use execution results as investigation pivots for future operational diagnostics and runtime analysis."
+      "Use Copilot to preview eligible global Actions, stop for a later EXECUTE confirmation, and execute through a short-lived single-use preview session.",
+      "Interpret successful or failed executions from stored runtime evidence without rerunning or contacting Dataverse.",
+      "Use execution results as investigation pivots for bounded operational diagnostics and runtime analysis."
     ],
     relatedPlaybooks: ["runtime-behaviour", "power-platform-participation"],
     commandId: "dvQuickRun.openCapabilityExplorer",
@@ -473,15 +474,15 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.6 introduces Operational Workflow Intelligence for source-first Dataverse application understanding.",
-  "The Business Capability Landscape groups Core Domain, Coordination, Execution, Governance and Platform roles.",
-  "Architectural conclusions now show confidence, evidence provenance, reasons and runtime-verification boundaries.",
-  "Operational Anchor Discovery ranks the business objects that organise work before treating downstream tasks or activities as the answer.",
-  "Relationship discovery continues beyond direct paths so materially different bridged workflow families remain visible.",
-  "Evidence-guided traversal separates metadata recommendation, runtime-observed workflow, no-data evidence and permission-limited outcomes.",
-  "MCP outputs now include an investigation summary, layered capability landscape, explainable conclusion cards and an onboarding-oriented executive summary.",
-  "The Welcome page, Hub, README and changelog now present the complete v0.15.6 business-architecture workflow.",
-  "Free remains Execute, Inspect, Explain and Understand; Pro remains Correlate, Prioritise, Recommend and Investigate."
+  "v0.15.7 completes Custom API Intelligence across discovery, explanation, comparison, recommendation, solution architecture, preview, execution, and interpretation.",
+  "Solution Architecture turns metadata-backed Custom API recommendations into ordered, evidence-bounded business pipelines.",
+  "Execution uses short-lived, single-use preview sessions and a later explicit EXECUTE confirmation.",
+  "Eligible public global generate-only Actions can run through the dedicated Custom API execution tool; generic OData execution is never used for Actions or Functions.",
+  "Successful and failed executions receive stable execution IDs and can be interpreted later without rerunning or contacting Dataverse.",
+  "Execution Intelligence reports classification, HTTP and timing evidence, transport, outputs, recommendations, and a clear evidence boundary.",
+  "Administrative, private, bound, complex, mutation-like, and unsupported operations remain blocked by the initial MCP execution policy.",
+  "The Welcome page, Hub, Quickstart, README, and changelog now present the complete v0.15.7 Custom API lifecycle.",
+  "Free provides understanding and basic preview-confirmed execution; Pro remains the home for deeper intelligence, orchestration, environment awareness, and productivity."
 ];
 
 export const philosophy: readonly string[] = [

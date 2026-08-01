@@ -91,7 +91,11 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes("💬 Understand business architecture"));
     assert.ok(html.includes("🔎 Understand metadata"));
     assert.ok(html.includes("📖 Explain a query"));
-    assert.ok(html.includes("What's New in v0.15.6"));
+    assert.ok(html.includes("What's New in v0.15.7"));
+    assert.ok(html.includes("Custom API Intelligence"));
+    assert.ok(html.includes("Preview-confirmed Custom API POST"));
+    assert.ok(html.includes("No PATCH · DELETE · upload · remediation"));
+    assert.ok(!html.includes("No POST · PATCH · DELETE"));
     assert.ok(html.includes("Using DV Quick Run, starting only from Contact metadata"));
     assert.ok(html.includes('id="local-mcp"'));
     assert.ok(html.includes("DV Quick Run Local MCP"));
