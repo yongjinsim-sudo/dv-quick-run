@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_15_6.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_15_7.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.6</title>
+<title>DV Quick Run v0.15.7</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,19 +122,19 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.6</div>
-        <h1>Understand Business Architecture</h1>
-        <p class="subtitle"><strong>Discover how a Dataverse solution actually operates.</strong><br>DV Quick Run identifies business capabilities, operational anchors, workflow layers and runtime evidence through a deterministic, read-only MCP surface.</p>
+        <div class="eyebrow">What's new in v0.15.7</div>
+        <h1>Custom API Intelligence</h1>
+        <p class="subtitle"><strong>Discover, understand, design, safely execute, and interpret Dataverse Custom APIs.</strong><br>DV Quick Run combines metadata-backed guidance, short-lived preview sessions, explicit confirmation, live execution, and stored runtime evidence.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.6</div>
-          <div class="price">Operational Workflow Intelligence, grounded by DV Quick Run</div>
-          <div class="limit">Read-only · Metadata-aware · Deterministic · Local-first</div>
-          <p class="recognition">Ask Copilot to discover business capabilities, explain workflow architecture and follow bounded runtime evidence while DV Quick Run remains read-only and metadata-grounded.</p>
+          <div class="eyebrow">New in v0.15.7</div>
+          <div class="price">The complete Custom API lifecycle, grounded by DV Quick Run</div>
+          <div class="limit">Metadata-aware · Preview-first · Evidence-backed · Local-first</div>
+          <p class="recognition">Ask Copilot to discover and explain Custom APIs, recommend an architecture, preview an eligible Action, confirm execution separately, and interpret stored runtime evidence without rerunning it.</p>
           <span class="badge">Evidence first · Human authority</span>
         </div>
       </div>
@@ -151,26 +151,26 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Local MCP is read-only: it may perform bounded Dataverse GET requests but never registers POST, PATCH, DELETE, upload, or remediation tools. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Local MCP keeps investigation tools read-only. Eligible Custom API Actions use dedicated preview-confirmed POST execution; PATCH, DELETE, upload, and remediation tools are not registered. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     
-        <p><strong>Try it:</strong> enable Local MCP from the Hub, sign in with Azure CLI, then ask: “Using DV Quick Run, starting from Contact, explain this application’s capability landscape, show why you believe each conclusion, and mark anything that still needs runtime verification.”</p>
+        <p><strong>Try it:</strong> enable Local MCP, then ask: “Using DV Quick Run, preview execution of AIReply with Text: Draft a short acknowledgement. Do not execute yet.” Review the preview, reply EXECUTE, then ask DVQR to interpret the last execution.</p>
       </section>
 
     <section class="section">
       <div class="eyebrow">Two ways to use DV Quick Run</div>
       <div class="grid">
-        <div class="card"><h3>1 · Understand the application</h3><p>Use GitHub Copilot Chat to discover business capabilities, workflow anchors and execution layers through DV Quick Run.</p></div>
-        <div class="card"><h3>2 · Build and investigate</h3><p>Use editor queries, CodeLens, Result Viewer, Guided Traversal, profiles, snapshots, Timeline, and Mini RCA.</p></div>
+        <div class="card"><h3>1 · Understand and design</h3><p>Discover, explain, compare, recommend, and assemble metadata-backed Custom API solution architectures.</p></div>
+        <div class="card"><h3>2 · Preview, execute, interpret</h3><p>Use short-lived previews, explicit confirmation, single-use execution, and stored-evidence interpretation.</p></div>
       </div>
     </section>
 
     <section class="section">
-      <div class="eyebrow">Local MCP workflow</div>
+      <div class="eyebrow">Custom API Intelligence lifecycle</div>
       <div class="grid">
-        <div class="card"><h3>🧭 Discover</h3><p>Start from a business record or table and discover the capabilities and anchors around it.</p></div>
-        <div class="card"><h3>🧠 Understand</h3><p>DV Quick Run separates governance, domain, scheduling, coordination and execution roles.</p></div>
-        <div class="card"><h3>🔎 Verify</h3><p>Follow metadata-verified workflow paths and add bounded runtime evidence when a record ID is available.</p></div>
-        <div class="card"><h3>🛡 Stay bounded</h3><p>No POST, PATCH or DELETE tools are registered.</p></div>
+        <div class="card"><h3>🧭 Discover & explain</h3><p>Inspect exact Custom API definitions, parameter shapes, related capabilities, and evidence-backed usage guidance.</p></div>
+        <div class="card"><h3>🧠 Recommend & architect</h3><p>Turn a business goal into a ranked shortlist or an ordered solution architecture with explicit evidence boundaries.</p></div>
+        <div class="card"><h3>▶ Preview & execute</h3><p>Review the exact request, stop for a later EXECUTE confirmation, then run one eligible single-use preview.</p></div>
+        <div class="card"><h3>🔎 Interpret evidence</h3><p>Classify success or failure, analyse outputs, and recommend the next safe action without rerunning.</p></div>
       </div>
     </section>
 
@@ -186,11 +186,11 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     </section>
 
     <section class="section future">
-      <div class="eyebrow">Included in v0.15.6</div>
+      <div class="eyebrow">Included in v0.15.7</div>
       <div class="grid">
-        <div class="card"><h3>🔌 Local MCP Server</h3><p>Extension-owned stdio server with relationship discovery, query generation, runtime probing, and explainability.</p></div>
-        <div class="card"><h3>🧭 Business capability understanding</h3><p>Separate governance, domain, scheduling, coordination, execution and integration roles.</p></div>
-        <div class="card"><h3>🧠 Operational workflow intelligence</h3><p>Rank anchors, preserve bridged workflow families, and separate metadata from runtime observations.</p></div>
+        <div class="card"><h3>🔌 Custom API Intelligence</h3><p>Discover, explain, compare, recommend, architect, preview, execute, and interpret supported Custom APIs.</p></div>
+        <div class="card"><h3>🛡 Preview-first execution</h3><p>Short-lived preview IDs, explicit confirmation, atomic single-use consumption, and replay protection.</p></div>
+        <div class="card"><h3>🧠 Execution Intelligence</h3><p>Interpret stored HTTP, timing, transport, output, and error evidence without contacting Dataverse again.</p></div>
         <div class="card"><h3>🏠 Workspace-owned experience</h3><p>Enable once; VS Code remembers and starts the server on demand.</p></div>
       </div>
     </section>
@@ -215,8 +215,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0156",
-    "DV Quick Run v0.15.6",
+    "dvQuickRunWelcomeV0157",
+    "DV Quick Run v0.15.7",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

@@ -147,7 +147,7 @@ function renderLocalMcpDashboard(model: DvQuickRunHubViewModel): string {
 
   return `<section id="local-mcp">
     <h2>Local MCP</h2>
-    <p class="dvqr-section-note">Understand Dataverse business architecture through an extension-owned, read-only MCP server with capability modelling, operational anchor discovery, workflow intelligence and deterministic explainability.</p>
+    <p class="dvqr-section-note">Understand Dataverse business architecture through an extension-owned local MCP server with read-only investigation tools and preview-confirmed execution for eligible Custom API Actions.</p>
     <div class="dvqr-card dvqr-evidence-workspace-card">
       <div>
         <div class="dvqr-continuation-action-header"><h3>DV Quick Run Local MCP</h3><span class="dvqr-mcp-health dvqr-mcp-health-${statusClass}"><span class="dvqr-mcp-health-dot" aria-hidden="true"></span>${trafficLabel} · ${statusLabel}</span></div>
@@ -159,7 +159,7 @@ function renderLocalMcpDashboard(model: DvQuickRunHubViewModel): string {
           <div><dt>Lifecycle</dt><dd>${escapeHtml(mcp.lifecycle)}</dd></div>
           <div><dt>Authentication</dt><dd>${escapeHtml(mcp.authentication)}</dd></div>
         </dl>
-        <div class="dvqr-meta"><span class="dvqr-chip">Read-only</span><span class="dvqr-chip">Natural-language OData</span><span class="dvqr-chip">Deterministic metadata search</span><span class="dvqr-chip">No POST · PATCH · DELETE</span>${mcp.enabled ? `<span class="dvqr-chip dvqr-chip-ready">MCP Ready</span>` : ""}</div>
+        <div class="dvqr-meta"><span class="dvqr-chip">Read-only investigation</span><span class="dvqr-chip">Natural-language OData</span><span class="dvqr-chip">Deterministic metadata search</span><span class="dvqr-chip">Preview-confirmed Custom API POST</span><span class="dvqr-chip">No PATCH · DELETE · upload · remediation</span>${mcp.enabled ? `<span class="dvqr-chip dvqr-chip-ready">MCP Ready</span>` : ""}</div>
       </div>
       <div class="dvqr-evidence-actions">
         <button class="dvqr-action-button" data-command="${primaryCommand}">${primaryLabel}</button>
@@ -295,16 +295,16 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["Evidence-Backed Capability Landscape", "Group Core Domain, Coordination, Execution, Governance and Platform capabilities with confidence and provenance."],
-    ["Explainable Architectural Conclusions", "Show why each anchor, governance layer, scheduling layer and execution layer was selected."],
-    ["Workflow Family Discovery", "Continue bounded exploration beyond direct relationships so materially different bridged workflows remain visible."],
-    ["Evidence-Guided Traversal", "Compare metadata recommendations with investigation-scoped runtime observations across diverse path families."],
-    ["Permission-Aware Outcomes", "Distinguish no matching data from access-limited evidence and incomplete probe coverage."],
-    ["Strict Safety Boundary", "No POST, PATCH, DELETE, upload, remediation, or unverified query-generation tools are registered."]
+    ["Custom API Intelligence", "Discover, explain, compare, recommend and architect metadata-backed Custom API capabilities."],
+    ["Preview-First Execution", "Build a short-lived reviewed execution plan, stop for a later explicit EXECUTE confirmation, and consume it once."],
+    ["Live Runtime Evidence", "Execute eligible public global Actions and preserve actual HTTP, timing, transport, output and error evidence."],
+    ["Execution Intelligence", "Interpret stored execution evidence without rerunning the operation or contacting Dataverse again."],
+    ["Replay Protection", "Atomic single-use preview consumption prevents repeated transport attempts from the same preview session."],
+    ["Bounded Safety Boundary", "Read-only investigation remains the default; Custom API POST is limited to eligible preview-confirmed Actions, while PATCH, DELETE, upload and remediation remain unavailable."]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.15.6</h2>
-    <p class="dvqr-section-note">Operational Workflow Intelligence: layered capability understanding, evidence-backed conclusions, inline uncertainty, verified workflow paths and bounded runtime evidence.</p>
+    <h2>What's New in v0.15.7</h2>
+    <p class="dvqr-section-note">Custom API Intelligence: discover, understand, design, safely execute and interpret Dataverse Custom APIs through one evidence-backed lifecycle.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }

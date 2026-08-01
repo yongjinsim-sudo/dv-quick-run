@@ -6,6 +6,38 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.15.7 — Custom API Intelligence
+
+This release completes the end-to-end Local MCP Custom API lifecycle: discover, explain, compare, recommend, design, preview, explicitly confirm, execute, interpret, and continue from stored runtime evidence.
+
+### Added
+
+- Added exact Custom API definition, explanation, comparison, recommendation, and solution-architecture MCP experiences.
+- Added metadata-only execution readiness and deterministic request preview for supported scalar inputs.
+- Added short-lived preview IDs, explicit later `EXECUTE` confirmation, atomic single-use consumption, expiry, and replay protection.
+- Added live execution for the deliberately narrow initial scope of public global generate-only Custom API Actions.
+- Added stored execution evidence with stable execution IDs for successful and failed runtime attempts.
+- Added `dvqr_interpret_custom_api_execution` for deterministic classification, output analysis, bounded recommendations, and evidence-backed follow-up without re-execution.
+- Added professional Execution Intelligence report rendering with summary, classification, HTTP and timing evidence, transport, outputs, recommendations, and evidence boundary.
+
+### Improved
+
+- Strengthened MCP routing so Actions and Functions never fall through to generic OData execution.
+- Removed unnecessary Explain or Definition calls from direct preview workflows.
+- Separated message summarisation, record-context summarisation, response drafting, plugin lifecycle, and administrative capability families.
+- Excluded plugin lifecycle and administrative APIs from normal business solution architectures.
+- Added honest no-fit behaviour for unsupported architecture goals instead of adjacent substitution.
+- Refreshed the Welcome page, Hub, Quickstart, README, and release messaging around **Custom API Intelligence**.
+
+### Evidence and safety boundaries
+
+- Preview does not execute.
+- Interpretation does not preview, execute, or contact Dataverse.
+- Every preview permits at most one transport attempt.
+- A successful HTTP response proves only that Dataverse accepted the reviewed request and returned the captured payload.
+- DVQR does not infer business correctness, accepted runtime values, downstream side effects, regulatory suitability, or operational authority.
+- Administrative, private, bound, complex, mutation-like, and unsupported operations remain blocked by the initial MCP execution policy.
+
 ## DV Quick Run v0.15.6 — Business Architecture Understanding
 
 This release evolves the extension-owned Local MCP server from relationship discovery into bounded, evidence-backed understanding of how an unfamiliar Dataverse application appears to organise, govern, schedule and execute work.

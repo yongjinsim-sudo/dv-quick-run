@@ -41,11 +41,16 @@ suite("quickStartContent", () => {
     assert.ok(mcpIndex > -1);
     assert.ok(twoWaysIndex < mcpIndex);
     assert.ok(mcpIndex < buildIndex);
-    assert.ok(content.includes("DV Quick Run includes an extension-owned, read-only local MCP server"));
+    assert.ok(content.includes("DV Quick Run includes an extension-owned local MCP server"));
+    assert.ok(content.includes("bounded read-only investigation"));
+    assert.ok(content.includes("preview-confirmed Custom API execution"));
     assert.ok(content.includes("Build and investigate in the editor"));
     assert.ok(content.includes("az login --allow-no-subscriptions"));
     assert.ok(content.includes("Using DV Quick Run, find tables related to customers."));
-    assert.ok(content.includes("no POST, PATCH, DELETE, upload, or remediation tools"));
+    assert.ok(content.includes("OData and investigation tools remain read-only"));
+    assert.ok(content.includes("Eligible Custom API Actions use short-lived previews"));
+    assert.ok(content.includes("a separate EXECUTE confirmation"));
+    assert.ok(content.includes("single-use sessions"));
   });
 
 });
