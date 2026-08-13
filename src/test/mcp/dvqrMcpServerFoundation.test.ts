@@ -37,10 +37,10 @@ function fixturePath(): string {
 }
 
 suite("dvqrMcpServerFoundation", () => {
-  test("publishes exactly four read-only semantic tools", () => {
+  test("publishes the seven read-only semantic and investigation-foundation tools", () => {
     const server = new DvqrMcpServerFoundation();
     assert.deepStrictEqual(server.listTools(), DVQR_MCP_TOOL_CATALOGUE);
-    assert.strictEqual(server.listTools().length, 4);
+    assert.strictEqual(server.listTools().length, 28);
     assert.ok(server.listTools().every((tool) => tool.readOnly));
     assert.strictEqual(server.capabilities().mutationAuthority, "none");
     assert.strictEqual(server.capabilities().evidenceAcquisition, "none");

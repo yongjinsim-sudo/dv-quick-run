@@ -28,6 +28,26 @@ DV Quick Run follows a simple investigation loop:
 understand → query → verify → investigate → compare → explain → hand off
 ```
 
+## Managed Investigation Intelligence — v0.15.8
+
+DV Quick Run now extends Local MCP from individual investigation tools into a **persisted managed investigation protocol** for real Dataverse records.
+
+```text
+Prepare → Confirm Intent → Metadata → Relationship Context → Runtime Evidence
+→ Readiness → Mini RCA → Continue with the next highest-value evidence
+```
+
+- **Persisted investigation truth:** subject, explicit target, deterministic strategy, evidence, readiness, Mini RCA checkpoint state and completion consistency survive across turns.
+- **Target-aware runtime traversal:** bounded candidate paths execute hop-by-hop while metadata validity, observed runtime viability and business authority remain distinct.
+- **Evidence reconciliation:** readiness and Mini RCA are tied to the current evidence fingerprint so stale checkpoints are detected rather than silently reused.
+- **Bounded Mini RCA:** supported, weakened and unresolved hypotheses remain tied to evidence; participation or reachability is never promoted to mechanism, root cause or causality.
+- **Host-adversarial protection:** duplicate pending starts are suppressed, pre-intent execution is blocked, and guarded continuation reconciles against persisted state.
+- **Recommended-action integrity:** deterministic steps expose a stable action ID bound to the investigation, strategy step, exact public tool, persisted-safe arguments and current evidence fingerprint.
+- **Server-side execution enforcement:** missing, stale, replayed, substituted, provider-altered, target-altered and undeclared deterministic requests are rejected before managed execution.
+- **Non-disclosing authorization:** failed premature or stale requests do not reveal the next actionable token; the host must return through DVQR continuation.
+
+The managed protocol is intentionally not an autonomous root-cause engine. It coordinates bounded evidence acquisition while preserving explicit user authority and the distinction between **participation, correlation, mechanism and causality**.
+
 ## Custom API Intelligence — v0.15.7
 
 DV Quick Run now provides a complete metadata-aware Custom API lifecycle through Local MCP:

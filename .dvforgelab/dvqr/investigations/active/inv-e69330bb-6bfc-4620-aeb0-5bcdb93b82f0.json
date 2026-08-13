@@ -1,0 +1,122 @@
+{
+  "investigationId": "inv-e69330bb-6bfc-4620-aeb0-5bcdb93b82f0",
+  "schemaVersion": "dvqr-investigation-v1",
+  "title": "Start an investigation for Contact",
+  "type": "Table",
+  "status": "Active",
+  "environmentId": "org7013c734.api.crm6.dynamics.com",
+  "environmentUrlHash": "04f473b65e363236743e07f7c175377306fc23af60a4a3763b793e38c9593da7",
+  "subject": {
+    "kind": "Table",
+    "logicalName": "contact"
+  },
+  "question": "Start an investigation for Contact",
+  "createdAt": "2026-08-04T04:12:12.898Z",
+  "updatedAt": "2026-08-04T04:14:09.077Z",
+  "evidenceRefs": [
+    {
+      "evidenceId": "ev-a7470450-96b1-4490-a98a-33ec3b979a63",
+      "evidenceType": "EntityMetadata",
+      "providerId": "metadata",
+      "status": "Acquired",
+      "summary": "Metadata retrieved for contact.",
+      "acquiredAt": "2026-08-04T04:14:09.077Z"
+    }
+  ],
+  "contributorStates": [],
+  "miniRcaArtifactRefs": [],
+  "executionRefs": [],
+  "reportRefs": [],
+  "lineage": {
+    "derivedFromArtifactIds": [],
+    "createdByCapability": "dvqr_start_investigation"
+  },
+  "limitations": [
+    "No evidence was acquired or executed while starting this investigation.",
+    "Investigation state does not imply root cause or remediation success.",
+    "Metadata evidence describes current schema state; it does not prove runtime usage, causality or row-level behaviour."
+  ],
+  "staleState": {
+    "isStale": false,
+    "reasons": []
+  },
+  "strategy": {
+    "schemaVersion": "dvqr-investigation-strategy-v1",
+    "templateId": "table-investigation-v1",
+    "generatedAt": "2026-08-04T04:12:12.898Z",
+    "currentStepIndex": 0,
+    "steps": [
+      {
+        "stepId": "table-investigation-v1:step-1",
+        "order": 1,
+        "title": "Confirm investigation scope",
+        "purpose": "Review the question, subject and environment binding.",
+        "capability": "dvqr_get_investigation",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Current",
+        "evidenceExpectation": "Persisted scope only."
+      },
+      {
+        "stepId": "table-investigation-v1:step-2",
+        "order": 2,
+        "title": "Inspect current metadata",
+        "purpose": "Resolve exact table or capability metadata relevant to the question.",
+        "capability": "dvqr_search_metadata",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Pending",
+        "evidenceExpectation": "Metadata facts only."
+      },
+      {
+        "stepId": "table-investigation-v1:step-3",
+        "order": 3,
+        "title": "Review relationship context",
+        "purpose": "Identify bounded related business surfaces without runtime claims.",
+        "capability": "dvqr_discover_operational_anchors",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Pending",
+        "evidenceExpectation": "Structural hypotheses with explicit boundaries."
+      },
+      {
+        "stepId": "table-investigation-v1:step-4",
+        "order": 4,
+        "title": "Identify missing runtime evidence",
+        "purpose": "Describe the smallest useful evidence acquisition step.",
+        "capability": "dvqr_get_evidence_recommendations",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Pending",
+        "evidenceExpectation": "Advisory recommendations only."
+      },
+      {
+        "stepId": "table-investigation-v1:step-5",
+        "order": 5,
+        "title": "Assess investigation readiness",
+        "purpose": "Evaluate canonical evidence coverage and limitations.",
+        "capability": "dvqr_assess_investigation_readiness",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Pending",
+        "evidenceExpectation": "A canonical readiness result; no evidence acquisition."
+      },
+      {
+        "stepId": "table-investigation-v1:step-6",
+        "order": 6,
+        "title": "Review Mini RCA eligibility",
+        "purpose": "Determine whether existing evidence is sufficient for bounded Mini RCA generation.",
+        "capability": "dvqr_generate_mini_rca",
+        "authority": "ExplicitUserAction",
+        "requiresExplicitUserAction": true,
+        "status": "Pending",
+        "evidenceExpectation": "An explicit later request; generation must not acquire evidence."
+      }
+    ],
+    "limitations": [
+      "Strategy steps are deterministic recommendations, not evidence.",
+      "Continuing an investigation presents at most one bounded step and performs no hidden execution.",
+      "Any execution or runtime probe requires a separate explicit user request."
+    ]
+  }
+}

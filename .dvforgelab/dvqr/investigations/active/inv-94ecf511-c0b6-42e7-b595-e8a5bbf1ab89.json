@@ -1,0 +1,29 @@
+{
+  "investigationId": "inv-94ecf511-c0b6-42e7-b595-e8a5bbf1ab89",
+  "schemaVersion": "dvqr-investigation-v1",
+  "title": "Investigation for Contact",
+  "type": "General",
+  "status": "Active",
+  "environmentId": "org7013c734.api.crm6.dynamics.com",
+  "environmentUrlHash": "04f473b65e363236743e07f7c175377306fc23af60a4a3763b793e38c9593da7",
+  "subject": {
+    "kind": "table",
+    "logicalName": "contact"
+  },
+  "question": "Start an investigation for Contact.",
+  "createdAt": "2026-08-03T14:29:32.908Z",
+  "updatedAt": "2026-08-03T14:29:32.908Z",
+  "evidenceRefs": [],
+  "contributorStates": [],
+  "miniRcaArtifactRefs": [],
+  "executionRefs": [],
+  "reportRefs": [],
+  "lineage": {
+    "derivedFromArtifactIds": [],
+    "createdByCapability": "dvqr_start_investigation"
+  },
+  "limitations": [
+    "No evidence was acquired or executed while starting this investigation.",
+    "Investigation state does not imply root cause or remediation success."
+  ]
+}

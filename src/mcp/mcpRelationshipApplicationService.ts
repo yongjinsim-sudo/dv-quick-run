@@ -3,6 +3,8 @@ import { McpRelationshipProbeService } from "./mcpRelationshipProbeService.js";
 import { McpOperationalAnchorApplicationService } from "./mcpOperationalAnchorApplicationService.js";
 import { McpLookupNavigationApplicationService } from "./mcpLookupNavigationApplicationService.js";
 import { McpRelationshipPathDiscoveryApplicationService } from "./mcpRelationshipPathDiscoveryApplicationService.js";
+import { McpBusinessPathDiscoveryApplicationService } from "./mcpBusinessPathDiscoveryApplicationService.js";
+import { McpBusinessPathRuntimeValidationApplicationService } from "./mcpBusinessPathRuntimeValidationApplicationService.js";
 import { McpRelationshipQueryApplicationService } from "./mcpRelationshipQueryApplicationService.js";
 import { McpRelationshipTraversalApplicationService } from "./mcpRelationshipTraversalApplicationService.js";
 import type { DvqrMcpRuntimeConfiguration } from "./mcpRuntimeConfiguration.js";
@@ -12,6 +14,8 @@ export class McpRelationshipApplicationService {
   private readonly operationalAnchors: McpOperationalAnchorApplicationService;
   private readonly lookupNavigation: McpLookupNavigationApplicationService;
   private readonly pathDiscovery: McpRelationshipPathDiscoveryApplicationService;
+  private readonly businessPathDiscovery: McpBusinessPathDiscoveryApplicationService;
+  private readonly businessPathRuntimeValidation: McpBusinessPathRuntimeValidationApplicationService;
   private readonly queryGeneration: McpRelationshipQueryApplicationService;
   private readonly traversal: McpRelationshipTraversalApplicationService;
 
@@ -21,6 +25,8 @@ export class McpRelationshipApplicationService {
     this.operationalAnchors = new McpOperationalAnchorApplicationService(metadata);
     this.lookupNavigation = new McpLookupNavigationApplicationService(config, metadata);
     this.pathDiscovery = new McpRelationshipPathDiscoveryApplicationService(metadata);
+    this.businessPathDiscovery = new McpBusinessPathDiscoveryApplicationService(metadata);
+    this.businessPathRuntimeValidation = new McpBusinessPathRuntimeValidationApplicationService(metadata, probes);
     this.queryGeneration = new McpRelationshipQueryApplicationService(metadata);
     this.traversal = new McpRelationshipTraversalApplicationService(metadata, probes);
   }
@@ -35,6 +41,14 @@ export class McpRelationshipApplicationService {
 
   public async findRelationshipPaths(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
     return this.pathDiscovery.findRelationshipPaths(args);
+  }
+
+  public async discoverBusinessPaths(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathDiscovery.discoverBusinessPaths(args);
+  }
+
+  public async validateBusinessPaths(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathRuntimeValidation.validateBusinessPaths(args);
   }
 
   public async generateRelationshipQuery(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {

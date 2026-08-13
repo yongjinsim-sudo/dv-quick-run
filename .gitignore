@@ -1,6 +1,7 @@
 .agents/skills
 docs/codex
 docs/architecture/graph
+docs/*.md
 out
 dist
 node_modules

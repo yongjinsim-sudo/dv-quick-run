@@ -1,6 +1,6 @@
 import { getDataverseAccessToken } from "../auth/azureCliAuth.js";
 import { mcpDataverseGet } from "./mcpDataverseTransport.js";
-import { findRelationshipPaths, rankRelationshipPaths, type McpRankedRelationshipPath, type McpRelationshipEdge, type McpRelationshipGraph } from "./mcpRelationshipIntelligence.js";
+import { findRelationshipPaths, rankRelationshipPath, rankRelationshipPaths, type McpRankedRelationshipPath, type McpRelationshipEdge, type McpRelationshipGraph } from "./mcpRelationshipIntelligence.js";
 import { rankDvqrMetadataEntities, type DvqrMetadataEntityCandidate } from "./mcpMetadataSearch.js";
 import { selectDiverseRelationshipPaths } from "./mcpRelationshipRuntimeEvidence.js";
 import { type McpEntityShape } from "./mcpRelationshipQueryGenerator.js";
@@ -27,6 +27,9 @@ export interface McpRelationshipPathDiscovery {
 }
 
 export class McpRelationshipMetadataRepository {
+  private readonly entityCatalogueCache = new Map<string, DvqrMetadataEntityCandidate[]>();
+  private readonly depthDiverseDiscoveryCache = new Map<string, McpRelationshipPathDiscovery>();
+
   public constructor(private readonly config: DvqrMcpRuntimeConfiguration) {}
 
   public async metadataContext(args: Record<string, unknown>): Promise<McpMetadataContext | DvqrMcpFreeToolFailure> {
@@ -110,7 +113,24 @@ export class McpRelationshipMetadataRepository {
       timeoutMs: this.config.requestTimeoutMs
     });
     const rows = (result.data as any)?.value;
-    return Array.isArray(rows) ? rows : [];
+    const catalogue = Array.isArray(rows) ? rows : [];
+    this.entityCatalogueCache.set(baseEnvironmentUrl.toLowerCase(), catalogue);
+    return catalogue;
+  }
+
+  public getCachedEntityCatalogue(baseEnvironmentUrl: string): readonly DvqrMetadataEntityCandidate[] | undefined {
+    return this.entityCatalogueCache.get(baseEnvironmentUrl.toLowerCase());
+  }
+
+  public getCachedDepthDiverseBusinessPaths(
+    baseEnvironmentUrl: string,
+    sourceTable: string,
+    targetTable: string,
+    maxDepth: number
+  ): McpRelationshipPathDiscovery | undefined {
+    return this.depthDiverseDiscoveryCache.get(
+      `${baseEnvironmentUrl.toLowerCase()}|${sourceTable.toLowerCase()}|${targetTable.toLowerCase()}|${maxDepth}`
+    );
   }
 
   public async resolveRuntimeTargetCandidates(
@@ -190,6 +210,223 @@ export class McpRelationshipMetadataRepository {
     };
   }
 
+
+  /**
+   * Pass 10.1.1 business-path discovery.
+   *
+   * Unlike the generic relationship search, this exploration deliberately keeps
+   * expanding high-value workflow hubs even when a source table (for example
+   * contact) exposes hundreds of direct relationships. The existence of a
+   * direct source->target relationship must not starve plausible multi-hop
+   * business routes such as Contact -> Care Plan -> Care Plan Activity.
+   */
+  public async discoverDepthDiverseBusinessPaths(
+    context: McpMetadataContext,
+    sourceTable: string,
+    targetTable: string,
+    maxDepth: number,
+    maxPaths: number,
+    assertedPathTables?: readonly string[]
+  ): Promise<McpRelationshipPathDiscovery> {
+    const maxTablesInspected = 90;
+    const maxQueuedTables = 72;
+    const maxNeighboursPerExpansion = 36;
+    const nodes = new Set<string>([sourceTable.toLowerCase(), targetTable.toLowerCase()]);
+    const edges: McpRelationshipEdge[] = [];
+    const inspected = new Set<string>();
+    const queued = new Set<string>([sourceTable.toLowerCase()]);
+    const operationalHubsInspected = new Set<string>();
+    const normalizedAssertedPath = (assertedPathTables ?? []).map((value) => value.trim()).filter(Boolean);
+    const assertedIntermediateTables = normalizedAssertedPath.slice(1, -1);
+    const queue: Array<{ table: string; depth: number; priority: number }> = [
+      { table: sourceTable, depth: 0, priority: 1000 },
+      // Pass 10.7.5: asserted business traversals are investigation-scoped hypotheses that
+      // must be metadata-inspected even when generic breadth limits would otherwise starve
+      // their intermediate tables. This is generic: no organisation/table names are encoded.
+      ...assertedIntermediateTables.map((table, index) => ({ table, depth: index + 1, priority: 2200 - index }))
+    ];
+    for (const table of assertedIntermediateTables) queued.add(table.toLowerCase());
+
+    const workflowPriority = (table: string): number => {
+      const value = table.toLowerCase();
+      if (value === targetTable.toLowerCase()) return 1000;
+      if (/(careplan|care_plan|careplanactivity|care_plan_activity|healthcheck|health_check)/.test(value)) return 180;
+      if (/(case|incident|episode|encounter|referral|order|workorder|booking|appointment|plan|activity|journey|application|claim|request|assessment)/.test(value)) return 120;
+      if (/(task|workitem|action)/.test(value)) return 95;
+      if (/(template|definition|goal)/.test(value)) return 80;
+      if (/^(systemuser|team|businessunit|organization|role|principal|owner|activityparty|activitypointer)$/.test(value)) return -140;
+      return 0;
+    };
+
+    while (queue.length && inspected.size < maxTablesInspected) {
+      queue.sort((left, right) =>
+        right.priority - left.priority
+        || left.depth - right.depth
+        || left.table.localeCompare(right.table)
+      );
+      const current = queue.shift()!;
+      const currentKey = current.table.toLowerCase();
+      if (inspected.has(currentKey)) continue;
+      inspected.add(currentKey);
+
+      if (
+        workflowPriority(current.table) >= 80
+        && currentKey !== sourceTable.toLowerCase()
+        && currentKey !== targetTable.toLowerCase()
+      ) {
+        operationalHubsInspected.add(current.table);
+      }
+
+      const tableEdges = await this.fetchRelationships(context.baseEnvironmentUrl, context.token, current.table);
+      edges.push(...tableEdges);
+      for (const edge of tableEdges) {
+        nodes.add(edge.toTable.toLowerCase());
+      }
+
+      if (current.depth + 1 >= maxDepth || queued.size >= maxQueuedTables) {
+        continue;
+      }
+
+      const expansionCandidates = [...new Set(tableEdges.map((edge) => edge.toTable))]
+        .filter((candidate) => {
+          const key = candidate.toLowerCase();
+          return key !== currentKey && !inspected.has(key) && !queued.has(key);
+        })
+        .sort((left, right) =>
+          workflowPriority(right) - workflowPriority(left)
+          || left.localeCompare(right)
+        )
+        .slice(0, maxNeighboursPerExpansion);
+
+      for (const candidate of expansionCandidates) {
+        if (queued.size >= maxQueuedTables) break;
+        const candidateKey = candidate.toLowerCase();
+        queued.add(candidateKey);
+        queue.push({
+          table: candidate,
+          depth: current.depth + 1,
+          priority: workflowPriority(candidate) - current.depth * 4
+        });
+      }
+    }
+
+    const graph: McpRelationshipGraph = { nodes: [...nodes], edges };
+    const discovered = findRelationshipPaths(graph, sourceTable, targetTable, {
+      maxDepth,
+      maxPaths: Math.max(60, Math.min(100, maxPaths * 10))
+    });
+
+    // Pass 10.7.5.2: an asserted traversal must not depend on the generic path finder
+    // rediscovering the exact chain from a highly connected graph. Build contiguous
+    // asserted candidates directly from metadata-valid edges between every adjacent
+    // asserted table pair. Relationship variants remain bounded and independent so
+    // runtime evidence can decide which role/navigation actually carries data.
+    const explicitAssertedRanked: McpRankedRelationshipPath[] = [];
+    if (normalizedAssertedPath.length >= 2 && normalizedAssertedPath.length - 1 <= maxDepth) {
+      const variantsPerHop: McpRelationshipEdge[][] = [];
+      let assertedMetadataResolved = true;
+      for (let index = 0; index < normalizedAssertedPath.length - 1; index += 1) {
+        const from = normalizedAssertedPath[index].toLowerCase();
+        const to = normalizedAssertedPath[index + 1].toLowerCase();
+        const variants = edges
+          .filter((edge) => edge.fromTable.toLowerCase() === from && edge.toTable.toLowerCase() === to)
+          .sort((left, right) => left.navigationProperty.localeCompare(right.navigationProperty));
+        if (!variants.length) {
+          assertedMetadataResolved = false;
+          break;
+        }
+        variantsPerHop.push(variants);
+      }
+
+      if (assertedMetadataResolved) {
+        let combinations: McpRelationshipEdge[][] = [[]];
+        for (const variants of variantsPerHop) {
+          const next: McpRelationshipEdge[][] = [];
+          for (const prefix of combinations) {
+            for (const variant of variants) {
+              next.push([...prefix, variant]);
+              if (next.length >= 8) break;
+            }
+            if (next.length >= 8) break;
+          }
+          combinations = next;
+          if (!combinations.length) break;
+        }
+        explicitAssertedRanked.push(...combinations.map((combination) => rankRelationshipPath(combination)));
+      }
+    }
+
+    const allRankedById = new Map<string, McpRankedRelationshipPath>();
+    for (const path of [...explicitAssertedRanked, ...rankRelationshipPaths(discovered)]) {
+      if (!allRankedById.has(path.pathId)) allRankedById.set(path.pathId, path);
+    }
+    const allRanked = [...allRankedById.values()].sort((left, right) => right.score - left.score || left.pathId.localeCompare(right.pathId));
+
+    // Preserve candidates across hop depths before any business scoring. This is
+    // intentionally different from shortest-path-first selection: one-hop
+    // routes are baselines, not a reason to suppress two-/three-hop workflows.
+    const byDepth = new Map<number, McpRankedRelationshipPath[]>();
+    for (const path of allRanked) {
+      const depth = path.hops.length;
+      const bucket = byDepth.get(depth) ?? [];
+      bucket.push(path);
+      byDepth.set(depth, bucket);
+    }
+
+    const selected: McpRankedRelationshipPath[] = [];
+    const seen = new Set<string>();
+
+    // Preserve an explicit investigator-asserted business chain in the discovery cohort when
+    // the metadata graph resolves that exact table sequence. This makes the chain testable; it
+    // does not make it true or preferred until runtime validation reaches the target.
+    const normalizedAssertedPathLower = normalizedAssertedPath.map((value) => value.toLowerCase());
+    if (normalizedAssertedPathLower.length >= 2) {
+      // Preserve relationship variants that share the exact asserted table sequence. A table
+      // chain can be correct even when one metadata-valid relationship role (for example an
+      // author role) is empty while another role (for example a patient role) carries rows.
+      // Keep the bounded variants so runtime evidence, not metadata tie-breaking, decides.
+      for (const asserted of allRanked.filter((path) => path.tables.length === normalizedAssertedPathLower.length
+        && path.tables.every((table, index) => table.toLowerCase() === normalizedAssertedPathLower[index])).slice(0, 8)) {
+        selected.push(asserted);
+        seen.add(asserted.pathId);
+      }
+    }
+    const perDepthBudget = Math.max(2, Math.ceil(maxPaths / Math.max(1, Math.min(maxDepth, byDepth.size || 1))));
+    for (let depth = 1; depth <= maxDepth; depth += 1) {
+      for (const path of (byDepth.get(depth) ?? []).slice(0, perDepthBudget)) {
+        if (seen.has(path.pathId)) continue;
+        selected.push(path);
+        seen.add(path.pathId);
+      }
+    }
+
+    // Fill remaining discovery budget by metadata quality without removing the
+    // depth-diverse seed set.
+    for (const path of allRanked) {
+      if (selected.length >= Math.max(maxPaths * 3, 24)) break;
+      if (seen.has(path.pathId)) continue;
+      selected.push(path);
+      seen.add(path.pathId);
+    }
+
+    const result: McpRelationshipPathDiscovery = {
+      ranked: selected,
+      nodes,
+      edges,
+      coverage: {
+        tablesInspected: inspected.size,
+        directPathsFound: discovered.filter((path) => path.length === 1).length,
+        bridgedPathsFound: discovered.filter((path) => path.length > 1).length,
+        operationalHubsInspected: [...operationalHubsInspected].sort(),
+        explorationComplete: queue.length === 0
+      }
+    };
+    this.depthDiverseDiscoveryCache.set(
+      `${context.baseEnvironmentUrl.toLowerCase()}|${sourceTable.toLowerCase()}|${targetTable.toLowerCase()}|${maxDepth}`,
+      result
+    );
+    return result;
+  }
 
 
 }

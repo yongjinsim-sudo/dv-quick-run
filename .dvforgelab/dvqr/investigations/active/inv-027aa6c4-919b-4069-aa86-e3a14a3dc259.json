@@ -1,0 +1,111 @@
+{
+  "investigationId": "inv-027aa6c4-919b-4069-aa86-e3a14a3dc259",
+  "schemaVersion": "dvqr-investigation-v1",
+  "title": "Investigation for Contact",
+  "type": "General",
+  "status": "Active",
+  "environmentId": "org7013c734.api.crm6.dynamics.com",
+  "environmentUrlHash": "04f473b65e363236743e07f7c175377306fc23af60a4a3763b793e38c9593da7",
+  "subject": {
+    "kind": "table",
+    "logicalName": "contact",
+    "recordIdMasked": "***bdc42f8b"
+  },
+  "question": "Start an investigation for Contact 7d29eec7-4414-f111-8341-6045bdc42f8b.",
+  "createdAt": "2026-08-03T14:30:14.996Z",
+  "updatedAt": "2026-08-03T23:35:46.789Z",
+  "evidenceRefs": [],
+  "contributorStates": [],
+  "miniRcaArtifactRefs": [],
+  "executionRefs": [],
+  "reportRefs": [],
+  "lineage": {
+    "derivedFromArtifactIds": [],
+    "createdByCapability": "dvqr_start_investigation"
+  },
+  "limitations": [
+    "No evidence was acquired or executed while starting this investigation.",
+    "Investigation state does not imply root cause or remediation success."
+  ],
+  "strategy": {
+    "schemaVersion": "dvqr-investigation-strategy-v1",
+    "templateId": "general-investigation-v1",
+    "generatedAt": "2026-08-03T14:30:14.996Z",
+    "currentStepIndex": 1,
+    "steps": [
+      {
+        "stepId": "general-investigation-v1:step-1",
+        "order": 1,
+        "title": "Confirm investigation scope",
+        "purpose": "Review the question, subject and environment binding.",
+        "capability": "dvqr_get_investigation",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Presented",
+        "evidenceExpectation": "Persisted scope only."
+      },
+      {
+        "stepId": "general-investigation-v1:step-2",
+        "order": 2,
+        "title": "Inspect current metadata",
+        "purpose": "Resolve exact table or capability metadata relevant to the question.",
+        "capability": "dvqr_search_metadata",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Current",
+        "evidenceExpectation": "Metadata facts only."
+      },
+      {
+        "stepId": "general-investigation-v1:step-3",
+        "order": 3,
+        "title": "Review relationship context",
+        "purpose": "Identify bounded related business surfaces without runtime claims.",
+        "capability": "dvqr_discover_operational_anchors",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Pending",
+        "evidenceExpectation": "Structural hypotheses with explicit boundaries."
+      },
+      {
+        "stepId": "general-investigation-v1:step-4",
+        "order": 4,
+        "title": "Identify missing runtime evidence",
+        "purpose": "Describe the smallest useful evidence acquisition step.",
+        "capability": "dvqr_get_evidence_recommendations",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Pending",
+        "evidenceExpectation": "Advisory recommendations only."
+      },
+      {
+        "stepId": "general-investigation-v1:step-5",
+        "order": 5,
+        "title": "Assess investigation readiness",
+        "purpose": "Evaluate canonical evidence coverage and limitations.",
+        "capability": "dvqr_assess_investigation_readiness",
+        "authority": "ReadOnly",
+        "requiresExplicitUserAction": false,
+        "status": "Pending",
+        "evidenceExpectation": "A canonical readiness result; no evidence acquisition."
+      },
+      {
+        "stepId": "general-investigation-v1:step-6",
+        "order": 6,
+        "title": "Review Mini RCA eligibility",
+        "purpose": "Determine whether existing evidence is sufficient for bounded Mini RCA generation.",
+        "capability": "dvqr_generate_mini_rca",
+        "authority": "ExplicitUserAction",
+        "requiresExplicitUserAction": true,
+        "status": "Pending",
+        "evidenceExpectation": "An explicit later request; generation must not acquire evidence."
+      }
+    ],
+    "limitations": [
+      "Strategy steps are deterministic recommendations, not evidence.",
+      "Continuing an investigation presents at most one bounded step and performs no hidden execution.",
+      "Any execution or runtime probe requires a separate explicit user request.",
+      "Last bounded continuation presented at 2026-08-03T23:35:46.789Z."
+    ]
+  },
+  "lastContinuedAt": "2026-08-03T23:35:46.789Z"
+}

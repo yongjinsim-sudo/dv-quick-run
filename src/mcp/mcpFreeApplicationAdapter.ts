@@ -10,7 +10,8 @@ import { McpSolutionArchitectureRecommendationApplicationService } from "./mcpSo
 import { McpCustomApiExecutionPreviewApplicationService } from "./mcpCustomApiExecutionPreviewApplicationService.js";
 import { McpCustomApiExecutionApplicationService } from "./mcpCustomApiExecutionApplicationService.js";
 import { McpCustomApiExecutionPreviewSessionStore } from "./mcpCustomApiExecutionPreviewSessionStore.js";
-import { McpCustomApiExecutionEvidenceStore } from "./mcpCustomApiExecutionEvidenceStore.js";
+import type { McpCustomApiExecutionEvidenceRepository } from "./mcpCustomApiExecutionEvidenceStore.js";
+import { createDvqrMcpFreeRuntimeState, type DvqrMcpFreeRuntimeState } from "./mcpFreeRuntimeState.js";
 import { McpCustomApiExecutionInterpretationApplicationService } from "./mcpCustomApiExecutionInterpretationApplicationService.js";
 import { McpRelationshipApplicationService } from "./mcpRelationshipApplicationService.js";
 import { environmentUrl, stringArg } from "./mcpRequestArguments.js";
@@ -28,21 +29,24 @@ export class DvqrMcpFreeApplicationAdapter {
   private readonly customApiExecutionPreviewSessions: McpCustomApiExecutionPreviewSessionStore;
   private readonly customApiExecutionPreviewApplicationService: McpCustomApiExecutionPreviewApplicationService;
   private readonly customApiExecutionApplicationService: McpCustomApiExecutionApplicationService;
-  private readonly customApiExecutionEvidence: McpCustomApiExecutionEvidenceStore;
+  private readonly customApiExecutionEvidence: McpCustomApiExecutionEvidenceRepository;
   private readonly customApiExecutionInterpretationApplicationService: McpCustomApiExecutionInterpretationApplicationService;
 
   public constructor(
     private readonly config: DvqrMcpRuntimeConfiguration,
-    customApiExecutionPreviewSessions = new McpCustomApiExecutionPreviewSessionStore()
+    runtimeStateOrPreviewSessions: DvqrMcpFreeRuntimeState | McpCustomApiExecutionPreviewSessionStore = createDvqrMcpFreeRuntimeState()
   ) {
+    const runtimeState = runtimeStateOrPreviewSessions instanceof McpCustomApiExecutionPreviewSessionStore
+      ? { ...createDvqrMcpFreeRuntimeState(), customApiExecutionPreviewSessions: runtimeStateOrPreviewSessions }
+      : runtimeStateOrPreviewSessions;
     this.oDataApplicationService = new McpODataApplicationService(config);
     this.relationshipApplicationService = new McpRelationshipApplicationService(config);
     this.customApiApplicationService = new McpCustomApiApplicationService(config);
     this.customApiExplainApplicationService = new McpCustomApiExplainApplicationService(config, this.customApiApplicationService);
     this.customApiRecommendationApplicationService = new McpCustomApiRecommendationApplicationService(config);
     this.solutionArchitectureRecommendationApplicationService = new McpSolutionArchitectureRecommendationApplicationService(config);
-    this.customApiExecutionPreviewSessions = customApiExecutionPreviewSessions;
-    this.customApiExecutionEvidence = new McpCustomApiExecutionEvidenceStore();
+    this.customApiExecutionPreviewSessions = runtimeState.customApiExecutionPreviewSessions;
+    this.customApiExecutionEvidence = runtimeState.customApiExecutionEvidence;
     this.customApiExecutionPreviewApplicationService = new McpCustomApiExecutionPreviewApplicationService(config, this.customApiApplicationService, this.customApiExecutionPreviewSessions);
     this.customApiExecutionApplicationService = new McpCustomApiExecutionApplicationService(config, this.customApiExecutionPreviewSessions, undefined, undefined, this.customApiExecutionEvidence);
     this.customApiExecutionInterpretationApplicationService = new McpCustomApiExecutionInterpretationApplicationService(this.customApiExecutionEvidence);
@@ -231,6 +235,14 @@ export class DvqrMcpFreeApplicationAdapter {
 
   public findRelationshipPaths(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
     return this.relationshipApplicationService.findRelationshipPaths(args);
+  }
+
+  public discoverBusinessPaths(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.relationshipApplicationService.discoverBusinessPaths(args);
+  }
+
+  public validateBusinessPaths(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.relationshipApplicationService.validateBusinessPaths(args);
   }
 
   public generateRelationshipQuery(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {

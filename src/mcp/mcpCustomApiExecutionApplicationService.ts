@@ -5,7 +5,7 @@ import { mapStructuredExecutionError } from "./mcpStructuredErrors.js";
 import type { DvqrMcpFreeToolResult } from "./mcpToolResults.js";
 import { stringArg } from "./mcpRequestArguments.js";
 import { McpCustomApiExecutionPreviewSessionStore } from "./mcpCustomApiExecutionPreviewSessionStore.js";
-import { McpCustomApiExecutionEvidenceStore } from "./mcpCustomApiExecutionEvidenceStore.js";
+import { McpCustomApiExecutionEvidenceStore, type McpCustomApiExecutionEvidenceRepository } from "./mcpCustomApiExecutionEvidenceStore.js";
 
 export type McpCustomApiAccessTokenProvider = (scope: string, tenantId?: string) => Promise<string>;
 export type McpCustomApiPostExecutor = (args: {
@@ -29,7 +29,7 @@ export class McpCustomApiExecutionApplicationService {
     private readonly previewSessions: McpCustomApiExecutionPreviewSessionStore,
     private readonly accessTokenProvider: McpCustomApiAccessTokenProvider = getDataverseAccessToken,
     private readonly postExecutor: McpCustomApiPostExecutor = mcpDataversePost,
-    private readonly executionEvidence: McpCustomApiExecutionEvidenceStore = new McpCustomApiExecutionEvidenceStore()
+    private readonly executionEvidence: McpCustomApiExecutionEvidenceRepository = new McpCustomApiExecutionEvidenceStore()
   ) {}
 
   public async execute(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {

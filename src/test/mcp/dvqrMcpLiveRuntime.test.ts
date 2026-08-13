@@ -4,6 +4,7 @@ import {
   DVQR_LIVE_MCP_TOOL_BY_NAME,
   DVQR_LIVE_MCP_TOOLS
 } from "../../mcp/mcpLiveToolCatalogue.js";
+import { listDvqrMcpProtocolTools } from "../../mcp/dvqrMcpStdioServer.js";
 import { loadDvqrMcpRuntimeConfiguration } from "../../mcp/mcpRuntimeConfiguration.js";
 import { DvqrMcpLiveCapabilityPolicy } from "../../mcp/mcpLiveCapabilityPolicy.js";
 import { createDvqrMcpCapabilityPayload } from "../../mcp/mcpCapabilityPayload.js";
@@ -20,10 +21,58 @@ suite("dvqrMcpLiveRuntime", () => {
       "dvqr_search_metadata",
       "dvqr_get_entity_metadata"
     ]);
-    assert.strictEqual(DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "pro").length, 4);
-    assert.ok(DVQR_LIVE_MCP_TOOLS.every((tool) => !/patch|delete|update/i.test(tool.name)));
+    const proToolNames = DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "pro").map((tool) => tool.name);
+    assert.strictEqual(proToolNames.length, 32);
+    assert.ok(proToolNames.includes("dvqr_start_investigation"));
+    assert.ok(proToolNames.includes("dvqr_get_investigation"));
+    assert.ok(proToolNames.includes("dvqr_list_investigations"));
+    assert.ok(proToolNames.includes("dvqr_get_investigation_strategy"));
+    assert.ok(proToolNames.includes("dvqr_continue_investigation"));
+    assert.ok(proToolNames.includes("dvqr_acquire_mechanism_context"));
+    assert.ok(proToolNames.includes("dvqr_pause_investigation"));
+    assert.ok(proToolNames.includes("dvqr_resume_investigation"));
+    assert.ok(DVQR_LIVE_MCP_TOOLS.every((tool) => !/^dvqr_(?:patch|delete)(?:_|$)/i.test(tool.name)));
+    assert.ok(!names.includes("dvqr_update_record"));
   });
 
+
+  test("publishes investigation tools as persistent state operations rather than evidence acquisition", () => {
+    const start = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_start_investigation");
+    const get = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_get_investigation");
+    const list = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_list_investigations");
+    if (!start || !get || !list) throw new Error("Expected investigation lifecycle tools.");
+    assert.match(
+      start.description,
+      /Investigation Brief.*continue with or edit the inferred intent/is
+    );
+    assert.match(
+      start.description,
+      /metadata-only preparation.*no runtime record query.*persists no investigation evidence/is
+    );
+    assert.ok(
+      /do not acquire investigation evidence before intent exists/i.test(start.description) ||
+      (/persists no investigation evidence/i.test(start.description) &&
+        /dvqr_confirm_investigation_intent/i.test(start.description))
+    );
+    assert.match(get.description, /authoritative/i);
+    assert.match(list.description, /empty list.*authoritative/i);
+    const subject = (start.inputSchema as any).properties.subject;
+    assert.ok(subject.properties.table);
+    assert.ok(subject.properties.recordId);
+  });
+
+  test("Pass 10.8.9.4 exposes bootstrap as a confirmation-capable fallback on restricted host surfaces", () => {
+    const bootstrap = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_bootstrap_investigation");
+    const continuation = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_continue_investigation");
+    if (!bootstrap || !continuation) throw new Error("Expected bootstrap and continuation tools.");
+    assert.strictEqual(bootstrap.tier, "pro");
+    assert.strictEqual(continuation.tier, "pro");
+    const schema = bootstrap.inputSchema as any;
+    assert.ok(schema.properties.confirmationText);
+    assert.match(bootstrap.description, /same investigationId/i);
+    assert.match(bootstrap.description, /NEVER call dvqr_start_investigation again/i);
+    assert.match(bootstrap.description, /confirmation classifier/i);
+  });
 
   test("registers every tool once with a matching typed handler", () => {
     assert.strictEqual(DVQR_LIVE_MCP_TOOL_BY_NAME.size, DVQR_LIVE_MCP_TOOLS.length);
@@ -195,4 +244,133 @@ suite("dvqrMcpLiveRuntime", () => {
     assert.strictEqual(config.proEnabled, true);
     assert.strictEqual(config.requestTimeoutMs, 15000);
   });
+  test("publishes the investigation workflow and primary entry point", () => {
+    const start = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_start_investigation");
+    const capabilities = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_list_capabilities");
+    assert.ok(start && capabilities);
+    assert.match(start.description, /PRIMARY INVESTIGATION ENTRY POINT/i);
+    assert.match(start.description, /investigate or troubleshoot/i);
+    assert.match(start.description, /Mini RCA/i);
+    assert.match(start.description, /Example: User: Investigate Contact/i);
+    assert.match(capabilities.description, /canonical investigation workflow/i);
+    const payload = createDvqrMcpCapabilityPayload(true) as any;
+    assert.strictEqual(payload.investigationWorkflow.primaryEntryTool, "dvqr_start_investigation");
+    assert.deepStrictEqual(
+      payload.investigationWorkflow.steps.map((step: any) => step.tool),
+      [
+        "dvqr_start_investigation",
+        "dvqr_confirm_investigation_intent",
+        "dvqr_continue_investigation",
+        "dvqr_acquire_investigation_evidence",
+        "dvqr_assess_investigation_readiness",
+        "dvqr_generate_mini_rca",
+        "dvqr_acquire_investigation_evidence",
+        "dvqr_assess_investigation_readiness",
+        "dvqr_generate_mini_rca"
+      ]
+    );
+    assert.ok(payload.toolSelectionGuidance.investigations.some((line: string) => /PRIMARY ENTRY/.test(line) && /dvqr_start_investigation/.test(line)));
+    const continuation = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_continue_investigation") as any;
+    assert.ok(continuation?.inputSchema?.properties?.confirmationText);
+    assert.match(continuation.description, /HOST-COMPATIBILITY FALLBACK/i);
+    assert.match(continuation.description, /same confirmation classifier/i);
+  });
+
+
+  test("Pass 10.8.4 publishes managed readiness as investigationId-only on the live MCP surface", () => {
+    const tool = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_assess_investigation_readiness");
+    if (!tool) throw new Error("Managed readiness tool missing.");
+    const schema = tool.inputSchema as any;
+    assert.deepStrictEqual(schema.required, ["investigationId"]);
+    assert.ok(schema.properties.investigationId);
+    assert.strictEqual(schema.properties.request, undefined);
+    assert.match(tool.description, /passing only investigationId/i);
+  });
+
+  test("publishes unambiguous investigation continuation and readiness routing", () => {
+    const get = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_get_investigation");
+    const strategy = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_get_investigation_strategy");
+    const continuation = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_continue_investigation");
+    const readiness = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_get_investigation_readiness");
+    const lowLevelGaps = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_get_investigation_gaps");
+    const anchors = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_discover_operational_anchors");
+    if (!get || !strategy || !continuation || !readiness || !lowLevelGaps || !anchors) throw new Error("Expected investigation routing tools.");
+    assert.match(get.description, /read-only.*never advances/i);
+    assert.match(strategy.description, /Only dvqr_continue_investigation may advance/i);
+    assert.match(continuation.description, /exact next planned investigation action/i);
+    assert.match(readiness.description, /investigationId/i);
+    assert.match(readiness.description, /Do not search the workspace/i);
+    assert.match(lowLevelGaps.title, /Low-Level/i);
+    assert.match(lowLevelGaps.description, /Do not use this tool for conversational requests/i);
+    assert.match(lowLevelGaps.description, /dvqr_get_investigation_readiness/i);
+    assert.match(anchors.description, /standalone exploratory tool/i);
+    assert.match(anchors.description, /not automatically attached/i);
+    const guidance = (createDvqrMcpCapabilityPayload(true) as any).toolSelectionGuidance.investigations as string[];
+    assert.ok(guidance.some((line) => /only tool that advances/.test(line) && /dvqr_continue_investigation/.test(line)));
+    assert.ok(guidance.some((line) => /show readiness/.test(line) && /dvqr_get_investigation_readiness/.test(line)));
+  });
+
+});
+
+
+suite("MCP protocol Mini RCA registration", () => {
+
+  test("Pass 10.8.5 exposes a checkpoint-named Mini RCA generator alias with retrieval distinction", () => {
+    const checkpoint = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_generate_mini_rca_checkpoint");
+    const getter = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_get_mini_rca");
+    if (!checkpoint || !getter) throw new Error("Expected Mini RCA checkpoint generator and getter.");
+    assert.match(checkpoint.description, /FIRST-CLASS STRATEGY HANDOFF/i);
+    assert.match(checkpoint.description, /same bounded evidence-backed Mini RCA artifact/i);
+    assert.match(checkpoint.description, /Do not substitute dvqr_get_mini_rca/i);
+    assert.match(getter.description, /does not regenerate/i);
+  });
+  test("Pass 10.9.1.2 exposes a guaranteed Mini RCA host-surface fallback on continuation", () => {
+    const continuation = DVQR_LIVE_MCP_TOOLS.find((tool) => tool.name === "dvqr_continue_investigation");
+    if (!continuation) throw new Error("Expected continuation tool.");
+    const schema = continuation.inputSchema as any;
+    assert.ok(schema.properties.executeRecommendedMiniRca);
+    assert.match(String(schema.properties.executeRecommendedMiniRca.description), /restricted host-surface fallback/i);
+    assert.match(continuation.description, /HOST-SURFACE MINI RCA FALLBACK/i);
+  });
+
+  test("exposes both managed Mini RCA tools through the actual protocol tool list", () => {
+    const names = listDvqrMcpProtocolTools().map((tool) => tool.name);
+    assert.ok(names.includes("dvqr_generate_mini_rca"));
+    assert.ok(names.includes("dvqr_generate_mini_rca_checkpoint"));
+    assert.ok(names.includes("dvqr_get_mini_rca"));
+  });
+
+  test("documents all investigation evidence provider IDs directly", () => {
+    const tool = listDvqrMcpProtocolTools().find((item) => item.name === "dvqr_acquire_investigation_evidence");
+    assert.ok(tool);
+    const provider = ((tool.inputSchema as any).properties.providerId);
+    assert.deepStrictEqual(provider.enum, ["metadata", "relationship-context", "runtime-relationship", "business-path-runtime", "mechanism-context", "timeline-context", "plugin-execution-understanding"]);
+  });
+  test("publishes Pass 10.2 bounded business-path runtime validation", () => {
+    const tool = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_validate_business_paths");
+    assert.ok(tool);
+    assert.strictEqual(tool.tier, "free");
+    assert.match(tool.description, /Pass 10\.2 bounded runtime validation/i);
+    assert.match(tool.description, /hop-by-hop/i);
+    assert.match(tool.description, /(source record only|this source record|this record only)/i);
+    const schema = tool.inputSchema as any;
+    assert.deepStrictEqual(schema.required, ["sourceTable", "targetTable", "sourceRecordId"]);
+    assert.strictEqual(schema.properties.maxCandidates.default, 5);
+  });
+
+  test("publishes Pass 10.1.1 depth-diverse metadata-only business-path discovery separately from generic relationship paths", () => {
+    const business = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_discover_business_paths");
+    const relationship = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_find_relationship_paths");
+    if (!business || !relationship) throw new Error("Expected relationship and business-path discovery tools.");
+    assert.strictEqual(business.tier, "free");
+    assert.match(business.description, /Pass 10\.1\.1 metadata-only business-path discovery/i);
+    assert.match(business.description, /does NOT query records/i);
+    assert.match(business.description, /do not suppress plausible deeper workflow routes/i);
+    assert.match(business.description, /business-preferred/i);
+    assert.match(relationship.description, /relationship paths/i);
+    const schema = business.inputSchema as any;
+    assert.deepStrictEqual(schema.required, ["sourceTable", "targetTable"]);
+    assert.strictEqual(schema.properties.maxDepth.default, 5);
+  });
+
 });
