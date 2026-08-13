@@ -116,6 +116,9 @@ export interface HubLocalMcpInfo {
   enabled: boolean;
   registrationState: "registered" | "disabled";
   toolCount: number;
+  freeToolCount: number;
+  proOnlyToolCount: number;
+  proTotalToolCount: number;
   environmentName?: string;
   environmentUrl?: string;
   mode: "Free" | "Pro";

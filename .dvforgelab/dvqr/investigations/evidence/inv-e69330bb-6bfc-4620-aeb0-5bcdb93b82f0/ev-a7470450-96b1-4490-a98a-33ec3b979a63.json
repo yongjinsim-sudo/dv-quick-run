@@ -1,0 +1,38 @@
+{
+  "evidenceId": "ev-a7470450-96b1-4490-a98a-33ec3b979a63",
+  "schemaVersion": "dvqr-investigation-evidence-v1",
+  "investigationId": "inv-e69330bb-6bfc-4620-aeb0-5bcdb93b82f0",
+  "evidenceType": "EntityMetadata",
+  "providerId": "metadata",
+  "acquisitionStepId": "table-investigation-v1:step-1",
+  "status": "Acquired",
+  "summary": "Metadata retrieved for contact.",
+  "payload": {
+    "entity": {
+      "@odata.context": "https://org7013c734.api.crm6.dynamics.com/api/data/v9.2/$metadata#EntityDefinitions(LogicalName,EntitySetName,PrimaryIdAttribute,PrimaryNameAttribute,IsActivity,IsCustomEntity,IsManaged,OwnershipType,SchemaName)/$entity",
+      "MetadataId": "608861bc-50a4-4c5f-a02c-21fe1943e2cf",
+      "IsActivity": false,
+      "IsCustomEntity": false,
+      "IsManaged": true,
+      "LogicalName": "contact",
+      "OwnershipType": "UserOwned",
+      "PrimaryNameAttribute": "fullname",
+      "PrimaryIdAttribute": "contactid",
+      "SchemaName": "Contact",
+      "EntitySetName": "contacts"
+    }
+  },
+  "provenance": {
+    "providerId": "metadata",
+    "capability": "dvqr_acquire_investigation_evidence",
+    "environmentId": "org7013c734.api.crm6.dynamics.com",
+    "acquiredAt": "2026-08-04T04:14:09.077Z",
+    "readOnly": true
+  },
+  "limitations": [
+    "Metadata evidence describes current schema state; it does not prove runtime usage, causality or row-level behaviour."
+  ],
+  "recommendations": [
+    "Continue the investigation to review the next bounded strategy step."
+  ]
+}

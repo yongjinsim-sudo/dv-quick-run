@@ -1,4 +1,4 @@
-import { McpCustomApiExecutionEvidenceStore, type McpCustomApiExecutionEvidence } from "./mcpCustomApiExecutionEvidenceStore.js";
+import type { McpCustomApiExecutionEvidence, McpCustomApiExecutionEvidenceRepository } from "./mcpCustomApiExecutionEvidenceStore.js";
 import { stringArg } from "./mcpRequestArguments.js";
 import type { DvqrMcpFreeToolResult } from "./mcpToolResults.js";
 
@@ -172,7 +172,7 @@ function renderExecutionIntelligenceReport(input: {
 }
 
 export class McpCustomApiExecutionInterpretationApplicationService {
-  public constructor(private readonly executions: McpCustomApiExecutionEvidenceStore) {}
+  public constructor(private readonly executions: McpCustomApiExecutionEvidenceRepository) {}
 
   public interpret(args: Record<string, unknown>): DvqrMcpFreeToolResult {
     const executionId = stringArg(args, "executionId");

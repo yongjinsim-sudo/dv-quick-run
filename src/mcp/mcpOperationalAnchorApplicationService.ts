@@ -24,13 +24,31 @@ export class McpOperationalAnchorApplicationService {
       const inspected = new Set<string>();
       const depthByTable = new Map<string, number>([[sourceTable.toLowerCase(), 0]]);
       const edges: McpRelationshipEdge[] = [];
+      const relationshipInspectionFailures: Array<{ table: string; depth: number; message: string }> = [];
       while (queue.length && inspected.size < maxTablesInspected) {
         const current = queue.shift()!;
         const key = current.table.toLowerCase();
         if (inspected.has(key)) continue;
         inspected.add(key);
         if (current.depth >= maxDepth) continue;
-        const tableEdges = await this.metadata.fetchRelationships(context.baseEnvironmentUrl, context.token, current.table);
+        let tableEdges: McpRelationshipEdge[];
+        try {
+          tableEdges = await this.metadata.fetchRelationships(context.baseEnvironmentUrl, context.token, current.table);
+        } catch (error) {
+          // Pass 10.7.5.1: relationship-context is foundational metadata evidence and should
+          // remain usable when a *downstream* table cannot expose relationship metadata.
+          // Preserve the source-table failure as fatal, because without source relationships
+          // there is no honest relationship context to persist. For later breadth-expansion
+          // failures, record bounded coverage loss and continue rather than failing the whole
+          // managed provider.
+          if (key === sourceTable.toLowerCase()) throw error;
+          relationshipInspectionFailures.push({
+            table: current.table,
+            depth: current.depth,
+            message: error instanceof Error ? error.message : "Relationship metadata inspection failed."
+          });
+          continue;
+        }
         edges.push(...tableEdges);
         for (const edge of tableEdges) {
           const next = edge.toTable.toLowerCase();
@@ -113,7 +131,13 @@ export class McpOperationalAnchorApplicationService {
           contractVersion: "dvqr-mcp-business-capability-understanding-v3",
           sourceTable,
           searchBounds: { maxDepth, maxResults, maxTablesInspected },
-          discoveryCoverage: { tablesInspected: inspected.size, graphEdgesInspected: edges.length, explorationComplete: queue.length === 0 },
+          discoveryCoverage: {
+            tablesInspected: inspected.size,
+            graphEdgesInspected: edges.length,
+            explorationComplete: queue.length === 0 && relationshipInspectionFailures.length === 0,
+            relationshipMetadataFailures: relationshipInspectionFailures.length,
+            inaccessibleOrFailedTables: relationshipInspectionFailures.slice(0, 12)
+          },
           recommendationBasis: "StructuralMetadataFirstWithSupportingSemantics",
           investigationSummary: {
             primaryBusinessCapability: primaryCapability?.capability,
@@ -162,7 +186,10 @@ export class McpOperationalAnchorApplicationService {
           limitations: [
             "Capability classification and anchor ranking are metadata-derived; they do not claim runtime data exists.",
             "A work-item table can be important evidence without being the business anchor that explains why the work exists.",
-            "Runtime probing and domain interpretation remain separate from metadata anchor ranking."
+            "Runtime probing and domain interpretation remain separate from metadata anchor ranking.",
+            ...(relationshipInspectionFailures.length > 0
+              ? [`Relationship metadata could not be inspected for ${relationshipInspectionFailures.length} downstream table${relationshipInspectionFailures.length === 1 ? "" : "s"}; relationship-context is partial rather than failed.`]
+              : [])
           ]
         }
       };

@@ -91,7 +91,7 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes("💬 Understand business architecture"));
     assert.ok(html.includes("🔎 Understand metadata"));
     assert.ok(html.includes("📖 Explain a query"));
-    assert.ok(html.includes("What's New in v0.15.7"));
+    assert.ok(html.includes("What's New in v0.15.8"));
     assert.ok(html.includes("Custom API Intelligence"));
     assert.ok(html.includes("Preview-confirmed Custom API POST"));
     assert.ok(html.includes("No PATCH · DELETE · upload · remediation"));

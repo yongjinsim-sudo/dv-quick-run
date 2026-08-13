@@ -6,6 +6,40 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.15.8 — Managed Investigation Intelligence
+
+This release turns the Pro Local MCP investigation surface into a persisted, deterministic and host-hardened managed investigation protocol for real Dataverse records.
+
+### Added
+
+- Added managed record investigations with persisted subject, explicit target, strategy, evidence, readiness, Mini RCA checkpoint and completion state.
+- Added deterministic continuation with explicit intent confirmation before managed evidence acquisition.
+- Added managed metadata and relationship-context evidence plus target-aware `business-path-runtime` probing.
+- Added bounded hop-by-hop runtime path execution with observed row counts and no-continuation reporting.
+- Added managed readiness assessment reconciled against the current evidence-set fingerprint.
+- Added persisted Mini RCA checkpoint generation with supported, weakened and unresolved hypotheses, missing evidence and a bounded next step.
+- Added deterministic recommended-action integrity IDs and server-side execution enforcement for evidence, readiness and Mini RCA checkpoint actions.
+
+### Improved
+
+- Preserved explicit downstream targets such as custom task tables through strategy, runtime acquisition and continuation.
+- Distinguished metadata-valid paths, observed runtime viability and business authority instead of treating structural reachability as business preference.
+- Added stale-state and reconvergence handling so readiness and Mini RCA checkpoints cannot silently survive material evidence changes.
+- Added authoritative persisted-truth reads and state-consistency diagnostics.
+- Added duplicate pending-start suppression and persisted pre-intent guards for optimized MCP hosts.
+- Hardened orchestration with one-explicit-action boundaries, exact tool/argument binding and stale/replayed action rejection.
+- Removed actionable-token disclosure from authorization and integrity failures; only managed continuation issues the current action ID.
+- Aligned the Mini RCA checkpoint MCP schema with action-ID execution enforcement.
+
+### Evidence and safety boundaries
+
+- Managed investigation does not make autonomous causality or root-cause claims.
+- Runtime reachability and row participation are observed evidence, not proof of business-preferred traversal, mechanism or cause.
+- Rejected deterministic execution requests perform no managed evidence acquisition.
+- Transient record identifiers required for runtime probing are not persisted merely for orchestration convenience.
+- A current action ID authorizes only the exact deterministic action represented by current persisted investigation state.
+- Failed authorization does not disclose the next actionable token; the host must return through DVQR continuation.
+
 ## DV Quick Run v0.15.7 — Custom API Intelligence
 
 This release completes the end-to-end Local MCP Custom API lifecycle: discover, explain, compare, recommend, design, preview, explicitly confirm, execute, interpret, and continue from stored runtime evidence.

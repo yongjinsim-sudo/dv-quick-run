@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_15_7.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_15_8.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.7</title>
+<title>DV Quick Run v0.15.8</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,20 +122,20 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.7</div>
-        <h1>Custom API Intelligence</h1>
-        <p class="subtitle"><strong>Discover, understand, design, safely execute, and interpret Dataverse Custom APIs.</strong><br>DV Quick Run combines metadata-backed guidance, short-lived preview sessions, explicit confirmation, live execution, and stored runtime evidence.</p>
+        <div class="eyebrow">What's new in v0.15.8</div>
+        <h1>Managed Investigation Intelligence</h1>
+        <p class="subtitle"><strong>Start with a real Dataverse record and follow a persisted, evidence-backed investigation.</strong><br>DV Quick Run now coordinates intent confirmation, metadata, relationship context, target-aware runtime evidence, readiness and bounded Mini RCA through a deterministic managed protocol.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.7</div>
-          <div class="price">The complete Custom API lifecycle, grounded by DV Quick Run</div>
-          <div class="limit">Metadata-aware · Preview-first · Evidence-backed · Local-first</div>
-          <p class="recognition">Ask Copilot to discover and explain Custom APIs, recommend an architecture, preview an eligible Action, confirm execution separately, and interpret stored runtime evidence without rerunning it.</p>
-          <span class="badge">Evidence first · Human authority</span>
+          <div class="eyebrow">New in v0.15.8</div>
+          <div class="price">From “investigate this record” to a managed evidence trail</div>
+          <div class="limit">Persisted state · Deterministic strategy · Runtime evidence · Bounded Mini RCA</div>
+          <p class="recognition">Ask Copilot to investigate a real record. DVQR preserves the explicit target, strategy, evidence provenance, readiness and Mini RCA checkpoint while keeping participation distinct from causality.</p>
+          <span class="badge">Evidence first · Participation ≠ causality</span>
         </div>
       </div>
       <div class="price-grid">
@@ -151,26 +151,26 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Local MCP keeps investigation tools read-only. Eligible Custom API Actions use dedicated preview-confirmed POST execution; PATCH, DELETE, upload, and remediation tools are not registered. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Managed investigation evidence acquisition remains bounded and governed. Eligible Custom API Actions retain dedicated preview-confirmed POST execution; PATCH, DELETE, upload, and remediation tools are not registered. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     
-        <p><strong>Try it:</strong> enable Local MCP, then ask: “Using DV Quick Run, preview execution of AIReply with Text: Draft a short acknowledgement. Do not execute yet.” Review the preview, reply EXECUTE, then ask DVQR to interpret the last execution.</p>
+        <p><strong>Try it:</strong> enable Local MCP, then ask: “Using DV Quick Run, investigate Contact &lt;record-id&gt; and understand how it relates to downstream work. Use managed investigation and do not infer causality.”</p>
       </section>
 
     <section class="section">
-      <div class="eyebrow">Two ways to use DV Quick Run</div>
+      <div class="eyebrow">Two ways to investigate</div>
       <div class="grid">
-        <div class="card"><h3>1 · Understand and design</h3><p>Discover, explain, compare, recommend, and assemble metadata-backed Custom API solution architectures.</p></div>
-        <div class="card"><h3>2 · Preview, execute, interpret</h3><p>Use short-lived previews, explicit confirmation, single-use execution, and stored-evidence interpretation.</p></div>
+        <div class="card"><h3>1 · Ask and understand</h3><p>Use metadata-aware Local MCP for architecture, relationships, bounded queries and Custom API Intelligence.</p></div>
+        <div class="card"><h3>2 · Run a managed investigation</h3><p>Start from a real record, confirm intent, acquire bounded evidence, assess readiness and generate a persisted Mini RCA checkpoint.</p></div>
       </div>
     </section>
 
     <section class="section">
-      <div class="eyebrow">Custom API Intelligence lifecycle</div>
+      <div class="eyebrow">Managed investigation lifecycle</div>
       <div class="grid">
-        <div class="card"><h3>🧭 Discover & explain</h3><p>Inspect exact Custom API definitions, parameter shapes, related capabilities, and evidence-backed usage guidance.</p></div>
-        <div class="card"><h3>🧠 Recommend & architect</h3><p>Turn a business goal into a ranked shortlist or an ordered solution architecture with explicit evidence boundaries.</p></div>
-        <div class="card"><h3>▶ Preview & execute</h3><p>Review the exact request, stop for a later EXECUTE confirmation, then run one eligible single-use preview.</p></div>
-        <div class="card"><h3>🔎 Interpret evidence</h3><p>Classify success or failure, analyse outputs, and recommend the next safe action without rerunning.</p></div>
+        <div class="card"><h3>🧭 Prepare & confirm</h3><p>Bind the investigation subject and explicit target, prepare a deterministic strategy, then stop for user confirmation or edit.</p></div>
+        <div class="card"><h3>🔎 Acquire bounded evidence</h3><p>Collect metadata, relationship context and target-aware runtime evidence one managed action at a time.</p></div>
+        <div class="card"><h3>📋 Assess readiness</h3><p>Reconcile the current persisted evidence fingerprint and expose gaps or stale checkpoints before synthesis.</p></div>
+        <div class="card"><h3>🧠 Generate bounded Mini RCA</h3><p>Persist supported, weakened and unresolved hypotheses with evidence gaps and the next-best discriminator.</p></div>
       </div>
     </section>
 
@@ -186,7 +186,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     </section>
 
     <section class="section future">
-      <div class="eyebrow">Included in v0.15.7</div>
+      <div class="eyebrow">Also included in v0.15.8</div>
       <div class="grid">
         <div class="card"><h3>🔌 Custom API Intelligence</h3><p>Discover, explain, compare, recommend, architect, preview, execute, and interpret supported Custom APIs.</p></div>
         <div class="card"><h3>🛡 Preview-first execution</h3><p>Short-lived preview IDs, explicit confirmation, atomic single-use consumption, and replay protection.</p></div>
@@ -215,8 +215,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0157",
-    "DV Quick Run v0.15.7",
+    "dvQuickRunWelcomeV0158",
+    "DV Quick Run v0.15.8",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

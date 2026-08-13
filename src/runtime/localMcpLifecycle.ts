@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { getCurrentProductPlan } from "../product/capabilities/capabilityResolver.js";
 import type { EnvironmentContext } from "../services/environmentContext.js";
+import { DVQR_LIVE_MCP_TOOLS } from "../mcp/mcpLiveToolCatalogue.js";
 
 const providerId = "dvQuickRun.localMcp";
 const workspaceEnabledKey = "dvQuickRun.localMcp.enabled";
@@ -10,6 +11,9 @@ export interface LocalMcpStatus {
   enabled: boolean;
   registrationState: "registered" | "disabled";
   toolCount: number;
+  freeToolCount: number;
+  proOnlyToolCount: number;
+  proTotalToolCount: number;
   environmentName?: string;
   environmentUrl?: string;
   mode: "Free" | "Pro";
@@ -61,7 +65,10 @@ export class LocalMcpLifecycle implements vscode.Disposable {
     return {
       enabled: this.isEnabled(),
       registrationState: this.isEnabled() ? "registered" : "disabled",
-      toolCount: 9,
+      toolCount: DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "free" || getCurrentProductPlan() === "pro").length,
+      freeToolCount: DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "free").length,
+      proOnlyToolCount: DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "pro").length,
+      proTotalToolCount: DVQR_LIVE_MCP_TOOLS.length,
       environmentName: environment?.name,
       environmentUrl: environment?.url,
       mode: getCurrentProductPlan() === "pro" ? "Pro" : "Free"
@@ -96,7 +103,8 @@ export class LocalMcpLifecycle implements vscode.Disposable {
       process.execPath,
       [script.fsPath],
       {
-        ELECTRON_RUN_AS_NODE: "1"
+        ELECTRON_RUN_AS_NODE: "1",
+        DVQR_MCP_SERVER_VERSION: this.context.extension.packageJSON.version as string
       },
       this.context.extension.packageJSON.version as string
     );
@@ -134,7 +142,8 @@ export class LocalMcpLifecycle implements vscode.Disposable {
       ...server.env,
       ELECTRON_RUN_AS_NODE: "1",
       DVQR_MCP_ENVIRONMENT_URL: resolvedEnvironment.url,
-      DVQR_MCP_PRO_ENABLED: getCurrentProductPlan() === "pro" ? "true" : "false"
+      DVQR_MCP_PRO_ENABLED: getCurrentProductPlan() === "pro" ? "true" : "false",
+      DVQR_MCP_SERVER_VERSION: this.context.extension.packageJSON.version as string
     };
     return server;
   }
@@ -225,7 +234,10 @@ export function getLocalMcpStatusSnapshot(): LocalMcpStatus {
   return activeLocalMcpLifecycle?.getStatus() ?? {
     enabled: false,
     registrationState: "disabled",
-    toolCount: 9,
+    toolCount: DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "free" || getCurrentProductPlan() === "pro").length,
+    freeToolCount: DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "free").length,
+    proOnlyToolCount: DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "pro").length,
+    proTotalToolCount: DVQR_LIVE_MCP_TOOLS.length,
     mode: getCurrentProductPlan() === "pro" ? "Pro" : "Free"
   };
 }

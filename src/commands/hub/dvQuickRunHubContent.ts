@@ -161,6 +161,17 @@ export const investigationPlaybooks: readonly InvestigationPlaybook[] = [
 
 export const capabilities: readonly CapabilityInfo[] = [
   {
+    id: "professional-investigations",
+    title: "Professional Investigations",
+    group: "Investigate & Explain",
+    summary: "Start, reload and list evidence-bounded Dataverse investigation sessions through Local MCP.",
+    operationalUseCase: "Use when an investigation needs durable local identity, environment binding and a handoff-ready foundation.",
+    relatedPlaybooks: ["runtime-behaviour", "entity-relationships"],
+    howToUse: ["Enable Pro Local MCP.", "Call dvqr_start_investigation.", "Reload with dvqr_get_investigation or inspect the index with dvqr_list_investigations."],
+    status: "available",
+    sinceVersion: "v0.15.8"
+  },
+  {
     id: "odata-fetchxml-execution",
     title: "OData and FetchXML execution",
     group: "Query & Explore",
@@ -474,15 +485,16 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.7 completes Custom API Intelligence across discovery, explanation, comparison, recommendation, solution architecture, preview, execution, and interpretation.",
-  "Solution Architecture turns metadata-backed Custom API recommendations into ordered, evidence-bounded business pipelines.",
-  "Execution uses short-lived, single-use preview sessions and a later explicit EXECUTE confirmation.",
-  "Eligible public global generate-only Actions can run through the dedicated Custom API execution tool; generic OData execution is never used for Actions or Functions.",
-  "Successful and failed executions receive stable execution IDs and can be interpreted later without rerunning or contacting Dataverse.",
-  "Execution Intelligence reports classification, HTTP and timing evidence, transport, outputs, recommendations, and a clear evidence boundary.",
-  "Administrative, private, bound, complex, mutation-like, and unsupported operations remain blocked by the initial MCP execution policy.",
-  "The Welcome page, Hub, Quickstart, README, and changelog now present the complete v0.15.7 Custom API lifecycle.",
-  "Free provides understanding and basic preview-confirmed execution; Pro remains the home for deeper intelligence, orchestration, environment awareness, and productivity."
+  "v0.15.8 adds Managed Investigation Intelligence to Local MCP: prepare, confirm, acquire evidence, assess readiness, generate Mini RCA, and continue from persisted investigation truth.",
+  "Record investigations preserve the explicit target, deterministic strategy, evidence provenance, readiness state, Mini RCA checkpoint state, and completion consistency across turns.",
+  "Target-aware business-path runtime evidence probes bounded relationship candidates hop-by-hop while keeping metadata validity, observed runtime viability, and business authority distinct.",
+  "Readiness and Mini RCA reconcile against the current evidence fingerprint so stale checkpoints are detected instead of silently reused.",
+  "Host-adversarial guards suppress duplicate pending starts, block pre-intent evidence work, and reconcile guarded continuation against persisted state.",
+  "Deterministic recommended actions carry stable action IDs bound to the current step, exact public tool, persisted-safe arguments, and evidence fingerprint.",
+  "Server-side enforcement rejects missing, stale, replayed, substituted, provider-altered, target-altered, or undeclared deterministic execution requests.",
+  "Authorization and integrity failures do not disclose the next actionable token; only DVQR continuation exposes the current action ID.",
+  "Mini RCA remains evidence-bounded: observed participation or reachability is never promoted to mechanism, root cause, or causality.",
+  "v0.15.7 Custom API Intelligence and the existing editor investigation surfaces remain available alongside managed investigation."
 ];
 
 export const philosophy: readonly string[] = [

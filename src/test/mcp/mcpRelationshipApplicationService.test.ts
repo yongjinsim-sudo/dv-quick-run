@@ -5,6 +5,7 @@ import { McpRelationshipMetadataRepository } from "../../mcp/mcpRelationshipMeta
 import { McpOperationalAnchorApplicationService } from "../../mcp/mcpOperationalAnchorApplicationService.js";
 import { McpLookupNavigationApplicationService } from "../../mcp/mcpLookupNavigationApplicationService.js";
 import { McpRelationshipPathDiscoveryApplicationService } from "../../mcp/mcpRelationshipPathDiscoveryApplicationService.js";
+import { McpBusinessPathDiscoveryApplicationService } from "../../mcp/mcpBusinessPathDiscoveryApplicationService.js";
 import { McpRelationshipQueryApplicationService } from "../../mcp/mcpRelationshipQueryApplicationService.js";
 import { McpRelationshipTraversalApplicationService } from "../../mcp/mcpRelationshipTraversalApplicationService.js";
 import { McpRelationshipProbeService } from "../../mcp/mcpRelationshipProbeService.js";
@@ -37,6 +38,14 @@ suite("mcpRelationshipApplicationService", () => {
       {
         adapterCall: () => adapter.findRelationshipPaths({}),
         serviceCall: () => service.findRelationshipPaths({})
+      },
+      {
+        adapterCall: () => adapter.discoverBusinessPaths({}),
+        serviceCall: () => service.discoverBusinessPaths({})
+      },
+      {
+        adapterCall: () => adapter.validateBusinessPaths({}),
+        serviceCall: () => service.validateBusinessPaths({})
       },
       {
         adapterCall: () => adapter.generateRelationshipQuery({}),
@@ -83,6 +92,57 @@ suite("mcpRelationshipApplicationService", () => {
     });
   });
 
+
+  test("keeps operational-anchor discovery usable when a downstream relationship table is inaccessible", async () => {
+    const repository = {
+      metadataContext: async () => ({ baseEnvironmentUrl: "https://example.crm.dynamics.com", token: "token" }),
+      fetchEntityCatalogue: async () => [],
+      fetchRelationships: async (_base: string, _token: string, table: string) => {
+        if (table === "contact") {
+          return [{
+            fromTable: "contact",
+            toTable: "restricted_child",
+            navigationProperty: "contact_restricted_child",
+            relationshipType: "OneToMany",
+            direction: "oneToMany",
+            collectionValued: true
+          }];
+        }
+        throw new Error("HTTP 403 while inspecting restricted_child metadata");
+      }
+    };
+    const service = new McpOperationalAnchorApplicationService(repository as never);
+
+    const result = await service.discoverOperationalAnchors({ sourceTable: "contact", maxDepth: 3, maxResults: 8, maxTablesInspected: 60 });
+
+    assert.strictEqual(result.ok, true);
+    if (!result.ok) return;
+    const content = result.structuredContent as Record<string, unknown>;
+    const coverage = content.discoveryCoverage as Record<string, unknown>;
+    assert.strictEqual(coverage.relationshipMetadataFailures, 1);
+    assert.strictEqual(coverage.explorationComplete, false);
+    assert.deepStrictEqual(coverage.inaccessibleOrFailedTables, [{
+      table: "restricted_child",
+      depth: 1,
+      message: "HTTP 403 while inspecting restricted_child metadata"
+    }]);
+  });
+
+  test("still fails operational-anchor discovery when source relationship metadata is inaccessible", async () => {
+    const repository = {
+      metadataContext: async () => ({ baseEnvironmentUrl: "https://example.crm.dynamics.com", token: "token" }),
+      fetchEntityCatalogue: async () => [],
+      fetchRelationships: async () => { throw new Error("HTTP 403 on source metadata"); }
+    };
+    const service = new McpOperationalAnchorApplicationService(repository as never);
+
+    const result = await service.discoverOperationalAnchors({ sourceTable: "contact" });
+
+    assert.strictEqual(result.ok, false);
+    if (result.ok) return;
+    assert.strictEqual(result.code, "ExecutionFailed");
+  });
+
   test("keeps lookup and navigation validation behind their focused application service", async () => {
     const repository = new McpRelationshipMetadataRepository(config);
     const service = new McpLookupNavigationApplicationService(config, repository);
@@ -103,6 +163,7 @@ suite("mcpRelationshipApplicationService", () => {
     const repository = new McpRelationshipMetadataRepository(config);
     const probes = new McpRelationshipProbeService(config, repository);
     const pathDiscovery = new McpRelationshipPathDiscoveryApplicationService(repository);
+    const businessPathDiscovery = new McpBusinessPathDiscoveryApplicationService(repository);
     const queryGeneration = new McpRelationshipQueryApplicationService(repository);
     const traversal = new McpRelationshipTraversalApplicationService(repository, probes);
 
@@ -112,6 +173,7 @@ suite("mcpRelationshipApplicationService", () => {
       message: "sourceTable and targetTable are required."
     };
     assert.deepStrictEqual(await pathDiscovery.findRelationshipPaths({}), missingTables);
+    assert.deepStrictEqual(await businessPathDiscovery.discoverBusinessPaths({}), missingTables);
     assert.deepStrictEqual(await queryGeneration.generateRelationshipQuery({}), missingTables);
     assert.deepStrictEqual(await traversal.probeRelationshipPath({}), {
       ok: false,

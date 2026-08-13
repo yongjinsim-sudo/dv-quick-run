@@ -6,21 +6,23 @@ import { DvqrMcpLiveToolDispatcher } from "./mcpLiveToolDispatcher.js";
 import { DVQR_LIVE_MCP_TOOLS } from "./mcpLiveToolCatalogue.js";
 import { loadDvqrMcpRuntimeConfiguration } from "./mcpRuntimeConfiguration.js";
 
+export function listDvqrMcpProtocolTools() {
+  return DVQR_LIVE_MCP_TOOLS.map((tool) => ({
+    name: tool.name,
+    description: `[${tool.tier.toUpperCase()}] ${tool.description}`,
+    inputSchema: tool.inputSchema
+  }));
+}
+
 export async function startDvqrMcpStdioServer(): Promise<void> {
   const config = loadDvqrMcpRuntimeConfiguration();
   const dispatcher = new DvqrMcpLiveToolDispatcher(config);
   const server = new Server(
-    { name: "dv-quick-run", version: "0.15.6" },
+    { name: "dv-quick-run", version: process.env.DVQR_MCP_SERVER_VERSION?.trim() || "0.15.7" },
     { capabilities: { tools: {} } }
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: DVQR_LIVE_MCP_TOOLS.map((tool) => ({
-      name: tool.name,
-      description: `[${tool.tier.toUpperCase()}] ${tool.description}`,
-      inputSchema: tool.inputSchema
-    }))
-  }));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: listDvqrMcpProtocolTools() }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request: any) => dispatcher.dispatch({
     name: request.params.name,

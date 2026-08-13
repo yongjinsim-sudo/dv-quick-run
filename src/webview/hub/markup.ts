@@ -147,18 +147,23 @@ function renderLocalMcpDashboard(model: DvQuickRunHubViewModel): string {
 
   return `<section id="local-mcp">
     <h2>Local MCP</h2>
-    <p class="dvqr-section-note">Understand Dataverse business architecture through an extension-owned local MCP server with read-only investigation tools and preview-confirmed execution for eligible Custom API Actions.</p>
+    <p class="dvqr-section-note">Use the extension-owned Local MCP server for metadata-aware Dataverse understanding, bounded read-only queries, Custom API Intelligence, and Pro managed investigations with persisted evidence and Mini RCA.</p>
     <div class="dvqr-card dvqr-evidence-workspace-card">
       <div>
         <div class="dvqr-continuation-action-header"><h3>DV Quick Run Local MCP</h3><span class="dvqr-mcp-health dvqr-mcp-health-${statusClass}"><span class="dvqr-mcp-health-dot" aria-hidden="true"></span>${trafficLabel} · ${statusLabel}</span></div>
         <p>${mcp.enabled ? "Enabled for this workspace. VS Code discovers and starts the local stdio process when its tools are needed." : "Enable once for this workspace. DV Quick Run remembers the choice across VS Code restarts and computer reboots."}</p>
         <dl class="dvqr-context-list">
           <div><dt>Mode</dt><dd>${escapeHtml(mcp.mode)}</dd></div>
-          <div><dt>Free tools</dt><dd>${mcp.toolCount}</dd></div>
+          <div><dt>Free tools</dt><dd>${mcp.freeToolCount}</dd></div>
+          <div><dt>Pro-only tools</dt><dd>${mcp.proOnlyToolCount}</dd></div>
+          <div><dt>Total with Pro</dt><dd>${mcp.proTotalToolCount}</dd></div>
           <div><dt>Environment</dt><dd>${escapeHtml(mcp.environmentName ?? "Not selected")}</dd></div>
           <div><dt>Lifecycle</dt><dd>${escapeHtml(mcp.lifecycle)}</dd></div>
           <div><dt>Authentication</dt><dd>${escapeHtml(mcp.authentication)}</dd></div>
         </dl>
+        <p class="dvqr-muted">${mcp.mode === "Pro"
+          ? `Your Pro session exposes all ${mcp.proTotalToolCount} MCP tools: ${mcp.freeToolCount} Free + ${mcp.proOnlyToolCount} Pro-only.`
+          : `Your Free session exposes ${mcp.freeToolCount} MCP tools. Pro adds ${mcp.proOnlyToolCount} more, for ${mcp.proTotalToolCount} total.`}</p>
         <div class="dvqr-meta"><span class="dvqr-chip">Read-only investigation</span><span class="dvqr-chip">Natural-language OData</span><span class="dvqr-chip">Deterministic metadata search</span><span class="dvqr-chip">Preview-confirmed Custom API POST</span><span class="dvqr-chip">No PATCH · DELETE · upload · remediation</span>${mcp.enabled ? `<span class="dvqr-chip dvqr-chip-ready">MCP Ready</span>` : ""}</div>
       </div>
       <div class="dvqr-evidence-actions">
@@ -295,16 +300,18 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["Custom API Intelligence", "Discover, explain, compare, recommend and architect metadata-backed Custom API capabilities."],
-    ["Preview-First Execution", "Build a short-lived reviewed execution plan, stop for a later explicit EXECUTE confirmation, and consume it once."],
-    ["Live Runtime Evidence", "Execute eligible public global Actions and preserve actual HTTP, timing, transport, output and error evidence."],
-    ["Execution Intelligence", "Interpret stored execution evidence without rerunning the operation or contacting Dataverse again."],
-    ["Replay Protection", "Atomic single-use preview consumption prevents repeated transport attempts from the same preview session."],
-    ["Bounded Safety Boundary", "Read-only investigation remains the default; Custom API POST is limited to eligible preview-confirmed Actions, while PATCH, DELETE, upload and remediation remain unavailable."]
+    ["Managed Investigation Intelligence", "Start from a real Dataverse record and preserve subject, explicit target, intent, strategy, evidence, readiness and Mini RCA state across turns."],
+    ["Deterministic Continuation", "Advance one bounded investigation action at a time from persisted DVQR state instead of relying on conversational reconstruction."],
+    ["Target-Aware Runtime Evidence", "Probe bounded business paths hop-by-hop while keeping metadata validity, observed runtime viability and business authority distinct."],
+    ["Readiness & Evidence Gaps", "Reconcile the current evidence fingerprint before Mini RCA so stale checkpoints and material evidence changes remain visible."],
+    ["Bounded Mini RCA", "Generate persisted evidence-backed hypotheses, contradictions, gaps and next-best discriminators without claiming autonomous root cause or causality."],
+    ["Host-Hardened Action Integrity", "Bind deterministic actions to exact tools, persisted-safe arguments, strategy state and evidence fingerprints; reject stale, replayed or substituted execution."],
+    ["Mechanism-Aware Follow-up", "After a Mini RCA checkpoint, acquire bounded mechanism context, explicitly stale readiness, reassess, and regenerate only when the user chooses to continue."],
+    ["Persistent Investigation Handoff", "Reload, summarize, inspect and continue professional investigations from canonical persisted evidence rather than host memory."]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.15.7</h2>
-    <p class="dvqr-section-note">Custom API Intelligence: discover, understand, design, safely execute and interpret Dataverse Custom APIs through one evidence-backed lifecycle.</p>
+    <h2>What's New in v0.15.8</h2>
+    <p class="dvqr-section-note">Managed Investigation Intelligence: persistent investigation continuity, deterministic evidence acquisition, readiness, bounded Mini RCA and MCP-native handoff.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }
