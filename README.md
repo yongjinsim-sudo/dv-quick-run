@@ -32,6 +32,8 @@ understand → query → verify → investigate → compare → explain → hand
 
 DV Quick Run now includes a **category-driven Prompt Library** that makes the growing Local MCP capability surface discoverable without requiring users to know MCP tool names.
 
+![DV Quick Run Prompt Library](docs/prompt-library.png)
+
 ```text
 Quick Start → Guided Prompt → Rendered request → Evidence-backed result → Suggested next prompt
 ```
