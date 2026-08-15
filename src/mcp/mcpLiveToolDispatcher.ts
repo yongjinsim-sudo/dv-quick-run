@@ -222,6 +222,7 @@ export class DvqrMcpLiveToolDispatcher {
       executeOData: async (args) => this.formatFreeResult(await this.freeAdapter.executeOData(args)),
       searchMetadata: async (args) => this.formatFreeResult(await this.freeAdapter.searchMetadata(args)),
       getEntityMetadata: async (args) => this.formatFreeResult(await this.freeAdapter.getEntityMetadata(args)),
+      getOperationalProfile: async (args) => this.formatFreeResult(await this.freeAdapter.getOperationalProfile(args)),
       discoverCustomApis: async (args) => this.formatFreeResult(await this.freeAdapter.discoverCustomApis(args)),
       getCustomApiDefinition: async (args) => this.formatFreeResult(await this.freeAdapter.getCustomApiDefinition(args)),
       explainCustomApi: async (args) => this.formatFreeResult(await this.freeAdapter.explainCustomApi(args)),

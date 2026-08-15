@@ -485,16 +485,13 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.8 adds Managed Investigation Intelligence to Local MCP: prepare, confirm, acquire evidence, assess readiness, generate Mini RCA, and continue from persisted investigation truth.",
-  "Record investigations preserve the explicit target, deterministic strategy, evidence provenance, readiness state, Mini RCA checkpoint state, and completion consistency across turns.",
-  "Target-aware business-path runtime evidence probes bounded relationship candidates hop-by-hop while keeping metadata validity, observed runtime viability, and business authority distinct.",
-  "Readiness and Mini RCA reconcile against the current evidence fingerprint so stale checkpoints are detected instead of silently reused.",
-  "Host-adversarial guards suppress duplicate pending starts, block pre-intent evidence work, and reconcile guarded continuation against persisted state.",
-  "Deterministic recommended actions carry stable action IDs bound to the current step, exact public tool, persisted-safe arguments, and evidence fingerprint.",
-  "Server-side enforcement rejects missing, stale, replayed, substituted, provider-altered, target-altered, or undeclared deterministic execution requests.",
-  "Authorization and integrity failures do not disclose the next actionable token; only DVQR continuation exposes the current action ID.",
-  "Mini RCA remains evidence-bounded: observed participation or reachability is never promoted to mechanism, root cause, or causality.",
-  "v0.15.7 Custom API Intelligence and the existing editor investigation surfaces remain available alongside managed investigation."
+  "v0.15.9 adds Discoverability & Guided Investigation: a category-driven Prompt Library with 94 curated user-intent prompts across 69 Free and 25 Pro journeys.",
+  "Quick Starts help users begin from an outcome instead of MCP tool-name knowledge, while search, category and Free/Pro filters keep the full catalogue manageable.",
+  "The Prompt Library is backed by a machine-readable Evidence Matrix over the live MCP catalogue, preserving tier, evidence posture and interpretation boundaries without creating a second reasoning engine.",
+  "Suggested next prompts turn individual prompts into guided journeys across metadata, bounded queries, relationship traversal, Custom API Intelligence, Operational Profile and managed investigations.",
+  "Operational Profile and DVQR Score are now exposed through Free MCP with canonical GUI parity, calibrated-score transparency, semantic guardrails and live-current-result authority over historical snapshots.",
+  "Raw MCP tool names are de-emphasised during browsing but remain available as capability details for users who want implementation transparency.",
+  "v0.15.8 Managed Investigation Intelligence remains the persisted Pro investigation protocol underneath the deeper guided-investigation journeys."
 ];
 
 export const philosophy: readonly string[] = [

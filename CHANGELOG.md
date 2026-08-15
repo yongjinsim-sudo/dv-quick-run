@@ -6,6 +6,37 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.15.9 — Discoverability & Guided Investigation
+
+This release turns the mature Local MCP capability surface into a discoverable, category-driven guided experience while exposing the canonical Operational Profile and DVQR Score through Free MCP.
+
+### Added
+
+- Added `dvqr_get_operational_profile` as a Free MCP capability using the canonical Operational Profile and DVQR Score semantics.
+- Added a machine-readable Prompt Library and Evidence Matrix tied to the live MCP catalogue.
+- Added 94 curated user-intent prompts: 69 Free and 25 Pro across six categories.
+- Added Prompt Library Quick Starts for common Dataverse outcomes, plus text, category and Free/Pro filters.
+- Added parameterised prompt rendering, Copy Prompt, and suggested next-prompt journeys.
+- Added Prompt Library entry points from the Hub and Welcome experience.
+
+### Improved
+
+- Preserved GUI/MCP Operational Profile parity by reusing canonical evidence acquisition and score construction.
+- Hardened DVQR Score projection with explicit weighted-evidence math, calibrated display-score semantics and no hidden residual contributors.
+- Added semantic guardrails so relationship fanout is not described as viable/access paths, workflow participation is not assumed asynchronous, and plug-in step counts are not treated as distinct plug-ins.
+- Added live-current-result authority so historical snapshots cannot silently replace a current Operational Profile request.
+- Expanded the Prompt Library from an initial 34-prompt catalogue to 94 curated intents without forcing one prompt per MCP tool.
+- De-emphasised raw MCP tool names in catalogue browsing while retaining capability details for transparency.
+- Refreshed Welcome, Hub and README around Discoverability & Guided Investigation.
+
+### Guidance and safety boundaries
+
+- Prompt Library entries guide existing DVQR capabilities; they do not implement a second reasoning engine.
+- Evidence Matrix boundaries remain authoritative over what a prompt/result may infer.
+- DVQR Score remains an operational-density and investigation-orientation signal, not health, quality, security, performance, business value or root-cause proof.
+- Metadata-valid relationship reachability remains distinct from runtime viability, business preference, effective access and causality.
+- Pro managed investigation retains persisted-state, one-explicit-action and evidence-bounded Mini RCA semantics from v0.15.8.
+
 ## DV Quick Run v0.15.8 — Managed Investigation Intelligence
 
 This release turns the Pro Local MCP investigation surface into a persisted, deterministic and host-hardened managed investigation protocol for real Dataverse records.
