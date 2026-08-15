@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "dvqr-investigation-index-v1",
+  "updatedAt": "2026-08-04T04:14:09.077Z",
+  "investigations": [
+    {
+      "investigationId": "inv-e69330bb-6bfc-4620-aeb0-5bcdb93b82f0",
+      "title": "Start an investigation for Contact",
+      "type": "Table",
+      "status": "Active",
+      "environmentId": "org7013c734.api.crm6.dynamics.com",
+      "createdAt": "2026-08-04T04:12:12.898Z",
+      "updatedAt": "2026-08-04T04:14:09.077Z",
+      "miniRcaAvailable": false
+    },
+    {
+      "investigationId": "inv-027aa6c4-919b-4069-aa86-e3a14a3dc259",
+      "title": "Investigation for Contact",
+      "type": "General",
+      "status": "Active",
+      "environmentId": "org7013c734.api.crm6.dynamics.com",
+      "createdAt": "2026-08-03T14:30:14.996Z",
+      "updatedAt": "2026-08-03T23:35:46.789Z",
+      "miniRcaAvailable": false
+    },
+    {
+      "investigationId": "inv-94ecf511-c0b6-42e7-b595-e8a5bbf1ab89",
+      "title": "Investigation for Contact",
+      "type": "General",
+      "status": "Active",
+      "environmentId": "org7013c734.api.crm6.dynamics.com",
+      "createdAt": "2026-08-03T14:29:32.908Z",
+      "updatedAt": "2026-08-03T14:29:32.908Z",
+      "miniRcaAvailable": false
+    }
+  ]
+}

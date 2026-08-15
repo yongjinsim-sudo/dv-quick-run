@@ -92,10 +92,11 @@ function renderGettingStarted(model: DvQuickRunHubViewModel): string {
     <div class="dvqr-start-grid">
       <article class="dvqr-card dvqr-start-card">
         <div class="dvqr-eyebrow">1 · Ask</div>
-        <h3>💬 Understand business architecture</h3>
-        <p>Ask GitHub Copilot how an unfamiliar Dataverse solution organises, coordinates and executes work.</p>
-        ${renderCopyPrompt("Using DV Quick Run, starting only from Contact metadata, discover the business capabilities and explain where operational work is coordinated and performed.")}
+        <h3>💬 Start with a guided prompt</h3>
+        <p>Open the 94-prompt library and start from a common outcome without needing to know MCP tool names.</p>
+        ${renderCopyPrompt("Using DV Quick Run, show me what I can ask about this Dataverse environment and recommend the best first prompt for my goal.")}
         <button class="dvqr-action-button" data-command="${mcpCommand}">${mcpLabel}</button>
+        <button class="dvqr-action-button" data-command="dvQuickRun.openPromptLibrary">Open Prompt Library</button>
       </article>
       <article class="dvqr-card dvqr-start-card">
         <div class="dvqr-eyebrow">2 · Discover</div>
@@ -254,7 +255,9 @@ function renderCapability(capability: CapabilityInfo): string {
     : "";
   const canLaunch = capability.commandId && capability.contextState?.launchable !== false;
   const action = canLaunch ? `<button class="dvqr-action-button" data-command="${escapeHtml(capability.commandId as string)}">${escapeHtml(capability.actionLabel ?? "Launch")}</button>` : "";
-  const state = capability.contextState ? `<span class="dvqr-context-state dvqr-context-state-${escapeHtml(capability.contextState.kind)}">${escapeHtml(capability.contextState.label)}</span>` : "";
+  const state = capability.contextState && !(capability.contextState.kind === "informational" && capability.status === "available")
+    ? `<span class="dvqr-context-state dvqr-context-state-${escapeHtml(capability.contextState.kind)}">${escapeHtml(capability.contextState.label)}</span>`
+    : "";
   const contextHint = capability.contextState ? `<p class="dvqr-context-hint">${escapeHtml(capability.contextState.detail)}</p>` : "";
   const howToUse = capability.howToUse && capability.howToUse.length > 0
     ? `<div class="dvqr-how-to"><strong>How to use:</strong><ol>${capability.howToUse.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol></div>`
@@ -300,18 +303,18 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["Managed Investigation Intelligence", "Start from a real Dataverse record and preserve subject, explicit target, intent, strategy, evidence, readiness and Mini RCA state across turns."],
-    ["Deterministic Continuation", "Advance one bounded investigation action at a time from persisted DVQR state instead of relying on conversational reconstruction."],
-    ["Target-Aware Runtime Evidence", "Probe bounded business paths hop-by-hop while keeping metadata validity, observed runtime viability and business authority distinct."],
-    ["Readiness & Evidence Gaps", "Reconcile the current evidence fingerprint before Mini RCA so stale checkpoints and material evidence changes remain visible."],
-    ["Bounded Mini RCA", "Generate persisted evidence-backed hypotheses, contradictions, gaps and next-best discriminators without claiming autonomous root cause or causality."],
-    ["Host-Hardened Action Integrity", "Bind deterministic actions to exact tools, persisted-safe arguments, strategy state and evidence fingerprints; reject stale, replayed or substituted execution."],
-    ["Mechanism-Aware Follow-up", "After a Mini RCA checkpoint, acquire bounded mechanism context, explicitly stale readiness, reassess, and regenerate only when the user chooses to continue."],
-    ["Persistent Investigation Handoff", "Reload, summarize, inspect and continue professional investigations from canonical persisted evidence rather than host memory."]
+    ["94-Prompt Guided Library", "Browse 69 Free and 25 Pro user-intent prompts across six categories without needing MCP tool-name knowledge."],
+    ["Quick Starts", "Begin from common outcomes such as finding tables, understanding relationships, validating runtime paths, checking DVQR Score, discovering Custom APIs, or investigating an issue."],
+    ["Search & Tier Filters", "Filter the complete catalogue by natural-language search, category, and Free or Pro availability."],
+    ["Parameterised Prompt Builder", "Fill table names, record IDs, queries, API names or investigation IDs and copy the exact rendered natural-language request."],
+    ["Guided Next Prompts", "Move from discovery into understanding, querying, traversal, investigation and verification through deterministic follow-up links."],
+    ["Operational Profile through Free MCP", "Get the canonical live Operational Profile and calibrated DVQR Score with GUI parity, explicit score math and semantic guardrails."],
+    ["Evidence Matrix Foundation", "Keep every live MCP capability tied to tier, evidence posture and interpretation boundaries without creating a second reasoning engine."],
+    ["Built on Managed Investigation", "Pro journeys continue to use the persisted v0.15.8 investigation protocol for bounded evidence, readiness, Mini RCA and handoff."]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.15.8</h2>
-    <p class="dvqr-section-note">Managed Investigation Intelligence: persistent investigation continuity, deterministic evidence acquisition, readiness, bounded Mini RCA and MCP-native handoff.</p>
+    <h2>What's New in v0.15.9</h2>
+    <p class="dvqr-section-note">Discoverability &amp; Guided Investigation: 94 curated prompts, Quick Starts, category/search/tier filtering, guided next prompts, and Free MCP Operational Profile + DVQR Score.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }

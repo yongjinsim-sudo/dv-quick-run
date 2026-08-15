@@ -16,12 +16,14 @@ import { McpCustomApiExecutionInterpretationApplicationService } from "./mcpCust
 import { McpRelationshipApplicationService } from "./mcpRelationshipApplicationService.js";
 import { environmentUrl, stringArg } from "./mcpRequestArguments.js";
 import type { DvqrMcpFreeToolResult } from "./mcpToolResults.js";
+import { McpOperationalProfileApplicationService } from "./mcpOperationalProfileApplicationService.js";
 
 export type { DvqrMcpFreeToolFailure, DvqrMcpFreeToolResult, DvqrMcpFreeToolSuccess } from "./mcpToolResults.js";
 
 export class DvqrMcpFreeApplicationAdapter {
   private readonly oDataApplicationService: McpODataApplicationService;
   private readonly relationshipApplicationService: McpRelationshipApplicationService;
+  private readonly operationalProfileApplicationService: McpOperationalProfileApplicationService;
   private readonly customApiApplicationService: McpCustomApiApplicationService;
   private readonly customApiExplainApplicationService: McpCustomApiExplainApplicationService;
   private readonly customApiRecommendationApplicationService: McpCustomApiRecommendationApplicationService;
@@ -41,6 +43,7 @@ export class DvqrMcpFreeApplicationAdapter {
       : runtimeStateOrPreviewSessions;
     this.oDataApplicationService = new McpODataApplicationService(config);
     this.relationshipApplicationService = new McpRelationshipApplicationService(config);
+    this.operationalProfileApplicationService = new McpOperationalProfileApplicationService(config);
     this.customApiApplicationService = new McpCustomApiApplicationService(config);
     this.customApiExplainApplicationService = new McpCustomApiExplainApplicationService(config, this.customApiApplicationService);
     this.customApiRecommendationApplicationService = new McpCustomApiRecommendationApplicationService(config);
@@ -137,6 +140,10 @@ export class DvqrMcpFreeApplicationAdapter {
         message: error instanceof Error ? error.message : "Metadata search failed."
       };
     }
+  }
+
+  public getOperationalProfile(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.operationalProfileApplicationService.get(args);
   }
 
   public async getEntityMetadata(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {

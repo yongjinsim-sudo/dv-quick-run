@@ -2,7 +2,7 @@
 
 **Understand Dataverse applications. Investigate operational behaviour. Stay grounded in evidence.**
 
-DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Dataverse investigation workbench for VS Code. Use GitHub Copilot to understand unfamiliar business architecture and query Dataverse in natural language, or continue in the editor with OData, FetchXML, Result Viewer, Guided Traversal, Operational Profiles, Cross-Environment Diff, Timeline Reconstruction and Mini RCA.
+DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Dataverse investigation workbench for VS Code. Use the 94-prompt guided library or GitHub Copilot to understand unfamiliar business architecture and query Dataverse in natural language, then continue in the editor with OData, FetchXML, Result Viewer, Guided Traversal, Operational Profiles, Cross-Environment Diff, Timeline Reconstruction and Mini RCA.
 
 **Read-only MCP · Deterministic metadata · Evidence-backed conclusions · Human authority**
 
@@ -28,43 +28,31 @@ DV Quick Run follows a simple investigation loop:
 understand → query → verify → investigate → compare → explain → hand off
 ```
 
-## Managed Investigation Intelligence — v0.15.8
+## Discoverability & Guided Investigation — v0.15.9
 
-DV Quick Run now extends Local MCP from individual investigation tools into a **persisted managed investigation protocol** for real Dataverse records.
+DV Quick Run now includes a **category-driven Prompt Library** that makes the growing Local MCP capability surface discoverable without requiring users to know MCP tool names.
 
-```text
-Prepare → Confirm Intent → Metadata → Relationship Context → Runtime Evidence
-→ Readiness → Mini RCA → Continue with the next highest-value evidence
-```
-
-- **Persisted investigation truth:** subject, explicit target, deterministic strategy, evidence, readiness, Mini RCA checkpoint state and completion consistency survive across turns.
-- **Target-aware runtime traversal:** bounded candidate paths execute hop-by-hop while metadata validity, observed runtime viability and business authority remain distinct.
-- **Evidence reconciliation:** readiness and Mini RCA are tied to the current evidence fingerprint so stale checkpoints are detected rather than silently reused.
-- **Bounded Mini RCA:** supported, weakened and unresolved hypotheses remain tied to evidence; participation or reachability is never promoted to mechanism, root cause or causality.
-- **Host-adversarial protection:** duplicate pending starts are suppressed, pre-intent execution is blocked, and guarded continuation reconciles against persisted state.
-- **Recommended-action integrity:** deterministic steps expose a stable action ID bound to the investigation, strategy step, exact public tool, persisted-safe arguments and current evidence fingerprint.
-- **Server-side execution enforcement:** missing, stale, replayed, substituted, provider-altered, target-altered and undeclared deterministic requests are rejected before managed execution.
-- **Non-disclosing authorization:** failed premature or stale requests do not reveal the next actionable token; the host must return through DVQR continuation.
-
-The managed protocol is intentionally not an autonomous root-cause engine. It coordinates bounded evidence acquisition while preserving explicit user authority and the distinction between **participation, correlation, mechanism and causality**.
-
-## Custom API Intelligence — v0.15.7
-
-DV Quick Run now provides a complete metadata-aware Custom API lifecycle through Local MCP:
+![DV Quick Run Prompt Library](docs/prompt-library.png)
 
 ```text
-Discover → Explain → Compare → Recommend → Architecture → Preview → Execute → Interpret
+Quick Start → Guided Prompt → Rendered request → Evidence-backed result → Suggested next prompt
 ```
 
-- **Discover and explain:** inspect exact public Custom API metadata, operation and binding shape, inputs, outputs, and bounded usage guidance.
-- **Compare and recommend:** evaluate named APIs or a natural-language goal without substituting unsupported capabilities.
-- **Solution Architecture:** assemble semantically compatible APIs into ordered Recommended, Simpler, and Extended pipelines with confidence and evidence boundaries.
-- **Preview-first execution:** validate required inputs and review the exact method, route, body, expected outputs, side-effect posture, preview ID, and expiry.
-- **Explicit confirmation:** execution only continues after a later user reply of `EXECUTE`; preview sessions are short-lived, single-use, and atomically consumed.
-- **Live execution:** the initial MCP scope is deliberately narrow—public global generate-only Actions with supported scalar inputs.
-- **Execution Intelligence:** successful and failed calls receive an execution ID and can be interpreted later from stored runtime evidence without rerunning or contacting Dataverse.
+- **94 curated user-intent prompts:** 69 Free and 25 Pro prompts across Understand Dataverse, Metadata & Queries, Relationships & Traversal, Custom APIs, Operational Profile, and Managed Investigation.
+- **Quick Starts:** common outcomes such as finding tables, understanding relationships, validating runtime paths, getting a DVQR Score, discovering Custom APIs, and starting or resuming investigations.
+- **Search and filters:** category, text and Free/Pro filtering keep the larger catalogue manageable.
+- **Parameterised rendering:** fill table names, record IDs, queries, API names or investigation IDs and copy the exact natural-language request.
+- **Guided journeys:** suggested next prompts help move from discovery to understanding, querying, navigation, investigation and verification.
+- **Evidence Matrix:** every live MCP capability has machine-readable tier, evidence posture and interpretation boundaries; the Prompt Library remains a guidance layer rather than another reasoning engine.
+- **Operational Profile through Free MCP:** `dvqr_get_operational_profile` exposes the canonical live Operational Profile and calibrated DVQR Score with GUI parity, explicit score math, semantic guardrails and live-result authority over historical snapshots.
 
-Execution reports distinguish observed runtime evidence from inference. Administrative, private, bound, complex, mutation-like, and unsupported operations remain outside the initial MCP execution policy. Basic understanding and execution remain Free; deeper orchestration, environment-aware intelligence, and productivity acceleration remain natural Pro territory.
+Open it from the Command Palette or Hub:
+
+```text
+DV Quick Run: Open Prompt Library
+```
+
+Raw MCP tool names are deliberately de-emphasised while browsing. They remain available as capability details for advanced users who want implementation transparency.
 
 ## Local MCP — Business Architecture Understanding
 
@@ -248,7 +236,8 @@ Trial and billing configuration is handled externally by the store/licensing pro
    ```
 
 4. Open GitHub Copilot Chat in VS Code and make sure the DV Quick Run MCP tools are enabled.
-5. Try one of these prompts:
+5. Open **DV Quick Run: Open Prompt Library** if you want a guided starting point. Browse Quick Starts, search by intent, or filter by category and Free/Pro tier.
+6. Try one of these prompts:
 
    ```text
    Using DV Quick Run, give me the top 10 Accounts by Revenue.
@@ -259,7 +248,7 @@ Trial and billing configuration is handled externally by the store/licensing pro
    accounts?$select=name,revenue&$filter=statecode eq 0&$orderby=name asc&$top=10
    ```
 
-6. Open **DV Quick Run: Open Hub** to review the Local MCP traffic-light status, environment, mode, tool count, lifecycle, and authentication guidance.
+7. Open **DV Quick Run: Open Hub** to review the Local MCP traffic-light status, environment, mode, tool count, lifecycle, authentication guidance, and Prompt Library entry point.
 
 DV Quick Run remembers MCP enablement per workspace. VS Code starts the local stdio server on demand after restarts or reboots; users do not need to recreate the configuration.
 

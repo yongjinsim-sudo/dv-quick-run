@@ -264,6 +264,10 @@
         "title": "DV Quick Run: Open Hub"
       },
       {
+        "command": "dvQuickRun.openPromptLibrary",
+        "title": "DV Quick Run: Open Prompt Library"
+      },
+      {
         "command": "dvQuickRun.discoverCustomApis",
         "title": "DV Quick Run: Discover Custom APIs"
       },

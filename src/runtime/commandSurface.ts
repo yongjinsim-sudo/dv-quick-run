@@ -36,6 +36,7 @@ import { registerChangeTraversalRouteCommand } from "../commands/changeTraversal
 import { registerClearTraversalCacheCommand } from '../commands/clearTraversalCache';
 import { registerOpenQuickStartCommand } from "../commands/openQuickStart.js";
 import { registerOpenDvQuickRunHubCommand } from "../commands/hub/openDvQuickRunHubCommand.js";
+import { registerOpenPromptLibraryCommand } from "../commands/promptLibrary/openPromptLibraryCommand.js";
 import { registerApplyRecommendedNextStepFromExplainCommand } from "../commands/applyRecommendedNextStepFromExplain.js";
 import { registerRunBatchQueriesCommand } from "../commands/runBatchQueries.js";
 import { registerShowOperationalProfileCommand } from "../commands/showOperationalProfile.js";
@@ -83,6 +84,7 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerClearTraversalCacheCommand,
   registerOpenQuickStartCommand,
   registerOpenDvQuickRunHubCommand,
+  registerOpenPromptLibraryCommand,
   registerApplyRecommendedNextStepFromExplainCommand,
   registerRunBatchQueriesCommand,
   registerShowOperationalProfileCommand,

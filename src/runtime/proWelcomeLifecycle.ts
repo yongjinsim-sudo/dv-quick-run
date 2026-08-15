@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_15_8.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_15_9.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.15.8</title>
+<title>DV Quick Run v0.15.9</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,45 +122,47 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.15.8</div>
-        <h1>Managed Investigation Intelligence</h1>
-        <p class="subtitle"><strong>Start with a real Dataverse record and follow a persisted, evidence-backed investigation.</strong><br>DV Quick Run now coordinates intent confirmation, metadata, relationship context, target-aware runtime evidence, readiness and bounded Mini RCA through a deterministic managed protocol.</p>
+        <div class="eyebrow">What's new in v0.15.9</div>
+        <h1>Discoverability &amp; Guided Investigation</h1>
+        <p class="subtitle"><strong>Discover what DVQR can do, choose a guided prompt, and follow the next evidence-backed step.</strong><br>v0.15.9 adds a 94-prompt category-driven library, Quick Starts, search and Free/Pro filtering, guided follow-ups, and canonical Operational Profile + DVQR Score through Free MCP.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.15.8</div>
-          <div class="price">From “investigate this record” to a managed evidence trail</div>
-          <div class="limit">Persisted state · Deterministic strategy · Runtime evidence · Bounded Mini RCA</div>
-          <p class="recognition">Ask Copilot to investigate a real record. DVQR preserves the explicit target, strategy, evidence provenance, readiness and Mini RCA checkpoint while keeping participation distinct from causality.</p>
-          <span class="badge">Evidence first · Participation ≠ causality</span>
+          <div class="eyebrow">New in v0.15.9</div>
+          <div class="price">From “what can I ask?” to a guided DVQR journey</div>
+          <div class="limit">94 prompts · 69 Free · 25 Pro · 6 categories</div>
+          <p class="recognition">Start from Quick Starts or search the full Prompt Library. Parameterised prompts render the exact natural-language request and suggested next prompts guide you deeper without requiring MCP tool-name knowledge.</p>
+          <span class="badge">Discover → Prompt → Evidence → Next step</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Evidence-backed capability landscape</strong><span>See layered capabilities, confidence states, evidence provenance and explicit uncertainty</span></div>
-        <div class="price-pill"><strong>Operational workflow discovery</strong><span>Rank anchors, follow bridged workflow paths and identify downstream work items</span></div>
-        <div class="price-pill"><strong>Extension-owned lifecycle</strong><span>Enable once per workspace; VS Code starts the server on demand</span></div>
-        <div class="price-pill"><strong>Free and Pro boundary</strong><span>Free understands and executes; Pro investigates and accelerates</span></div>
+        <div class="price-pill"><strong>Quick Starts</strong><span>Begin from eight common outcomes instead of figuring out which MCP tool to call</span></div>
+        <div class="price-pill"><strong>94 guided prompts</strong><span>Search and filter 69 Free and 25 Pro user-intent prompts across six categories</span></div>
+        <div class="price-pill"><strong>Prompt journeys</strong><span>Fill parameters, copy the rendered request, then follow evidence-backed suggested next prompts</span></div>
+        <div class="price-pill"><strong>Operational Profile MCP</strong><span>Get the canonical live profile and DVQR Score with explicit evidence and interpretation boundaries</span></div>
       </div>
       <div class="actions">
-        <button class="primary" data-action="hub">Open DV Quick Run Hub</button>
+        <button class="primary" data-action="prompts">Open Prompt Library</button>
+        <button data-action="hub">Open DV Quick Run Hub</button>
         <button class="gold" data-action="pricing">Start 14-day Pro Trial</button>
         <button class="store" data-action="store">Open Store</button>
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Managed investigation evidence acquisition remains bounded and governed. Eligible Custom API Actions retain dedicated preview-confirmed POST execution; PATCH, DELETE, upload, and remediation tools are not registered. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Prompt Library guidance remains catalogue-driven and evidence-bounded; it does not create a second reasoning engine. Managed investigation evidence acquisition remains bounded and governed. Eligible Custom API Actions retain dedicated preview-confirmed POST execution; PATCH, DELETE, upload, and remediation tools are not registered. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     
-        <p><strong>Try it:</strong> enable Local MCP, then ask: “Using DV Quick Run, investigate Contact &lt;record-id&gt; and understand how it relates to downstream work. Use managed investigation and do not infer causality.”</p>
+        <p><strong>Try it:</strong> enable Local MCP, open the Prompt Library, then choose a Quick Start such as “Get Operational Profile &amp; DVQR Score”, “How are two tables related?”, or “Start a managed investigation”.</p>
       </section>
 
     <section class="section">
-      <div class="eyebrow">Two ways to investigate</div>
+      <div class="eyebrow">Three ways to start</div>
       <div class="grid">
-        <div class="card"><h3>1 · Ask and understand</h3><p>Use metadata-aware Local MCP for architecture, relationships, bounded queries and Custom API Intelligence.</p></div>
-        <div class="card"><h3>2 · Run a managed investigation</h3><p>Start from a real record, confirm intent, acquire bounded evidence, assess readiness and generate a persisted Mini RCA checkpoint.</p></div>
+        <div class="card"><h3>1 · Choose a Quick Start</h3><p>Begin from a common outcome such as finding a table, understanding relationships, checking DVQR Score or investigating an issue.</p></div>
+        <div class="card"><h3>2 · Search 94 guided prompts</h3><p>Filter by category and Free/Pro tier, fill parameters, copy the rendered prompt and follow suggested next prompts.</p></div>
+        <div class="card"><h3>3 · Run a managed investigation</h3><p>For Pro investigations, start from a real problem, acquire bounded evidence, assess readiness and persist a Mini RCA checkpoint.</p></div>
       </div>
     </section>
 
@@ -181,12 +183,12 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <div class="card"><h3>1 · Select environment</h3><p>Choose the Dataverse environment DV Quick Run should expose to the local MCP server.</p></div>
         <div class="card"><h3>2 · Enable once</h3><p>Run <strong>DV Quick Run: Enable Local MCP Server</strong>. The workspace preference is remembered.</p></div>
         <div class="card"><h3>3 · Sign in</h3><p>Use <code>az login --tenant &lt;tenant-id&gt; --allow-no-subscriptions</code> for tenant-only Dataverse access.</p></div>
-        <div class="card"><h3>4 · Ask Copilot</h3><p>Try: “Starting only from Contact metadata, explain this application's business capabilities and operational workflow.”</p></div>
+        <div class="card"><h3>4 · Ask Copilot</h3><p>Try: “Using DV Quick Run, show me what I can investigate in this Dataverse environment and recommend where to start.”</p></div>
       </div>
     </section>
 
     <section class="section future">
-      <div class="eyebrow">Also included in v0.15.8</div>
+      <div class="eyebrow">Built on the v0.15.8 investigation foundation</div>
       <div class="grid">
         <div class="card"><h3>🔌 Custom API Intelligence</h3><p>Discover, explain, compare, recommend, architect, preview, execute, and interpret supported Custom APIs.</p></div>
         <div class="card"><h3>🛡 Preview-first execution</h3><p>Short-lived preview IDs, explicit confirmation, atomic single-use consumption, and replay protection.</p></div>
@@ -215,8 +217,8 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
-    "dvQuickRunWelcomeV0158",
-    "DV Quick Run v0.15.8",
+    "dvQuickRunWelcomeV0159",
+    "DV Quick Run v0.15.9",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -245,6 +247,12 @@ async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<
 
     if (message.action === "products") {
       await vscode.env.openExternal(vscode.Uri.parse(DVFORGELAB_PRODUCTS_URL));
+      return;
+    }
+
+    if (message.action === "prompts") {
+      await vscode.commands.executeCommand("dvQuickRun.openPromptLibrary");
+      panel.dispose();
       return;
     }
 

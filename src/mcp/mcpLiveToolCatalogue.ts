@@ -4,6 +4,7 @@ export type DvqrLiveMcpFreeHandlerId =
   | "executeOData"
   | "searchMetadata"
   | "getEntityMetadata"
+  | "getOperationalProfile"
   | "discoverCustomApis"
   | "getCustomApiDefinition"
   | "explainCustomApi"
@@ -118,6 +119,22 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["logicalName"],
       properties: {
         logicalName: { type: "string" },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+      }
+    }
+  },
+  {
+    name: "dvqr_get_operational_profile",
+    handler: { kind: "free", id: "getOperationalProfile" },
+    title: "Get Operational Profile",
+    description: "Build the canonical DVQR Operational Profile and DVQR Score for one Dataverse table using bounded read-only evidence. Use this for Operational Profile, DVQR Score, score-contributor, or why-is-the-score-high questions. The score is a calibrated normalization of weighted operational evidence; weighted contributions are points, not percentages and do not arithmetically sum to the displayed 0-100 score. It is an operational-density investigation signal, never a health, quality, security, performance, business-value, or root-cause score.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["table"],
+      properties: {
+        table: { type: "string", description: "Dataverse table logical name, for example account or opportunity." },
         environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
       }
     }
