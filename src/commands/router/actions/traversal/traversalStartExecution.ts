@@ -67,12 +67,27 @@ export async function executeFirstStepDefault(
     environmentKey
   );
 
+  const firstStepInput = itinerary.preserveExactHops === true
+    ? {
+        entityName: route.sourceEntity,
+        ids: options?.sourceRecordId ? [options.sourceRecordId] : []
+      }
+    : undefined;
+
+  if (itinerary.preserveExactHops === true && !firstStepInput?.ids.length) {
+    logInfo(
+      ctx.output,
+      `Exact Preferred Business Path traversal requires a source ${route.sourceEntity} record; execution was not started.`
+    );
+    return;
+  }
+
   const execution = await executeTraversalStep(
     ctx,
     graph,
     itinerary,
     firstStep,
-    undefined,
+    firstStepInput,
     1,
     {
       traversalContext: buildTraversalViewerContext({
@@ -107,9 +122,9 @@ export async function executeFirstStepDefault(
       currentStepIndex: 0,
       graph,
       lastLanding: execution.landing,
-      currentStepInput: undefined,
+      currentStepInput: firstStepInput,
       selectedInputsByStep: {
-        0: undefined
+        0: firstStepInput
       },
       selectedCarryValuesByStep: {
         0: undefined
@@ -179,9 +194,9 @@ export async function executeFirstStepDefault(
     currentStepIndex: 0,
     graph,
     lastLanding: execution.landing,
-    currentStepInput: undefined,
+    currentStepInput: firstStepInput,
     selectedInputsByStep: {
-      0: undefined
+      0: firstStepInput
     },
     selectedCarryValuesByStep: {
       0: undefined

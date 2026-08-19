@@ -88,6 +88,27 @@ suite("traversalPlanGenerator", () => {
     );
   });
 
+
+  test("workspace Preferred Business Path preserves every saved hop as an exact itinerary", () => {
+    const preferred: TraversalRoute = {
+      ...buildRoute(),
+      routeId: "preferred-care-path",
+      selectionAuthority: "workspacePreferred"
+    };
+
+    const plans = buildTraversalExecutionPlans(preferred);
+
+    assert.strictEqual(plans.length, 1);
+    assert.strictEqual(plans[0]?.preserveExactHops, true);
+    assert.strictEqual(plans[0]?.recommended, true);
+    assert.ok(plans[0]?.planId.endsWith(":preferred-exact"));
+    assert.deepStrictEqual(
+      plans[0]?.steps.map((step) => step.stageLabel),
+      ["account → contact", "contact → patient", "patient → careplans", "careplans → tasks"]
+    );
+    assert.ok(plans[0]?.steps.every((step) => step.hopCount === 1));
+  });
+
   test("marks mixed as recommended for a 4-hop route", () => {
     const planned = buildPlannedTraversalRoute(buildRoute());
 

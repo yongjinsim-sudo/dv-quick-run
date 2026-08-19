@@ -20,6 +20,12 @@ export type DvqrLiveMcpFreeHandlerId =
   | "findRelationshipPaths"
   | "discoverBusinessPaths"
   | "validateBusinessPaths"
+  | "listBusinessPaths"
+  | "getBusinessPath"
+  | "saveBusinessPath"
+  | "deleteBusinessPath"
+  | "revalidateBusinessPath"
+  | "testBusinessPath"
   | "generateRelationshipQuery"
   | "probeRelationshipPath"
   | "explainLookup";
@@ -341,7 +347,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
     name: "dvqr_discover_business_paths",
     handler: { kind: "free", id: "discoverBusinessPaths" },
     title: "Discover Business Paths",
-    description: "Pass 10.1.1 metadata-only business-path discovery with depth-diverse candidate generation. Use when the user wants likely multi-hop business routes between two Dataverse tables rather than merely the shortest relationship. Direct relationships remain baseline candidates but do not suppress plausible deeper workflow routes. Discovers only metadata-verified paths, then ranks them using deterministic structural and business-semantic signals from table and relationship metadata. It does NOT query records, prove runtime viability, or mark any route business-preferred. Use dvqr_find_relationship_paths for exact relationship-shape questions; use this tool when the business flow itself is the question.",
+    description: "Pass 10.1.1 metadata-only business-path discovery with depth-diverse candidate generation. Use when the user wants likely multi-hop business routes between two Dataverse tables rather than merely the shortest relationship. Direct relationships remain baseline candidates but do not suppress plausible deeper workflow routes. Discovers only metadata-verified paths, then ranks them using deterministic structural and business-semantic signals from table and relationship metadata. It does NOT query records, prove runtime viability, or mark any route business-preferred. Use dvqr_find_relationship_paths for exact relationship-shape questions; use this tool when the business flow itself is the question. Pass 8.2 additionally consumes Managed Business Path preference from the current workspace: when a matching enabled Preferred Business Path exists, the tool revalidates it and returns it as the top-visible workspace recommendation BEFORE metadata-ranked discovered alternatives, without changing discovery scores or alternative ordering. Therefore use this tool directly for prompts such as 'find the best way from contact to task' rather than separately rediscovering first. Preferred means explicit workspace/organisational guidance, not algorithmic rank or current runtime proof. If a Preferred path is returned and the user supplies a source record, use dvqr_test_business_path rather than manually reconstructing the route with OData.",
     tier: "free",
     inputSchema: {
       type: "object", additionalProperties: false, required: ["sourceTable", "targetTable"],
@@ -358,7 +364,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
     name: "dvqr_validate_business_paths",
     handler: { kind: "free", id: "validateBusinessPaths" },
     title: "Validate Business Paths",
-    description: "Pass 10.2 bounded runtime validation for Pass 10.1 business-path candidates, hardened by Pass 10.2.1 resilience. Starting from one real source record, it discovers a broad metadata-valid candidate pool, executes selected candidates independently hop-by-hop, records bounded observed continuation counts and exact breakpoints, exposes when a count reached the observation limit so it is not mistaken for an exact total, preserves access-denied/execution failures as indeterminate candidate outcomes instead of aborting the cohort, and explicitly marks budget-limited candidates NotTested. Direct relationships remain runtime baselines. Runtime preference is evidence for this source record only and never persistent organisational truth.",
+    description: "Pass 10.2 bounded runtime validation for Pass 10.1 business-path candidates, preserving the v0.15.8 asserted-business-traversal contract. IMPORTANT: when the user names or selects an exact business table sequence, pass it in assertedBusinessPathTables; when exact relationship variants are known, also pass assertedBusinessPathRelationshipSchemaNames. DVQR forces the asserted candidate into the bounded runtime cohort, validates candidates hop-by-hop, and keeps shorter runtime shortcuts separate. Only promotionDecision.eligible=true identifies the exact asserted traversal as eligible for persistence from this validation result. When eligible, DVQR also returns saveFollowUp with a short-lived promotion authorization. Present that follow-up question and STOP; do not save in the same turn. On a later explicit user confirmation, call dvqr_save_business_path with promotionAuthorizationId and confirmSave=true; name is optional and defaults to DVQR's suggested route name. Never reconstruct intendedTables/hops from conversation and never substitute runtimePreferredPath or another shortcut. Runtime ranking remains evidence for this source record only and never persistent organisational truth.",
     tier: "free",
     inputSchema: {
       type: "object", additionalProperties: false, required: ["sourceTable", "targetTable", "sourceRecordId"],
@@ -366,11 +372,162 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
         sourceTable: { type: "string" },
         targetTable: { type: "string" },
         sourceRecordId: { type: "string", description: "Real Dataverse source-record GUID used for bounded hop-by-hop validation." },
+        assertedBusinessPathTables: {
+          type: "array",
+          minItems: 2,
+          maxItems: 7,
+          items: { type: "string" },
+          description: "Exact ordered table sequence explicitly selected/asserted by the user, for example contact -> msemr_careplan -> msemr_careplanactivity -> bu_task. When supplied, DVQR must preserve this route as the business hypothesis and must not replace it with a shorter runtime shortcut."
+        },
+        assertedBusinessPathRelationshipSchemaNames: {
+          type: "array",
+          minItems: 1,
+          maxItems: 6,
+          items: { type: "string" },
+          description: "Optional exact ordered relationship schema names for the asserted table sequence. When supplied, only that exact relationship variant can satisfy the asserted traversal."
+        },
         maxDepth: { type: "integer", minimum: 2, maximum: 6, default: 5 },
         maxCandidates: { type: "integer", minimum: 1, maximum: 8, default: 5 },
         maxRecordsPerStep: { type: "integer", minimum: 1, maximum: 10, default: 3 },
         maxProbeRequests: { type: "integer", minimum: 1, maximum: 30, default: 16 },
         environmentUrl: { type: "string" }
+      }
+    }
+  },
+  {
+    name: "dvqr_list_business_paths",
+    handler: { kind: "free", id: "listBusinessPaths" },
+    title: "List Managed Business Paths",
+    description: "List workspace-managed Business Paths. These are explicit saved preferences, not current Dataverse truth. By default returns enabled Preferred paths; set includeDisabled=true to include disabled artifacts. Use this before asking the user to choose or manage an existing saved route.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        sourceTable: { type: "string", description: "Optional source-table logical-name filter." },
+        targetTable: { type: "string", description: "Optional target-table logical-name filter." },
+        includeDisabled: { type: "boolean", default: false }
+      }
+    }
+  },
+  {
+    name: "dvqr_get_business_path",
+    handler: { kind: "free", id: "getBusinessPath" },
+    title: "Get Managed Business Path",
+    description: "Load one exact workspace-managed Business Path by pathId. Returns saved route identity, preference state, historical verification provenance, and exact relationship hops. It does not revalidate current metadata or test runtime rows.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["pathId"],
+      properties: {
+        pathId: { type: "string", description: "Exact bp_<id> copied from dvqr_list_business_paths or another DVQR managed-path result." }
+      }
+    }
+  },
+  {
+    name: "dvqr_save_business_path",
+    handler: { kind: "free", id: "saveBusinessPath" },
+    title: "Save Preferred Business Path",
+    description: "MUTATION. Save or update a workspace Preferred Business Path only after explicit user confirmation. PREFERRED MODE: after dvqr_validate_business_paths returns saveFollowUp, pass promotionAuthorizationId plus name and confirmSave=true. DVQR loads the exact asserted route from its short-lived server-held authorization; do NOT reconstruct or redefine intendedTables or hops. This preserves the route that was canonically runtime-validated and carries that bounded verification provenance into the saved artifact. MANUAL MODE remains available for explicitly reviewed routes and requires sourceTable, targetTable, intendedTables and exact hops; manual saves remain not-runtime-verified. A promotion authorization is single-use and expires. Never use a runtime shortcut as a substitute for an asserted route unless the user separately selects that shortcut.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["confirmSave"],
+      properties: {
+        name: { type: "string", description: "Optional in authorized save-follow-up mode; DVQR uses saveFollowUp.suggestedName when omitted. Required for manual save mode." },
+        description: { type: "string" },
+        promotionAuthorizationId: {
+          type: "string",
+          description: "Preferred save mode. Exact short-lived authorizationId returned by saveFollowUp/promotionDecision.authorization from dvqr_validate_business_paths. When supplied, DVQR ignores conversational route reconstruction and loads the exact validated asserted route from server-held state."
+        },
+        sourceTable: { type: "string" },
+        targetTable: { type: "string" },
+        intendedTables: {
+          type: "array",
+          minItems: 2,
+          maxItems: 7,
+          items: { type: "string" },
+          description: "Manual-save mode only. Exact ordered business table sequence explicitly selected for persistence. Do not reconstruct this when promotionAuthorizationId is available."
+        },
+        priority: { type: "integer", minimum: 0 },
+        confirmSave: { type: "boolean", description: "Must be true only after explicit user intent to persist this exact route." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        hops: {
+          type: "array",
+          minItems: 1,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["fromTable", "toTable", "relationshipSchemaName", "relationshipType", "direction"],
+            properties: {
+              fromTable: { type: "string" },
+              toTable: { type: "string" },
+              relationshipSchemaName: { type: "string" },
+              relationshipType: { type: "string", enum: ["ManyToOne", "OneToMany", "ManyToMany"] },
+              direction: { type: "string", enum: ["forward", "reverse"] },
+              navigationProperty: { type: "string" },
+              lookupAttribute: { type: "string" },
+              intersectTable: { type: "string" },
+              polymorphicTarget: { type: "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    name: "dvqr_remove_business_path",
+    handler: { kind: "free", id: "deleteBusinessPath" },
+    title: "Delete Managed Business Path",
+    description: "MUTATION. Delete one workspace Business Path preference by exact pathId. Call ONLY after explicit user intent to delete it. confirmDelete=true is mandatory. This never deletes Dataverse metadata or historical investigation evidence.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["pathId", "confirmDelete"],
+      properties: {
+        pathId: { type: "string" },
+        confirmDelete: { type: "boolean", description: "Must be true only after explicit user intent to delete this managed path." }
+      }
+    }
+  },
+  {
+    name: "dvqr_revalidate_business_path",
+    handler: { kind: "free", id: "revalidateBusinessPath" },
+    title: "Revalidate Managed Business Path",
+    description: "Revalidate one saved Business Path against current Dataverse metadata. Returns valid, stale, or unknown plus exact broken-hop diagnostics. This does not query records and does not establish current runtime viability.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["pathId"],
+      properties: {
+        pathId: { type: "string" },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+      }
+    }
+  },
+  {
+    name: "dvqr_test_business_path",
+    handler: { kind: "free", id: "testBusinessPath" },
+    title: "Test Saved Preferred Business Path",
+    description: "Test one saved Preferred Business Path against a source record using DVQR's existing bounded runtime validator. This is the canonical tool for prompts such as 'test my saved path' or 'use this Preferred Business Path for this contact'; do NOT manually reconstruct the saved route with dvqr_execute_odata when this tool applies. DVQR first revalidates the exact saved relationship identities, then places that exact route first in the existing runtime-validation cohort while retaining alternatives. A successful exact-path run refreshes historical verification provenance by default; an empty, access-limited or failed run never downgrades an earlier successful verification. This tool never writes to Dataverse.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["pathId", "sourceRecordId"],
+      properties: {
+        pathId: { type: "string", description: "Exact bp_<id> of the saved Preferred Business Path." },
+        sourceRecordId: { type: "string", description: "Source-table record ID to test." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        refreshVerification: { type: "boolean", default: true, description: "When true, a successful exact saved-path run refreshes structured historical verification provenance. Set false for a read-only runtime test." },
+        maxCandidates: { type: "integer", minimum: 1, maximum: 8, default: 5 },
+        maxDepth: { type: "integer", minimum: 2, maximum: 6, default: 5 },
+        maxRecordsPerStep: { type: "integer", minimum: 1, maximum: 10, default: 5 },
+        maxProbeRequests: { type: "integer", minimum: 1, maximum: 30, default: 16 }
       }
     }
   },

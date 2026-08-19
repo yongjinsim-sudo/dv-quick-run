@@ -106,6 +106,7 @@ export type TraversalSubpath = {
 
 export type TraversalRoute = {
   routeId: string;
+  selectionAuthority?: "workspacePreferred";
   sourceEntity: string;
   targetEntity: string;
   entities: string[];
@@ -137,6 +138,12 @@ export type TraversalExecutionPlan = {
   label: "Compact" | "Mixed" | "Detailed";
   rationale: string;
   steps: TraversalExecutionStep[];
+  /**
+   * Workspace Preferred Business Paths preserve every persisted relationship
+   * as an execution boundary. The executor must not collapse these hops into
+   * nested expands or reinterpret the route.
+   */
+  preserveExactHops?: boolean;
   recommended?: boolean;
 };
 
@@ -233,9 +240,9 @@ export type TraversalViewerContext = {
 
 export type ContinueTraversalRequest = {
   traversalSessionId: string;
-  legIndex: number;
-  carryField: string;
-  carryValue: string;
+  legIndex?: number;
+  carryField?: string;
+  carryValue?: string;
 };
 
 export type ActiveTraversalProgress = {

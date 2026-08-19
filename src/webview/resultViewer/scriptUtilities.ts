@@ -1589,14 +1589,18 @@ function showCopyStatus(message) {
                 ? "<span class='traversal-status-subtitle'>" + escapeHtml(traversal.subtitle) + "</span>"
                 : "";
 
-            const carryHint = traversal.requiredCarryField
-                ? "<span class='traversal-status-subtitle'> • Choose a row to continue using " + escapeHtml(traversal.requiredCarryField) + "</span>"
+            const carryHint = traversal.requiredCarryField && traversal.hasNextLeg
+                ? "<span class='traversal-status-subtitle'> • Continue keeps the landed rows in scope; choose a row only to follow that branch using " + escapeHtml(traversal.requiredCarryField) + "</span>"
                 : "";
 
+            const canContinue = !!traversal.traversalSessionId && !!traversal.hasNextLeg;
             const canGoBack = !!traversal.traversalSessionId && !!traversal.canGoBack;
             const canChangeRoute = !!traversal.traversalSessionId && !!traversal.canChangeRoute;
-            const actions = (canGoBack || canChangeRoute)
+            const actions = (canContinue || canGoBack || canChangeRoute)
                 ? "<span class='traversal-status-actions'>" +
+                    (canContinue
+                        ? "<button type='button' class='traversal-status-action' data-traversal-action='continue' title='Continue the Guided Traversal using the bounded set of rows landed at this step'>Continue</button>"
+                        : "") +
                     (canGoBack
                         ? "<button type='button' class='traversal-status-action' data-traversal-action='back' title='Go back to the previous Guided Traversal step'>← Back</button>"
                         : "") +

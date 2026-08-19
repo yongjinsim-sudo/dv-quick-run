@@ -15,6 +15,12 @@ import type { TraversalRoute } from "../shared/traversal/traversalTypes.js";
 export type TraversalStartOptions = {
   isBestMatchRoute?: boolean;
   routeOptions?: TraversalRoute[];
+  /**
+   * Exact Preferred Business Path execution is record-scoped, like the MCP
+   * runtime validator. Without this seed, traversal must not broaden to the
+   * whole source table.
+   */
+  sourceRecordId?: string;
 };
 
 export type TraversalScopeSettings = {

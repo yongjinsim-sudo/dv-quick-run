@@ -74,6 +74,152 @@ export function buildStepExecutionPlan(
   };
 }
 
+
+function normalizeNavigationResult(result: unknown): Record<string, unknown>[] {
+  if (!result || typeof result !== "object") {
+    return [];
+  }
+
+  if (Array.isArray((result as { value?: unknown }).value)) {
+    return ((result as { value: unknown[] }).value)
+      .filter((item): item is Record<string, unknown> =>
+        !!item && typeof item === "object" && !Array.isArray(item)
+      );
+  }
+
+  return Array.isArray(result)
+    ? result.filter((item): item is Record<string, unknown> =>
+        !!item && typeof item === "object" && !Array.isArray(item)
+      )
+    : [result as Record<string, unknown>];
+}
+
+function dedupeBoundedRows(
+  rows: readonly Record<string, unknown>[],
+  primaryIdAttribute: string | undefined
+): Record<string, unknown>[] {
+  const bounded: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+
+  for (const row of rows) {
+    const id = primaryIdAttribute && typeof row[primaryIdAttribute] === "string"
+      ? String(row[primaryIdAttribute]).trim().toLowerCase()
+      : "";
+
+    if (id && seen.has(id)) {
+      continue;
+    }
+    if (id) {
+      seen.add(id);
+    }
+
+    bounded.push(row);
+    if (bounded.length >= MAX_CONTINUATION_SCOPE_IDS) {
+      break;
+    }
+  }
+
+  return bounded;
+}
+
+async function executeExactPreferredHop(
+  ctx: CommandContext,
+  graph: TraversalGraph,
+  step: TraversalExecutionStep,
+  landingContext: TraversalLandingContext,
+  startQuerySequenceNumber: number,
+  viewerOptions?: ResultViewerLaunchOptions & { siblingExpandClause?: string }
+): Promise<ExecutionResult> {
+  const edge = step.edges[0];
+  const sourceNode = graph.entities[step.fromEntity];
+  const targetNode = graph.entities[step.toEntity];
+
+  if (!edge || step.hopCount !== 1 || !sourceNode || !targetNode) {
+    throw new Error("Preferred Business Path exact-hop execution requires one resolved relationship hop.");
+  }
+
+  const sourceIds = getRestrictedContinuationIds(landingContext, step) ?? [];
+  if (!sourceIds.length) {
+    throw new Error(`No landed ${step.fromEntity} records are available for exact Preferred Business Path continuation.`);
+  }
+
+  const client = ctx.getClient();
+  const token = await ctx.getToken(ctx.getScope());
+  const targetSelect = buildSafeSelectFields(targetNode);
+  const allRows: Record<string, unknown>[] = [];
+  const executedQueries: TraversalStepQuery[] = [];
+  let lastQueryPath = "";
+
+  for (let index = 0; index < sourceIds.length; index++) {
+    const sourceId = sourceIds[index]!;
+    const queryPath = normalizeTraversalQueryPath(
+      `${sourceNode.entitySetName}(${sourceId})/${edge.navigationPropertyName}?$select=${targetSelect.join(",")}&$top=${MAX_CONTINUATION_SCOPE_IDS}`
+    );
+    const queryNumber = startQuerySequenceNumber + index;
+
+    logInfo(ctx.output, `  Query ${queryNumber}: GET ${queryPath}`);
+    logDebug(ctx.output, `GET ${queryPath}`);
+
+    const result = await client.get(queryPath, token);
+    allRows.push(...normalizeNavigationResult(result));
+    lastQueryPath = queryPath;
+    executedQueries.push({
+      queryNumber,
+      queryPath,
+      sourceEntity: step.fromEntity,
+      targetEntity: step.toEntity,
+      purpose: `exact Preferred Business Path hop ${step.fromEntity} to ${step.toEntity}`
+    });
+
+    if (dedupeBoundedRows(allRows, targetNode.primaryIdAttribute).length >= MAX_CONTINUATION_SCOPE_IDS) {
+      break;
+    }
+  }
+
+  const rows = dedupeBoundedRows(allRows, targetNode.primaryIdAttribute);
+  const finalResult = buildProjectedResult(rows);
+  const finalQueryPath = lastQueryPath || normalizeTraversalQueryPath(targetNode.entitySetName);
+  const executionPlan: TraversalStepExecutionPlan = {
+    mode: "chained_queries",
+    mainMissionTarget: step.toEntity,
+    queries: executedQueries,
+    rationale: [
+      "workspace Preferred Business Path exact-hop execution",
+      `preserved relationship ${edge.schemaName ?? edge.navigationPropertyName}`,
+      "bounded source frontier executed through the exact navigation property",
+      "target rows were merged and deduplicated before continuation"
+    ],
+    usedFallback: false,
+    enrichmentCandidates: buildEnrichmentCandidates(graph, step.toEntity)
+  };
+
+  logInfo(ctx.output, `Result rows after exact-hop merge: ${rows.length}`);
+
+  await showResultViewerForQuery(ctx, finalResult, finalQueryPath, {
+    ...viewerOptions,
+    landedEntity: {
+      entitySetName: targetNode.entitySetName,
+      logicalName: targetNode.logicalName,
+      primaryIdAttribute: targetNode.primaryIdAttribute
+    }
+  });
+
+  const landedIds = extractLandingIds(graph, step.toEntity, finalResult);
+  logInfo(ctx.output, `Current landing: ${step.toEntity} (${landedIds.length} row(s))`);
+
+  return {
+    finalResult,
+    finalQueryPath,
+    executionPlan,
+    landing: {
+      entityName: step.toEntity,
+      ids: landedIds
+    },
+    executedQueryCount: executedQueries.length,
+    executedQueries
+  };
+}
+
 export async function executeTraversalStep(
   ctx: CommandContext,
   graph: TraversalGraph,
@@ -83,6 +229,21 @@ export async function executeTraversalStep(
   startQuerySequenceNumber = 1,
   viewerOptions?: ResultViewerLaunchOptions & { siblingExpandClause?: string }
 ): Promise<ExecutionResult> {
+  if (
+    itinerary.preserveExactHops === true
+    && landingContext
+    && landingContext.entityName === step.fromEntity
+  ) {
+    return executeExactPreferredHop(
+      ctx,
+      graph,
+      step,
+      landingContext,
+      startQuerySequenceNumber,
+      viewerOptions
+    );
+  }
+
   const client = ctx.getClient();
   const token = await ctx.getToken(ctx.getScope());
 

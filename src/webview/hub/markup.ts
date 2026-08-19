@@ -313,7 +313,7 @@ function renderReleaseHighlights(): string {
     ["Built on Managed Investigation", "Pro journeys continue to use the persisted v0.15.8 investigation protocol for bounded evidence, readiness, Mini RCA and handoff."]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.15.9</h2>
+    <h2>What's New in v0.16.0</h2>
     <p class="dvqr-section-note">Discoverability &amp; Guided Investigation: 94 curated prompts, Quick Starts, category/search/tier filtering, guided next prompts, and Free MCP Operational Profile + DVQR Score.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;

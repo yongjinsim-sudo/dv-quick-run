@@ -350,7 +350,28 @@ suite("resultViewModelBuilder", () => {
     assert.strictEqual(model.rows.length, 0);
     assert.strictEqual(model.rowCount, 0);
   });
-  test("preserves traversal toolbar state including sibling expand availability", () => {
+
+  test("suppresses traversal Continue when the current landing has zero rows", () => {
+    const model = buildResultViewerModel({ value: [] }, "careplanactivities?$select=activityid", {
+      primaryIdField: "activityid",
+      traversalContext: {
+        traversalSessionId: "session-empty",
+        legIndex: 1,
+        legCount: 3,
+        hasNextLeg: true,
+        nextLegEntityName: "bu_task",
+        currentEntityName: "msemr_careplanactivity",
+        isFinalLeg: false,
+        canSiblingExpand: true
+      }
+    });
+
+    assert.strictEqual(model.rowCount, 0);
+    assert.strictEqual(model.traversal?.hasNextLeg, false);
+    assert.strictEqual(model.traversal?.nextLegEntityName, undefined);
+  });
+
+  test("preserves traversal toolbar state including frontier continuation and sibling expand availability", () => {
     const result = {
       value: [
         {
@@ -364,15 +385,18 @@ suite("resultViewModelBuilder", () => {
       traversalContext: {
         traversalSessionId: "session-1",
         legIndex: 0,
-        legCount: 1,
-        hasNextLeg: false,
-        currentEntityName: "contact",
-        isFinalLeg: true,
+        legCount: 3,
+        hasNextLeg: true,
+        nextLegEntityName: "msemr_careplanactivity",
+        currentEntityName: "msemr_careplan",
+        isFinalLeg: false,
         canSiblingExpand: true
       }
     });
 
     assert.strictEqual(model.traversal?.traversalSessionId, "session-1");
+    assert.strictEqual(model.traversal?.hasNextLeg, true);
+    assert.strictEqual(model.traversal?.nextLegEntityName, "msemr_careplanactivity");
     assert.strictEqual(model.traversal?.canSiblingExpand, true);
   });
 

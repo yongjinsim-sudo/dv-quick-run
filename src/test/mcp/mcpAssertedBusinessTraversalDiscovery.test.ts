@@ -121,9 +121,222 @@ suite("mcp asserted business traversal discovery", () => {
     assert.strictEqual(content.assertedBusinessTraversal.metadataResolution, "ResolvedCandidates");
     assert.strictEqual(content.assertedBusinessTraversal.reachedTarget, true);
     assert.deepStrictEqual(content.businessPreferredTraversal.tables, ["alpha", "beta", "gamma", "omega"]);
+    assert.strictEqual(content.promotionDecision.eligible, true);
+    assert.deepStrictEqual(content.promotionDecision.tables, ["alpha", "beta", "gamma", "omega"]);
+    assert.match(content.promotionDecision.authorization.authorizationId, /^bpa_/);
+    assert.strictEqual(content.promotionDecision.authorization.singleUse, true);
+    assert.strictEqual(content.saveFollowUp.shouldAskUser, true);
+    assert.match(content.saveFollowUp.question, /Would you like to save this as a Preferred Business Path/i);
+    assert.strictEqual(content.saveFollowUp.authorizationId, content.promotionDecision.authorization.authorizationId);
+    assert.match(content.saveFollowUp.instruction, /STOP/i);
+    assert.notStrictEqual(content.promotionDecision.pathId, content.runtimePreferredPath.pathId);
     assert.strictEqual(content.businessPreferredTraversal.completedHops, 3);
     assert.strictEqual(content.businessPreferredTraversal.reachedTarget, true);
     assert.deepStrictEqual(content.runtimePreferredPath.tables, ["alpha", "omega"]);
+  });
+
+
+
+  test("blocks promotion when only a shorter runtime shortcut is viable", async () => {
+    const asserted = {
+      pathId: "alpha:alpha_beta:beta|beta:beta_gamma:gamma|gamma:gamma_omega:omega",
+      tables: ["alpha", "beta", "gamma", "omega"],
+      bridgeTables: ["beta", "gamma"],
+      hops: [edge("alpha", "beta", "alpha_beta"), edge("beta", "gamma", "beta_gamma"), edge("gamma", "omega", "gamma_omega")],
+      score: 90,
+      family: "asserted",
+      reasons: []
+    };
+    const shortcut = {
+      pathId: "alpha:alpha_omega:omega",
+      tables: ["alpha", "omega"],
+      bridgeTables: [],
+      hops: [edge("alpha", "omega", "alpha_omega")],
+      score: 100,
+      family: "shortcut",
+      reasons: []
+    };
+    const metadata = {
+      metadataContext: async () => ({ baseEnvironmentUrl: "https://example.crm.dynamics.com", token: "token" }),
+      discoverDepthDiverseBusinessPaths: async () => ({
+        ranked: [shortcut, asserted],
+        nodes: new Set(["alpha", "beta", "gamma", "omega"]),
+        edges: [...shortcut.hops, ...asserted.hops],
+        coverage: { tablesInspected: 4, directPathsFound: 1, bridgedPathsFound: 1, operationalHubsInspected: [], explorationComplete: true }
+      }),
+      fetchEntityCatalogue: async () => [],
+      getCachedDepthDiverseBusinessPaths: () => undefined,
+      getCachedEntityCatalogue: () => undefined
+    };
+    const probes = {
+      probeRankedRelationshipPath: async (_context: unknown, path: any) => {
+        const viable = path.pathId === shortcut.pathId;
+        return {
+          observation: {
+            pathId: path.pathId,
+            tables: path.tables,
+            targetTable: "omega",
+            family: path.family,
+            metadataScore: path.score,
+            status: viable ? "TargetObserved" : "NoContinuationObserved",
+            reachedTarget: viable,
+            completedHops: viable ? 1 : 1,
+            totalHops: path.hops.length,
+            intermediateRowsObserved: 0,
+            finalTargetRecordCount: viable ? 3 : 0,
+            runtimeEvidenceScore: viable ? 100 : -5,
+            investigationScore: viable ? 200 : 80,
+            reasons: []
+          },
+          reachedTarget: viable,
+          finalTargetRecordIds: viable ? ["id"] : [],
+          probeRequestsUsed: path.hops.length,
+          steps: path.hops.map((_hop: unknown, index: number) => ({
+            index: index + 1,
+            continuationRecordCount: viable ? 3 : 0,
+            status: viable ? "DataObserved" : "NoMatchingDataObserved"
+          }))
+        };
+      }
+    };
+
+    const service = new McpBusinessPathRuntimeValidationApplicationService(metadata as any, probes as any);
+    const result = await service.validateBusinessPaths({
+      sourceTable: "alpha",
+      targetTable: "omega",
+      sourceRecordId: "00000000-0000-0000-0000-000000000001",
+      assertedBusinessPathTables: ["alpha", "beta", "gamma", "omega"],
+      maxDepth: 4,
+      maxCandidates: 2,
+      maxProbeRequests: 10
+    });
+
+    assert.strictEqual(result.ok, true);
+    const content = (result as any).structuredContent;
+    assert.strictEqual(content.runtimePreferredPath.pathId, shortcut.pathId);
+    assert.strictEqual(content.assertedBusinessTraversal.reachedTarget, false);
+    assert.strictEqual(content.businessPreferredTraversal, undefined);
+    assert.strictEqual(content.promotionDecision.eligible, false);
+    assert.strictEqual(content.promotionDecision.authorization, undefined);
+    assert.strictEqual(content.saveFollowUp, undefined);
+    assert.deepStrictEqual(content.promotionDecision.tables, ["alpha", "beta", "gamma", "omega"]);
+    assert.match(content.promotionDecision.rule, /Do not promote runtimePreferredPath/i);
+  });
+
+  test("uses exact saved relationship identity and probes the Preferred variant before alternatives", async () => {
+    const patient = {
+      pathId: "alpha:patient_role:beta|beta:beta_omega:omega",
+      tables: ["alpha", "beta", "omega"],
+      bridgeTables: ["beta"],
+      hops: [edge("alpha", "beta", "patient_role"), edge("beta", "omega", "beta_omega")],
+      score: 80,
+      family: "patient",
+      reasons: []
+    };
+    const author = {
+      ...patient,
+      pathId: "alpha:author_role:beta|beta:beta_omega:omega",
+      hops: [edge("alpha", "beta", "author_role"), edge("beta", "omega", "beta_omega")],
+      score: 99,
+      family: "author"
+    };
+    const shortcut = {
+      pathId: "alpha:alpha_omega:omega",
+      tables: ["alpha", "omega"],
+      bridgeTables: [],
+      hops: [edge("alpha", "omega", "alpha_omega")],
+      score: 100,
+      family: "shortcut",
+      reasons: []
+    };
+    const discovery = {
+      ranked: [shortcut, author, patient],
+      nodes: new Set(["alpha", "beta", "omega"]),
+      edges: [...shortcut.hops, ...author.hops, patient.hops[0]],
+      coverage: {
+        tablesInspected: 3,
+        directPathsFound: 1,
+        bridgedPathsFound: 2,
+        operationalHubsInspected: [],
+        explorationComplete: true
+      }
+    };
+    const metadata = {
+      metadataContext: async () => ({ baseEnvironmentUrl: "https://example.crm.dynamics.com", token: "token" }),
+      discoverDepthDiverseBusinessPaths: async () => discovery,
+      fetchEntityCatalogue: async () => [],
+      getCachedDepthDiverseBusinessPaths: () => undefined,
+      getCachedEntityCatalogue: () => undefined
+    };
+    const probeOrder: string[] = [];
+    const probes = {
+      probeRankedRelationshipPath: async (_context: unknown, path: any) => {
+        probeOrder.push(path.pathId);
+        const viable = path.pathId === patient.pathId || path.pathId === shortcut.pathId;
+        const counts = path.pathId === patient.pathId ? [1, 2] : path.pathId === shortcut.pathId ? [3] : [0];
+        return {
+          observation: {
+            pathId: path.pathId,
+            tables: path.tables,
+            targetTable: "omega",
+            family: path.family,
+            metadataScore: path.score,
+            status: viable ? "TargetObserved" : "NoContinuationObserved",
+            reachedTarget: viable,
+            completedHops: viable ? path.hops.length : 1,
+            totalHops: path.hops.length,
+            intermediateRowsObserved: path.pathId === patient.pathId ? 1 : 0,
+            finalTargetRecordCount: viable ? counts[counts.length - 1] : 0,
+            runtimeEvidenceScore: path.pathId === shortcut.pathId ? 60 : viable ? 30 : -5,
+            investigationScore: viable ? 130 : 80,
+            reasons: []
+          },
+          reachedTarget: viable,
+          finalTargetRecordIds: viable ? ["id"] : [],
+          probeRequestsUsed: path.hops.length,
+          steps: counts.map((count: number, index: number) => ({
+            index: index + 1,
+            continuationRecordCount: count,
+            status: count ? "DataObserved" : "NoMatchingDataObserved"
+          }))
+        };
+      }
+    };
+
+    const service = new McpBusinessPathRuntimeValidationApplicationService(metadata as any, probes as any);
+    const result = await service.validateBusinessPaths({
+      sourceTable: "alpha",
+      targetTable: "omega",
+      sourceRecordId: "00000000-0000-0000-0000-000000000001",
+      assertedBusinessPathTables: ["alpha", "beta", "omega"],
+      assertedBusinessPathRelationshipSchemaNames: ["patient_role", "beta_omega"],
+      preferredBusinessPathId: "bp_12345678",
+      preferredBusinessPathHistoricalVerification: "verified",
+      preferredBusinessPathHistoricallyVerifiedInActiveEnvironment: true,
+      maxCandidates: 2,
+      maxProbeRequests: 10
+    });
+
+    assert.strictEqual(result.ok, true);
+    const content = (result as any).structuredContent;
+    assert.strictEqual(probeOrder[0], patient.pathId, "the exact saved Preferred path must consume runtime budget first");
+    assert.strictEqual(content.assertedBusinessTraversal.relationshipVariantsResolved, 1);
+    assert.strictEqual(content.assertedBusinessTraversal.exactRelationshipVariantRequested, true);
+    assert.deepStrictEqual(
+      content.assertedBusinessTraversal.relationshipSchemaNames,
+      ["patient_role", "beta_omega"]
+    );
+    assert.strictEqual(content.businessPreferredTraversal.pathId, patient.pathId);
+    assert.strictEqual(content.promotionDecision.eligible, true);
+    assert.strictEqual(content.promotionDecision.authorization, undefined);
+    assert.strictEqual(content.saveFollowUp, undefined, "testing an already-saved Preferred path must not offer to save it again");
+    assert.strictEqual(content.preferredBusinessPath.pathId, "bp_12345678");
+    assert.strictEqual(content.preferredBusinessPath.source, "BusinessPathLibrary");
+    assert.strictEqual(content.preferredBusinessPath.metadataRevalidation, "Valid");
+    assert.strictEqual(
+      content.preferredBusinessPath.runtimeEvidenceScope,
+      "CurrentRunIsSeparateFromHistoricalVerification"
+    );
   });
 
   test("preserves bounded relationship variants for the same asserted table sequence", async () => {
@@ -235,5 +448,8 @@ suite("mcp asserted business traversal discovery", () => {
     assert.strictEqual(content.businessPreferredTraversal.businessAuthority, "AssertedBusinessTraversal");
     assert.strictEqual(content.runtimePreferredPath.pathId, shortcut.pathId);
     assert.strictEqual(content.runtimePreferredPath.businessAuthority, "RuntimeShortcut");
+    assert.strictEqual(content.promotionDecision.eligible, true);
+    assert.strictEqual(content.promotionDecision.pathId, assertedViable.pathId);
+    assert.deepStrictEqual(content.promotionDecision.tables, ["alpha", "beta", "omega"]);
   });
 });

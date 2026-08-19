@@ -89,6 +89,173 @@ function buildGraph(): TraversalGraph {
 }
 
 suite("traversalRoutePickerService", () => {
+
+  test("shows a valid Preferred Business Path first and removes its exact discovered duplicate from normal groups", async () => {
+    const ctx = createStubContext();
+    const graph = buildGraph();
+    const preferredRoute = buildRoute({
+      routeId: "route-preferred",
+      entities: ["account", "contact"],
+      edgeNames: ["primarycontactid"]
+    });
+    const alternativeRoute = buildRoute({
+      routeId: "route-alternative",
+      entities: ["account", "task"],
+      edgeNames: ["regardingobjectid_task"]
+    });
+
+    const labels: string[][] = [];
+
+    const selected = await pickTraversalRouteFromQuickPick(
+      ctx,
+      graph,
+      [preferredRoute, alternativeRoute],
+      {
+        showRouteGroupQuickPick: async (picks) => {
+          labels.push(picks.map((item) => item.label));
+          return picks[0];
+        },
+        openGraphView: async () => undefined,
+        loadBusinessPathOverlay: async (_ctx, _graph, routes) => ({
+          discoveredRoutes: routes,
+          preferredPaths: [{
+            artifact: {
+              schemaVersion: "dvqr-business-path-v1",
+              id: "bp_12345678",
+              name: "Our Account to Contact route",
+              sourceTable: "account",
+              targetTable: "contact",
+              state: "preferred",
+              hops: [{
+                ordinal: 1,
+                fromTable: "account",
+                toTable: "contact",
+                relationshipSchemaName: "account_primary_contact",
+                relationshipType: "ManyToOne",
+                direction: "forward",
+                navigationProperty: "primarycontactid"
+              }],
+              provenance: {
+                promotedFrom: "runtime-validation",
+                promotedAt: "2026-08-18T00:00:00.000Z",
+                promotedBy: "user"
+              },
+              verification: {
+                status: "verified",
+                verifiedAt: "2026-08-18T00:00:00.000Z",
+                bounded: true
+              },
+              createdAt: "2026-08-18T00:00:00.000Z",
+              updatedAt: "2026-08-18T00:00:00.000Z"
+            },
+            validation: {
+              pathId: "bp_12345678",
+              state: "valid",
+              historicallyVerifiedInActiveEnvironment: null,
+              checkedTables: ["account", "contact"],
+              checkedHops: 1,
+              issues: []
+            },
+            state: "valid",
+            route: preferredRoute,
+            duplicateDiscoveredRouteId: preferredRoute.routeId
+          }]
+        })
+      }
+    );
+
+    assert.strictEqual(selected?.routeId, preferredRoute.routeId);
+    assert.strictEqual(selected?.selectionAuthority, "workspacePreferred");
+    assert.ok(labels[0]);
+    assert.strictEqual(labels[0]![0], "★ Our Account to Contact route");
+    assert.strictEqual(
+      labels[0]!.filter((label) => label.includes("account -> contact")).length,
+      0,
+      "the discovered duplicate must not appear again as a normal route group"
+    );
+  });
+
+  test("keeps a stale Preferred Business Path top-visible but does not select it", async () => {
+    const ctx = createStubContext();
+    const graph = buildGraph();
+    const route = buildRoute({
+      routeId: "route-a",
+      entities: ["account", "contact"],
+      edgeNames: ["primarycontactid"]
+    });
+
+    const labels: string[][] = [];
+    const warnings: string[] = [];
+    let call = 0;
+
+    const selected = await pickTraversalRouteFromQuickPick(
+      ctx,
+      graph,
+      [route],
+      {
+        showRouteGroupQuickPick: async (picks) => {
+          labels.push(picks.map((item) => item.label));
+          call += 1;
+          return call === 1
+            ? picks.find((item) => item.choiceKind === "preferred_notice")
+            : picks.find((item) => item.choiceKind === "route" || item.choiceKind === "route_group");
+        },
+        openGraphView: async () => undefined,
+        showWarningMessage: (message) => {
+          warnings.push(message);
+          return undefined;
+        },
+        loadBusinessPathOverlay: async (_ctx, _graph, routes) => ({
+          discoveredRoutes: routes,
+          preferredPaths: [{
+            artifact: {
+              schemaVersion: "dvqr-business-path-v1",
+              id: "bp_87654321",
+              name: "Old preferred route",
+              sourceTable: "account",
+              targetTable: "contact",
+              state: "preferred",
+              hops: [{
+                ordinal: 1,
+                fromTable: "account",
+                toTable: "contact",
+                relationshipSchemaName: "old_relationship",
+                relationshipType: "ManyToOne",
+                direction: "forward",
+                navigationProperty: "old_navigation"
+              }],
+              provenance: {
+                promotedFrom: "manual-reviewed",
+                promotedAt: "2026-08-18T00:00:00.000Z",
+                promotedBy: "user"
+              },
+              createdAt: "2026-08-18T00:00:00.000Z",
+              updatedAt: "2026-08-18T00:00:00.000Z"
+            },
+            validation: {
+              pathId: "bp_87654321",
+              state: "stale",
+              historicallyVerifiedInActiveEnvironment: null,
+              checkedTables: ["account", "contact"],
+              checkedHops: 1,
+              issues: [{
+                code: "relationship-missing",
+                message: "Saved relationship no longer resolves.",
+                hopOrdinal: 1
+              }]
+            },
+            state: "stale"
+          }]
+        })
+      }
+    );
+
+    assert.strictEqual(labels[0]?.[0], "★ Old preferred route");
+    assert.strictEqual(warnings.length, 1);
+    assert.match(warnings[0] ?? "", /stale/i);
+    assert.strictEqual(selected?.routeId, route.routeId);
+  });
+
   test("opens graph view from quick pick and closes the picker flow", async () => {
     const ctx = createStubContext();
     const graph = buildGraph();

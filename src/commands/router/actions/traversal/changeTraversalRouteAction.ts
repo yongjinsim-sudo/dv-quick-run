@@ -56,12 +56,27 @@ export async function runChangeTraversalRouteAction(
       return;
     }
 
-    const isBestMatchRoute = buildRankedTraversalRoutes(routeOptions)
-      .some((item) => item.route.routeId === selectedRoute.routeId && item.isBestMatch);
+    const isBestMatchRoute = selectedRoute.selectionAuthority === "workspacePreferred"
+      || selectedRoute.routeId.startsWith("business-path:")
+      || buildRankedTraversalRoutes(routeOptions)
+        .some((item) => item.route.routeId === selectedRoute.routeId && item.isBestMatch);
+
+    const sourceRecordId = selectedPlan.preserveExactHops === true
+      ? progress.selectedInputsByStep?.[0]?.ids?.[0]
+      : undefined;
+
+    if (selectedPlan.preserveExactHops === true && !sourceRecordId) {
+      logWarn(
+        ctx.output,
+        "Exact Preferred Business Path route change requires a source record. Start a new Preferred traversal so DVQR can establish the source-record frontier."
+      );
+      return;
+    }
 
     await executeFirstStepDefault(ctx, progress.graph, selectedRoute, selectedPlan, undefined, {
       isBestMatchRoute,
-      routeOptions
+      routeOptions,
+      sourceRecordId
     });
   });
 }

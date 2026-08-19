@@ -539,13 +539,22 @@ export function buildResultViewerBinderSuggestion(args: {
   executionContext?: ResultViewerExecutionContext;
 }): BinderSuggestion | undefined {
   const traversal = args.traversalContext;
-  const shouldPreferTraversalSuggestion = traversal?.isBestMatchRoute !== false;
+  // Once a user has entered Guided Traversal, continuing that chosen route is
+  // the primary interaction regardless of whether the route was the metadata
+  // ranker's original #1. Generic query-shape suggestions such as $top must
+  // never displace deterministic traversal continuation.
+  const shouldPreferTraversalSuggestion = !!traversal?.traversalSessionId;
 
-  if (shouldPreferTraversalSuggestion && traversal?.hasNextLeg && traversal.traversalSessionId) {
+  if (
+    shouldPreferTraversalSuggestion
+    && traversal?.hasNextLeg
+    && traversal.traversalSessionId
+    && args.rowCount > 0
+  ) {
     return buildSuggestion({
       text: traversal.nextLegEntityName
-        ? `💡 Recommended next step: continue this traversal to ${traversal.nextLegEntityName}`
-        : "💡 Recommended next step: continue this traversal",
+        ? `💡 Recommended next step: continue landed rows to ${traversal.nextLegEntityName}`
+        : "💡 Recommended next step: continue landed rows",
       actionId: "continueTraversal",
       confidence: 0.96,
       reason: "An active best-match traversal session has a deterministic next leg.",

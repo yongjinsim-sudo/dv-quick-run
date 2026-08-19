@@ -30,6 +30,7 @@ import { registerInvestigateRecordCommand } from "../commands/investigateRecord.
 import { registerTrySampleQueryCommand } from "../commands/trySampleQuery.js";
 import { registerTryFetchXmlSampleCommand } from "../commands/tryFetchXmlSample.js";
 import { registerFindPathToTableCommand } from "../commands/findPathToTable.js";
+import { registerManageBusinessPathsCommand } from "../commands/manageBusinessPaths.js";
 import { registerContinueTraversalCommand } from "../commands/continueTraversal.js";
 import { registerBackTraversalCommand } from "../commands/backTraversal.js";
 import { registerChangeTraversalRouteCommand } from "../commands/changeTraversalRoute.js";
@@ -78,6 +79,7 @@ const coreRegistrations: readonly ContextRegistration[] = [
   registerTrySampleQueryCommand,
   registerTryFetchXmlSampleCommand,
   registerFindPathToTableCommand,
+  registerManageBusinessPathsCommand,
   registerContinueTraversalCommand,
   registerBackTraversalCommand,
   registerChangeTraversalRouteCommand,

@@ -17,6 +17,7 @@ import { McpRelationshipApplicationService } from "./mcpRelationshipApplicationS
 import { environmentUrl, stringArg } from "./mcpRequestArguments.js";
 import type { DvqrMcpFreeToolResult } from "./mcpToolResults.js";
 import { McpOperationalProfileApplicationService } from "./mcpOperationalProfileApplicationService.js";
+import { McpBusinessPathManagementApplicationService } from "./mcpBusinessPathManagementApplicationService.js";
 
 export type { DvqrMcpFreeToolFailure, DvqrMcpFreeToolResult, DvqrMcpFreeToolSuccess } from "./mcpToolResults.js";
 
@@ -24,6 +25,7 @@ export class DvqrMcpFreeApplicationAdapter {
   private readonly oDataApplicationService: McpODataApplicationService;
   private readonly relationshipApplicationService: McpRelationshipApplicationService;
   private readonly operationalProfileApplicationService: McpOperationalProfileApplicationService;
+  private readonly businessPathManagementApplicationService: McpBusinessPathManagementApplicationService;
   private readonly customApiApplicationService: McpCustomApiApplicationService;
   private readonly customApiExplainApplicationService: McpCustomApiExplainApplicationService;
   private readonly customApiRecommendationApplicationService: McpCustomApiRecommendationApplicationService;
@@ -44,6 +46,7 @@ export class DvqrMcpFreeApplicationAdapter {
     this.oDataApplicationService = new McpODataApplicationService(config);
     this.relationshipApplicationService = new McpRelationshipApplicationService(config);
     this.operationalProfileApplicationService = new McpOperationalProfileApplicationService(config);
+    this.businessPathManagementApplicationService = new McpBusinessPathManagementApplicationService(config);
     this.customApiApplicationService = new McpCustomApiApplicationService(config);
     this.customApiExplainApplicationService = new McpCustomApiExplainApplicationService(config, this.customApiApplicationService);
     this.customApiRecommendationApplicationService = new McpCustomApiRecommendationApplicationService(config);
@@ -187,6 +190,31 @@ export class DvqrMcpFreeApplicationAdapter {
         message: error instanceof Error ? error.message : "Entity metadata retrieval failed."
       };
     }
+  }
+
+
+  public listBusinessPaths(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathManagementApplicationService.list(args);
+  }
+
+  public getBusinessPath(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathManagementApplicationService.get(args);
+  }
+
+  public saveBusinessPath(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathManagementApplicationService.save(args);
+  }
+
+  public deleteBusinessPath(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathManagementApplicationService.remove(args);
+  }
+
+  public revalidateBusinessPath(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathManagementApplicationService.revalidate(args);
+  }
+
+  public testBusinessPath(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {
+    return this.businessPathManagementApplicationService.test(args);
   }
 
   public discoverCustomApis(args: Record<string, unknown>): Promise<DvqrMcpFreeToolResult> {

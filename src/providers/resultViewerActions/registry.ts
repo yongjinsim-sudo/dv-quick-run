@@ -818,8 +818,8 @@ function resolveTraversalActions(
     createAction({
       id: "continue-traversal",
       title: nextTarget
-        ? `Continue Guided Traversal to ${nextTarget} using ${carryField}`
-        : `Continue Guided Traversal using ${carryField}`,
+        ? `Follow only this row to ${nextTarget} using ${carryField}`
+        : `Follow only this row using ${carryField}`,
       icon: "➤",
       placement: "primary",
       group: "traversal",

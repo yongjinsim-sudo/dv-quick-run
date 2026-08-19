@@ -6,6 +6,37 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.16.0 — Managed Business Paths
+
+This release turns runtime-verified business traversal knowledge into a persisted, reusable workspace capability. A useful path can be explicitly saved, promoted to Preferred, surfaced first in Guided Traversal, and later executed as the same exact bounded business route from a real source record.
+
+### Added
+
+- Added workspace-managed Business Path artifacts under `.dvforgelab/dvqr/business-paths`.
+- Added explicit save follow-up after DVQR discovers and runtime-validates a useful business path.
+- Added Preferred Business Path selection authority so saved routes appear as the top visible Guided Traversal option without hiding metadata-derived alternatives.
+- Added exact-hop Preferred traversal that preserves every persisted relationship boundary.
+- Added record-scoped Preferred traversal entry using an explicit Dataverse source-record GUID.
+- Added bounded multi-row frontier continuation across exact saved navigation properties.
+
+### Improved
+
+- Reused the proven v0.15.8 relationship/path-selection semantics instead of replacing them with a second traversal-reasoning architecture.
+- Prevented Compact/Mixed itinerary compression from changing the meaning of a saved Preferred Business Path.
+- Merged and deduplicated viable sibling branches before carrying the bounded frontier to the next hop.
+- Kept Guided Traversal recommendations aligned with the active traversal rather than unrelated generic query-shape suggestions.
+- Added clear Continue, Back and Route recovery behaviour across multi-leg Preferred traversal.
+- Bound Result Viewer metadata to the actual landed target entity while retaining the executed navigation-query evidence.
+
+### Safety and evidence boundaries
+
+- A Preferred Business Path is reusable user-managed traversal knowledge; it does not override Dataverse metadata truth.
+- Runtime-observed viability remains distinct from metadata validity, business preference and causality.
+- Preferred traversal is source-record scoped and bounded; it never intentionally broadens from an empty frontier.
+- A zero-row landing hard-stops continuation and cannot fall through to an unrestricted target-table query.
+- A frontier whose landed entity does not match the next hop source is rejected rather than reinterpreted.
+- Business Path discovery, validation and ranking remain generic; no organisation-specific route is hardcoded.
+
 ## DV Quick Run v0.15.9 — Discoverability & Guided Investigation
 
 This release turns the mature Local MCP capability surface into a discoverable, category-driven guided experience while exposing the canonical Operational Profile and DVQR Score through Free MCP.

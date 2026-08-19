@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-
+import type { TraversalGraph, TraversalRoute } from "./traversalTypes.js";
 
 function isTraversalDebugEnabled(): boolean {
   return (vscode.workspace.getConfiguration("dvQuickRun").get<string>("logLevel") ?? "info").toLowerCase() === "debug";
@@ -20,18 +20,18 @@ export interface TraversalRouteKey {
 }
 
 export class TraversalCacheService {
-  private static metadataCache = new Map<string, any>();
-  private static routeCache = new Map<string, any>();
+  private static metadataCache = new Map<string, TraversalGraph>();
+  private static routeCache = new Map<string, TraversalRoute[]>();
 
   // ---------- Metadata Cache ----------
 
-  public static getMetadata(environmentId: string): any | undefined {
+  public static getMetadata(environmentId: string): TraversalGraph | undefined {
     const hit = this.metadataCache.get(environmentId);
-    debugTraversal(`[Traversal] Metadata cache ${hit ? 'HIT' : 'MISS'} (${environmentId})`);
+    debugTraversal(`[Traversal] Metadata cache ${hit ? "HIT" : "MISS"} (${environmentId})`);
     return hit;
   }
 
-  public static setMetadata(environmentId: string, metadata: any): void {
+  public static setMetadata(environmentId: string, metadata: TraversalGraph): void {
     this.metadataCache.set(environmentId, metadata);
   }
 
@@ -41,14 +41,14 @@ export class TraversalCacheService {
     return `${key.environmentId}::${key.sourceTable}::${key.targetTable}::${key.maxDepth}`;
   }
 
-  public static getRoute(key: TraversalRouteKey): any | undefined {
+  public static getRoute(key: TraversalRouteKey): TraversalRoute[] | undefined {
     const cacheKey = this.buildRouteKey(key);
     const hit = this.routeCache.get(cacheKey);
-    debugTraversal(`[Traversal] Route cache ${hit ? 'HIT' : 'MISS'} (${cacheKey})`);
+    debugTraversal(`[Traversal] Route cache ${hit ? "HIT" : "MISS"} (${cacheKey})`);
     return hit;
   }
 
-  public static setRoute(key: TraversalRouteKey, route: any): void {
+  public static setRoute(key: TraversalRouteKey, route: TraversalRoute[]): void {
     const cacheKey = this.buildRouteKey(key);
     this.routeCache.set(cacheKey, route);
   }
@@ -58,14 +58,14 @@ export class TraversalCacheService {
   public static clearAll(): void {
     this.metadataCache.clear();
     this.routeCache.clear();
-    debugTraversal('[Traversal] Cache cleared');
+    debugTraversal("[Traversal] Cache cleared");
   }
 
   public static clearEnvironment(environmentId: string): void {
     this.metadataCache.delete(environmentId);
 
     for (const key of this.routeCache.keys()) {
-      if (key.startsWith(environmentId + '::')) {
+      if (key.startsWith(environmentId + "::")) {
         this.routeCache.delete(key);
       }
     }

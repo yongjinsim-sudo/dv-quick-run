@@ -30,6 +30,8 @@ export interface ResultViewerTraversalStatus {
     title: string;
     subtitle?: string;
     traversalSessionId?: string;
+    hasNextLeg?: boolean;
+    nextLegEntityName?: string;
     canSiblingExpand?: boolean;
     canRunBatch?: boolean;
     canRunOptimizedBatch?: boolean;
@@ -1649,6 +1651,10 @@ export function buildResultViewerModel(
     const primaryIdField = options?.primaryIdField;
     const environment = options?.environment;
     const traversalContext = options?.traversalContext;
+    const traversalResultRowCount =
+        result && typeof result === "object" && Array.isArray((result as { value?: unknown }).value)
+            ? ((result as { value: unknown[] }).value).length
+            : (result && typeof result === "object" ? 1 : 0);
     const traversal = traversalContext?.showBanner === false
         ? undefined
         : traversalContext
@@ -1666,6 +1672,10 @@ export function buildResultViewerModel(
                             ? `Next: ${traversalContext.nextLegLabel}`
                             : "Select a row to continue"),
                 traversalSessionId: traversalContext.traversalSessionId,
+                hasNextLeg: traversalContext.hasNextLeg && traversalResultRowCount > 0,
+                nextLegEntityName: traversalContext.hasNextLeg && traversalResultRowCount > 0
+                  ? traversalContext.nextLegEntityName
+                  : undefined,
                 canSiblingExpand: traversalContext.canSiblingExpand,
                 canRunBatch: traversalContext.canRunBatch,
                 canRunOptimizedBatch: traversalContext.canRunOptimizedBatch,

@@ -7,6 +7,12 @@ import type { DvqrPromptCatalogueCoverageReport } from "./promptLibraryTypes.js"
 // lifecycle-specific, or semantic projection tools that are reached through guided investigation
 // rather than exposed as primary copy/paste journeys.
 export const DVQR_INTENTIONALLY_UNCOVERED_PROMPT_TOOLS: readonly string[] = [
+  "dvqr_list_business_paths",
+  "dvqr_get_business_path",
+  "dvqr_save_business_path",
+  "dvqr_remove_business_path",
+  "dvqr_revalidate_business_path",
+  "dvqr_test_business_path",
   "dvqr_execute_custom_api",
   "dvqr_bootstrap_investigation",
   "dvqr_get_investigation_focus_suggestions",

@@ -2,7 +2,7 @@
   "name": "dv-quick-run",
   "displayName": "DV Quick Run",
   "description": "Extension-owned Local MCP server and metadata-aware Dataverse investigation workbench for VS Code. Understand business architecture, query with natural language, investigate operational workflows, explain OData, compare environments, reconstruct timelines, and generate Mini RCA.",
-  "version": "0.15.9",
+  "version": "0.16.0",
   "publisher": "dv-forgelab",
   "repository": {
     "type": "git",
@@ -206,6 +206,10 @@
       {
         "command": "dvQuickRun.findPathToTable",
         "title": "DV Quick Run: Guided Traversal"
+      },
+      {
+        "command": "dvQuickRun.manageBusinessPaths",
+        "title": "DV Quick Run: Manage Business Paths"
       },
       {
         "command": "dvQuickRun.relationshipGraphView",

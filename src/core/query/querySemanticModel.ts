@@ -1,7 +1,7 @@
 import type {
   ParsedDataverseQuery,
   QueryParseDiagnostic
-} from "../../commands/router/actions/explain/explainQueryTypes.js";
+} from "./queryParseTypes.js";
 
 export type QueryReferenceClause = "$select" | "$filter" | "$orderby" | "$expand";
 

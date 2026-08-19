@@ -2,227 +2,211 @@
 
 **Understand Dataverse applications. Investigate operational behaviour. Stay grounded in evidence.**
 
-DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Dataverse investigation workbench for VS Code. Use the 94-prompt guided library or GitHub Copilot to understand unfamiliar business architecture and query Dataverse in natural language, then continue in the editor with OData, FetchXML, Result Viewer, Guided Traversal, Operational Profiles, Cross-Environment Diff, Timeline Reconstruction and Mini RCA.
+DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Dataverse investigation workbench for VS Code. Ask Dataverse questions in natural language, discover business architecture, run bounded queries, follow real relationships, preserve verified business paths, and continue into evidence-backed investigation without leaving the editor.
 
-**Read-only MCP · Deterministic metadata · Evidence-backed conclusions · Human authority**
+**Read-only MCP foundations · Deterministic metadata · Evidence-backed conclusions · Human authority**
+
+[Website](https://www.dvquickrun.com) · [Pricing](https://www.dvquickrun.com/pricing) · [GitHub Discussions](https://github.com/yongjinsim-sudo/dv-quick-run/discussions)
 
 ---
 
-## What is DV Quick Run?
+## What's New in v0.16.0
 
-DV Quick Run gives Dataverse developers, consultants and support teams two connected ways to work:
+### Managed Business Paths
 
-1. **Talk to Dataverse through Local MCP** — discover business capabilities, identify operational anchors, explain workflow layers, search metadata, generate verified OData and run bounded read-only probes.
-2. **Build and investigate in the editor** — write and execute queries, inspect results, follow relationships, capture evidence, compare environments, reconstruct timelines and generate bounded Mini RCA reports.
-
-The product is organised around four outcomes:
-
-- **Understand applications** — translate structural metadata into a layered Business Capability Landscape.
-- **Query and explain** — use natural language or editor workflows to create, validate and understand OData and FetchXML.
-- **Investigate runtime behaviour** — move from records and queries into Execution Insights, Operational Profiles, Access Context and evidence-backed traversal.
-- **Compare and reconstruct** — use snapshots, Cross-Environment Diff, Timeline Reconstruction, Audit Evidence and Mini RCA without claiming unsupported causality.
-
-DV Quick Run follows a simple investigation loop:
+Find a useful relationship route once, runtime-verify it, save it to the workspace, mark it **Preferred**, and reuse the exact route later from a real source record.
 
 ```text
-understand → query → verify → investigate → compare → explain → hand off
+discover → runtime-verify → save → prefer → reuse → exact record-scoped traversal
 ```
 
-## Discoverability & Guided Investigation — v0.15.9
+- **Workspace persistence** — paths are stored under `.dvforgelab/dvqr/business-paths` as inspectable, Git-friendly JSON.
+- **Preferred visibility** — saved Preferred paths surface first in Guided Traversal without hiding metadata-derived alternatives.
+- **Explicit save follow-up** — a runtime-validated path can be offered for saving; DVQR does not silently persist it.
+- **Exact-hop reuse** — saved relationship boundaries are preserved instead of being collapsed into a different route.
+- **Record-scoped execution** — reuse starts from an explicit source record and carries only landed IDs forward.
+- **Safe dead ends** — zero-row or mismatched frontiers stop instead of broadening into an unrestricted query.
 
-DV Quick Run now includes a **category-driven Prompt Library** that makes the growing Local MCP capability surface discoverable without requiring users to know MCP tool names.
+Example:
+
+```text
+account → contact → task
+```
+
+### Discoverability & Guided Investigation
+
+The **94-prompt Prompt Library** makes the Local MCP capability surface approachable without requiring MCP tool-name knowledge.
 
 ![DV Quick Run Prompt Library](docs/prompt-library.png)
 
-```text
-Quick Start → Guided Prompt → Rendered request → Evidence-backed result → Suggested next prompt
-```
+- 69 Free + 25 Pro curated prompts
+- Quick Starts for common outcomes
+- category, search and Free/Pro filtering
+- parameterised natural-language prompt rendering
+- guided next prompts
+- machine-readable Evidence Matrix boundaries
+- Operational Profile + calibrated DVQR Score through Free MCP
 
-- **94 curated user-intent prompts:** 69 Free and 25 Pro prompts across Understand Dataverse, Metadata & Queries, Relationships & Traversal, Custom APIs, Operational Profile, and Managed Investigation.
-- **Quick Starts:** common outcomes such as finding tables, understanding relationships, validating runtime paths, getting a DVQR Score, discovering Custom APIs, and starting or resuming investigations.
-- **Search and filters:** category, text and Free/Pro filtering keep the larger catalogue manageable.
-- **Parameterised rendering:** fill table names, record IDs, queries, API names or investigation IDs and copy the exact natural-language request.
-- **Guided journeys:** suggested next prompts help move from discovery to understanding, querying, navigation, investigation and verification.
-- **Evidence Matrix:** every live MCP capability has machine-readable tier, evidence posture and interpretation boundaries; the Prompt Library remains a guidance layer rather than another reasoning engine.
-- **Operational Profile through Free MCP:** `dvqr_get_operational_profile` exposes the canonical live Operational Profile and calibrated DVQR Score with GUI parity, explicit score math, semantic guardrails and live-result authority over historical snapshots.
+---
 
-Open it from the Command Palette or Hub:
+## Start in Three Ways
+
+| Start here | Best for | What you get |
+|---|---|---|
+| **Prompt Library** | You know the outcome but not the DVQR tool | Quick Starts, guided prompts, parameters and suggested next steps |
+| **Local MCP** | You want to talk to Dataverse through Copilot | Metadata-aware discovery, architecture understanding, bounded querying and investigation |
+| **Editor Workbench** | You already have a query, record or investigation | OData/FetchXML, Result Viewer, Guided Traversal, profiles, evidence and reports |
+
+Open the two main orientation surfaces from the Command Palette:
 
 ```text
 DV Quick Run: Open Prompt Library
+DV Quick Run: Open Hub
 ```
 
-Raw MCP tool names are deliberately de-emphasised while browsing. They remain available as capability details for advanced users who want implementation transparency.
+---
 
-## Local MCP — Business Architecture Understanding
+## What DV Quick Run Can Do
 
-DV Quick Run v0.15.6 provides an extension-owned local stdio MCP server for GitHub Copilot and compatible VS Code MCP clients. Enable it once per workspace with **DV Quick Run: Enable Local MCP Server**; VS Code then starts the server on demand and DV Quick Run remembers the workspace preference.
+### 1. Understand Dataverse
 
-The Free MCP surface is strictly read-only. It can:
+Translate structural metadata and bounded runtime evidence into an explainable view of an unfamiliar application.
 
-- discover business capabilities and operational anchors;
-- produce a layered **Business Capability Landscape**;
-- explain why architectural conclusions were selected;
-- show confidence, evidence provenance and inline uncertainty;
-- discover metadata-verified relationship paths;
-- generate and explain OData;
-- execute bounded Dataverse GET requests;
-- search and inspect entity metadata.
+- discover business capabilities and operational anchors
+- identify Core Domain, Coordination, Execution, Governance and Platform layers
+- explain why entities and routes were ranked
+- distinguish metadata recommendation from runtime-observed workflow
+- preserve confidence, provenance and uncertainty
 
-No POST, PATCH, DELETE, upload, remediation or workspace-mutation tools are registered.
+### 2. Query & Explain
 
-Current Dataverse execution uses an Azure CLI tenant session. For tenants without an Azure subscription, sign in with:
+Work directly with Dataverse query surfaces in VS Code.
 
-```bash
-az login --tenant <tenant-id> --allow-no-subscriptions
-```
+- natural-language OData through Local MCP
+- OData and FetchXML execution
+- `$batch` workflows
+- Query-by-Canvas refinement
+- Query Doctor and metadata-aware suggestions
+- Query Explain
+- preview-first Smart PATCH in the editor
 
-The Hub shows the selected environment, MCP mode, available tool count, lifecycle, authentication guidance and traffic-light health state.
+### 3. Navigate Real Business Relationships
 
-### Business Architecture Understanding
+Move from metadata-valid relationships to data-viable traversal.
 
-The user-facing capability is **Business Architecture Understanding**. Its underlying **Operational Workflow Intelligence** engine separates:
+- relationship discovery and ranking
+- Guided Traversal using returned rows
+- Relationship Graph
+- runtime path verification
+- Managed Business Paths
+- Preferred-path reuse with exact saved hops
+- `$batch` traversal replay
 
-- **Core Domain** — the principal business, service, clinical, case, plan or request concepts;
-- **Coordination** — journey, referral, process, routing and orchestration records;
-- **Execution** — tasks, activities and downstream work items;
-- **Governance** — eligibility, consent, approval, safety and control records;
-- **Platform** — plugins, flows, asynchronous jobs and integration participation.
+### 4. Investigate Operational Behaviour
 
-`dvqr_discover_operational_anchors` returns explainable conclusions rather than an unexplained entity ranking. Each major conclusion can include:
+Use bounded evidence instead of speculative diagnosis.
 
-- confidence and evidence provenance;
-- why DVQR reached the conclusion;
-- metadata evidence and bounded runtime observations;
-- explicit runtime-verification requirements;
-- a plain-English architectural narrative;
-- an onboarding-oriented “If I joined tomorrow” summary.
+- Result Viewer
+- Execution Insights
+- Operational Profiles
+- DVQR Score
+- Access Context for users, teams, roles, business units and application identities
+- persisted Pro managed investigations
+- evidence acquisition, readiness and Mini RCA
 
-Capability classification remains metadata-derived. Strong structural evidence does not prove that a particular record participated until runtime evidence is collected.
+### 5. Compare & Reconstruct
 
-### Evidence-guided workflow discovery
+Preserve evidence across environments and time.
 
-DVQR continues bounded exploration through materially different workflow families rather than stopping at the shortest direct task relationship. Runtime probing keeps separate conclusions for:
+- Evidence Workspace and Snapshot Library
+- Cross-Environment Diff
+- Timeline Reconstruction
+- Timeline Graph
+- Audit Evidence Enrichment
+- findings, verification and handoff workflows
+- HTML/PDF investigation reports
 
-- the metadata recommendation;
-- runtime-observed workflow;
-- accessible paths with no matching data;
-- permission-limited evidence;
-- incomplete coverage when a probe budget is exhausted.
+### 6. Discover & Govern Dataverse Capabilities
 
-Runtime evidence is investigation-scoped and never overwrites metadata confidence.
+Inspect supported Custom APIs and Dataverse operations with explicit execution boundaries.
 
-### Try these prompts
+- Capability Explorer
+- bound and unbound operation discovery
+- metadata-backed request shaping
+- preview-first supported execution
+- explicit confirmation
+- access-aware discovery
+- execution diagnostics and investigation continuation
 
-```text
-Using DV Quick Run, starting only from Contact metadata, discover the business capabilities and explain where operational work is coordinated and performed.
+---
 
-Using DV Quick Run, identify the operational anchors around Account and explain why each was ranked.
+## See It in Action
 
-Using DV Quick Run, investigate this Contact from the highest-ranked operational anchor and separate metadata recommendation from runtime-observed workflow.
-```
-
-### What the Free MCP experience looks like
-
-**Find related Dataverse tables deterministically**
-
-![DV Quick Run MCP deterministic metadata search](docs/mcp-query-1.png)
-
-**Query Dataverse in natural language**
+### Ask Dataverse in natural language
 
 ![DV Quick Run MCP natural-language OData execution](docs/mcp-query-2.png)
 
-**Explain OData in plain English**
+### Find related tables deterministically
+
+![DV Quick Run MCP deterministic metadata search](docs/mcp-query-1.png)
+
+### Explain OData in plain English
 
 ![DV Quick Run MCP OData explanation](docs/mcp-query-3.png)
 
-| Without DV Quick Run | With DV Quick Run MCP |
-|---|---|
-| Remember OData syntax | Ask in plain English |
-| Browse metadata manually | Search related tables deterministically |
-| Interpret logical names yourself | Receive structured, metadata-grounded context |
-| Risk broad or unsupported metadata filters | Use bounded DVQR tools with explicit ranking |
+### Explore query results
 
-## Core capabilities
+![DV Quick Run Result Viewer](docs/demo-result-viewer.gif)
 
-- **Local MCP:** business architecture understanding, deterministic metadata discovery, relationship intelligence, natural-language OData, bounded GET execution and explainability.
-- **Query workbench:** OData, FetchXML, `$batch`, Query-by-Canvas, CodeLens, Query Doctor, metadata-aware suggestions and preview-first Smart PATCH.
-- **Investigation:** Result Viewer, Guided Traversal, Execution Insights, Operational Profiles, Operational Context and Access Context.
-- **Evidence and comparison:** Evidence Workspace, Snapshot Library, Cross-Environment Diff, Timeline Reconstruction, Audit Evidence and investigation handoff reports.
-- **Understanding:** Query Understanding, Cross Diff Understanding, Timeline Understanding and evidence-backed Mini RCA.
-- **DV ForgeLab handoffs:** DVBUR plus DVAF, DVIM, DVCE and DVEVM reconstruction artifacts, while investigation and reconstruction remain separate concerns.
+### Understand an entity's operational footprint
 
-## 🌐 Website & Interactive Demo
-
-Official website:
-
-```text
-https://www.dvquickrun.com
-```
-
-The website includes:
-
-* product overview
-* roadmap direction
-* operational investigation philosophy
-* feature walkthroughs
-* marketplace/install links
-* Free / Pro / Offline pricing and activation guidance
-* interactive mock HTML comparison reports demonstrating DV Quick Run investigation workflows
-* sample Diff Findings Summary, Cross Diff Understanding, Timeline Understanding, Mini RCA, Timeline Findings Summary, Investigation Handoff, Timeline Investigation Handoff, audit-aware report flows, and Reconstruction Artifact handoff flows
-
-The interactive HTML demo helps illustrate:
-
-* grouped operational drift investigation
-* inline evidence continuation
-* operational verification workflows
-* Findings / Verification / Handoff investigation flow
-* Timeline Reconstruction, interval graph, first-observed drift, audit evidence enrichment, and reconstruction artifact report flows
-* dense enterprise comparison readability
-* operational investigation continuity
-* report export mental models for Cross Diff Understanding, Timeline Understanding, Mini RCA, Diff Findings Summary, Timeline Findings Summary, Investigation Handoff, and Timeline Investigation Handoff workflows
-
-without requiring a live Dataverse environment.
+![DV Quick Run Operational Profile](docs/entity-profile-card.png)
 
 ---
 
-## 🚀 14-day Pro Trial
+## Free and Pro
 
-DV Quick Run surfaces user-facing 14-day Pro Trial messaging so teams can try the full Pro investigation workflow before choosing Pro.
+DV Quick Run follows an open-core model. Foundational Dataverse understanding remains accessible; Pro adds advanced investigation acceleration and persistence.
 
-Trial messaging highlights:
+| Capability | Free | Pro |
+|---|:---:|:---:|
+| Prompt Library and Quick Starts | ✓ | ✓ |
+| Deterministic metadata discovery | ✓ | ✓ |
+| Natural-language OData and bounded GET | ✓ | ✓ |
+| Relationship intelligence and Guided Traversal | ✓ | ✓ |
+| Operational Profile + DVQR Score | ✓ | ✓ |
+| Query workbench and Result Viewer | ✓ | ✓ |
+| Managed Business Paths | ✓ | ✓ |
+| Managed investigation lifecycle |  | ✓ |
+| Cross-Environment Diff | Preview / samples where provided | ✓ |
+| Timeline Reconstruction | Mock preview | ✓ |
+| Audit Evidence Enrichment |  | ✓ |
+| Mini RCA and investigation handoff |  | ✓ |
+| Advanced report/export workflows |  | ✓ |
+| Governed supported Custom API execution |  | ✓ |
+| Online / Offline Pro licensing |  | ✓ |
 
-* Cross-Environment Diff
-* Timeline Reconstruction
-* Audit Evidence
-* Reconstruction Artifact exports
-* HTML/PDF investigation reports
-
-Trial and billing configuration is handled externally by the store/licensing provider. DV Quick Run only needs a valid Pro entitlement to unlock Pro features.
+A **14-day Pro Trial** is available for teams that want to evaluate the full investigation workflow.
 
 ---
 
-## ⚡ Quick Start
+## 5-Minute Quick Start
 
-### Run DV Quick Run normally
+### A. Run DV Quick Run normally
 
-1. Install **DV Quick Run**.
-2. Configure and select your Dataverse environment.
+1. Install **DV Quick Run** in VS Code.
+2. Configure and select a Dataverse environment.
 3. Run a query such as:
 
    ```http
    contacts?$top=10
    ```
 
-4. Open the Hub any time:
+4. Open **DV Quick Run: Open Hub** whenever you need orientation.
 
-   ```text
-   DV Quick Run: Open Hub
-   ```
+### B. Enable Local MCP
 
-### Enable Local MCP
-
-1. Select the Dataverse environment you want DV Quick Run MCP to use.
+1. Select the Dataverse environment to expose to the local server.
 2. Run:
 
    ```text
@@ -235,1003 +219,328 @@ Trial and billing configuration is handled externally by the store/licensing pro
    az login --tenant <tenant-id> --allow-no-subscriptions
    ```
 
-4. Open GitHub Copilot Chat in VS Code and make sure the DV Quick Run MCP tools are enabled.
-5. Open **DV Quick Run: Open Prompt Library** if you want a guided starting point. Browse Quick Starts, search by intent, or filter by category and Free/Pro tier.
-6. Try one of these prompts:
+4. Open GitHub Copilot Chat and make sure the DV Quick Run MCP tools are enabled.
+5. Open **DV Quick Run: Open Prompt Library**, or ask directly:
 
    ```text
-   Using DV Quick Run, give me the top 10 Accounts by Revenue.
-
-   Using DV Quick Run, find tables related to customers.
-
-   Using DV Quick Run, explain this OData query:
-   accounts?$select=name,revenue&$filter=statecode eq 0&$orderby=name asc&$top=10
+   Using DV Quick Run, show me what I can investigate in this Dataverse environment and recommend where to start.
    ```
 
-7. Open **DV Quick Run: Open Hub** to review the Local MCP traffic-light status, environment, mode, tool count, lifecycle, authentication guidance, and Prompt Library entry point.
-
-DV Quick Run remembers MCP enablement per workspace. VS Code starts the local stdio server on demand after restarts or reboots; users do not need to recreate the configuration.
+DV Quick Run remembers MCP enablement per workspace. VS Code starts the extension-owned local stdio server on demand.
 
 ---
 
-## 🔐 DV Quick Run Pro Activation
+## Local MCP
 
-DV Quick Run is available in Free and Pro editions.
+DV Quick Run owns its local MCP lifecycle inside the extension. The Hub shows the selected environment, mode, tool count, authentication guidance and traffic-light health state.
 
-Free preserves foundational operational understanding workflows. Pro accelerates advanced operational investigation workflows such as real snapshot comparison, replay continuity, report exports, and investigation handoff workflows.
+The foundational MCP surface is deliberately bounded. It supports metadata understanding, relationship intelligence, natural-language querying and evidence acquisition without turning the assistant into an unrestricted Dataverse administrator.
 
-Learn more:
-
-```text
-https://www.dvquickrun.com/pricing
-```
-
-Direct purchase / checkout:
+Typical prompts:
 
 ```text
-https://dvforgelab.lemonsqueezy.com
+Using DV Quick Run, find tables related to customers.
+
+Using DV Quick Run, explain this OData query:
+accounts?$select=name,revenue&$filter=statecode eq 0&$orderby=name asc&$top=10
+
+Using DV Quick Run, starting only from Contact metadata, discover the business capabilities and explain where operational work is coordinated and performed.
+
+Using DV Quick Run, find and runtime-verify a relationship path from account to task.
 ```
 
-To activate Online Pro:
+### Business Architecture Understanding
 
-1. Purchase a DV Quick Run Pro subscription.
-2. Open Visual Studio Code.
-3. Run:
+Operational Workflow Intelligence separates structural evidence into:
 
-   ```text
-   DV Quick Run: Activate Pro License
-   ```
+- **Core Domain** — principal business, service, case, plan or request concepts
+- **Coordination** — journey, process, routing and orchestration records
+- **Execution** — tasks, activities and downstream work items
+- **Governance** — eligibility, consent, approval, safety and control records
+- **Platform** — plugins, flows, asynchronous jobs and integration participation
 
-4. Paste the license key from your Lemon Squeezy purchase.
-
-To inspect your current entitlement:
-
-```text
-DV Quick Run: License Status
-```
-
-Online recurring subscriptions display as:
-
-```text
-Subscription: Active
-```
-
-Eligible Pathfinder licenses show:
-
-```text
-DVQR Pathfinder • Early Supporter
-```
-
-Offline Pro customers can import a signed offline license using:
-
-```text
-DV Quick Run: Import Offline License
-```
-
-Offline Pro is designed for restricted, disconnected, and air-gapped environments where recurring online validation is not suitable.
+Strong structural evidence does not prove that a particular record participated. Runtime evidence remains investigation-scoped and does not overwrite metadata confidence.
 
 ---
 
-## 🎬 Result Viewer
+## Managed Business Paths
 
-![DV Quick Run Result Viewer](docs/demo-result-viewer.gif)
+Managed Business Paths turn verified traversal knowledge into a reusable workspace asset.
+
+```text
+metadata-valid path
+        ↓
+runtime verification
+        ↓
+explicit save
+        ↓
+Preferred workspace path
+        ↓
+record-scoped exact-hop Guided Traversal
+```
+
+A Preferred path is **top visible**, not exclusive. Metadata-derived alternatives remain available. Preference records useful team knowledge; it does not replace Dataverse metadata truth or prove universal business authority.
+
+Saved paths live under:
+
+```text
+.dvforgelab/dvqr/business-paths
+```
+
+The runtime frontier is intentionally bounded:
+
+```text
+landed record IDs → exact next relationship → landed record IDs
+```
+
+If a hop returns no rows, traversal stops. DVQR does not convert an empty frontier into a table-wide query.
+
+---
+
+## Result Viewer & Guided Traversal
 
 The Result Viewer is the main interactive surface for exploring query results.
 
-Typical workflow:
-
 ```text
-start simple → run → explore → refine → update safely → refresh → repeat
+start simple → run → explore → refine → investigate → verify
 ```
-
-Result Viewer also acts as an operational launch surface. From a primary row id, you can open **Bound Actions on this record** to preview compatible entity-bound Actions for that specific row.
-
-The Result Viewer only supplies target row context. Execution still flows through DV Quick Run’s governed preview surface:
-
-```text
-row → bound Action preview → explicit confirmation → execution result → investigation context
-```
-
----
-
-### 📦 Result Viewer → DVBUR Artifact Export
-
-DV Quick Run can export Result Viewer records as DVBUR-compatible artifacts for DV ForgeLab's **DV Bulk Upsert Runner**.
-
-This supports a focused ecosystem workflow:
-
-```text
-DVQR investigates
-→ exports a DVBUR artifact
-→ DVBUR performs focused bulk upsert execution
-```
-
-The export remains explicit and user-triggered.
-
-DV Quick Run does not perform automatic remediation or hidden bulk updates. It prepares an artifact from observed Result Viewer data so the execution workflow can remain separated in DV Bulk Upsert Runner.
-
----
-
-## ✨ Key Features
-
-### 🔎 Run & Explore Queries
-
-* Run Dataverse OData and FetchXML directly in VS Code
-* View results in an interactive table or JSON
-* Sort, filter, inspect, copy, and act on data inline
-* Use Ctrl+Enter to run the query under your cursor
-
----
-
-### 🧭 DV Quick Run Hub
-
-The Hub provides a calm orientation surface for operational investigation workflows.
-
-It helps you:
-
-* understand current investigation context
-* see whether a Result Viewer context is active, recoverable, historical, or stale
-* reopen recoverable Result Viewer sessions
-* track selected `$batch` sub-results
-* pivot to related investigation surfaces
-* discover Snapshot Library and operational comparison workflows
-* open DVQR GitHub Discussions for feedback, bugs, workflow ideas, and roadmap conversation
-* avoid stale context after environment switches
-
-The Hub is optional. It does not take over the workflow; it helps you recover orientation when you need it.
-
-
----
-
-### 🔐 Access Context
-
-Access Context helps you investigate bounded operational identity participation without leaving VS Code.
-
-You can investigate:
-
-* users
-* application/service identities
-* teams
-* roles
-* business units
-
-Access Context can surface:
-
-* business-unit context
-* direct role participation
-* team participation
-* inherited participation
-* member composition
-* role participation
-* notable operational participants
-* raw verification evidence
-
-It is designed for operational investigation, not security administration.
-
-Access Context does not:
-
-* simulate RBAC
-* calculate effective record access
-* generate privilege matrices
-* infer security risk
-* perform recursive environment-wide topology crawling
-
-Access Context can be launched from:
-
-* Command Palette
-* DV Quick Run Hub
-* Result Viewer row actions
-
-Common Result Viewer continuations include:
-
-```text
-systemusers.systemuserid       → Check User Access Context
-systemusers.systemuserid       → Check Application User Context
-teams.teamid                   → Check Team Access Context
-roles.roleid                   → Check Role Access Context
-businessunits.businessunitid   → Check Business Unit Context
-```
-
-Access Context remains summary-first, searchable, exportable, and bounded to the current investigation subject.
-
----
-
-### 🧩 Query-by-Canvas
-
-Query-by-Canvas is DV Quick Run’s preview-first refinement model.
-
-Start simple, then refine from results:
-
-```text
-contacts
-→ add $top
-→ add $select
-→ filter by value
-→ rerun
-```
-
-Supported refinement paths include:
-
-* add fields
-* filter by value
-* preview query changes
-* apply safely
-* rerun and verify
-
----
-
-### 🔗 Guided Traversal
-
-Guided Traversal helps you navigate relationships across Dataverse tables.
 
 Use it to:
 
-* find paths between entities
-* traverse using real returned rows
-* continue exploration step-by-step
-* understand relationship routes visually
-* replay traversal flows as `$batch`
+- view records as table or JSON
+- search and inspect results
+- refine queries
+- launch record investigation
+- open relationship navigation
+- continue Guided Traversal
+- inspect operational context
+- preview compatible bound Actions
+- export evidence and supported handoff artifacts
+
+Guided Traversal carries actual landed records from hop to hop. Managed Preferred paths can reuse the exact saved route from a supplied source record.
 
 ---
 
-### 🕸️ Relationship Graph
+## Operational Profiles & DVQR Score
 
-DV Quick Run includes a dedicated Relationship Graph workspace for exploring Dataverse entity relationships.
-
-Relationship Graph can surface:
-
-* relationship counts by type
-* Many-to-One relationships
-* One-to-Many relationships
-* Many-to-Many relationships
-* navigation properties
-* target entities
-* relationship schema names
-
-The workspace supports:
-
-* live search
-* match highlighting
-* next/previous navigation
-* automatic match focus
-* exact text export
-* exact text copy
-
-Relationship Graph is designed for operational metadata understanding.
-
-It does not perform recursive graph analysis, dependency impact analysis, or deployment validation.
-
-Relationship Graph can be launched directly from:
-
-```text
-Result Viewer
-→ View Relationships
-```
-
-The original relationship artifact remains available through:
-
-```text
-Save Exact Text
-Copy Exact Text
-```
-
-so visual exploration and exported evidence remain consistent.
-
----
-
-### 📦 `$batch` Workflows
-
-Run multiple related queries together using `$batch`.
-
-Useful for:
-
-* validating several endpoints together
-* investigating related tables in one execution
-* replaying Guided Traversal routes
-* comparing related results without manual switching
-
-The Hub tracks selected `$batch` sub-results so investigation context stays aligned with the selected response.
-
----
-
-### ✏️ Smart PATCH
-
-Smart PATCH lets you update Dataverse records directly from the Result Viewer using a preview-first workflow.
-
-It supports:
-
-* previewing PATCH payloads before execution
-* metadata-aware boolean and choice inputs
-* automatic result refresh after update
-* guardrails for expanded or unsafe update contexts
-
----
-
-### 📊 Execution Insights
-
-Understand what is happening **behind your Dataverse queries** without leaving VS Code.
-
-DV Quick Run surfaces execution behaviour across plugins, async operations, workflows, and Power Automate-related context.
-
-It can help identify:
-
-* slow execution
-* failed or waiting async operations
-* repeated execution patterns
-* nested plugin behaviour
-* correlation/request-linked runtime evidence
-
-![Primary Signal 1](docs/execution-insights-primary-1.png)
-
-Execution Insights prioritises the strongest signal first, then keeps supporting evidence available for deeper investigation.
-
-![Guided Investigation 1](docs/execution-insights-next-1.png)
-
----
-
-### 🧭 Operational Profiles
-
-Operational Profiles help you understand the **operational footprint** of a Dataverse entity before diving into deeper troubleshooting.
+Operational Profiles describe the **operational footprint** of a Dataverse entity before deeper troubleshooting.
 
 Profiles can surface:
 
-* plugin orchestration density
-* relationship complexity
-* metadata footprint
-* async participation
-* Power Automate involvement
-* workflow participation
-* managed-state context
-* comparison-ready snapshot evidence for operational comparison and Timeline Reconstruction workflows
+- plugin orchestration density
+- relationship complexity
+- metadata footprint
+- async participation
+- Power Automate involvement
+- workflow participation
+- managed-state context
 
 ![Operational Profile](docs/entity-profile-card.png)
 
-Operational Profiles are:
-
-* entity-scoped
-* user-triggered
-* evidence-backed
-* bounded
-* advisory-only
-
-They help identify good investigation starting points without implying speculative root cause.
-
-Operational Profile snapshot export is capability-aware: Free keeps operational understanding available, while Pro unlocks snapshot persistence, comparison workflows, and Timeline Reconstruction workflows.
+Profiles are entity-scoped, user-triggered, evidence-backed, bounded and advisory-only. The DVQR Score is a calibrated investigation aid, not a risk or root-cause score.
 
 ---
 
-### 🔄 Evidence Workspace, Snapshot Library, Timeline Reconstruction & Cross-Environment Diff
+## Access Context
 
-DV Quick Run includes a local DV ForgeLab Evidence Workspace for organising investigation artifacts and reconstruction handoffs:
+Access Context investigates bounded identity participation for:
+
+- users and application identities
+- teams
+- roles
+- business units
+
+It can show business-unit context, direct and inherited participation, team membership and supporting evidence.
+
+It does **not** simulate RBAC, calculate effective record access, generate privilege matrices or infer security risk.
+
+---
+
+## Managed Investigation
+
+Pro managed investigations preserve professional investigation continuity rather than treating each prompt as an isolated answer.
+
+```text
+prepare & confirm
+      ↓
+acquire bounded evidence
+      ↓
+assess readiness
+      ↓
+generate bounded Mini RCA
+      ↓
+verify / hand off
+```
+
+The evidence model keeps supported, weakened and unresolved hypotheses distinct and preserves gaps rather than filling them with speculation.
+
+---
+
+## Evidence Workspace, Comparison & Timeline
+
+DV Quick Run uses a local DV ForgeLab Evidence Workspace for investigation artifacts and reconstruction handoffs.
 
 ```text
 .dvforgelab
-├─ dvaf
-│  └─ exports
 └─ dvqr
+   ├─ business-paths
    ├─ comparisons
    ├─ reports
    └─ snapshots
 ```
 
-Snapshot Library coordinates saved operational investigation snapshots and acts as the central console for comparison and timeline reconstruction.
+### Snapshot Library
 
-It supports:
-
-* source and target snapshot selection
-* 3+ snapshot timeline reconstruction selection
-* grouping snapshots by environment and subject
-* latest-vs-previous snapshot comparison
-* snapshot search and filtering
-* grouped recent comparison history
-* replayable recent comparisons
-* bounded comparison-history rendering
-* comparison-history cleanup without deleting snapshots
-* mock snapshot exploration in Free / Pro Preview mode
-* built-in `TIMELINE-MOCK` snapshots for timeline preview
-* real snapshot workflows in Pro
-
-DV Quick Run uses the selected evidence shape to guide the workflow:
-
-```text
-2 compatible snapshots
-→ Operational Comparison
-
-3+ compatible snapshots from the same environment and entity
-→ Operational Timeline Reconstruction
-
-different environments
-→ Cross-Environment Diff
-```
-
-Timeline Reconstruction is intentionally restricted to same-environment, same-entity snapshots.
-
-Cross-environment timelines are blocked because they would mix environment comparison with historical evidence reconstruction.
-
-### ⏱️ Operational Timeline Reconstruction
-
-Operational Timeline Reconstruction helps investigators understand how operational evidence evolved across multiple snapshots.
-
-Select:
-
-```text
-3+ snapshots
-same environment
-same entity / subject
-```
-
-DV Quick Run reconstructs:
-
-* snapshot-bounded intervals
-* first-observed drift windows
-* Timeline Graph
-* provider distributions
-* significance distributions
-* Timeline Trust
-* Timeline Findings Summary reports
-* Timeline Investigation Handoff reports
-* optional Audit Evidence Enrichment where Dataverse audit rows are available
-
-Timeline Reconstruction can show provider-backed operational drift across:
-
-* Operational Profiles
-* Plugin Step Runtime Behaviour
-* Solution Participation
-* Workflow / Automation Participation
-* Identity Participation
-* Relationship Metadata Drift
-* Column Metadata Drift
-* Choice Metadata Drift
-* Entity Configuration Drift
-
-Timeline findings answer:
-
-```text
-What changed?
-When was it first observed between snapshot captures?
-Which evidence provider detected it?
-What supporting evidence exists?
-```
-
-Timeline findings do not claim:
-
-```text
-exact change time
-root cause
-human responsibility
-remediation status
-operational authority
-```
-
-### 📈 Timeline Graph
-
-Timeline Graph provides a visual reconstruction of selected snapshot intervals.
-
-It shows:
-
-* ordered snapshot progression
-* interval boundaries
-* event density by interval
-* first-observed drift concentration
-* clickable interval navigation in the timeline investigation surface
-
-This makes timeline investigations easier to scan before reviewing detailed findings.
-
-### 📄 Timeline Reports
-
-Timeline Reconstruction can export dedicated timeline artifacts:
-
-* **Timeline Findings Summary** — executive-style timeline summary focused on first-observed drift, interval distribution, provider contribution, significance mix, timeline trust, and top findings
-* **Timeline Investigation Handoff** — evidence-first handoff report for investigation continuity, sharing, escalation, and operational review
-
-Timeline reports are available as branded HTML/PDF artifacts.
-
-They preserve:
-
-* timeline range
-* snapshot count
-* interval count
-* event count
-* snapshot-bounded interval timeline
-* provider distribution
-* significance distribution
-* top timeline events
-* evidence references
-* audit evidence where explicitly queried before export
-* trust and verification boundaries
-
-
-### 🔍 Audit Evidence Enrichment
-
-Audit Evidence Enrichment adds optional Dataverse audit context to Timeline Reconstruction and Cross-Environment Diff investigations.
-
-When audit evidence is queried, DV Quick Run searches within the relevant snapshot-bounded investigation window and renders matching audit rows alongside the related finding.
-
-Audit evidence may include:
-
-* recorded timestamp
-* recorded user / actor where available
-* operation and action labels
-* changed attributes for supported entity update payloads
-* security or relationship association information
-* partially interpreted Dataverse audit payloads
-* raw payload preservation in HTML reports
-
-Audit Evidence Enrichment is intentionally bounded:
-
-```text
-Audit evidence enriches investigation context.
-Audit evidence does not establish causality, deployment correctness, remediation status, or operational authority.
-```
-
-Dataverse audit payload interpretation is experimental. Some payloads may be partially interpreted or preserved as raw evidence so users can submit edge cases through Feedback.
-
-### 🧩 Reconstruction Artifacts
-
-Reconstruction Artifacts preserve supported source-side metadata drift as explicit DVAF handoff files.
-
-Eligible Column Metadata Drift findings can export `.dvaf.json` artifacts into:
-
-```text
-.dvforgelab/dvaf/exports
-```
-
-These artifacts can be imported into DV Attribute Factory for preview-first reconstruction of supported metadata.
-
-DVQR may export reconstruction intent for supported source-side definitions such as:
-
-* text and multiline text
-* numeric and currency columns
-* date columns
-* choice columns with captured option values
-* lookup columns with captured target metadata
-
-DVQR blocks export for non-standalone companion attributes, shadow columns, and source metadata that is not valid for create.
-
-Reconstruction Artifacts are handoffs only:
-
-```text
-DVQR investigates and exports reconstruction intent.
-DVAF validates, previews, and creates supported metadata.
-Humans retain operational authority.
-```
-
-Global choice lifecycle reconstruction is intentionally left for DV Choice Editor rather than DV Attribute Factory.
-
-
+Snapshot Library coordinates saved operational snapshots and comparison/timeline selection.
 
 ![Operational Snapshot Library](docs/snapshot-library.png)
 
-The Snapshot Library provides Evidence Workspace management, snapshot selection, timeline reconstruction, cross-environment comparison, and built-in TIMELINE-MOCK samples for free timeline previews.
-
-### 🎭 Free Timeline Preview
-
-DV Quick Run includes built-in `TIMELINE-MOCK` snapshots.
-
-Free users can:
-
-* explore timeline workflows
-* select mock timeline snapshots
-* generate sample Timeline Graphs
-* export sample Timeline Findings Summary reports
-* export sample Timeline Investigation Handoff reports
-* understand first-observed drift analysis without setup
-
-Real operational timeline reconstruction remains Pro capability-aware.
-
 ### Cross-Environment Diff
 
-Cross-Environment Diff remains the workflow for comparing snapshots across different environments.
+Compare compatible snapshots across environments and review grouped operational drift with evidence references, verification state and handoff context.
 
-Cross Diff Explain is available from the comparison **Reports** menu. It opens as Markdown Preview and saves under the DVQR reports workspace so investigators can understand the comparison before drilling into detailed evidence.
+### Timeline Reconstruction
 
+Select 3+ compatible snapshots from the same environment and entity to reconstruct snapshot-bounded intervals and first-observed drift.
 
-Comparison reports preserve scope awareness so exported artifacts clearly identify the operational subject being compared, for example:
+DVQR can surface:
 
-```text
-Cross-Environment Diff: Contact • DEV → SIT
-```
+- Timeline Graph
+- provider and significance distributions
+- Timeline Trust
+- Timeline Findings Summary
+- Timeline Investigation Handoff
+- optional Audit Evidence Enrichment
 
-When snapshots represent different operational subjects, DV Quick Run warns before continuing so users do not accidentally treat unrelated subjects as meaningful operational drift.
-
-Dense comparison reports use grouped operational surfaces so investigations remain readable at enterprise scale. High-signal drift remains visible first, while lower-priority evidence is grouped with:
-
-* classification rationale
-* evidence summaries
-* representative drift signals
-* operational-priority explanation
-* full JSON/HTML evidence continuity
-
-Comparison reports also support interactive operational verification workflows. Evidence rows can open inline investigation context directly from the report, including bounded live pivots where DV Quick Run can safely query the active Dataverse environment.
-
-Inline evidence continuation supports:
-
-* solution participation evidence
-* identity/team/role participation evidence
-* workflow and automation participation evidence
-* grouped representative signals
-* custom/publisher-prefixed entity metadata context
-* captured context-only evidence with explanatory fallback wording
-
-The comparison workspace is organised around:
-
-* **Findings** — review the operational drift evidence
-* **Verification** — track what has been reviewed, externally checked, or still needs follow-up
-* **Handoff** — preserve operational notes and review posture for human investigation continuity
-
-Review and verification state is local to the comparison workflow and remains investigation-oriented. Marking something reviewed does not imply remediation, correctness, access authority, or root-cause certainty.
-
-Comparison reports can be exported as dedicated operational artifacts:
-
-* **Cross Diff Explain** — Markdown Preview briefing that summarises confidence, key operational changes, affected areas, risk posture, investigation path, technical breakdown, and raw comparison references
-* **Diff Findings Summary** — concise operational briefing focused on strongest drift signals, executive summary, significance distribution, provider distribution, snapshot trust, and top operational findings
-* **Investigation Handoff** — verification-oriented handoff package focused on outstanding operational review, grouped evidence continuity, review posture, and external follow-up context
-* **HTML reports** — readable, branded report exports that preserve operational hierarchy and evidence-backed summaries
-* **PDF reports** — branded, watermarked, print-friendly exports for review packs, CAB discussions, handoff, escalation, and stakeholder communication
-
-The comparison toolbar groups report exports under:
-
-```text
-Reports
-```
-
-so standard evidence exports and report artifacts stay distinct:
-
-```text
-Save JSON / Save MD / Save HTML / Reports / Reset Review State
-```
-
-The comparison and timeline models are intentionally observational:
-
-```text
-DVQR observes operational drift.
-DVQR does not fix operational drift.
-
-DVQR reconstructs observed evidence.
-DVQR does not reconstruct historical certainty.
-```
-
-Operational comparison and timeline reconstruction are not deployment tooling, remediation automation, root-cause certainty, or environment authority.
-
-They are designed to help you understand:
-
-* what changed
-* when drift was first observed
-* where operational density shifted
-* which providers contributed evidence
-* which drift signals may deserve follow-up investigation
-* whether runtime plugin or automation participation differs between snapshots
-* whether platform-layer drift is low-priority context or relevant to the investigation
-* whether a comparison or timeline is scope-aligned before treating drift as meaningful
-
-Audit Evidence Enrichment is available in v0.13.1.
-
-Current coverage includes:
-
-* snapshot-bounded audit retrieval
-* Timeline Reconstruction audit enrichment
-* Cross-Environment Diff audit enrichment
-* security and relationship association interpretation
-* audit-aware HTML/PDF exports
-* raw payload preservation for partially interpreted audit rows
-
-Future roadmap direction includes expanded audit payload interpretation, ownership transfer decoding, platform-operation decoding, custom association decoding, richer attribute-level audit correlation, and timeline-assisted root-cause guidance while preserving human verification boundaries.
+Timeline findings describe **when drift was first observed between captures**. They do not claim an exact change time, root cause, human responsibility or remediation status.
 
 ---
 
-### 🧠 Explain & Investigation Intelligence
+## Capability Explorer & Governed Execution
 
-Use Explain to turn Dataverse technical evidence into human-readable investigation briefings.
+Capability Explorer discovers and explains supported Dataverse operations and Custom APIs.
 
-Supported Explain surfaces include:
+It distinguishes:
 
-* **Query Explain** — explains OData and FetchXML query structure, intent, risk, recommendations, and raw query mechanics
-* **Cross Diff Explain** — explains cross-environment comparison evidence, confidence basis, key operational changes, investigation priority, and recommended investigation path
+- Functions vs Actions
+- bound vs unbound operations
+- public vs private visibility
+- preview-ready vs inspect-only capability
+- execution eligibility
+- operational-impact cautions
 
-Use Explain Query to turn Dataverse query structure into operational investigation understanding. Investigation Intelligence produces investigation summaries, confidence assessment, investigation pattern teaching, evidence-backed guidance, clause analysis, and verification recommendations. Query Doctor participates as an advisory contributor in the same pipeline.
-
-Supported workflows include:
-
-* break down query structure
-* understand filters, sorting, expands, and selected fields
-* identify missing `$top` or `$select`
-* preview suggested improvements
-* apply safe refinements through preview-first workflows
-
----
-
-### 🔍 Investigate Record
-
-Investigate a record from a GUID or result context.
-
-Useful for:
-
-* primary keys
-* surfaced business GUID fields
-* record interpretation
-* relationship exploration
-* suggested follow-up queries
-
----
-
-### 🧬 Metadata Intelligence
-
-DV Quick Run uses Dataverse metadata to improve query building and investigation.
-
-Features include:
-
-* field metadata hover
-* choice label resolution
-* relationship awareness
-* entity set resolution
-* preview-first filter refinement
-
----
-
-### 🧩 Capability Explorer & Governed Operational Execution
-
-DV Quick Run includes a metadata-backed **Capability Explorer** for discovering, understanding, previewing, and executing supported Dataverse operational capabilities.
-
-It helps identify:
-
-* executable vs inspect-only Custom APIs
-* Functions vs Actions
-* bound vs unbound operations
-* public vs private capability visibility
-* parameter complexity and preview support
-* OData execution eligibility
-* Action execution support state
-* AI-related execution policy state
-* governed operational execution context
-
-Capability Explorer supports:
-
-* entity-bound operational execution
-* operational capability discovery
-* metadata-backed execution validation
-* preview-first Function execution
-* preview-first eligible unbound Action execution
-* preview-first entity-bound Action execution
-* preview-first collection-bound Action execution
-* Result Viewer row-context bound Action previews
-* metadata-aware bound route generation
-* explicit target-row execution workflows
-* simple parameter request shaping
-* explicit execution confirmation
-* access-aware discovery behaviour under restricted permissions
-* execution diagnostics
-* execution result inspection
-* Capability Execution Insights continuation
-* structured operational investigation
-
-Capability Explorer now presents Action execution using a clearer support taxonomy:
-
-* **Preview-ready** — all discovered parameters can be represented safely in the preview foundation
-* **Partially preview-ready** — some parameters can be previewed, while others remain inspect-only
-* **Ready to run** — the Action is metadata-valid, OData-exposed, preview-ready, and executable after confirmation
-* **Run with caution** — the Action is executable, but DV Quick Run detected operational-impact or governance signals requiring extra review
-* **Preview request only** — a request template can be generated, but no Dataverse operation will be executed
-* **Inspect only** — the operation remains discoverable and inspectable, but cannot be executed safely in the current release boundary
-
-This keeps unsupported or private operations useful for investigation without making them appear broken or silently executable.
-
-![Capability Explorer Function Preview](docs/capability-model-get-preview-sample.png)
-
-### 🔗 Entity-Bound Action Execution
-
-DV Quick Run can now execute supported entity-bound Dataverse Actions using explicit target-row context.
-
-Capability Explorer automatically:
-
-* resolves executable bound OData routes
-* generates preview-ready request shapes
-* validates execution eligibility
-* preserves preview-first execution trust semantics
-* captures execution diagnostics and operational investigation context
-
-Bound execution remains:
-
-* metadata-aware
-* explicit
-* environment-bound
-* confirmation-driven
-* investigation-oriented
-
-![Entity-Bound Action Execution](docs/bound-actions-success-1.png)
-
-Execution results preserve:
-
-* request shape visibility
-* execution identifiers
-* execution diagnostics
-* captured operational investigation context
-
-![Entity-Bound Action Result](docs/bound-actions-success-2.png)
-
-### 🧭 Result Viewer Bound Actions
-
-Result Viewer rows can now open compatible bound Actions directly from the row action menu.
-
-Use **Bound Actions on this record** to move from a returned Dataverse row into a governed Action preview without manually constructing the bound OData route.
-
-Behaviour:
-
-* the row supplies target entity and row id context
-* DV Quick Run resolves the bound OData route from metadata
-* execution preview remains the authority boundary
-* execution still requires explicit confirmation
-* request and response context are captured as investigation evidence
-
-If Custom API discovery is restricted, DV Quick Run keeps the action visible but explains why it is unavailable instead of showing noisy failures.
-
-### 🔒 Access-Aware Capability Discovery
-
-Capability Explorer now handles restricted Custom API discovery access as an expected enterprise condition.
-
-When access is restricted, DV Quick Run opens a calm restricted-access surface instead of treating the launch as a tool failure.
-
-Where available, DV Quick Run surfaces actionable remediation details:
-
-* principal user
-* missing privilege
-* required entity
-* HTTP status
-
-This keeps enterprise environments understandable even when security roles intentionally restrict Custom API metadata visibility.
-
-The capability model is intentionally:
-
-* metadata-driven
-* preview-first
-* explicit
-* investigation-oriented
-* execution-safe
-* governance-aware
-
-Execution is validated against the Dataverse OData `$metadata` surface before supported Functions and eligible unbound Actions can run.
-
-The governing model is:
-
-```text
-Custom API metadata = discovery truth
-OData metadata = execution exposure truth
-bound route metadata = execution route truth
-active environment = execution authority boundary
-```
-
-AI-related operations are governed separately. By default, DV Quick Run blocks AI-related execution:
-
-```json
-"dvQuickRun.execution.aiPolicy": "deny"
-```
-
-Set the policy to `allow` only when AI-related execution is intentionally permitted:
-
-```json
-"dvQuickRun.execution.aiPolicy": "allow"
-```
-
-When AI execution is allowed, DV Quick Run still surfaces amber advisory warnings because generated responses may be inaccurate, incomplete, non-deterministic, or unsuitable for direct operational decisions without human review.
-
----
-
-### 🌍 Environment Support
-
-Work across configured Dataverse environments such as DEV, UAT, SIT, and PROD.
-
-DV Quick Run supports:
-
-* active environment selection
-* environment-aware metadata caching
-* safe environment switching
-* investigation context reset on environment change
-
----
-
-## 🛡 Guardrails
-
-DV Quick Run favours explicit, preview-first, user-controlled workflows.
-
-It detects or guards against risky situations such as:
-
-* missing `$top`
-* broad result analysis
-* unsafe PATCH contexts
-* unsupported expanded-field updates
-* stale investigation context
-* stale execution authority after environment changes
-* unavailable execution evidence
-* unsupported or inspect-only Custom API execution
-* private/internal Custom APIs remaining preview-request only
-* restricted Custom API discovery access
-* unavailable Result Viewer bound Action discovery
-* unsupported or complex Action parameter shapes
-* high-risk Actions requiring clearer caution semantics
-* AI-related execution blocked by default
-* AI-generated content requiring human review
-* cross-environment investigation leakage
-* operational-context overclaiming beyond bounded evidence
-* effective-access claims from Access Context participation evidence
-* causal claims from solution, ownership, access, or actor participation
-* treating operational comparison as deployment authority
-* treating snapshot evidence as remediation instruction
-* treating mismatched comparison subjects as equivalent operational drift without explicit user awareness
-* reconstructing timelines from mixed-environment snapshots
-* treating first-observed timeline windows as exact historical change times
-* replay-history cleanup deleting underlying snapshots
-* hidden cross-environment scans or automatic drift verification
-* treating inline evidence continuation as remediation or proof of root cause
-* treating review-state completion as operational correctness
-* treating exported reports, Explain surfaces, or PDFs as approval, certification, root-cause proof, timeline certainty, or remediation authority
-* treating audit evidence as causality, deployment correctness, remediation proof, or operational authority
-* assuming unknown Dataverse audit payloads are fully interpreted when DVQR marks them as experimental or partially interpreted
-* treating DVAF reconstruction artifacts as proof that the source is correct or the target is wrong
-* treating reconstruction exports as automatic remediation instructions
-* exporting shadow/system companion attributes as standalone reconstruction candidates
-
-Execution-capable workflows are designed around:
+Supported execution follows:
 
 ```text
 preview → explicit confirmation → execution → inspect result → investigate evidence
 ```
 
-DV Quick Run does not treat generated or AI-assisted responses as operational truth. AI-related output should be reviewed before being used for operational decisions.
+Custom API metadata is discovery truth; OData metadata is execution-exposure truth; bound route metadata is execution-route truth; the active environment remains the execution authority boundary.
+
+AI-related operation execution is blocked by default unless explicitly allowed by policy, and generated output still requires human review.
 
 ---
 
-## 💬 Community & Feedback
+## DV ForgeLab Ecosystem
 
-DV Quick Run includes GitHub Discussions entry points from the Hub and operational comparison surfaces.
+DV Quick Run investigates. Other DV ForgeLab utilities reconstruct or execute focused changes through explicit handoff artifacts.
 
-Use DVQR Discussions to:
+Supported ecosystem handoffs include:
 
-* report bugs
-* suggest features
-* share workflow feedback
-* discuss operational investigation patterns
-* propose comparison providers
-* submit audit payload edge cases
-* follow roadmap direction
+- **DVBUR** — focused bulk upsert artifacts
+- **DVAF** — supported attribute reconstruction intent
+- **DVIM** — identity management artifacts
+- **DVCE** — choice artifacts
+- **DVEVM** — environment variable artifacts
 
-GitHub Discussions:
+Investigation and reconstruction remain separate concerns.
+
+---
+
+## Guardrails
+
+DV Quick Run favours explicit, preview-first, user-controlled workflows.
+
+Key boundaries include:
+
+- bounded queries and explicit execution context
+- no silent Managed Business Path persistence
+- no broadening after an empty traversal frontier
+- no causal claims from participation alone
+- no effective-access claims from Access Context participation
+- no cross-environment timeline reconstruction
+- no treatment of first-observed drift as exact historical time
+- no treatment of audit rows as proof of causality
+- no treatment of reports or exports as approval/certification
+- no treatment of reconstruction artifacts as automatic remediation
+- explicit confirmation for supported execution-capable workflows
+
+DV Quick Run does not treat generated or AI-assisted responses as operational truth. Human verification remains the authority boundary.
+
+---
+
+## Pro Activation
+
+DV Quick Run is available in Free and Pro editions.
+
+Pricing: https://www.dvquickrun.com/pricing
+
+Purchase: https://dvforgelab.lemonsqueezy.com
+
+Activate Online Pro from the Command Palette:
 
 ```text
-https://github.com/yongjinsim-sudo/dv-quick-run/discussions
+DV Quick Run: Activate Pro License
 ```
 
-Official website:
+Inspect entitlement:
 
 ```text
-https://www.dvquickrun.com
+DV Quick Run: License Status
 ```
 
----
-
-## 👥 Who Is This For?
-
-* Dataverse / Dynamics 365 developers
-* Power Platform engineers
-* Integration / API developers
-* Support engineers investigating Dataverse execution behaviour
-* Consultants working across complex Dataverse environments
-
----
-
-## 💡 Why DV Quick Run?
-
-Because the fastest Dataverse workflow is:
+Restricted or disconnected environments can use signed Offline Pro licensing:
 
 ```text
-write → run → explore → refine → investigate → reconstruct evidence → verify
+DV Quick Run: Import Offline License
 ```
-
-…without leaving your editor.
-
-DV Quick Run is designed to reduce tool switching while keeping investigation, operational context, and execution workflows explicit, bounded, governed, and trustworthy.
 
 ---
 
-## 🔧 Development
+## Who Is This For?
+
+- Dataverse / Dynamics 365 developers
+- Power Platform engineers
+- integration and API developers
+- support engineers investigating Dataverse behaviour
+- consultants working across complex Dataverse environments
+- teams onboarding into unfamiliar Dataverse solutions
+
+---
+
+## Why DV Quick Run?
+
+Because useful Dataverse investigation is more than running a query:
+
+```text
+understand → query → verify → investigate → compare → explain → hand off
+```
+
+DV Quick Run reduces tool switching while keeping metadata truth, runtime evidence, user preference, execution authority and human judgement explicitly separated.
+
+---
+
+## Community & Feedback
+
+GitHub Discussions: https://github.com/yongjinsim-sudo/dv-quick-run/discussions
+
+Official website: https://www.dvquickrun.com
+
+Use Discussions to report bugs, suggest features, share workflow feedback, discuss investigation patterns and submit evidence edge cases.
+
+---
+
+## Development
 
 ```bash
 npm install
@@ -1240,45 +549,27 @@ npm run compile
 
 Press **F5** to run the extension.
 
+For direct developer MCP verification after compiling:
+
+```powershell
+npm run mcp:start
+```
+
+For interactive inspection:
+
+```powershell
+npm run mcp:inspect
+```
+
+Azure CLI authentication must already be available through `az login`.
+
 ---
 
-## 📜 License
-
-MIT License
-
-## Open-Core Model
+## License & Open-Core Model
 
 DV Quick Run follows an open-core model.
 
-The MIT-licensed core preserves foundational operational understanding workflows for Dataverse.
-
-Commercial Pro capabilities focus on advanced operational acceleration workflows such as:
-
-- Cross-Environment Diff
-- Cross Diff Explain
-- Timeline Reconstruction
-- Timeline Findings Summary Reports
-- Timeline Investigation Handoff Reports
-- Audit Evidence Enrichment
-- Audit-Aware HTML/PDF Report Exports
-- Reconstruction Artifact Export
-- DVAF Reconstruction Handoff
-- Runtime Behaviour Drift
-- Identity Participation Drift
-- Snapshot Replay
-- Comparison Report Export Workflows
-- Investigation Handoff Exports
-- Result Viewer → DVBUR Artifact Export
-- Online Pro Activation
-- Offline Pro Licensing
-- Capability-Aware Acceleration Workflows
-
-The public repository intentionally excludes proprietary Pro implementation modules.
-
-Foundational operational understanding remains accessible.  
-Commercial acceleration funds continued development.
-
-### Repository Structure
+The MIT-licensed core preserves foundational Dataverse understanding workflows. Proprietary Pro modules provide advanced investigation acceleration, persistence, comparison, timeline, reporting and governed execution capabilities.
 
 ```text
 /src/core
@@ -1289,18 +580,4 @@ Private proprietary acceleration modules
 Not included in the public repository or MIT grant
 ```
 
-## Developer MCP verification
-
-The packaged extension owns normal MCP registration and lifecycle. Repository contributors can also run the stdio server directly after `npm install` and `npm run compile`:
-
-```powershell
-npm run mcp:start
-```
-
-The process remains silent while waiting for an MCP client. For interactive inspection, use:
-
-```powershell
-npm run mcp:inspect
-```
-
-Azure CLI authentication must already be available through `az login`. The Free MCP catalogue remains deterministic and read-only; it includes metadata search, capability discovery, relationship intelligence, OData explanation and bounded GET execution without mutation tools.
+Foundational operational understanding remains accessible. Commercial acceleration funds continued development.
