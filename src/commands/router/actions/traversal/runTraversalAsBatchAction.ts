@@ -5,10 +5,11 @@ import { getActiveTraversalProgress, isActiveTraversalSession } from "../shared/
 import { runAction } from "../shared/actionRunner.js";
 import { previewAndRunBatchQueries } from "../execution/batch/runBatchExecutionFlow.js";
 import { buildStepExecutionPlan } from "../shared/traversal/traversalStepExecutor.js";
+import type { ActiveTraversalProgress, TraversalExecutionStep, TraversalRelationshipEdge } from "../shared/traversal/traversalTypes.js";
 
 
 
-function getSelectedInputForStep(progress: any, stepIndex: number, step: any) {
+function getSelectedInputForStep(progress: ActiveTraversalProgress, stepIndex: number, step: TraversalExecutionStep) {
   const selectedCarryValue = progress.selectedCarryValuesByStep?.[stepIndex];
   const currentStepSelectedInput =
     stepIndex === progress.currentStepIndex &&
@@ -29,7 +30,7 @@ function getSelectedInputForStep(progress: any, stepIndex: number, step: any) {
     : currentStepSelectedInput ?? progress.selectedInputsByStep?.[stepIndex];
 }
 
-function buildOptimizedPreviousStepFilter(progress: any, step: any, stepIndex: number): string | undefined {
+function buildOptimizedPreviousStepFilter(progress: ActiveTraversalProgress, step: TraversalExecutionStep, stepIndex: number): string | undefined {
   const nextSelectedInput = progress.selectedInputsByStep?.[stepIndex + 1] ??
     ((stepIndex + 1 === progress.currentStepIndex && progress.currentStepInput) ? progress.currentStepInput : undefined);
 
@@ -48,7 +49,7 @@ function buildOptimizedPreviousStepFilter(progress: any, step: any, stepIndex: n
     return undefined;
   }
 
-  const relationshipPath = step.edges.map((edge: any) => edge.navigationPropertyName).filter((value: string) => !!value).join('/');
+  const relationshipPath = step.edges.map((edge: TraversalRelationshipEdge) => edge.navigationPropertyName).filter((value: string) => !!value).join('/');
   if (!relationshipPath) {
     return undefined;
   }

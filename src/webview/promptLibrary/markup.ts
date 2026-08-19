@@ -31,7 +31,7 @@ export function getPromptLibraryMarkup(model: PromptLibraryViewModel): string {
   return `<main class="shell">
     <header class="hero">
       <div>
-        <div class="eyebrow">v0.15.9 · Discoverability & Guided Investigation</div>
+        <div class="eyebrow">Discoverability & Guided Investigation</div>
         <h1>${escapeHtml(model.title)}</h1>
         <p>${escapeHtml(model.subtitle)}</p>
       </div>

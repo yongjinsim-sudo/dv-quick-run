@@ -1,14 +1,14 @@
 import { DvqrMcpServerFoundation } from "./dvqrMcpServerFoundation.js";
 import { DvqrMcpFreeApplicationAdapter } from "./mcpFreeApplicationAdapter.js";
-import { createDvqrMcpCapabilityPayload } from "./mcpCapabilityPayload.js";
 import { DvqrMcpLiveCapabilityPolicy } from "./mcpLiveCapabilityPolicy.js";
 import {
-  DVQR_LIVE_MCP_TOOL_BY_NAME,
-  type DvqrLiveMcpFreeHandlerId
+  DVQR_LIVE_MCP_TOOL_BY_NAME
 } from "./mcpLiveToolCatalogue.js";
 import type { DvqrMcpPortableTextOptions } from "./mcpPortableText.js";
 import type { DvqrMcpRuntimeConfiguration } from "./mcpRuntimeConfiguration.js";
 import type { DvqrMcpFreeToolResult } from "./mcpToolResults.js";
+import { createDvqrMcpFreeLiveHandlers, type DvqrMcpFreeLiveHandler } from "./mcpFreeLiveToolHandlers.js";
+import type { DvqrLiveMcpFreeHandlerId } from "./mcpLiveToolCatalogue.js";
 import { formatDvqrMcpToolResponse, type DvqrMcpToolResponse } from "./mcpToolResponseFormatter.js";
 import { WorkspaceInvestigationEvidenceRepository } from "../pro/investigations/index.js";
 import { extractAssertedBusinessTraversal } from "../pro/investigations/investigationBusinessTraversal.js";
@@ -24,8 +24,6 @@ export interface DvqrMcpLiveToolCall {
   readonly name: string;
   readonly arguments?: Record<string, unknown>;
 }
-
-type FreeHandler = (args: Record<string, unknown>) => Promise<DvqrMcpToolResponse>;
 
 export interface RuntimeRelationshipAcquisitionArguments {
   readonly investigationId: string;
@@ -96,7 +94,7 @@ function extractExplicitLogicalTarget(question: string, subjectLogicalName?: str
 
 export class DvqrMcpLiveToolDispatcher {
   private readonly portableTextOptions: DvqrMcpPortableTextOptions;
-  private readonly freeHandlers: Readonly<Record<DvqrLiveMcpFreeHandlerId, FreeHandler>>;
+  private readonly freeHandlers: Readonly<Record<DvqrLiveMcpFreeHandlerId, DvqrMcpFreeLiveHandler>>;
   private readonly capabilityPolicy: DvqrMcpLiveCapabilityPolicy;
   private readonly intentInference = new InvestigationIntentInferenceEngine();
   private readonly pendingInferredIntents = new Map<string, PendingInvestigationIntent>();
@@ -115,7 +113,13 @@ export class DvqrMcpLiveToolDispatcher {
       enabled: config.emitTextMirror,
       maxCharacters: config.textMirrorMaxCharacters
     };
-    this.freeHandlers = this.createFreeHandlers();
+    this.freeHandlers = createDvqrMcpFreeLiveHandlers({
+      config: this.config,
+      adapter: this.freeAdapter,
+      format: (summary, structuredContent, isError) => this.format(summary, structuredContent, isError),
+      formatFreeResult: (result) => this.formatFreeResult(result),
+      dispatchRelationshipQuery: (args) => this.dispatchRelationshipQuery(args)
+    });
   }
 
   public async dispatch(call: DvqrMcpLiveToolCall): Promise<DvqrMcpToolResponse> {
@@ -212,37 +216,7 @@ export class DvqrMcpLiveToolDispatcher {
     return this.freeHandlers[tool.handler.id](args);
   }
 
-  private createFreeHandlers(): Readonly<Record<DvqrLiveMcpFreeHandlerId, FreeHandler>> {
-    return {
-      listCapabilities: async () => this.format(
-        "DVQR local MCP is active. Free execution and understanding tools are available; Pro tools provide investigation acceleration.",
-        createDvqrMcpCapabilityPayload(this.config.proEnabled)
-      ),
-      explainOData: async (args) => this.formatFreeResult(this.freeAdapter.explainOData(args)),
-      executeOData: async (args) => this.formatFreeResult(await this.freeAdapter.executeOData(args)),
-      searchMetadata: async (args) => this.formatFreeResult(await this.freeAdapter.searchMetadata(args)),
-      getEntityMetadata: async (args) => this.formatFreeResult(await this.freeAdapter.getEntityMetadata(args)),
-      getOperationalProfile: async (args) => this.formatFreeResult(await this.freeAdapter.getOperationalProfile(args)),
-      discoverCustomApis: async (args) => this.formatFreeResult(await this.freeAdapter.discoverCustomApis(args)),
-      getCustomApiDefinition: async (args) => this.formatFreeResult(await this.freeAdapter.getCustomApiDefinition(args)),
-      explainCustomApi: async (args) => this.formatFreeResult(await this.freeAdapter.explainCustomApi(args)),
-      compareCustomApis: async (args) => this.formatFreeResult(await this.freeAdapter.compareCustomApis(args)),
-      recommendCustomApis: async (args) => this.formatFreeResult(await this.freeAdapter.recommendCustomApis(args)),
-      recommendSolutionArchitecture: async (args) => this.formatFreeResult(await this.freeAdapter.recommendSolutionArchitecture(args)),
-      checkCustomApiExecution: async (args) => this.formatFreeResult(await this.freeAdapter.checkCustomApiExecution(args)),
-      previewCustomApiExecution: async (args) => this.formatFreeResult(await this.freeAdapter.previewCustomApiExecution(args)),
-      executeCustomApi: async (args) => this.formatFreeResult(await this.freeAdapter.executeCustomApi(args)),
-      interpretCustomApiExecution: async (args) => this.formatFreeResult(this.freeAdapter.interpretCustomApiExecution(args)),
-      discoverOperationalAnchors: async (args) => this.formatFreeResult(await this.freeAdapter.discoverOperationalAnchors(args)),
-      resolveNavigationProperty: async (args) => this.formatFreeResult(await this.freeAdapter.resolveNavigationProperty(args)),
-      findRelationshipPaths: async (args) => this.formatFreeResult(await this.freeAdapter.findRelationshipPaths(args)),
-      discoverBusinessPaths: async (args) => this.formatFreeResult(await this.freeAdapter.discoverBusinessPaths(args)),
-      validateBusinessPaths: async (args) => this.formatFreeResult(await this.freeAdapter.validateBusinessPaths(args)),
-      generateRelationshipQuery: async (args) => this.dispatchRelationshipQuery(args),
-      probeRelationshipPath: async (args) => this.formatFreeResult(await this.freeAdapter.probeRelationshipPath(args)),
-      explainLookup: async (args) => this.formatFreeResult(await this.freeAdapter.explainLookup(args))
-    };
-  }
+
 
 
   private pendingRecordStartKey(args: Record<string, unknown>): string | undefined {

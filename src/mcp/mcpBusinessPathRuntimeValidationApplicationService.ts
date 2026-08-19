@@ -4,12 +4,43 @@ import type { DvqrMcpFreeToolResult } from "./mcpToolResults.js";
 import { McpRelationshipMetadataRepository } from "./mcpRelationshipMetadataRepository.js";
 import { McpRelationshipProbeService } from "./mcpRelationshipProbeService.js";
 import { rankBusinessPathCandidates } from "./mcpBusinessPathDiscovery.js";
+import { candidateMatchesPreferredBusinessPath } from "./mcpBusinessPathRuntimeReuse.js";
+import { businessPathEnvironmentIdentity } from "./mcpBusinessPathMetadataProvider.js";
+import { businessPathPromotionAuthorizations, suggestedBusinessPathName } from "./mcpBusinessPathPromotionAuthorizationStore.js";
+import type { BusinessPathHop } from "../core/businessPaths/index.js";
 import {
   failedBusinessPathResult,
   notTestedBusinessPathResult,
   rankValidatedBusinessPaths,
   validateBusinessPathResult
 } from "./mcpBusinessPathRuntimeValidation.js";
+
+function promotionHopFromCandidate(
+  hop: {
+    readonly fromTable: string;
+    readonly toTable: string;
+    readonly relationshipSchemaName?: string;
+    readonly relationshipType: "ManyToOne" | "OneToMany" | "ManyToMany";
+    readonly navigationProperty: string;
+    readonly referencingAttribute?: string;
+  },
+  ordinal: number
+): BusinessPathHop | undefined {
+  const relationshipSchemaName = hop.relationshipSchemaName?.trim();
+  if (!relationshipSchemaName) {
+    return undefined;
+  }
+  return {
+    ordinal,
+    fromTable: hop.fromTable,
+    toTable: hop.toTable,
+    relationshipSchemaName,
+    relationshipType: hop.relationshipType,
+    direction: "forward",
+    ...(hop.navigationProperty ? { navigationProperty: hop.navigationProperty } : {}),
+    ...(hop.referencingAttribute ? { lookupAttribute: hop.referencingAttribute } : {})
+  };
+}
 
 interface CachedBusinessPathMetadata {
   readonly discovered: Awaited<ReturnType<McpRelationshipMetadataRepository["discoverDepthDiverseBusinessPaths"]>>;
@@ -46,8 +77,51 @@ export class McpBusinessPathRuntimeValidationApplicationService {
       const assertedBusinessPathTables = Array.isArray(args.assertedBusinessPathTables)
         ? args.assertedBusinessPathTables.filter((value): value is string => typeof value === "string" && Boolean(value.trim())).map((value) => value.trim())
         : [];
+      const assertedBusinessPathRelationshipSchemaNames = Array.isArray(args.assertedBusinessPathRelationshipSchemaNames)
+        ? args.assertedBusinessPathRelationshipSchemaNames
+            .filter((value): value is string => typeof value === "string" && Boolean(value.trim()))
+            .map((value) => value.trim())
+        : [];
+      if (
+        assertedBusinessPathRelationshipSchemaNames.length > 0
+        && assertedBusinessPathTables.length < 2
+      ) {
+        return {
+          ok: false,
+          code: "InvalidArguments",
+          message: "assertedBusinessPathRelationshipSchemaNames requires assertedBusinessPathTables."
+        };
+      }
+      if (
+        assertedBusinessPathRelationshipSchemaNames.length > 0
+        && assertedBusinessPathRelationshipSchemaNames.length !== assertedBusinessPathTables.length - 1
+      ) {
+        return {
+          ok: false,
+          code: "InvalidArguments",
+          message: "assertedBusinessPathRelationshipSchemaNames must contain exactly one relationship schema name per asserted hop."
+        };
+      }
+      if (
+        assertedBusinessPathTables.length >= 2
+        && (
+          assertedBusinessPathTables[0].toLowerCase() !== sourceTable.toLowerCase()
+          || assertedBusinessPathTables[assertedBusinessPathTables.length - 1].toLowerCase() !== targetTable.toLowerCase()
+        )
+      ) {
+        return {
+          ok: false,
+          code: "InvalidArguments",
+          message: "assertedBusinessPathTables must begin with sourceTable and end with targetTable."
+        };
+      }
+
+      const preferredBusinessPathId = stringArg(args, "preferredBusinessPathId");
       const normalizedAssertedBusinessPath = assertedBusinessPathTables.map((value) => value.toLowerCase());
-      const assertedCacheSuffix = normalizedAssertedBusinessPath.join(">");
+      const assertedCacheSuffix = [
+        normalizedAssertedBusinessPath.join(">"),
+        assertedBusinessPathRelationshipSchemaNames.map((value) => value.toLowerCase()).join(">")
+      ].join("|");
       const cacheKey = `${context.baseEnvironmentUrl.toLowerCase()}|${sourceTable.toLowerCase()}|${targetTable.toLowerCase()}|${maxDepth}|${assertedCacheSuffix}`;
 
       let metadataSource: "Fresh" | "Cached" = "Fresh";
@@ -88,8 +162,13 @@ export class McpBusinessPathRuntimeValidationApplicationService {
       const { discovered, catalogue } = metadataBundle;
       const allBusinessCandidates = rankBusinessPathCandidates(discovered.ranked, catalogue);
       const assertedCandidates = normalizedAssertedBusinessPath.length >= 2
-        ? allBusinessCandidates.filter((candidate) => candidate.tables.length === normalizedAssertedBusinessPath.length
-          && candidate.tables.every((table, index) => table.toLowerCase() === normalizedAssertedBusinessPath[index]))
+        ? allBusinessCandidates.filter((candidate) =>
+            candidateMatchesPreferredBusinessPath(
+              candidate,
+              assertedBusinessPathTables,
+              assertedBusinessPathRelationshipSchemaNames
+            )
+          )
         : [];
       const assertedCandidateIds = new Set(assertedCandidates.map((candidate) => candidate.pathId));
       const directBaselines = allBusinessCandidates
@@ -109,11 +188,14 @@ export class McpBusinessPathRuntimeValidationApplicationService {
       for (const assertedCandidate of assertedCandidates) {
         selectedById.set(assertedCandidate.pathId, assertedCandidate);
       }
-      const businessCandidates = [...selectedById.values()].sort((left, right) =>
-        right.businessPathScore - left.businessPathScore
-        || right.metadataTraversalScore - left.metadataTraversalScore
-        || left.pathId.localeCompare(right.pathId)
-      );
+      const businessCandidates = [...selectedById.values()].sort((left, right) => {
+        const leftAsserted = assertedCandidateIds.has(left.pathId) ? 0 : 1;
+        const rightAsserted = assertedCandidateIds.has(right.pathId) ? 0 : 1;
+        return leftAsserted - rightAsserted
+          || right.businessPathScore - left.businessPathScore
+          || right.metadataTraversalScore - left.metadataTraversalScore
+          || left.pathId.localeCompare(right.pathId);
+      });
       const relationshipPathById = new Map(discovered.ranked.map((path) => [path.pathId, path]));
 
       if (!businessCandidates.length) {
@@ -154,6 +236,32 @@ export class McpBusinessPathRuntimeValidationApplicationService {
       const assertedValidated = assertedValidatedVariants.find((item) => item.runtimeStatus === "RuntimeViable")
         ?? assertedValidatedVariants[0];
       const businessPreferredTraversal = assertedValidated?.runtimeStatus === "RuntimeViable" ? assertedValidated : undefined;
+      const promotionCandidate = businessPreferredTraversal
+        ? allBusinessCandidates.find((candidate) => candidate.pathId === businessPreferredTraversal.pathId)
+        : undefined;
+      const promotionHops = promotionCandidate
+        ? promotionCandidate.hops
+            .map((hop, index) => promotionHopFromCandidate(hop, index + 1))
+            .filter((hop): hop is BusinessPathHop => Boolean(hop))
+        : [];
+      const promotionAuthorization = (
+        !preferredBusinessPathId
+        && businessPreferredTraversal
+        && promotionCandidate
+        && promotionHops.length === promotionCandidate.hops.length
+      )
+        ? businessPathPromotionAuthorizations.issue({
+            sourceTable,
+            targetTable,
+            sourceRecordId,
+            environmentIdentity: businessPathEnvironmentIdentity(context.baseEnvironmentUrl),
+            pathId: businessPreferredTraversal.pathId,
+            tables: businessPreferredTraversal.tables,
+            relationshipSchemaNames: promotionHops.map((hop) => hop.relationshipSchemaName),
+            hops: promotionHops,
+            observedTargetRows: businessPreferredTraversal.observedTargetRecordCount
+          })
+        : undefined;
       const probesUsed = maxProbeRequests - budget.remaining;
 
       return {
@@ -174,12 +282,69 @@ export class McpBusinessPathRuntimeValidationApplicationService {
           ...(metadataFallbackError ? { metadataFallback: { reason: metadataFallbackError.summary, structuredError: metadataFallbackError } } : {}),
           runtimePreferredPath: winner,
           businessPreferredTraversal,
+          promotionDecision: normalizedAssertedBusinessPath.length >= 2
+            ? businessPreferredTraversal
+              ? {
+                  eligible: true,
+                  source: "AssertedBusinessTraversal",
+                  pathId: businessPreferredTraversal.pathId,
+                  tables: businessPreferredTraversal.tables,
+                  relationshipSchemaNames: promotionAuthorization?.relationshipSchemaNames
+                    ?? assertedBusinessPathRelationshipSchemaNames,
+                  authorization: promotionAuthorization
+                    ? {
+                        authorizationId: promotionAuthorization.authorizationId,
+                        expiresAt: promotionAuthorization.expiresAt,
+                        singleUse: true,
+                        saveTool: "dvqr_save_business_path"
+                      }
+                    : undefined,
+                  rule: "Only this exact asserted traversal is eligible for promotion from this validation result. Runtime-ranked shortcuts remain alternatives."
+                }
+              : {
+                  eligible: false,
+                  source: "AssertedBusinessTraversal",
+                  tables: assertedBusinessPathTables,
+                  relationshipSchemaNames: assertedBusinessPathRelationshipSchemaNames,
+                  reason: assertedCandidates.length
+                    ? "The asserted business traversal was metadata-resolved but did not reach the target in this bounded run."
+                    : "The asserted business traversal was not resolved into the bounded metadata discovery pool.",
+                  rule: "Do not promote runtimePreferredPath or another observed shortcut as a substitute for the asserted business traversal. A different route requires a separate explicit user selection."
+                }
+            : {
+                eligible: false,
+                source: "NoAssertedBusinessTraversal",
+                reason: "No explicit business traversal was asserted for this validation request.",
+                rule: "Runtime ranking alone is not organisational preference. Obtain explicit user selection before persistence."
+              },
+          saveFollowUp: promotionAuthorization
+            ? {
+                shouldAskUser: true,
+                question: `Business path confirmed: ${promotionAuthorization.tables.join(" → ")}. It is metadata-valid and runtime-viable for this source record. Would you like to save this as a Preferred Business Path for this workspace?`,
+                authorizationId: promotionAuthorization.authorizationId,
+                expiresAt: promotionAuthorization.expiresAt,
+                saveTool: "dvqr_save_business_path",
+                suggestedName: suggestedBusinessPathName(promotionAuthorization.tables),
+                instruction: "STOP after presenting this question. Do not save in the same turn. On a subsequent explicit user confirmation, call dvqr_save_business_path with this authorizationId and confirmSave=true. The name is optional in authorized mode; use the returned suggestedName unless the user supplies another name. Do not reconstruct intendedTables or hops."
+              }
+            : undefined,
+          preferredBusinessPath: preferredBusinessPathId ? {
+            pathId: preferredBusinessPathId,
+            source: "BusinessPathLibrary",
+            metadataRevalidation: "Valid",
+            historicalVerification: args.preferredBusinessPathHistoricalVerification ?? "unknown",
+            historicallyVerifiedInActiveEnvironment:
+              args.preferredBusinessPathHistoricallyVerifiedInActiveEnvironment ?? null,
+            runtimeEvidenceScope: "CurrentRunIsSeparateFromHistoricalVerification"
+          } : undefined,
           assertedBusinessTraversal: normalizedAssertedBusinessPath.length >= 2 ? {
             tables: assertedBusinessPathTables,
+            relationshipSchemaNames: assertedBusinessPathRelationshipSchemaNames,
             metadataResolution: assertedCandidates.length ? "ResolvedCandidates" : "NotResolvedInDiscoveryPool",
             runtimeStatus: assertedValidated?.runtimeStatus ?? "NotTested",
             pathId: assertedValidated?.pathId,
             relationshipVariantsResolved: assertedCandidates.length,
+            exactRelationshipVariantRequested: assertedBusinessPathRelationshipSchemaNames.length > 0,
             reachedTarget: assertedValidated?.reachedTarget ?? false,
             interpretation: businessPreferredTraversal
               ? "The investigator-asserted business traversal was metadata-resolved and runtime-validated for this source record. It may be treated as the investigation-scoped business-preferred traversal while retaining shorter runtime shortcuts as reachability evidence only."
@@ -224,7 +389,7 @@ export class McpBusinessPathRuntimeValidationApplicationService {
                 ? "The asserted business traversal did not reach the target through any bounded metadata-valid relationship variant in this run. Keep it unresolved/not observed and do not promote a shorter runtime route to business-preferred truth."
                 : winner.routeSemantics === "DirectRuntimeReachability"
                   ? "Treat the direct winner as bounded runtime reachability only. Compare any runtime-viable multi-hop candidates before describing a business-preferred traversal."
-                  : "Use the runtime-preferred multi-hop route as investigation-scoped traversal evidence while retaining other runtime-viable and metadata-valid candidates as alternatives.",
+                  : "Treat the runtime-preferred multi-hop route as investigation-scoped traversal evidence only. Obtain explicit user selection before promoting it to persistent workspace preference.",
             "Inspect per-hop row counts, access limitations and breakpoints of lower-ranked paths before concluding they are generally invalid.",
             "Pass the observed route into investigation evidence/Mini RCA integration in the next Pass 10 stage."
           ] : [

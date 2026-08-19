@@ -163,7 +163,7 @@ suite("mcpRelationshipApplicationService", () => {
     const repository = new McpRelationshipMetadataRepository(config);
     const probes = new McpRelationshipProbeService(config, repository);
     const pathDiscovery = new McpRelationshipPathDiscoveryApplicationService(repository);
-    const businessPathDiscovery = new McpBusinessPathDiscoveryApplicationService(repository);
+    const businessPathDiscovery = new McpBusinessPathDiscoveryApplicationService(repository, config);
     const queryGeneration = new McpRelationshipQueryApplicationService(repository);
     const traversal = new McpRelationshipTraversalApplicationService(repository, probes);
 

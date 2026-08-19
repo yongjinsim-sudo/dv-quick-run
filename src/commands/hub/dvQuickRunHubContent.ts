@@ -239,12 +239,12 @@ export const capabilities: readonly CapabilityInfo[] = [
     id: "guided-traversal",
     title: "Guided Traversal",
     group: "Navigate Relationships",
-    summary: "Find metadata-backed relationship paths and continue investigations across related tables.",
-    operationalUseCase: "Use when you know where you want to go operationally but not which Dataverse relationship path to take.",
+    summary: "Find metadata-backed relationship paths, save runtime-verified business routes, and reuse Preferred paths through bounded exact-hop traversal.",
+    operationalUseCase: "Use when you need to discover a relationship route or quickly reuse a previously verified business traversal from a real source record.",
     relatedPlaybooks: ["entity-relationships"],
     commandId: "dvQuickRun.findPathToTable",
     actionLabel: "Start Guided Traversal",
-    launchNote: "This workflow can start from the Hub because it asks for source and target context.",
+    launchNote: "This workflow can start from the Hub because it asks for source and target context. Saved Preferred Business Paths are surfaced first, and exact reuse asks for a source record before execution.",
     contextRequirement: {
       kind: "selfContained",
       label: "Can start from the Hub",
@@ -485,13 +485,13 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.15.9 adds Discoverability & Guided Investigation: a category-driven Prompt Library with 94 curated user-intent prompts across 69 Free and 25 Pro journeys.",
-  "Quick Starts help users begin from an outcome instead of MCP tool-name knowledge, while search, category and Free/Pro filters keep the full catalogue manageable.",
-  "The Prompt Library is backed by a machine-readable Evidence Matrix over the live MCP catalogue, preserving tier, evidence posture and interpretation boundaries without creating a second reasoning engine.",
-  "Suggested next prompts turn individual prompts into guided journeys across metadata, bounded queries, relationship traversal, Custom API Intelligence, Operational Profile and managed investigations.",
-  "Operational Profile and DVQR Score are now exposed through Free MCP with canonical GUI parity, calibrated-score transparency, semantic guardrails and live-current-result authority over historical snapshots.",
-  "Raw MCP tool names are de-emphasised during browsing but remain available as capability details for users who want implementation transparency.",
-  "v0.15.8 Managed Investigation Intelligence remains the persisted Pro investigation protocol underneath the deeper guided-investigation journeys."
+  "v0.16.0 adds Managed Business Paths: runtime-verified relationship routes can be explicitly saved as workspace artifacts and reused instead of rediscovered from scratch.",
+  "Saved Preferred Business Paths are surfaced as the top visible Guided Traversal option while metadata-derived alternatives remain available for recovery and exploration.",
+  "Preferred reuse preserves every saved relationship boundary and executes the exact path from an explicit source record rather than collapsing business waypoints into Compact or Mixed plans.",
+  "Bounded landed rows are carried hop-by-hop across the exact saved navigation properties, merged and deduplicated before the next continuation.",
+  "Empty or mismatched frontiers now hard-stop traversal, preventing a failed relationship hop from broadening into an unrestricted target-table query.",
+  "Business Path artifacts remain evidence-aware: metadata validity, runtime-observed viability and user preference are preserved as distinct concepts rather than treated as causality or universal business truth.",
+  "v0.15.9 Prompt Library and v0.15.8 Managed Investigation Intelligence remain available alongside the new reusable traversal workflow."
 ];
 
 export const philosophy: readonly string[] = [

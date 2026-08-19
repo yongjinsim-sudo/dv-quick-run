@@ -136,6 +136,75 @@ suite("continueTraversalAction", () => {
     clearActiveTraversalProgress();
   });
 
+
+  test("hard-stops continuation when the previous landing is empty", async () => {
+    clearActiveTraversalProgress();
+    setActiveTraversalProgress({
+      ...buildProgress({
+        sessionId: "empty-frontier",
+        currentStepIndex: 0,
+        stepCount: 2
+      }),
+      lastLanding: {
+        entityName: "contact",
+        ids: []
+      }
+    });
+
+    const logs: string[] = [];
+    let getCalled = false;
+    const ctx = createStubContext(logs);
+    ctx.getClient = () => ({
+      get: async () => {
+        getCalled = true;
+        return { value: [{ activityid: "should-not-run" }] };
+      }
+    }) as any;
+
+    await runContinueTraversalAction(ctx, {
+      traversalSessionId: "empty-frontier",
+      legIndex: 0
+    });
+
+    assert.strictEqual(getCalled, false);
+    assert.ok(logs.some((entry) => /previous landing contains no record IDs/i.test(entry)));
+    clearActiveTraversalProgress();
+  });
+
+  test("hard-stops continuation when the landed entity does not match the next hop source", async () => {
+    clearActiveTraversalProgress();
+    setActiveTraversalProgress({
+      ...buildProgress({
+        sessionId: "mismatched-frontier",
+        currentStepIndex: 0,
+        stepCount: 2
+      }),
+      lastLanding: {
+        entityName: "account",
+        ids: ["account-1"]
+      }
+    });
+
+    const logs: string[] = [];
+    let getCalled = false;
+    const ctx = createStubContext(logs);
+    ctx.getClient = () => ({
+      get: async () => {
+        getCalled = true;
+        return { value: [] };
+      }
+    }) as any;
+
+    await runContinueTraversalAction(ctx, {
+      traversalSessionId: "mismatched-frontier",
+      legIndex: 0
+    });
+
+    assert.strictEqual(getCalled, false);
+    assert.ok(logs.some((entry) => /next hop expects contact/i.test(entry)));
+    clearActiveTraversalProgress();
+  });
+
   test("keeps completed traversal progress so sibling expand remains available on the landed result", async () => {
     clearActiveTraversalProgress();
     setActiveTraversalProgress({

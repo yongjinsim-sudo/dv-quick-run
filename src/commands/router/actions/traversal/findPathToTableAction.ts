@@ -53,12 +53,18 @@ type FindPathToTableDeps = {
   ) => Promise<TraversalGraph>;
   pickTraversalRoute: (
     graph: TraversalGraph,
-    routes: TraversalRoute[]
+    routes: TraversalRoute[],
+    source?: TraversalEntityOption,
+    target?: TraversalEntityOption
   ) => Promise<TraversalRoute | undefined>;
   pickExecutionPlan: (
     graph: TraversalGraph,
     plannedRoute: PlannedTraversalRoute
   ) => Promise<TraversalExecutionPlan | undefined>;
+  pickSourceRecordId?: (
+    source: TraversalEntityOption,
+    route: TraversalRoute
+  ) => Promise<string | undefined>;
   executeFirstStep: (
     ctx: CommandContext,
     graph: TraversalGraph,
@@ -215,9 +221,37 @@ function createDefaultDeps(ctx: CommandContext): FindPathToTableDeps {
         options.filter((option) => option.logicalName !== source.logicalName)
       ),
     buildTraversalGraph: buildFocusedTraversalGraph,
-    pickTraversalRoute: async (graph, routes) =>
-      pickTraversalRouteFromQuickPick(ctx, graph, routes),
+    pickTraversalRoute: async (graph, routes, source, target) =>
+      pickTraversalRouteFromQuickPick(
+        ctx,
+        graph,
+        routes,
+        undefined,
+        source && target
+          ? { sourceTable: source.logicalName, targetTable: target.logicalName }
+          : undefined
+      ),
     pickExecutionPlan: pickExecutionPlanFromQuickPick,
+    pickSourceRecordId: async (source, route) => {
+      const value = await vscode.window.showInputBox({
+        title: "DV Quick Run: Start Preferred Business Path",
+        prompt: `Enter the ${source.logicalName} record GUID to traverse ${route.entities.join(" → ")}`,
+        placeHolder: source.primaryIdAttribute
+          ? `${source.primaryIdAttribute} GUID`
+          : `${source.logicalName} record GUID`,
+        ignoreFocusOut: true,
+        validateInput: (input: string) => {
+          const trimmed = input.trim().replace(/[{}]/g, "");
+          if (!trimmed) {
+            return "A source record GUID is required for exact Preferred Business Path traversal.";
+          }
+          return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)
+            ? undefined
+            : "Enter a valid Dataverse record GUID.";
+        }
+      });
+      return value?.trim().replace(/[{}]/g, "");
+    },
     executeFirstStep: executeFirstStepDefault,
     showInfoMessage: (message) => vscode.window.showInformationMessage(message)
   };
@@ -253,21 +287,21 @@ export async function runFindPathToTableWorkflow(
 
   const { graph, routes } = await resolveGraphAndRoutes(ctx, deps, source, target);
 
-  if (!routes.length) {
-    logWarn(ctx.output, `No traversal route found from ${source.logicalName} to ${target.logicalName}.`);
-    await deps.showInfoMessage(
-      `DV Quick Run: No route found from ${source.logicalName} to ${target.logicalName}.`
-    );
-    return;
-  }
-
-  const selectedRoute = await deps.pickTraversalRoute(graph, routes);
+  const selectedRoute = await deps.pickTraversalRoute(graph, routes, source, target);
   if (!selectedRoute) {
+    if (!routes.length) {
+      logWarn(ctx.output, `No traversal route found from ${source.logicalName} to ${target.logicalName}.`);
+      await deps.showInfoMessage(
+        `DV Quick Run: No route found from ${source.logicalName} to ${target.logicalName}.`
+      );
+    }
     return;
   }
 
-  const isBestMatchRoute = buildRankedTraversalRoutes(routes)
-    .some((item) => item.route.routeId === selectedRoute.routeId && item.isBestMatch);
+  const isBestMatchRoute = selectedRoute.selectionAuthority === "workspacePreferred"
+    || selectedRoute.routeId.startsWith("business-path:")
+    || buildRankedTraversalRoutes(routes)
+      .some((item) => item.route.routeId === selectedRoute.routeId && item.isBestMatch);
 
   progress?.report(`Planning execution for ${selectedRoute.sourceEntity} -> ${selectedRoute.targetEntity}...`, 10);
   const plannedRoute = buildPlannedTraversalRoute(selectedRoute);
@@ -277,9 +311,21 @@ export async function runFindPathToTableWorkflow(
     return;
   }
 
+  let sourceRecordId: string | undefined;
+  if (selectedPlan.preserveExactHops === true) {
+    sourceRecordId = await deps.pickSourceRecordId?.(source, selectedRoute);
+    if (!sourceRecordId) {
+      await deps.showInfoMessage(
+        `DV Quick Run: Exact Preferred Business Path traversal requires a ${source.logicalName} source record.`
+      );
+      return;
+    }
+  }
+
   await deps.executeFirstStep(ctx, graph, selectedRoute, selectedPlan, progress, {
     isBestMatchRoute,
-    routeOptions: routes
+    routeOptions: routes,
+    sourceRecordId
   });
 }
 

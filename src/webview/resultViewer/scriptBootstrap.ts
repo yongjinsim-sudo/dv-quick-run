@@ -1270,6 +1270,14 @@ export const RESULT_VIEWER_SCRIPT_BOOTSTRAP = `
                     return;
                 }
 
+                if (traversalAction === "continue") {
+                    vscodeApi.postMessage({
+                        type: "continueTraversal",
+                        payload: { traversalSessionId }
+                    });
+                    return;
+                }
+
                 if (traversalAction === "back") {
                     vscodeApi.postMessage({
                         type: "backTraversal",

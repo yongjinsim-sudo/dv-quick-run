@@ -220,7 +220,7 @@ function renderTable(currentModel) {
                     : "<div class=\\"empty-state\\">" +
                         "<div class=\\"empty-title\\">No results found</div>" +
                         (currentModel.traversal && (currentModel.traversal.canGoBack || currentModel.traversal.canChangeRoute)
-                            ? "<div class=\\"empty-hint\\">This traversal path did not return rows. Use Back or Route in the Guided Traversal pill above to continue exploring.</div>"
+                            ? "<div class=\\"empty-hint\\">This selected branch or bounded continuation did not return rows at this hop. Use Back to return to the previous landing, then Continue to keep its landed rows in scope, choose another row to follow only that branch, or use Route for another path.</div>"
                             : "<div class=\\"empty-hint\\">Try:</div>" +
                                 "<ul class=\\"empty-list\\">" +
                                 "<li>Removing filters</li>" +

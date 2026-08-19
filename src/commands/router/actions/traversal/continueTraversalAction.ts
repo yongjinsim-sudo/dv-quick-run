@@ -53,12 +53,43 @@ export async function runContinueTraversalAction(
       return;
     }
 
-    const effectiveLanding: TraversalLandingContext | undefined = request?.carryValue
+    const selectedCarryValue = request?.carryValue?.trim();
+    const effectiveLanding: TraversalLandingContext | undefined = selectedCarryValue
       ? {
           entityName: progress.lastLanding?.entityName ?? nextStep.fromEntity,
-          ids: [request.carryValue]
+          ids: [selectedCarryValue]
         }
       : progress.lastLanding;
+
+    if (
+      !effectiveLanding
+      || !Array.isArray(effectiveLanding.ids)
+      || effectiveLanding.ids.length === 0
+    ) {
+      logWarn(
+        ctx.output,
+        `Traversal cannot continue to ${nextStep.toEntity} because the previous landing contains no record IDs.`
+      );
+      return;
+    }
+
+    if (effectiveLanding.entityName !== nextStep.fromEntity) {
+      logWarn(
+        ctx.output,
+        `Traversal cannot continue because the active landing is ${effectiveLanding.entityName}, but the next hop expects ${nextStep.fromEntity}.`
+      );
+      return;
+    }
+
+    if (selectedCarryValue) {
+      logInfo(ctx.output, `Continuation scope: selected row only (${selectedCarryValue}).`);
+    } else if (effectiveLanding?.ids.length) {
+      const boundedCount = Math.min(effectiveLanding.ids.length, 5);
+      logInfo(
+        ctx.output,
+        `Continuation scope: landed-row frontier (${boundedCount}/${effectiveLanding.ids.length} row(s) considered; bounded at 5).`
+      );
+    }
 
     logInfo(ctx.output, "Continue Traversal");
     logInfo(
@@ -103,6 +134,7 @@ export async function runContinueTraversalAction(
       setActiveTraversalProgress({
         ...progress,
         currentStepIndex: nextStepIndex,
+        lastLanding: execution.landing,
         currentStepInput: effectiveLanding,
         selectedInputsByStep: {
           ...(progress.selectedInputsByStep ?? {}),
@@ -110,7 +142,7 @@ export async function runContinueTraversalAction(
         },
         selectedCarryValuesByStep: {
           ...(progress.selectedCarryValuesByStep ?? {}),
-          [nextStepIndex]: request?.carryValue ? String(request.carryValue).trim() : undefined
+          [nextStepIndex]: selectedCarryValue || undefined
         },
         currentStepSiblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex],
         currentStepInsightActions: [],
@@ -124,11 +156,21 @@ export async function runContinueTraversalAction(
         isCompleted: false
       });
 
-      logInfo(ctx.output, `No usable rows were returned for this path.`);
+      logInfo(
+        ctx.output,
+        selectedCarryValue
+          ? "No usable rows were returned for this selected branch."
+          : "No usable rows were returned for the bounded landed-row frontier at this hop."
+      );
       for (const line of buildNoResultGuidanceLines({ step: nextStep, verbosity: explainVerbosity })) {
         logInfo(ctx.output, line);
       }
-      logInfo(ctx.output, `This variant did not produce usable data at ${nextStep.toEntity}. Use Back to choose another row or route variant.`);
+      logInfo(
+        ctx.output,
+        selectedCarryValue
+          ? `This selected row did not continue to ${nextStep.toEntity}. Use Back, then Continue to keep the previous landed rows in scope, or choose another row.`
+          : `No bounded continuation was observed at ${nextStep.toEntity}. Use Back to inspect individual branches or Route for another path variant.`
+      );
       return;
     }
 
@@ -170,7 +212,7 @@ export async function runContinueTraversalAction(
       },
       selectedCarryValuesByStep: {
         ...(progress.selectedCarryValuesByStep ?? {}),
-        [nextStepIndex]: request?.carryValue ? String(request.carryValue).trim() : undefined
+        [nextStepIndex]: selectedCarryValue || undefined
       },
       currentStepSiblingExpandClause: progress.siblingExpandClausesByStep?.[nextStepIndex],
       currentStepInsightActions: insightActions,

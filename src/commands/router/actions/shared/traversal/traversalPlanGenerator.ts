@@ -116,6 +116,20 @@ export function buildTraversalExecutionPlans(
   route: TraversalRoute,
   breakpoints: TraversalBreakpoint[] = analyzeTraversalBreakpoints(route)
 ): TraversalExecutionPlan[] {
+  if (route.selectionAuthority === "workspacePreferred") {
+    return [{
+      ...buildExecutionPlan(
+        route,
+        "Detailed",
+        route.entities.slice(1, -1).map((_entity, index) => index + 1),
+        "Exact Preferred Business Path: preserve every saved relationship as a separate bounded execution hop."
+      ),
+      planId: `${route.routeId}:preferred-exact`,
+      preserveExactHops: true,
+      recommended: true
+    }];
+  }
+
   const splitCandidates = breakpoints.map((point) => point.entityIndex);
   const topTwoSplitIndexes = breakpoints
     .slice(0, 2)

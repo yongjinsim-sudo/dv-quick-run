@@ -1,12 +1,12 @@
 import { getDataverseAccessToken } from "../auth/azureCliAuth.js";
-import { parseDataverseQuery } from "../commands/router/actions/explain/explainQueryParser.js";
+import { parseDataverseQuery } from "../core/query/parseDataverseQuery.js";
 import {
-  buildDesignNotes,
-  buildIntentLines,
-  buildOperationalCharacteristics,
-  buildSummary,
-  buildVerificationGuidance
-} from "../commands/router/actions/explain/explainQuerySections.js";
+  buildQueryDesignNotes,
+  buildQueryIntentLines,
+  buildQueryOperationalCharacteristics,
+  buildQuerySummary,
+  buildQueryVerificationGuidance
+} from "../core/query/queryExplanationProjection.js";
 import { buildQuerySemanticModel } from "../core/query/querySemanticModel.js";
 import { mcpDataverseGet } from "./mcpDataverseTransport.js";
 import { rootEntitySetFromODataQuery } from "./mcpODataPath.js";
@@ -60,17 +60,17 @@ export class McpODataApplicationService {
     }
     const parsed = parseDataverseQuery(query);
     const semanticModel = buildQuerySemanticModel(parsed);
-    const summary = buildSummary(parsed);
+    const summary = buildQuerySummary(parsed);
     return {
       ok: true,
       summary,
       structuredContent: {
         contractVersion: "dvqr-mcp-query-explanation-v1",
         summary,
-        intent: buildIntentLines(parsed),
-        operationalCharacteristics: buildOperationalCharacteristics(parsed),
-        designNotes: buildDesignNotes(parsed),
-        verificationGuidance: buildVerificationGuidance(parsed),
+        intent: buildQueryIntentLines(parsed),
+        operationalCharacteristics: buildQueryOperationalCharacteristics(parsed),
+        designNotes: buildQueryDesignNotes(parsed),
+        verificationGuidance: buildQueryVerificationGuidance(parsed),
         semanticModel
       }
     };

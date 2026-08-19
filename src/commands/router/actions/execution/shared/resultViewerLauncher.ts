@@ -24,6 +24,11 @@ import { findLogicalEditorQueryTargetByText } from "../../shared/queryMutation/e
 export type ResultViewerLaunchOptions = {
     traversalContext?: ResultViewerTraversalContext;
     executionContext?: DataverseExecutionContext;
+    landedEntity?: {
+        entitySetName: string;
+        logicalName: string;
+        primaryIdAttribute?: string;
+    };
     paging?: {
         pageNumber?: number;
         nextLink?: string;
@@ -60,11 +65,18 @@ export async function showResultViewerForQuery(
     const client = ctx.getClient();
     const token = await ctx.getToken(ctx.getScope());
 
-    const entitySetName = getEntitySetNameFromPath(path);
+    const entitySetName = options?.landedEntity?.entitySetName ?? getEntitySetNameFromPath(path);
 
-    const entityDef = entitySetName
-        ? await loadEntityDefByEntitySetName(ctx, client, token, entitySetName)
-        : undefined;
+    const entityDef = options?.landedEntity
+        ? {
+            entitySetName: options.landedEntity.entitySetName,
+            logicalName: options.landedEntity.logicalName,
+            primaryIdAttribute: options.landedEntity.primaryIdAttribute,
+            displayName: undefined
+        }
+        : entitySetName
+            ? await loadEntityDefByEntitySetName(ctx, client, token, entitySetName)
+            : undefined;
 
     const fields = entityDef?.logicalName
         ? await loadFields(ctx, client, token, entityDef.logicalName, { silent: true })

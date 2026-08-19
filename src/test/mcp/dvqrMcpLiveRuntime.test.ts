@@ -236,11 +236,13 @@ suite("dvqrMcpLiveRuntime", () => {
     const config = loadDvqrMcpRuntimeConfiguration({
       DVQR_MCP_ENVIRONMENT_URL: "https://example.crm6.dynamics.com/",
       DVQR_MCP_TENANT_ID: "tenant",
+      DVQR_MCP_WORKSPACE_ROOT: "C:\\work\\dvqr-test",
       DVQR_MCP_PRO_ENABLED: "true",
       DVQR_MCP_REQUEST_TIMEOUT_MS: "15000"
     });
     assert.strictEqual(config.environmentUrl, "https://example.crm6.dynamics.com");
     assert.strictEqual(config.tenantId, "tenant");
+    assert.strictEqual(config.workspaceRoot, "C:\\work\\dvqr-test");
     assert.strictEqual(config.proEnabled, true);
     assert.strictEqual(config.requestTimeoutMs, 15000);
   });
@@ -346,6 +348,102 @@ suite("MCP protocol Mini RCA registration", () => {
     const provider = ((tool.inputSchema as any).properties.providerId);
     assert.deepStrictEqual(provider.enum, ["metadata", "relationship-context", "runtime-relationship", "business-path-runtime", "mechanism-context", "timeline-context", "plugin-execution-understanding"]);
   });
+
+
+  test("business-path discovery consumes workspace Preferred paths before metadata-ranked alternatives", () => {
+    const tool = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_discover_business_paths");
+    if (!tool) throw new Error("Expected dvqr_discover_business_paths.");
+    assert.match(tool.description, /Managed Business Path preference/i);
+    assert.match(tool.description, /top-visible workspace recommendation/i);
+    assert.match(tool.description, /without changing discovery scores/i);
+    assert.match(tool.description, /dvqr_test_business_path/i);
+  });
+
+
+  test("exposes v0.15.8 asserted-business-traversal inputs and promotion integrity on Free MCP", () => {
+    const validate = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_validate_business_paths");
+    const save = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_save_business_path");
+    if (!validate || !save) throw new Error("Expected business-path validation and save tools.");
+
+    const validateSchema = validate.inputSchema as any;
+    assert.ok(validateSchema.properties.assertedBusinessPathTables);
+    assert.ok(validateSchema.properties.assertedBusinessPathRelationshipSchemaNames);
+    assert.match(validate.description, /v0\.15\.8 asserted-business-traversal contract/i);
+    assert.match(validate.description, /shorter runtime shortcuts separate/i);
+    assert.match(validate.description, /promotionDecision\.eligible=true/i);
+    assert.match(validate.description, /saveFollowUp/i);
+    assert.match(validate.description, /STOP/i);
+
+    const saveSchema = save.inputSchema as any;
+    assert.ok(saveSchema.properties.intendedTables);
+    assert.ok(saveSchema.properties.promotionAuthorizationId);
+    assert.deepStrictEqual(saveSchema.required, ["confirmSave"]);
+    assert.match(save.description, /PREFERRED MODE/i);
+    assert.match(save.description, /server-held authorization/i);
+    assert.match(save.description, /do NOT reconstruct/i);
+    assert.match(save.description, /single-use/i);
+  });
+
+  test("publishes focused Managed Business Path MCP management tools with explicit mutation confirmation", () => {
+    const list = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_list_business_paths");
+    const get = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_get_business_path");
+    const save = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_save_business_path");
+    const remove = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_remove_business_path");
+    const revalidate = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_revalidate_business_path");
+    const testSaved = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_test_business_path");
+
+    if (!list || !get || !save || !remove || !revalidate || !testSaved) {
+      throw new Error("Expected all Managed Business Path MCP tools.");
+    }
+
+    assert.strictEqual(list.tier, "free");
+    assert.strictEqual(get.tier, "free");
+    assert.strictEqual(save.tier, "free");
+    assert.strictEqual(remove.tier, "free");
+    assert.strictEqual(revalidate.tier, "free");
+    assert.strictEqual(testSaved.tier, "free");
+
+    assert.match(save.description, /MUTATION/i);
+    assert.match(save.description, /explicit user/i);
+    assert.match(save.description, /promotionAuthorizationId/i);
+    assert.deepStrictEqual(
+      (save.inputSchema as any).required,
+      ["confirmSave"]
+    );
+    assert.strictEqual((save.inputSchema as any).properties.confirmSave.type, "boolean");
+
+    assert.match(remove.description, /MUTATION/i);
+    assert.match(remove.description, /explicit user/i);
+    assert.deepStrictEqual((remove.inputSchema as any).required, ["pathId", "confirmDelete"]);
+
+    assert.match(revalidate.description, /valid, stale, or unknown/i);
+    assert.match(revalidate.description, /does not query records/i);
+    assert.match(get.description, /does not revalidate current metadata/i);
+
+    assert.match(testSaved.description, /canonical tool/i);
+    assert.match(testSaved.description, /do NOT manually reconstruct/i);
+    assert.match(testSaved.description, /exact route first/i);
+    assert.match(testSaved.description, /never downgrades an earlier successful verification/i);
+    assert.deepStrictEqual(
+      (testSaved.inputSchema as any).required,
+      ["pathId", "sourceRecordId"]
+    );
+    assert.strictEqual((testSaved.inputSchema as any).properties.refreshVerification.default, true);
+  });
+
+
+  test("publishes asserted Business Path promotion guidance to MCP hosts", () => {
+    const payload = createDvqrMcpCapabilityPayload(false) as any;
+    const guidance = payload.toolSelectionGuidance.businessPaths as string[];
+    assert.ok(guidance.some((line) => /assertedBusinessPathTables/.test(line) && /Do not replace/i.test(line)));
+    assert.ok(guidance.some((line) => /assertedBusinessPathRelationshipSchemaNames/.test(line)));
+    assert.ok(guidance.some((line) => /promotionDecision\.eligible=true/.test(line)));
+    assert.ok(guidance.some((line) => /saveFollowUp/.test(line) && /STOP/.test(line)));
+    assert.ok(guidance.some((line) => /promotionAuthorizationId/.test(line) && /Do not reconstruct/i.test(line)));
+    assert.ok(guidance.some((line) => /runtimePreferredPath/.test(line) && /never a substitute/i.test(line)));
+    assert.ok(guidance.some((line) => /Manual dvqr_save_business_path/.test(line) && /not-runtime-verified/i.test(line)));
+  });
+
   test("publishes Pass 10.2 bounded business-path runtime validation", () => {
     const tool = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_validate_business_paths");
     assert.ok(tool);

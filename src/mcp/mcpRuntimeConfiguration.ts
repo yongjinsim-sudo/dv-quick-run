@@ -1,5 +1,6 @@
 export interface DvqrMcpRuntimeConfiguration {
   readonly environmentUrl?: string;
+  readonly workspaceRoot?: string;
   readonly tenantId?: string;
   readonly proEnabled: boolean;
   readonly requestTimeoutMs: number;
@@ -22,6 +23,7 @@ export function loadDvqrMcpRuntimeConfiguration(env: NodeJS.ProcessEnv = process
   const timeout = Number(env.DVQR_MCP_REQUEST_TIMEOUT_MS ?? "30000");
   return {
     environmentUrl: normalizeEnvironmentUrl(env.DVQR_MCP_ENVIRONMENT_URL),
+    workspaceRoot: env.DVQR_MCP_WORKSPACE_ROOT?.trim() || undefined,
     tenantId: env.DVQR_MCP_TENANT_ID?.trim() || undefined,
     proEnabled: env.DVQR_MCP_PRO_ENABLED?.trim().toLowerCase() === "true",
     requestTimeoutMs: Number.isFinite(timeout) && timeout >= 1000 ? timeout : 30000,

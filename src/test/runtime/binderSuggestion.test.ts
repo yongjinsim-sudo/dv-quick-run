@@ -22,7 +22,7 @@ suite("binderSuggestion", () => {
 
     assert.ok(suggestion);
     assert.strictEqual(suggestion?.actionId, "continueTraversal");
-    assert.ok(suggestion?.text.includes("continue this traversal"));
+    assert.ok(suggestion?.text.includes("continue landed rows"));
   });
 
   test("suggests traversal batch on final leg when batch is available", () => {
@@ -46,7 +46,29 @@ suite("binderSuggestion", () => {
     assert.strictEqual(suggestion?.actionId, "runTraversalBatch");
   });
 
-  test("falls back to non-traversal binder suggestions for non-best-match routes", () => {
+  test("keeps traversal actions primary after the user has entered a non-ranked route", () => {
+    const suggestion = buildResultViewerBinderSuggestion({
+      queryPath: "careplans?$select=careplanid",
+      rowCount: 3,
+      columnCount: 1,
+      traversalContext: {
+        traversalSessionId: "trv_123",
+        isBestMatchRoute: false,
+        legIndex: 0,
+        legCount: 3,
+        hasNextLeg: true,
+        nextLegEntityName: "careplanactivity",
+        currentEntityName: "careplan",
+        isFinalLeg: false
+      }
+    });
+
+    assert.ok(suggestion);
+    assert.strictEqual(suggestion?.actionId, "continueTraversal");
+    assert.match(suggestion?.text ?? "", /continue landed rows/i);
+  });
+
+  test("keeps final traversal batch primary even when route was not metadata-ranked number one", () => {
     const suggestion = buildResultViewerBinderSuggestion({
       queryPath: "tasks?$select=subject",
       rowCount: 34,
@@ -64,9 +86,30 @@ suite("binderSuggestion", () => {
     });
 
     assert.ok(suggestion);
-    assert.notStrictEqual(suggestion?.actionId, "continueTraversal");
-    assert.notStrictEqual(suggestion?.actionId, "runTraversalBatch");
-    assert.strictEqual(suggestion?.actionId, "previewAddTop");
+    assert.strictEqual(suggestion?.actionId, "runTraversalBatch");
+  });
+
+
+  test("does not recommend Continue when an intermediate traversal landing has zero rows", () => {
+    const suggestion = buildResultViewerBinderSuggestion({
+      queryPath: "careplanactivities?$select=activityid",
+      rowCount: 0,
+      columnCount: 1,
+      traversalContext: {
+        traversalSessionId: "trv_empty",
+        isBestMatchRoute: true,
+        legIndex: 1,
+        legCount: 3,
+        hasNextLeg: true,
+        nextLegEntityName: "bu_task",
+        currentEntityName: "msemr_careplanactivity",
+        isFinalLeg: false,
+        canGoBack: true,
+        canChangeRoute: true
+      }
+    });
+
+    assert.ok(!suggestion || suggestion.actionId !== "continueTraversal");
   });
 
   test("stays quiet for active traversal recovery when no traversal action is available", () => {

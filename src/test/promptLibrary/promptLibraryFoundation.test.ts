@@ -15,7 +15,7 @@ suite("promptLibraryFoundation", () => {
     const matrix = createDvqrPromptEvidenceMatrix();
     assert.strictEqual(matrix.length, DVQR_LIVE_MCP_TOOLS.length);
     assert.strictEqual(new Set(matrix.map((entry) => entry.toolName)).size, matrix.length);
-    assert.strictEqual(matrix.filter((entry) => entry.tier === "free").length, 24);
+    assert.strictEqual(matrix.filter((entry) => entry.tier === "free").length, 30);
     assert.strictEqual(matrix.filter((entry) => entry.tier === "pro").length, 32);
     assert.ok(matrix.every((entry) => entry.mutatesDataverse === false));
   });
@@ -72,7 +72,7 @@ suite("promptLibraryFoundation", () => {
 
   test("reports deliberate capability coverage with no accidental live-tool gaps", () => {
     const coverage = createDvqrPromptCatalogueCoverageReport();
-    assert.strictEqual(coverage.totalToolCount, 56);
+    assert.strictEqual(coverage.totalToolCount, 62);
     assert.ok(coverage.totalPromptCount >= 30);
     assert.ok(coverage.coveredToolCount >= 30);
     assert.deepStrictEqual(coverage.uncoveredToolNames, []);

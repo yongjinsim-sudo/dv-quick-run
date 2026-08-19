@@ -7,6 +7,15 @@ const providerId = "dvQuickRun.localMcp";
 const workspaceEnabledKey = "dvQuickRun.localMcp.enabled";
 const serverLabel = "DV Quick Run";
 
+
+function resolveLocalMcpWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
+  // One local MCP process needs one stable persistence root. For multi-root
+  // workspaces, bind deterministically to the first VS Code workspace folder
+  // rather than changing roots with the active editor.
+  return vscode.workspace.workspaceFolders?.[0];
+}
+
+
 export interface LocalMcpStatus {
   enabled: boolean;
   registrationState: "registered" | "disabled";
@@ -98,17 +107,21 @@ export class LocalMcpLifecycle implements vscode.Disposable {
     }
 
     const script = vscode.Uri.joinPath(this.context.extensionUri, "out", "mcp", "dvqrMcpStdioServer.js");
+    const workspaceFolder = resolveLocalMcpWorkspaceFolder();
     const definition = new vscode.McpStdioServerDefinition(
       serverLabel,
       process.execPath,
       [script.fsPath],
       {
         ELECTRON_RUN_AS_NODE: "1",
-        DVQR_MCP_SERVER_VERSION: this.context.extension.packageJSON.version as string
+        DVQR_MCP_SERVER_VERSION: this.context.extension.packageJSON.version as string,
+        ...(workspaceFolder ? { DVQR_MCP_WORKSPACE_ROOT: workspaceFolder.uri.fsPath } : {})
       },
       this.context.extension.packageJSON.version as string
     );
-    definition.cwd = this.context.extensionUri;
+    if (workspaceFolder) {
+      definition.cwd = workspaceFolder.uri;
+    }
     return [definition];
   }
 
@@ -137,13 +150,22 @@ export class LocalMcpLifecycle implements vscode.Disposable {
       return undefined;
     }
 
-    server.cwd = this.context.extensionUri;
+    const workspaceFolder = resolveLocalMcpWorkspaceFolder();
+    if (!workspaceFolder) {
+      void vscode.window.showWarningMessage(
+        "DV Quick Run Local MCP requires an open VS Code workspace folder so Managed Business Paths can bind to a deterministic workspace."
+      );
+      return undefined;
+    }
+
+    server.cwd = workspaceFolder.uri;
     server.env = {
       ...server.env,
       ELECTRON_RUN_AS_NODE: "1",
       DVQR_MCP_ENVIRONMENT_URL: resolvedEnvironment.url,
       DVQR_MCP_PRO_ENABLED: getCurrentProductPlan() === "pro" ? "true" : "false",
-      DVQR_MCP_SERVER_VERSION: this.context.extension.packageJSON.version as string
+      DVQR_MCP_SERVER_VERSION: this.context.extension.packageJSON.version as string,
+      DVQR_MCP_WORKSPACE_ROOT: workspaceFolder.uri.fsPath
     };
     return server;
   }
@@ -212,7 +234,7 @@ export class LocalMcpLifecycle implements vscode.Disposable {
   private async showStatus(): Promise<void> {
     const status = this.getStatus();
     const detail = status.enabled
-      ? `Enabled for this workspace\nEnvironment: ${status.environmentName ?? "Not selected"}\nMode: ${status.mode}\nLifecycle: VS Code-managed and started on demand`
+      ? `Enabled for this workspace\nWorkspace: ${resolveLocalMcpWorkspaceFolder()?.uri.fsPath ?? "Unavailable"}\nEnvironment: ${status.environmentName ?? "Not selected"}\nMode: ${status.mode}\nLifecycle: VS Code-managed and started on demand`
       : "Disabled for this workspace";
 
     const action = await vscode.window.showInformationMessage(

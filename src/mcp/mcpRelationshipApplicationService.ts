@@ -25,7 +25,7 @@ export class McpRelationshipApplicationService {
     this.operationalAnchors = new McpOperationalAnchorApplicationService(metadata);
     this.lookupNavigation = new McpLookupNavigationApplicationService(config, metadata);
     this.pathDiscovery = new McpRelationshipPathDiscoveryApplicationService(metadata);
-    this.businessPathDiscovery = new McpBusinessPathDiscoveryApplicationService(metadata);
+    this.businessPathDiscovery = new McpBusinessPathDiscoveryApplicationService(metadata, config);
     this.businessPathRuntimeValidation = new McpBusinessPathRuntimeValidationApplicationService(metadata, probes);
     this.queryGeneration = new McpRelationshipQueryApplicationService(metadata);
     this.traversal = new McpRelationshipTraversalApplicationService(metadata, probes);

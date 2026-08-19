@@ -1,6 +1,13 @@
 import * as vscode from "vscode";
 import type { CommandContext } from "../../../context/commandContext.js";
-import { logInfo } from "../../../../utils/logger.js";
+import { logInfo, logWarn } from "../../../../utils/logger.js";
+import { WorkspaceBusinessPathRepository } from "../../../../runtime/businessPaths/workspaceBusinessPathRepository.js";
+import { GuidedTraversalBusinessPathMetadataProvider } from "./guidedTraversalBusinessPathMetadataProvider.js";
+import {
+  buildGuidedTraversalBusinessPathOverlay,
+  type GuidedTraversalBusinessPathOverlay,
+  type GuidedTraversalPreferredPath
+} from "./businessPathGuidedTraversalOverlay.js";
 import {
   buildExecutionPlanDescription,
   buildExecutionPlanLabel,
@@ -22,6 +29,7 @@ import type {
 } from "../shared/traversal/traversalTypes.js";
 import {
   assessExecutionPlanFeasibility,
+  assessRouteFeasibility,
   buildFeasibilityPrefix,
   buildGroupFeasibilityDetail,
   buildGroupFeasibilityPrefix
@@ -70,13 +78,17 @@ type RoutePickerChoice =
     }
   | {
       choiceKind: "open_graph";
+    }
+  | {
+      choiceKind: "preferred_notice";
     };
 
 type RouteQuickPickItem = vscode.QuickPickItem & {
-  choiceKind: "route" | "route_group" | "show_all" | "open_graph";
+  choiceKind: "route" | "route_group" | "show_all" | "open_graph" | "preferred_route" | "preferred_notice";
   route?: TraversalRoute;
   groupKey?: string;
   feasibility?: RouteFeasibility;
+  preferredState?: GuidedTraversalPreferredPath["state"];
 };
 
 type TraversalRoutePickerDeps = {
@@ -91,6 +103,13 @@ type TraversalRoutePickerDeps = {
     orderedRoutes: TraversalRoute[];
     selectedRouteId?: string;
   }) => Promise<void>;
+  loadBusinessPathOverlay?: (
+    ctx: CommandContext,
+    graph: TraversalGraph,
+    routes: TraversalRoute[],
+    requestedEndpoints?: { sourceTable: string; targetTable: string }
+  ) => Promise<GuidedTraversalBusinessPathOverlay>;
+  showWarningMessage?: (message: string) => Thenable<unknown> | Promise<unknown> | unknown;
 };
 
 type VariantQuickPickItem = vscode.QuickPickItem & {
@@ -133,6 +152,118 @@ function getOrCreatePreparedPickerModel(
   const prepared = buildPreparedPickerModel(graph, orderedRoutes);
   pickerModelCache.set(orderedRoutes, prepared);
   return prepared;
+}
+
+function resolveWorkspaceRoot(): string | undefined {
+  const activeEditorUri = vscode.window.activeTextEditor?.document.uri;
+  const activeWorkspace = activeEditorUri
+    ? vscode.workspace.getWorkspaceFolder(activeEditorUri)
+    : undefined;
+  return activeWorkspace?.uri.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+}
+
+function buildPreferredPathDescription(item: GuidedTraversalPreferredPath): string {
+  if (item.state === "valid") {
+    return "★ Preferred Business Path · Valid";
+  }
+  if (item.state === "stale") {
+    return "⚠ Preferred Business Path · Stale";
+  }
+  return "? Preferred Business Path · Validation unavailable";
+}
+
+function buildPreferredPathDetail(item: GuidedTraversalPreferredPath): string {
+  const chain = item.artifact.hops
+    .slice()
+    .sort((left, right) => left.ordinal - right.ordinal)
+    .reduce<string[]>(
+      (tables, hop, index) => index === 0
+        ? [hop.fromTable, hop.toTable]
+        : [...tables, hop.toTable],
+      []
+    )
+    .join(" → ");
+
+  const verification = item.artifact.verification?.status === "verified"
+    ? `Previously runtime verified${item.artifact.verification.verifiedAt ? ` ${item.artifact.verification.verifiedAt}` : ""}`
+    : "Not runtime verified";
+
+  const issue = item.validation.issues[0]?.message;
+  return [chain, verification, issue].filter(Boolean).join(" • ");
+}
+
+function buildPreferredRoutePicks(
+  graph: TraversalGraph,
+  preferredPaths: readonly GuidedTraversalPreferredPath[]
+): RouteQuickPickItem[] {
+  return preferredPaths.map((item) => {
+    const feasibility = item.route
+      ? assessRouteFeasibility(graph, {
+          route: item.route,
+          score: 0,
+          isBestMatch: false,
+          reasons: ["saved Preferred Business Path"]
+        })
+      : undefined;
+
+    return {
+      choiceKind: item.state === "valid" && item.route ? "preferred_route" : "preferred_notice",
+      route: item.route ? { ...item.route, selectionAuthority: "workspacePreferred" } : undefined,
+      label: `★ ${item.artifact.name}`,
+      description: buildPreferredPathDescription(item),
+      detail: [
+        buildPreferredPathDetail(item),
+        feasibility && feasibility.status !== "selectable" ? feasibility.reason : undefined
+      ].filter(Boolean).join(" • "),
+      feasibility,
+      preferredState: item.state,
+      alwaysShow: true
+    };
+  });
+}
+
+async function loadDefaultBusinessPathOverlay(
+  ctx: CommandContext,
+  graph: TraversalGraph,
+  routes: TraversalRoute[],
+  requestedEndpoints?: { sourceTable: string; targetTable: string }
+): Promise<GuidedTraversalBusinessPathOverlay> {
+  const sourceTable = requestedEndpoints?.sourceTable ?? routes[0]?.sourceEntity;
+  const targetTable = requestedEndpoints?.targetTable ?? routes[0]?.targetEntity;
+  const workspaceRoot = resolveWorkspaceRoot();
+
+  if (!workspaceRoot || !sourceTable || !targetTable) {
+    return { preferredPaths: [], discoveredRoutes: routes };
+  }
+
+  try {
+    const repository = new WorkspaceBusinessPathRepository(workspaceRoot);
+    const activeEnvironment = ctx.envContext.getActiveEnvironment();
+    let environmentId = activeEnvironment?.name?.trim().toLowerCase();
+    if (activeEnvironment?.url?.trim()) {
+      try {
+        environmentId = new URL(activeEnvironment.url).hostname.toLowerCase();
+      } catch {
+        environmentId = activeEnvironment.url.trim().toLowerCase();
+      }
+    }
+
+    return await buildGuidedTraversalBusinessPathOverlay(
+      repository,
+      graph,
+      sourceTable,
+      targetTable,
+      routes,
+      environmentId,
+      new GuidedTraversalBusinessPathMetadataProvider(ctx)
+    );
+  } catch (error) {
+    logWarn(
+      ctx.output,
+      `Managed Business Path overlay unavailable: ${error instanceof Error ? error.message : "unknown error"}`
+    );
+    return { preferredPaths: [], discoveredRoutes: routes };
+  }
 }
 
 function buildRouteGroupPick(
@@ -218,9 +349,14 @@ async function pickFromRouteGroupList(
   placeHolder: string,
   items: CompactRankedRouteGroup[],
   includeShowAll: boolean,
-  deps: TraversalRoutePickerDeps
+  deps: TraversalRoutePickerDeps,
+  preferredPaths: readonly GuidedTraversalPreferredPath[] = []
 ): Promise<RoutePickerChoice | undefined> {
-  const picks = buildRouteGroupPicks(items, successMap, prepared.hiddenGroupCount, includeShowAll);
+  const preferredPicks = buildPreferredRoutePicks(graph, preferredPaths);
+  const picks = [
+    ...preferredPicks,
+    ...buildRouteGroupPicks(items, successMap, prepared.hiddenGroupCount, includeShowAll)
+  ];
 
   while (true) {
     const selected = await deps.showRouteGroupQuickPick(picks, title, placeHolder);
@@ -229,9 +365,32 @@ async function pickFromRouteGroupList(
       return undefined;
     }
 
+    if (selected.choiceKind === "preferred_route" && selected.route) {
+      if (selected.feasibility?.status === "unselectable") {
+        await (deps.showWarningMessage ?? vscode.window.showWarningMessage)(
+          `This Preferred Business Path is metadata-valid but not runnable by the current Guided Traversal executor: ${selected.feasibility.reason}`
+        );
+        continue;
+      }
+      return {
+        choiceKind: "route",
+        route: selected.route
+      };
+    }
+
+    if (selected.choiceKind === "preferred_notice") {
+      const message = selected.preferredState === "stale"
+        ? `This Preferred Business Path is stale: ${selected.detail ?? "saved metadata no longer resolves."}`
+        : selected.preferredState === "unknown"
+          ? `This Preferred Business Path could not be revalidated: ${selected.detail ?? "metadata validation is unavailable."}`
+          : `This Preferred Business Path is metadata-valid but is not currently projectable as a runnable Guided Traversal route: ${selected.detail ?? "show alternatives or re-test the saved path."}`;
+      await (deps.showWarningMessage ?? vscode.window.showWarningMessage)(message);
+      continue;
+    }
+
     if (selected.choiceKind === "route" && selected.route) {
       if (selected.feasibility?.status === "unselectable") {
-        await vscode.window.showWarningMessage(
+        await (deps.showWarningMessage ?? vscode.window.showWarningMessage)(
           `This route variant is not runnable yet: ${selected.feasibility.reason}`
         );
         continue;
@@ -417,10 +576,25 @@ export async function pickTraversalRouteFromQuickPick(
   ctx: CommandContext,
   graph: TraversalGraph,
   routes: TraversalRoute[],
-  deps: TraversalRoutePickerDeps = createDefaultTraversalRoutePickerDeps()
+  deps: TraversalRoutePickerDeps = createDefaultTraversalRoutePickerDeps(),
+  requestedEndpoints?: { sourceTable: string; targetTable: string }
 ): Promise<TraversalRoute | undefined> {
-  const successMap = buildSuccessMap(ctx, routes);
-  const orderedRoutes = sortRoutesByHistoricalSuccess(routes, successMap);
+  const overlayLoader = deps.loadBusinessPathOverlay ?? loadDefaultBusinessPathOverlay;
+  const overlay = await overlayLoader(ctx, graph, routes, requestedEndpoints);
+  const duplicateRouteIds = new Set(
+    overlay.preferredPaths
+      .filter((item) => item.state === "valid")
+      .map((item) => item.duplicateDiscoveredRouteId)
+      .filter((value): value is string => Boolean(value))
+  );
+  const alternativeRoutes = routes.filter((route) => !duplicateRouteIds.has(route.routeId));
+
+  if (!routes.length && !overlay.preferredPaths.length) {
+    return undefined;
+  }
+
+  const successMap = buildSuccessMap(ctx, alternativeRoutes.length ? alternativeRoutes : routes);
+  const orderedRoutes = sortRoutesByHistoricalSuccess(alternativeRoutes, successMap);
   const prepared = getOrCreatePreparedPickerModel(graph, orderedRoutes);
   const showingBestMatchOnly = prepared.bestMatches.length > 0;
   const initialGroups = showingBestMatchOnly
@@ -436,7 +610,8 @@ export async function pickTraversalRouteFromQuickPick(
     showingBestMatchOnly ? "Here's what I think you want" : "Choose a route",
     initialGroups,
     showingBestMatchOnly,
-    deps
+    deps,
+    overlay.preferredPaths
   );
 
   if (!firstPick) {
@@ -462,7 +637,8 @@ export async function pickTraversalRouteFromQuickPick(
     "Choose from all discovered routes",
     prepared.expandedGroups,
     false,
-    deps
+    deps,
+    overlay.preferredPaths
   );
 
   if (!fullPick) {
@@ -484,6 +660,7 @@ export async function pickTraversalRouteFromQuickPick(
 function createDefaultTraversalRoutePickerDeps(): TraversalRoutePickerDeps {
   return {
     showRouteGroupQuickPick,
+    showWarningMessage: (message) => vscode.window.showWarningMessage(message),
     openGraphView: async ({ ctx, graph, orderedRoutes, selectedRouteId }) => {
       const rankedRoutes = buildRankedTraversalRoutes(orderedRoutes);
       const sourceEntity = rankedRoutes[0]?.route.sourceEntity;
@@ -508,6 +685,20 @@ export async function pickExecutionPlanFromQuickPick(
   graph: TraversalGraph,
   plannedRoute: PlannedTraversalRoute
 ): Promise<TraversalExecutionPlan | undefined> {
+  const exactPreferredPlan = plannedRoute.candidatePlans.length === 1
+    ? plannedRoute.candidatePlans[0]
+    : undefined;
+  if (exactPreferredPlan?.preserveExactHops === true) {
+    const feasibility = assessExecutionPlanFeasibility(graph, exactPreferredPlan);
+    if (feasibility.status === "unselectable") {
+      await vscode.window.showWarningMessage(
+        `This exact Preferred Business Path is not runnable yet: ${feasibility.reason}`
+      );
+      return undefined;
+    }
+    return exactPreferredPlan;
+  }
+
   const picks = plannedRoute.candidatePlans.map((plan) => {
     const feasibility = assessExecutionPlanFeasibility(graph, plan);
 

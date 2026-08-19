@@ -203,6 +203,12 @@ type ResultViewerMessage =
         type: "nextPage";
     }
     | {
+        type: "continueTraversal";
+        payload: {
+            traversalSessionId?: string;
+        };
+    }
+    | {
         type: "backTraversal";
         payload: {
             traversalSessionId?: string;
@@ -515,6 +521,12 @@ export class ResultViewerPanel {
 
             case "nextPage":
                 await ResultViewerPanel.nextPage();
+                return;
+
+            case "continueTraversal":
+                await runContinueTraversalAction(ctx, {
+                    traversalSessionId: message.payload.traversalSessionId ?? ""
+                });
                 return;
 
             case "backTraversal":

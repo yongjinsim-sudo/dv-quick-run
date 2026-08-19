@@ -245,4 +245,119 @@ suite("findPathToTableAction", () => {
 
     TraversalCacheService.clearAll();
   });
+
+  test("requires and forwards a source record for exact Preferred Business Path execution", async () => {
+    const preferredRoute: TraversalRoute = {
+      ...buildSelectedRoute(),
+      routeId: "business-path:bp_test",
+      selectionAuthority: "workspacePreferred"
+    };
+    const exactPlan: TraversalExecutionPlan = {
+      planId: "business-path:bp_test:preferred-exact",
+      label: "Detailed",
+      rationale: "exact Preferred path",
+      preserveExactHops: true,
+      recommended: true,
+      steps: [{
+        stepNumber: 1,
+        fromEntity: "account",
+        toEntity: "patient",
+        entities: ["account", "patient"],
+        edges: preferredRoute.edges,
+        hopCount: 1,
+        stageLabel: "account → patient"
+      }]
+    };
+    let observedSourceRecordId: string | undefined;
+
+    await runFindPathToTableWorkflow(createStubContext(), {
+      loadEntityOptions: async () => [
+        { logicalName: "account", entitySetName: "accounts", primaryIdAttribute: "accountid", fieldLogicalNames: [] },
+        { logicalName: "patient", entitySetName: "patients", primaryIdAttribute: "patientid", fieldLogicalNames: [] }
+      ],
+      pickSourceEntity: async (options) => options[0],
+      pickTargetEntity: async (options) => options[1],
+      buildTraversalGraph: async () => ({ entities: {} } as TraversalGraph),
+      pickTraversalRoute: async () => preferredRoute,
+      pickExecutionPlan: async () => exactPlan,
+      pickSourceRecordId: async () => "d264ceff-8763-f011-bec2-002248985631",
+      executeFirstStep: async (_ctx, _graph, _route, _itinerary, _progress, options) => {
+        observedSourceRecordId = options?.sourceRecordId;
+      },
+      showInfoMessage: () => undefined
+    });
+
+    assert.strictEqual(observedSourceRecordId, "d264ceff-8763-f011-bec2-002248985631");
+  });
+
+  test("does not execute an exact Preferred Business Path when source record selection is cancelled", async () => {
+    const preferredRoute: TraversalRoute = {
+      ...buildSelectedRoute(),
+      selectionAuthority: "workspacePreferred"
+    };
+    const exactPlan: TraversalExecutionPlan = {
+      planId: "preferred-exact",
+      label: "Detailed",
+      rationale: "exact",
+      preserveExactHops: true,
+      steps: [{
+        stepNumber: 1,
+        fromEntity: "account",
+        toEntity: "patient",
+        entities: ["account", "patient"],
+        edges: preferredRoute.edges,
+        hopCount: 1,
+        stageLabel: "account → patient"
+      }]
+    };
+    let executed = false;
+    const messages: string[] = [];
+
+    await runFindPathToTableWorkflow(createStubContext(), {
+      loadEntityOptions: async () => [
+        { logicalName: "account", entitySetName: "accounts", fieldLogicalNames: [] },
+        { logicalName: "patient", entitySetName: "patients", fieldLogicalNames: [] }
+      ],
+      pickSourceEntity: async (options) => options[0],
+      pickTargetEntity: async (options) => options[1],
+      buildTraversalGraph: async () => ({ entities: {} } as TraversalGraph),
+      pickTraversalRoute: async () => preferredRoute,
+      pickExecutionPlan: async () => exactPlan,
+      pickSourceRecordId: async () => undefined,
+      executeFirstStep: async () => { executed = true; },
+      showInfoMessage: (message) => { messages.push(message); }
+    });
+
+    assert.strictEqual(executed, false);
+    assert.ok(messages.some((message) => /requires a .* source record/i.test(message)));
+  });
+
+  test("treats a projected Preferred Business Path as the active best-match traversal", async () => {
+    const preferredRoute: TraversalRoute = {
+      ...buildSelectedRoute(),
+      routeId: "route-preferred",
+      selectionAuthority: "workspacePreferred"
+    };
+    const selectedPlan = buildPlannedRoute(preferredRoute).candidatePlans[0] as TraversalExecutionPlan;
+    let observedBestMatch: boolean | undefined;
+
+    await runFindPathToTableWorkflow(createStubContext(), {
+      loadEntityOptions: async () => [
+        { logicalName: "account", entitySetName: "accounts", fieldLogicalNames: [] },
+        { logicalName: "patient", entitySetName: "patients", fieldLogicalNames: [] }
+      ],
+      pickSourceEntity: async (options) => options[0],
+      pickTargetEntity: async (options) => options[1],
+      buildTraversalGraph: async () => ({ entities: {} } as TraversalGraph),
+      pickTraversalRoute: async () => preferredRoute,
+      pickExecutionPlan: async () => selectedPlan,
+      executeFirstStep: async (_ctx, _graph, _route, _itinerary, _progress, options) => {
+        observedBestMatch = options?.isBestMatchRoute;
+      },
+      showInfoMessage: () => undefined
+    });
+
+    assert.strictEqual(observedBestMatch, true);
+  });
+
 });
