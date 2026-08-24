@@ -303,18 +303,18 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["94-Prompt Guided Library", "Browse 69 Free and 25 Pro user-intent prompts across six categories without needing MCP tool-name knowledge."],
-    ["Quick Starts", "Begin from common outcomes such as finding tables, understanding relationships, validating runtime paths, checking DVQR Score, discovering Custom APIs, or investigating an issue."],
-    ["Search & Tier Filters", "Filter the complete catalogue by natural-language search, category, and Free or Pro availability."],
-    ["Parameterised Prompt Builder", "Fill table names, record IDs, queries, API names or investigation IDs and copy the exact rendered natural-language request."],
-    ["Guided Next Prompts", "Move from discovery into understanding, querying, traversal, investigation and verification through deterministic follow-up links."],
-    ["Operational Profile through Free MCP", "Get the canonical live Operational Profile and calibrated DVQR Score with GUI parity, explicit score math and semantic guardrails."],
-    ["Evidence Matrix Foundation", "Keep every live MCP capability tied to tier, evidence posture and interpretation boundaries without creating a second reasoning engine."],
-    ["Built on Managed Investigation", "Pro journeys continue to use the persisted v0.15.8 investigation protocol for bounded evidence, readiness, Mini RCA and handoff."]
+    ["MCP Security Hardening I", "Validate registered schemas, bounds, environment identity and capability authority before application execution."],
+    ["Save / Rerify Business Path", "Capture a Guided Traversal route explicitly, retain canonical identity, and reverify an existing route without duplicate artifacts."],
+    ["Current-Metadata Revalidation", "Treat saved paths as guidance: verify active-environment compatibility before reuse and fall back safely when guidance is stale."],
+    ["Terminated-Scope Guard", "Stop an empty saved-path investigation server-side so another MCP capability cannot silently broaden it."],
+    ["Explicit New Scope", "Resume broader investigation through a visible Business Path lifecycle transition rather than implicit fallback."],
+    ["Output & Input Hardening", "Redact credential-shaped output and reject malformed identifiers, unsafe environment URLs and path/file manipulation."],
+    ["Evidence-Honest Path State", "Keep Saved, historical runtime verification and workspace Preferred state distinct from causality or production certification."],
+    ["Algorithms Preserved", "Keep the established discovery, ranking, traversal and verification semantics while strengthening their authority boundaries."]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.16.0</h2>
-    <p class="dvqr-section-note">Discoverability &amp; Guided Investigation: 94 curated prompts, Quick Starts, category/search/tier filtering, guided next prompts, and Free MCP Operational Profile + DVQR Score.</p>
+    <h2>What's New in v0.16.1</h2>
+    <p class="dvqr-section-note">MCP Security Hardening I + Guided Traversal Business Path Capture: deterministic server-side authority, explicit path capture/reverification, current-metadata reuse checks and terminated-scope protection.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }

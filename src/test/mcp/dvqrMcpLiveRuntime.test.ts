@@ -390,10 +390,12 @@ suite("MCP protocol Mini RCA registration", () => {
     const save = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_save_business_path");
     const remove = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_remove_business_path");
     const revalidate = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_revalidate_business_path");
+    const verifySaved = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_verify_business_path");
     const testSaved = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_test_business_path");
+    const probeRelationship = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_probe_relationship_path");
 
-    if (!list || !get || !save || !remove || !revalidate || !testSaved) {
-      throw new Error("Expected all Managed Business Path MCP tools.");
+    if (!list || !get || !save || !remove || !revalidate || !verifySaved || !testSaved || !probeRelationship) {
+      throw new Error("Expected all Managed Business Path MCP tools and relationship probe tool.");
     }
 
     assert.strictEqual(list.tier, "free");
@@ -401,7 +403,11 @@ suite("MCP protocol Mini RCA registration", () => {
     assert.strictEqual(save.tier, "free");
     assert.strictEqual(remove.tier, "free");
     assert.strictEqual(revalidate.tier, "free");
+    assert.strictEqual(verifySaved.tier, "free");
     assert.strictEqual(testSaved.tier, "free");
+    assert.strictEqual(probeRelationship.tier, "free");
+    assert.match(probeRelationship.description, /SCOPE-BOUNDARY RULE/i);
+    assert.match(probeRelationship.description, /new explicit user request/i);
 
     assert.match(save.description, /MUTATION/i);
     assert.match(save.description, /explicit user/i);
@@ -418,12 +424,35 @@ suite("MCP protocol Mini RCA registration", () => {
 
     assert.match(revalidate.description, /valid, stale, or unknown/i);
     assert.match(revalidate.description, /does not query records/i);
+    assert.match(revalidate.description, /do NOT call it before or after/i);
     assert.match(get.description, /does not revalidate current metadata/i);
+
+    assert.match(verifySaved.description, /CANONICAL ONE-CALL VERIFY WORKFLOW/i);
+    assert.match(verifySaved.description, /executes the exact saved route once/i);
+    assert.match(verifySaved.description, /Do NOT call dvqr_revalidate_business_path/i);
+    assert.match(verifySaved.description, /bounded observation/i);
+    assert.match(verifySaved.description, /EMPTY-FRONTIER RULE/i);
+    assert.match(verifySaved.description, /dvqr_probe_relationship_path/i);
+    assert.match(verifySaved.description, /dvqr_discover_business_paths/i);
+    assert.match(verifySaved.description, /new explicit user request/i);
+    assert.match(verifySaved.description, /do NOT automatically call dvqr_execute_odata/i);
+    assert.match(verifySaved.description, /must not be described as production-ready/i);
+    assert.deepStrictEqual(
+      (verifySaved.inputSchema as any).required,
+      ["pathId", "sourceRecordId"]
+    );
 
     assert.match(testSaved.description, /canonical tool/i);
     assert.match(testSaved.description, /do NOT manually reconstruct/i);
     assert.match(testSaved.description, /exact route first/i);
     assert.match(testSaved.description, /never downgrades an earlier successful verification/i);
+    assert.match(testSaved.description, /EMPTY-FRONTIER RULE/i);
+    assert.match(testSaved.description, /dvqr_probe_relationship_path/i);
+    assert.match(testSaved.description, /dvqr_discover_business_paths/i);
+    assert.match(testSaved.description, /new explicit user request/i);
+    assert.match(testSaved.description, /do NOT automatically call dvqr_execute_odata/i);
+    assert.match(testSaved.description, /alternate entity-set names/i);
+    assert.match(testSaved.description, /must not be described as production-ready/i);
     assert.deepStrictEqual(
       (testSaved.inputSchema as any).required,
       ["pathId", "sourceRecordId"]
@@ -441,6 +470,10 @@ suite("MCP protocol Mini RCA registration", () => {
     assert.ok(guidance.some((line) => /saveFollowUp/.test(line) && /STOP/.test(line)));
     assert.ok(guidance.some((line) => /promotionAuthorizationId/.test(line) && /Do not reconstruct/i.test(line)));
     assert.ok(guidance.some((line) => /runtimePreferredPath/.test(line) && /never a substitute/i.test(line)));
+    assert.ok(guidance.some((line) => /EMPTY-FRONTIER \/ NO-BROADENING RULE/i.test(line) && /dvqr_execute_odata/i.test(line)));
+    assert.ok(guidance.some((line) => /EMPTY-FRONTIER \/ NO-BROADENING RULE/i.test(line) && /dvqr_probe_relationship_path/i.test(line)));
+    assert.ok(guidance.some((line) => /EMPTY-FRONTIER \/ NO-BROADENING RULE/i.test(line) && /dvqr_discover_business_paths/i.test(line)));
+    assert.ok(guidance.some((line) => /EVIDENCE WORDING/i.test(line) && /production-ready/i.test(line)));
     assert.ok(guidance.some((line) => /Manual dvqr_save_business_path/.test(line) && /not-runtime-verified/i.test(line)));
   });
 

@@ -5,7 +5,7 @@ export interface BusinessPathManagementUpdate {
   readonly name?: string;
   readonly description?: string | null;
   readonly priority?: number | null;
-  readonly state?: "preferred" | "disabled";
+  readonly state?: "saved" | "preferred" | "disabled";
 }
 
 export interface BusinessPathManagementClock {

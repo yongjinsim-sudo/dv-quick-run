@@ -10,42 +10,29 @@ DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Datav
 
 ---
 
-## What's New in v0.16.0
+## What's New in v0.16.1
 
-### Managed Business Paths
+### MCP Security Hardening I + Guided Traversal Business Path Capture
 
-Find a useful relationship route once, runtime-verify it, save it to the workspace, mark it **Preferred**, and reuse the exact route later from a real source record.
-
-```text
-discover → runtime-verify → save → prefer → reuse → exact record-scoped traversal
-```
-
-- **Workspace persistence** — paths are stored under `.dvforgelab/dvqr/business-paths` as inspectable, Git-friendly JSON.
-- **Preferred visibility** — saved Preferred paths surface first in Guided Traversal without hiding metadata-derived alternatives.
-- **Explicit save follow-up** — a runtime-validated path can be offered for saving; DVQR does not silently persist it.
-- **Exact-hop reuse** — saved relationship boundaries are preserved instead of being collapsed into a different route.
-- **Record-scoped execution** — reuse starts from an explicit source record and carries only landed IDs forward.
-- **Safe dead ends** — zero-row or mismatched frontiers stop instead of broadening into an unrestricted query.
-
-Example:
+v0.16.1 hardens the model ↔ MCP ↔ DVQR boundary and completes the path from bounded traversal evidence into reusable Managed Business Paths.
 
 ```text
-account → contact → task
+validate → execute bounded → verify exact route → save/reverify → reuse safely
 ```
 
-### Discoverability & Guided Investigation
+- **Server-side MCP authority** — registered schemas, capability allow-lists, environment binding, bounds and entitlement remain application-owned rather than prompt-controlled.
+- **Untrusted-input hardening** — malformed identifiers, unsafe environment URLs, fabricated control fields, path/file manipulation and credential-shaped output are rejected or redacted at the DVQR boundary.
+- **Explicit Save / Verify** — a useful Guided Traversal route can be deliberately captured; identical canonical routes retain the same Business Path ID and refresh verification evidence instead of creating duplicates.
+- **Evidence-aware reuse** — saved guidance is revalidated against current metadata before reuse; Saved, runtime-verified and Preferred remain distinct states.
+- **Empty-frontier scope guard** — a saved-path run that reaches no continuation terminates its investigation scope server-side. Automatic OData, alternate-route, target-expansion or probe broadening cannot silently continue it.
+- **Auditable new-scope transition** — broader follow-up investigation requires an explicit Business Path scope transition before DVQR will continue.
+- **Accurate null-navigation evidence** — null/204 singleton navigation results are treated as zero landed records rather than apparent returned data.
 
-The **94-prompt Prompt Library** makes the Local MCP capability surface approachable without requiring MCP tool-name knowledge.
+Managed Business Paths remain workspace guidance, not Dataverse truth: current metadata, bounded runtime evidence, user preference and causality stay separate.
 
-![DV Quick Run Prompt Library](docs/prompt-library.png)
+### Discoverability remains built in
 
-- 69 Free + 25 Pro curated prompts
-- Quick Starts for common outcomes
-- category, search and Free/Pro filtering
-- parameterised natural-language prompt rendering
-- guided next prompts
-- machine-readable Evidence Matrix boundaries
-- Operational Profile + calibrated DVQR Score through Free MCP
+The **94-prompt Prompt Library** (69 Free + 25 Pro) remains the guided entry point to DVQR's Local MCP capabilities, including Operational Profile + calibrated DVQR Score, relationship intelligence, bounded traversal and managed investigation.
 
 ---
 

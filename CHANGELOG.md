@@ -6,6 +6,41 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.16.1 — MCP Security Hardening I + Guided Traversal Business Path Capture
+
+This focused release hardens the model ↔ MCP ↔ DVQR trust boundary and completes explicit Guided Traversal capture, reverification and safe reuse through the Managed Business Path Library.
+
+### Added
+
+- Added a canonical pre-dispatch MCP security gate for registered schemas, malformed identifiers/logical names, unsafe environment URLs, fabricated control fields, excessive bounds and malformed nested input.
+- Added model-facing redaction for authentication credentials and credential-shaped values/keys before MCP output is returned.
+- Added explicit Guided Traversal **Save / Reverify Business Path** capture backed by canonical route identity, stable Business Path IDs and duplicate-safe reverification.
+- Added server-held terminated Business Path scope protection after an exact saved path reaches an empty bounded frontier.
+- Added `dvqr_start_new_business_path_scope` as an explicit, non-Dataverse lifecycle transition before broader investigation may resume.
+
+### Improved
+
+- Saved-path reuse revalidates current metadata compatibility and preserves guidance provenance before execution.
+- Identical canonical routes retain the same Business Path ID and refresh verification evidence without silently changing name, notes or Preferred governance state.
+- Saved guidance can participate without being silently promoted to BusinessPreferred; Preferred guidance remains workspace-scoped and does not become universal truth.
+- Empty-frontier protection now covers direct OData fallback, alternate route discovery/probing/validation, alternate target concepts and entity-set guessing within the terminated scope.
+- Null/HTTP 204 singleton navigation responses now count as zero landed records unless the target primary ID is actually present.
+- Business Path wording distinguishes current metadata validity, historical bounded runtime verification and workspace preference; bounded evidence is not described as production-ready or guaranteed.
+- Azure CLI authentication is explicitly separated from DVQR Pro entitlement authority.
+
+### Security and authority boundaries
+
+- MCP is transport, not authority; prompt text, model output, Dataverse data and persisted artifact presentation fields cannot grant execution authority.
+- Capability/tier enforcement, environment binding and server-side bounds remain deterministic application concerns.
+- Business Path artifacts are treated as untrusted persisted data and cannot control arbitrary filesystem locations.
+- A terminated saved-path scope cannot silently widen through another MCP capability; broader investigation requires an explicit new-scope transition.
+- Saved ≠ runtime verified; runtime verified ≠ Preferred; Preferred ≠ causality, organisation-wide truth or production certification.
+
+### Compatibility
+
+- v0.16.0 Business Path artifacts remain compatible; canonical route identity is derived without unnecessarily changing IDs, governance state or verification provenance.
+- Existing discovery, ranking, traversal and verification algorithms remain intact; v0.16.1 hardens their authority and lifecycle boundaries rather than replacing them.
+
 ## DV Quick Run v0.16.0 — Managed Business Paths
 
 This release turns runtime-verified business traversal knowledge into a persisted, reusable workspace capability. A useful path can be explicitly saved, promoted to Preferred, surfaced first in Guided Traversal, and later executed as the same exact bounded business route from a real source record.

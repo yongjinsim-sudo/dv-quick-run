@@ -141,6 +141,10 @@ function comparePreferredProjection(
   left: GuidedTraversalPreferredPath,
   right: GuidedTraversalPreferredPath
 ): number {
+  const stateRank = (artifact: BusinessPathArtifact): number => artifact.state === "preferred" ? 0 : 1;
+  const state = stateRank(left.artifact) - stateRank(right.artifact);
+  if (state !== 0) return state;
+
   const leftPriority = left.artifact.priority ?? Number.MAX_SAFE_INTEGER;
   const rightPriority = right.artifact.priority ?? Number.MAX_SAFE_INTEGER;
   if (leftPriority !== rightPriority) {
@@ -179,7 +183,7 @@ export async function buildGuidedTraversalBusinessPathOverlay(
 ): Promise<GuidedTraversalBusinessPathOverlay> {
   const matching = repository
     .findMatching(sourceTable, targetTable)
-    .filter((artifact) => artifact.state === "preferred");
+    .filter((artifact) => artifact.state !== "disabled");
 
   if (!matching.length) {
     return {

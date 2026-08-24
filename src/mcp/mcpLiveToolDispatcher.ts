@@ -13,6 +13,7 @@ import { formatDvqrMcpToolResponse, type DvqrMcpToolResponse } from "./mcpToolRe
 import { WorkspaceInvestigationEvidenceRepository } from "../pro/investigations/index.js";
 import { extractAssertedBusinessTraversal } from "../pro/investigations/investigationBusinessTraversal.js";
 import { InvestigationIntentInferenceEngine, type InvestigationIntentInferenceCandidate } from "../pro/investigations/investigationIntentInference.js";
+import { validateMcpToolArguments } from "./mcpInputSecurity.js";
 import {
   INVESTIGATION_INTENT_GUARDED_TOOLS,
   classifyInvestigationConfirmationText,
@@ -102,6 +103,10 @@ export class DvqrMcpLiveToolDispatcher {
   // Raw record IDs are held only transiently in-memory for duplicate-start suppression.
   private readonly pendingRecordStartResponses = new Map<string, DvqrMcpToolResponse>();
   private readonly pendingRecordStartKeyByInvestigationId = new Map<string, string>();
+  // v0.16.1 beta-7: server-held guard. Advisory tool prose is insufficient: after an
+  // exact saved-path run terminates at an empty frontier, broadening-capable tools
+  // are rejected until an explicit new-scope transition is requested.
+  private terminatedBusinessPathScope?: { readonly pathId?: string; readonly sourceRecordId?: string; readonly createdAt: string };
 
   public constructor(
     private readonly config: DvqrMcpRuntimeConfiguration,
@@ -131,7 +136,9 @@ export class DvqrMcpLiveToolDispatcher {
       }, true);
     }
 
-    const args = call.arguments ?? {};
+    // Entitlement is an authority boundary and must be resolved before parsing
+    // tool arguments. A caller cannot use validation behaviour to probe or
+    // influence a capability that is not available in the current tier.
     const decision = this.capabilityPolicy.decide(tool);
     if (!decision.allowed) {
       return this.format(
@@ -140,6 +147,52 @@ export class DvqrMcpLiveToolDispatcher {
         true
       );
     }
+
+    const suppliedArgs = call.arguments ?? {};
+    const inputValidation = validateMcpToolArguments(tool.inputSchema, suppliedArgs);
+    if (!inputValidation.valid) {
+      const detail = inputValidation.issues.length > 0 ? ` ${inputValidation.issues.join(" ")}` : "";
+      return this.format(`DVQR could not run this request because one or more MCP arguments are invalid.${detail}`, {
+        code: "InvalidArguments",
+        toolName: tool.name,
+        issues: inputValidation.issues,
+        authorityBoundary: "Only registered capability schemas and validated arguments may reach DVQR application services.",
+        executionBoundary: "No Dataverse request or workspace mutation was performed."
+      }, true);
+    }
+    const args = inputValidation.normalizedArguments;
+
+    if (tool.name === "dvqr_start_new_business_path_scope") {
+      this.terminatedBusinessPathScope = undefined;
+      return this.freeHandlers[tool.handler.kind === "free" ? tool.handler.id : "startNewBusinessPathScope"]({});
+    }
+
+    const businessPathBroadeningTools = new Set([
+      "dvqr_execute_odata",
+      "dvqr_probe_relationship_path",
+      "dvqr_validate_business_paths",
+      "dvqr_discover_business_paths",
+      "dvqr_find_relationship_paths",
+      "dvqr_search_metadata",
+      "dvqr_resolve_navigation_property"
+    ]);
+    if (this.terminatedBusinessPathScope && businessPathBroadeningTools.has(tool.name)) {
+      return this.format(
+        "DVQR stopped this call because the current saved Business Path scope already terminated at an empty bounded frontier. Start a new Business Path investigation scope only after a new explicit user request for broader investigation.",
+        {
+          code: "BusinessPathScopeTerminated",
+          contractVersion: "dvqr-mcp-business-path-scope-guard-v1",
+          blockedTool: tool.name,
+          guard: this.terminatedBusinessPathScope,
+          operationTerminated: true,
+          automaticBroadeningAllowed: false,
+          requiredTransitionTool: "dvqr_start_new_business_path_scope",
+          executionBoundary: "No Dataverse request or alternate path discovery was performed."
+        },
+        true
+      );
+    }
+
     if (tool.handler.kind === "pro") {
       const investigationId = typeof args.investigationId === "string" ? args.investigationId.trim() : "";
       if ((tool.name === "dvqr_continue_investigation" || tool.name === "dvqr_bootstrap_investigation")
@@ -213,7 +266,18 @@ export class DvqrMcpLiveToolDispatcher {
       if (tool.name === "dvqr_continue_investigation" && args.executeRecommendedMiniRca === true) return this.dispatchRecommendedMiniRcaFallback(tool.handler.internalName, args);
       return this.dispatchProTool(tool.name, tool.handler.internalName, args);
     }
-    return this.freeHandlers[tool.handler.id](args);
+    const response = await this.freeHandlers[tool.handler.id](args);
+    if (tool.name === "dvqr_test_business_path" || tool.name === "dvqr_verify_business_path") {
+      const boundary = response.structuredContent?.scopeBoundary as Record<string, unknown> | undefined;
+      if (boundary?.outcome === "TerminatedAtBoundedFrontier") {
+        this.terminatedBusinessPathScope = {
+          pathId: typeof args.pathId === "string" ? args.pathId : undefined,
+          sourceRecordId: typeof args.sourceRecordId === "string" ? args.sourceRecordId : undefined,
+          createdAt: new Date().toISOString()
+        };
+      }
+    }
+    return response;
   }
 
 

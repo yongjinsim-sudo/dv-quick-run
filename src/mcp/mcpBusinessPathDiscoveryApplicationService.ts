@@ -113,7 +113,7 @@ export class McpBusinessPathDiscoveryApplicationService {
           distinction: {
             workspacePreferred: "Explicit persisted organisational/workspace guidance; not an algorithmic score.",
             metadataValid: "Current relationship metadata revalidation state.",
-            historicalRuntimeVerification: "Persisted evidence from an earlier successful canonical saved-path test, when present.",
+            historicalRuntimeVerification: "Persisted bounded evidence from an earlier successful canonical saved-path test, when present. Any observedTargetRows value is historical and non-exhaustive; it is not a current row count.",
             currentRuntimeViable: "Unknown for this request until a source record is tested."
           },
           preferredBusinessPath: primaryPreferredPath,
@@ -138,7 +138,7 @@ export class McpBusinessPathDiscoveryApplicationService {
           alternatives: present.slice(1),
           candidateCount: present.length,
           suggestedNextActions: present.length ? [
-            "If preferredBusinessPath is present and a representative source record is available, use dvqr_test_business_path with its saved bp_<id>; do not manually reconstruct it with OData.",
+            "If preferredBusinessPath is present and the user asks to verify/re-verify it, use dvqr_verify_business_path exactly once. If the user asks only to test/use it for a record, use dvqr_test_business_path exactly once. Both already revalidate current metadata internally; do not pair either with dvqr_revalidate_business_path or manually reconstruct with OData.",
             "For discovered alternatives, use bounded runtime validation before treating them as data-viable.",
             "Validate candidates hop-by-hop before calling any route data-viable or business-preferred.",
             "Keep direct relationships as baselines; do not equate an empty direct route with a missing downstream business record.",

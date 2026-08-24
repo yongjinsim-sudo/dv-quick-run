@@ -22,12 +22,13 @@ export interface BusinessPathDetailModel {
 export function buildBusinessPathLibraryItem(
   artifact: BusinessPathArtifact
 ): BusinessPathLibraryItemModel {
-  const enabled = artifact.state === "preferred";
+  const preferred = artifact.state === "preferred";
+  const stateLabel = preferred ? "Preferred" : artifact.state === "saved" ? "Saved" : "Disabled";
   return {
     id: artifact.id,
-    label: `${enabled ? "★" : "○"} ${artifact.name}`,
+    label: `${preferred ? "★" : "○"} ${artifact.name}`,
     description: [
-      enabled ? "Preferred" : "Disabled",
+      stateLabel,
       artifact.priority !== undefined ? `Priority ${artifact.priority}` : undefined,
       businessPathVerificationLabel(artifact)
     ].filter(Boolean).join(" · "),
@@ -42,7 +43,7 @@ export function buildBusinessPathDetail(
   const ordered = [...artifact.hops].sort((left, right) => left.ordinal - right.ordinal);
   const lines = [
     `Path ID: ${artifact.id}`,
-    `State: ${artifact.state === "preferred" ? "Preferred" : "Disabled"}`,
+    `State: ${artifact.state === "preferred" ? "Preferred" : artifact.state === "saved" ? "Saved" : "Disabled"}`,
     `Route: ${businessPathDisplayChain(artifact)}`,
     `Priority: ${artifact.priority ?? "Default"}`,
     `Verification: ${businessPathVerificationLabel(artifact)}`,

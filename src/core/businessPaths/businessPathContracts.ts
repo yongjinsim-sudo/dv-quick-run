@@ -2,7 +2,7 @@ export const DVQR_BUSINESS_PATH_SCHEMA_VERSION = "dvqr-business-path-v1" as cons
 
 export type BusinessPathSchemaVersion = typeof DVQR_BUSINESS_PATH_SCHEMA_VERSION;
 
-export type BusinessPathState = "preferred" | "disabled";
+export type BusinessPathState = "saved" | "preferred" | "disabled";
 
 export type BusinessPathKnowledgeState = "suggested" | "verified" | "preferred";
 

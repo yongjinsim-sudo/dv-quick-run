@@ -26,6 +26,7 @@ export type DvqrLiveMcpFreeHandlerId =
   | "deleteBusinessPath"
   | "revalidateBusinessPath"
   | "testBusinessPath"
+  | "startNewBusinessPathScope"
   | "generateRelationshipQuery"
   | "probeRelationshipPath"
   | "explainLookup";
@@ -347,7 +348,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
     name: "dvqr_discover_business_paths",
     handler: { kind: "free", id: "discoverBusinessPaths" },
     title: "Discover Business Paths",
-    description: "Pass 10.1.1 metadata-only business-path discovery with depth-diverse candidate generation. Use when the user wants likely multi-hop business routes between two Dataverse tables rather than merely the shortest relationship. Direct relationships remain baseline candidates but do not suppress plausible deeper workflow routes. Discovers only metadata-verified paths, then ranks them using deterministic structural and business-semantic signals from table and relationship metadata. It does NOT query records, prove runtime viability, or mark any route business-preferred. Use dvqr_find_relationship_paths for exact relationship-shape questions; use this tool when the business flow itself is the question. Pass 8.2 additionally consumes Managed Business Path preference from the current workspace: when a matching enabled Preferred Business Path exists, the tool revalidates it and returns it as the top-visible workspace recommendation BEFORE metadata-ranked discovered alternatives, without changing discovery scores or alternative ordering. Therefore use this tool directly for prompts such as 'find the best way from contact to task' rather than separately rediscovering first. Preferred means explicit workspace/organisational guidance, not algorithmic rank or current runtime proof. If a Preferred path is returned and the user supplies a source record, use dvqr_test_business_path rather than manually reconstructing the route with OData.",
+    description: "Pass 10.1.1 metadata-only business-path discovery with depth-diverse candidate generation. Use when the user wants likely multi-hop business routes between two Dataverse tables rather than merely the shortest relationship. Direct relationships remain baseline candidates but do not suppress plausible deeper workflow routes. Discovers only metadata-verified paths, then ranks them using deterministic structural and business-semantic signals from table and relationship metadata. It does NOT query records, prove runtime viability, or mark any route business-preferred. Use dvqr_find_relationship_paths for exact relationship-shape questions; use this tool when the business flow itself is the question. Pass 8.2 additionally consumes Managed Business Path preference from the current workspace: when a matching enabled Preferred Business Path exists, the tool revalidates it and returns it as the top-visible workspace recommendation BEFORE metadata-ranked discovered alternatives, without changing discovery scores or alternative ordering. Therefore use this tool directly for prompts such as 'find the best way from contact to task' rather than separately rediscovering first. Preferred means explicit workspace/organisational guidance, not algorithmic rank or current runtime proof. If a Preferred path is returned and the user asks to verify or re-verify it, use dvqr_verify_business_path exactly once. If the user asks only to test/use it for a source record, use dvqr_test_business_path exactly once. Both already revalidate current metadata internally; do not pair them with dvqr_revalidate_business_path or manually reconstruct the route with OData.",
     tier: "free",
     inputSchema: {
       type: "object", additionalProperties: false, required: ["sourceTable", "targetTable"],
@@ -496,8 +497,8 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
   {
     name: "dvqr_revalidate_business_path",
     handler: { kind: "free", id: "revalidateBusinessPath" },
-    title: "Revalidate Managed Business Path",
-    description: "Revalidate one saved Business Path against current Dataverse metadata. Returns valid, stale, or unknown plus exact broken-hop diagnostics. This does not query records and does not establish current runtime viability.",
+    title: "Revalidate Managed Business Path Metadata",
+    description: "METADATA ONLY. Revalidate one saved Business Path against current Dataverse metadata. Returns valid, stale, or unknown plus exact broken-hop diagnostics. This does not query records and does not establish current runtime viability. Use this only when the user asks specifically for metadata revalidation. Do NOT call it before or after dvqr_test_business_path or dvqr_verify_business_path: those canonical runtime tools already perform exact current-metadata revalidation internally.",
     tier: "free",
     inputSchema: {
       type: "object",
@@ -510,10 +511,40 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
     }
   },
   {
+    name: "dvqr_start_new_business_path_scope",
+    handler: { kind: "free", id: "startNewBusinessPathScope" },
+    title: "Start New Business Path Investigation Scope",
+    description: "EXPLICIT SCOPE TRANSITION. Use only after a previous saved Business Path test/verify terminated at an empty bounded frontier AND the user has subsequently issued a new explicit request for broader or alternate investigation. Clears the server-held terminated-scope guard. This tool performs no Dataverse request and grants no entitlement or mutation authority. Do not call it automatically in the same user request that produced the terminated saved-path result.",
+    tier: "free",
+    inputSchema: { type: "object", additionalProperties: false, properties: {} }
+  },
+  {
+    name: "dvqr_verify_business_path",
+    handler: { kind: "free", id: "testBusinessPath" },
+    title: "Verify Saved Business Path",
+    description: "CANONICAL ONE-CALL VERIFY WORKFLOW for prompts such as 'verify this saved Business Path'. Use exactly this one tool call for that user intent. It performs current metadata revalidation, executes the exact saved route once with the supplied bounded runtime settings, and refreshes historical verification provenance only from that same successful run. Do NOT call dvqr_revalidate_business_path before or after it, and do NOT follow it with dvqr_test_business_path. EMPTY-FRONTIER RULE: if the exact saved route does not reach the target, this scoped Business Path operation is complete. Do NOT automatically call dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, query the target table broadly, discover an alternate route, switch or guess entity sets, expand target concepts, search metadata for a substitute target, or otherwise widen/reinterpret scope in the same user request. Any broader or alternate investigation requires a new explicit user request. Historical observedTargetRows is a bounded observation from the verification run, not a full current table count. Preferred or runtime-verified evidence must not be described as production-ready, guaranteed, causal, or organisation-wide truth. This tool never writes to Dataverse.",
+    tier: "free",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["pathId", "sourceRecordId"],
+      properties: {
+        pathId: { type: "string", description: "Exact bp_<id> of the saved Business Path." },
+        sourceRecordId: { type: "string", description: "Source-table record ID to verify." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        refreshVerification: { type: "boolean", default: true, description: "Keep true for verify semantics. A successful exact run refreshes historical bounded verification provenance." },
+        maxCandidates: { type: "integer", minimum: 1, maximum: 8, default: 5 },
+        maxDepth: { type: "integer", minimum: 2, maximum: 6, default: 5 },
+        maxRecordsPerStep: { type: "integer", minimum: 1, maximum: 10, default: 5 },
+        maxProbeRequests: { type: "integer", minimum: 1, maximum: 30, default: 16 }
+      }
+    }
+  },
+  {
     name: "dvqr_test_business_path",
     handler: { kind: "free", id: "testBusinessPath" },
     title: "Test Saved Preferred Business Path",
-    description: "Test one saved Preferred Business Path against a source record using DVQR's existing bounded runtime validator. This is the canonical tool for prompts such as 'test my saved path' or 'use this Preferred Business Path for this contact'; do NOT manually reconstruct the saved route with dvqr_execute_odata when this tool applies. DVQR first revalidates the exact saved relationship identities, then places that exact route first in the existing runtime-validation cohort while retaining alternatives. A successful exact-path run refreshes historical verification provenance by default; an empty, access-limited or failed run never downgrades an earlier successful verification. This tool never writes to Dataverse.",
+    description: "ONE-CALL RUNTIME TEST. Test one saved Preferred Business Path against a source record using DVQR's existing bounded runtime validator. This is the canonical tool for prompts such as 'test my saved path' or 'use this Preferred Business Path for this contact'; do NOT manually reconstruct the saved route with dvqr_execute_odata when this tool applies. This single call revalidates the exact route first, including the saved relationship identities, before runtime execution and can refresh historical verification provenance after one successful bounded run. Do NOT pair it with dvqr_revalidate_business_path and do NOT call it twice for one user request. EMPTY-FRONTIER RULE: if the exact path reaches zero rows or cannot continue, stop this Business Path operation. Do NOT automatically call dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, query the target table broadly, discover an alternate route, try alternate entity-set names, expand target concepts, search metadata for a substitute target, or otherwise widen/reinterpret scope in the same user request. Any broader or alternate investigation requires a new explicit user request. A successful exact-path run refreshes historical verification provenance by default; an empty, access-limited or failed run never downgrades an earlier successful verification. Preferred or runtime-verified evidence must not be described as production-ready, guaranteed, causal, or organisation-wide truth. This tool never writes to Dataverse.",
     tier: "free",
     inputSchema: {
       type: "object",
@@ -551,7 +582,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
     name: "dvqr_probe_relationship_path",
     handler: { kind: "free", id: "probeRelationshipPath" },
     title: "Probe Relationship Path",
-    description: "Explicitly execute bounded, read-only evidence-guided traversal for one source record. Without pathId or relationshipHint, DVQR probes diverse metadata path families, optionally expands generic target concepts such as task to related custom tables, and returns separate metadata and runtime-observed recommendations.",
+    description: "Explicitly execute bounded, read-only evidence-guided traversal for one source record. Without pathId or relationshipHint, DVQR probes diverse metadata path families, optionally expands generic target concepts such as task to related custom tables, and returns separate metadata and runtime-observed recommendations. SCOPE-BOUNDARY RULE: do NOT use this tool as an automatic same-request fallback after dvqr_test_business_path or dvqr_verify_business_path returns a terminated/empty scopeBoundary (zero rows, NoContinuationObserved, or target-not-reached). Alternate-route probing or target-concept expansion after that result requires a new explicit user request.",
     tier: "free",
     inputSchema: {
       type: "object", additionalProperties: false, required: ["sourceTable", "targetTable", "sourceRecordId"],

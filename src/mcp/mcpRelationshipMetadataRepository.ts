@@ -29,6 +29,19 @@ export interface McpRelationshipPathDiscovery {
 export class McpRelationshipMetadataRepository {
   private readonly entityCatalogueCache = new Map<string, DvqrMetadataEntityCandidate[]>();
   private readonly depthDiverseDiscoveryCache = new Map<string, McpRelationshipPathDiscovery>();
+  private readonly discoveryRelationshipCache = new Map<string, { readonly expiresAt: number; readonly edges: readonly McpRelationshipEdge[] }>();
+
+  private async fetchRelationshipsForDiscovery(baseEnvironmentUrl: string, token: string, logicalName: string): Promise<McpRelationshipEdge[]> {
+    const key = `${baseEnvironmentUrl.toLowerCase()}|${logicalName.toLowerCase()}`;
+    const now = Date.now();
+    const cached = this.discoveryRelationshipCache.get(key);
+    if (cached && cached.expiresAt > now) {
+      return [...cached.edges];
+    }
+    const edges = await this.fetchRelationships(baseEnvironmentUrl, token, logicalName);
+    this.discoveryRelationshipCache.set(key, { expiresAt: now + 60_000, edges: [...edges] });
+    return edges;
+  }
 
   public constructor(private readonly config: DvqrMcpRuntimeConfiguration) {}
 
@@ -228,9 +241,14 @@ export class McpRelationshipMetadataRepository {
     maxPaths: number,
     assertedPathTables?: readonly string[]
   ): Promise<McpRelationshipPathDiscovery> {
-    const maxTablesInspected = 90;
-    const maxQueuedTables = 72;
-    const maxNeighboursPerExpansion = 36;
+    // Performance envelope only. The ranking/path-selection algorithm below is intentionally
+    // unchanged: these bounds govern metadata acquisition, not business semantics.
+    const maxTablesInspected = 24;
+    const maxQueuedTables = 56;
+    const maxNeighboursPerExpansion = 28;
+    const expansionBatchSize = 4;
+    const discoveryTimeBudgetMs = 25_000;
+    const discoveryStartedAt = Date.now();
     const nodes = new Set<string>([sourceTable.toLowerCase(), targetTable.toLowerCase()]);
     const edges: McpRelationshipEdge[] = [];
     const inspected = new Set<string>();
@@ -239,11 +257,13 @@ export class McpRelationshipMetadataRepository {
     const normalizedAssertedPath = (assertedPathTables ?? []).map((value) => value.trim()).filter(Boolean);
     const assertedIntermediateTables = normalizedAssertedPath.slice(1, -1);
     const queue: Array<{ table: string; depth: number; priority: number }> = [
-      { table: sourceTable, depth: 0, priority: 1000 },
+      // Always inspect the requested source first. This preserves the established forward
+      // discovery semantics and avoids target-side hints becoming authority.
+      { table: sourceTable, depth: 0, priority: 3000 },
       // Pass 10.7.5: asserted business traversals are investigation-scoped hypotheses that
       // must be metadata-inspected even when generic breadth limits would otherwise starve
       // their intermediate tables. This is generic: no organisation/table names are encoded.
-      ...assertedIntermediateTables.map((table, index) => ({ table, depth: index + 1, priority: 2200 - index }))
+      ...assertedIntermediateTables.map((table, index) => ({ table, depth: index + 1, priority: 2800 - index }))
     ];
     for (const table of assertedIntermediateTables) queued.add(table.toLowerCase());
 
@@ -258,55 +278,106 @@ export class McpRelationshipMetadataRepository {
       return 0;
     };
 
+    // Target-aware acquisition hint: inspect the target metadata once, but do NOT add its
+    // outgoing edges to the discovery graph. Its neighbours are only scheduling hints that
+    // help us inspect likely predecessor tables earlier. Canonical forward edges still have
+    // to be observed from those tables before a source -> target path can exist.
+    try {
+      const targetHintResult = await Promise.race([
+        this.fetchRelationshipsForDiscovery(context.baseEnvironmentUrl, context.token, targetTable)
+          .then((value) => ({ kind: "metadata" as const, value }))
+          .catch(() => ({ kind: "unavailable" as const })),
+        new Promise<{ readonly kind: "timeout" }>((resolve) => setTimeout(() => resolve({ kind: "timeout" }), 1_500))
+      ]);
+      const targetEdges = targetHintResult.kind === "metadata" ? targetHintResult.value : [];
+      const hintedPredecessors = [...new Set(targetEdges.map((edge) => edge.toTable))]
+        .filter((table) => {
+          const key = table.toLowerCase();
+          return key !== targetTable.toLowerCase() && !queued.has(key);
+        })
+        .sort((left, right) => workflowPriority(right) - workflowPriority(left) || left.localeCompare(right))
+        .slice(0, 12);
+      for (const table of hintedPredecessors) {
+        if (queued.size >= maxQueuedTables) break;
+        queued.add(table.toLowerCase());
+        // The hint gets one inspection opportunity but no target-side recursive authority.
+        queue.push({ table, depth: Math.max(1, maxDepth - 1), priority: 1800 + workflowPriority(table) });
+      }
+    } catch {
+      // Target-side hinting is an optimisation only. A failure must not alter established
+      // source-driven discovery behaviour or turn partial metadata into a false negative.
+    }
+
+    let timeBudgetReached = false;
     while (queue.length && inspected.size < maxTablesInspected) {
+      if (Date.now() - discoveryStartedAt >= discoveryTimeBudgetMs) {
+        timeBudgetReached = true;
+        break;
+      }
+
       queue.sort((left, right) =>
         right.priority - left.priority
         || left.depth - right.depth
         || left.table.localeCompare(right.table)
       );
-      const current = queue.shift()!;
-      const currentKey = current.table.toLowerCase();
-      if (inspected.has(currentKey)) continue;
-      inspected.add(currentKey);
 
-      if (
-        workflowPriority(current.table) >= 80
-        && currentKey !== sourceTable.toLowerCase()
-        && currentKey !== targetTable.toLowerCase()
-      ) {
-        operationalHubsInspected.add(current.table);
+      const batch: Array<{ table: string; depth: number; priority: number }> = [];
+      while (queue.length && batch.length < expansionBatchSize && inspected.size + batch.length < maxTablesInspected) {
+        const candidate = queue.shift()!;
+        const key = candidate.table.toLowerCase();
+        if (inspected.has(key) || batch.some((entry) => entry.table.toLowerCase() === key)) continue;
+        batch.push(candidate);
       }
+      if (!batch.length) continue;
 
-      const tableEdges = await this.fetchRelationships(context.baseEnvironmentUrl, context.token, current.table);
-      edges.push(...tableEdges);
-      for (const edge of tableEdges) {
-        nodes.add(edge.toTable.toLowerCase());
-      }
+      const fetched = await Promise.all(batch.map(async (current) => ({
+        current,
+        tableEdges: await this.fetchRelationshipsForDiscovery(context.baseEnvironmentUrl, context.token, current.table)
+      })));
 
-      if (current.depth + 1 >= maxDepth || queued.size >= maxQueuedTables) {
-        continue;
-      }
+      for (const { current, tableEdges } of fetched) {
+        const currentKey = current.table.toLowerCase();
+        if (inspected.has(currentKey)) continue;
+        inspected.add(currentKey);
 
-      const expansionCandidates = [...new Set(tableEdges.map((edge) => edge.toTable))]
-        .filter((candidate) => {
-          const key = candidate.toLowerCase();
-          return key !== currentKey && !inspected.has(key) && !queued.has(key);
-        })
-        .sort((left, right) =>
-          workflowPriority(right) - workflowPriority(left)
-          || left.localeCompare(right)
-        )
-        .slice(0, maxNeighboursPerExpansion);
+        if (
+          workflowPriority(current.table) >= 80
+          && currentKey !== sourceTable.toLowerCase()
+          && currentKey !== targetTable.toLowerCase()
+        ) {
+          operationalHubsInspected.add(current.table);
+        }
 
-      for (const candidate of expansionCandidates) {
-        if (queued.size >= maxQueuedTables) break;
-        const candidateKey = candidate.toLowerCase();
-        queued.add(candidateKey);
-        queue.push({
-          table: candidate,
-          depth: current.depth + 1,
-          priority: workflowPriority(candidate) - current.depth * 4
-        });
+        edges.push(...tableEdges);
+        for (const edge of tableEdges) {
+          nodes.add(edge.toTable.toLowerCase());
+        }
+
+        if (current.depth + 1 >= maxDepth || queued.size >= maxQueuedTables) {
+          continue;
+        }
+
+        const expansionCandidates = [...new Set(tableEdges.map((edge) => edge.toTable))]
+          .filter((candidate) => {
+            const key = candidate.toLowerCase();
+            return key !== currentKey && !inspected.has(key) && !queued.has(key);
+          })
+          .sort((left, right) =>
+            workflowPriority(right) - workflowPriority(left)
+            || left.localeCompare(right)
+          )
+          .slice(0, maxNeighboursPerExpansion);
+
+        for (const candidate of expansionCandidates) {
+          if (queued.size >= maxQueuedTables) break;
+          const candidateKey = candidate.toLowerCase();
+          queued.add(candidateKey);
+          queue.push({
+            table: candidate,
+            depth: current.depth + 1,
+            priority: workflowPriority(candidate) - current.depth * 4
+          });
+        }
       }
     }
 
@@ -418,7 +489,7 @@ export class McpRelationshipMetadataRepository {
         directPathsFound: discovered.filter((path) => path.length === 1).length,
         bridgedPathsFound: discovered.filter((path) => path.length > 1).length,
         operationalHubsInspected: [...operationalHubsInspected].sort(),
-        explorationComplete: queue.length === 0
+        explorationComplete: queue.length === 0 && !timeBudgetReached
       }
     };
     this.depthDiverseDiscoveryCache.set(

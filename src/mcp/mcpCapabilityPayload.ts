@@ -41,6 +41,10 @@ export function createDvqrMcpCapabilityPayload(proEnabled: boolean) {
       ],
       businessPaths: [
         "Use dvqr_discover_business_paths when the question is about likely multi-hop business flow between two Dataverse tables; it ranks only metadata-verified candidates and performs no record query.",
+        "VERIFY SAVED PATHS: when the user says verify/re-verify a saved Business Path, call dvqr_verify_business_path exactly once. That one call already performs current metadata revalidation, exact bounded runtime execution, and verification refresh. Do not call dvqr_revalidate_business_path before/after it and do not also call dvqr_test_business_path in the same user request. Use dvqr_revalidate_business_path only for metadata-only questions.",
+        "EMPTY-FRONTIER / NO-BROADENING RULE: when dvqr_test_business_path or dvqr_verify_business_path returns zero rows, NoContinuationObserved, or target-not-reached, that scoped Business Path operation is complete. Do not automatically follow it with dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, a broad target-table query, alternate route discovery, target-concept expansion, metadata search for substitute targets, an alternate entity-set guess, or any other widened fallback in the same user request. A broader or alternate investigation requires a new explicit user request.",
+        "EVIDENCE WORDING: Preferred means workspace guidance and verified means bounded historical runtime evidence. Never call a Business Path production-ready, guaranteed, causal, universally valid, or organisation-wide truth from those signals alone.",
+
         "When the user explicitly names or selects a business traversal table sequence, preserve that sequence as assertedBusinessPathTables when calling dvqr_validate_business_paths. Do not replace the asserted sequence with a shorter route merely because the shorter route returns rows.",
         "When exact relationship schema variants for the asserted traversal are known, pass them in assertedBusinessPathRelationshipSchemaNames so DVQR tests the exact relationship identity rather than a semantically different variant such as Author versus Patient.",
         "Use dvqr_validate_business_paths when a real sourceRecordId is available and the user wants to test an asserted or discovered business traversal. Inspect promotionDecision: only promotionDecision.eligible=true authorizes the exact asserted traversal as a save candidate.",
@@ -94,7 +98,7 @@ export function createDvqrMcpCapabilityPayload(proEnabled: boolean) {
     ],
     limitations: [
       "No PATCH, DELETE or workspace mutation tools are registered. POST is restricted to explicitly confirmed, short-lived single-use preview sessions for public global generate-only Custom API Actions.",
-      "OData execution uses Azure CLI authentication and requires an explicit local Dataverse environment.",
+      "OData execution uses Azure CLI authentication and requires an explicit local Dataverse environment. Azure CLI authenticates Dataverse requests only; it does not grant or determine DVQR Pro entitlement.",
       "On Windows, low-level Node fetch failures retry through a bounded PowerShell transport using the same reviewed method, route and body.",
       "Pro readiness calls require DVQR_MCP_PRO_ENABLED=true until packaged entitlement reuse is connected."
     ]

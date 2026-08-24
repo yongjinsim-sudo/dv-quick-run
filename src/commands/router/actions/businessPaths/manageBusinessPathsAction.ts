@@ -100,8 +100,8 @@ async function pickPath(
 
 async function pickAction(artifact: BusinessPathArtifact): Promise<PathAction | undefined> {
   const stateAction: ActionQuickPickItem = artifact.state === "preferred"
-    ? { action: "disable", label: "$(circle-slash) Disable", description: "Keep the artifact but stop pinning it in Guided Traversal" }
-    : { action: "enable", label: "$(star-full) Enable as Preferred", description: "Pin this path in matching Guided Traversal" };
+    ? { action: "disable", label: "$(circle-slash) Disable", description: "Keep the artifact but stop using it as active workspace guidance" }
+    : { action: "enable", label: "$(star-full) Enable as Preferred", description: "Promote this saved path to BusinessPreferred guidance" };
 
   const items: ActionQuickPickItem[] = [
     { action: "inspect", label: "$(eye) View details" },

@@ -93,7 +93,7 @@ suite("dvQuickRunHubViewModel", () => {
     assert.ok(html.includes("💬 Start with a guided prompt"));
     assert.ok(html.includes("🔎 Understand metadata"));
     assert.ok(html.includes("📖 Explain a query"));
-    assert.ok(html.includes("What's New in v0.16.0"));
+    assert.ok(html.includes("What's New in v0.16.1"));
     assert.ok(html.includes("Professional Investigations"));
     assert.ok(html.includes("Since v0.15.8"));
     assert.strictEqual(html.includes('<span class="dvqr-context-state dvqr-context-state-informational">Available</span>'), false);

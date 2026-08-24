@@ -21,6 +21,7 @@ import {
   buildNoResultGuidanceLines
 } from "./traversalExplainability.js";
 import { recordSuccessfulTraversalRoute } from "../shared/traversal/traversalHistoryStore.js";
+import { offerCompletedTraversalBusinessPathCapture } from "./guidedTraversalBusinessPathCapture.js";
 
 export async function runContinueTraversalAction(
   ctx: CommandContext,
@@ -241,6 +242,7 @@ export async function runContinueTraversalAction(
         logInfo(ctx.output, "Run completed traversal as $batch from the Result Viewer toolbar.");
       }
       logInfo(ctx.output, "- Guided Traversal complete -");
+      await offerCompletedTraversalBusinessPathCapture(ctx, { ...updatedProgress, isCompleted: true });
       return;
     }
 
