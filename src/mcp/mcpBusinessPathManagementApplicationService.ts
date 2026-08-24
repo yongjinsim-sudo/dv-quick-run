@@ -227,7 +227,7 @@ export class McpBusinessPathManagementApplicationService {
         paths = paths.filter((item) => item.targetTable.toLowerCase() === targetTable.toLowerCase());
       }
       if (!includeDisabled) {
-        paths = paths.filter((item) => item.state === "preferred");
+        paths = paths.filter((item) => item.state !== "disabled");
       }
 
       return {
@@ -681,11 +681,34 @@ export class McpBusinessPathManagementApplicationService {
                   : "refreshVerification=false requested a read-only runtime test."
               },
           runtimeValidation: content,
+          scopeBoundary: {
+            exactPathOnly: true,
+            operationTerminated: true,
+            automaticBroadeningAllowed: false,
+            alternateRouteDiscoveryAllowed: false,
+            alternateTargetProbeAllowed: false,
+            alternateEntitySetGuessingAllowed: false,
+            requiresNewUserRequestForBroaderInvestigation: true,
+            outcome: observation?.runtimeStatus === "RuntimeViable" && observation.reachedTarget
+              ? "TargetReached"
+              : "TerminatedAtBoundedFrontier",
+            forbiddenAutomaticContinuations: [
+              "direct or broad target-table queries",
+              "alternate entity-set guesses",
+              "relationship-path probing",
+              "alternate route discovery",
+              "target-concept expansion",
+              "metadata search intended to substitute another target or route"
+            ],
+            nextStep: observation?.runtimeStatus === "RuntimeViable" && observation.reachedTarget
+              ? "This exact-path operation is complete. Any unrelated or broader query, alternate route discovery, or alternate target probe requires a new explicit user request."
+              : "Stop this Business Path operation. Do not automatically call dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, query the target table broadly, try alternate entity-set names, expand target concepts, search for substitute targets, or otherwise widen scope in the same user request. Any broader investigation requires a new explicit user request."
+          },
           distinction: {
-            preferred: "Workspace preference remains explicit organisational guidance.",
+            preferred: "Workspace preference remains explicit organisational guidance, not organisation-wide truth or production readiness.",
             metadata: "Current metadata revalidation is separate from runtime row evidence.",
             currentRuntime: "Current runtime observation is scoped to this source record and bounded probe settings.",
-            historicalVerification: "A successful canonical saved-path test may refresh historical verification provenance. Empty or failed current runs never erase earlier successful verification."
+            historicalVerification: "A successful canonical saved-path test may refresh bounded historical verification provenance. Empty or failed current runs never erase earlier successful verification and never authorize automatic scope broadening."
           }
         }
       };

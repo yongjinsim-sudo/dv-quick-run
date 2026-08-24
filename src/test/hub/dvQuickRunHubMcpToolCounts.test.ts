@@ -5,9 +5,9 @@ suite("DV Quick Run Hub MCP tool counts", () => {
   test("derives Free, Pro-only, and Pro total counts from the live catalogue", () => {
     const free = DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "free").length;
     const proOnly = DVQR_LIVE_MCP_TOOLS.filter((tool) => tool.tier === "pro").length;
-    assert.strictEqual(free, 30);
+    assert.strictEqual(free, 32);
     assert.strictEqual(proOnly, 32);
-    assert.strictEqual(DVQR_LIVE_MCP_TOOLS.length, 62);
+    assert.strictEqual(DVQR_LIVE_MCP_TOOLS.length, 64);
     assert.strictEqual(free + proOnly, DVQR_LIVE_MCP_TOOLS.length);
   });
 });

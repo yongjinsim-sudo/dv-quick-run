@@ -1,3 +1,4 @@
+import { offerCompletedTraversalBusinessPathCapture } from "./guidedTraversalBusinessPathCapture.js";
 import type { CommandContext } from "../../../context/commandContext.js";
 import { logInfo } from "../../../../utils/logger.js";
 import { canRunTraversalBatch, canRunTraversalOptimizedBatch } from "../../../../product/capabilities/capabilityResolver.js";
@@ -227,4 +228,5 @@ export async function executeFirstStepDefault(
   logInfo(ctx.output, "Guided Traversal complete.");
   logInfo(ctx.output, `Reached: ${execution.landing.entityName}`);
   logInfo(ctx.output, "Sibling expand remains available on this landed result.");
+  await offerCompletedTraversalBusinessPathCapture(ctx, traversalProgress);
 }

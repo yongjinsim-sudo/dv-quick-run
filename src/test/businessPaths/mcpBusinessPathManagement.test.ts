@@ -474,6 +474,20 @@ suite("MCP Managed Business Path management", () => {
       const content = (result as any).structuredContent;
       assert.strictEqual(content.currentRuntimeObservation.runtimeStatus, "NoContinuationObserved");
       assert.strictEqual(content.verificationRefresh.refreshed, false);
+      assert.strictEqual(content.scopeBoundary.exactPathOnly, true);
+      assert.strictEqual(content.scopeBoundary.operationTerminated, true);
+      assert.strictEqual(content.scopeBoundary.automaticBroadeningAllowed, false);
+      assert.strictEqual(content.scopeBoundary.alternateRouteDiscoveryAllowed, false);
+      assert.strictEqual(content.scopeBoundary.alternateTargetProbeAllowed, false);
+      assert.strictEqual(content.scopeBoundary.alternateEntitySetGuessingAllowed, false);
+      assert.strictEqual(content.scopeBoundary.requiresNewUserRequestForBroaderInvestigation, true);
+      assert.strictEqual(content.scopeBoundary.outcome, "TerminatedAtBoundedFrontier");
+      assert.ok(content.scopeBoundary.forbiddenAutomaticContinuations.some((item: string) => /relationship-path probing/i.test(item)));
+      assert.ok(content.scopeBoundary.forbiddenAutomaticContinuations.some((item: string) => /alternate route discovery/i.test(item)));
+      assert.match(content.scopeBoundary.nextStep, /do not automatically call dvqr_execute_odata/i);
+      assert.match(content.scopeBoundary.nextStep, /dvqr_probe_relationship_path/i);
+      assert.match(content.scopeBoundary.nextStep, /dvqr_discover_business_paths/i);
+      assert.match(content.scopeBoundary.nextStep, /new explicit user request/i);
 
       const persisted = repository.findById(pathId)!;
       assert.strictEqual(persisted.verification?.status, "verified");
@@ -534,3 +548,6 @@ suite("MCP Managed Business Path management", () => {
     assert.strictEqual((fullList as any).structuredContent.paths[0].state, "disabled");
   });
 });
+
+// beta-7 scope enforcement is dispatcher-owned; catalogue/runtime contract assertions
+// remain here as regression documentation for Business Path management semantics.

@@ -66,7 +66,7 @@ suite("BusinessPathVerificationService", () => {
       nowIso: () => "2026-08-18T04:00:00.000Z"
     });
     const updated = service.recordSuccessfulRuntimeVerification(value.id, {
-      environment: { identity: "hcpdev.crm6.dynamics.com" },
+      environment: { identity: "orgdev.crm6.dynamics.com" },
       observedTargetRows: 7
     });
 
@@ -76,8 +76,8 @@ suite("BusinessPathVerificationService", () => {
     assert.strictEqual(updated.verification?.reachedTargetCount, 1);
     assert.strictEqual(updated.verification?.observedTargetRows, 7);
     assert.strictEqual(updated.verification?.bounded, true);
-    assert.strictEqual(updated.verification?.environment?.identity, "hcpdev.crm6.dynamics.com");
-    assert.deepStrictEqual(updated.applicability?.verifiedEnvironmentIds, ["hcpdev.crm6.dynamics.com"]);
+    assert.strictEqual(updated.verification?.environment?.identity, "orgdev.crm6.dynamics.com");
+    assert.deepStrictEqual(updated.applicability?.verifiedEnvironmentIds, ["orgdev.crm6.dynamics.com"]);
     assert.deepStrictEqual(updated.hops, value.hops);
     assert.strictEqual(updated.provenance.promotedAt, value.provenance.promotedAt);
   });
@@ -103,7 +103,7 @@ suite("BusinessPathVerificationService", () => {
 
     const service = new BusinessPathVerificationService(repository);
     const updated = service.recordSuccessfulRuntimeVerification(value.id, {
-      environment: { identity: "hcpdev.crm6.dynamics.com" },
+      environment: { identity: "orgdev.crm6.dynamics.com" },
       observedTargetRows: 5,
       verifiedAt: "2026-08-18T05:00:00.000Z"
     });
@@ -113,7 +113,7 @@ suite("BusinessPathVerificationService", () => {
     assert.strictEqual(updated.verification?.observedTargetRows, 5);
     assert.deepStrictEqual(
       updated.applicability?.verifiedEnvironmentIds,
-      ["hcpdev.crm6.dynamics.com", "old.crm.dynamics.com"]
+      ["old.crm.dynamics.com", "orgdev.crm6.dynamics.com"]
     );
   });
 
@@ -125,7 +125,7 @@ suite("BusinessPathVerificationService", () => {
     assert.throws(
       () => new BusinessPathVerificationService(repository)
         .recordSuccessfulRuntimeVerification(value.id, {
-          environment: { identity: "hcpdev.crm6.dynamics.com" },
+          environment: { identity: "orgdev.crm6.dynamics.com" },
           observedTargetRows: 1
         }),
       /enabled Preferred/i

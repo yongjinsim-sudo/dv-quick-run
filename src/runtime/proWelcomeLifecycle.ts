@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.16.0</title>
+<title>DV Quick Run v0.16.1</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,27 +122,27 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.16.0</div>
-        <h1>Discoverability &amp; Guided Investigation</h1>
-        <p class="subtitle"><strong>Preserve a verified business route once, then reuse it as bounded traversal knowledge.</strong><br>v0.16.0 adds Managed Business Paths: explicit workspace persistence, Preferred route visibility, exact-hop record-scoped Guided Traversal, and empty-frontier safety.</p>
+        <div class="eyebrow">What's new in v0.16.1</div>
+        <h1>MCP Security Hardening I &amp; Business Path Capture</h1>
+        <p class="subtitle"><strong>Keep model-driven Dataverse investigation bounded, explicit and evidence-aware.</strong><br>v0.16.1 hardens the MCP trust boundary and completes explicit Save / Verify capture, current-metadata revalidation, and server-held empty-frontier scope protection for Managed Business Paths.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.16.0</div>
-          <div class="price">Managed Business Paths</div>
-          <div class="limit">Save verified routes · Prefer them later · Traverse exact hops</div>
-          <p class="recognition">Runtime-verified relationship routes can now be explicitly persisted under .dvforgelab/dvqr/business-paths. Preferred paths surface first in Guided Traversal and execute from a real source record through the exact saved relationships.</p>
-          <span class="badge">Discover → Verify → Save → Prefer → Reuse</span>
+          <div class="eyebrow">New in v0.16.1</div>
+          <div class="price">Secure Managed Business Paths</div>
+          <div class="limit">Validate authority · Save or reverify · Reuse exact hops</div>
+          <p class="recognition">Guided Traversal routes can be explicitly saved or reverified under .dvforgelab/dvqr/business-paths. Current metadata is checked before reuse, while server-side MCP guards keep bounds, environment identity, entitlement and empty-frontier scope outside prompt authority.</p>
+          <span class="badge">Discover → Verify → Save/Reverify → Revalidate → Reuse</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Workspace persistence</strong><span>Save verified business routes as inspectable, Git-friendly JSON artifacts</span></div>
-        <div class="price-pill"><strong>Preferred visibility</strong><span>Surface saved business knowledge first without hiding metadata-derived alternatives</span></div>
-        <div class="price-pill"><strong>Exact-hop reuse</strong><span>Preserve every saved relationship boundary instead of collapsing business waypoints</span></div>
-        <div class="price-pill"><strong>Bounded continuation</strong><span>Carry only landed record IDs forward and stop safely on an empty or mismatched frontier</span></div>
+        <div class="price-pill"><strong>Explicit capture</strong><span>Save or reverify canonical routes as inspectable, Git-friendly workspace artifacts</span></div>
+        <div class="price-pill"><strong>Server-side authority</strong><span>Validate schemas, bounds, environment and capability authority before application execution</span></div>
+        <div class="price-pill"><strong>Exact-hop reuse</strong><span>Revalidate current metadata and preserve every saved relationship boundary before bounded execution</span></div>
+        <div class="price-pill"><strong>Terminated-scope guard</strong><span>Stop on an empty saved-path frontier and require an explicit new scope before broader investigation</span></div>
       </div>
       <div class="actions">
         <button class="primary" data-action="prompts">Open Prompt Library</button>
@@ -152,7 +152,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Preferred Business Paths remain evidence-bounded workspace knowledge: metadata validity, runtime viability and user preference stay distinct. Empty frontiers never broaden into unrestricted traversal. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Managed Business Paths remain evidence-bounded workspace knowledge: current metadata, runtime evidence and user preference stay distinct. Prompt text cannot override server-side authority, and terminated empty frontiers cannot silently broaden through another MCP capability. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
     
         <p><strong>Try it:</strong> find and runtime-verify a relationship path, save it as Preferred, then start Guided Traversal again and reuse the exact route from a real source record.</p>
       </section>
@@ -218,7 +218,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     "dvQuickRunWelcomeV0159",
-    "DV Quick Run v0.16.0",
+    "DV Quick Run v0.16.1",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

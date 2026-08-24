@@ -36,8 +36,8 @@ export class BusinessPathVerificationService {
     if (!existing) {
       throw new Error(`Business Path ${id} was not found.`);
     }
-    if (existing.state !== "preferred") {
-      throw new Error("Only an enabled Preferred Business Path can refresh runtime verification.");
+    if (existing.state === "disabled") {
+      throw new Error("Only an enabled Preferred or saved Business Path can refresh runtime verification; disabled paths cannot be verified.");
     }
     if (!evidence.environment.identity.trim()) {
       throw new Error("Runtime verification requires an environment identity.");

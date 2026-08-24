@@ -59,6 +59,7 @@ export function createDvqrMcpFreeLiveHandlers(
     deleteBusinessPath: async (args) => deps.formatFreeResult(await adapter.deleteBusinessPath(args)),
     revalidateBusinessPath: async (args) => deps.formatFreeResult(await adapter.revalidateBusinessPath(args)),
     testBusinessPath: async (args) => deps.formatFreeResult(await adapter.testBusinessPath(args)),
+    startNewBusinessPathScope: async () => deps.format("A new Business Path investigation scope is active.", { contractVersion: "dvqr-mcp-business-path-scope-transition-v1", scopeReset: true, dataverseRequestPerformed: false }),
     generateRelationshipQuery: async (args) => deps.dispatchRelationshipQuery(args),
     probeRelationshipPath: async (args) => deps.formatFreeResult(await adapter.probeRelationshipPath(args)),
     explainLookup: async (args) => deps.formatFreeResult(await adapter.explainLookup(args))

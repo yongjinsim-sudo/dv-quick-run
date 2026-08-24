@@ -23,13 +23,15 @@ export interface McpPreferredBusinessPathProjection {
   readonly presentationRank: number;
   readonly route: string;
   readonly relationshipSchemaNames: readonly string[];
-  readonly workspaceRole: "Preferred";
+  readonly workspaceRole: "Preferred" | "SavedGuidance";
   readonly currentMetadata: "valid" | "stale" | "unknown";
   readonly historicalRuntimeVerification: {
     readonly status: "verified" | "not-runtime-verified";
+    readonly evidenceScope: "historical-bounded-observation" | "none";
     readonly verifiedAt?: string;
     readonly environment?: string;
     readonly observedTargetRows?: number | null;
+    readonly observedTargetRowsMeaning?: string;
   };
 }
 
@@ -56,7 +58,7 @@ export class McpPreferredBusinessPathConsumptionService {
     const repository = new WorkspaceBusinessPathRepository(binding.workspaceRoot);
     const matching = repository
       .findMatching(sourceTable, targetTable)
-      .filter((artifact) => artifact.state === "preferred");
+      .filter((artifact) => artifact.state !== "disabled");
 
     if (!matching.length) return [];
 
@@ -76,22 +78,28 @@ export class McpPreferredBusinessPathConsumptionService {
         relationshipSchemaNames: [...artifact.hops]
           .sort((left, right) => left.ordinal - right.ordinal)
           .map((hop) => hop.relationshipSchemaName),
-        workspaceRole: "Preferred",
+        workspaceRole: artifact.state === "preferred" ? "Preferred" : "SavedGuidance",
         currentMetadata: validation.state,
         historicalRuntimeVerification: artifact.verification?.status === "verified"
           ? {
               status: "verified",
+              evidenceScope: "historical-bounded-observation",
               ...(artifact.verification.verifiedAt ? { verifiedAt: artifact.verification.verifiedAt } : {}),
               ...(artifact.verification.environment?.identity ? { environment: artifact.verification.environment.identity } : {}),
               ...(artifact.verification.observedTargetRows !== undefined
-                ? { observedTargetRows: artifact.verification.observedTargetRows }
+                ? {
+                    observedTargetRows: artifact.verification.observedTargetRows,
+                    observedTargetRowsMeaning: "Bounded row observation from the last successful saved-path verification; not a current or exhaustive target-table count."
+                  }
                 : {})
             }
-          : { status: "not-runtime-verified" }
+          : { status: "not-runtime-verified", evidenceScope: "none" }
       });
     }
 
     return results.sort((left, right) => {
+      const state = (left.path.state === "preferred" ? 0 : 1) - (right.path.state === "preferred" ? 0 : 1);
+      if (state !== 0) return state;
       const leftPriority = left.path.priority ?? Number.MAX_SAFE_INTEGER;
       const rightPriority = right.path.priority ?? Number.MAX_SAFE_INTEGER;
       if (leftPriority !== rightPriority) return leftPriority - rightPriority;

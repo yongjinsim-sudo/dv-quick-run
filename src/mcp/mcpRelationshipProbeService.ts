@@ -60,7 +60,13 @@ export class McpRelationshipProbeService {
           timeoutMs: this.config.requestTimeoutMs
         });
         const data: any = result.data;
-        const rows = Array.isArray(data?.value) ? data.value : data && typeof data === "object" ? [data] : [];
+        // A 204/null ManyToOne navigation may be represented by the transport as an
+        // empty object. Count landed records, not response envelopes: a singleton
+        // exists only when the target primary ID is actually present.
+        const singletonId = data && typeof data === "object" ? data[targetShape.primaryIdAttribute] : undefined;
+        const rows = Array.isArray(data?.value)
+          ? data.value
+          : (typeof singletonId === "string" && singletonId ? [data] : []);
         for (const row of rows.slice(0, maxRecordsPerStep)) {
           const value = row?.[targetShape.primaryIdAttribute];
           if (typeof value === "string" && value) {

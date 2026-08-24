@@ -485,13 +485,13 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.16.0 adds Managed Business Paths: runtime-verified relationship routes can be explicitly saved as workspace artifacts and reused instead of rediscovered from scratch.",
-  "Saved Preferred Business Paths are surfaced as the top visible Guided Traversal option while metadata-derived alternatives remain available for recovery and exploration.",
-  "Preferred reuse preserves every saved relationship boundary and executes the exact path from an explicit source record rather than collapsing business waypoints into Compact or Mixed plans.",
-  "Bounded landed rows are carried hop-by-hop across the exact saved navigation properties, merged and deduplicated before the next continuation.",
-  "Empty or mismatched frontiers now hard-stop traversal, preventing a failed relationship hop from broadening into an unrestricted target-table query.",
-  "Business Path artifacts remain evidence-aware: metadata validity, runtime-observed viability and user preference are preserved as distinct concepts rather than treated as causality or universal business truth.",
-  "v0.15.9 Prompt Library and v0.15.8 Managed Investigation Intelligence remain available alongside the new reusable traversal workflow."
+  "v0.16.1 adds MCP Security Hardening I: registered schemas, bounds, environment binding and capability authority are enforced by DVQR rather than prompt text.",
+  "Guided Traversal now supports explicit Save / Reverify Business Path capture with canonical route identity, stable IDs and duplicate-safe reverification.",
+  "Saved guidance is checked against current metadata before reuse; Saved, runtime-verified and Preferred remain distinct evidence/governance states.",
+  "A saved-path empty frontier now creates a server-held terminated scope so OData, alternate-route discovery, probing, validation or target expansion cannot silently broaden the same investigation.",
+  "Broader follow-up work crosses an explicit Business Path scope transition, keeping the lifecycle visible and auditable.",
+  "Credential-shaped model output is redacted, unsafe environment/file inputs are rejected, and null singleton navigation results no longer masquerade as landed records.",
+  "Existing discovery, ranking and traversal semantics remain intact; v0.16.1 hardens authority and workflow boundaries rather than introducing a second reasoning engine."
 ];
 
 export const philosophy: readonly string[] = [

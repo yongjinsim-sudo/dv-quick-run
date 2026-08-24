@@ -51,8 +51,8 @@ export function validateBusinessPathArtifact(artifact: BusinessPathArtifact): Bu
   if (!isLogicalName(artifact.targetTable)) {
     issues.push(issue("invalid-target-table", "targetTable must be a Dataverse logical name."));
   }
-  if (artifact.state !== "preferred" && artifact.state !== "disabled") {
-    issues.push(issue("invalid-state", "Business Path state must be preferred or disabled."));
+  if (!["saved", "preferred", "disabled"].includes(artifact.state)) {
+    issues.push(issue("invalid-state", "Business Path state must be saved, preferred or disabled."));
   }
   if (artifact.priority !== undefined && (!Number.isInteger(artifact.priority) || artifact.priority < 0)) {
     issues.push(issue("invalid-priority", "Business Path priority must be a non-negative integer when supplied."));
