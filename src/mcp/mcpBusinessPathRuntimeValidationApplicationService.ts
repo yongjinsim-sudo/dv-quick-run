@@ -175,27 +175,40 @@ export class McpBusinessPathRuntimeValidationApplicationService {
         .filter((candidate) => candidate.hops.length === 1)
         .slice(0, 2);
 
-      // Runtime validation intentionally selects from a much broader discovery pool than the
-      // requested execution cohort. This prevents a patient/subject variant from disappearing
-      // merely because a superficially similar author/reference variant was encountered first.
-      const primaryRuntimeCandidates = allBusinessCandidates.slice(0, maxCandidates);
-      const selectedById = new Map(primaryRuntimeCandidates.map((candidate) => [candidate.pathId, candidate]));
-      for (const direct of directBaselines) {
-        selectedById.set(direct.pathId, direct);
+      // Runtime validation intentionally selects from a broader discovery pool for ordinary
+      // discovery/validation calls. Saved Preferred-path execution is different: its route has
+      // already been selected by exact table + relationship identity, so no alternative candidate,
+      // direct baseline or shortcut is allowed to consume runtime budget in that operation.
+      let businessCandidates: typeof allBusinessCandidates;
+      if (preferredBusinessPathId) {
+        if (!assertedCandidates.length) {
+          return {
+            ok: false,
+            code: "InvalidArguments",
+            message: `Saved Business Path ${preferredBusinessPathId} could not be resolved to its exact current metadata route. No alternative route was executed.`
+          };
+        }
+        businessCandidates = [assertedCandidates[0]];
+      } else {
+        const primaryRuntimeCandidates = allBusinessCandidates.slice(0, maxCandidates);
+        const selectedById = new Map(primaryRuntimeCandidates.map((candidate) => [candidate.pathId, candidate]));
+        for (const direct of directBaselines) {
+          selectedById.set(direct.pathId, direct);
+        }
+        // An explicit investigation business traversal is an authoritative hypothesis, not an automatic truth.
+        // Ensure it enters the bounded runtime cohort when metadata discovery can resolve the exact table sequence.
+        for (const assertedCandidate of assertedCandidates) {
+          selectedById.set(assertedCandidate.pathId, assertedCandidate);
+        }
+        businessCandidates = [...selectedById.values()].sort((left, right) => {
+          const leftAsserted = assertedCandidateIds.has(left.pathId) ? 0 : 1;
+          const rightAsserted = assertedCandidateIds.has(right.pathId) ? 0 : 1;
+          return leftAsserted - rightAsserted
+            || right.businessPathScore - left.businessPathScore
+            || right.metadataTraversalScore - left.metadataTraversalScore
+            || left.pathId.localeCompare(right.pathId);
+        });
       }
-      // An explicit investigation business traversal is an authoritative hypothesis, not an automatic truth.
-      // Ensure it enters the bounded runtime cohort when metadata discovery can resolve the exact table sequence.
-      for (const assertedCandidate of assertedCandidates) {
-        selectedById.set(assertedCandidate.pathId, assertedCandidate);
-      }
-      const businessCandidates = [...selectedById.values()].sort((left, right) => {
-        const leftAsserted = assertedCandidateIds.has(left.pathId) ? 0 : 1;
-        const rightAsserted = assertedCandidateIds.has(right.pathId) ? 0 : 1;
-        return leftAsserted - rightAsserted
-          || right.businessPathScore - left.businessPathScore
-          || right.metadataTraversalScore - left.metadataTraversalScore
-          || left.pathId.localeCompare(right.pathId);
-      });
       const relationshipPathById = new Map(discovered.ranked.map((path) => [path.pathId, path]));
 
       if (!businessCandidates.length) {

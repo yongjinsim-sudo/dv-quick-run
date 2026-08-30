@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_15_9.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v0_16_2.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -20,7 +20,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.16.1</title>
+<title>DV Quick Run v0.16.2</title>
 <style>
   :root {
     color-scheme: dark;
@@ -122,27 +122,27 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.16.1</div>
-        <h1>MCP Security Hardening I &amp; Business Path Capture</h1>
-        <p class="subtitle"><strong>Keep model-driven Dataverse investigation bounded, explicit and evidence-aware.</strong><br>v0.16.1 hardens the MCP trust boundary and completes explicit Save / Verify capture, current-metadata revalidation, and server-held empty-frontier scope protection for Managed Business Paths.</p>
+        <div class="eyebrow">What's new in v0.16.2</div>
+        <h1>Safer MCP Investigation, Exact Business Paths</h1>
+        <p class="subtitle"><strong>Talk to Dataverse with stronger application-enforced boundaries.</strong><br>v0.16.2 completes Security Hardening II: the connected environment stays authoritative, saved Business Paths keep their exact reviewed route, empty frontiers stop instead of silently widening scope, diagnostics protect credential-shaped values, and Professional Investigation remains evidence-bounded.</p>
       </div>
     </section>
 
     <section class="pathfinder">
       <div class="pathfinder-head">
         <div>
-          <div class="eyebrow">New in v0.16.1</div>
-          <div class="price">Secure Managed Business Paths</div>
-          <div class="limit">Validate authority · Save or reverify · Reuse exact hops</div>
-          <p class="recognition">Guided Traversal routes can be explicitly saved or reverified under .dvforgelab/dvqr/business-paths. Current metadata is checked before reuse, while server-side MCP guards keep bounds, environment identity, entitlement and empty-frontier scope outside prompt authority.</p>
-          <span class="badge">Discover → Verify → Save/Reverify → Revalidate → Reuse</span>
+          <div class="eyebrow">New in v0.16.2</div>
+          <div class="price">Security Hardening II Complete</div>
+          <div class="limit">Exact routes · Explicit scope · Safe diagnostics · Evidence first</div>
+          <p class="recognition">DVQR now keeps model-driven investigation behind deterministic application boundaries. Prompts and Dataverse content cannot switch the active environment, grant capabilities or silently replace a saved Business Path. Reverify checks current metadata; runtime verification remains a separate, explicit record-scoped operation.</p>
+          <span class="badge">Prompt/model/data → Validate authority → Execute bounded → Preserve evidence → Explicit next scope</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-pill"><strong>Explicit capture</strong><span>Save or reverify canonical routes as inspectable, Git-friendly workspace artifacts</span></div>
-        <div class="price-pill"><strong>Server-side authority</strong><span>Validate schemas, bounds, environment and capability authority before application execution</span></div>
-        <div class="price-pill"><strong>Exact-hop reuse</strong><span>Revalidate current metadata and preserve every saved relationship boundary before bounded execution</span></div>
-        <div class="price-pill"><strong>Terminated-scope guard</strong><span>Stop on an empty saved-path frontier and require an explicit new scope before broader investigation</span></div>
+        <div class="price-pill"><strong>Clear Reverify semantics</strong><span>Reverify checks saved routes against current metadata without silently running record traversal</span></div>
+        <div class="price-pill"><strong>Canonical authority</strong><span>Environment, entitlement, schemas and bounds are validated by DVQR before execution</span></div>
+        <div class="price-pill"><strong>Exact saved-path reuse</strong><span>Runtime verification follows the reviewed relationship hops instead of substituting a shortcut</span></div>
+        <div class="price-pill"><strong>Explicit broader scope</strong><span>An empty saved-path frontier stops; alternate-route investigation starts only as a new explicit scope</span></div>
       </div>
       <div class="actions">
         <button class="primary" data-action="prompts">Open Prompt Library</button>
@@ -152,7 +152,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
         <button data-action="products">View Products</button>
         <button data-action="continue">Continue</button>
       </div>
-      <div class="footer">Managed Business Paths remain evidence-bounded workspace knowledge: current metadata, runtime evidence and user preference stay distinct. Prompt text cannot override server-side authority, and terminated empty frontiers cannot silently broaden through another MCP capability. Pricing: ${pricingUrl} · Products: ${productsUrl}</div>
+      <div class="footer">Managed Business Paths remain evidence-bounded workspace knowledge: current metadata, runtime evidence and user preference stay distinct. Prompt text cannot override server-side authority, and terminated empty frontiers cannot silently broaden through another MCP capability.</div>
     
         <p><strong>Try it:</strong> find and runtime-verify a relationship path, save it as Preferred, then start Guided Traversal again and reuse the exact route from a real source record.</p>
       </section>
@@ -218,7 +218,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     "dvQuickRunWelcomeV0159",
-    "DV Quick Run v0.16.1",
+    "DV Quick Run v0.16.2",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

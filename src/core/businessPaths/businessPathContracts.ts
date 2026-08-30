@@ -85,6 +85,8 @@ export interface BusinessPathValidationIssue {
     | "invalid-state"
     | "invalid-priority"
     | "missing-hops"
+    | "excessive-hops"
+    | "invalid-text-content"
     | "invalid-hop-ordinal"
     | "duplicate-hop-ordinal"
     | "invalid-hop-table"

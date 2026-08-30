@@ -1,5 +1,5 @@
 import * as assert from "node:assert";
-import { environmentUrl, stringArg, validateEnvironmentUrl } from "../../mcp/mcpRequestArguments.js";
+import { environmentUrl, stringArg, validateEnvironmentAuthority, validateEnvironmentUrl } from "../../mcp/mcpRequestArguments.js";
 import type { DvqrMcpRuntimeConfiguration } from "../../mcp/mcpRuntimeConfiguration.js";
 
 const config: DvqrMcpRuntimeConfiguration = {
@@ -17,10 +17,34 @@ suite("mcpRequestArguments", () => {
     assert.strictEqual(stringArg({ query: 42 }, "query"), undefined);
   });
 
-  test("prefers and normalises a call-specific environment URL", () => {
+  test("keeps the configured environment authoritative over call-specific input", () => {
     assert.strictEqual(
       environmentUrl({ environmentUrl: "https://override.crm6.dynamics.com///" }, config),
-      "https://override.crm6.dynamics.com"
+      "https://configured.crm6.dynamics.com"
+    );
+    assert.deepStrictEqual(
+      validateEnvironmentAuthority({ environmentUrl: "https://override.crm6.dynamics.com///" }, config),
+      {
+        ok: false,
+        code: "EnvironmentAuthorityMismatch",
+        message: "environmentUrl cannot override the active canonical MCP environment."
+      }
+    );
+  });
+
+  test("allows a matching environmentUrl and preserves explicit resolution when no canonical environment is configured", () => {
+    assert.deepStrictEqual(
+      validateEnvironmentAuthority({ environmentUrl: "https://configured.crm6.dynamics.com/" }, config),
+      { ok: true }
+    );
+    const unbound = { ...config, environmentUrl: undefined };
+    assert.deepStrictEqual(
+      validateEnvironmentAuthority({ environmentUrl: "https://resolved.crm6.dynamics.com" }, unbound),
+      { ok: true }
+    );
+    assert.strictEqual(
+      environmentUrl({ environmentUrl: "https://resolved.crm6.dynamics.com///" }, unbound),
+      "https://resolved.crm6.dynamics.com"
     );
   });
 

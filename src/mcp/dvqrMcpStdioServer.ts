@@ -5,6 +5,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import { DvqrMcpLiveToolDispatcher } from "./mcpLiveToolDispatcher.js";
 import { DVQR_LIVE_MCP_TOOLS } from "./mcpLiveToolCatalogue.js";
 import { loadDvqrMcpRuntimeConfiguration } from "./mcpRuntimeConfiguration.js";
+import { getDvqrReleaseVersion } from "../product/releaseIdentity.js";
 
 export function listDvqrMcpProtocolTools() {
   return DVQR_LIVE_MCP_TOOLS.map((tool) => ({
@@ -18,7 +19,7 @@ export async function startDvqrMcpStdioServer(): Promise<void> {
   const config = loadDvqrMcpRuntimeConfiguration();
   const dispatcher = new DvqrMcpLiveToolDispatcher(config);
   const server = new Server(
-    { name: "dv-quick-run", version: process.env.DVQR_MCP_SERVER_VERSION?.trim() || "0.15.7" },
+    { name: "dv-quick-run", version: process.env.DVQR_MCP_SERVER_VERSION?.trim() || getDvqrReleaseVersion() },
     { capabilities: { tools: {} } }
   );
 

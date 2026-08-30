@@ -10,6 +10,7 @@ import {
   parseBusinessPathArtifact,
   serializeBusinessPathArtifact
 } from "../../core/businessPaths/index.js";
+import { assertWorkspaceContainedPath } from "../../utils/workspacePathSecurity.js";
 
 const SAFE_BUSINESS_PATH_ID = /^bp_[0-9a-f]{8}$/;
 
@@ -26,10 +27,13 @@ export function businessPathWorkspaceRoot(workspaceRoot: string): string {
 }
 
 export class WorkspaceBusinessPathRepository implements BusinessPathRepository {
+  private readonly workspaceRoot: string;
   private readonly root: string;
 
   public constructor(workspaceRoot: string) {
+    this.workspaceRoot = path.resolve(workspaceRoot);
     this.root = businessPathWorkspaceRoot(workspaceRoot);
+    assertWorkspaceContainedPath(this.workspaceRoot, this.root);
   }
 
   public list(): readonly BusinessPathArtifact[] {
@@ -58,6 +62,7 @@ export class WorkspaceBusinessPathRepository implements BusinessPathRepository {
       throw new Error("Invalid Business Path ID.");
     }
 
+    assertWorkspaceContainedPath(this.workspaceRoot, this.root);
     fs.mkdirSync(this.root, { recursive: true });
     const target = this.fileForId(artifact.id);
     this.atomicWrite(target, serialized);

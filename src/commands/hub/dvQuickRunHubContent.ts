@@ -485,13 +485,13 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.16.1 adds MCP Security Hardening I: registered schemas, bounds, environment binding and capability authority are enforced by DVQR rather than prompt text.",
-  "Guided Traversal now supports explicit Save / Reverify Business Path capture with canonical route identity, stable IDs and duplicate-safe reverification.",
-  "Saved guidance is checked against current metadata before reuse; Saved, runtime-verified and Preferred remain distinct evidence/governance states.",
-  "A saved-path empty frontier now creates a server-held terminated scope so OData, alternate-route discovery, probing, validation or target expansion cannot silently broaden the same investigation.",
-  "Broader follow-up work crosses an explicit Business Path scope transition, keeping the lifecycle visible and auditable.",
-  "Credential-shaped model output is redacted, unsafe environment/file inputs are rejected, and null singleton navigation results no longer masquerade as landed records.",
-  "Existing discovery, ranking and traversal semantics remain intact; v0.16.1 hardens authority and workflow boundaries rather than introducing a second reasoning engine."
+  "v0.16.2 completes MCP Security Hardening II: Local MCP now keeps capability, entitlement, environment, bounds and execution authority behind deterministic application services.",
+  "Managed Business Path Reverify is metadata-only; runtime verification is a separate, explicit source-record operation that executes the exact saved route.",
+  "A reached empty saved-path frontier stops the current scope. Downstream targets are not treated as globally empty, and alternate routes require an explicit new Business Path scope.",
+  "Business Path and investigation persistence stay inside the canonical workspace, including protection against symlink or junction escape.",
+  "Credential-shaped values are redacted consistently across MCP structured output, text mirrors, transport diagnostics and persisted investigation boundaries.",
+  "Professional Investigation keeps recommendations non-authoritative, revalidates chained actions independently and keeps Mini RCA zero-acquisition.",
+  "Permanent A01–A20 adversarial regression coverage plus bounded non-production dogfooding now protects these contracts as DVQR moves into the separate v1 readiness assessment."
 ];
 
 export const philosophy: readonly string[] = [

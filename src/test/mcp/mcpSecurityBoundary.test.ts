@@ -83,22 +83,30 @@ suite("MCP server security boundary", () => {
     }
   });
 
-  test("accepts supported Dataverse cloud environment hosts", async () => {
-    const urls = [
+  test("accepts the configured Dataverse environment and rejects a different supported environment before execution", async () => {
+    const matching = createDispatcher();
+    const allowed = await matching.dispatcher.dispatch({
+      name: "dvqr_execute_odata",
+      arguments: { query: "contacts?$select=contactid&$top=1", maxRecords: 1, environmentUrl: "https://example.crm.dynamics.com/" }
+    });
+    assert.strictEqual(allowed.isError, undefined);
+    assert.strictEqual(matching.getExecuteCalls(), 1);
+
+    for (const environmentUrl of [
       "https://org.crm6.dynamics.com",
       "https://org.crm.dynamics.cn",
       "https://org.crm.microsoftdynamics.us",
       "https://org.crm.microsoftdynamics.de",
       "https://org.crm.appsplatform.us"
-    ];
-    for (const environmentUrl of urls) {
+    ]) {
       const { dispatcher, getExecuteCalls } = createDispatcher();
       const response = await dispatcher.dispatch({
         name: "dvqr_execute_odata",
         arguments: { query: "contacts?$select=contactid&$top=1", maxRecords: 1, environmentUrl }
       });
-      assert.strictEqual(response.isError, undefined, environmentUrl);
-      assert.strictEqual(getExecuteCalls(), 1, environmentUrl);
+      assert.strictEqual(response.isError, true, environmentUrl);
+      assert.strictEqual((response.structuredContent as any).code, "EnvironmentAuthorityMismatch", environmentUrl);
+      assert.strictEqual(getExecuteCalls(), 0, environmentUrl);
     }
   });
 
