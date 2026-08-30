@@ -5,6 +5,7 @@ import {
   type DataverseExecutionContext,
   type DataverseGetResult
 } from "../services/dataverseClient.js";
+import { redactSensitiveText } from "../utils/sensitiveData.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -290,7 +291,7 @@ export async function mcpDataversePost<T = unknown>(args: {
       throw new Error(`${nativeFetchFailure}. URL: ${buildUrl(args.baseUrl, args.path)}`);
     }
 
-    process.stderr.write(`[DVQR MCP] Node POST failed; retrying through Windows PowerShell transport: ${nativeFetchFailure}\n`);
+    process.stderr.write(`[DVQR MCP] Node POST failed; retrying through Windows PowerShell transport: ${redactSensitiveText(nativeFetchFailure)}\n`);
     return postViaPowerShell<T>({
       ...args,
       nativeFetchFailure
@@ -318,7 +319,7 @@ export async function mcpDataverseGet<T = unknown>(args: {
       throw new Error(`${nativeFetchFailure}. URL: ${buildUrl(args.baseUrl, args.path)}`);
     }
 
-    process.stderr.write(`[DVQR MCP] Node fetch failed; retrying through Windows PowerShell transport: ${nativeFetchFailure}\n`);
+    process.stderr.write(`[DVQR MCP] Node fetch failed; retrying through Windows PowerShell transport: ${redactSensitiveText(nativeFetchFailure)}\n`);
     return getViaPowerShell<T>({
       ...args,
       nativeFetchFailure

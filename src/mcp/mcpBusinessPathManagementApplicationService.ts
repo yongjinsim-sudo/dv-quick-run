@@ -177,9 +177,16 @@ function exactPreferredRuntimeObservation(
   const exact = pathId
     ? validated.find((item) => item.pathId === pathId)
     : undefined;
-  const observed = typeof exact?.observedTargetRecordCount === "number"
+  const breakHop = typeof exact?.breakHop === "number" ? exact.breakHop : undefined;
+  const totalHops = typeof exact?.totalHops === "number" ? exact.totalHops : undefined;
+  const observed = runtimeStatus === "RuntimeViable" && typeof exact?.observedTargetRecordCount === "number"
     ? exact.observedTargetRecordCount
-    : null;
+    : runtimeStatus === "NoContinuationObserved"
+      && breakHop !== undefined
+      && totalHops !== undefined
+      && breakHop === totalHops
+      ? 0
+      : null;
 
   return {
     runtimeStatus,
@@ -187,6 +194,58 @@ function exactPreferredRuntimeObservation(
     observedTargetRows: observed,
     ...(pathId ? { pathId } : {})
   };
+}
+
+function exactSavedPathHopStates(
+  artifact: BusinessPathArtifact,
+  result: DvqrMcpFreeToolResult
+): readonly Record<string, unknown>[] {
+  const content = recordArg(result.structuredContent);
+  const asserted = recordArg(content?.assertedBusinessTraversal);
+  const runtimePathId = typeof asserted?.pathId === "string" ? asserted.pathId : undefined;
+  const validated = arrayArg(content?.validatedPaths)
+    .map(recordArg)
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+  const exact = runtimePathId
+    ? validated.find((item) => item.pathId === runtimePathId)
+    : undefined;
+  const rawSteps = arrayArg(exact?.steps).map(recordArg);
+
+  let frontierOpen = true;
+  return [...artifact.hops]
+    .sort((left, right) => left.ordinal - right.ordinal)
+    .map((hop, index) => {
+      const step = rawSteps[index];
+      const attempts = step ? arrayArg(step.attempts) : [];
+      const status = typeof step?.status === "string" ? step.status : undefined;
+      const hasObservation = Boolean(step) && (
+        attempts.length > 0
+        || status === "DataObserved"
+        || status === "NoMatchingDataObserved"
+      );
+      const reached = frontierOpen && hasObservation;
+      const continuationRecordCount = reached && typeof step?.continuationRecordCount === "number"
+        ? step.continuationRecordCount
+        : undefined;
+
+      if (!reached || continuationRecordCount === 0 || status === "ProbeBudgetExhausted") {
+        frontierOpen = false;
+      }
+
+      return {
+        ordinal: hop.ordinal,
+        fromTable: hop.fromTable,
+        toTable: hop.toTable,
+        relationshipSchemaName: hop.relationshipSchemaName,
+        reachability: reached ? "Reached" : "NotReached",
+        ...(reached ? {
+          observation: {
+            ...(status ? { status } : {}),
+            ...(continuationRecordCount !== undefined ? { continuationRecordCount } : {})
+          }
+        } : {})
+      };
+    });
 }
 
 /**
@@ -667,6 +726,7 @@ export class McpBusinessPathManagementApplicationService {
             reachedTarget: false,
             observedTargetRows: null
           },
+          exactRouteHops: exactSavedPathHopStates(artifact, runtimeResult),
           verificationRefresh: refreshedArtifact
             ? {
                 refreshed: true,
@@ -691,7 +751,9 @@ export class McpBusinessPathManagementApplicationService {
             requiresNewUserRequestForBroaderInvestigation: true,
             outcome: observation?.runtimeStatus === "RuntimeViable" && observation.reachedTarget
               ? "TargetReached"
-              : "TerminatedAtBoundedFrontier",
+              : observation?.runtimeStatus === "NoContinuationObserved"
+                ? "TerminatedAtBoundedFrontier"
+                : "Indeterminate",
             forbiddenAutomaticContinuations: [
               "direct or broad target-table queries",
               "alternate entity-set guesses",
@@ -702,7 +764,9 @@ export class McpBusinessPathManagementApplicationService {
             ],
             nextStep: observation?.runtimeStatus === "RuntimeViable" && observation.reachedTarget
               ? "This exact-path operation is complete. Any unrelated or broader query, alternate route discovery, or alternate target probe requires a new explicit user request."
-              : "Stop this Business Path operation. Do not automatically call dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, query the target table broadly, try alternate entity-set names, expand target concepts, search for substitute targets, or otherwise widen scope in the same user request. Any broader investigation requires a new explicit user request."
+              : observation?.runtimeStatus === "NoContinuationObserved"
+                ? "Stop this Business Path operation at the observed empty frontier. Do not automatically call dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, query the target table broadly, try alternate entity-set names, expand target concepts, search for substitute targets, or otherwise widen scope in the same user request. Any broader investigation requires a new explicit user request."
+                : "This exact saved-path run is indeterminate rather than empty. Do not describe access, execution failure, or an untested hop as zero rows. Any retry or broader investigation must follow the applicable canonical retry/budget policy or a new explicit user request."
           },
           distinction: {
             preferred: "Workspace preference remains explicit organisational guidance, not organisation-wide truth or production readiness.",

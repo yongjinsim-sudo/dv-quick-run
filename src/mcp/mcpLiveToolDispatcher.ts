@@ -14,6 +14,7 @@ import { WorkspaceInvestigationEvidenceRepository } from "../pro/investigations/
 import { extractAssertedBusinessTraversal } from "../pro/investigations/investigationBusinessTraversal.js";
 import { InvestigationIntentInferenceEngine, type InvestigationIntentInferenceCandidate } from "../pro/investigations/investigationIntentInference.js";
 import { validateMcpToolArguments } from "./mcpInputSecurity.js";
+import { validateEnvironmentAuthority } from "./mcpRequestArguments.js";
 import {
   INVESTIGATION_INTENT_GUARDED_TOOLS,
   classifyInvestigationConfirmationText,
@@ -103,7 +104,7 @@ export class DvqrMcpLiveToolDispatcher {
   // Raw record IDs are held only transiently in-memory for duplicate-start suppression.
   private readonly pendingRecordStartResponses = new Map<string, DvqrMcpToolResponse>();
   private readonly pendingRecordStartKeyByInvestigationId = new Map<string, string>();
-  // v0.16.1 beta-7: server-held guard. Advisory tool prose is insufficient: after an
+  // v0.16.x: server-held guard. Advisory tool prose is insufficient: after an
   // exact saved-path run terminates at an empty frontier, broadening-capable tools
   // are rejected until an explicit new-scope transition is requested.
   private terminatedBusinessPathScope?: { readonly pathId?: string; readonly sourceRecordId?: string; readonly createdAt: string };
@@ -162,6 +163,16 @@ export class DvqrMcpLiveToolDispatcher {
     }
     const args = inputValidation.normalizedArguments;
 
+    const environmentAuthority = validateEnvironmentAuthority(args, this.config);
+    if (!environmentAuthority.ok) {
+      return this.format(environmentAuthority.message, {
+        code: environmentAuthority.code,
+        toolName: tool.name,
+        authorityBoundary: "The active MCP environment is canonical server state and cannot be replaced by model/tool arguments.",
+        executionBoundary: "No Dataverse request or workspace mutation was performed."
+      }, true);
+    }
+
     if (tool.name === "dvqr_start_new_business_path_scope") {
       this.terminatedBusinessPathScope = undefined;
       return this.freeHandlers[tool.handler.kind === "free" ? tool.handler.id : "startNewBusinessPathScope"]({});
@@ -174,7 +185,13 @@ export class DvqrMcpLiveToolDispatcher {
       "dvqr_discover_business_paths",
       "dvqr_find_relationship_paths",
       "dvqr_search_metadata",
-      "dvqr_resolve_navigation_property"
+      "dvqr_resolve_navigation_property",
+      // Professional Investigation coordination must not turn a saved-path STOP
+      // into implicit reacquisition or continuation inside the same request scope.
+      "dvqr_continue_investigation",
+      "dvqr_acquire_investigation_evidence",
+      "dvqr_acquire_mechanism_context",
+      "dvqr_acquire_timeline_context"
     ]);
     if (this.terminatedBusinessPathScope && businessPathBroadeningTools.has(tool.name)) {
       return this.format(

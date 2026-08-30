@@ -1,3 +1,4 @@
+import { redactSensitiveText } from "../utils/sensitiveData.js";
 export interface StructuredExecutionError {
   readonly contractVersion: "dvqr-mcp-structured-execution-error-v1";
   readonly code: string;
@@ -29,14 +30,16 @@ function transportCode(message: string): string | undefined {
 
 export function mapStructuredExecutionError(error: unknown, query?: string, entitySet?: string): StructuredExecutionError {
   const raw = error instanceof Error ? error.message : String(error);
+  const safeRaw = redactSensitiveText(raw);
   const statusMatch = raw.match(/Dataverse error\s+(\d{3})|HTTP\s+(\d{3})/i);
   const status = Number(statusMatch?.[1] ?? statusMatch?.[2]) || undefined;
   const payload = extractJson(raw);
   const dvError = payload?.error ?? payload;
   const dvCode = typeof dvError?.code === "string" ? dvError.code : raw.match(/0x[0-9a-f]+/i)?.[0];
-  const dvMessage = typeof dvError?.message === "string" ? dvError.message : raw;
-  const unknownNav = dvMessage.match(/property named '([^']+)'[^]*type 'Microsoft\.Dynamics\.CRM\.([^']+)'/i);
-  const unknownProperty = dvMessage.match(/Could not find a property named '([^']+)'/i);
+  const rawDvMessage = typeof dvError?.message === "string" ? dvError.message : raw;
+  const dvMessage = redactSensitiveText(rawDvMessage);
+  const unknownNav = rawDvMessage.match(/property named '([^']+)'[^]*type 'Microsoft\.Dynamics\.CRM\.([^']+)'/i);
+  const unknownProperty = rawDvMessage.match(/Could not find a property named '([^']+)'/i);
   const category = unknownNav ? "UnknownNavigationProperty" : unknownProperty ? "UnknownProperty" : status === 403 ? "AccessDenied" : status === 429 ? "Throttled" : "DataverseRequestFailed";
   const suggestedNextActions = category === "UnknownNavigationProperty"
     ? ["Resolve the navigation property from metadata.", "Search for a bridge table between the source and target tables.", "Run Relationship Path Intelligence."]
@@ -49,7 +52,7 @@ export function mapStructuredExecutionError(error: unknown, query?: string, enti
           : ["Inspect the structured Dataverse error and validate the query against metadata."];
 
   const nativeMarker = raw.match(/Node:\s*([^.]*(?:\.[^P]*?)?)\.\s*PowerShell:/i)?.[1];
-  const primaryMessage = nativeMarker?.trim();
+  const primaryMessage = nativeMarker?.trim() ? redactSensitiveText(nativeMarker.trim()) : undefined;
   return {
     contractVersion: "dvqr-mcp-structured-execution-error-v1",
     code: category === "UnknownNavigationProperty" || category === "UnknownProperty" ? "DataverseQueryRejected" : "ExecutionFailed",
@@ -61,8 +64,8 @@ export function mapStructuredExecutionError(error: unknown, query?: string, enti
     ...(primaryMessage ? { transport: { primary: { kind: "node-fetch", outcome: "failed", code: transportCode(primaryMessage), message: primaryMessage }, fallback: { kind: "windows-powershell", outcome: status ? "connected" : "failed" } } } : {}),
     ...(status ? { http: { status } } : {}),
     dataverse: { code: dvCode, message: dvMessage, category, property: unknownNav?.[1] ?? unknownProperty?.[1], table: unknownNav?.[2] },
-    query: { text: query, entitySet },
+    query: { text: query ? redactSensitiveText(query) : query, entitySet },
     suggestedNextActions,
-    diagnostics: { rawMessage: raw }
+    diagnostics: { rawMessage: safeRaw }
   };
 }

@@ -547,6 +547,201 @@ suite("MCP Managed Business Path management", () => {
     assert.strictEqual((fullList as any).structuredContent.resultCount, 1);
     assert.strictEqual((fullList as any).structuredContent.paths[0].state, "disabled");
   });
+
+  test("A15 Save is explicit and idempotent for the same canonical route", async () => {
+    const service = serviceWithMetadata();
+
+    const first = await service.save({
+      name: "Contact to Account",
+      sourceTable: "contact",
+      targetTable: "account",
+      intendedTables: ["contact", "account"],
+      hops,
+      confirmSave: true,
+      environmentUrl: "https://example.crm.dynamics.com"
+    });
+    assert.strictEqual(first.ok, true);
+
+    const second = await service.save({
+      name: "Contact to Account reviewed",
+      sourceTable: "contact",
+      targetTable: "account",
+      intendedTables: ["contact", "account"],
+      hops,
+      confirmSave: true,
+      environmentUrl: "https://example.crm.dynamics.com"
+    });
+    assert.strictEqual(second.ok, true);
+
+    const repository = new WorkspaceBusinessPathRepository(workspace);
+    const paths = repository.list();
+    assert.strictEqual(paths.length, 1);
+    assert.strictEqual((first as any).structuredContent.path.id, (second as any).structuredContent.path.id);
+    assert.strictEqual((second as any).structuredContent.mutation, "updated");
+    assert.strictEqual(paths[0].name, "Contact to Account reviewed");
+  });
+
+  test("A15 Reverify is structural only and never invokes saved-path runtime execution", async () => {
+    const service = serviceWithMetadata();
+    const saved = await service.save({
+      name: "Contact to Account",
+      sourceTable: "contact",
+      targetTable: "account",
+      intendedTables: ["contact", "account"],
+      hops,
+      confirmSave: true,
+      environmentUrl: "https://example.crm.dynamics.com"
+    });
+    assert.strictEqual(saved.ok, true);
+    const pathId = (saved as any).structuredContent.path.id;
+
+    const original = McpPreferredBusinessPathRuntimeValidationService.prototype.validatePreferredPath;
+    let runtimeCalls = 0;
+    try {
+      McpPreferredBusinessPathRuntimeValidationService.prototype.validatePreferredPath = async function() {
+        runtimeCalls += 1;
+        throw new Error("runtime execution must not occur during reverify");
+      };
+
+      const result = await service.revalidate({
+        pathId,
+        environmentUrl: "https://example.crm.dynamics.com"
+      });
+
+      assert.strictEqual(result.ok, true);
+      assert.strictEqual(runtimeCalls, 0);
+      const content = (result as any).structuredContent;
+      assert.strictEqual(content.validation.state, "valid");
+      assert.match(content.runtimeBoundary, /does not test rows/i);
+    } finally {
+      McpPreferredBusinessPathRuntimeValidationService.prototype.validatePreferredPath = original;
+    }
+  });
+
+  test("A18 exact saved path marks reached zero separately from downstream NotReached", async () => {
+    const twoHops: readonly BusinessPathHop[] = [
+      {
+        ordinal: 1,
+        fromTable: "contact",
+        toTable: "careplan",
+        relationshipSchemaName: "contact_careplans",
+        relationshipType: "OneToMany",
+        direction: "forward",
+        navigationProperty: "contact_careplans"
+      },
+      {
+        ordinal: 2,
+        fromTable: "careplan",
+        toTable: "account",
+        relationshipSchemaName: "careplan_account",
+        relationshipType: "ManyToOne",
+        direction: "forward",
+        navigationProperty: "careplan_account"
+      }
+    ];
+
+    const service = new McpBusinessPathManagementApplicationService({ ...config, workspaceRoot: workspace } as any);
+    (service as any).metadata = {
+      metadataContext: async () => ({
+        baseEnvironmentUrl: "https://example.crm.dynamics.com",
+        token: "token"
+      }),
+      fetchEntityCatalogue: async () => [
+        { LogicalName: "contact" },
+        { LogicalName: "careplan" },
+        { LogicalName: "account" }
+      ],
+      fetchRelationships: async (_url: string, _token: string, logicalName: string) => {
+        if (logicalName.toLowerCase() === "contact") {
+          return [{
+            fromTable: "contact",
+            toTable: "careplan",
+            navigationProperty: "contact_careplans",
+            relationshipSchemaName: "contact_careplans",
+            relationshipType: "OneToMany",
+            direction: "oneToMany",
+            collectionValued: true,
+            polymorphicTargetQualified: true
+          }];
+        }
+        if (logicalName.toLowerCase() === "careplan") {
+          return [{
+            fromTable: "careplan",
+            toTable: "account",
+            navigationProperty: "careplan_account",
+            relationshipSchemaName: "careplan_account",
+            relationshipType: "ManyToOne",
+            direction: "manyToOne",
+            collectionValued: false,
+            polymorphicTargetQualified: true
+          }];
+        }
+        return [];
+      }
+    };
+
+    const saved = await service.save({
+      name: "Contact to Account via Care Plan",
+      sourceTable: "contact",
+      targetTable: "account",
+      intendedTables: ["contact", "careplan", "account"],
+      hops: twoHops,
+      confirmSave: true,
+      environmentUrl: "https://example.crm.dynamics.com"
+    });
+    assert.strictEqual(saved.ok, true);
+    const pathId = (saved as any).structuredContent.path.id;
+
+    const original = McpPreferredBusinessPathRuntimeValidationService.prototype.validatePreferredPath;
+    try {
+      McpPreferredBusinessPathRuntimeValidationService.prototype.validatePreferredPath = async function() {
+        return {
+          ok: true,
+          summary: "Exact route stopped at first empty frontier.",
+          structuredContent: {
+            assertedBusinessTraversal: {
+              pathId: "contact:contact_careplans:careplan|careplan:careplan_account:account",
+              runtimeStatus: "NoContinuationObserved",
+              reachedTarget: false
+            },
+            validatedPaths: [{
+              pathId: "contact:contact_careplans:careplan|careplan:careplan_account:account",
+              runtimeStatus: "NoContinuationObserved",
+              reachedTarget: false,
+              observedTargetRecordCount: 0,
+              breakHop: 1,
+              totalHops: 2,
+              steps: [{
+                index: 1,
+                status: "NoMatchingDataObserved",
+                continuationRecordCount: 0,
+                attempts: [{ sourceRecordId: "record-empty", returnedRecords: 0 }]
+              }]
+            }]
+          }
+        } as any;
+      };
+
+      const result = await service.test({
+        pathId,
+        sourceRecordId: "00000000-0000-0000-0000-000000000001",
+        environmentUrl: "https://example.crm.dynamics.com"
+      });
+
+      assert.strictEqual(result.ok, true);
+      const content = (result as any).structuredContent;
+      assert.strictEqual(content.exactRouteHops.length, 2);
+      assert.strictEqual(content.currentRuntimeObservation.observedTargetRows, null);
+      assert.strictEqual(content.exactRouteHops[0].reachability, "Reached");
+      assert.strictEqual(content.exactRouteHops[0].observation.continuationRecordCount, 0);
+      assert.strictEqual(content.exactRouteHops[1].reachability, "NotReached");
+      assert.strictEqual(content.exactRouteHops[1].observation, undefined);
+      assert.strictEqual(content.scopeBoundary.outcome, "TerminatedAtBoundedFrontier");
+    } finally {
+      McpPreferredBusinessPathRuntimeValidationService.prototype.validatePreferredPath = original;
+    }
+  });
+
 });
 
 // beta-7 scope enforcement is dispatcher-owned; catalogue/runtime contract assertions

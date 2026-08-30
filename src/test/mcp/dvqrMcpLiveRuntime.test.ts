@@ -1,4 +1,6 @@
 import * as assert from "assert";
+import * as fs from "fs";
+import * as path from "path";
 import {
   createDvqrLiveMcpToolRegistry,
   DVQR_LIVE_MCP_TOOL_BY_NAME,
@@ -8,10 +10,21 @@ import { listDvqrMcpProtocolTools } from "../../mcp/dvqrMcpStdioServer.js";
 import { loadDvqrMcpRuntimeConfiguration } from "../../mcp/mcpRuntimeConfiguration.js";
 import { DvqrMcpLiveCapabilityPolicy } from "../../mcp/mcpLiveCapabilityPolicy.js";
 import { createDvqrMcpCapabilityPayload } from "../../mcp/mcpCapabilityPayload.js";
+import { createDvqrMcpCapabilityManifest } from "../../mcp/mcpCapabilityManifest.js";
+import { getDvqrReleaseVersion } from "../../product/releaseIdentity.js";
 import { DvqrMcpFreeApplicationAdapter } from "../../mcp/mcpFreeApplicationAdapter.js";
 import { McpCustomApiExecutionPreviewSessionStore } from "../../mcp/mcpCustomApiExecutionPreviewSessionStore.js";
 
 suite("dvqrMcpLiveRuntime", () => {
+  test("projects the packaged release version through every MCP identity surface", () => {
+    const root = path.join(__dirname, "..", "..", "..");
+    const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as { version: string };
+    const expected = packageJson.version;
+    assert.strictEqual(getDvqrReleaseVersion(), expected);
+    assert.strictEqual((createDvqrMcpCapabilityPayload(false) as any).releaseVersion, expected);
+    assert.strictEqual(createDvqrMcpCapabilityManifest().releaseVersion, expected);
+  });
+
   test("publishes the first live Free and Pro tool surface", () => {
     const names = DVQR_LIVE_MCP_TOOLS.map((tool) => tool.name);
     assert.deepStrictEqual(names.slice(0, 5), [
@@ -422,14 +435,20 @@ suite("MCP protocol Mini RCA registration", () => {
     assert.match(remove.description, /explicit user/i);
     assert.deepStrictEqual((remove.inputSchema as any).required, ["pathId", "confirmDelete"]);
 
-    assert.match(revalidate.description, /valid, stale, or unknown/i);
+    assert.match(revalidate.description, /CANONICAL METADATA-ONLY REVERIFY/i);
+    assert.match(revalidate.description, /Reverify this saved path against the current environment/i);
+    assert.match(revalidate.description, /requires only pathId/i);
+    assert.match(revalidate.description, /Do NOT ask for sourceRecordId/i);
     assert.match(revalidate.description, /does not query records/i);
-    assert.match(revalidate.description, /do NOT call it before or after/i);
+    assert.deepStrictEqual((revalidate.inputSchema as any).required, ["pathId"]);
     assert.match(get.description, /does not revalidate current metadata/i);
 
-    assert.match(verifySaved.description, /CANONICAL ONE-CALL VERIFY WORKFLOW/i);
+    assert.match(verifySaved.description, /CANONICAL ONE-CALL RUNTIME VERIFY WORKFLOW/i);
+    assert.match(verifySaved.description, /explicitly asks to runtime-verify/i);
+    assert.match(verifySaved.description, /requires sourceRecordId/i);
+    assert.match(verifySaved.description, /bare request.*Reverify this saved path against the current environment/i);
+    assert.match(verifySaved.description, /dvqr_revalidate_business_path/i);
     assert.match(verifySaved.description, /executes the exact saved route once/i);
-    assert.match(verifySaved.description, /Do NOT call dvqr_revalidate_business_path/i);
     assert.match(verifySaved.description, /bounded observation/i);
     assert.match(verifySaved.description, /EMPTY-FRONTIER RULE/i);
     assert.match(verifySaved.description, /dvqr_probe_relationship_path/i);
@@ -473,6 +492,8 @@ suite("MCP protocol Mini RCA registration", () => {
     assert.ok(guidance.some((line) => /EMPTY-FRONTIER \/ NO-BROADENING RULE/i.test(line) && /dvqr_execute_odata/i.test(line)));
     assert.ok(guidance.some((line) => /EMPTY-FRONTIER \/ NO-BROADENING RULE/i.test(line) && /dvqr_probe_relationship_path/i.test(line)));
     assert.ok(guidance.some((line) => /EMPTY-FRONTIER \/ NO-BROADENING RULE/i.test(line) && /dvqr_discover_business_paths/i.test(line)));
+    assert.ok(guidance.some((line) => /REVERIFY \/ CURRENT-ENVIRONMENT CHECK/i.test(line) && /dvqr_revalidate_business_path/i.test(line) && /does not require sourceRecordId/i.test(line)));
+    assert.ok(guidance.some((line) => /RUNTIME VERIFY \/ TEST/i.test(line) && /dvqr_verify_business_path/i.test(line) && /specific source record/i.test(line)));
     assert.ok(guidance.some((line) => /EVIDENCE WORDING/i.test(line) && /production-ready/i.test(line)));
     assert.ok(guidance.some((line) => /Manual dvqr_save_business_path/.test(line) && /not-runtime-verified/i.test(line)));
   });

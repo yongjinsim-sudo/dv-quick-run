@@ -2,6 +2,7 @@ import {
   DVQR_BUSINESS_PATH_SCHEMA_VERSION,
   type BusinessPathArtifact,
   type BusinessPathArtifactValidationResult,
+  type BusinessPathHop,
   type BusinessPathValidationIssue
 } from "./businessPathContracts.js";
 import { businessPathId } from "./businessPathIdentity.js";
@@ -9,6 +10,10 @@ import { businessPathId } from "./businessPathIdentity.js";
 const logicalNamePattern = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 const safeIdPattern = /^bp_[0-9a-f]{8}$/;
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+const controlCharacterPattern = /[\u0000-\u001f\u007f]/;
+const MAX_BUSINESS_PATH_HOPS = 6;
+const MAX_BUSINESS_PATH_NAME = 256;
+const MAX_BUSINESS_PATH_DESCRIPTION = 4096;
 
 const secretPattern =
   /\b(access[_-]?token|refresh[_-]?token|client[_-]?secret|authorization|password|private[_-]?key)\b|Bearer\s+[A-Za-z0-9._~+/-]+/i;
@@ -42,8 +47,29 @@ export function validateBusinessPathArtifact(artifact: BusinessPathArtifact): Bu
   if (!safeIdPattern.test(artifact.id)) {
     issues.push(issue("invalid-id", "Business Path ID must use the deterministic bp_<8 hex chars> form."));
   }
-  if (!artifact.name?.trim()) {
+  if (typeof artifact.name !== "string" || !artifact.name.trim()) {
     issues.push(issue("invalid-name", "Business Path name is required."));
+  } else if (
+    artifact.name.length > MAX_BUSINESS_PATH_NAME
+    || controlCharacterPattern.test(artifact.name)
+  ) {
+    issues.push(issue(
+      "invalid-text-content",
+      `Business Path name must be at most ${MAX_BUSINESS_PATH_NAME} characters and contain no control characters.`
+    ));
+  }
+  if (
+    artifact.description !== undefined
+    && (
+      typeof artifact.description !== "string"
+      || artifact.description.length > MAX_BUSINESS_PATH_DESCRIPTION
+      || controlCharacterPattern.test(artifact.description)
+    )
+  ) {
+    issues.push(issue(
+      "invalid-text-content",
+      `Business Path description must be at most ${MAX_BUSINESS_PATH_DESCRIPTION} characters and contain no control characters.`
+    ));
   }
   if (!isLogicalName(artifact.sourceTable)) {
     issues.push(issue("invalid-source-table", "sourceTable must be a Dataverse logical name."));
@@ -59,12 +85,29 @@ export function validateBusinessPathArtifact(artifact: BusinessPathArtifact): Bu
   }
   if (!Array.isArray(artifact.hops) || artifact.hops.length === 0) {
     issues.push(issue("missing-hops", "At least one exact relationship hop is required."));
+  } else if (artifact.hops.length > MAX_BUSINESS_PATH_HOPS) {
+    issues.push(issue(
+      "excessive-hops",
+      `Business Path artifacts are bounded to at most ${MAX_BUSINESS_PATH_HOPS} exact relationship hops.`
+    ));
   }
 
-  const ordered = [...artifact.hops].sort((left, right) => left.ordinal - right.ordinal);
+  const hopsStructurallyUsable = Array.isArray(artifact.hops)
+    && artifact.hops.every((hop) => Boolean(hop) && typeof hop === "object" && !Array.isArray(hop));
+  const ordered = hopsStructurallyUsable
+    ? [...artifact.hops].sort((left, right) => left.ordinal - right.ordinal)
+    : [];
+  if (Array.isArray(artifact.hops) && artifact.hops.length > 0 && !hopsStructurallyUsable) {
+    issues.push(issue("invalid-hop-table", "Each hop must be an object with exact relationship identity."));
+  }
   const seenOrdinals = new Set<number>();
 
-  for (const hop of ordered) {
+  for (const rawHop of ordered) {
+    if (!rawHop || typeof rawHop !== "object" || Array.isArray(rawHop)) {
+      issues.push(issue("invalid-hop-table", "Each hop must be an object with exact relationship identity."));
+      continue;
+    }
+    const hop = rawHop as BusinessPathHop;
     if (!Number.isInteger(hop.ordinal) || hop.ordinal < 1) {
       issues.push(issue("invalid-hop-ordinal", "Hop ordinal must be a positive integer.", hop.ordinal));
     }
@@ -105,7 +148,7 @@ export function validateBusinessPathArtifact(artifact: BusinessPathArtifact): Bu
     issues.push(issue("target-mismatch", "Artifact targetTable must match the last hop target."));
   }
 
-  if (artifact.hops.length > 0 && safeIdPattern.test(artifact.id)) {
+  if (hopsStructurallyUsable && artifact.hops.length > 0 && safeIdPattern.test(artifact.id)) {
     const expectedId = businessPathId(artifact.sourceTable, artifact.targetTable, artifact.hops);
     if (artifact.id !== expectedId) {
       issues.push(issue("id-mismatch", `Business Path ID does not match canonical route identity; expected ${expectedId}.`));

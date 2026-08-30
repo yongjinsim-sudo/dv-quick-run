@@ -92,7 +92,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["query"],
       properties: {
         query: querySchema.properties.query,
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." },
         maxRecords: { type: "integer", minimum: 1, maximum: 500, default: 100 }
       }
     }
@@ -109,7 +109,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["query"],
       properties: {
         query: { type: "string", description: "Natural-language metadata search such as employee, customer, security, appointment or revenue." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." },
         maxResults: { type: "integer", minimum: 1, maximum: 50, default: 10 }
       }
     }
@@ -126,7 +126,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["logicalName"],
       properties: {
         logicalName: { type: "string" },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -142,7 +142,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["table"],
       properties: {
         table: { type: "string", description: "Dataverse table logical name, for example account or opportunity." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -164,7 +164,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
         maxResults: { type: "integer", minimum: 1, maximum: 200, default: 50 },
         detailLevel: { type: "string", enum: ["names", "summary"], default: "names", description: "names returns the smallest directly answerable inventory projection. summary also includes display name and description." },
         continuationToken: { type: "string", description: "Opaque token returned by the previous discovery page. Reuse the same filters when continuing." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -180,7 +180,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["uniqueName"],
       properties: {
         uniqueName: { type: "string", description: "Exact Custom API unique name whose purpose and practical meaning should be explained." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -196,7 +196,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["uniqueNames"],
       properties: {
         uniqueNames: { type: "array", minItems: 2, maxItems: 10, uniqueItems: true, items: { type: "string" }, description: "Two to ten exact Custom API unique names to compare." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -213,7 +213,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       properties: {
         goal: { type: "string", description: "Natural-language goal, task or solution capability to match against public Custom API metadata." },
         maxResults: { type: "integer", minimum: 1, maximum: 10, default: 5 },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -230,7 +230,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       properties: {
         goal: { type: "string", description: "The user's original natural-language architecture or workflow goal, preserved unchanged. Do not add adjacent capabilities or remove unsupported domain and technology terms." },
         maxStages: { type: "integer", minimum: 1, maximum: 10, default: 6 },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -244,7 +244,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       uniqueName: { type: "string", description: "Exact Custom API unique name." },
       parameters: { type: "object", description: "Optional proposed parameter values used only for readiness validation." },
       target: { type: "object", description: "Optional bound target with entitySetName and recordId." },
-      environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL." }
+      environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
     }}
   },
   {
@@ -257,7 +257,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       uniqueName: { type: "string", description: "Exact Custom API unique name." },
       parameters: { type: "object", description: "Proposed scalar input values. This pass supports string, boolean, integer, number and GUID values." },
       target: { type: "object", description: "For bound APIs: entitySetName and, for entity-bound APIs, recordId." },
-      environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL." }
+      environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
     }}
   },
   {
@@ -293,7 +293,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["uniqueName"],
       properties: {
         uniqueName: { type: "string", description: "Exact Custom API unique name whose metadata definition is required." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -348,13 +348,13 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
     name: "dvqr_discover_business_paths",
     handler: { kind: "free", id: "discoverBusinessPaths" },
     title: "Discover Business Paths",
-    description: "Pass 10.1.1 metadata-only business-path discovery with depth-diverse candidate generation. Use when the user wants likely multi-hop business routes between two Dataverse tables rather than merely the shortest relationship. Direct relationships remain baseline candidates but do not suppress plausible deeper workflow routes. Discovers only metadata-verified paths, then ranks them using deterministic structural and business-semantic signals from table and relationship metadata. It does NOT query records, prove runtime viability, or mark any route business-preferred. Use dvqr_find_relationship_paths for exact relationship-shape questions; use this tool when the business flow itself is the question. Pass 8.2 additionally consumes Managed Business Path preference from the current workspace: when a matching enabled Preferred Business Path exists, the tool revalidates it and returns it as the top-visible workspace recommendation BEFORE metadata-ranked discovered alternatives, without changing discovery scores or alternative ordering. Therefore use this tool directly for prompts such as 'find the best way from contact to task' rather than separately rediscovering first. Preferred means explicit workspace/organisational guidance, not algorithmic rank or current runtime proof. If a Preferred path is returned and the user asks to verify or re-verify it, use dvqr_verify_business_path exactly once. If the user asks only to test/use it for a source record, use dvqr_test_business_path exactly once. Both already revalidate current metadata internally; do not pair them with dvqr_revalidate_business_path or manually reconstruct the route with OData.",
+    description: "Pass 10.1.1 metadata-only business-path discovery with depth-diverse candidate generation. Use when the user wants likely multi-hop business routes between two Dataverse tables rather than merely the shortest relationship. Direct relationships remain baseline candidates but do not suppress plausible deeper workflow routes. Discovers only metadata-verified paths, then ranks them using deterministic structural and business-semantic signals from table and relationship metadata. It does NOT query records, prove runtime viability, or mark any route business-preferred. Use dvqr_find_relationship_paths for exact relationship-shape questions; use this tool when the business flow itself is the question. Pass 8.2 additionally consumes Managed Business Path preference from the current workspace: when a matching enabled Preferred Business Path exists, the tool revalidates it and returns it as the top-visible workspace recommendation BEFORE metadata-ranked discovered alternatives, without changing discovery scores or alternative ordering. Therefore use this tool directly for prompts such as 'find the best way from contact to task' rather than separately rediscovering first. Preferred means explicit workspace/organisational guidance, not algorithmic rank or current runtime proof. If a Preferred path is returned and the user asks to reverify/revalidate it against the current environment or current metadata, use dvqr_revalidate_business_path exactly once; this metadata-only operation requires no source record. Use dvqr_verify_business_path only for explicit runtime verification with a source record, and use dvqr_test_business_path when the user asks to test/use it for a source record. Do not pair a runtime operation with dvqr_revalidate_business_path or manually reconstruct the route with OData.",
     tier: "free",
     inputSchema: {
       type: "object", additionalProperties: false, required: ["sourceTable", "targetTable"],
       properties: {
         sourceTable: { type: "string", description: "Logical name of the business-flow source table, such as contact." },
-        targetTable: { type: "string", description: "Logical name of the desired downstream business table, such as msemr_careplanactivity or task." },
+        targetTable: { type: "string", description: "Logical name of the desired downstream business table, such as account or task." },
         maxDepth: { type: "integer", minimum: 2, maximum: 6, default: 5 },
         maxPaths: { type: "integer", minimum: 1, maximum: 20, default: 8 },
         environmentUrl: { type: "string" }
@@ -378,7 +378,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
           minItems: 2,
           maxItems: 7,
           items: { type: "string" },
-          description: "Exact ordered table sequence explicitly selected/asserted by the user, for example contact -> msemr_careplan -> msemr_careplanactivity -> bu_task. When supplied, DVQR must preserve this route as the business hypothesis and must not replace it with a shorter runtime shortcut."
+          description: "Exact ordered table sequence explicitly selected/asserted by the user, for example contact -> custom_parent -> custom_activity -> custom_task. When supplied, DVQR must preserve this route as the business hypothesis and must not replace it with a shorter runtime shortcut."
         },
         assertedBusinessPathRelationshipSchemaNames: {
           type: "array",
@@ -454,7 +454,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
         },
         priority: { type: "integer", minimum: 0 },
         confirmSave: { type: "boolean", description: "Must be true only after explicit user intent to persist this exact route." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." },
         hops: {
           type: "array",
           minItems: 1,
@@ -497,8 +497,8 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
   {
     name: "dvqr_revalidate_business_path",
     handler: { kind: "free", id: "revalidateBusinessPath" },
-    title: "Revalidate Managed Business Path Metadata",
-    description: "METADATA ONLY. Revalidate one saved Business Path against current Dataverse metadata. Returns valid, stale, or unknown plus exact broken-hop diagnostics. This does not query records and does not establish current runtime viability. Use this only when the user asks specifically for metadata revalidation. Do NOT call it before or after dvqr_test_business_path or dvqr_verify_business_path: those canonical runtime tools already perform exact current-metadata revalidation internally.",
+    title: "Reverify Saved Business Path Against Current Metadata",
+    description: "CANONICAL METADATA-ONLY REVERIFY. Use this tool exactly once for natural requests such as 'Reverify this saved path against the current environment', 'revalidate this saved path', 'check whether this saved route is still valid', or any equivalent current-metadata/current-environment compatibility check. Requires only pathId. Do NOT ask for sourceRecordId. This tool does not query records, does not execute traversal, does not refresh runtime verification provenance, and does not establish current runtime viability. Do NOT call it before or after dvqr_test_business_path or dvqr_verify_business_path in the same user request: those separate runtime tools already perform exact current-metadata revalidation internally.",
     tier: "free",
     inputSchema: {
       type: "object",
@@ -506,7 +506,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       required: ["pathId"],
       properties: {
         pathId: { type: "string" },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." }
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." }
       }
     }
   },
@@ -521,8 +521,8 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
   {
     name: "dvqr_verify_business_path",
     handler: { kind: "free", id: "testBusinessPath" },
-    title: "Verify Saved Business Path",
-    description: "CANONICAL ONE-CALL VERIFY WORKFLOW for prompts such as 'verify this saved Business Path'. Use exactly this one tool call for that user intent. It performs current metadata revalidation, executes the exact saved route once with the supplied bounded runtime settings, and refreshes historical verification provenance only from that same successful run. Do NOT call dvqr_revalidate_business_path before or after it, and do NOT follow it with dvqr_test_business_path. EMPTY-FRONTIER RULE: if the exact saved route does not reach the target, this scoped Business Path operation is complete. Do NOT automatically call dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, query the target table broadly, discover an alternate route, switch or guess entity sets, expand target concepts, search metadata for a substitute target, or otherwise widen/reinterpret scope in the same user request. Any broader or alternate investigation requires a new explicit user request. Historical observedTargetRows is a bounded observation from the verification run, not a full current table count. Preferred or runtime-verified evidence must not be described as production-ready, guaranteed, causal, or organisation-wide truth. This tool never writes to Dataverse.",
+    title: "Runtime Verify Saved Business Path",
+    description: "CANONICAL ONE-CALL RUNTIME VERIFY WORKFLOW. Use this tool only when the user explicitly asks to runtime-verify a saved Business Path with a specific source record, or explicitly asks to refresh historical bounded runtime verification provenance. It requires sourceRecordId, performs current metadata revalidation, executes the exact saved route once with the supplied bounded runtime settings, and refreshes historical verification provenance only from that same successful run. Do NOT use this tool for a bare request such as 'Reverify this saved path against the current environment/current metadata'; that intent belongs to dvqr_revalidate_business_path and requires no source record. Do NOT call dvqr_revalidate_business_path before or after this runtime operation, and do NOT follow it with dvqr_test_business_path. EMPTY-FRONTIER RULE: if the exact saved route does not reach the target, this scoped Business Path operation is complete. Do NOT automatically call dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, query the target table broadly, discover an alternate route, switch or guess entity sets, expand target concepts, search metadata for a substitute target, or otherwise widen/reinterpret scope in the same user request. Any broader or alternate investigation requires a new explicit user request. Historical observedTargetRows is a bounded observation from the verification run, not a full current table count. Preferred or runtime-verified evidence must not be described as production-ready, guaranteed, causal, or organisation-wide truth. This tool never writes to Dataverse.",
     tier: "free",
     inputSchema: {
       type: "object",
@@ -531,7 +531,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       properties: {
         pathId: { type: "string", description: "Exact bp_<id> of the saved Business Path." },
         sourceRecordId: { type: "string", description: "Source-table record ID to verify." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." },
         refreshVerification: { type: "boolean", default: true, description: "Keep true for verify semantics. A successful exact run refreshes historical bounded verification provenance." },
         maxCandidates: { type: "integer", minimum: 1, maximum: 8, default: 5 },
         maxDepth: { type: "integer", minimum: 2, maximum: 6, default: 5 },
@@ -553,7 +553,7 @@ export const DVQR_LIVE_MCP_TOOLS: readonly DvqrLiveMcpToolDefinition[] = [
       properties: {
         pathId: { type: "string", description: "Exact bp_<id> of the saved Preferred Business Path." },
         sourceRecordId: { type: "string", description: "Source-table record ID to test." },
-        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment URL. Defaults to DVQR_MCP_ENVIRONMENT_URL." },
+        environmentUrl: { type: "string", description: "Optional HTTPS Dataverse environment reference. When DVQR_MCP_ENVIRONMENT_URL is configured, this value must match the active canonical environment; otherwise the call is rejected." },
         refreshVerification: { type: "boolean", default: true, description: "When true, a successful exact saved-path run refreshes structured historical verification provenance. Set false for a read-only runtime test." },
         maxCandidates: { type: "integer", minimum: 1, maximum: 8, default: 5 },
         maxDepth: { type: "integer", minimum: 2, maximum: 6, default: 5 },

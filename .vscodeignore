@@ -29,3 +29,8 @@ next.config.js
 .github/**
 docs/architecture/**
 docs/codex/**
+docs/**/*.md
+docs/**/*.txt
+docs/**/*.json
+docs/**/*.log
+docs/security/**

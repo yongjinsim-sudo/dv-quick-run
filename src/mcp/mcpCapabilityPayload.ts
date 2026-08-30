@@ -1,12 +1,13 @@
 import { DvqrMcpLiveCapabilityPolicy, DVQR_MCP_COMMERCIAL_BOUNDARY } from "./mcpLiveCapabilityPolicy.js";
 import { DVQR_LIVE_MCP_TOOLS } from "./mcpLiveToolCatalogue.js";
+import { getDvqrReleaseVersion } from "../product/releaseIdentity.js";
 
 export function createDvqrMcpCapabilityPayload(proEnabled: boolean) {
   const policy = new DvqrMcpLiveCapabilityPolicy(proEnabled);
   return {
     contractVersion: "dvqr-mcp-capabilities-v1",
     product: "DV Quick Run",
-    releaseVersion: "0.15.6",
+    releaseVersion: getDvqrReleaseVersion(),
     transport: "stdio",
     mode: "local-read-only",
     commercialBoundary: DVQR_MCP_COMMERCIAL_BOUNDARY,
@@ -41,7 +42,8 @@ export function createDvqrMcpCapabilityPayload(proEnabled: boolean) {
       ],
       businessPaths: [
         "Use dvqr_discover_business_paths when the question is about likely multi-hop business flow between two Dataverse tables; it ranks only metadata-verified candidates and performs no record query.",
-        "VERIFY SAVED PATHS: when the user says verify/re-verify a saved Business Path, call dvqr_verify_business_path exactly once. That one call already performs current metadata revalidation, exact bounded runtime execution, and verification refresh. Do not call dvqr_revalidate_business_path before/after it and do not also call dvqr_test_business_path in the same user request. Use dvqr_revalidate_business_path only for metadata-only questions.",
+        "REVERIFY / CURRENT-ENVIRONMENT CHECK: when the user says reverify, re-verify, revalidate, check the saved path against the current environment, or asks whether the saved route is still metadata-valid, call dvqr_revalidate_business_path exactly once. This is metadata-only, requires only pathId, does not require sourceRecordId, does not query records, and must not be upgraded into runtime execution.",
+        "RUNTIME VERIFY / TEST: use dvqr_verify_business_path only when the user explicitly asks to runtime-verify the saved route with a specific source record or to refresh historical bounded runtime verification provenance. It requires sourceRecordId and performs current metadata revalidation plus one exact-route bounded runtime execution. Use dvqr_test_business_path for ordinary 'test/use this saved path for this record' requests. Never use dvqr_verify_business_path for a bare current-environment/current-metadata reverify request.",
         "EMPTY-FRONTIER / NO-BROADENING RULE: when dvqr_test_business_path or dvqr_verify_business_path returns zero rows, NoContinuationObserved, or target-not-reached, that scoped Business Path operation is complete. Do not automatically follow it with dvqr_execute_odata, dvqr_probe_relationship_path, dvqr_discover_business_paths, a broad target-table query, alternate route discovery, target-concept expansion, metadata search for substitute targets, an alternate entity-set guess, or any other widened fallback in the same user request. A broader or alternate investigation requires a new explicit user request.",
         "EVIDENCE WORDING: Preferred means workspace guidance and verified means bounded historical runtime evidence. Never call a Business Path production-ready, guaranteed, causal, universally valid, or organisation-wide truth from those signals alone.",
 

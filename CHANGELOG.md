@@ -6,6 +6,57 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v0.16.2 — MCP Security Hardening II
+
+This focused pre-v1 qualification release validates and hardens DVQR's model ↔ MCP ↔ application ↔ Dataverse trust boundary through permanent adversarial regression coverage and bounded real-environment red-team testing.
+
+### Added
+
+- Added a permanent A01–A20 adversarial regression suite with deterministic fixture ownership, stable taxonomy IDs, forbidden-effect assertions and contributor guidance.
+- Added application-enforced rejection of per-call environment overrides that conflict with the configured MCP environment.
+- Added workspace containment helpers for Business Path and investigation persistence, including real-path checks against symlink/junction escape.
+- Added central sensitive-data detection/redaction reused by MCP structured errors, text output, transport diagnostics and persisted investigation boundaries.
+- Added exact-route saved Business Path runtime observations with explicit Reached/NotReached state and empty-frontier terminal scope.
+- Added cross-surface semantic-parity regression coverage across Prompt Library, MCP, Guided Traversal and Managed Business Path identity.
+- Added bounded non-production red-team verification records for the v0.16.2 trust boundary.
+
+### Security and authority boundaries
+
+- Prompt/model/Dataverse/metadata/artifact content remains data, not execution authority.
+- Registered canonical capabilities, entitlement, active environment, identifiers and server-owned bounds are revalidated by application code.
+- Saved-path execution cannot silently substitute an alternative route after an empty frontier.
+- Professional Investigation continuation cannot bypass a terminated Business Path scope; broader work requires an explicit new-scope transition.
+- Mini RCA generation remains zero-acquisition.
+- Credential-shaped values are redacted from public structured diagnostics and text mirrors while preserving factual error classification.
+- Free and Pro may differ in capability availability but not factual or safety meaning.
+
+### Final dogfood fixes
+
+- Aligned every MCP release/version projection with the packaged extension version instead of stale hard-coded pre-v0.16 values.
+- Clarified Managed Business Path intent routing: “reverify/revalidate against the current environment/current metadata” now maps to metadata-only `dvqr_revalidate_business_path` without requesting a source record, while runtime verification remains an explicit source-record operation.
+- Added regression coverage for both packaged-version identity and metadata-only Reverify tool selection contracts.
+
+### Final qualification
+
+- Completed final prompt dogfooding against the packaged v0.16.2 beta with the full unit suite green.
+- Verified MCP reports the packaged extension version rather than a stale hard-coded release identity.
+- Verified natural-language **Reverify** selects metadata-only `dvqr_revalidate_business_path` with no source record and no runtime traversal.
+- Verified explicit runtime verification selects `dvqr_verify_business_path`, executes the exact saved route and preserves bounded target-reach semantics.
+- Verified empty-frontier results do not become global zero-data claims and alternate-route work remains blocked until an explicit new Business Path scope is started.
+- Verified environment references in prompt text do not replace the currently bound MCP environment.
+- Closed v0.16.2 dogfood with no known release-blocking trust-boundary defect; v1 readiness remains a separate assessment.
+
+### Validation and packaging
+
+- Consolidated the security suite into the normal full-test command with deterministic, customer-neutral fixtures.
+- Completed bounded real-environment dogfooding without an unexplained authority bypass, secret leakage or semantic drift.
+- Excluded internal Markdown/TXT/JSON/log security and investigation documentation from VSIX packaging while retaining public README/release surfaces and media assets.
+- Sanitised model-facing Business Path examples so customer-specific schema is not used in public capability guidance.
+
+### Scope
+
+v0.16.2 intentionally does not add a new intelligence, traversal, ranking, RCA or scoring subsystem. It hardens and validates the settled v0.16.0/v0.16.1 contracts ahead of the separate v1 readiness assessment.
+
 ## DV Quick Run v0.16.1 — MCP Security Hardening I + Guided Traversal Business Path Capture
 
 This focused release hardens the model ↔ MCP ↔ DVQR trust boundary and completes explicit Guided Traversal capture, reverification and safe reuse through the Managed Business Path Library.

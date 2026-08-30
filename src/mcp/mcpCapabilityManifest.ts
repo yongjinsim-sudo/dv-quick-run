@@ -1,11 +1,12 @@
 import { DVQR_MCP_CONTRACT_VERSION, type DvqrMcpCapabilityManifestV1 } from "./mcpContracts.js";
 import { DVQR_MCP_TOOL_CATALOGUE } from "./mcpToolCatalogue.js";
+import { getDvqrReleaseVersion } from "../product/releaseIdentity.js";
 
 export function createDvqrMcpCapabilityManifest(): DvqrMcpCapabilityManifestV1 {
   return {
     contractVersion: DVQR_MCP_CONTRACT_VERSION,
     product: "DV Quick Run",
-    releaseVersion: "0.15.7",
+    releaseVersion: getDvqrReleaseVersion(),
     mode: "local-read-only-foundation",
     transport: "unbound",
     mutationAuthority: "none",

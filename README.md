@@ -10,25 +10,37 @@ DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Datav
 
 ---
 
-## What's New in v0.16.1
+## What's New in v0.16.2
 
-### MCP Security Hardening I + Guided Traversal Business Path Capture
+### MCP Security Hardening II
 
-v0.16.1 hardens the model ↔ MCP ↔ DVQR boundary and completes the path from bounded traversal evidence into reusable Managed Business Paths.
+v0.16.2 completes the pre-v1 hardening of DVQR's Local MCP trust boundary. The release focuses on a simple rule: **the model can propose work, but DVQR application code remains the authority for what may execute, where it may execute, and what the evidence means.**
 
 ```text
-validate → execute bounded → verify exact route → save/reverify → reuse safely
+prompt / model / Dataverse data
+            ↓
+validate canonical authority
+            ↓
+execute bounded work
+            ↓
+preserve evidence semantics
+            ↓
+stop or continue through an explicit scope
 ```
 
-- **Server-side MCP authority** — registered schemas, capability allow-lists, environment binding, bounds and entitlement remain application-owned rather than prompt-controlled.
-- **Untrusted-input hardening** — malformed identifiers, unsafe environment URLs, fabricated control fields, path/file manipulation and credential-shaped output are rejected or redacted at the DVQR boundary.
-- **Explicit Save / Verify** — a useful Guided Traversal route can be deliberately captured; identical canonical routes retain the same Business Path ID and refresh verification evidence instead of creating duplicates.
-- **Evidence-aware reuse** — saved guidance is revalidated against current metadata before reuse; Saved, runtime-verified and Preferred remain distinct states.
-- **Empty-frontier scope guard** — a saved-path run that reaches no continuation terminates its investigation scope server-side. Automatic OData, alternate-route, target-expansion or probe broadening cannot silently continue it.
-- **Auditable new-scope transition** — broader follow-up investigation requires an explicit Business Path scope transition before DVQR will continue.
-- **Accurate null-navigation evidence** — null/204 singleton navigation results are treated as zero landed records rather than apparent returned data.
+- **Canonical environment and capability authority** — conflicting per-call environment overrides fail closed, while entitlement, registered capabilities, identifiers and server-owned bounds remain application-controlled.
+- **Clear Managed Business Path lifecycle** — Save is explicit, **Reverify is metadata-only**, and runtime verification is a separate source-record operation.
+- **Exact saved-route execution** — runtime verification follows the reviewed relationship hops; it cannot silently substitute a shorter or merely data-producing route.
+- **Empty-frontier STOP** — when a saved route reaches an empty continuation, downstream targets remain NotReached for that route. Broader discovery requires an explicit new Business Path scope.
+- **Evidence remains calibrated** — metadata-valid, runtime-observed, Preferred and causal conclusions remain separate. A bounded zero is not promoted to organisation-wide absence.
+- **Bounded Professional Investigation** — recommendations do not become execution authority, chained actions revalidate their own contracts, and Mini RCA remains zero-acquisition.
+- **Contained local persistence** — Business Path and investigation writes remain inside the canonical workspace, including real-path checks against symlink/junction escape.
+- **Credential-safe diagnostics** — structured output, text mirrors and transport diagnostics share a central redaction boundary without hiding the underlying failure class.
+- **Permanent adversarial qualification** — deterministic A01–A20 regression coverage and bounded non-production dogfooding protect the settled trust-boundary contracts.
 
-Managed Business Paths remain workspace guidance, not Dataverse truth: current metadata, bounded runtime evidence, user preference and causality stay separate.
+The final v0.16.2 dogfood also verified packaged MCP version identity, metadata-only Reverify, exact runtime verification, environment authority, empty-frontier STOP and explicit new-scope continuation.
+
+This is engineering security qualification, not a security certification. DVQR continues to treat prompts, model output, Dataverse content, metadata and persisted artifact presentation fields as untrusted until canonical application services validate their specific use.
 
 ### Discoverability remains built in
 

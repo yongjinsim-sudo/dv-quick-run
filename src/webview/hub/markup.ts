@@ -303,22 +303,21 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["MCP Security Hardening I", "Validate registered schemas, bounds, environment identity and capability authority before application execution."],
-    ["Save / Rerify Business Path", "Capture a Guided Traversal route explicitly, retain canonical identity, and reverify an existing route without duplicate artifacts."],
-    ["Current-Metadata Revalidation", "Treat saved paths as guidance: verify active-environment compatibility before reuse and fall back safely when guidance is stale."],
-    ["Terminated-Scope Guard", "Stop an empty saved-path investigation server-side so another MCP capability cannot silently broaden it."],
-    ["Explicit New Scope", "Resume broader investigation through a visible Business Path lifecycle transition rather than implicit fallback."],
-    ["Output & Input Hardening", "Redact credential-shaped output and reject malformed identifiers, unsafe environment URLs and path/file manipulation."],
-    ["Evidence-Honest Path State", "Keep Saved, historical runtime verification and workspace Preferred state distinct from causality or production certification."],
-    ["Algorithms Preserved", "Keep the established discovery, ranking, traversal and verification semantics while strengthening their authority boundaries."]
+    ["Security Hardening II Complete", "Keep capability, entitlement, environment identity and server-owned bounds in canonical DVQR application services."],
+    ["Reverify Means Metadata", "Revalidate a saved Business Path against current metadata without silently turning the request into record traversal."],
+    ["Exact Runtime Verification", "When a source record is supplied, execute the reviewed saved route only and preserve every relationship boundary."],
+    ["Empty-Frontier STOP", "Keep downstream targets NotReached when continuation ends and require an explicit new scope before alternate-route work."],
+    ["Credential-Safe Diagnostics", "Redact credential-shaped values from structured and text projections while preserving useful failure classification."],
+    ["Contained Persistence", "Keep Business Path and investigation writes inside the canonical workspace, including real-path containment checks."],
+    ["Bounded Investigation", "Keep recommendations non-authoritative, revalidate chained actions independently and keep Mini RCA zero-acquisition."],
+    ["Qualified for v1 Assessment", "Permanent adversarial regression coverage and bounded non-production dogfooding protect the settled v0.16.2 contracts." ]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.16.1</h2>
-    <p class="dvqr-section-note">MCP Security Hardening I + Guided Traversal Business Path Capture: deterministic server-side authority, explicit path capture/reverification, current-metadata reuse checks and terminated-scope protection.</p>
+    <h2>What's New in v0.16.2</h2>
+    <p class="dvqr-section-note">MCP Security Hardening II is complete: deterministic authority, metadata-only Reverify, exact-route runtime verification, explicit STOP/new-scope semantics, contained persistence and credential-safe diagnostics.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }
-
 export function getDvQuickRunHubMarkup(model: DvQuickRunHubViewModel, iconUri?: string): string {
   const capabilityGroups = Array.from(groupCapabilities(model.capabilities).entries());
   const heroIcon = iconUri

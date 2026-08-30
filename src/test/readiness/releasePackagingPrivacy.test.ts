@@ -38,6 +38,18 @@ suite("releasePackagingPrivacy", () => {
     assert.strictEqual(packageLock.packages[""].version, packageJson.version);
   });
 
+  test("does not hard-code stale MCP release identities", () => {
+    const root = workspaceRoot();
+    const payload = fs.readFileSync(path.join(root, "src", "mcp", "mcpCapabilityPayload.ts"), "utf8");
+    const manifest = fs.readFileSync(path.join(root, "src", "mcp", "mcpCapabilityManifest.ts"), "utf8");
+    const server = fs.readFileSync(path.join(root, "src", "mcp", "dvqrMcpStdioServer.ts"), "utf8");
+    for (const source of [payload, manifest, server]) {
+      assert.match(source, /getDvqrReleaseVersion/);
+      assert.doesNotMatch(source, /releaseVersion:\s*["']0\.15\./);
+      assert.doesNotMatch(source, /MCP_SERVER_VERSION[^\n]+\|\|\s*["']0\.15\./);
+    }
+  });
+
   test("keeps tests, source maps, agent residue, secrets, and stale trees out of the VSIX", () => {
     const ignore = fs.readFileSync(path.join(workspaceRoot(), ".vscodeignore"), "utf8");
     const requiredPatterns = [
@@ -56,7 +68,12 @@ suite("releasePackagingPrivacy", () => {
       "*.pem",
       "*.key",
       "*.secret",
-      "*.dvqr-license.json"
+      "*.dvqr-license.json",
+      "docs/**/*.md",
+      "docs/**/*.txt",
+      "docs/**/*.json",
+      "docs/**/*.log",
+      "docs/security/**"
     ];
     for (const pattern of requiredPatterns) {
       assert.ok(ignore.includes(pattern), `Missing VSIX exclusion: ${pattern}`);
@@ -103,6 +120,33 @@ suite("releasePackagingPrivacy", () => {
       for (const pattern of forbidden) {
         assert.doesNotMatch(content, pattern, `${path.relative(root, file)} contains non-public fixture wording.`);
       }
+    }
+  });
+
+  test("keeps v0.16.2 public release surfaces aligned and customer-neutral", () => {
+    const root = workspaceRoot();
+    const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as { version: string };
+    assert.strictEqual(packageJson.version, "0.16.2");
+
+    const surfaces = [
+      fs.readFileSync(path.join(root, "README.md"), "utf8"),
+      fs.readFileSync(path.join(root, "CHANGELOG.md"), "utf8"),
+      fs.readFileSync(path.join(root, "src", "mcp", "mcpLiveToolCatalogue.ts"), "utf8"),
+      fs.readFileSync(path.join(root, "src", "commands", "hub", "dvQuickRunHubContent.ts"), "utf8"),
+      fs.readFileSync(path.join(root, "src", "runtime", "proWelcomeLifecycle.ts"), "utf8"),
+      fs.readFileSync(path.join(root, "src", "webview", "hub", "markup.ts"), "utf8")
+    ].join("\n");
+
+    assert.match(surfaces, /v0\.16\.2/);
+    assert.match(surfaces, /MCP Security Hardening II/);
+    for (const pattern of [
+      /\bbupa\b/i,
+      /hcpdev\.crm\d*\.dynamics\.com/i,
+      /\bmsemr_/i,
+      /\bbu_task\b/i,
+      /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i
+    ]) {
+      assert.doesNotMatch(surfaces, pattern, "v0.16.2 public release surface contains customer-specific material.");
     }
   });
 

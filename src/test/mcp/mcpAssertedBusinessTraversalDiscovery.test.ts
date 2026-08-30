@@ -319,7 +319,13 @@ suite("mcp asserted business traversal discovery", () => {
 
     assert.strictEqual(result.ok, true);
     const content = (result as any).structuredContent;
-    assert.strictEqual(probeOrder[0], patient.pathId, "the exact saved Preferred path must consume runtime budget first");
+    assert.deepStrictEqual(
+      probeOrder,
+      [patient.pathId],
+      "a saved Preferred-path run must execute only the exact saved relationship route and no shortcut/alternative"
+    );
+    assert.strictEqual(content.validatedPaths.length, 1);
+    assert.strictEqual(content.validatedPaths[0].pathId, patient.pathId);
     assert.strictEqual(content.assertedBusinessTraversal.relationshipVariantsResolved, 1);
     assert.strictEqual(content.assertedBusinessTraversal.exactRelationshipVariantRequested, true);
     assert.deepStrictEqual(

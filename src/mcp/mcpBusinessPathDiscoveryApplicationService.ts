@@ -138,7 +138,7 @@ export class McpBusinessPathDiscoveryApplicationService {
           alternatives: present.slice(1),
           candidateCount: present.length,
           suggestedNextActions: present.length ? [
-            "If preferredBusinessPath is present and the user asks to verify/re-verify it, use dvqr_verify_business_path exactly once. If the user asks only to test/use it for a record, use dvqr_test_business_path exactly once. Both already revalidate current metadata internally; do not pair either with dvqr_revalidate_business_path or manually reconstruct with OData.",
+            "If preferredBusinessPath is present and the user asks to reverify/revalidate it against the current environment or current metadata, use dvqr_revalidate_business_path exactly once; that metadata-only operation requires no source record. Use dvqr_verify_business_path only for an explicit runtime verification request with a source record, and use dvqr_test_business_path when the user asks to test/use the saved path for a record. Do not pair a runtime operation with dvqr_revalidate_business_path or manually reconstruct the route with OData.",
             "For discovered alternatives, use bounded runtime validation before treating them as data-viable.",
             "Validate candidates hop-by-hop before calling any route data-viable or business-preferred.",
             "Keep direct relationships as baselines; do not equate an empty direct route with a missing downstream business record.",
