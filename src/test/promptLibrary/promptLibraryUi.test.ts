@@ -54,8 +54,8 @@ suite("promptLibrary UI view model", () => {
 
   test("keeps prompt UI content customer-neutral", () => {
     const serialized = JSON.stringify(buildPromptLibraryViewModel("pro")).toLowerCase();
-    assert.ok(!serialized.includes("bupa"));
+    assert.ok(!serialized.includes("customername"));
     assert.ok(!serialized.includes("msemr_"));
-    assert.ok(!serialized.includes("bu_tasks"));
+    assert.ok(!serialized.includes("sample_tasks"));
   });
 });

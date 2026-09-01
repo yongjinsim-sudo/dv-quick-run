@@ -108,10 +108,10 @@ test("bounds high-connectivity metadata acquisition without suppressing a target
 
   (repository as any).fetchRelationships = async (_baseUrl: string, _token: string, table: string) => {
     calls.push(table);
-    if (table === "bu_tasks") {
+    if (table === "sample_tasks") {
       // Target-side metadata is scheduling evidence only; the forward route still has to be
       // observed from careplanactivity before it can appear in the graph.
-      return [edge("bu_tasks", "msemr_careplanactivity", "reverse_task_activity")];
+      return [edge("sample_tasks", "msemr_careplanactivity", "reverse_task_activity")];
     }
     if (table === "contact") {
       return [
@@ -125,7 +125,7 @@ test("bounds high-connectivity metadata acquisition without suppressing a target
       return [edge("msemr_careplan", "msemr_careplanactivity", "careplan_activities")];
     }
     if (table === "msemr_careplanactivity") {
-      return [edge("msemr_careplanactivity", "bu_tasks", "activity_task")];
+      return [edge("msemr_careplanactivity", "sample_tasks", "activity_task")];
     }
     return [];
   };
@@ -133,13 +133,13 @@ test("bounds high-connectivity metadata acquisition without suppressing a target
   const discovered = await repository.discoverDepthDiverseBusinessPaths(
     { baseEnvironmentUrl: "https://example.crm.dynamics.com", token: "test" },
     "contact",
-    "bu_tasks",
+    "sample_tasks",
     5,
     10
   );
 
   const shapes = discovered.ranked.map((path) => path.tables.join(" -> "));
-  assert.ok(shapes.includes("contact -> msemr_careplan -> msemr_careplanactivity -> bu_tasks"));
+  assert.ok(shapes.includes("contact -> msemr_careplan -> msemr_careplanactivity -> sample_tasks"));
   assert.ok(discovered.coverage.tablesInspected <= 24);
   // One optional target-hint fetch plus the bounded forward inspection envelope.
   assert.ok(calls.length <= 25, `expected at most 25 metadata-table fetches, got ${calls.length}`);

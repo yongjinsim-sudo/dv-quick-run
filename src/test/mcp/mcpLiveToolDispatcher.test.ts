@@ -216,13 +216,13 @@ suite("mcpLiveToolDispatcher", () => {
     };
     const foundation = {
       callTool: ({ name }: { name: string }) => name === "dvqr.getInvestigation"
-        ? { ok: true, structuredContent: { investigationId, status: "Active", subject: { kind: "Record", logicalName: "contact" }, staleState: { isStale: false }, assertedBusinessTraversal: { tables: ["contact", "msemr_careplan", "msemr_careplanactivity", "bu_task"], source: "Question" } } }
+        ? { ok: true, structuredContent: { investigationId, status: "Active", subject: { kind: "Record", logicalName: "contact" }, staleState: { isStale: false }, assertedBusinessTraversal: { tables: ["contact", "msemr_careplan", "msemr_careplanactivity", "sample_task"], source: "Question" } } }
         : { ok: true, structuredContent: { investigationId, evidence: { evidenceId: `ev-${randomUUID()}` } } }
     };
     const dispatcher = new DvqrMcpLiveToolDispatcher(proConfig, freeAdapter as any, foundation as any);
-    const response = await dispatcher.dispatch({ name: "dvqr_acquire_investigation_evidence", arguments: { investigationId, providerId: "business-path-runtime", sourceRecordId: "d264ceff-8763-f011-bec2-002248985631", targetTable: "bu_task" } });
+    const response = await dispatcher.dispatch({ name: "dvqr_acquire_investigation_evidence", arguments: { investigationId, providerId: "business-path-runtime", sourceRecordId: "d264ceff-8763-f011-bec2-002248985631", targetTable: "sample_task" } });
     assert.strictEqual(response.isError, undefined);
-    assert.deepStrictEqual(received?.assertedBusinessPathTables, ["contact", "msemr_careplan", "msemr_careplanactivity", "bu_task"]);
+    assert.deepStrictEqual(received?.assertedBusinessPathTables, ["contact", "msemr_careplan", "msemr_careplanactivity", "sample_task"]);
   });
 
 
@@ -233,7 +233,7 @@ suite("mcpLiveToolDispatcher", () => {
       callTool: (call: { name: string; arguments?: Record<string, unknown> }) => {
         calls.push(call);
         if (call.name === "dvqr.getInvestigation") {
-          return { ok: true, structuredContent: { investigationId: "inv-ready", currentIntent: { directionLogicalName: "bu_task" } } };
+          return { ok: true, structuredContent: { investigationId: "inv-ready", currentIntent: { directionLogicalName: "sample_task" } } };
         }
         if (call.name === "dvqr.continueInvestigation") {
           return {
@@ -286,7 +286,7 @@ suite("mcpLiveToolDispatcher", () => {
               investigationId: "inv-timeline",
               status: "ReadyForMiniRca",
               subject: { kind: "Record", logicalName: "msemr_careplanactivity" },
-              currentIntent: { directionLogicalName: "bu_task" },
+              currentIntent: { directionLogicalName: "sample_task" },
               staleState: { isStale: false },
               miniRcaArtifactRefs: [{ artifactId: "mini-1" }],
               evidenceRefs: []
@@ -314,7 +314,7 @@ suite("mcpLiveToolDispatcher", () => {
       name: "dvqr_acquire_timeline_context",
       arguments: {
         investigationId: "inv-timeline",
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         fromIso: "2026-07-01T00:00:00Z",
         toIso: "2026-07-31T23:59:59Z",
         boundaryRequestText: "Use fromIso 2026-07-01T00:00:00Z and toIso 2026-07-31T23:59:59Z"
@@ -340,10 +340,10 @@ suite("mcpLiveToolDispatcher", () => {
         }
         if (name === "dvqr.updateInvestigationIntent") {
           updateCalls += 1;
-          return { ok: true, structuredContent: { investigationId, currentIntent: { directionLogicalName: "bu_task" } } };
+          return { ok: true, structuredContent: { investigationId, currentIntent: { directionLogicalName: "sample_task" } } };
         }
         if (name === "dvqr.getInvestigation") {
-          return { ok: true, structuredContent: { investigationId, subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, evidenceRefs: [], currentIntent: updateCalls ? { directionLogicalName: "bu_task" } : undefined } };
+          return { ok: true, structuredContent: { investigationId, subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, evidenceRefs: [], currentIntent: updateCalls ? { directionLogicalName: "sample_task" } : undefined } };
         }
         return { ok: true, structuredContent: { investigationId } };
       }
@@ -360,7 +360,7 @@ suite("mcpLiveToolDispatcher", () => {
     await dispatcher.dispatch({
       name: "dvqr_start_investigation",
       arguments: {
-        question: "Investigate Care Plan Activity adb5efca-c866-f011-b4cb-000d3a6a75e8 and downstream bu_task"
+        question: "Investigate Care Plan Activity adb5efca-c866-f011-b4cb-000d3a6a75e8 and downstream sample_task"
       }
     });
 
@@ -487,7 +487,7 @@ suite("mcpLiveToolDispatcher", () => {
               optionalActions: [{
                 kind: "ToolCall",
                 tool: "dvqr_acquire_timeline_context",
-                arguments: { investigationId: "inv-timeline-optional", targetTable: "bu_task" },
+                arguments: { investigationId: "inv-timeline-optional", targetTable: "sample_task" },
                 requiredHostArguments: {
                   fromIso: { source: "ExplicitJustifiedChronologyWindow", required: true, persist: false },
                   toIso: { source: "ExplicitJustifiedChronologyWindow", required: true, persist: false }
@@ -598,7 +598,7 @@ suite("mcpLiveToolDispatcher", () => {
     let executionCalls = 0;
     const foundation = {
       callTool: ({ name }: { name: string }) => name === "dvqr.getInvestigation"
-        ? { ok: true, structuredContent: { investigationId: "inv-delegated-mech", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "bu_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } }
+        ? { ok: true, structuredContent: { investigationId: "inv-delegated-mech", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "sample_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } }
         : { ok: true, structuredContent: {} }
     } as never;
     const freeAdapter = { executeOData: async () => { executionCalls += 1; return { ok: true, structuredContent: { data: { value: [] } } }; } } as never;
@@ -607,7 +607,7 @@ suite("mcpLiveToolDispatcher", () => {
       name: "dvqr_acquire_mechanism_context",
       arguments: {
         investigationId: "inv-delegated-mech",
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         fromIso: "2026-07-13T00:00:00Z",
         toIso: "2026-08-12T23:59:59Z",
         boundaryRequestText: "Use whatever time window you think is appropriate."
@@ -625,7 +625,7 @@ suite("mcpLiveToolDispatcher", () => {
     let executionCalls = 0;
     const foundation = {
       callTool: ({ name }: { name: string }) => name === "dvqr.getInvestigation"
-        ? { ok: true, structuredContent: { investigationId: "inv-delegated-timeline", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "bu_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } }
+        ? { ok: true, structuredContent: { investigationId: "inv-delegated-timeline", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "sample_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } }
         : { ok: true, structuredContent: {} }
     } as never;
     const freeAdapter = { executeOData: async () => { executionCalls += 1; return { ok: true, structuredContent: { data: { value: [] } } }; } } as never;
@@ -634,7 +634,7 @@ suite("mcpLiveToolDispatcher", () => {
       name: "dvqr_acquire_timeline_context",
       arguments: {
         investigationId: "inv-delegated-timeline",
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         fromIso: "2026-07-13T00:00:00Z",
         toIso: "2026-08-12T23:59:59Z",
         boundaryRequestText: "Pick a sensible period yourself."
@@ -650,7 +650,7 @@ suite("mcpLiveToolDispatcher", () => {
     let provenance: any;
     const foundation = {
       callTool: ({ name, arguments: callArgs }: { name: string; arguments?: Record<string, unknown> }) => {
-        if (name === "dvqr.getInvestigation") return { ok: true, structuredContent: { investigationId: "inv-genuine-relative", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "bu_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } };
+        if (name === "dvqr.getInvestigation") return { ok: true, structuredContent: { investigationId: "inv-genuine-relative", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "sample_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } };
         if (name === "dvqr.recordInvestigationEvidence") {
           provenance = ((callArgs?.rawResult as any)?.structuredContent as any)?.boundaryProvenance;
           return { ok: true, structuredContent: { evidence: { evidenceId: "ev-genuine-relative", providerId: "mechanism-context", status: "Acquired" } } };
@@ -664,7 +664,7 @@ suite("mcpLiveToolDispatcher", () => {
       name: "dvqr_acquire_mechanism_context",
       arguments: {
         investigationId: "inv-genuine-relative",
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         fromIso: "2026-07-13T00:00:00Z",
         toIso: "2026-08-12T23:59:59Z",
         boundaryRequestText: "Use the last 30 days."
@@ -680,7 +680,7 @@ suite("mcpLiveToolDispatcher", () => {
     let provenance: any;
     const foundation = {
       callTool: ({ name, arguments: callArgs }: { name: string; arguments?: Record<string, unknown> }) => {
-        if (name === "dvqr.getInvestigation") return { ok: true, structuredContent: { investigationId: "inv-boundary", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "bu_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } };
+        if (name === "dvqr.getInvestigation") return { ok: true, structuredContent: { investigationId: "inv-boundary", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "sample_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } };
         if (name === "dvqr.recordInvestigationEvidence") {
           provenance = ((callArgs?.rawResult as any)?.structuredContent as any)?.boundaryProvenance;
           return { ok: true, structuredContent: { evidence: { evidenceId: "ev-relative", providerId: "mechanism-context", status: "Acquired" } } };
@@ -694,7 +694,7 @@ suite("mcpLiveToolDispatcher", () => {
       name: "dvqr_acquire_mechanism_context",
       arguments: {
         investigationId: "inv-boundary",
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         fromIso: "2026-07-13T00:00:00Z",
         toIso: "2026-08-12T23:59:59Z",
         boundaryRequestText: "Use the last 30 days and proceed with mechanism-context."
@@ -711,7 +711,7 @@ suite("mcpLiveToolDispatcher", () => {
     const proConfig = { ...config, proEnabled: true };
     const foundation = {
       callTool: ({ name }: { name: string }) => name === "dvqr.getInvestigation"
-        ? { ok: true, structuredContent: { investigationId: "inv-boundary-missing", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "bu_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } }
+        ? { ok: true, structuredContent: { investigationId: "inv-boundary-missing", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "sample_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } }
         : { ok: true, structuredContent: {} }
     } as never;
     const dispatcher = new DvqrMcpLiveToolDispatcher(proConfig, {} as never, foundation);
@@ -719,7 +719,7 @@ suite("mcpLiveToolDispatcher", () => {
       name: "dvqr_acquire_mechanism_context",
       arguments: {
         investigationId: "inv-boundary-missing",
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         fromIso: "2026-07-13T00:00:00Z",
         toIso: "2026-08-12T23:59:59Z",
         boundaryRequestText: "Continue Investigation"
@@ -736,7 +736,7 @@ suite("mcpLiveToolDispatcher", () => {
     let absoluteProvenance: any;
     const foundation = {
       callTool: ({ name, arguments: callArgs }: { name: string; arguments?: Record<string, unknown> }) => {
-        if (name === "dvqr.getInvestigation") return { ok: true, structuredContent: { investigationId: "inv-boundary-ok", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "bu_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } };
+        if (name === "dvqr.getInvestigation") return { ok: true, structuredContent: { investigationId: "inv-boundary-ok", status: "ReadyForMiniRca", subject: { kind: "Record", logicalName: "msemr_careplanactivity" }, currentIntent: { directionLogicalName: "sample_task" }, staleState: { isStale: false }, miniRcaArtifactRefs: ["mini-1"] } };
         if (name === "dvqr.recordInvestigationEvidence") { recorded = true; absoluteProvenance = ((callArgs?.rawResult as any)?.structuredContent as any)?.boundaryProvenance; return { ok: true, structuredContent: { evidence: { evidenceId: "ev-mech", providerId: "mechanism-context", status: "Acquired" } } }; }
         throw new Error(`Unexpected ${name}`);
       }
@@ -747,7 +747,7 @@ suite("mcpLiveToolDispatcher", () => {
       name: "dvqr_acquire_mechanism_context",
       arguments: {
         investigationId: "inv-boundary-ok",
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         fromIso: "2026-07-13T00:00:00Z",
         toIso: "2026-08-12T23:59:59Z",
         boundaryRequestText: "Use fromIso: 2026-07-13T00:00:00Z and toIso: 2026-08-12T23:59:59Z"
@@ -794,8 +794,8 @@ suite("mcpLiveToolDispatcher", () => {
     } as never;
     const dispatcher = new DvqrMcpLiveToolDispatcher(proConfig, freeAdapter, foundation);
     const args = {
-      question: "Investigate Care Plan Activity adb5efca-c866-f011-b4cb-000d3a6a75e8. I want to understand how this record relates to downstream bu_task records and what evidence exists about how the task came to exist.",
-      title: "Investigate Care Plan Activity to bu_task downstream evidence"
+      question: "Investigate Care Plan Activity adb5efca-c866-f011-b4cb-000d3a6a75e8. I want to understand how this record relates to downstream sample_task records and what evidence exists about how the task came to exist.",
+      title: "Investigate Care Plan Activity to sample_task downstream evidence"
     };
 
     const first = await dispatcher.dispatch({ name: "dvqr_start_investigation", arguments: args });

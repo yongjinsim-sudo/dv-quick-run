@@ -7,7 +7,7 @@ suite("investigation intent inference", () => {
   test("infers Care Plan Activity creation failure with high confidence", () => {
     const result = engine.infer({ question: "Investigate why this Contact's Care Plan Activity was not created." });
     assert.strictEqual(result.focus.value, "Care Plan Activity");
-    assert.strictEqual(result.focus.logicalName, "msemr_careplanactivity");
+    assert.strictEqual(result.focus.logicalName, undefined);
     assert.strictEqual(result.problem.value, "Expected Care Plan Activity was not created.");
     assert.strictEqual(result.goal.value, "Determine why the expected Care Plan Activity was not created.");
     assert.strictEqual(result.overallConfidence, "High");
@@ -50,6 +50,23 @@ suite("investigation intent inference", () => {
     assert.strictEqual(result.focus.value, "Relationship");
     assert.match(result.problem.value ?? "", /Relationship.*missing/i);
     assert.strictEqual(result.overallConfidence, "High");
+  });
+
+
+  test("uses metadata-derived custom schema identity for an industry business label", () => {
+    const result = engine.infer({
+      question: "Investigate why this Contact's Care Plan Activity was not created.",
+      candidates: [{ focusId: "contoso_careplanactivity", label: "Care Plan Activity", logicalName: "contoso_careplanactivity" }]
+    });
+    assert.strictEqual(result.focus.value, "Care Plan Activity");
+    assert.strictEqual(result.focus.logicalName, "contoso_careplanactivity");
+    assert.strictEqual(result.requiresClarification, false);
+  });
+
+  test("does not attach an industry schema identity when metadata supplied no matching candidate", () => {
+    const result = engine.infer({ question: "Investigate missing Questionnaire Responses for this Contact." });
+    assert.strictEqual(result.focus.value, "Questionnaire Response");
+    assert.strictEqual(result.focus.logicalName, undefined);
   });
 
   test("uses supplied metadata-derived candidates without performing evidence work", () => {

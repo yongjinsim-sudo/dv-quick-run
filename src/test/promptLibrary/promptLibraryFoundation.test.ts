@@ -65,7 +65,7 @@ suite("promptLibraryFoundation", () => {
 
   test("public prompt examples stay generic and customer-neutral", () => {
     const serialized = JSON.stringify(DVQR_PROMPT_CATALOGUE).toLowerCase();
-    for (const forbidden of ["bupa", "msemr_careplan", "msemr_careplanactivities", "bu_tasks"]) {
+    for (const forbidden of ["customername", "msemr_careplan", "msemr_careplanactivities", "sample_tasks"]) {
       assert.ok(!serialized.includes(forbidden), `prompt catalogue must not contain customer-specific token ${forbidden}`);
     }
   });

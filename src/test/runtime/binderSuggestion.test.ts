@@ -101,7 +101,7 @@ suite("binderSuggestion", () => {
         legIndex: 1,
         legCount: 3,
         hasNextLeg: true,
-        nextLegEntityName: "bu_task",
+        nextLegEntityName: "sample_task",
         currentEntityName: "msemr_careplanactivity",
         isFinalLeg: false,
         canGoBack: true,

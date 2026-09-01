@@ -111,8 +111,8 @@ suite("mcpInvestigationFoundation", () => {
     try {
       const service = new InvestigationApplicationService(new WorkspaceInvestigationRepository(root), "https://example.crm.dynamics.com");
       const guid = "d264ceff-8763-f011-bec2-002248985631";
-      const created = service.start({ question: `Investigate contact ${guid}. The asserted business traversal is exactly: contact -> msemr_careplan -> msemr_careplanactivity -> bu_task. Use managed DVQR investigation only.` });
-      assert.deepStrictEqual(created.assertedBusinessTraversal?.tables, ["contact", "msemr_careplan", "msemr_careplanactivity", "bu_task"]);
+      const created = service.start({ question: `Investigate contact ${guid}. The asserted business traversal is exactly: contact -> msemr_careplan -> msemr_careplanactivity -> sample_task. Use managed DVQR investigation only.` });
+      assert.deepStrictEqual(created.assertedBusinessTraversal?.tables, ["contact", "msemr_careplan", "msemr_careplanactivity", "sample_task"]);
       assert.strictEqual(created.assertedBusinessTraversal?.source, "Question");
       const persisted = JSON.stringify(created);
       assert.doesNotMatch(persisted, new RegExp(guid, "i"));
@@ -120,21 +120,35 @@ suite("mcpInvestigationFoundation", () => {
   });
 
 
-  test("Pass 10.8.3 corrects a host-guessed record logical name that conflicts with the user's bounded business label", () => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "dvqr-mcp-subject-binding-corrective-"));
+  test("Pass 0.3 preserves a host-supplied custom logical name when the question uses an industry display label", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "dvqr-mcp-subject-binding-domain-neutral-"));
     try {
       const service = new InvestigationApplicationService(new WorkspaceInvestigationRepository(root), "https://example.crm.dynamics.com");
       const guid = "adb5efca-c866-f011-b4cb-000d3a6a75e8";
       const created = service.start({
-        question: `Investigate Care Plan Activity ${guid}. I want to understand the downstream bu_task.`,
-        subject: { kind: "Record", logicalName: "mspp_careplanactivity", recordId: guid, displayLabel: `Care Plan Activity ${guid}` }
+        question: `Investigate Care Plan Activity ${guid}. I want to understand the downstream contoso_task.`,
+        subject: { kind: "Record", logicalName: "contoso_careplanactivity", recordId: guid, displayLabel: `Care Plan Activity ${guid}` }
       });
-      assert.strictEqual(created.subject.logicalName, "msemr_careplanactivity");
-      assert.strictEqual(created.subjectBinding?.state, "HostLogicalNameOverridden");
-      assert.strictEqual(created.subjectBinding?.suppliedLogicalName, "mspp_careplanactivity");
-      assert.strictEqual(created.subjectBinding?.resolvedLogicalName, "msemr_careplanactivity");
-      assert.match(created.subjectBinding?.reason ?? "", /conflicted/i);
+      assert.strictEqual(created.subject.logicalName, "contoso_careplanactivity");
+      assert.strictEqual(created.subjectBinding?.state, "HostSuppliedUnverified");
+      assert.strictEqual(created.subjectBinding?.suppliedLogicalName, "contoso_careplanactivity");
+      assert.strictEqual(created.subjectBinding?.resolvedLogicalName, "contoso_careplanactivity");
+      assert.match(created.subjectBinding?.reason ?? "", /natural-language labels are not schema authority/i);
       assert.doesNotMatch(JSON.stringify(created), new RegExp(guid, "i"));
+    } finally { fs.rmSync(root, { recursive: true, force: true }); }
+  });
+
+  test("Pass 0.3 does not invent an industry logical name from a display label when no logical name is supplied", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "dvqr-mcp-subject-binding-no-schema-invention-"));
+    try {
+      const service = new InvestigationApplicationService(new WorkspaceInvestigationRepository(root), "https://example.crm.dynamics.com");
+      const guid = "adb5efca-c866-f011-b4cb-000d3a6a75e8";
+      const created = service.start({ question: `Investigate Care Plan Activity ${guid}.` });
+      assert.strictEqual(created.subject.kind, "Record");
+      assert.strictEqual(created.subject.logicalName, undefined);
+      assert.strictEqual(created.subjectBinding?.state, "HostSuppliedUnverified");
+      assert.strictEqual(created.subjectBinding?.resolvedLogicalName, undefined);
+      assert.match(created.subjectBinding?.reason ?? "", /without inventing a schema name/i);
     } finally { fs.rmSync(root, { recursive: true, force: true }); }
   });
 

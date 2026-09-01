@@ -20,7 +20,7 @@ function investigation(): Investigation {
     limitations: [],
     miniRcaArtifactRefs: [],
     staleState: { isStale: false },
-    currentIntent: { version: 1, focus: "CreationMechanism", reportedProblem: "How was task created?", directionLogicalName: "bu_task", confidence: "High", source: "UserConfirmed", updatedAt: "2026-08-11T00:00:00.000Z" }
+    currentIntent: { version: 1, focus: "CreationMechanism", reportedProblem: "How was task created?", directionLogicalName: "sample_task", confidence: "High", source: "UserConfirmed", updatedAt: "2026-08-11T00:00:00.000Z" }
   } as unknown as Investigation;
 }
 
@@ -34,11 +34,11 @@ suite("Pass 10.8 executable timeline context", () => {
     const normalized = provider.normalize({
       ok: true,
       structuredContent: {
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         interval: { fromIso: "2026-07-01T00:00:00Z", toIso: "2026-07-31T23:59:59Z" },
         audit: result([{ createdon: "2026-07-10T10:00:03Z", operation: 2, action: 2 }]),
-        asyncOperations: result([{ createdon: "2026-07-10T10:00:01Z", name: "Workflow A", primaryentitytype: "bu_task" }]),
-        pluginTrace: result([{ createdon: "2026-07-10T10:00:02Z", typename: "Contoso.Plugin", messagename: "Create", primaryentity: "bu_task" }])
+        asyncOperations: result([{ createdon: "2026-07-10T10:00:01Z", name: "Workflow A", primaryentitytype: "sample_task" }]),
+        pluginTrace: result([{ createdon: "2026-07-10T10:00:02Z", typename: "Contoso.Plugin", messagename: "Create", primaryentity: "sample_task" }])
       }
     }, { investigation: investigation(), acquiredAt: "2026-08-11T00:01:00Z" });
     assert.strictEqual(normalized.status, "Acquired");
@@ -53,7 +53,7 @@ suite("Pass 10.8 executable timeline context", () => {
     const normalized = provider.normalize({
       ok: true,
       structuredContent: {
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         interval: { fromIso: "2026-07-01T00:00:00Z", toIso: "2026-07-31T23:59:59Z" },
         audit: { ok: false, message: "HTTP 403" },
         asyncOperations: result([]),
@@ -139,7 +139,7 @@ suite("Pass 10.8 executable timeline context", () => {
     const normalized = provider.normalize({
       ok: true,
       structuredContent: {
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         interval: { fromIso: "2026-07-13T00:00:00Z", toIso: "2026-08-12T23:59:59Z" },
         boundaryProvenance: {
           source: "UserRelativeBoundary",
@@ -161,11 +161,11 @@ suite("Pass 10.8 executable timeline context", () => {
     const normalized = provider.normalize({
       ok: true,
       structuredContent: {
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         interval: { fromIso: "2026-07-01T00:00:00Z", toIso: "2026-07-31T23:59:59Z" },
         audit: result([]),
-        asyncOperations: result([{ createdon: "2026-07-16T23:16:04Z", name: "Async immediately before trace", primaryentitytype: "bu_task" }]),
-        pluginTrace: result([{ createdon: "2026-07-16T23:16:05Z", typename: "Contoso.Plugin", messagename: "Create", primaryentity: "bu_task" }])
+        asyncOperations: result([{ createdon: "2026-07-16T23:16:04Z", name: "Async immediately before trace", primaryentitytype: "sample_task" }]),
+        pluginTrace: result([{ createdon: "2026-07-16T23:16:05Z", typename: "Contoso.Plugin", messagename: "Create", primaryentity: "sample_task" }])
       }
     }, { investigation: investigation(), acquiredAt: "2026-08-11T00:01:00Z" });
     const payload = normalized.payload as { chronology: { state: string; eventCount: number }; events: Array<{ observedAt?: string }>; interpretationBoundary: string };

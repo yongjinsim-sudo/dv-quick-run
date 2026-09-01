@@ -366,14 +366,14 @@ suite("MCP protocol Mini RCA registration", () => {
   test("business-path discovery consumes workspace Preferred paths before metadata-ranked alternatives", () => {
     const tool = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_discover_business_paths");
     if (!tool) throw new Error("Expected dvqr_discover_business_paths.");
-    assert.match(tool.description, /Managed Business Path preference/i);
+    assert.match(tool.description, /Managed Business Path discovery also consumes preference from the current workspace/i);
     assert.match(tool.description, /top-visible workspace recommendation/i);
     assert.match(tool.description, /without changing discovery scores/i);
     assert.match(tool.description, /dvqr_test_business_path/i);
   });
 
 
-  test("exposes v0.15.8 asserted-business-traversal inputs and promotion integrity on Free MCP", () => {
+  test("exposes asserted-business-traversal inputs and promotion integrity on Free MCP", () => {
     const validate = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_validate_business_paths");
     const save = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_save_business_path");
     if (!validate || !save) throw new Error("Expected business-path validation and save tools.");
@@ -381,7 +381,7 @@ suite("MCP protocol Mini RCA registration", () => {
     const validateSchema = validate.inputSchema as any;
     assert.ok(validateSchema.properties.assertedBusinessPathTables);
     assert.ok(validateSchema.properties.assertedBusinessPathRelationshipSchemaNames);
-    assert.match(validate.description, /v0\.15\.8 asserted-business-traversal contract/i);
+    assert.match(validate.description, /explicitly asserted Business Path candidates/i);
     assert.match(validate.description, /shorter runtime shortcuts separate/i);
     assert.match(validate.description, /promotionDecision\.eligible=true/i);
     assert.match(validate.description, /saveFollowUp/i);
@@ -498,11 +498,11 @@ suite("MCP protocol Mini RCA registration", () => {
     assert.ok(guidance.some((line) => /Manual dvqr_save_business_path/.test(line) && /not-runtime-verified/i.test(line)));
   });
 
-  test("publishes Pass 10.2 bounded business-path runtime validation", () => {
+  test("publishes bounded business-path runtime validation", () => {
     const tool = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_validate_business_paths");
     assert.ok(tool);
     assert.strictEqual(tool.tier, "free");
-    assert.match(tool.description, /Pass 10\.2 bounded runtime validation/i);
+    assert.match(tool.description, /Bounded runtime validation for discovered or explicitly asserted Business Path candidates/i);
     assert.match(tool.description, /hop-by-hop/i);
     assert.match(tool.description, /(source record only|this source record|this record only)/i);
     const schema = tool.inputSchema as any;
@@ -510,12 +510,12 @@ suite("MCP protocol Mini RCA registration", () => {
     assert.strictEqual(schema.properties.maxCandidates.default, 5);
   });
 
-  test("publishes Pass 10.1.1 depth-diverse metadata-only business-path discovery separately from generic relationship paths", () => {
+  test("publishes depth-diverse metadata-only business-path discovery separately from generic relationship paths", () => {
     const business = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_discover_business_paths");
     const relationship = DVQR_LIVE_MCP_TOOLS.find((item) => item.name === "dvqr_find_relationship_paths");
     if (!business || !relationship) throw new Error("Expected relationship and business-path discovery tools.");
     assert.strictEqual(business.tier, "free");
-    assert.match(business.description, /Pass 10\.1\.1 metadata-only business-path discovery/i);
+    assert.match(business.description, /Metadata-only Business Path discovery with depth-diverse candidate generation/i);
     assert.match(business.description, /does NOT query records/i);
     assert.match(business.description, /do not suppress plausible deeper workflow routes/i);
     assert.match(business.description, /business-preferred/i);

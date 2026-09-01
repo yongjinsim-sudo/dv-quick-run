@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import type { ComparisonProviderResult, ComparisonViewModel } from "../../core/comparison/index.js";
+import { getDvqrReleaseVersion } from "../../product/releaseIdentity.js";
 import {
   adaptCrossDiffToInvestigationInput,
   buildCrossDiffReadinessRequest,
@@ -265,7 +266,8 @@ suite("crossDiffReadinessIntegration", () => {
     assert.match(html, /Investigation Readiness · Advisory/);
     assert.match(html, /Investigation Readiness · technical trace/);
     assert.match(html, /GAP-FRESHNESS-001/);
-    assert.match(html, /DV Quick Run v0\.15\.3/);
+    assert.match(html, new RegExp(`DV Quick Run v${getDvqrReleaseVersion().replace(/\./g, "\\.")}`));
+    assert.doesNotMatch(html, /DV Quick Run v0\.15\.3/);
     assert.doesNotMatch(`${markdown}\n${html}`, /readiness score/i);
   });
 });

@@ -1,62 +1,218 @@
 # DV Quick Run
 
+> **DV Quick Run v1.0.0 is here. 🎉**
+
 **Understand Dataverse applications. Investigate operational behaviour. Stay grounded in evidence.**
 
-DV Quick Run is an extension-owned **Local MCP server** and metadata-aware Dataverse investigation workbench for VS Code. Ask Dataverse questions in natural language, discover business architecture, run bounded queries, follow real relationships, preserve verified business paths, and continue into evidence-backed investigation without leaving the editor.
+DV Quick Run is a metadata-aware **Dataverse investigation workbench for VS Code** with an extension-owned **Local MCP server**. It brings querying, schema intelligence, relationship discovery, reusable Business Paths, operational evidence, professional investigation and bounded Mini RCA into one local-first workflow.
 
-**Read-only MCP foundations · Deterministic metadata · Evidence-backed conclusions · Human authority**
+Instead of jumping between metadata browsers, query tools, logs, spreadsheets and disconnected AI conversations, DV Quick Run lets you move through the investigation as one explainable journey:
+
+```text
+understand
+   ↓
+query
+   ↓
+discover relationships
+   ↓
+verify real business paths
+   ↓
+collect evidence
+   ↓
+investigate
+   ↓
+assess readiness & gaps
+   ↓
+Mini RCA
+   ↓
+handoff / preserve
+```
+
+**Metadata-backed · Evidence-aware · Preview-first · Local-first · Human-controlled**
 
 [Website](https://www.dvquickrun.com) · [Pricing](https://www.dvquickrun.com/pricing) · [GitHub Discussions](https://github.com/yongjinsim-sudo/dv-quick-run/discussions)
 
 ---
 
-## What's New in v0.16.2
+# 🎉 DV Quick Run v1.0.0
 
-### MCP Security Hardening II
+After evolving from a Dataverse query utility into a complete investigation workbench, **DV Quick Run has reached v1.0.0**.
 
-v0.16.2 completes the pre-v1 hardening of DVQR's Local MCP trust boundary. The release focuses on a simple rule: **the model can propose work, but DVQR application code remains the authority for what may execute, where it may execute, and what the evidence means.**
+v1 establishes the stable product contract for DVQR:
 
-```text
-prompt / model / Dataverse data
-            ↓
-validate canonical authority
-            ↓
-execute bounded work
-            ↓
-preserve evidence semantics
-            ↓
-stop or continue through an explicit scope
-```
+- understand unfamiliar Dataverse applications from metadata
+- query and explain OData, FetchXML and `$batch`
+- discover how tables actually relate
+- test multi-hop routes against real records
+- preserve verified routes as Managed Business Paths
+- investigate operational behaviour with canonical evidence
+- compare environments and reconstruct timelines
+- inspect Operational Profiles, Access Context and execution evidence
+- run persisted Professional Investigations
+- assess evidence readiness and gaps
+- generate bounded, evidence-backed Mini RCA
+- talk to Dataverse through an extension-owned Local MCP server
+- keep execution authority, evidence meaning and final judgement outside the model
 
-- **Canonical environment and capability authority** — conflicting per-call environment overrides fail closed, while entitlement, registered capabilities, identifiers and server-owned bounds remain application-controlled.
-- **Clear Managed Business Path lifecycle** — Save is explicit, **Reverify is metadata-only**, and runtime verification is a separate source-record operation.
-- **Exact saved-route execution** — runtime verification follows the reviewed relationship hops; it cannot silently substitute a shorter or merely data-producing route.
-- **Empty-frontier STOP** — when a saved route reaches an empty continuation, downstream targets remain NotReached for that route. Broader discovery requires an explicit new Business Path scope.
-- **Evidence remains calibrated** — metadata-valid, runtime-observed, Preferred and causal conclusions remain separate. A bounded zero is not promoted to organisation-wide absence.
-- **Bounded Professional Investigation** — recommendations do not become execution authority, chained actions revalidate their own contracts, and Mini RCA remains zero-acquisition.
-- **Contained local persistence** — Business Path and investigation writes remain inside the canonical workspace, including real-path checks against symlink/junction escape.
-- **Credential-safe diagnostics** — structured output, text mirrors and transport diagnostics share a central redaction boundary without hiding the underlying failure class.
-- **Permanent adversarial qualification** — deterministic A01–A20 regression coverage and bounded non-production dogfooding protect the settled trust-boundary contracts.
-
-The final v0.16.2 dogfood also verified packaged MCP version identity, metadata-only Reverify, exact runtime verification, environment authority, empty-frontier STOP and explicit new-scope continuation.
-
-This is engineering security qualification, not a security certification. DVQR continues to treat prompts, model output, Dataverse content, metadata and persisted artifact presentation fields as untrusted until canonical application services validate their specific use.
-
-### Discoverability remains built in
-
-The **94-prompt Prompt Library** (69 Free + 25 Pro) remains the guided entry point to DVQR's Local MCP capabilities, including Operational Profile + calibrated DVQR Score, relationship intelligence, bounded traversal and managed investigation.
+This is not simply a version-number milestone. **v1 is the point where DVQR's query, understanding, traversal and investigation capabilities form one coherent product.**
 
 ---
 
-## Start in Three Ways
+## ✨ What Ships in v1.0.0
+
+### 🧠 Metadata-Aware Dataverse Understanding
+DVQR starts from Dataverse metadata rather than guessing schema semantics.
+
+- deterministic table, column and relationship discovery
+- navigation-property and polymorphic-lookup understanding
+- business architecture and operational workflow intelligence
+- capability and Custom API discovery
+- confidence, provenance and uncertainty preserved
+
+### 🔎 Query, Explain & Refine
+- OData and FetchXML execution
+- `$batch` workflows
+- natural-language OData through Local MCP
+- Query Doctor and Query Explain
+- metadata-aware suggestions
+- Query-by-Canvas refinement
+- lookup-aware `$expand` guidance
+- Result Viewer
+- preview-first Smart PATCH in the editor
+
+### 🧭 Relationship Intelligence & Guided Traversal
+- discover and rank relationship paths
+- resolve exact navigation properties
+- Relationship Graph
+- carry landed records from hop to hop
+- distinguish metadata-valid from data-viable routes
+- explain the exact frontier where traversal becomes empty
+
+### 🛤️ Test Business Traverse & Managed Business Paths
+One of v1's defining capabilities is turning discovered traversal knowledge into reusable workspace knowledge.
+
+```text
+discover candidate paths
+        ↓
+test against real records
+        ↓
+observe reached hops
+        ↓
+rank viable routes
+        ↓
+explicit Save
+        ↓
+Reverify metadata
+        ↓
+Runtime Verify exact saved route
+        ↓
+reuse / govern
+```
+
+DVQR keeps **metadata-valid**, **runtime-observed**, **ObservedNonEmpty**, **ObservedEmpty**, **NotReached**, **saved**, **Runtime Verified** and **BusinessPreferred** meaningfully separate.
+
+If an exact route reaches an empty frontier, that route **STOPs**. DVQR does not silently substitute another relationship or turn the empty frontier into a table-wide query. Broader exploration requires an explicit new Business Path scope.
+
+### 📊 Operational Profiles & DVQR Score
+Operational Profiles provide a bounded, evidence-backed view of an entity's operational footprint, including relationship complexity, plugin orchestration, async participation, Power Automate/workflow involvement and managed-state context.
+
+The **DVQR Score** is a calibrated investigation aid—not a risk, health or root-cause score.
+
+### 👤 Access Context
+Investigate bounded identity participation across users, application identities, teams, roles and business units.
+
+Access Context does **not** simulate RBAC or claim effective record access.
+
+### 📸 Evidence Workspace & Snapshot Library
+Preserve snapshots, comparisons, Business Paths, reports, investigation artifacts and handoff material locally under `.dvforgelab`.
+
+### 🔀 Cross-Environment Diff
+Compare compatible evidence across environments, review grouped operational drift, preserve verification state and export investigation-ready reports.
+
+### 🕒 Timeline Reconstruction & Audit Evidence
+Reconstruct snapshot-bounded change intervals with Timeline Graph, trust, findings, handoff and optional Audit Evidence Enrichment.
+
+First-observed drift is not presented as an exact historical change time or proof of causality.
+
+### ⚙️ Custom API Intelligence & Governed Execution
+- Functions vs Actions
+- bound vs unbound operations
+- metadata-backed definitions
+- architecture recommendations
+- execution readiness
+- preview
+- explicit confirmation
+- guarded eligible execution
+- execution interpretation
+
+```text
+discover → explain → preview → confirm → execute → inspect evidence
+```
+
+### 🧪 Professional Investigation
+**Pro** turns individual evidence tools into a persisted investigation workflow.
+
+```text
+Start Investigation
+      ↓
+confirm / edit intent
+      ↓
+bounded Continue
+      ↓
+acquire explicit evidence
+      ↓
+inspect trace & evidence
+      ↓
+Readiness / Evidence Gaps
+      ↓
+Mini RCA
+      ↓
+verify / hand off
+```
+
+Professional Investigation coordinates. **Providers acquire evidence.** Resume restores state; it does not silently reacquire evidence.
+
+### 🎯 Investigation Readiness & Evidence Gaps
+DVQR keeps acquired, observed-zero, unavailable, unsupported, access-limited, failed, stale/historical and NotReached states distinct.
+
+Evidence Gaps remain visible instead of being filled with confident prose.
+
+### 🔬 Evidence Correlation
+DVQR can correlate evidence across providers while preserving a permanent rule:
+
+> **Participation is not causality.**
+
+### 🧩 Mini RCA
+Mini RCA synthesizes already-acquired evidence into bounded observations, hypotheses, limitations, verification recommendations and handoff material.
+
+**Mini RCA is zero-acquisition. Regenerate Mini RCA is also zero-acquisition.**
+
+DVQR stops at explanation and handoff rather than silently progressing into remediation or deployment.
+
+### 🤖 Talk to Dataverse with Local MCP
+DV Quick Run includes an extension-owned Local MCP server.
+
+**v1 catalogue**
+- **32 Free MCP tools**
+- **32 Pro MCP tools**
+- **64 tools total**
+
+**Prompt Library**
+- **69 Free prompts**
+- **25 Pro prompts**
+- **94 guided prompts total**
+
+> **The model can propose work. DVQR decides what may execute and what the resulting evidence means.**
+
+---
+
+## 🚀 Three Ways to Use DV Quick Run
 
 | Start here | Best for | What you get |
 |---|---|---|
-| **Prompt Library** | You know the outcome but not the DVQR tool | Quick Starts, guided prompts, parameters and suggested next steps |
-| **Local MCP** | You want to talk to Dataverse through Copilot | Metadata-aware discovery, architecture understanding, bounded querying and investigation |
-| **Editor Workbench** | You already have a query, record or investigation | OData/FetchXML, Result Viewer, Guided Traversal, profiles, evidence and reports |
-
-Open the two main orientation surfaces from the Command Palette:
+| **Prompt Library** | You know the outcome but not the DVQR capability | 94 guided prompts, parameters and next steps |
+| **Local MCP** | You want to talk to Dataverse through an AI client | 64 metadata-aware, bounded investigation tools |
+| **Editor Workbench** | You already have a query, record or investigation | Querying, Result Viewer, traversal, evidence and reports |
 
 ```text
 DV Quick Run: Open Prompt Library
@@ -65,127 +221,96 @@ DV Quick Run: Open Hub
 
 ---
 
-## What DV Quick Run Can Do
+## 🆓 Free vs Pro
 
-### 1. Understand Dataverse
+DV Quick Run follows an open-core model.
 
-Translate structural metadata and bounded runtime evidence into an explainable view of an unfamiliar application.
+**Free is the investigation foundation. Pro accelerates and deepens professional investigation.**
 
-- discover business capabilities and operational anchors
-- identify Core Domain, Coordination, Execution, Governance and Platform layers
-- explain why entities and routes were ranked
-- distinguish metadata recommendation from runtime-observed workflow
-- preserve confidence, provenance and uncertainty
-
-### 2. Query & Explain
-
-Work directly with Dataverse query surfaces in VS Code.
-
-- natural-language OData through Local MCP
-- OData and FetchXML execution
-- `$batch` workflows
-- Query-by-Canvas refinement
-- Query Doctor and metadata-aware suggestions
-- Query Explain
-- preview-first Smart PATCH in the editor
-
-### 3. Navigate Real Business Relationships
-
-Move from metadata-valid relationships to data-viable traversal.
-
-- relationship discovery and ranking
-- Guided Traversal using returned rows
-- Relationship Graph
-- runtime path verification
-- Managed Business Paths
-- Preferred-path reuse with exact saved hops
-- `$batch` traversal replay
-
-### 4. Investigate Operational Behaviour
-
-Use bounded evidence instead of speculative diagnosis.
-
-- Result Viewer
-- Execution Insights
-- Operational Profiles
-- DVQR Score
-- Access Context for users, teams, roles, business units and application identities
-- persisted Pro managed investigations
-- evidence acquisition, readiness and Mini RCA
-
-### 5. Compare & Reconstruct
-
-Preserve evidence across environments and time.
-
-- Evidence Workspace and Snapshot Library
-- Cross-Environment Diff
-- Timeline Reconstruction
-- Timeline Graph
-- Audit Evidence Enrichment
-- findings, verification and handoff workflows
-- HTML/PDF investigation reports
-
-### 6. Discover & Govern Dataverse Capabilities
-
-Inspect supported Custom APIs and Dataverse operations with explicit execution boundaries.
-
-- Capability Explorer
-- bound and unbound operation discovery
-- metadata-backed request shaping
-- preview-first supported execution
-- explicit confirmation
-- access-aware discovery
-- execution diagnostics and investigation continuation
-
----
-
-## See It in Action
-
-### Ask Dataverse in natural language
-
-![DV Quick Run MCP natural-language OData execution](docs/mcp-query-2.png)
-
-### Find related tables deterministically
-
-![DV Quick Run MCP deterministic metadata search](docs/mcp-query-1.png)
-
-### Explain OData in plain English
-
-![DV Quick Run MCP OData explanation](docs/mcp-query-3.png)
-
-### Explore query results
-
-![DV Quick Run Result Viewer](docs/demo-result-viewer.gif)
-
-### Understand an entity's operational footprint
-
-![DV Quick Run Operational Profile](docs/entity-profile-card.png)
-
----
-
-## Free and Pro
-
-DV Quick Run follows an open-core model. Foundational Dataverse understanding remains accessible; Pro adds advanced investigation acceleration and persistence.
+```text
+Free truth = Pro truth
+Free safety = Pro safety
+```
 
 | Capability | Free | Pro |
 |---|:---:|:---:|
 | Prompt Library and Quick Starts | ✓ | ✓ |
 | Deterministic metadata discovery | ✓ | ✓ |
 | Natural-language OData and bounded GET | ✓ | ✓ |
-| Relationship intelligence and Guided Traversal | ✓ | ✓ |
+| OData / FetchXML / `$batch` workbench | ✓ | ✓ |
+| Query Doctor / Query Explain | ✓ | ✓ |
+| Relationship Intelligence and Guided Traversal | ✓ | ✓ |
 | Operational Profile + DVQR Score | ✓ | ✓ |
-| Query workbench and Result Viewer | ✓ | ✓ |
+| Result Viewer | ✓ | ✓ |
 | Managed Business Paths | ✓ | ✓ |
-| Managed investigation lifecycle |  | ✓ |
+| Governed eligible Custom API execution | ✓ | ✓ |
+| Persisted Professional Investigation |  | ✓ |
+| Advanced investigation evidence acquisition |  | ✓ |
+| Investigation Readiness / Evidence Gaps |  | ✓ |
 | Cross-Environment Diff | Preview / samples where provided | ✓ |
 | Timeline Reconstruction | Mock preview | ✓ |
 | Audit Evidence Enrichment |  | ✓ |
-| Mini RCA and investigation handoff |  | ✓ |
-| Advanced report/export workflows |  | ✓ |
-| Governed supported Custom API execution |  | ✓ |
+| Mini RCA |  | ✓ |
+| Advanced handoff/reporting workflows |  | ✓ |
 | Online / Offline Pro licensing |  | ✓ |
 
-A **14-day Pro Trial** is available for teams that want to evaluate the full investigation workflow.
+A **14-day Pro Trial** is available for evaluating the complete investigation workflow.
+
+---
+
+## 🛡️ Built for Evidence, Not AI Guesswork
+
+DVQR application code—not prompt text or model output—owns the active environment, registered capability, entitlement, canonical identifiers, execution bounds, workspace containment, confirmation requirements and evidence-state semantics.
+
+Security hardening includes permanent deterministic adversarial regression across hostile content, capability spoofing, entitlement bypass, environment confusion, replay, unsafe tool chaining, traversal/resource abuse, path escape and diagnostic exfiltration scenarios.
+
+This is engineering security qualification—not a security certification.
+
+---
+
+## 🛑 Guardrails That Matter
+
+DVQR does not:
+
+- silently persist Business Paths
+- treat runtime success as BusinessPreferred
+- substitute a different relationship during exact-route verification
+- continue past an empty Business Path frontier
+- treat NotReached as zero
+- convert metadata validity into runtime truth
+- convert participation into causality
+- simulate effective RBAC
+- treat first-observed drift as an exact historical timestamp
+- treat audit rows as proof of causality
+- allow Mini RCA to acquire evidence
+- treat generated recommendations as execution authority
+- automatically remediate or deploy from an investigation
+
+**Humans retain operational authority.**
+
+---
+
+## 🌟 Why v1 Matters
+
+DV Quick Run started with a simple idea: make Dataverse investigation faster without making it less trustworthy.
+
+v1 brings the pieces together:
+
+```text
+query workbench
+   + metadata intelligence
+   + relationship understanding
+   + runtime traversal
+   + reusable Business Paths
+   + evidence workspace
+   + professional investigation
+   + bounded AI assistance
+   = DV Quick Run v1
+```
+
+The goal is not to make Dataverse investigation magical.
+
+The goal is to make it **faster, more explainable, more repeatable and easier to hand off—without losing sight of what was actually observed.**
 
 ---
 
@@ -316,7 +441,7 @@ Use it to:
 - preview compatible bound Actions
 - export evidence and supported handoff artifacts
 
-Guided Traversal carries actual landed records from hop to hop. Managed Preferred paths can reuse the exact saved route from a supplied source record.
+Guided Traversal carries actual landed records from hop to hop. Managed Business Paths can reuse the exact saved route from a supplied source record.
 
 ---
 

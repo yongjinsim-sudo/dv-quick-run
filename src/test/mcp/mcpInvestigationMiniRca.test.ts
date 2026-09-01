@@ -74,9 +74,9 @@ suite("MCP investigation Mini RCA", () => {
     investigations.save({ ...changed, managedReadiness: { ...changed.managedReadiness!, evidenceCount: 4, assessmentUtc: "2026-08-09T00:04:30.000Z", evidenceSetFingerprint: investigationEvidenceSetFingerprint(changed), latestEvidenceAt: "2026-08-09T00:04:00.000Z" } });
     evidenceRepo.save(evidence("ev-11111111-1111-1111-1111-111111111111", "metadata", "EntityMetadata", "metadata", {}, now));
     evidenceRepo.save(evidence("ev-22222222-2222-2222-2222-222222222222", "relationship-context", "RelationshipContext", "relationships", {}, now));
-    evidenceRepo.save(evidence("ev-33333333-3333-3333-3333-333333333333", "runtime-relationship", "RuntimeRelationship", "observed care plan", { classification: "Observed", requestedTargetTable: "bu_task", observedRowCount: 1 }, now));
+    evidenceRepo.save(evidence("ev-33333333-3333-3333-3333-333333333333", "runtime-relationship", "RuntimeRelationship", "observed care plan", { classification: "Observed", requestedTargetTable: "sample_task", observedRowCount: 1 }, now));
     evidenceRepo.save(evidence(mechanismRef.evidenceId, "mechanism-context", "MechanismContext", "no mechanism rows observed", {
-      targetTable: "bu_task",
+      targetTable: "sample_task",
       interval: { fromIso: "2026-08-01T00:00:00Z", toIso: "2026-08-09T00:00:00Z" },
       sources: [
         { kind: "Audit", state: "Empty", observedCount: 0, interpretationBoundary: "No matching audit rows observed; bounded absence only." },
@@ -217,6 +217,39 @@ suite("MCP intent-driven Mini RCA", () => {
     assert.ok(artifact.suggestedFollowUps?.some((item) => item.kind === "Custom"));
     assert.ok(artifact.mostValuableNextStep?.expectedInformationGain === "VeryHigh");
   });
+  test("uses metadata-backed custom logical identity for intent correlation without industry aliases", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "dvqr-mini-rca-domain-neutral-"));
+    const url = "https://example.crm.dynamics.com";
+    const now = "2026-08-05T00:00:00.000Z";
+    const investigations = new WorkspaceInvestigationRepository(root, url);
+    const evidenceRepo = new WorkspaceInvestigationEvidenceRepository(root, url);
+    const base = investigation(now);
+    investigations.save({
+      ...base,
+      currentIntent: {
+        intentVersion: 1,
+        leadingDirection: "Care Plan Activity",
+        directionLabel: "Care Plan Activity",
+        directionLogicalName: "contoso_careplanactivity",
+        directionSource: "UserCustom",
+        reportedProblem: "Expected Care Plan Activity was not created.",
+        keywords: ["care", "plan", "activity"],
+        reason: "Metadata-backed custom target.",
+        updatedBy: "User",
+        updatedAt: now
+      },
+      intentHistory: []
+    });
+    evidenceRepo.save(evidence("ev-11111111-1111-1111-1111-111111111111", "metadata", "EntityMetadata", "metadata", {}, now));
+    evidenceRepo.save(evidence("ev-22222222-2222-2222-2222-222222222222", "relationship-context", "RelationshipContext", "relationships", {}, now));
+    evidenceRepo.save(evidence("ev-33333333-3333-3333-3333-333333333333", "runtime-relationship", "RuntimeRelationship", "bounded runtime observation", { classification: "Observed", requestedTargetTable: "contoso_careplanactivity", observedRowCount: 1 }, now));
+    const artifact = new InvestigationMiniRcaService(investigations, evidenceRepo, new WorkspaceInvestigationMiniRcaRepository(root, url), () => new Date(now)).generate(base.investigationId).artifact;
+    const correlation = artifact.evidenceCorrelations?.find((item) => item.evidenceId === "ev-33333333-3333-3333-3333-333333333333");
+    assert.strictEqual(correlation?.correlation, "Supports");
+    assert.strictEqual(artifact.intent?.directionLogicalName, "contoso_careplanactivity");
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
   test("accepts path-aware runtime evidence as the managed runtime prerequisite", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "dvqr-mrca-path-"));
     const environmentUrl = "https://example.crm.dynamics.com";

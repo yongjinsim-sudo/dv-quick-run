@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { DVFORGELAB_PRODUCTS_URL, DVFORGELAB_STORE_URL, DVQR_PRICING_URL } from "../product/capabilities/commercialLinks.js";
 
-const WELCOME_KEY = "dvQuickRun.welcome.v0_16_2.seen";
+const WELCOME_KEY = "dvQuickRun.welcome.v1_0_0.seen";
 
 function escapeHtml(value: string): string {
   return value
@@ -12,15 +12,13 @@ function escapeHtml(value: string): string {
 }
 
 function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string {
-  const pricingUrl = escapeHtml(DVQR_PRICING_URL);
-  const productsUrl = escapeHtml(DVFORGELAB_PRODUCTS_URL);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v0.16.2</title>
+<title>DV Quick Run v1.0.0</title>
 <style>
   :root {
     color-scheme: dark;
@@ -32,88 +30,75 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     --muted: var(--vscode-descriptionForeground, #9aa4ad);
     --accent: var(--vscode-button-background, #0e639c);
     --accentText: var(--vscode-button-foreground, #fff);
-    --gold: #ffe680;
     --cyan: #8bd5ff;
+    --green: #7ee2a8;
   }
   * { box-sizing: border-box; }
-  html {
-    min-height: 100%;
-    background:
-      radial-gradient(circle at top left, rgba(14,99,156,.26), transparent 34%),
-      radial-gradient(circle at top right, rgba(126,87,194,.16), transparent 32%),
-      var(--bg);
-    background-attachment: fixed;
-  }
+  html, body { min-height: 100%; }
   body {
-    min-height: 100vh;
     margin: 0;
     padding: 28px;
     background:
-      radial-gradient(circle at top left, rgba(14,99,156,.26), transparent 34%),
-      radial-gradient(circle at top right, rgba(126,87,194,.16), transparent 32%),
+      radial-gradient(circle at top left, rgba(14,99,156,.24), transparent 34%),
+      radial-gradient(circle at top right, rgba(126,87,194,.14), transparent 32%),
       var(--bg);
     background-attachment: fixed;
     color: var(--text);
     font-family: var(--vscode-font-family, Segoe UI, sans-serif);
   }
-  .shell { max-width: 980px; min-height: calc(100vh - 56px); margin: 0 auto; }
+  .shell { max-width: 1040px; margin: 0 auto; }
   .hero {
     display: grid;
-    grid-template-columns: 72px 1fr;
-    gap: 18px;
+    grid-template-columns: 76px 1fr;
+    gap: 20px;
     align-items: center;
-    padding: 24px;
+    padding: 28px;
     border: 1px solid var(--border);
     border-radius: 16px;
     background: linear-gradient(135deg, rgba(14,99,156,.24), rgba(126,87,194,.14)), var(--card);
     box-shadow: 0 18px 45px rgba(0,0,0,.22);
   }
-  .hero img { width: 64px; height: 64px; border-radius: 14px; }
+  .hero img { width: 68px; height: 68px; border-radius: 14px; }
   .eyebrow { color: var(--cyan); font-weight: 800; text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
-  h1 { margin: 6px 0 8px; font-size: 32px; line-height: 1.08; }
-  h2 { margin: 0 0 12px; font-size: 20px; }
-  h3 { margin: 0 0 8px; font-size: 15px; }
+  h1 { margin: 6px 0 8px; font-size: 34px; line-height: 1.08; }
+  h2 { margin: 0 0 8px; font-size: 21px; }
+  h3 { margin: 0 0 8px; font-size: 16px; }
   p { margin: 0; }
-  .subtitle { color: var(--muted); font-size: 14px; line-height: 1.55; }
-  .pathfinder {
-    margin-top: 18px;
-    padding: 20px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,230,128,.42);
-    background: linear-gradient(135deg, rgba(255,230,128,.08), rgba(14,99,156,.14)), var(--card);
-  }
-  .pathfinder-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
-  .price { font-size: 32px; font-weight: 900; margin: 4px 0; color: #fff; }
-  .limit { color: var(--gold); font-weight: 800; }
-  .price-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
-  .price-pill { border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 9px 10px; background: rgba(0,0,0,.16); }
-  .price-pill strong { display: block; font-size: 13px; }
-  .price-pill span { color: var(--muted); font-size: 12px; }
-  .section { margin-top: 18px; }
+  .subtitle { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 820px; }
+  .section { margin-top: 20px; }
+  .section-head { margin-bottom: 12px; }
+  .section-head p { color: var(--muted); margin-top: 5px; line-height: 1.5; }
   .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .card { border: 1px solid var(--border); border-radius: 12px; background: var(--cardSoft); padding: 14px; }
-  .card p { color: var(--muted); line-height: 1.45; }
-  .future .card { border-color: rgba(139,213,255,.18); }
-  .recognition { color: var(--muted); margin-top: 10px; line-height: 1.5; }
-  .badge { display: inline-block; margin-top: 8px; border: 1px solid rgba(255,230,128,.45); color: var(--gold); border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 800; }
-  .ecosystem {
-    margin-top: 18px;
-    padding: 14px;
-    border: 1px solid rgba(139,213,255,.22);
-    border-radius: 12px;
-    background: rgba(14,99,156,.10);
+  .card { border: 1px solid var(--border); border-radius: 13px; background: var(--cardSoft); padding: 16px; }
+  .card p { color: var(--muted); line-height: 1.5; }
+  .start-card { min-height: 142px; display: flex; flex-direction: column; }
+  .start-card .tag { color: var(--cyan); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 8px; }
+  .start-card button { margin-top: auto; align-self: flex-start; }
+  .journey {
+    padding: 18px;
+    border: 1px solid rgba(139,213,255,.25);
+    border-radius: 13px;
+    background: rgba(14,99,156,.09);
   }
-  .ecosystem-list { margin-top: 8px; color: var(--muted); line-height: 1.65; }
+  .journey-line { margin-top: 10px; color: var(--text); font-weight: 700; line-height: 1.7; }
+  .journey-line span { color: var(--cyan); padding: 0 5px; }
+  .cap-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .cap { padding: 13px; border: 1px solid var(--border); border-radius: 11px; background: rgba(255,255,255,.025); }
+  .cap strong { display: block; margin-bottom: 5px; }
+  .cap span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+  .mcp { padding: 18px; border: 1px solid var(--border); border-radius: 13px; background: var(--cardSoft); }
+  .mcp-steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 12px; }
+  .step { padding: 12px; border: 1px solid var(--border); border-radius: 10px; }
+  .step strong { display: block; margin-bottom: 5px; }
+  .step span { color: var(--muted); font-size: 12px; line-height: 1.45; }
   .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
   button { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 9px 14px; cursor: pointer; font-weight: 800; }
   button.primary { background: var(--accent); color: var(--accentText); border-color: var(--accent); }
-  button.gold { background: var(--gold); color: #1d1d1d; border-color: var(--gold); }
-  button.store { background: #5fbf7a; color: #07120a; border-color: #5fbf7a; }
-  .footer { color: var(--muted); margin-top: 12px; font-size: 12px; }
+  button.trial { background: var(--green); color: #07120a; border-color: var(--green); }
+  .footer { color: var(--muted); margin: 18px 0 4px; font-size: 12px; line-height: 1.5; }
   @media (max-width: 760px) {
     .hero { grid-template-columns: 1fr; }
-    .grid, .price-grid { grid-template-columns: 1fr; }
-    .pathfinder-head { display: block; }
+    .grid, .cap-grid, .mcp-steps { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -122,86 +107,88 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">What's new in v0.16.2</div>
-        <h1>Safer MCP Investigation, Exact Business Paths</h1>
-        <p class="subtitle"><strong>Talk to Dataverse with stronger application-enforced boundaries.</strong><br>v0.16.2 completes Security Hardening II: the connected environment stays authoritative, saved Business Paths keep their exact reviewed route, empty frontiers stop instead of silently widening scope, diagnostics protect credential-shaped values, and Professional Investigation remains evidence-bounded.</p>
+        <div class="eyebrow">DV Quick Run v1.0.0</div>
+        <h1>Investigate Dataverse with evidence, not guesswork.</h1>
+        <p class="subtitle">DV Quick Run is a Dataverse investigation workbench for VS Code. Query and explain data, understand metadata and relationships, inspect runtime and operational context, preserve evidence, compare environments, reconstruct timelines, and carry investigations through to bounded Mini RCA and handoff.</p>
       </div>
     </section>
 
-    <section class="pathfinder">
-      <div class="pathfinder-head">
-        <div>
-          <div class="eyebrow">New in v0.16.2</div>
-          <div class="price">Security Hardening II Complete</div>
-          <div class="limit">Exact routes · Explicit scope · Safe diagnostics · Evidence first</div>
-          <p class="recognition">DVQR now keeps model-driven investigation behind deterministic application boundaries. Prompts and Dataverse content cannot switch the active environment, grant capabilities or silently replace a saved Business Path. Reverify checks current metadata; runtime verification remains a separate, explicit record-scoped operation.</p>
-          <span class="badge">Prompt/model/data → Validate authority → Execute bounded → Preserve evidence → Explicit next scope</span>
+    <section class="section">
+      <div class="section-head">
+        <div class="eyebrow">Choose where to start</div>
+        <h2>Start with the task you have</h2>
+        <p>You do not need to know DV Quick Run's tool names. Pick an entry point and follow the evidence.</p>
+      </div>
+      <div class="grid">
+        <div class="card start-card">
+          <div class="tag">Ask</div>
+          <h3>Start with a guided prompt</h3>
+          <p>Search 94 guided prompts for common Dataverse questions and investigation workflows.</p>
+          <button class="primary" data-action="prompts">Open Prompt Library</button>
+        </div>
+        <div class="card start-card">
+          <div class="tag">Explore</div>
+          <h3>Understand your environment</h3>
+          <p>Use the Hub to discover metadata, relationships, capabilities, current context and the best next surface.</p>
+          <button class="primary" data-action="hub">Open DV Quick Run Hub</button>
+        </div>
+        <div class="card start-card">
+          <div class="tag">Investigate</div>
+          <h3>Follow evidence through the problem</h3>
+          <p>Move from query results into traversal, runtime evidence, profiles, readiness, correlation and Mini RCA.</p>
+          <button data-action="hub">Open Investigation Hub</button>
+        </div>
+        <div class="card start-card">
+          <div class="tag">Preserve</div>
+          <h3>Keep evidence you can revisit</h3>
+          <p>Capture snapshots, compare environments, reconstruct timelines, export reports and prepare handoff.</p>
+          <button data-action="hub">Open Evidence Workspace</button>
         </div>
       </div>
-      <div class="price-grid">
-        <div class="price-pill"><strong>Clear Reverify semantics</strong><span>Reverify checks saved routes against current metadata without silently running record traversal</span></div>
-        <div class="price-pill"><strong>Canonical authority</strong><span>Environment, entitlement, schemas and bounds are validated by DVQR before execution</span></div>
-        <div class="price-pill"><strong>Exact saved-path reuse</strong><span>Runtime verification follows the reviewed relationship hops instead of substituting a shortcut</span></div>
-        <div class="price-pill"><strong>Explicit broader scope</strong><span>An empty saved-path frontier stops; alternate-route investigation starts only as a new explicit scope</span></div>
-      </div>
-      <div class="actions">
-        <button class="primary" data-action="prompts">Open Prompt Library</button>
-        <button data-action="hub">Open DV Quick Run Hub</button>
-        <button class="gold" data-action="pricing">Start 14-day Pro Trial</button>
-        <button class="store" data-action="store">Open Store</button>
-        <button data-action="products">View Products</button>
-        <button data-action="continue">Continue</button>
-      </div>
-      <div class="footer">Managed Business Paths remain evidence-bounded workspace knowledge: current metadata, runtime evidence and user preference stay distinct. Prompt text cannot override server-side authority, and terminated empty frontiers cannot silently broaden through another MCP capability.</div>
-    
-        <p><strong>Try it:</strong> find and runtime-verify a relationship path, save it as Preferred, then start Guided Traversal again and reuse the exact route from a real source record.</p>
-      </section>
+    </section>
 
-    <section class="section">
-      <div class="eyebrow">Three ways to start</div>
-      <div class="grid">
-        <div class="card"><h3>1 · Choose a Quick Start</h3><p>Begin from a common outcome such as finding a table, understanding relationships, checking DVQR Score or investigating an issue.</p></div>
-        <div class="card"><h3>2 · Search 94 guided prompts</h3><p>Filter by category and Free/Pro tier, fill parameters, copy the rendered prompt and follow suggested next prompts.</p></div>
-        <div class="card"><h3>3 · Run a managed investigation</h3><p>For Pro investigations, start from a real problem, acquire bounded evidence, assess readiness and persist a Mini RCA checkpoint.</p></div>
-      </div>
+    <section class="section journey">
+      <div class="eyebrow">The v1 investigation journey</div>
+      <h2>From question to handoff</h2>
+      <p class="subtitle">Start small. DV Quick Run keeps the technical evidence connected as the investigation deepens.</p>
+      <div class="journey-line">Orient <span>→</span> Query <span>→</span> Understand <span>→</span> Traverse <span>→</span> Preserve <span>→</span> Investigate <span>→</span> Assess <span>→</span> Explain <span>→</span> Handoff</div>
     </section>
 
     <section class="section">
-      <div class="eyebrow">Managed investigation lifecycle</div>
-      <div class="grid">
-        <div class="card"><h3>🧭 Prepare & confirm</h3><p>Bind the investigation subject and explicit target, prepare a deterministic strategy, then stop for user confirmation or edit.</p></div>
-        <div class="card"><h3>🔎 Acquire bounded evidence</h3><p>Collect metadata, relationship context and target-aware runtime evidence one managed action at a time.</p></div>
-        <div class="card"><h3>📋 Assess readiness</h3><p>Reconcile the current persisted evidence fingerprint and expose gaps or stale checkpoints before synthesis.</p></div>
-        <div class="card"><h3>🧠 Generate bounded Mini RCA</h3><p>Persist supported, weakened and unresolved hypotheses with evidence gaps and the next-best discriminator.</p></div>
+      <div class="section-head">
+        <div class="eyebrow">Core v1 capabilities</div>
+        <h2>One workbench, connected investigation surfaces</h2>
+      </div>
+      <div class="cap-grid">
+        <div class="cap"><strong>Query & Explain</strong><span>OData, FetchXML, $batch, Query Doctor, Result Viewer and query refinement.</span></div>
+        <div class="cap"><strong>Metadata & Relationships</strong><span>Schema discovery, relationship intelligence, Guided Traversal and managed Business Paths.</span></div>
+        <div class="cap"><strong>Runtime & Capabilities</strong><span>Execution Insights, Custom API Intelligence and preview-first supported execution.</span></div>
+        <div class="cap"><strong>Operational Context</strong><span>Operational Profiles, DVQR Score and bounded Access Context.</span></div>
+        <div class="cap"><strong>Evidence & Comparison</strong><span>Snapshots, Cross-Environment Diff, Timeline Reconstruction and evidence correlation.</span></div>
+        <div class="cap"><strong>Professional Investigation</strong><span>Persisted investigation workflow, readiness, evidence gaps, bounded Mini RCA and handoff.</span></div>
       </div>
     </section>
 
-
-    <section class="section">
-      <div class="eyebrow">Local MCP quick start</div>
-      <div class="grid">
-        <div class="card"><h3>1 · Select environment</h3><p>Choose the Dataverse environment DV Quick Run should expose to the local MCP server.</p></div>
-        <div class="card"><h3>2 · Enable once</h3><p>Run <strong>DV Quick Run: Enable Local MCP Server</strong>. The workspace preference is remembered.</p></div>
-        <div class="card"><h3>3 · Sign in</h3><p>Use <code>az login --tenant &lt;tenant-id&gt; --allow-no-subscriptions</code> for tenant-only Dataverse access.</p></div>
-        <div class="card"><h3>4 · Ask Copilot</h3><p>Try: “Using DV Quick Run, show me what I can investigate in this Dataverse environment and recommend where to start.”</p></div>
+    <section class="section mcp">
+      <div class="eyebrow">Optional: Talk to Dataverse</div>
+      <h2>Local MCP in three steps</h2>
+      <p class="subtitle">Use DV Quick Run from GitHub Copilot Chat when conversational investigation is the fastest way to start.</p>
+      <div class="mcp-steps">
+        <div class="step"><strong>1 · Select environment</strong><span>Choose the Dataverse environment you want DV Quick Run to use.</span></div>
+        <div class="step"><strong>2 · Enable once</strong><span>Run <b>DV Quick Run: Enable Local MCP Server</b> for the workspace.</span></div>
+        <div class="step"><strong>3 · Ask</strong><span>Try: “Using DV Quick Run, show me what I can investigate here and recommend where to start.”</span></div>
       </div>
     </section>
 
-    <section class="section future">
-      <div class="eyebrow">Built on the v0.15.8 investigation foundation</div>
-      <div class="grid">
-        <div class="card"><h3>🔌 Custom API Intelligence</h3><p>Discover, explain, compare, recommend, architect, preview, execute, and interpret supported Custom APIs.</p></div>
-        <div class="card"><h3>🛡 Preview-first execution</h3><p>Short-lived preview IDs, explicit confirmation, atomic single-use consumption, and replay protection.</p></div>
-        <div class="card"><h3>🧠 Execution Intelligence</h3><p>Interpret stored HTTP, timing, transport, output, and error evidence without contacting Dataverse again.</p></div>
-        <div class="card"><h3>🏠 Workspace-owned experience</h3><p>Enable once; VS Code remembers and starts the server on demand.</p></div>
-      </div>
-    </section>
-
-    <section class="ecosystem">
-      <div class="eyebrow">DV ForgeLab Ecosystem</div>
-      <p class="ecosystem-list">DV Quick Run · DV Bulk Upsert Runner · DV Choice Editor · DV Environment Variable Manager · DV Identity Manager · DV Attribute Factory</p>
-      <p class="subtitle">DV Quick Run investigates. DV ForgeLab utilities reconstruct. Investigation and reconstruction remain separate concerns.</p>
-    </section>
+    <div class="actions">
+      <button class="primary" data-action="hub">Open Hub</button>
+      <button data-action="prompts">Prompt Library</button>
+      <button class="trial" data-action="pricing">Start 14-day Pro Trial</button>
+      <button data-action="store">Open Store</button>
+      <button data-action="products">DV ForgeLab Products</button>
+      <button data-action="continue">Continue</button>
+    </div>
+    <div class="footer">DV Quick Run keeps investigation evidence explicit and bounded. It helps you understand and explain what the available evidence supports; operational decisions remain with you.</div>
   </main>
 <script>
   const vscode = acquireVsCodeApi();
@@ -218,7 +205,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     "dvQuickRunWelcomeV0159",
-    "DV Quick Run v0.16.2",
+    "DV Quick Run v1.0.0",
     vscode.ViewColumn.One,
     {
       enableScripts: true,

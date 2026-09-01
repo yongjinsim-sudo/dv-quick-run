@@ -6,6 +6,19 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v1.0.0 — First Stable Release
+
+DV Quick Run v1.0.0 brings the complete DVQR investigation experience together as the first stable release. Features developed throughout the 0.x series now form one coherent v1 product contract; their original introduction remains recorded in the historical changelog entries below.
+
+- Establishes `1.0.0` as the canonical current release identity across package, Welcome, Hub, README and current feature surfaces.
+- Locks the application-owned trust boundary: configured environment, registered capability, entitlement, identifier validation, server-owned bounds and central redaction remain authoritative.
+- Locks Managed Business Path semantics: explicit Save, metadata-only Reverify, separate source-record Runtime Verify, exact-route STOP, explicit new scope and human-owned BusinessPreferred governance.
+- Locks Professional Investigation as bounded evidence coordination and Mini RCA as zero-acquisition explanation; participation remains distinct from causality.
+- Free and Pro retain the same truth and safety semantics. Pro adds persisted professional investigation depth rather than stronger evidence authority.
+- Governed supported Custom API execution remains available according to the authoritative v1 capability catalogue and keeps preview/confirmation safeguards.
+- Permanent A01–A20 adversarial regression coverage remains part of the v1 security contract.
+- Historical 0.x entries below remain release history only and do not define current feature provenance or the active v1 product contract.
+
 ## DV Quick Run v0.16.2 — MCP Security Hardening II
 
 This focused pre-v1 qualification release validates and hardens DVQR's model ↔ MCP ↔ application ↔ Dataverse trust boundary through permanent adversarial regression coverage and bounded real-environment red-team testing.

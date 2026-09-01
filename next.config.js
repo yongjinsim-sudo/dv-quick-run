@@ -4,4 +4,3 @@ const nextConfig = {
 /* config options here */
 };
 exports.default = nextConfig;
-//# sourceMappingURL=next.config.js.map

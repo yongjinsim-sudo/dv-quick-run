@@ -111,7 +111,7 @@ suite("Permanent adversarial regression suite governance", () => {
       ["msemr", "_careplan"].join(""),
       ["msemr", "_careplanactivities"].join(""),
       ["bu", "_tasks"].join(""),
-      ["hcpdev", ".crm6.dynamics.com"].join("")
+      ["privateorg", ".crm6.dynamics.com"].join("")
     ];
 
     for (const source of readSecuritySources()) {
