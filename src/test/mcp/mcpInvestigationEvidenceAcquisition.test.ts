@@ -345,13 +345,13 @@ suite("mcpInvestigationEvidenceAcquisition", () => {
     const result = provider.normalize({
       ok: true,
       structuredContent: {
-        targetTable: "bu_task",
+        targetTable: "sample_task",
         interval: { fromIso: "2026-08-01T00:00:00Z", toIso: "2026-08-02T00:00:00Z" },
         audit: { ok: true, structuredContent: { data: { value: [] } } },
         asyncOperations: { ok: true, structuredContent: { data: { value: [] } } },
         pluginTrace: { ok: true, structuredContent: { data: { value: [] } } }
       }
-    }, { investigation: { subject: { kind: "Record", logicalName: "contact" }, currentIntent: { directionLogicalName: "bu_task" } } as never, acquiredAt: "2026-08-02T00:00:00Z" });
+    }, { investigation: { subject: { kind: "Record", logicalName: "contact" }, currentIntent: { directionLogicalName: "sample_task" } } as never, acquiredAt: "2026-08-02T00:00:00Z" });
 
     const payload = result.payload as any;
     assert.strictEqual(result.status, "Acquired");

@@ -42,17 +42,17 @@ const activityHop: BusinessPathHop = {
 const taskHop: BusinessPathHop = {
   ordinal: 3,
   fromTable: "msemr_careplanactivity",
-  toTable: "bu_task",
-  relationshipSchemaName: "bu_task_msemr_careplanactivity",
+  toTable: "sample_task",
+  relationshipSchemaName: "sample_task_msemr_careplanactivity",
   relationshipType: "ManyToOne",
   direction: "forward",
-  navigationProperty: "bu_Task",
-  lookupAttribute: "bu_task"
+  navigationProperty: "sample_Task",
+  lookupAttribute: "sample_task"
 };
 
 function artifact(hops: readonly BusinessPathHop[] = [patientHop, activityHop, taskHop]): BusinessPathArtifact {
   const sourceTable = "contact";
-  const targetTable = "bu_task";
+  const targetTable = "sample_task";
   return {
     schemaVersion: DVQR_BUSINESS_PATH_SCHEMA_VERSION,
     id: businessPathId(sourceTable, targetTable, hops),
@@ -93,19 +93,19 @@ function artifact(hops: readonly BusinessPathHop[] = [patientHop, activityHop, t
 
 suite("Managed Business Path contracts", () => {
   test("builds deterministic identity from exact relationship route", () => {
-    const first = businessPathId("contact", "bu_task", [patientHop, activityHop, taskHop]);
-    const second = businessPathId("CONTACT", "BU_TASK", [patientHop, activityHop, taskHop]);
+    const first = businessPathId("contact", "sample_task", [patientHop, activityHop, taskHop]);
+    const second = businessPathId("CONTACT", "SAMPLE_TASK", [patientHop, activityHop, taskHop]);
     assert.strictEqual(first, second);
     assert.match(first, /^bp_[0-9a-f]{8}$/);
   });
 
   test("keeps same table sequence but different relationship identity distinct", () => {
-    const patient = businessPathId("contact", "bu_task", [patientHop, activityHop, taskHop]);
-    const author = businessPathId("contact", "bu_task", [authorHop, activityHop, taskHop]);
+    const patient = businessPathId("contact", "sample_task", [patientHop, activityHop, taskHop]);
+    const author = businessPathId("contact", "sample_task", [authorHop, activityHop, taskHop]);
     assert.notStrictEqual(patient, author);
     assert.notStrictEqual(
-      canonicalBusinessPathKey("contact", "bu_task", [patientHop, activityHop, taskHop]),
-      canonicalBusinessPathKey("contact", "bu_task", [authorHop, activityHop, taskHop])
+      canonicalBusinessPathKey("contact", "sample_task", [patientHop, activityHop, taskHop]),
+      canonicalBusinessPathKey("contact", "sample_task", [authorHop, activityHop, taskHop])
     );
   });
 

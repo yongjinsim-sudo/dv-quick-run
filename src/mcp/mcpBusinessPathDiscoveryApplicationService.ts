@@ -145,7 +145,7 @@ export class McpBusinessPathDiscoveryApplicationService {
             "Depth-diverse discovery intentionally retains plausible multi-hop business routes even when direct relationships exist."
           ] : ["Verify the source and target logical names or increase maxDepth cautiously."],
           limitations: [
-            "Pass 10.1 performs metadata-only discovery and ranking; it does not execute Dataverse record queries.",
+            "Business Path discovery performs metadata-only discovery and ranking; it does not execute Dataverse record queries.",
             "A higher business-path score means stronger metadata-based business-flow signals, not proof of runtime usage.",
             "Discovery itself does not persist preference. Existing workspace Preferred paths are consumed as a presentation overlay and remain distinct from discovery scoring.",
             "Direct relationships do not suppress deeper workflow candidates; the candidate set is deliberately depth-diverse before business ranking."

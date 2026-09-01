@@ -81,7 +81,7 @@ suite("mcpBusinessPathRuntimeValidation", () => {
 
 
   test("classifies a one-hop winner as direct runtime reachability rather than business traversal semantics", () => {
-    const direct = candidate("direct-observed", 110, ["contact", "bu_task"]);
+    const direct = candidate("direct-observed", 110, ["contact", "sample_task"]);
     const result = validateBusinessPathResult(direct, probe(direct.pathId, true, [2], 40) as any, 3);
     assert.strictEqual(result.runtimeStatus, "RuntimeViable");
     assert.strictEqual(result.routeSemantics, "DirectRuntimeReachability");
@@ -92,8 +92,8 @@ suite("mcpBusinessPathRuntimeValidation", () => {
   });
 
   test("preserves an investigator-asserted multi-hop traversal as business authority independently of runtime ranking", () => {
-    const asserted = candidate("asserted-care-chain", 80, ["contact", "msemr_careplan", "msemr_careplanactivity", "bu_task"]);
-    const shortcut = candidate("direct-shortcut", 120, ["contact", "bu_task"]);
+    const asserted = candidate("asserted-care-chain", 80, ["contact", "msemr_careplan", "msemr_careplanactivity", "sample_task"]);
+    const shortcut = candidate("direct-shortcut", 120, ["contact", "sample_task"]);
     const assertedResult = validateBusinessPathResult(asserted, probe(asserted.pathId, true, [1, 1, 2], 20) as any, 3, true);
     const shortcutResult = validateBusinessPathResult(shortcut, probe(shortcut.pathId, true, [3], 50) as any, 3);
     const ranked = rankValidatedBusinessPaths([assertedResult, shortcutResult]);

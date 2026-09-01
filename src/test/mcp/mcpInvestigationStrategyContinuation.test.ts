@@ -130,7 +130,7 @@ suite("mcpInvestigationStrategyContinuation", () => {
         status: "ReadyForMiniRca",
         environmentId: "example.crm.dynamics.com",
         subject: { kind: "Record", logicalName: "msemr_careplanactivity", displayLabel: "Care Plan Activity", recordIdMasked: "***3a6a75e8" },
-        question: "Investigate downstream bu_task creation",
+        question: "Investigate downstream sample_task creation",
         createdAt: now,
         updatedAt: now,
         evidenceRefs: [
@@ -144,7 +144,7 @@ suite("mcpInvestigationStrategyContinuation", () => {
         executionRefs: [], reportRefs: [],
         lineage: { derivedFromArtifactIds: [], createdByCapability: "dvqr_start_investigation" },
         limitations: [], staleState: { isStale: false, reasons: [] },
-        currentIntent: { intentVersion: 1, leadingDirection: "bu_task", directionLabel: "bu_task", directionLogicalName: "bu_task", reportedProblem: "How did bu_task come to exist?", keywords: [], reason: "confirmed", updatedBy: "User", updatedAt: now }
+        currentIntent: { intentVersion: 1, leadingDirection: "sample_task", directionLabel: "sample_task", directionLogicalName: "sample_task", reportedProblem: "How did sample_task come to exist?", keywords: [], reason: "confirmed", updatedBy: "User", updatedAt: now }
       } as unknown as Investigation;
       const fp = investigationEvidenceSetFingerprint(base);
       const ready = {
@@ -159,7 +159,7 @@ suite("mcpInvestigationStrategyContinuation", () => {
       assert.strictEqual(mechanism.presentedStep?.title, "Inspect creation / transition mechanism evidence");
       assert.strictEqual(mechanism.recommendedAction?.tool, "dvqr_acquire_investigation_evidence");
       assert.strictEqual(mechanism.recommendedAction?.arguments.providerId, "mechanism-context");
-      assert.strictEqual(mechanism.recommendedAction?.arguments.targetTable, "bu_task");
+      assert.strictEqual(mechanism.recommendedAction?.arguments.targetTable, "sample_task");
       assert.strictEqual(mechanism.recommendedAction?.requiredHostArguments?.fromIso?.source, "ExplicitJustifiedEvidenceWindow");
       assert.strictEqual(mechanism.recommendedAction?.requiredHostArguments?.toIso?.source, "ExplicitJustifiedEvidenceWindow");
       assert.match(mechanism.recommendedAction?.reason ?? "", /evidence fingerprint/i);
@@ -210,7 +210,7 @@ suite("mcpInvestigationStrategyContinuation", () => {
         status: "ReadyForMiniRca",
         environmentId: "example.crm.dynamics.com",
         subject: { kind: "Record", logicalName: "msemr_careplanactivity", displayLabel: "Care Plan Activity", recordIdMasked: "***3a6a75e8" },
-        question: "Investigate downstream bu_task creation",
+        question: "Investigate downstream sample_task creation",
         createdAt: now, updatedAt: now,
         evidenceRefs: [
           { evidenceId: "ev-meta", providerId: "metadata", status: "Acquired", acquiredAt: now },
@@ -221,7 +221,7 @@ suite("mcpInvestigationStrategyContinuation", () => {
         ],
         contributorStates: [], miniRcaArtifactRefs: ["mrca-final"], executionRefs: [], reportRefs: [],
         lineage: { derivedFromArtifactIds: [], createdByCapability: "dvqr_start_investigation" }, limitations: [], staleState: { isStale: false, reasons: [] },
-        currentIntent: { intentVersion: 1, leadingDirection: "bu_task", directionLabel: "bu_task", directionLogicalName: "bu_task", reportedProblem: "How did bu_task come to exist?", keywords: [], reason: "confirmed", updatedBy: "User", updatedAt: now }
+        currentIntent: { intentVersion: 1, leadingDirection: "sample_task", directionLabel: "sample_task", directionLogicalName: "sample_task", reportedProblem: "How did sample_task come to exist?", keywords: [], reason: "confirmed", updatedBy: "User", updatedAt: now }
       } as unknown as Investigation;
       const fp = investigationEvidenceSetFingerprint(base);
       const strategy = buildInvestigationStrategy(base);
@@ -236,7 +236,7 @@ suite("mcpInvestigationStrategyContinuation", () => {
       const completed = service.continue(complete.investigationId);
       assert.strictEqual(completed.completion?.state, "InvestigationComplete");
       assert.strictEqual(repository.get(complete.investigationId)?.managedCompletionHistory?.length, 1);
-      assert.strictEqual(repository.get(complete.investigationId)?.currentIntent?.directionLogicalName, "bu_task");
+      assert.strictEqual(repository.get(complete.investigationId)?.currentIntent?.directionLogicalName, "sample_task");
 
       const persisted = repository.get(complete.investigationId)!;
       repository.save({
@@ -246,7 +246,7 @@ suite("mcpInvestigationStrategyContinuation", () => {
       } as Investigation);
 
       const reopened = service.continue(complete.investigationId);
-      assert.strictEqual(reopened.investigation.currentIntent?.directionLogicalName, "bu_task");
+      assert.strictEqual(reopened.investigation.currentIntent?.directionLogicalName, "sample_task");
       assert.strictEqual(reopened.recommendedAction?.tool, "dvqr_assess_investigation_readiness");
       assert.notStrictEqual(reopened.recommendedAction?.arguments.providerId, "runtime-relationship");
       assert.strictEqual(reopened.investigation.strategy?.steps.find((step) => step.order === 4)?.status, "Completed");

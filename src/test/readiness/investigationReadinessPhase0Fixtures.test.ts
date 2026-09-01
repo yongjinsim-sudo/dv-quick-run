@@ -369,7 +369,7 @@ suite("investigationReadinessPhase0Fixtures", () => {
   test("contains no unresolved or customer-specific fixture language", () => {
     const fixtureText = `${JSON.stringify(catalogue)}\n${JSON.stringify(golden)}`;
     assert.doesNotMatch(fixtureText, /\b(?:TODO|TBD|FIXME|lorem ipsum|customer-specific)\b/i);
-    assert.doesNotMatch(fixtureText, /\b(?:Bupa|Infosys)\b/i);
+    assert.doesNotMatch(fixtureText, /\b(?:CustomerName|ConsultingPartner)\b/i);
     assert.match(fixtureText, /Sample Work Item/);
   });
 });

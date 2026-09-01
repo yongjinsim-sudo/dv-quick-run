@@ -33,18 +33,18 @@ const hops: readonly BusinessPathHop[] = [
   {
     ordinal: 3,
     fromTable: "msemr_careplanactivity",
-    toTable: "bu_task",
-    relationshipSchemaName: "bu_task_msemr_careplanactivity",
+    toTable: "sample_task",
+    relationshipSchemaName: "sample_task_msemr_careplanactivity",
     relationshipType: "ManyToOne",
     direction: "forward",
-    navigationProperty: "bu_Task",
-    lookupAttribute: "bu_task"
+    navigationProperty: "sample_Task",
+    lookupAttribute: "sample_task"
   }
 ];
 
 function artifact(): BusinessPathArtifact {
   const sourceTable = "contact";
-  const targetTable = "bu_task";
+  const targetTable = "sample_task";
   return {
     schemaVersion: DVQR_BUSINESS_PATH_SCHEMA_VERSION,
     id: businessPathId(sourceTable,targetTable,hops),
@@ -91,7 +91,7 @@ function provider(options: {
   failTable?: string;
   failRelationshipsFrom?: string;
 } = {}): BusinessPathMetadataProvider {
-  const tables=new Set(["contact","msemr_careplan","msemr_careplanactivity","bu_task"]);
+  const tables=new Set(["contact","msemr_careplan","msemr_careplanactivity","sample_task"]);
   if(options.missingTable) tables.delete(options.missingTable.toLowerCase());
   const items=relationships.map((item)=>({...item}));
   options.mutate?.(items);
@@ -149,7 +149,7 @@ suite("Managed Business Path metadata revalidation",()=>{
   });
 
   test("missing target table makes the path stale",async()=>{
-    const result=await new BusinessPathRevalidationService(provider({missingTable:"bu_task"})).revalidate(artifact());
+    const result=await new BusinessPathRevalidationService(provider({missingTable:"sample_task"})).revalidate(artifact());
     assert.strictEqual(result.state,"stale");
     assert.ok(result.issues.some((item)=>item.code==="target-table-missing"));
   });
@@ -223,7 +223,7 @@ suite("Managed Business Path metadata revalidation",()=>{
   test("revalidation never changes historical runtime verification",async()=>{
     const value=artifact();
     const before=JSON.stringify(value);
-    const result=await new BusinessPathRevalidationService(provider({missingTable:"bu_task"})).revalidate(value);
+    const result=await new BusinessPathRevalidationService(provider({missingTable:"sample_task"})).revalidate(value);
     assert.strictEqual(result.state,"stale");
     assert.strictEqual(JSON.stringify(value),before);
     assert.strictEqual(value.verification?.status,"verified");

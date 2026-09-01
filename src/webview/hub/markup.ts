@@ -303,18 +303,18 @@ function renderDvForgeLabEcosystem(): string {
 
 function renderReleaseHighlights(): string {
   const highlights = [
-    ["Security Hardening II Complete", "Keep capability, entitlement, environment identity and server-owned bounds in canonical DVQR application services."],
-    ["Reverify Means Metadata", "Revalidate a saved Business Path against current metadata without silently turning the request into record traversal."],
-    ["Exact Runtime Verification", "When a source record is supplied, execute the reviewed saved route only and preserve every relationship boundary."],
-    ["Empty-Frontier STOP", "Keep downstream targets NotReached when continuation ends and require an explicit new scope before alternate-route work."],
-    ["Credential-Safe Diagnostics", "Redact credential-shaped values from structured and text projections while preserving useful failure classification."],
-    ["Contained Persistence", "Keep Business Path and investigation writes inside the canonical workspace, including real-path containment checks."],
-    ["Bounded Investigation", "Keep recommendations non-authoritative, revalidate chained actions independently and keep Mini RCA zero-acquisition."],
-    ["Qualified for v1 Assessment", "Permanent adversarial regression coverage and bounded non-production dogfooding protect the settled v0.16.2 contracts." ]
+    ["One Connected Investigation Workbench", "Move from metadata and queries through relationships, runtime evidence, readiness, Mini RCA and handoff without losing the evidence chain."],
+    ["Managed Business Paths", "Discover and test real multi-hop routes, save reviewed paths explicitly, Reverify metadata separately and Runtime Verify the exact saved route from a real source record."],
+    ["Professional Investigation", "Persist investigation intent and bounded evidence, assess readiness and gaps, and carry the investigation through to evidence-backed Mini RCA and handoff."],
+    ["Operational Understanding", "Use Operational Profiles, DVQR Score, Access Context and execution evidence to orient investigation without turning derived signals into root-cause claims."],
+    ["Evidence Across Environments and Time", "Preserve snapshots, compare compatible environments, reconstruct first-observed timeline intervals and keep historical evidence distinct from current truth."],
+    ["Governed Custom API Execution", "Discover and explain supported operations, preview eligible execution, require explicit confirmation and interpret stored runtime evidence."],
+    ["Local MCP + Prompt Library", "Use 64 bounded Local MCP tools and 94 guided prompts while DVQR application code retains environment, capability, entitlement, bounds and evidence authority."],
+    ["Free Foundation · Pro Acceleration", "Free and Pro share the same truth and safety model; Pro adds persisted continuity, deeper evidence workflows, comparison, timeline, Mini RCA and handoff." ]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v0.16.2</h2>
-    <p class="dvqr-section-note">MCP Security Hardening II is complete: deterministic authority, metadata-only Reverify, exact-route runtime verification, explicit STOP/new-scope semantics, contained persistence and credential-safe diagnostics.</p>
+    <h2>What's New in v1.0.0</h2>
+    <p class="dvqr-section-note">DV Quick Run v1.0.0 brings the complete evidence-backed Dataverse investigation workflow together in one local-first workbench.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }

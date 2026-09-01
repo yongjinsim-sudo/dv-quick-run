@@ -54,6 +54,8 @@ suite("releasePackagingPrivacy", () => {
     const ignore = fs.readFileSync(path.join(workspaceRoot(), ".vscodeignore"), "utf8");
     const requiredPatterns = [
       ".vscode-test/**",
+      "vscode/**",
+      ".dvforgelab/**",
       ".agents/**",
       ".codex/**",
       ".git/**",
@@ -106,8 +108,8 @@ suite("releasePackagingPrivacy", () => {
       path.join(root, "package.json")
     ];
     const forbidden = [
-      /\bbupa\b/i,
-      /\binfosys\b/i,
+      /\bcustomername\b/i,
+      /\bconsultingpartner\b/i,
       /\bmsemr_/i,
       /\bbu_[a-z0-9_]+/i,
       /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/i,
@@ -123,38 +125,37 @@ suite("releasePackagingPrivacy", () => {
     }
   });
 
-  test("keeps v0.16.2 public release surfaces aligned and customer-neutral", () => {
+  test("keeps v1.0.0 package identity and v1 public release surfaces customer-neutral", () => {
     const root = workspaceRoot();
     const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as { version: string };
-    assert.strictEqual(packageJson.version, "0.16.2");
+    assert.strictEqual(packageJson.version, "1.0.0");
 
     const surfaces = [
       fs.readFileSync(path.join(root, "README.md"), "utf8"),
-      fs.readFileSync(path.join(root, "CHANGELOG.md"), "utf8"),
       fs.readFileSync(path.join(root, "src", "mcp", "mcpLiveToolCatalogue.ts"), "utf8"),
       fs.readFileSync(path.join(root, "src", "commands", "hub", "dvQuickRunHubContent.ts"), "utf8"),
       fs.readFileSync(path.join(root, "src", "runtime", "proWelcomeLifecycle.ts"), "utf8"),
       fs.readFileSync(path.join(root, "src", "webview", "hub", "markup.ts"), "utf8")
     ].join("\n");
 
-    assert.match(surfaces, /v0\.16\.2/);
-    assert.match(surfaces, /MCP Security Hardening II/);
+    assert.doesNotMatch(surfaces, /MCP Security Hardening II/);
+    assert.doesNotMatch(surfaces, /v1\.0\.0 (?:is the )?(?:starting )?baseline/i);
+    assert.doesNotMatch(surfaces, /Pass 10\.[0-9]/);
     for (const pattern of [
-      /\bbupa\b/i,
-      /hcpdev\.crm\d*\.dynamics\.com/i,
+      /\bcustomername\b/i,
+      /privateorg\.crm\d*\.dynamics\.com/i,
       /\bmsemr_/i,
-      /\bbu_task\b/i,
+      /\bsample_task\b/i,
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i
     ]) {
-      assert.doesNotMatch(surfaces, pattern, "v0.16.2 public release surface contains customer-specific material.");
+      assert.doesNotMatch(surfaces, pattern, "v1.0.0 public release surface contains customer-specific material.");
     }
   });
 
-  test("keeps public v0.15.3 messaging bounded and non-authoritative", () => {
+  test("keeps v1 public messaging bounded and non-authoritative", () => {
     const root = workspaceRoot();
     const surfaces = [
       fs.readFileSync(path.join(root, "README.md"), "utf8"),
-      fs.readFileSync(path.join(root, "CHANGELOG.md"), "utf8"),
       fs.readFileSync(path.join(root, "src", "commands", "hub", "dvQuickRunHubContent.ts"), "utf8"),
       fs.readFileSync(path.join(root, "src", "runtime", "proWelcomeLifecycle.ts"), "utf8")
     ].join("\n");
@@ -167,7 +168,9 @@ suite("releasePackagingPrivacy", () => {
     ]) {
       assert.strictEqual(surfaces.includes(phrase), false, `Prohibited public claim: ${phrase}`);
     }
-    assert.match(surfaces, /does not certify|never certifies/i);
+    assert.match(surfaces, /not a security certification/i);
+    assert.match(surfaces, /Participation is not causality/i);
+    assert.match(surfaces, /Humans retain operational authority/i);
     assert.match(surfaces, /local MCP|MCP server|stdio/i);
   });
 });

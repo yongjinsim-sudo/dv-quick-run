@@ -25,7 +25,7 @@ const hops: readonly BusinessPathHop[] = [
   {
     ordinal: 2,
     fromTable: "careplan",
-    toTable: "bu_task",
+    toTable: "sample_task",
     relationshipSchemaName: "careplan_tasks",
     relationshipType: "OneToMany",
     direction: "forward",
@@ -35,7 +35,7 @@ const hops: readonly BusinessPathHop[] = [
 
 function artifact(state: "saved" | "preferred" | "disabled" = "preferred"): BusinessPathArtifact {
   const sourceTable = "contact";
-  const targetTable = "bu_task";
+  const targetTable = "sample_task";
   return {
     schemaVersion: DVQR_BUSINESS_PATH_SCHEMA_VERSION,
     id: businessPathId(sourceTable, targetTable, hops),
@@ -126,13 +126,13 @@ suite("Security adversarial malicious Business Path artifacts", () => {
       ...hops[index % hops.length],
       ordinal: index + 1,
       fromTable: index === 0 ? "contact" : `table_${index}`,
-      toTable: index === 6 ? "bu_task" : `table_${index + 1}`,
+      toTable: index === 6 ? "sample_task" : `table_${index + 1}`,
       relationshipSchemaName: `relationship_${index + 1}`
     })) as BusinessPathHop[];
     const excessive: BusinessPathArtifact = {
       ...artifact(),
       hops: excessiveHops,
-      id: businessPathId("contact", "bu_task", excessiveHops)
+      id: businessPathId("contact", "sample_task", excessiveHops)
     };
     const huge: BusinessPathArtifact = { ...artifact(), description: "x".repeat(4097) };
     const controls: BusinessPathArtifact = { ...artifact(), name: "Contact\u0000to Task" };

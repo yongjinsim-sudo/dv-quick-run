@@ -28,7 +28,7 @@ const hops: readonly BusinessPathHop[] = [
   {
     ordinal: 2,
     fromTable: "msemr_careplan",
-    toTable: "bu_task",
+    toTable: "sample_task",
     relationshipSchemaName: "careplan_tasks",
     relationshipType: "OneToMany",
     direction: "forward",
@@ -39,7 +39,7 @@ const hops: readonly BusinessPathHop[] = [
 
 function artifact(state:"preferred"|"disabled"="preferred"):BusinessPathArtifact{
   const sourceTable="contact";
-  const targetTable="bu_task";
+  const targetTable="sample_task";
   return {
     schemaVersion:DVQR_BUSINESS_PATH_SCHEMA_VERSION,
     id:businessPathId(sourceTable,targetTable,hops),
@@ -71,7 +71,7 @@ function revalidation(state:"valid"|"stale"|"unknown"="valid"):BusinessPathReval
     state,
     activeEnvironmentId:"example.crm.dynamics.com",
     historicallyVerifiedInActiveEnvironment:true,
-    checkedTables:["contact","msemr_careplan","bu_task"],
+    checkedTables:["contact","msemr_careplan","sample_task"],
     checkedHops:state==="valid"?2:1,
     issues:[]
   };
@@ -79,18 +79,18 @@ function revalidation(state:"valid"|"stale"|"unknown"="valid"):BusinessPathReval
 
 suite("Preferred Business Path runtime reuse",()=>{
   test("derives exact table and relationship-schema sequences from the saved artifact",()=>{
-    assert.deepStrictEqual(businessPathTables(artifact()),["contact","msemr_careplan","bu_task"]);
+    assert.deepStrictEqual(businessPathTables(artifact()),["contact","msemr_careplan","sample_task"]);
     assert.deepStrictEqual(businessPathRelationshipSchemas(artifact()),["patient_role","careplan_tasks"]);
   });
 
   test("matches exact saved relationship variant and rejects another role with same tables",()=>{
     const exact:any={
       pathId:"exact",
-      tables:["contact","msemr_careplan","bu_task"],
+      tables:["contact","msemr_careplan","sample_task"],
       bridgeTables:["msemr_careplan"],
       hops:[
         {fromTable:"contact",toTable:"msemr_careplan",relationshipSchemaName:"patient_role"},
-        {fromTable:"msemr_careplan",toTable:"bu_task",relationshipSchemaName:"careplan_tasks"}
+        {fromTable:"msemr_careplan",toTable:"sample_task",relationshipSchemaName:"careplan_tasks"}
       ]
     };
     const author:any={
@@ -116,15 +116,15 @@ suite("Preferred Business Path runtime reuse",()=>{
       artifact:artifact(),
       revalidation:revalidation(),
       sourceRecordId:"record-1",
-      runtimeArguments:{environmentName:"BUPA"},
+      runtimeArguments:{environmentName:"SAMPLE-ENV"},
       maxCandidates:4
     });
 
-    assert.strictEqual(args.environmentName,"BUPA");
+    assert.strictEqual(args.environmentName,"SAMPLE-ENV");
     assert.strictEqual(args.sourceTable,"contact");
-    assert.strictEqual(args.targetTable,"bu_task");
+    assert.strictEqual(args.targetTable,"sample_task");
     assert.strictEqual(args.sourceRecordId,"record-1");
-    assert.deepStrictEqual(args.assertedBusinessPathTables,["contact","msemr_careplan","bu_task"]);
+    assert.deepStrictEqual(args.assertedBusinessPathTables,["contact","msemr_careplan","sample_task"]);
     assert.deepStrictEqual(args.assertedBusinessPathRelationshipSchemaNames,["patient_role","careplan_tasks"]);
     assert.strictEqual(args.preferredBusinessPathId,artifact().id);
     assert.strictEqual(args.preferredBusinessPathHistoricalVerification,"verified");

@@ -10,8 +10,8 @@ import type { McpValidatedBusinessPath } from "../../mcp/mcpBusinessPathRuntimeV
 
 function candidate(): McpBusinessPathCandidate {
   return {
-    pathId: "contact:contact_careplans:msemr_careplan|msemr_careplan:careplan_activities:msemr_careplanactivity|msemr_careplanactivity:bu_Task:bu_task",
-    tables: ["contact", "msemr_careplan", "msemr_careplanactivity", "bu_task"],
+    pathId: "contact:contact_careplans:msemr_careplan|msemr_careplan:careplan_activities:msemr_careplanactivity|msemr_careplanactivity:sample_Task:sample_task",
+    tables: ["contact", "msemr_careplan", "msemr_careplanactivity", "sample_task"],
     bridgeTables: ["msemr_careplan", "msemr_careplanactivity"],
     hops: [
       {
@@ -38,10 +38,10 @@ function candidate(): McpBusinessPathCandidate {
       },
       {
         fromTable: "msemr_careplanactivity",
-        toTable: "bu_task",
-        navigationProperty: "bu_Task",
-        relationshipSchemaName: "bu_task_msemr_careplanactivity",
-        referencingAttribute: "bu_task",
+        toTable: "sample_task",
+        navigationProperty: "sample_Task",
+        relationshipSchemaName: "sample_task_msemr_careplanactivity",
+        referencingAttribute: "sample_task",
         relationshipType: "ManyToOne",
         direction: "manyToOne",
         collectionValued: false,
@@ -130,7 +130,7 @@ suite("Business Path explicit promotion", () => {
     assert.deepStrictEqual(result.artifact.hops.map((hop) => hop.relationshipSchemaName), [
       "msemr_contact_msemr_careplan_PatientIdentifier",
       "msemr_msemr_careplan_msemr_careplanactivity_CarePlan",
-      "bu_task_msemr_careplanactivity"
+      "sample_task_msemr_careplanactivity"
     ]);
     assert.strictEqual(repository.list().length, 1);
   });

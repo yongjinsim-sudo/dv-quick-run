@@ -12,7 +12,7 @@ suite("MCP relationship runtime evidence", () => {
   const carePlan = rankRelationshipPath([
     edge("contact", "msemr_careplan", "msemr_contact_msemr_careplans"),
     edge("msemr_careplan", "msemr_careplanactivity", "msemr_careplanactivities"),
-    edge("msemr_careplanactivity", "bu_task", "bu_tasks")
+    edge("msemr_careplanactivity", "sample_task", "sample_tasks")
   ]);
 
   test("groups materially different path families", () => {

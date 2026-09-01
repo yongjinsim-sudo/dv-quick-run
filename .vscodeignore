@@ -1,4 +1,6 @@
 .vscode/**
+vscode/**
+.dvforgelab/**
 .vscode-test/**
 .agents/**
 .codex/**

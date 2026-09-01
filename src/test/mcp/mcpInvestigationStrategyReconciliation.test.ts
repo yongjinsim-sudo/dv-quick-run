@@ -396,11 +396,11 @@ suite("mcpInvestigationStrategyReconciliation", () => {
         status: "ReadyForMiniRca",
         environmentId: "example.crm.dynamics.com",
         subject: { kind: "Record", logicalName: "msemr_careplanactivity", recordIdMasked: "***3a6a75e8" },
-        question: "Investigate downstream bu_task",
+        question: "Investigate downstream sample_task",
         createdAt: now, updatedAt: now, bootstrapCompletedAt: now,
         evidenceRefs, contributorStates: [], miniRcaArtifactRefs: ["mrca-88888888-8888-4888-8888-888888888888"], executionRefs: [], reportRefs: [],
         lineage: { derivedFromArtifactIds: [], createdByCapability: "dvqr_start_investigation" }, limitations: [], staleState: { isStale: false, reasons: [] },
-        currentIntent: { intentVersion: 1, leadingDirection: "bu_task", directionLabel: "bu_task", directionLogicalName: "bu_task", directionSource: "UserCustom", reportedProblem: "How did task come to exist?", keywords: [], reason: "confirmed", updatedBy: "User", updatedAt: now }
+        currentIntent: { intentVersion: 1, leadingDirection: "sample_task", directionLabel: "sample_task", directionLogicalName: "sample_task", directionSource: "UserCustom", reportedProblem: "How did task come to exist?", keywords: [], reason: "confirmed", updatedBy: "User", updatedAt: now }
       };
       const fp = investigationEvidenceSetFingerprint(base);
       base.managedReadiness = { contractVersion: "dvqr-managed-investigation-readiness-v1", investigationId: base.investigationId, posture: "Conditional", summary: "current", evidenceCount: 5, providerContributions: [], gaps: [], recommendations: [], baseSynthesizedConfidence: "Low", effectiveSynthesizedConfidence: "Low", confidenceEffect: "Qualify", limitations: [], assessmentUtc: now, evidenceSetFingerprint: fp, isStale: false };
@@ -411,7 +411,7 @@ suite("mcpInvestigationStrategyReconciliation", () => {
       assert.strictEqual(continued.optionalActions?.length, 1);
       assert.strictEqual(continued.optionalActions?.[0]?.kind, "ToolCall");
       assert.strictEqual(continued.optionalActions?.[0]?.tool, "dvqr_acquire_timeline_context");
-      assert.deepStrictEqual(continued.optionalActions?.[0]?.arguments, { investigationId: base.investigationId, targetTable: "bu_task" });
+      assert.deepStrictEqual(continued.optionalActions?.[0]?.arguments, { investigationId: base.investigationId, targetTable: "sample_task" });
       assert.strictEqual(continued.optionalActions?.[0]?.requiredHostArguments?.fromIso?.required, true);
       assert.strictEqual(continued.optionalActions?.[0]?.requiredHostArguments?.toIso?.required, true);
       assert.match(continued.optionalActions?.[0]?.reason ?? "", /optional independent chronology discriminator/i);

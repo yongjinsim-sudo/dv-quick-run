@@ -7,7 +7,7 @@ suite("mcpRelationshipGuidance", () => {
     const edges: McpRelationshipEdge[] = [
       { fromTable:"contact", toTable:"msemr_careplan", navigationProperty:"msemr_contact_msemr_careplans", relationshipType:"OneToMany", direction:"oneToMany", collectionValued:true },
       { fromTable:"msemr_careplan", toTable:"msemr_careplanactivity", navigationProperty:"msemr_careplan_msemr_careplanactivities", relationshipType:"OneToMany", direction:"oneToMany", collectionValued:true },
-      { fromTable:"msemr_careplanactivity", toTable:"bu_task", navigationProperty:"bu_tasks", relationshipType:"OneToMany", direction:"oneToMany", collectionValued:true }
+      { fromTable:"msemr_careplanactivity", toTable:"sample_task", navigationProperty:"sample_tasks", relationshipType:"OneToMany", direction:"oneToMany", collectionValued:true }
     ];
     const guidance = buildRelationshipPathGuidance(rankRelationshipPath(edges));
     assert.strictEqual(guidance.pathShape, "Bridged");

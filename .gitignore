@@ -43,3 +43,5 @@ next.config.js.map
 *.pem
 *.key
 *.secret
+vscode/
+.dvforgelab/

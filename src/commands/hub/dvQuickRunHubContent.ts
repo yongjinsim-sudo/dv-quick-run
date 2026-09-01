@@ -169,7 +169,7 @@ export const capabilities: readonly CapabilityInfo[] = [
     relatedPlaybooks: ["runtime-behaviour", "entity-relationships"],
     howToUse: ["Enable Pro Local MCP.", "Call dvqr_start_investigation.", "Reload with dvqr_get_investigation or inspect the index with dvqr_list_investigations."],
     status: "available",
-    sinceVersion: "v0.15.8"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "odata-fetchxml-execution",
@@ -185,7 +185,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Editor"
     },
     status: "available",
-    sinceVersion: "v0.6.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "result-viewer",
@@ -201,7 +201,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Result Viewer"
     },
     status: "available",
-    sinceVersion: "v0.5.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "query-by-canvas",
@@ -217,7 +217,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Result Viewer"
     },
     status: "available",
-    sinceVersion: "v0.7.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "explain-query-doctor",
@@ -233,7 +233,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Editor or Result Viewer"
     },
     status: "available",
-    sinceVersion: "v0.7.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "guided-traversal",
@@ -252,7 +252,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Guided Traversal"
     },
     status: "available",
-    sinceVersion: "v0.7.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "execution-insights",
@@ -268,7 +268,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Result Viewer / Execution Insights"
     },
     status: "available",
-    sinceVersion: "v0.9.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "operational-profiles",
@@ -284,7 +284,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Operational Profile"
     },
     status: "available",
-    sinceVersion: "v0.9.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "preview-first-mutation",
@@ -315,7 +315,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Result Viewer / Preview"
     },
     status: "available",
-    sinceVersion: "v0.9.x"
+    sinceVersion: "v1.0.0"
   },
   {
     id: "capability-explorer",
@@ -341,7 +341,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Capability Explorer"
     },
     status: "available",
-    sinceVersion: "v0.10.0"
+    sinceVersion: "v1.0.0"
   },
 
   {
@@ -368,7 +368,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Snapshot Library"
     },
     status: "preview",
-    sinceVersion: "v0.12.0"
+    sinceVersion: "v1.0.0"
   },
 
   {
@@ -386,7 +386,7 @@ export const capabilities: readonly CapabilityInfo[] = [
     commandId: "dvQuickRun.openFeedback",
     actionLabel: "Share Feedback",
     status: "available",
-    sinceVersion: "v0.12.5"
+    sinceVersion: "v1.0.0"
   },
 
   {
@@ -404,7 +404,7 @@ export const capabilities: readonly CapabilityInfo[] = [
     commandId: "dvQuickRun.openDiscussions",
     actionLabel: "Open Discussions",
     status: "available",
-    sinceVersion: "v0.12.0"
+    sinceVersion: "v1.0.0"
   },
 
   {
@@ -427,7 +427,7 @@ export const capabilities: readonly CapabilityInfo[] = [
       recommendedSurface: "Editor selection"
     },
     status: "available",
-    sinceVersion: "v0.9.0"
+    sinceVersion: "v1.0.0"
   }
 ];
 
@@ -472,7 +472,7 @@ function buildProComparisonCapability(): CapabilityInfo {
       recommendedSurface: "Snapshot Library"
     },
     status: "available",
-    sinceVersion: "v0.12.0"
+    sinceVersion: "v1.0.0"
   };
 }
 
@@ -485,13 +485,13 @@ export function getHubCapabilities(plan: EntitlementPlan = "free"): CapabilityIn
 }
 
 export const whatsNew: readonly string[] = [
-  "v0.16.2 completes MCP Security Hardening II: Local MCP now keeps capability, entitlement, environment, bounds and execution authority behind deterministic application services.",
-  "Managed Business Path Reverify is metadata-only; runtime verification is a separate, explicit source-record operation that executes the exact saved route.",
-  "A reached empty saved-path frontier stops the current scope. Downstream targets are not treated as globally empty, and alternate routes require an explicit new Business Path scope.",
-  "Business Path and investigation persistence stay inside the canonical workspace, including protection against symlink or junction escape.",
-  "Credential-shaped values are redacted consistently across MCP structured output, text mirrors, transport diagnostics and persisted investigation boundaries.",
-  "Professional Investigation keeps recommendations non-authoritative, revalidates chained actions independently and keeps Mini RCA zero-acquisition.",
-  "Permanent A01–A20 adversarial regression coverage plus bounded non-production dogfooding now protects these contracts as DVQR moves into the separate v1 readiness assessment."
+  "v1.0.0 brings DVQR's metadata, query, relationship, traversal, evidence and investigation surfaces together as one coherent Dataverse investigation workbench.",
+  "Managed Business Paths preserve reviewed traversal knowledge while keeping metadata Reverify, source-record Runtime Verify and BusinessPreferred governance explicitly separate.",
+  "Professional Investigation persists bounded evidence and investigation continuity through Readiness, Evidence Gaps, Mini RCA and handoff.",
+  "Operational Profiles, DVQR Score, Access Context and execution evidence help orient investigation without claiming risk, effective access or root cause.",
+  "Snapshot Library, Cross-Environment Diff and Timeline Reconstruction preserve compatible evidence across environments and captured points in time.",
+  "Capability Explorer and Local MCP share governed Custom API discovery, preview, explicit confirmation and eligible execution semantics.",
+  "The v1 Local MCP catalogue exposes 32 Free and 32 Pro-only tools, with 94 guided prompts for outcome-first discovery."
 ];
 
 export const philosophy: readonly string[] = [

@@ -415,7 +415,7 @@ export class McpBusinessPathRuntimeValidationApplicationService {
             "When targetCountBoundary is AtLimit, observedTargetRecordCount is a lower bound only; the actual total may be higher.",
             "An empty hop does not invalidate the relationship metadata or prove the path is never used by the business.",
             "AccessLimited and ExecutionFailed are indeterminate runtime outcomes, not evidence of zero rows.",
-            "Pass 10.2.1 does not persist a Business Path Library preference or rewrite Pass 10.1 metadata scores."
+            "Runtime validation does not persist a Business Path Library preference or rewrite metadata discovery scores."
           ]
         }
       };
