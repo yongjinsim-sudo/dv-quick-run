@@ -125,10 +125,10 @@ suite("releasePackagingPrivacy", () => {
     }
   });
 
-  test("keeps v1.0.0 package identity and v1 public release surfaces customer-neutral", () => {
+  test("keeps v1.0.1 package identity and v1 public release surfaces customer-neutral", () => {
     const root = workspaceRoot();
     const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as { version: string };
-    assert.strictEqual(packageJson.version, "1.0.0");
+    assert.strictEqual(packageJson.version, "1.0.1");
 
     const surfaces = [
       fs.readFileSync(path.join(root, "README.md"), "utf8"),
@@ -148,7 +148,7 @@ suite("releasePackagingPrivacy", () => {
       /\bsample_task\b/i,
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i
     ]) {
-      assert.doesNotMatch(surfaces, pattern, "v1.0.0 public release surface contains customer-specific material.");
+      assert.doesNotMatch(surfaces, pattern, "v1.0.1 public release surface contains customer-specific material.");
     }
   });
 

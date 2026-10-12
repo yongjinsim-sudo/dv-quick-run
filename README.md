@@ -1,6 +1,6 @@
 # DV Quick Run
 
-> **DV Quick Run v1.0.0 is here. 🎉**
+> **DV Quick Run v1.0.1 — Capability Explorer usability update.**
 
 **Understand Dataverse applications. Investigate operational behaviour. Stay grounded in evidence.**
 
@@ -543,6 +543,13 @@ Timeline findings describe **when drift was first observed between captures**. T
 ## Capability Explorer & Governed Execution
 
 Capability Explorer discovers and explains supported Dataverse operations and Custom APIs.
+
+
+### Responsive Capability Explorer layout (v1.0.1)
+
+Capability Explorer adapts its presentation to the available VS Code editor space. In constrained or shorter viewports, the four overview cards reduce to compact labels and counts, keeping the Custom API search and results table prominent. Narrow editor layouts allow the details inspector to follow the results vertically, with page and table scrolling available rather than requiring VS Code zoom changes.
+
+The layout refinement is presentation-only: discovery, filtering, pagination, execution preview, confirmation, environment authority and Free/Pro policy remain unchanged.
 
 It distinguishes:
 
