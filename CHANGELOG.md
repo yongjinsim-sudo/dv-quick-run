@@ -6,6 +6,22 @@ This project follows the principles of [Keep a Changelog](https://keepachangelog
 
 ---
 
+## DV Quick Run v1.0.1 — Capability Explorer Responsive Layout
+
+### Changed
+
+- Improved Capability Explorer usability in constrained VS Code editor viewports, including shorter windows and split-editor workflows.
+- Made the four summary metrics compact when available width or height is limited, retaining essential labels and counts while hiding secondary descriptions and icons.
+- Adjusted the Custom API results area's scrolling and height allocation so multiple rows remain accessible; narrow layouts can place the selected API inspector below the table.
+- Kept Custom API discovery, filtering, pagination, preview-first execution, entitlement checks and application-owned security boundaries unchanged.
+
+### Verification
+
+- Visual dogfooding confirmed compact summary metrics, multiple visible results rows, and access to the selected API details.
+- Build, automated tests and final release qualification remain to be confirmed.
+
+---
+
 ## DV Quick Run v1.0.0 — First Stable Release
 
 DV Quick Run v1.0.0 brings the complete DVQR investigation experience together as the first stable release. Features developed throughout the 0.x series now form one coherent v1 product contract; their original introduction remains recorded in the historical changelog entries below.

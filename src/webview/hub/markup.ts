@@ -313,8 +313,8 @@ function renderReleaseHighlights(): string {
     ["Free Foundation · Pro Acceleration", "Free and Pro share the same truth and safety model; Pro adds persisted continuity, deeper evidence workflows, comparison, timeline, Mini RCA and handoff." ]
   ] as const;
   return `<section id="whats-new">
-    <h2>What's New in v1.0.0</h2>
-    <p class="dvqr-section-note">DV Quick Run v1.0.0 brings the complete evidence-backed Dataverse investigation workflow together in one local-first workbench.</p>
+    <h2>What's New in v1.0.1</h2>
+    <p class="dvqr-section-note">v1.0.1 improves Capability Explorer usability in narrow and shorter VS Code editor layouts, with compact overview metrics and more accessible Custom API results. The v1.0.0 investigation contract remains unchanged.</p>
     <div class="dvqr-highlight-grid">${highlights.map(([title, summary]) => `<article class="dvqr-card"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(summary)}</p></article>`).join("")}</div>
   </section>`;
 }

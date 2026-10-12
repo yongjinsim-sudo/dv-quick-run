@@ -297,7 +297,7 @@ button, input, select {
 .dvqr-table-shell {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   width: 100%;
 }
@@ -895,49 +895,84 @@ th:hover .dvqr-column-resizer::after,
   width: 32px;
 }
 
-@media (max-width: 1180px) {
+/* Pass 2.3 — compact summaries with height-aware table allocation.
+   All selectors target the existing webview; no execution logic changes. */
+@media (max-width: 1200px), (max-height: 900px) {
+  .dvqr-capability-explorer {
+    padding: 12px 16px 18px;
+  }
+  .dvqr-header { gap: 8px; margin-bottom: 10px; }
+  .dvqr-title-block h1 { font-size: 22px; margin-bottom: 3px; }
+  .dvqr-subtitle { margin-bottom: 4px; }
+  .dvqr-toolbar { gap: 6px; }
+  .dvqr-metric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .dvqr-metric-card {
+    display: block;
+    min-height: 0;
+    padding: 7px 9px;
+  }
+  .dvqr-metric-icon { display: none; }
+  .dvqr-metric-label { font-size: 11px; line-height: 1.2; margin-bottom: 3px; }
+  .dvqr-metric-value { font-size: 19px; line-height: 1.2; margin-bottom: 0; }
+  .dvqr-metric-card .dvqr-muted { display: none; }
+  .dvqr-section-header { margin-bottom: 6px; }
+  .dvqr-section-header h2 { font-size: 18px; margin-bottom: 2px; }
+  .dvqr-section-header p { margin: 0; }
+  .dvqr-filter-row { gap: 7px; margin-bottom: 8px; }
+  /* Use document scrolling when the table and details cannot both fit.
+     This avoids the flex shrink that reduced the result shell to 66px. */
+  html, body { height: auto; min-height: 100%; }
+  body { overflow-x: hidden; overflow-y: auto; }
+  .dvqr-capability-explorer {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .dvqr-capability-explorer > section:last-child {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+  .dvqr-explorer-layout { flex: 0 0 auto; min-height: 0; }
+  .dvqr-table-card { height: auto; min-height: 0; }
+  .dvqr-table-shell {
+    flex: 0 0 auto;
+    height: clamp(240px, 38vh, 420px);
+    min-height: 240px;
+    max-height: none;
+    overflow: auto;
+  }
+  .dvqr-table-shell table { min-width: 850px; }
+  .dvqr-detail-drawer { min-height: 0; max-height: 540px; }
+}
+@media (max-width: 1050px) {
   .dvqr-explorer-layout,
   .dvqr-explorer-layout-with-drawer {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
   }
-
- .dvqr-table-card {
-    height: auto;
-    max-height: none;
-  }
-
-  .dvqr-detail-drawer {
-    max-height: none;
-  }
-
-  [data-role="detail-content"] {
-    min-height: 320px;
-  }
+  .dvqr-filter-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dvqr-search { grid-column: 1 / -1; min-width: 0; }
+  .dvqr-select { width: 100%; min-width: 0; }
+  .dvqr-detail-drawer { max-height: none; }
+  .dvqr-detail-body { max-height: 360px; }
 }
-
-@media (max-width: 980px) {
-  .dvqr-header,
-  .dvqr-section-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .dvqr-toolbar {
-    justify-content: flex-start;
-  }
-
-  .dvqr-metric-grid,
-  .dvqr-filter-row {
-    grid-template-columns: 1fr;
-  }
-
-  .dvqr-footer {
-    grid-template-columns: 1fr;
-  }
-
-  .dvqr-footer > :last-child {
-    text-align: left;
-  }
+@media (max-width: 700px) {
+  .dvqr-capability-explorer { padding: 10px; }
+  .dvqr-header { flex-direction: column; align-items: stretch; }
+  .dvqr-toolbar { justify-content: flex-start; }
+  .dvqr-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .dvqr-metric-card { padding: 5px 8px; }
+  .dvqr-metric-label { font-size: 10px; }
+  .dvqr-metric-value { font-size: 17px; }
+  .dvqr-filter-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dvqr-search { grid-column: 1 / -1; }
+  .dvqr-section-header { flex-direction: column; align-items: stretch; }
+  .dvqr-table-hint { display: none; }
+  .dvqr-footer { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
 `;
 }

@@ -18,7 +18,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DV Quick Run v1.0.0</title>
+<title>DV Quick Run v1.0.1</title>
 <style>
   :root {
     color-scheme: dark;
@@ -107,7 +107,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
     <section class="hero">
       <img src="${iconUri}" alt="DV Quick Run">
       <div>
-        <div class="eyebrow">DV Quick Run v1.0.0</div>
+        <div class="eyebrow">DV Quick Run v1.0.1</div>
         <h1>Investigate Dataverse with evidence, not guesswork.</h1>
         <p class="subtitle">DV Quick Run is a Dataverse investigation workbench for VS Code. Query and explain data, understand metadata and relationships, inspect runtime and operational context, preserve evidence, compare environments, reconstruct timelines, and carry investigations through to bounded Mini RCA and handoff.</p>
       </div>
@@ -205,7 +205,7 @@ function renderWelcomeHtml(webview: vscode.Webview, iconUri: vscode.Uri): string
 async function showV0141WelcomePanel(context: vscode.ExtensionContext): Promise<void> {
   const panel = vscode.window.createWebviewPanel(
     "dvQuickRunWelcomeV0159",
-    "DV Quick Run v1.0.0",
+    "DV Quick Run v1.0.1",
     vscode.ViewColumn.One,
     {
       enableScripts: true,
